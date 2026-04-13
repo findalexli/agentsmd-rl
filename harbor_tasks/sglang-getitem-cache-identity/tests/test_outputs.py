@@ -390,3 +390,111 @@ def test_not_stub():
     assert found_embedding_cache_logic, (
         "EmbeddingReqInput.__getitem__ must have _sub_obj_cache caching logic"
     )
+
+
+# -----------------------------------------------------------------------------
+# Additional pass_to_pass gates - Repo CI checks (require tools installed)
+# -----------------------------------------------------------------------------
+
+def _install_tool(name):
+    """Install a Python tool if not already installed."""
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", name], capture_output=True, timeout=120)
+    return r.returncode == 0
+
+
+def test_repo_check_yaml():
+    """Repo's CI workflow YAML files are valid (pass_to_pass)."""
+    _install_tool("pyyaml")
+    # Check that key workflow YAML files are valid
+    workflow_dir = Path(f"{REPO}/.github/workflows")
+    if not workflow_dir.exists():
+        return  # Skip if no workflows
+
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import yaml
+import sys
+from pathlib import Path
+
+workflow_dir = Path("{workflow_dir}")
+errors = []
+for f in workflow_dir.glob("*.yml"):
+    try:
+        yaml.safe_load(f.read_text())
+    except yaml.YAMLError as e:
+        errors.append(f"{{f.name}}: {{e}}")
+
+if errors:
+    print("\\n".join(errors))
+    sys.exit(1)
+print(f"Validated {{len(list(workflow_dir.glob('*.yml')))}} workflow YAML files")
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\\n{r.stderr}\\n{r.stdout}"
+
+
+def test_repo_check_toml():
+    """Repo's pyproject.toml is valid (pass_to_pass)."""
+    pyproject_path = Path(f"{REPO}/python/pyproject.toml")
+    if not pyproject_path.exists():
+        return  # Skip if no pyproject.toml
+
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import tomllib
+import sys
+
+with open("{pyproject_path}", "rb") as f:
+    try:
+        tomllib.load(f)
+        print("pyproject.toml is valid")
+    except Exception as e:
+        print(f"Invalid TOML: {{e}}")
+        sys.exit(1)
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\\n{r.stderr}\\n{r.stdout}"
+
+
+def test_repo_check_debug_statements():
+    """Modified files have no debug statements (breakpoint, pdb) (pass_to_pass)."""
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import sys
+from pathlib import Path
+
+files = ["{io_struct_path}", "{tokenizer_manager_path}"]
+errors = []
+debug_patterns = ['breakpoint()', 'import pdb', 'from pdb import', 'pdb.set_trace', 'console.log', 'debugger']
+
+for f in files:
+    content = Path(f).read_text()
+    lines = content.split('\\n')
+    for i, line in enumerate(lines, 1):
+        for pattern in debug_patterns:
+            if pattern in line and not line.strip().startswith('#'):
+                errors.append(f"{{f}}:{{i}}: found '{{pattern}}'")
+                break
+
+if errors:
+    print('\\n'.join(errors))
+    sys.exit(1)
+print("No debug statements found")
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Debug statement check failed:\\n{r.stderr}\\n{r.stdout}"

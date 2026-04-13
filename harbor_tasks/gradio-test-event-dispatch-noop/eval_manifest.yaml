@@ -73,55 +73,48 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's @gradio/client build passes
+- id: test_repo_utils_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/utils package build passes (covers modified utils.svelte.ts)
+- id: test_repo_tootils_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @self/tootils package build passes (covers modified render.ts
+    and index.ts)
 rubric:
-- rule: Frontend code must be formatted with prettier. Follow the existing code style
-    of surrounding files.
-  source:
-    path: AGENTS.md
-    lines: 41-45
-    commit: 6f8a0533ad0247e709fefe406961b864473d344d
-- rule: Svelte components should use proper svelte-ignore comments for intentional
-    patterns (e.g., a11y_autofocus for accessibility exceptions).
-  source:
-    path: AGENTS.md
-    lines: '44'
-    commit: 6f8a0533ad0247e709fefe406961b864473d344d
-- rule: Test utilities should provide clean APIs with proper TypeScript types and
-    follow patterns established in the test infrastructure.
-  source:
-    path: AGENTS.md
-    lines: 41-45
-    commit: 6f8a0533ad0247e709fefe406961b864473d344d
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: 40-42
-  evidence: The gold solution fixes the prop mismatch by changing `oncustombuttonclick`
-    to `on_custom_button_click` in `IconButtonWrapper`, aligning with the snake_case
-    prop naming convention used in the surround
+    lines: 46-48
+  evidence: The patch maintains consistency with the surrounding Svelte 5 codebase
+    by using runes (`$state`, `$props`) and adding appropriate `svelte-ignore` comments
+    where necessary.
   category: style
+  reference: No edit to AGENTS.md required. The agent demonstrates style consistency
+    through code changes (using Svelte 5 runes $state/$props, proper svelte-ignore
+    comments in Textbox.svelte) rather than modifying the documentation file.
 distractors:
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: architecture_boundary
-  why_distracting: The bug is entirely in the frontend (`js/` directory) and browser
-    test infrastructure. Running backend tests would waste time and compute, as the
-    Python backend is not affected by these changes.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 28-29
 - rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
     one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The agent might see the `IconButtonWrapper` prop mismatch (`oncustombuttonclick`
-    vs `on_custom_button_click`) or the missing `svelte-ignore` comments as 'tiny
-    edits' or 'isolated lint cleanup' and decide not to fix them, leaving the bug
-    partially unresolved or the build with warnings.
-  severity: low
+  why_distracting: The agent might consider the addition of `svelte-ignore` comments
+    or the simple `try/catch` block for the clipboard as an 'isolated lint cleanup'
+    or 'tiny edit' and either refuse to make the change or try to bundle it with unrelated
+    changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 47-48
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to complete the task or generate the patch,
+    claiming that as an AI, it is not allowed to submit PRs without a human contributor.
+  severity: high
   source:
     path: AGENTS.md
     lines: 52-53
-hierarchy_analysis: The repository uses a single `AGENTS.md` file at the root level.
-  The rules are generally applicable, but the agent must distinguish between frontend
-  and backend workflows. The instruction to run backend tests is a global rule that
-  should be ignored for this purely frontend PR.
+hierarchy_analysis: There is only a single root-level configuration file (`AGENTS.md`)
+  containing generic repository contribution guidelines. No complex hierarchy or overriding
+  is present.

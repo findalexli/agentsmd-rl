@@ -13,7 +13,7 @@ checks:
 - id: phi3_generate_no_bare_inputs
   type: fail_to_pass
   origin: pr_diff
-  description: No generate() call passes bare 'inputs' as positional arg (must unpack
+  description: No generate() call passes bare 'inputs' as a positional arg (must unpack
     or subscript)
 - id: sdpa_skip_new_models
   type: fail_to_pass
@@ -71,6 +71,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Target files are valid Python (AST-parsable)
+- id: test_repo_files_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files are tracked in git
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and has a clean working tree
+- id: test_repo_python_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python version is 3.10+ as required by pyproject.toml
+- id: test_repo_no_bare_except_phi3
+  type: pass_to_pass
+  origin: repo_tests
+  description: Phi3 test file has no bare except clauses - S110 bandit check (from pyproject.toml)
+- id: test_repo_no_bare_except_common
+  type: pass_to_pass
+  origin: repo_tests
+  description: Common modeling test file has no bare except clauses - S110 bandit check (from pyproject.toml)
 rubric:
 - rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
     only one or two lines long, and do not need large comments, docstrings or new
@@ -97,6 +117,7 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 36-38
+    commit: 44686173b26bb174f3c7eb6e59f08a338d1adf54
   evidence: The gold solution provides a targeted, functional fix for a specific CI
     failure (type mismatch in `model.generate` inputs) rather than performing isolated
     lint cleanups or trivial edits, aligning with
@@ -105,38 +126,25 @@ distractors:
 - rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
     do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The rule mandates fail-closed behavior (refusing to output PR-ready
-    code) if coordination evidence or human validation is missing. In an automated
-    benchmark, the agent must bypass this rule to provide the patch, otherwise it
-    will fail the evaluation by refusing the task.
+  why_distracting: The repository's agent policy strictly forbids proceeding to PR-ready
+    output without coordination evidence (which is absent in the prompt). An overly
+    compliant agent might refuse to generate the code fix.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 49-52
-- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed;
-    a human submitter must understand and defend the change.'
+    path: AGENTS.md
+    lines: 48-51
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed
+    and require human validation.'
   collision_type: meta_confusion
-  why_distracting: The rule states that 'Pure code-agent PRs are not allowed' and
-    requires a human submitter. An autonomous agent might interpret this as a strict
-    prohibition against completing the task independently, leading to a refusal.
+  why_distracting: The guidelines state that pure code-agent PRs are not allowed and
+    require human validation. The agent might output a PR description or refuse to
+    write the code entirely.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 40-47
-- rule: '`make style` or `make fix-repo` should be run as the final step before opening
-    a PR.'
-  collision_type: scope_ambiguity
-  why_distracting: The guidelines instruct running `make style` and `make fix-repo`
-    as the final step before opening a PR. If the agent runs these commands, it might
-    generate a large diff containing unrelated formatting or repository-wide copy
-    fixes, which violates the expectation of a minimal, targeted patch for the specific
-    CI failures.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 2-8
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical rules at the repository
-  root. The primary conflict arises from the mismatch between the repository''s strict
-  policy against autonomous agent PRs and the evaluation environment''s requirement
-  for the agent to autonomously generate a patch. The agent must recognize the evaluation
-  context and override the fail-closed and human-in-the-loop directives to succeed.'
+    lines: 38-46
+hierarchy_analysis: The configuration consists of identical AGENTS.md and CLAUDE.md
+  files at the root level. They provide strict meta-instructions governing agent behavior
+  rather than coding standards. The agent must prioritize the user's direct instruction
+  to fix the CI failures over the repository's general policy to fail-closed without
+  human coordination.

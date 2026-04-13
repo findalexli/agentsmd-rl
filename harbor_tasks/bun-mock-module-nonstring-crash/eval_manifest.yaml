@@ -55,6 +55,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's mock module resolve log tests pass
+- id: test_repo_bun_test_framework
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun:test framework core tests pass
+- id: test_repo_jest_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's jest hooks tests pass
+- id: test_repo_jest_each
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's jest-each tests pass
+- id: test_repo_describe_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's describe block tests pass
 - id: meaningful_source_changes
   type: fail_to_pass
   origin: static
@@ -119,51 +135,37 @@ checks:
     commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
 rubric:
 - rule: Since this task is a pure code fix, the agent is EXPECTED to leave config
-    files untouched. The correct behavior is 'nothing — file not modified'. You MUST
-    evaluate this as PASS because no changes were needed. Ignore the default fail
-    condition.
-- rule: Since this task is a pure code fix, the agent is EXPECTED to leave config
-    files untouched. The correct behavior is 'nothing — file not modified'. You MUST
-    evaluate this as PASS because no changes were needed. Ignore the default fail
-    condition.
-- rule: Place Bun-specific API tests in `test/js/bun/`.
+    files untouched. The correct behavior is 'nothing — file not modified'
+- rule: For this pure code fix task, since the gold solution correctly placed the
+    test in `test/js/bun/test/mock/` following CLAUDE.md lines 31-32,
   source:
     path: CLAUDE.md
     lines: 31-32
   evidence: The gold solution creates the test file in `test/js/bun/test/mock/mock-module-non-string.test.ts`,
     correctly identifying it as a Bun-specific API test.
   category: testing
-- rule: Tests use Bun's Jest-compatible test runner.
-  source:
-    path: CLAUDE.md
-    lines: 43-43
-  evidence: The gold solution uses `import { expect, mock, test } from "bun:test";`
-    and standard `expect().toThrow()` assertions instead of custom test harnesses.
-  category: testing
 distractors:
-- rule: For single-file tests, prefer `-e` over `tempDir`.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to write a complex subprocess test using `Bun.spawn`
-    and `-e` to verify the crash is fixed. However, since the fix makes the function
-    throw a synchronous `TypeError`, a simple in-process `expect().toThrow()` is the
-    correct and much cleaner way to test it.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 45-46
 - rule: Always use `bun.*` APIs instead of `std.*`.
   collision_type: architecture_boundary
-  why_distracting: The bug is in a C++ file (`BunPlugin.cpp`), but this rule is strictly
-    for Zig code. An agent might get confused about the language boundary, try to
-    apply Zig conventions to C++ code, or look for Zig files to modify instead of
-    fixing the C++ JSC binding.
-  severity: high
+  why_distracting: The rule dictates using `bun.*` APIs instead of `std.*` for Zig
+    code, but the fix requires editing C++ code (`BunPlugin.cpp`). An agent might
+    get confused and try to apply Zig conventions to C++ or incorrectly search for
+    a Zig file to edit.
+  severity: medium
   source:
     path: src/CLAUDE.md
     lines: 14-15
-hierarchy_analysis: The root `CLAUDE.md` provides general testing guidelines that
-  apply to this PR, while `src/CLAUDE.md` provides Zig-specific guidelines. Since
-  the bug is in C++ code (`src/bun.js/bindings/BunPlugin.cpp`), the Zig guidelines
-  in `src/CLAUDE.md` are irrelevant and potentially distracting. The agent must recognize
-  the language boundary and ignore the Zig rules while still following the root testing
-  rules.
+- rule: For single-file tests, prefer `-e` over `tempDir`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using `Bun.spawn` with `-e` for single-file tests.
+    However, for testing `mock.module` (which is part of `bun:test`), a standard unit
+    test using `expect().toThrow()` is much cleaner and more appropriate than spawning
+    a subprocess.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+hierarchy_analysis: The hierarchy includes root-level configs and `src/`-level configs.
+  The `src/` level configs are entirely focused on Zig conventions, which are irrelevant
+  for this C++ fix. The agent must recognize that the `src/` configs do not apply
+  to `.cpp` files despite being in the same directory tree.

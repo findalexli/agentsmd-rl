@@ -89,33 +89,29 @@ rubric:
     creating a new dedicated test file for the issu
   category: testing
 distractors:
-- rule: Don't be afraid to write code that's more verbose or requires largeish refactors
-    if it enables you to avoid these unsafe calls.
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+    Instead, try to encode those constraints in the type system. Don't be afraid to
+    write code that's more verbose or requires largeish refactors...
   collision_type: scope_ambiguity
-  why_distracting: The bug involves a panic caused by incorrect cursor advancement
-    and parsing. The rule encourages 'largeish refactors' to encode constraints in
-    the type system to avoid panics. An agent might attempt to completely rewrite
-    the escape sequence parser to be type-safe, whereas the gold solution demonstrates
-    that a localized fix using `from_str_radix` and `saturating_sub` is the correct,
-    scoped approach.
+  why_distracting: The instruction asks to fix a panic. The rule suggests avoiding
+    panics by encoding constraints in the type system and encourages 'largeish refactors'
+    to do so. An agent might attempt to heavily refactor the `Cursor` or `StringLiteral`
+    types to make invalid states unrepresentable, which is out of scope and would
+    overcomplicate this localized parsing bug fix.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 69-71
-- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
-    the `ty` GitHub label.
-  collision_type: meta_confusion
-  why_distracting: The repository contains both `ruff` and `ty` projects. Because
-    the instructions heavily feature `ty` examples (like `ty_python_semantic`), an
-    agent might mistakenly assume this PR falls under the `ty` ecosystem and attempt
-    to apply `ty`-specific conventions or run `ty` test commands, even though the
-    issue is strictly within `ruff_linter`.
+    lines: 69-70
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism... Look for existing utilities first.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the manual parsing and cursor manipulation
+    as 'significant amounts of new code' and waste time searching for a non-existent
+    Ruff-specific utility for octal escape sequence parsing, rather than just using
+    the standard library `u8::from_str_radix` and `saturating_sub`.
   severity: low
   source:
     path: AGENTS.md
-    lines: 59-60
-hierarchy_analysis: The configuration consists of a single substantive file (`AGENTS.md`)
-  loaded via `CLAUDE.md`. The rules are flat, but there is a clear division between
-  general repository guidelines, `ruff`-specific commands, and `ty`-specific commands.
-  Agents must correctly identify the subsystem (`ruff_linter`) to apply the appropriate
-  testing and architectural guidelines.
+    lines: 68-69
+hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
+  simply includes AGENTS.md. The rules are generic repository guidelines.

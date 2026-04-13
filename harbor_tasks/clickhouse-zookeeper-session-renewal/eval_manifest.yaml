@@ -79,6 +79,42 @@ checks:
   source:
     path: ci/jobs/scripts/check_style/check_cpp.sh lines 34-41
     lines: ''
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has no git conflict markers (ClickHouse CI check)
+  source:
+    path: ci/jobs/scripts/check_style/various_checks.sh lines 177-179
+    lines: ''
+- id: test_repo_no_dos_newlines
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has no DOS/Windows newlines (ClickHouse CI check)
+  source:
+    path: ci/jobs/scripts/check_style/various_checks.sh line 182
+    lines: ''
+- id: test_repo_file_permissions_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has valid git file permissions 100644 or 120000
+  source:
+    path: ci/jobs/scripts/check_style/various_checks.sh lines 92-93
+    lines: ''
+- id: test_repo_no_pragma_once_in_cpp
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target C++ file does not use pragma once (headers only)
+  source:
+    path: ci/jobs/scripts/check_style/check_cpp.sh line 201
+    lines: ''
+- id: test_repo_no_forbidden_std_containers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file in Functions dir does not use forbidden std containers
+  source:
+    path: ci/jobs/scripts/check_style/check_cpp.sh lines 246-259
+    lines: ''
+
 rubric:
 - rule: When writing C++ code, always use Allman-style braces (opening brace on a
     new line).
@@ -98,9 +134,41 @@ rubric:
     path: .claude/CLAUDE.md
     lines: '49'
     commit: a3c77899d3f826cfdc879ce9c276dd5f019cb46d
+- rule: When mentioning logical errors, say 'exception' instead of 'crash'
+  source:
+    path: AGENTS.md
+    lines: 11-12
+  evidence: 'The gold solution''s added comments (''the provided handle may point
+    to an expired session'') describe the failure mode without using the word ''crash'',
+    adhering to the rule despite the prompt''s repeated '
+  category: documentation
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  evidence: The updated comment refers to functions like `tryLoadObject` and `setAllObjects`
+    without appending parentheses.
+  category: style
 version: '2.0'
 source:
   repo: ClickHouse/ClickHouse
   pr: 102171
   base_commit: a3c77899d3f826cfdc879ce9c276dd5f019cb46d
   merge_commit: 23c8e6b613f72896b0f092f6df38188c9b9852ee
+distractors:
+- rule: wrap literal names from ClickHouse SQL language, classes and functions...
+    inside inline code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates wrapping class and function names in backticks.
+    However, the surrounding comments in this specific file do not use backticks for
+    names like `ZooKeeperRetriesControl` or `tryLoadObject`. An agent strictly applying
+    this rule would introduce stylistic inconsistency with the immediate context and
+    diverge from the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 6-7
+hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`).
+  The agent must apply comment styling rules while balancing them against the existing
+  style of the surrounding code.

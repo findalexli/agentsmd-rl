@@ -61,6 +61,43 @@ def test_repo_unit_tests_conversation():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
+def test_repo_unit_tests_app_conversation_service():
+    """Repo's unit tests for app conversation service pass (pass_to_pass).
+
+    Tests AppConversationInfoService which is imported in the refactored code.
+    """
+    test_file = REPO / "tests" / "unit" / "app_server" / "test_sql_app_conversation_info_service.py"
+    if not test_file.exists():
+        pytest.skip("App conversation info service test file not found")
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", str(test_file), "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env={**os.environ, "PYTHONPATH": ".:" + os.environ.get("PYTHONPATH", "")},
+    )
+    assert r.returncode == 0, f"App conversation service tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_conversation_id_validation():
+    """Repo's unit tests for conversation ID validation pass (pass_to_pass)."""
+    test_file = REPO / "tests" / "unit" / "server" / "routes" / "test_conversation_id_validation.py"
+    if not test_file.exists():
+        pytest.skip("Conversation ID validation test file not found")
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", str(test_file), "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env={**os.environ, "PYTHONPATH": ".:" + os.environ.get("PYTHONPATH", "")},
+    )
+    assert r.returncode == 0, f"Conversation ID validation tests failed:\n{r.stderr[-500:]}"
+
+
 # =============================================================================
 # Fail-to-Pass Tests (verify the specific fix is applied correctly)
 # =============================================================================

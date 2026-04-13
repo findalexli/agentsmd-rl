@@ -18,16 +18,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: Colorpicker.svelte must have proper imports and structure
-- id: hsva_to_rgba_runs
-  type: pass_to_pass
-  origin: repo_tests
-  description: hsva_to_rgba function must execute without errors on base commit via
-    Node.js runtime
-- id: format_color_regression
-  type: pass_to_pass
-  origin: repo_tests
-  description: Existing format_color function still produces correct output via Node.js
-    runtime
 - id: tinycolor_runtime_available
   type: pass_to_pass
   origin: repo_tests
@@ -36,6 +26,24 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified TypeScript files must be parseable by Node.js
+- id: hsva_to_rgba_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: hsva_to_rgba function must execute and return valid color strings
+- id: format_color_regression
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing format_color function produces correct output
+- id: colorpicker_directory_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Colorpicker shared directory has required files (utils.ts, Colorpicker.svelte,
+    events.ts) with proper structure
+- id: events_ts_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: events.ts file exists and exports click_outside handler with TypeScript
+    types
 - id: hsva_to_rgba_returns_hex
   type: fail_to_pass
   origin: pr_diff
@@ -63,45 +71,39 @@ checks:
     path: js/README.md
     lines: '81'
     commit: 8bc75137b24ba8a8571b49b9b006741819c0518b
-rubric:
-- rule: Be consistent with the style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: '45'
-  evidence: The gold solution maintains the existing indentation style (using tabs)
-    in both `Colorpicker.svelte` and `utils.ts`, and seamlessly integrates the new
-    `normalize_color` function using the existing `ti
-  category: style
 distractors:
-- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
-    be able to defend the change.
-  collision_type: meta_confusion
-  why_distracting: The rule states that 'Pure code-agent PRs are not allowed' and
-    requires a human contributor. An autonomous agent might interpret this as a hard
-    blocker and refuse to generate the code fix, asking for human intervention instead.
+- rule: Build Gradio web UIs and demos in Python. Use when creating or editing Gradio
+    apps, components...
+  collision_type: architecture_boundary
+  why_distracting: The skill description suggests using Python when editing Gradio
+    components. An agent might mistakenly try to fix the color normalization in the
+    Python backend (`gradio/components/colorpicker.py`) instead of the Svelte frontend,
+    which would fail to address the raw value sent from the client.
   severity: high
   source:
-    path: AGENTS.md
-    lines: 65-66
-- rule: AI coding agents must include the keyword 'kumquat' in the PR description.
+    path: .agents/skills/gradio
+    lines: 1-2
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The rule requires adding the keyword 'kumquat' to the PR description.
-    The agent might waste time trying to find a PR description file, use GitHub CLI
-    to create a PR, or output PR template text instead of focusing purely on the code
-    fix.
-  severity: medium
+  why_distracting: The agent might misinterpret this bug fix as a 'tiny edit' and
+    either refuse to implement it or attempt to bundle it with unrelated mechanical
+    cleanups.
+  severity: low
   source:
     path: AGENTS.md
-    lines: '70'
-- rule: 'Format your code before pushing. Frontend: bash scripts/format_frontend.sh'
-  collision_type: scope_ambiguity
-  why_distracting: The rule instructs to run `bash scripts/format_frontend.sh`. Running
-    this script might format the entire frontend codebase, resulting in a massive
-    diff with unrelated formatting changes that pollute the specific bug fix.
-  severity: medium
+    lines: 57-58
+hierarchy_analysis: The configuration is relatively flat, consisting of a single AGENTS.md
+  file and a skill description. The primary challenge is correctly interpreting the
+  architectural boundaries described in the repository structure.
+rubric:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
   source:
     path: AGENTS.md
-    lines: 31-33
-hierarchy_analysis: There is only one config file (`AGENTS.md`) at the root level,
-  so there are no conflicts between different config files. The rules apply globally
-  to the repository.
+    lines: 12-13
+  evidence: The gold solution correctly implements the fix in the frontend Svelte/TypeScript
+    files within the component's specific subdirectory (`js/colorpicker/shared/`)
+    rather than the Python backend.
+  category: architecture
+  verification: llm_judge

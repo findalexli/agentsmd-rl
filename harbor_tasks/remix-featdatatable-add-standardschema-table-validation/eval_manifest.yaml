@@ -81,59 +81,48 @@ rubric:
     path: AGENTS.md
     lines: 1-20
     commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+  reference: '- **Cross-package boundaries**: Avoid re-exporting APIs/types from other packages. Consumers should import from the owning package directly. Reuse shared concepts from sibling packages internally instead of creating bespoke duplicate implementations.'
 - rule: README Data Validation section follows the structure and tone of existing
     README sections
   source:
     path: packages/data-table/README.md
     lines: 1-30
     commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+  reference: "### Data Validation\n\nFor write operations, data validation happens before SQL is executed"
 - rule: AGENTS.md documents cross-package boundary rule about re-exports
   source:
     path: AGENTS.md
     lines: '19'
     commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
+  reference: '- **Cross-package boundaries**: Avoid re-exporting APIs/types from other packages.'
 - rule: data-table README documents data validation and Standard Schema compatibility
   source:
     path: packages/data-table/README.md
     lines: 219-259
     commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
-- rule: timestampSchema uses createSchema from data-schema instead of inline ~standard
-- rule: When defining functions in object literals, use shorthand method syntax (`{
-    method() {} }`) instead of arrow functions
-  source:
-    path: AGENTS.md
-    lines: 22-22
-  evidence: The `validate` function inside the `~standard` object property of the
-    table uses shorthand method syntax (`validate(value) { ... }`) rather than an
-    arrow function.
-  category: style
-- rule: Always use `import type { X }` for types (separate from value imports)
-  source:
-    path: AGENTS.md
-    lines: 19-19
-  evidence: When replacing the re-exported `DataSchema` with `Schema` from `data-schema`,
-    the import is written as `import type { Schema }`.
-  category: style
-- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
-  source:
-    path: AGENTS.md
-    lines: 20-20
-  evidence: Local variables defined within the newly extracted shared validator function
-    use `let` instead of `const`.
-  category: style
+  reference: 'Tables are also [Standard Schema](https://standardschema.dev/)-compatible, so you can run the same validation explicitly with `remix/data-schema` before writing:'
 distractors:
+- rule: All `exports` in `package.json` have a dedicated file in `src` that defines
+    the public API by re-exporting from within `src/lib`
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires removing the re-export of `DataSchema`
+    from `data-table`. The agent might hesitate to remove it from `src/index.ts` because
+    of the rule stating that public APIs are defined by re-exporting from within `src/lib`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 13-13
 - rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
     files.'
   collision_type: scope_ambiguity
-  why_distracting: The prompt explicitly lists the documentation files to update (AGENTS.md
-    and README.md). Creating a changes file might seem required by the general repo
-    rules, but doing so introduces out-of-scope files not requested in the specific
-    PR instructions.
+  why_distracting: The agent might create a `.changes` file for this PR, but the instructions
+    only specify updating `AGENTS.md` and `README.md`. Creating unrequested change
+    files pollutes the PR.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 40-40
-hierarchy_analysis: The AGENTS.md file provides global architectural and stylistic
-  rules. The prompt introduces a new architectural rule (not re-exporting types across
-  package boundaries) that must be appended to AGENTS.md, demonstrating that the agent
-  must both follow the existing rules and mutate the rule file itself.
+    lines: 41-41
+hierarchy_analysis: 'The configuration is a flat single file (`AGENTS.md`), but the
+  task introduces a unique meta-referential challenge: the agent is instructed to
+  edit `AGENTS.md` itself to add a new architectural guideline. This requires the
+  agent to treat its own instruction file as a mutable target.'

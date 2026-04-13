@@ -150,3 +150,30 @@ def test_repo_check_deps():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_env_utils():
+    """ESLint passes on env utils module (imported by solution) (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright-core/src/server/utils/env.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on env.ts failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_registry():
+    """ESLint passes on browser registry (used by solution) (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright-core/src/server/registry/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on registry failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_tools():
+    """ESLint passes on all tools directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright-core/src/tools/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on tools failed:\n{r.stderr[-500:]}"

@@ -1,134 +1,83 @@
-version: '2.0'
+version: "2.0"
 source:
-  repo: anomalyco/opencode
-  pr: 19534
-  base_commit: 8ac2fbbd1262a9de1362beb6e29debc446ceea0e
-  merge_commit: 2b86b36c8cd7d13a64d1e85296554cf5414d532b
+  repo: "example/calc-repo"
+  pr: 1
+  base_commit: "abc123"
+  merge_commit: "def456"
+
 checks:
-- id: handler_opens_dialog_variant
-  type: fail_to_pass
-  origin: pr_diff
-  description: variant_cycle handler opens DialogVariant via dialog API instead of
-    cycling
-- id: dialog_variant_imported
-  type: fail_to_pass
-  origin: pr_diff
-  description: DialogVariant component is imported in app.tsx
-- id: no_blind_cycle_in_handler
-  type: fail_to_pass
-  origin: pr_diff
-  description: .variant.cycle() removed from variant_cycle handler
-- id: title_not_variant_cycle
-  type: fail_to_pass
-  origin: pr_diff
-  description: Title updated from 'Variant cycle' to a selection-oriented label
-- id: variant_keybind_preserved
-  type: pass_to_pass
-  origin: pr_diff
-  description: variant_cycle keybind still registered in commands
-- id: other_dialogs_preserved
-  type: pass_to_pass
-  origin: static
-  description: DialogModel and App function still present (anti-stub)
-- id: app_not_gutted
-  type: pass_to_pass
-  origin: static
-  description: app.tsx has >150 meaningful lines
-- id: dialog_variant_component_exists
-  type: pass_to_pass
-  origin: pr_diff
-  description: dialog-variant.tsx exists and exports DialogVariant
-- id: no_any_type
-  type: pass_to_pass
-  origin: agent_config
-  description: No 'any' type usage in app.tsx
-  source:
-    path: AGENTS.md
-    lines: '13'
-    commit: 8ac2fbbd1262a9de1362beb6e29debc446ceea0e
-- id: no_else_in_variant_area
-  type: pass_to_pass
-  origin: agent_config
-  description: No else statements near variant handler
-  source:
-    path: AGENTS.md
-    lines: '84'
-    commit: 8ac2fbbd1262a9de1362beb6e29debc446ceea0e
-- id: no_try_catch_in_variant_area
-  type: pass_to_pass
-  origin: agent_config
-  description: No try/catch near variant handler
-  source:
-    path: AGENTS.md
-    lines: '12'
-    commit: 8ac2fbbd1262a9de1362beb6e29debc446ceea0e
-- id: prefer_const_in_variant_area
-  type: pass_to_pass
-  origin: agent_config
-  description: No let in variant handler area — prefer const
-  source:
-    path: AGENTS.md
-    lines: '70'
-    commit: 8ac2fbbd1262a9de1362beb6e29debc446ceea0e
-- id: repo_tsx_syntax_valid
-  type: pass_to_pass
-  origin: static
-  description: Repo's TSX files have valid syntax (brace matching check)
-- id: repo_dialog_variant_exports_component
-  type: pass_to_pass
-  origin: static
-  description: DialogVariant component is properly exported
-- id: repo_app_tsx_structure
-  type: pass_to_pass
-  origin: static
-  description: app.tsx has valid structure with imports and exports
+  # Fail-to-pass tests (the main bug fix)
+  - id: divide_by_zero_raises_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "divide() raises ValueError when dividing by zero"
+
+  - id: divide_error_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: "divide() error message is 'Cannot divide by zero'"
+
+  # Pass-to-pass tests (repo CI tests)
+  - id: test_repo_pytest_add
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for add() passes"
+
+  - id: test_repo_pytest_subtract
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for subtract() passes"
+
+  - id: test_repo_pytest_multiply
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for multiply() passes"
+
+  - id: test_repo_pytest_divide
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for divide() passes"
+
+  - id: test_repo_pytest_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All repo pytest tests pass"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes"
+
+
+config_edits:
+  - path: ".claude/CLAUDE.md"
+    tier: 1
+    gold_added: |
+      # Calculator Module Conventions
+
+      ## Error Handling
+
+      All mathematical operations must validate inputs and raise appropriate exceptions:
+      - Division by zero must raise `ValueError` with a clear message
+      - Invalid types should raise `TypeError`
+
+      ## Testing
+
+      Run tests with: `pytest tests/ -v`
+      Run linting with: `ruff check src/`
+      Run type checking with: `mypy src/`
+
 rubric:
-- rule: Code changes follow the repository's style guidelines (tested via pass_to_pass
-    tests)
-- rule: 'Minimal focused change: only the variant_cycle handler and related import
-    were modified'
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary
-  source:
-    path: AGENTS.md
-    lines: 15-15
-  evidence: The `onSelect` callback and the `dialog.replace` argument `() => <DialogVariant
-    />` are written without explicit type annotations, relying entirely on TypeScript's
-    inference.
-  category: style
-- rule: Keep things in one function unless composable or reusable
-  source:
-    path: AGENTS.md
-    lines: 10-10
-  evidence: Reuses the existing `DialogVariant` component by importing it, rather
-    than implementing the dialog UI inline within the `onSelect` handler.
-  category: architecture
-distractors:
-- rule: Use single word names by default for new locals, params, and helper functions.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to alias the imported `DialogVariant` to a
-    single word like `Variant` to satisfy the strict single-word naming rule. Doing
-    so would break consistency with other dialog components (like `DialogModel`) and
-    violate standard React component naming conventions.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 26-26
-- rule: Use `Effect.gen(function* () { ... })` for composition and `Effect.fn` for
-    named effects.
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to implement the `onSelect` handler using `Effect.gen`
-    or `Effect.fn` because the file is within the `opencode` package. However, this
-    is a React/Ink TUI component that expects standard synchronous JavaScript callbacks,
-    not Effect workflows.
-  severity: high
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 16-17
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/JavaScript style
-  rules, while `packages/opencode/AGENTS.md` introduces highly specific rules for
-  the Effect ecosystem and Drizzle database. Since this PR modifies a React/Ink TUI
-  component (`app.tsx`), the Effect-specific rules in the package-level config are
-  out of scope and act as distractors. The agent must recognize the architectural
-  boundary between the Effect-based backend services and the React-based frontend
-  TUI.
+  - rule: "Agent should add proper error handling for division by zero"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "6-8"
+    evidence: "Gold solution adds if b == 0 check with ValueError"
+    category: "architecture"
+
+  - rule: "Agent should document error handling conventions in CLAUDE.md"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "1-12"
+    evidence: "Gold solution creates CLAUDE.md with error handling section"
+    category: "documentation"

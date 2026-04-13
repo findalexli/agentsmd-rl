@@ -13,6 +13,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: mps.py must compile to bytecode without errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff linter passes on mps.py
+- id: test_repo_py_compile_subprocess
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - mps.py compiles via subprocess without errors
 - id: test_utils_h_balanced_braces
   type: pass_to_pass
   origin: static
@@ -25,6 +33,29 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: mps.py must have valid import statements
+- id: test_mps_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: mps.py has valid AST structure with required MetalExprPrinter class
+    and methods
+- id: test_utils_h_key_functions_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils.h contains required Metal utility functions (floor_divide, fmod)
+- id: test_modular_indexing_method_signature
+  type: pass_to_pass
+  origin: repo_tests
+  description: _print_ModularIndexing has correct method signature with self and expr
+    parameters
+- id: test_mps_modular_indexing_behavior
+  type: pass_to_pass
+  origin: repo_tests
+  description: _print_ModularIndexing produces valid output for standard non-buggy
+    cases
+- id: test_floordiv_method_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: _print_FloorDiv method exists and has correct signature
 - id: test_buggy_pattern_not_bare_modulo
   type: fail_to_pass
   origin: pr_diff
@@ -84,6 +115,7 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 31-32
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
   evidence: 'The gold solution adds comments in both `c10/metal/utils.h` and `torch/_inductor/codegen/mps.py`
     explicitly mentioning the ''Metal compiler bug'' and the specific ''fused (x /
     A) % B'' pattern to explain '
@@ -91,28 +123,39 @@ rubric:
 distractors:
 - rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
     it significantly improves code readability.
-  collision_type: rule_conflict
-  why_distracting: The `safe_mod` function is literally a 1-LOC helper (`return x
-    % y;`). An agent strictly following this rule might try to avoid creating this
-    helper and instead emit complex inline workarounds in the Python codegen, which
-    could fail to defeat the Metal compiler's peephole optimizer or make the codegen
-    messy.
+  collision_type: architecture_boundary
+  why_distracting: The `safe_mod` function is a 1-LOC helper (`return x % y;`). An
+    agent strictly following this rule might try to avoid creating the C++ helper
+    and instead emit the `volatile` cast directly in the Python codegen string (e.g.,
+    `((volatile {type}){x}) % {mod}`). This crosses an architecture boundary and makes
+    the generated code messy, whereas adding the helper to the Metal utility header
+    is the correct architectural choice.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 33-34
+    lines: 47-48
 - rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
-  collision_type: meta_confusion
-  why_distracting: '`CLAUDE.md` explicitly states ''Only use commands provided via
-    `spin` for linting.'' This creates a direct contradiction in the instructions
-    for how the agent should check its work, potentially causing the agent to run
-    the wrong command and fail.'
-  severity: low
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md instructs the agent to use `lintrunner -a` for linting,
+    which directly conflicts with CLAUDE.md's instruction to 'Only use commands provided
+    via spin for linting'. An agent trying to validate its changes might fail or get
+    confused by these conflicting toolchain instructions.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 9-9
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are at Level 0, but they contain
-  conflicting instructions regarding linting (`spin lint` vs `lintrunner -a`). The
-  agent must navigate this contradiction. Additionally, the general rule against trivial
-  helper functions in `CLAUDE.md` conflicts with the specific necessity of creating
-  a 1-LOC C++ function to defeat a compiler optimization pass.
+    lines: 10-10
+- rule: Do NOT run setup.py, you do not have a working build environment
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md states 'you do not have a working build environment',
+    while CLAUDE.md provides explicit build instructions via `pip install -e .`. The
+    agent might incorrectly assume it cannot compile the C++ header changes to verify
+    the fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-8
+hierarchy_analysis: The config hierarchy features two Level 0 files (`AGENTS.md` and
+  `CLAUDE.md`) that contain direct contradictions regarding the development environment
+  (linting tools and build capabilities). The agent must synthesize these rules and
+  recognize that `CLAUDE.md` provides more specific, PyTorch-tailored instructions
+  (like `spin`) that likely supersede the generic `AGENTS.md` rules.

@@ -58,17 +58,17 @@ _IWM_BLOCK = (
 def test_catch_all_produces_output():
     """Empty else => {} catch-all replaced with Output.* error messages."""
     r = _node(_IWM_BLOCK + r"""
-    if (/else\s*=>\s*\{\s*\}/.test(block)) {
+    if (/else\s*=\>\s*\{\s*\}/.test(block)) {
         console.log(JSON.stringify({error: 'empty_else'})); process.exit(0);
     }
-    const em = block.match(/else\s*=>\s*\|?\w*\|?\s*\{([\s\S]*?)\}/);
+    const em = block.match(/else\s*=\>\s*\|?\w*\|?\s*\{([\s\S]*?)\}/);
     if (em) {
         const body = em[1].trim();
         if (!body || !/Output\.\w+\s*\(/.test(body)) {
             console.log(JSON.stringify({error: 'else_no_output'})); process.exit(0);
         }
     }
-    const branches = block.match(/=>\s*(?:\|[^|]*\|)?\s*\{[^}]*Output\.\w+\s*\(/g) || [];
+    const branches = block.match(/=\>\s*(?:\|[^|]*\|)?\s*\{[^}]*Output\.\w+\s*\(/g) || [];
     if (branches.length < 2) {
         console.log(JSON.stringify({error: 'few_branches', count: branches.length})); process.exit(0);
     }
@@ -84,7 +84,7 @@ def test_error_variant_coverage():
     r = _node(_IWM_BLOCK + r"""
     const named = block.match(/error\.\w+\s*=>/g) || [];
     const outputCalls = block.match(/Output\.\w+\(/g) || [];
-    const hasDynamic = /else\s*=>\s*\|(\w+)\|[\s\S]*?@errorName\(\1\)/.test(block);
+    const hasDynamic = /else\s*=\>\s*\|(\w+)\|[\s\S]*?@errorName\(\1\)/.test(block);
     if (named.length >= 3 && outputCalls.length >= 3) {
         console.log(JSON.stringify({ok: true, strategy: 'named', named: named.length}));
     } else if (hasDynamic) {
@@ -128,8 +128,8 @@ def test_error_variant_propagated():
     const m = text.match(/fn performSecurityScanAfterResolution\b([\s\S]*?)(?:\nfn |\npub fn |$)/);
     if (!m) { console.log(JSON.stringify({error: 'func_not_found'})); process.exit(0); }
     const func = m[1];
-    const hasCollapse = /else\s*=>\s*return\s+error\.SecurityScannerRetryFailed/.test(func);
-    const hasProp = /\.@"error"\s*=>\s*\|/.test(func) || /\.error\s*=>\s*\|/.test(func) || /inline\s+else\s*=>\s*\|/.test(func);
+    const hasCollapse = /else\s*=\>\s*return\s+error\.SecurityScannerRetryFailed/.test(func);
+    const hasProp = /\.@"error"\s*=\>\s*\|/.test(func) || /\.error\s*=\>\s*\|/.test(func) || /inline\s+else\s*=\>\s*\|/.test(func);
     if (hasCollapse) {
         console.log(JSON.stringify({error: 'collapsed'}));
     } else if (hasProp) {
@@ -263,12 +263,73 @@ def test_exit_code_assertion_last():
 
 # [repo_tests] pass_to_pass
 def test_repo_banned_words():
-    """Repo banned words check passes (CI check from package.json scripts)."""
+    """Repo banned words check passes (CI check from package.json scripts.banned)."""
     r = subprocess.run(
         ["bun", "./test/internal/ban-words.test.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_glob_sources():
+    """Repo glob-sources script passes (CI check from package.json scripts.glob-sources)."""
+    r = subprocess.run(
+        ["bun", "run", "glob-sources"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Glob sources failed:\n{r.stderr[-500:]}"
+    # Verify output contains expected "Globbed" message
+    assert "Globbed" in r.stdout, f"Expected 'Globbed' in output, got:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo Prettier formatting check passes on package.json."""
+    r = subprocess.run(
+        ["bunx", "--bun", "prettier@latest", "--check", "package.json"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Prettier exits 0 if files are formatted correctly
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo package.json is valid JSON and parseable by bun."""
+    r = subprocess.run(
+        ["bun", "-e", "const d = JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('name:', d.name, 'version:', d.version)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json validation failed:\n{r.stderr[-500:]}"
+    assert "name: bun" in r.stdout and "version:" in r.stdout, "package.json not properly parsed"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsconfig_valid():
+    """Repo tsconfig.json is valid JSON and parseable by node."""
+    r = subprocess.run(
+        ["node", "-e", "const d = JSON.parse(require('fs').readFileSync('tsconfig.json', 'utf8')); console.log('compilerOptions:', !!d.compilerOptions)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsconfig.json validation failed:\n{r.stderr[-500:]}"
+    assert "compilerOptions: true" in r.stdout, "tsconfig.json not properly parsed"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_harness_imports():
+    """Test harness imports resolve correctly (bun:test and harness)."""
+    r = subprocess.run(
+        ["bun", "-e", "import('bun:test').then(m => console.log('bun:test ok')); import('./test/harness.ts').then(m => console.log('harness ok')).catch(e => console.log('harness not needed'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Harness imports check failed:\n{r.stderr[-500:]}"
+    assert "bun:test ok" in r.stdout, "bun:test import failed"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — File structure and content checks
+# ---------------------------------------------------------------------------
 
 
 # [static] pass_to_pass - uses Path.read_text() not subprocess
@@ -287,46 +348,25 @@ def test_repo_source_files_valid():
     assert ss_lines > 50, f"security_scanner.zig has only {ss_lines} lines (expected > 50)"
 
 
-# [static] pass_to_pass - uses head/file reading not a real CI command
-def test_repo_zig_files_parseable():
-    """Zig source files are syntactically valid (basic parse check)."""
+# [static] pass_to_pass - uses Path.read_text() not subprocess
+def test_repo_zig_files_valid():
+    """Zig source files have valid structure with expected keywords."""
     # Check install_with_manager.zig for basic syntax validity
-    r1 = subprocess.run(
-        ["head", "-50", IWM],
-        capture_output=True, text=True, timeout=10, cwd=REPO,
-    )
-    assert r1.returncode == 0, "Cannot read install_with_manager.zig"
-    # Basic check: file should start with expected Zig content
-    assert "pub" in r1.stdout or "const" in r1.stdout, "install_with_manager.zig doesn't look like valid Zig"
+    iwm_content = Path(IWM).read_text()
+    assert "pub fn" in iwm_content or "const" in iwm_content, "install_with_manager.zig doesn't look like valid Zig"
+    assert "installWithManager" in iwm_content, "install_with_manager.zig missing expected function"
 
     # Check security_scanner.zig for basic syntax validity
-    r2 = subprocess.run(
-        ["head", "-50", SS],
-        capture_output=True, text=True, timeout=10, cwd=REPO,
-    )
-    assert r2.returncode == 0, "Cannot read security_scanner.zig"
-    assert "pub" in r2.stdout or "const" in r2.stdout, "security_scanner.zig doesn't look like valid Zig"
+    ss_content = Path(SS).read_text()
+    assert "pub fn" in ss_content or "const" in ss_content, "security_scanner.zig doesn't look like valid Zig"
+    assert "performSecurityScanAfterResolution" in ss_content, "security_scanner.zig missing expected function"
 
 
-# [static] pass_to_pass - file existence check only
+# [static] pass_to_pass - file existence check, should pass even if not found on base
 def test_repo_typescript_check():
-    """TypeScript typecheck passes for test directory."""
-    # Check that the regression test file parses correctly as TypeScript
-    r = subprocess.run(
-        ["node", "-e", f"require('fs').readFileSync('{REGRESSION_TEST}', 'utf8')"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    # Just verify the file exists and is readable - parsing is done via node
-    assert r.returncode == 0 or "Cannot find module" not in r.stderr, f"Regression test file issue: {r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_glob_sources():
-    """Repo glob-sources script passes (CI check from package.json scripts)."""
-    r = subprocess.run(
-        ["bun", "run", "glob-sources"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Glob sources failed:\n{r.stderr[-500:]}"
-    # Verify output contains expected "Globbed" message
-    assert "Globbed" in r.stdout, f"Expected 'Globbed' in output, got:\n{r.stdout[-500:]}"
+    """TypeScript regression test location is valid (file may not exist on base commit)."""
+    rt_file = Path(REGRESSION_TEST)
+    if rt_file.exists():
+        content = rt_file.read_text()
+        assert "import" in content, "No imports in regression test"
+        assert "test(" in content or "describe(" in content, "No test definitions found"

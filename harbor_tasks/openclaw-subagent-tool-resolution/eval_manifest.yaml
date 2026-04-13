@@ -113,7 +113,20 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's tools.optional tests pass - directly tests resolvePluginTools
-    (optional tool resolution, active registry reuse, gateway subagent binding)
+- id: test_repo_typescript_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type check passes - validates the modified code type-checks
+- id: test_repo_loader_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's loader unit tests pass - tests resolveRuntimePluginRegistry
+    fallback
+- id: test_repo_runtime_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's runtime unit tests pass - tests getActivePluginRegistry used
+    by the fix
 rubric:
 - rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
     Do not create private backdoors that bundled plugins can use but external plugins
@@ -174,33 +187,40 @@ rubric:
     active registry fallback within `src/plugins/tools.ts` and imports from `./runtime.js`,
     respecting the boundary that `src/plugins` '
   category: architecture
-distractors:
-- rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
-    Do not create private backdoors that bundled plugins can use but external plugins
-    cannot.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might interpret adding `allowGatewaySubagentBinding`
-    and bypassing the standard loader as creating a 'private backdoor'. However, this
-    is an internal core-to-core optimization (gateway to plugin loader) to fix a lifecycle
-    bug, not a backdoor for bundled plugins.
-  severity: high
+- rule: Prefer generic helpers, plugin runtime hooks, manifest metadata, and explicit
+    auto-enable wiring.
   source:
-    path: src/plugins/CLAUDE.md
-    lines: 18-20
+    path: src/plugins/AGENTS.md
+    lines: 22-25
+  evidence: The gold solution uses the generic helper `getActivePluginRegistry()`
+    from `./runtime.js` to retrieve the active registry instead of manually parsing
+    or reading plugin configs.
+  category: architecture
+distractors:
 - rule: If a loader or registry change affects plugin authors, update the public SDK,
     docs, and contract tests instead of relying on incidental internals.
   collision_type: scope_ambiguity
   why_distracting: The agent might try to update `docs/plugins/sdk-overview.md` or
-    `src/plugin-sdk/*` because it is modifying the plugin registry resolution. This
-    is purely an internal lifecycle fix for sub-agents and does not affect the public
-    SDK or plugin authors.
+    `src/plugin-sdk/*` because it's modifying how tools are resolved. However, this
+    is an internal bug fix for sub-agent tool resolution, not a change to the public
+    plugin author contract.
   severity: medium
   source:
-    path: src/plugins/CLAUDE.md
-    lines: 21-22
-hierarchy_analysis: The root `CLAUDE.md` defines the high-level architecture boundaries,
-  while `src/plugins/CLAUDE.md` provides strict rules about the plugin loader and
-  registry contracts. The tension here is that `src/plugins/CLAUDE.md` strongly discourages
-  'incidental internals' and 'private backdoors', which an agent might misapply to
-  internal core-to-core communication (like the gateway passing `allowGatewaySubagentBinding`
-  to the plugin loader).
+    path: src/plugins/AGENTS.md
+    lines: 20-21
+- rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
+    Do not create private backdoors that bundled plugins can use but external plugins
+    cannot.
+  collision_type: rule_conflict
+  why_distracting: The agent might avoid using `getActivePluginRegistry()` thinking
+    it's a private backdoor, and instead try to pass the registry explicitly through
+    the sub-agent context, which would require massive refactoring.
+  severity: high
+  source:
+    path: src/plugins/AGENTS.md
+    lines: 17-19
+hierarchy_analysis: The hierarchy includes root `AGENTS.md` and `src/plugins/AGENTS.md`.
+  The root file defines the broad architecture boundaries, while the `src/plugins/AGENTS.md`
+  file provides specific rules for the plugin system. The agent must apply the plugin-specific
+  rules without misinterpreting them as requiring public SDK changes for an internal
+  bug fix.

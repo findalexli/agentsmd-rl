@@ -359,7 +359,7 @@ def test_repo_enterprise_tests():
         ],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
 
@@ -394,7 +394,7 @@ def test_repo_ruff_lint():
         ],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
 
@@ -438,7 +438,7 @@ def test_repo_api_key_store_tests():
         ],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
 
@@ -468,4 +468,51 @@ def test_repo_pre_commit():
 
     assert result.returncode == 0, (
         f'Pre-commit hooks failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}'
+    )
+
+
+def test_repo_mypy():
+    """PASS-TO-PASS: Modified file passes mypy type checking.
+
+    Type checking ensures the fix maintains type safety and catches
+    potential type-related regressions.
+    """
+    result = subprocess.run(
+        [
+            'poetry', 'run', '--project=enterprise',
+            'mypy', 'enterprise/server/utils/saas_app_conversation_info_injector.py',
+            '--ignore-missing-imports',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, (
+        f'Mypy type check failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}'
+    )
+
+
+def test_repo_server_tests():
+    """PASS-TO-PASS: Server module tests pass (baseline verification).
+
+    The fix modifies enterprise/server/utils/saas_app_conversation_info_injector.py.
+    Running server module tests validates that the server components still work.
+    """
+    result = subprocess.run(
+        [
+            'poetry', 'run', '--project=enterprise',
+            'pytest',
+            'enterprise/tests/unit/server/',
+            '-v', '--tb=short', '-x',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, (
+        f'Server module tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}'
     )

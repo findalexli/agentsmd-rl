@@ -90,12 +90,16 @@ def _ensure_pytest_deps():
     # Check if gradio is installed by trying to import it
     r = subprocess.run(
         ["python", "-c", "import gradio"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     if r.returncode != 0:
-        # Install dependencies
+        # Install gradio from source along with test dependencies
         subprocess.run(
-            ["pip", "install", "pytest", "gradio", "hypothesis", "gradio_client", "-q"],
+            ["pip", "install", "-e", ".", "-q"],
+            capture_output=True, text=True, timeout=300, cwd=REPO,
+        )
+        subprocess.run(
+            ["pip", "install", "pytest", "hypothesis", "-q"],
             capture_output=True, text=True, timeout=180,
         )
 
@@ -159,6 +163,36 @@ def test_repo_pytest_utils_ner():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Utils NER tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_pytest_utils_extension():
+    """Repo's utils file extension tests pass (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::test_get_extension_from_file_path_or_url", "-v"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils extension tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_pytest_utils_is_in_or_equal():
+    """Repo's utils path comparison tests pass (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::test_is_in_or_equal", "-v"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils is_in_or_equal tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_pytest_utils_file_size():
+    """Repo's utils file size parsing tests pass (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::test_parse_file_size", "-v"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils file size tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -115,6 +115,8 @@ def test_repo_function_params():
     assert r.returncode == 0, f"Function params tests failed:\n{r.stderr[-1000:]}"
 
 
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------

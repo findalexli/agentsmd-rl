@@ -79,24 +79,25 @@ rubric:
     or add new explanatory comment
   category: documentation
 distractors:
-- rule: 'Server: Changes need just generate-openapi'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might run `just generate-openapi` because it modified
-    Rust files in the `crates/goose` directory, but these changes are internal configuration
-    cleanups and do not affect the server API.
+- rule: 'Logging: Clean up existing logs, don''t add more unless for errors or security
+    events'
+  collision_type: rule_conflict
+  why_distracting: The agent might interpret 'Clean up existing logs' as a directive
+    to completely remove the `tracing::debug!` statement in `extensions.rs` rather
+    than converting it to `tracing::warn!` as explicitly requested in the prompt.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 61-61
-- rule: 'Test: When adding features, update goose-self-test.yaml, rebuild, then run
-    `goose run --recipe goose-self-test.yaml` to validate'
+    lines: 78-78
+- rule: 'Server: Changes need just generate-openapi'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to update `goose-self-test.yaml` or run the
-    validation recipe, but this PR is strictly a cleanup of dead code and logs, not
-    a new feature.
+  why_distracting: The agent modifies files in `crates/goose/src/config/` and might
+    mistakenly assume this constitutes a 'Server' change requiring an OpenAPI regeneration,
+    leading to unnecessary modifications or wasted execution time.
   severity: low
   source:
     path: AGENTS.md
-    lines: 57-57
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
-  so there are no inter-file conflicts. The rules apply globally across the repository.
+    lines: 68-68
+hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`).
+  There are no hierarchical conflicts, but the agent must prioritize the explicit
+  prompt instructions over a broad interpretation of the config rules.

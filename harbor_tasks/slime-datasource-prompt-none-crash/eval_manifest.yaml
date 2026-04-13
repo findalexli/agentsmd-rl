@@ -17,6 +17,31 @@ checks:
     origin: repo_tests
     description: "Repo's ruff lint check passes on modified files"
 
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black format check passes on modified files"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import order check passes on modified files"
+
+  - id: test_repo_chunked_gae
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's chunked GAE unit tests pass"
+
+  - id: test_repo_autoflake
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's autoflake unused import check passes on modified files"
+
+  - id: test_repo_plugin_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin contract tests pass"
+
   - id: constructor_none_prompt_data
     type: fail_to_pass
     origin: pr_diff
@@ -58,13 +83,9 @@ checks:
     description: "get_samples returns correctly structured list[list[Sample]] when dataset is None"
 
 rubric:
-  - rule: "Keep list[list[Sample]] structure intact where required. Do not flatten sample groups unless downstream path expects flattened samples."
+  - rule: "Disable router health check in rollout.py _start_router function to prevent unnecessary health probes."
     source:
-      path: ".claude/skills/add-dynamic-filter/SKILL.md"
-      lines: "68-69"
+      path: "slime/ray/rollout.py"
+      lines: "950-960"
       commit: "10f21d86514bcd26ca813590a7d22072325d36df"
-  - rule: "Avoid expensive logic in hot filtering paths — the data_source.py buffer filter is on the hot path."
-    source:
-      path: ".claude/skills/add-dynamic-filter/SKILL.md"
-      lines: "94"
-      commit: "10f21d86514bcd26ca813590a7d22072325d36df"
+    reference: "router_args.disable_health_check = True"

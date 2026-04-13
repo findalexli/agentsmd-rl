@@ -109,51 +109,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified C++ file is tracked by git (pass_to_pass repo_tests)
+- id: test_repo_cpp_basic_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ file has valid basic syntax (pass_to_pass repo_tests)
+- id: test_repo_cpp_structure_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ bindings have all required JSC API patterns (pass_to_pass repo_tests)
+- id: test_repo_additional_shell_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Additional repo shell scripts have valid bash syntax (pass_to_pass
+    repo_tests)
 rubric:
 - rule: Code changes must follow the existing C++ style in FormatStackTraceForJS.cpp
-    — use 4-space indentation, JSC naming conventions, and preserve bracing style.
-  reference: 'The gold solution changes the hasMaterializedErrorInfo() check from
-    negative guard to positive if-else branch,
-
-    maintaining the same indentation (4 spaces), brace placement (same-line), and
-    naming conventions as surrounding code.
-
-    '
+  reference: The gold solution maintains the same indentation (4 spaces), brace placement
+    (same-line), and naming conventions as surrounding code.
 - rule: 'Run with JavaScript exception scope verification: BUN_JSC_validateExceptionChecks=1'
   source:
     path: CLAUDE.md
     lines: 13-14
-  evidence: The gold solution includes `RETURN_IF_EXCEPTION(scope, {});` immediately
-    after calling `computeErrorInfoToJSValue`, ensuring that any JavaScript exceptions
-    thrown during error info computation are pro
+  evidence: The gold solution includes RETURN_IF_EXCEPTION after calling computeErrorInfoToJSValue
   category: architecture
 distractors:
-- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
-    in the test output.
+- rule: NEVER write tests that check for no panic or uncaught exception in the test
+    output
   collision_type: rule_conflict
-  why_distracting: The bug involves an assertion failure and crash during garbage
-    collection. An agent might try to write a test using `Bun.spawn` that runs the
-    reproduction and checks `stderr` to ensure it doesn't contain 'panic' or 'ASSERT'.
-    Following the testing guidelines to write such a test would violate this explicit
-    negative constraint.
+  why_distracting: The bug is an assertion failure/crash during garbage collection
   severity: high
   source:
-    path: CLAUDE.md
-    lines: '66'
-- rule: If no valid issue number is provided, find the best existing file to modify
-    instead, such as; test/js/node/...
-  collision_type: scope_ambiguity
-  why_distracting: The extensive test organization rules might compel an agent to
-    write a test for this bug in `test/js/node/` or `test/v8/`. However, because the
-    bug is a GC-dependent assertion failure that requires specific memory pressure
-    to trigger reliably, writing a standard JS test is likely to be flaky or ineffective.
-    The gold solution correctly skips adding a test.
+    path: AGENTS.md
+    lines: 78-79
+- rule: Always use bun.* APIs instead of std.*
+  collision_type: architecture_boundary
+  why_distracting: Instructions emphasize Zig but the affected file is C++
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 26-34
-hierarchy_analysis: The config hierarchy provides extensive rules for Zig and testing,
-  but the PR is a C++ bug fix for a GC-related crash. The agent must recognize that
-  the Zig rules in `src/CLAUDE.md` do not apply to C++ files, and that the testing
-  rules in `CLAUDE.md` should be ignored because writing a reliable test for this
-  specific GC timing issue is impractical.
+    path: src/AGENTS.md
+    lines: 14-26
+hierarchy_analysis: The config hierarchy provides extensive guidance for Zig and testing,
+  but lacks specific coding conventions for the C++ JavaScriptCore bindings.

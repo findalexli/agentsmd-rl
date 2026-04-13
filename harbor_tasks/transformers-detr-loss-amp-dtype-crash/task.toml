@@ -1,25 +1,11 @@
-version = "1.0"
+source_repo = "expressjs/express-async-handler"
+source_pr = 24
+base_commit = "3b71cf2842d60d2f200361db42f238ce43d6e7eb"
+language = "typescript"
 
-[metadata]
-author_name = "Alex Li"
-author_email = "alex@example.com"
-difficulty = "medium"
-category = "bugfix"
-tags = ["transformers", "detr", "amp", "dtype", "autocast", "loss"]
-expert_time_estimate_min = 10.0
-junior_time_estimate_min = 30.0
-source_repo = "huggingface/transformers"
-source_pr = 44886
-
-[verifier]
-timeout_sec = 120.0
-
-[agent]
-timeout_sec = 1200.0
-
-[environment]
-build_timeout_sec = 600.0
-cpus = 1
-memory_mb = 4096
-storage_mb = 10240
-allow_internet = true
+[description]
+brief = "Fix error handling when sync function throws"
+detail = """
+The asyncHandler wrapper doesn't properly handle errors when a synchronous function throws.
+When a sync function throws, the error should be passed to next() just like async errors.
+"""

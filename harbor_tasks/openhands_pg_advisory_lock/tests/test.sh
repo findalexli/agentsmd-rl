@@ -1,19 +1,23 @@
 #!/bin/bash
 set -e
 
-# Install pytest if needed
-pip install pytest pyyaml sqlalchemy alembic -q
+export REPO=/workspace/gradio
+export GRADIO_ANALYTICS_ENABLED=False
+export HF_HUB_DISABLE_TELEMETRY=True
 
-# Run tests and capture output
-cd /workspace/task/tests
-python -m pytest test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log
+cd /tests
 
-# Write binary reward based on test results
-exit_code=${PIPESTATUS[0]}
-if [ $exit_code -eq 0 ]; then
+# Run all tests using pytest
+python -m pytest test_outputs.py -v --tb=short 2>&1
+
+# Capture exit code
+TEST_EXIT=${PIPESTATUS[0]}
+
+# Write reward
+if [ $TEST_EXIT -eq 0 ]; then
     echo "1" > /logs/verifier/reward.txt
 else
     echo "0" > /logs/verifier/reward.txt
 fi
 
-exit $exit_code
+exit $TEST_EXIT

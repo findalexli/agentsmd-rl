@@ -25,6 +25,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Test compilation succeeds (npm run compile-tests)
+- id: test_repo_proto_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Proto files linting passes (npm run lint:proto)
+- id: test_repo_biome_format_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome format check on all source files passes
 - id: filters_outside_radio_group
   type: fail_to_pass
   origin: pr_diff
@@ -49,3 +57,36 @@ rubric:
     path: CLAUDE.md
     lines: 1-15
     commit: 9fc9785aa2ab3985ae5030330566499d26fb6192
+- rule: Add tribal knowledge and tips for working effectively in the codebase to CLAUDE.md.
+  source:
+    path: CLAUDE.md
+    lines: 3-12
+  evidence: The gold solution adds the build script tip to CLAUDE.md, recognizing
+    it as the appropriate documentation file for tribal knowledge and project-specific
+    tips.
+  category: documentation
+- rule: Use CLAUDE.md to capture tribal knowledge and project-specific tips, acting
+    as the appropriate documentation file for agent instructions.
+  source:
+    path: CLAUDE.md
+    lines: 1-14
+  evidence: The gold solution adds the requested tip about checking `package.json`
+    for scripts directly into `CLAUDE.md` under a new `## Miscellaneous` section.
+  category: documentation
+distractors:
+- rule: 'What NOT to add: Stuff you can figure out from reading a few files, obvious
+    patterns, or standard practices.'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly forbids adding 'standard practices' to CLAUDE.md.
+    Checking `package.json` for build scripts is a very standard Node.js practice.
+    An agent might strictly follow this negative constraint and refuse to add the
+    tip to CLAUDE.md, or put it in a different markdown file, failing the user's explicit
+    instruction.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 16-16
+hierarchy_analysis: 'The configuration is a flat single file (CLAUDE.md). The primary
+  challenge is resolving an internal contradiction within the instructions: the user
+  explicitly asks to document a tip that arguably falls under the ''standard practices''
+  category which CLAUDE.md explicitly forbids adding.'

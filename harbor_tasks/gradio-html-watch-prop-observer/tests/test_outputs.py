@@ -422,3 +422,39 @@ def test_repo_html_api_pytest():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"HTML API pytest failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gradio_imports():
+    """Repo's gradio module imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import gradio; print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Gradio import failed:\n{r.stderr}"
+    assert "OK" in r.stdout, "Unexpected output from gradio import"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_html_py_syntax():
+    """Repo's html.py has valid Python syntax via py_compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/gradio/components/html.py"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"html.py syntax error:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_svelte_files_exist():
+    """Repo's Svelte HTML component files exist and are non-empty (pass_to_pass)."""
+    svelte_files = [
+        f"{REPO}/js/html/Index.svelte",
+        f"{REPO}/js/html/shared/HTML.svelte",
+    ]
+    for path in svelte_files:
+        r = subprocess.run(
+            ["test", "-s", path],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Svelte file {path} does not exist or is empty"

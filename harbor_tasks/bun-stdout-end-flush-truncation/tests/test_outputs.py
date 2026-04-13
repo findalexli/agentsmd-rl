@@ -204,7 +204,7 @@ def test_existing_stream_setup():
 # Pass-to-pass (repo_ci) — actual CI/CD checks from the repo
 # ---------------------------------------------------------------------------
 
-# [repo_ci] pass_to_pass — oxlint on target file (from package.json "lint")
+# [repo_tests] pass_to_pass — oxlint on target file (from package.json "lint")
 def test_repo_oxlint():
     """Repo's oxlint passes on ProcessObjectInternals.ts (pass_to_pass)."""
     r = subprocess.run(
@@ -217,7 +217,7 @@ def test_repo_oxlint():
         f"oxlint found errors:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass — prettier format check (from package.json "fmt")
+# [repo_tests] pass_to_pass — prettier format check (from package.json "fmt")
 def test_repo_prettier():
     """Repo's prettier format check passes on ProcessObjectInternals.ts (pass_to_pass)."""
     r = subprocess.run(
@@ -228,7 +228,7 @@ def test_repo_prettier():
         f"prettier format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass — oxlint on builtins directory (CI checks all builtins)
+# [repo_tests] pass_to_pass — oxlint on builtins directory (CI checks all builtins)
 def test_repo_oxlint_builtins():
     """Repo's oxlint passes on src/js/builtins directory (pass_to_pass)."""
     r = subprocess.run(
@@ -239,7 +239,7 @@ def test_repo_oxlint_builtins():
         f"oxlint found errors in builtins:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass — prettier check on builtins directory
+# [repo_tests] pass_to_pass — prettier check on builtins directory
 def test_repo_prettier_builtins():
     """Repo's prettier format check passes on src/js/builtins directory (pass_to_pass)."""
     r = subprocess.run(
@@ -250,7 +250,7 @@ def test_repo_prettier_builtins():
         f"prettier format check failed on builtins:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass — syntax check target file with node
+# [repo_tests] pass_to_pass — syntax check target file with node
 def test_repo_node_syntax():
     """Target TypeScript file is syntactically parseable (pass_to_pass)."""
     r = subprocess.run(
@@ -267,11 +267,110 @@ console.log('Syntax check passed');
     assert r.returncode == 0, f"Node syntax check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Node.js parallel test: stream _final async
+def test_node_stream_final_async():
+    """Node.js parallel test: stream _final async callback (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-stream-writable-final-async.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js stream _final async test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js parallel test: stream _final throw
+def test_node_stream_final_throw():
+    """Node.js parallel test: stream _final throws error (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-stream-writable-final-throw.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js stream _final throw test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js parallel test: stream end cb uncaught
+def test_node_stream_end_cb_uncaught():
+    """Node.js parallel test: stream end callback uncaught (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-stream-writable-end-cb-uncaught.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js stream end callback test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js parallel test: stream writable finished
+def test_node_stream_writable_finished():
+    """Node.js parallel test: stream writable finished state (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-stream-writable-finished.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js stream writable finished test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js file write stream test
+def test_node_file_write_stream():
+    """Node.js parallel test: file write stream operations (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-file-write-stream.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js file write stream test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js file write stream 2 test
+def test_node_file_write_stream2():
+    """Node.js parallel test: file write stream operations 2 (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-file-write-stream2.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js file write stream 2 test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js stream2 writable test
+def test_node_stream2_writable():
+    """Node.js parallel test: stream2 writable implementation (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/test/js/node/test/parallel/test-stream2-writable.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"Node.js stream2 writable test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript builtins basic syntax check
+def test_ts_builtins_basic_syntax():
+    """TypeScript builtins ProcessObjectInternals.ts syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const content = fs.readFileSync('{TARGET}', 'utf8');
+// Check for balanced braces
+let depth = 0;
+for (const char of content) {{
+    if (char === '{{') depth++;
+    else if (char === '}}') depth--;
+    if (depth < 0) {{ console.log('Unbalanced braces'); process.exit(1); }}
+}}
+if (depth !== 0) {{ console.log('Unbalanced braces: ' + depth); process.exit(1); }}
+console.log('Syntax check passed');
+"""],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_ci) — structural CI checks
 # ---------------------------------------------------------------------------
 
-# [repo_ci] pass_to_pass — structural check for kWriteStreamFastPath import
+# [static] pass_to_pass — structural check for kWriteStreamFastPath import
 def test_kwritestreamfastpath_import():
     """kWriteStreamFastPath import must exist (required for _final implementation)."""
     source = Path(TARGET).read_text()
@@ -279,7 +378,7 @@ def test_kwritestreamfastpath_import():
         "kWriteStreamFastPath not found in ProcessObjectInternals.ts (required for stream fast path)"
 
 
-# [repo_ci] pass_to_pass — require("internal/fs/streams") usage
+# [static] pass_to_pass — require("internal/fs/streams") usage
 def test_internal_fs_streams_require():
     """ProcessObjectInternals must require internal/fs/streams module."""
     source = Path(TARGET).read_text()
@@ -287,7 +386,7 @@ def test_internal_fs_streams_require():
         "internal/fs/streams require not found in ProcessObjectInternals.ts"
 
 
-# [repo_ci] pass_to_pass — getStdioWriteStream function exists
+# [static] pass_to_pass — getStdioWriteStream function exists
 def test_getstdiowritestream_function():
     """getStdioWriteStream function must exist in ProcessObjectInternals."""
     source = Path(TARGET).read_text()
@@ -295,7 +394,7 @@ def test_getstdiowritestream_function():
         "getStdioWriteStream export not found in ProcessObjectInternals.ts"
 
 
-# [repo_ci] pass_to_pass — stream setup with fd and _type properties
+# [static] pass_to_pass — stream setup with fd and _type properties
 def test_stream_properties():
     """Stream setup must include required properties (fd, _type, _isStdio)."""
     source = Path(TARGET).read_text()

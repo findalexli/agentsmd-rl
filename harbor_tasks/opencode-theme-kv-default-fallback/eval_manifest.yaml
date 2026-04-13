@@ -89,88 +89,68 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's TypeScript typecheck passes on packages/opencode
-- id: test_repo_unit_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's unit tests pass for opencode package
-- id: test_repo_theme_store_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Theme store unit tests pass (covers theme.tsx context)
 - id: test_repo_turbo_typecheck
   type: pass_to_pass
   origin: repo_tests
   description: 'Root turbo typecheck passes (CI command: bun turbo typecheck)'
-- id: test_repo_turbo_test
+- id: test_repo_theme_store_tests
   type: pass_to_pass
   origin: repo_tests
-  description: 'Root turbo test passes for opencode package (CI command: bun turbo
-    test)'
+  description: Theme store unit tests pass (covers theme.tsx context)
+- id: test_repo_tui_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TUI unit tests pass (stable subset covering TUI components)
+- id: test_repo_prettier_theme
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes on theme.tsx
 rubric:
-- rule: Keep things in one function unless composable or reusable
+- rule: Code uses early returns instead of else statements where possible
   source:
-    path: AGENTS.md
-    lines: '11'
-    commit: 26382c6216797e65a1b43dea8646725332f62e07
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
-  source:
-    path: AGENTS.md
-    lines: '16'
-    commit: 26382c6216797e65a1b43dea8646725332f62e07
-- rule: Avoid else statements. Prefer early returns.
-  source:
-    path: AGENTS.md
-    lines: '84'
-    commit: 26382c6216797e65a1b43dea8646725332f62e07
-- rule: Avoid `else` statements. Prefer early returns.
-  source:
-    path: AGENTS.md
-    lines: 81-89
-  evidence: The `createMemo` callback uses multiple `if` statements with early returns
-    (`if (active) return ...`, `if (theme) return ...`) and a final fallback return,
-    completely avoiding `else` blocks.
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
   category: style
-- rule: Prefer single word variable names where possible.
+- rule: Code prefers const over let with early returns instead of reassignment
   source:
-    path: AGENTS.md
-    lines: 26-41
-  evidence: The gold solution introduces new variables with single-word names (`active`,
-    `saved`, `theme`) instead of using multi-word names like `activeTheme`, `savedThemeName`,
-    or `resolvedTheme`.
-  category: naming
-- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
+  category: style
+- rule: Code keeps logic in one function unless composable or reusable
   source:
-    path: AGENTS.md
-    lines: 71-79
-  evidence: The gold solution uses `const` for `active`, `saved`, and `theme`, and
-    relies on early returns to determine the final value, rather than declaring a
-    `let` variable and reassigning it.
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
+  category: style
+- rule: Code relies on type inference and avoids explicit type annotations unless necessary
+  source:
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
   category: style
 distractors:
-- rule: Reduce total variable count by inlining when a value is only used once.
-  collision_type: would_cause_bug
-  why_distracting: The gold solution explicitly creates `const active`, `const saved`,
-    and `const theme` to allow for type narrowing (`if (typeof saved === "string")`)
-    and truthiness checks before returning. Inlining these into the `if` conditions
-    or return statements would either duplicate property access or break TypeScript's
-    type narrowing, leading to type errors.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 48-57
-- rule: Use `Effect.gen(function* () { ... })` for composition.
+- rule: Use Effect.gen(function* () { ... }) for composition and Effect.fn for named/traced
+    effects.
   collision_type: architecture_boundary
-  why_distracting: The file `theme.tsx` is part of the TUI (SolidJS) and uses `createMemo`.
-    The `kv` object is a local TUI store wrapper. Trying to wrap this logic in `Effect.gen`
-    or use Effect services would break the synchronous reactivity expected by `createMemo`
-    and cross the boundary between the TUI frontend and the Effect backend.
+  why_distracting: The file being edited (`theme.tsx`) is a SolidJS/React TUI component,
+    not an Effect service. An agent might try to wrap the KV lookup or memo logic
+    in `Effect.gen` or `Effect.fn`, which would break the synchronous reactivity expected
+    by the UI framework.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
-    lines: 16-23
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines
-  (early returns, single-word naming, const over let) which are highly applicable
-  to this TUI React/SolidJS code. The `packages/opencode/AGENTS.md` introduces Effect-specific
-  rules, but since this specific file is part of the TUI frontend (`src/cli/cmd/tui/context/theme.tsx`),
-  the Effect rules do not apply and serve as an architecture boundary distractor.
+    lines: 14-21
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: would_cause_bug
+  why_distracting: An agent might try to inline `kv.get("theme")` directly into the
+    theme lookup (e.g., `store.themes[kv.get("theme")]`) to reduce variable count.
+    This would bypass the safe `typeof saved === "string"` type guard, potentially
+    causing a TypeScript error or runtime bug if the KV store returns undefined or
+    a non-string value.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-53
+hierarchy_analysis: The root `AGENTS.md` provides strict stylistic rules (single-word
+  naming, early returns, no `let`) that directly apply to this UI component. The package-level
+  `packages/opencode/AGENTS.md` introduces Effect-specific rules that act as a distractor
+  here, as the agent must recognize that `theme.tsx` falls outside the Effect architecture
+  boundary despite being in the `opencode` package.

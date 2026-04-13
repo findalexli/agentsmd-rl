@@ -79,26 +79,35 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: gradio module imports without errors
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use tools to create a GitHub issue or
+    write issue-related text in the code, which is outside the scope of the coding
+    task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
+  collision_type: meta_confusion
+  why_distracting: The agent might try to edit the `.github/PULL_REQUEST_TEMPLATE.md`
+    file itself to add the AI disclosure or issue link, misunderstanding the instruction
+    to 'Use the PR template' as a directive to modify the template file during the
+    coding task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 21-24
+hierarchy_analysis: The hierarchy is flat, consisting of a single generic AGENTS.md
+  file. There are no conflicts between config files.
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: b1f62c0ebc09be80aee830e26689ab70b939cf44
-distractors:
-- rule: '- `client/python/` — the `gradio_client` Python client library'
-  collision_type: architecture_boundary
-  why_distracting: The bug description mentions that the latency is caused by `gradio_client.Client.submit()`
-    performing an HTTP loopback. An agent reading the repository structure might try
-    to modify the `gradio_client` code in `client/python/` to optimize `submit()`
-    or add a local bypass. However, the correct architectural approach is to stop
-    using the client entirely for non-queued events and call the internal `blocks.process_api()`
-    directly in `gradio/mcp.py`.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 10-10
-hierarchy_analysis: 'Only `AGENTS.md` is provided, which gives high-level repository
-  structure and general PR/style guidelines. The primary challenge is architectural:
-  understanding that a bug caused by `gradio_client` should be fixed by bypassing
-  it in `gradio/mcp.py` rather than modifying the client library itself.'
+    lines: 38-40
+  evidence: 'The gold solution maintains the existing async/await structure, variable
+    naming conventions, and type hints (e.g., updating `progress_token: str | int`)
+    consistent with the rest of `gradio/mcp.py`.'
+  category: style

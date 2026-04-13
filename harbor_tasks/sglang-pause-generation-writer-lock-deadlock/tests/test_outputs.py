@@ -188,6 +188,71 @@ def test_repo_precommit_ast():
     assert r.returncode == 0, f"pre-commit check-ast failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_precommit_debug_statements():
+    """Repo's pre-commit debug-statements hook passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install pre-commit --quiet 2>/dev/null && cd /workspace/sglang && pre-commit run debug-statements --files python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit debug-statements failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_trailing_whitespace():
+    """Repo's pre-commit trailing-whitespace hook passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install pre-commit --quiet 2>/dev/null && cd /workspace/sglang && pre-commit run trailing-whitespace --files python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit trailing-whitespace failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_end_of_file():
+    """Repo's pre-commit end-of-file-fixer hook passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install pre-commit --quiet 2>/dev/null && cd /workspace/sglang && pre-commit run end-of-file-fixer --files python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit end-of-file-fixer failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_yaml():
+    """Repo's pre-commit check-yaml hook passes on config files."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install pre-commit --quiet 2>/dev/null && cd /workspace/sglang && pre-commit run check-yaml --files .pre-commit-config.yaml"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-yaml failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_toml():
+    """Repo's pre-commit check-toml hook passes on pyproject.toml."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install pre-commit --quiet 2>/dev/null && cd /workspace/sglang && pre-commit run check-toml --files python/pyproject.toml"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-toml failed:\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """Modified function has real logic, not just pass/return."""

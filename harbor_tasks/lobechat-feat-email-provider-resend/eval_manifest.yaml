@@ -12,7 +12,7 @@ checks:
 - id: resend_sdk_importable
   type: pass_to_pass
   origin: static
-  description: The resend npm package is importable and provides a Resend class
+  description: The resend npm package must be importable and provides a Resend class
 - id: nodejs_available
   type: pass_to_pass
   origin: static
@@ -29,6 +29,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Repo package.json has expected CI scripts defined
+- id: test_repo_email_service_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's email service tests pass (vitest on src/server/services/email/)
+- id: test_repo_email_index_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's email index.test.ts tests pass (vitest)
+- id: test_repo_email_impls_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's email impls/index.test.ts tests pass (vitest)
+- id: test_repo_eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint check on TypeScript files passes (npm run lint:ts)
+- id: test_resend_sdk_importable_via_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: The resend npm package is importable via Node.js require()
 - id: resend_impl_file_structure
   type: fail_to_pass
   origin: pr_diff
@@ -64,37 +84,55 @@ rubric:
     path: .cursor/rules/debug-usage.mdc
     lines: 21-23,33-36
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+  evidence: "The gold solution uses `const log = debug('lobe-email:Resend');` in the ResendImpl class, which follows the required namespace pattern."
 - rule: When importing a directory module, use the explicit index path like '@/envs/email/index'
     instead of '@/envs/email'
   source:
     path: .cursor/rules/typescript.mdc
     lines: '21'
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+  evidence: The gold solution uses `import { emailEnv } from '@/envs/email/index';` in the resend/index.ts file, following the explicit index path convention.
 - rule: Server environment variables must be defined using createEnv from '@t3-oss/env-nextjs'
     with zod validation schema in src/envs/<domain>.ts files
   source:
     path: .cursor/rules/add-setting-env.mdc
     lines: 16-34
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+  evidence: The gold solution adds RESEND_API_KEY, RESEND_FROM, and EMAIL_SERVICE_PROVIDER to src/envs/email.ts using createEnv with zod validation schema.
 - rule: Prefer async/await over callbacks or chained .then() promises in asynchronous
     code
   source:
     path: .cursor/rules/typescript.mdc
     lines: 25-28
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
-- rule: Prefer interface over type for object shapes (keep type for unions/intersections)
-  source:
-    path: .cursor/rules/typescript.mdc
-    lines: '14'
-    commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+  evidence: The gold solution's ResendImpl.sendMail() method uses async/await throughout, including `await this.client.emails.send(emailOptions)`.
 - rule: read @.cursor/rules/project-introduce.mdc
   source:
     path: CLAUDE.md
     lines: 6-8
-  evidence: The gold solution updates the project description in `.cursor/rules/project-introduce.mdc`
-    in addition to `AGENTS.md`. It follows the cross-reference in CLAUDE.md's Tech
-    Stack section to ensure the ac
+  evidence: The gold solution updates the project description in `.cursor/rules/project-introduce.mdc` in addition to `AGENTS.md`, following the cross-reference in CLAUDE.md's Tech Stack section.
   category: documentation
+- rule: Update the project description in the agent instructions to reflect the new
+    'AI Agent Workspace' branding.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+  evidence: "The gold solution directly edits AGENTS.md to add the Project Description section with the text You are developing an open-source, modern-design AI Agent Workspace: LobeHub(previous LobeChat)."
+  category: documentation
+- rule: Maintain accurate and consistent project description across documentation
+    and rule files
+  source:
+    path: .cursor/rules/project-introduce.mdc
+    lines: 4-7
+  evidence: The gold solution updates `.cursor/rules/project-introduce.mdc` to change 'AI chat framework' to 'AI Agent Workspace' and 'lobehub(previous lobe-chat)' to 'LobeHub(previous LobeChat)'.
+  category: documentation
+- rule: Update AGENTS.md to reflect the new project description as an AI Agent Workspace.
+  source:
+    path: AGENTS.md
+    lines: 1-10
+  evidence: "The gold solution adds a new '## Project Description' section to AGENTS.md with the updated branding 'AI Agent Workspace: LobeHub(previous LobeChat)'."
+  category: documentation
+
 config_edits:
 - path: .cursor/rules/project-introduce.mdc
   tier: 1
@@ -145,28 +183,26 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: DON'T run pnpm i18n, let CI auto handle it
-  collision_type: scope_ambiguity
-  why_distracting: The rule instructs not to run `pnpm i18n` and that CI handles translations,
-    specifically mentioning `locales/zh-CN/namespace.json`. An agent might incorrectly
-    generalize this to the documentation files and skip manually updating `docs/self-hosting/advanced/auth.zh-CN.mdx`
-    with the new Resend environment variables, assuming CI will translate the docs
-    automatically.
+- rule: Never run `bun run test` etc to run tests, this will run all tests and cost
+    about 10mins.
+  collision_type: rule_conflict
+  why_distracting: The agent creates a new test file `src/server/services/email/index.test.ts`
+    and will likely want to run tests to verify its implementation. Standard instinct
+    is to run `bun run test` or `npm test`, but doing so will trigger the entire test
+    suite and waste significant time (10+ minutes).
   severity: high
   source:
     path: CLAUDE.md
-    lines: 44-47
-- rule: Use pnpm as the primary package manager vs Use bun to run npm scripts
-  collision_type: rule_conflict
-  why_distracting: The rules specify using `pnpm` for dependency management but `bun`
-    for running scripts. When adding the `resend` dependency, an agent might get confused
-    by the mixed package manager instructions and attempt to use `bun add resend`
-    or `bun install resend` instead of `pnpm add resend`.
+    lines: 35-45
+- rule: DON'T run `pnpm i18n`, let CI auto handle it.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is updating documentation and might notice the existence
+    of localized files like `auth.zh-CN.mdx`. It might attempt to run `pnpm i18n`
+    to automatically sync or generate translations for the new Resend documentation.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 24-27
-hierarchy_analysis: CLAUDE.md and AGENTS.md act as root-level configuration files.
-  CLAUDE.md contains cross-references to specific `.mdc` files (like `project-introduce.mdc`),
-  which act as deeper, more specific guidance. The agent must follow these pointers
-  to find the true source of configuration rather than just updating the root files.
+    lines: 50-55
+hierarchy_analysis: The configuration is relatively flat but split across `AGENTS.md`
+  and `CLAUDE.md`. The most interesting dynamic is that `AGENTS.md` acts simultaneously
+  as a rule file and a target file to be edited, creating a meta-referential loop.

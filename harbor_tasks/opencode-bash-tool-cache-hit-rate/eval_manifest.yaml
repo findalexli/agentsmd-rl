@@ -51,38 +51,79 @@ checks:
   type: pass_to_pass
   origin: static
   description: BashTool must still be exported from bash.ts
-- id: repo_bash_tool_structure
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's bash tool has valid structure with balanced syntax
 - id: repo_prettier_formatting
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's TypeScript files must pass prettier formatting check
-- id: repo_bash_txt_placeholders
+  description: Repo CI - prettier formatting check on TypeScript files
+- id: repo_node_can_load_bash_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Node.js can load and read bash.ts
+- id: repo_node_can_load_bash_txt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Node.js can load and read bash.txt
+- id: repo_git_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Git repository has valid structure for bash.ts
+- id: repo_agents_md_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - AGENTS.md exists and is readable by Node.js
+- id: repo_bash_ts_syntax_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - bash.ts has balanced braces/parens via Node.js validation
+- id: repo_node_can_parse_bash_txt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Node.js can parse bash.txt and validate placeholders
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Git repository has clean working tree
+- id: repo_ts_imports_exports_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - bash.ts has valid import and export statements
+- id: repo_git_has_commits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Git repository has at least one commit
+- id: repo_bash_tool_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - bash.ts contains BashTool and DESCRIPTION definitions
+- id: static_bash_txt_placeholders
   type: pass_to_pass
   origin: static
   description: Bash.txt must contain required template placeholders
-- id: repo_ts_syntax_valid
-  type: pass_to_pass
-  origin: static
-  description: Bash.ts must have valid TypeScript syntax structure
-- id: repo_bash_txt_valid
-  type: pass_to_pass
-  origin: static
-  description: Bash.txt must exist and be readable
-- id: repo_node_can_parse_ts
-  type: pass_to_pass
-  origin: static
-  description: Node.js must be able to read and parse the TypeScript source file
-- id: repo_bash_tool_description_pattern
+- id: static_bash_tool_description_pattern
   type: pass_to_pass
   origin: static
   description: Bash.ts must follow the tool description pattern with DESCRIPTION constant
-- id: repo_bash_txt_sections
+- id: static_bash_txt_sections
   type: pass_to_pass
   origin: static
   description: Bash.txt must contain required tool description sections
+- id: static_ts_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Bash.ts must have valid TypeScript syntax structure
+- id: static_bash_txt_valid
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must exist and be readable
+- id: repo_truncate_constants_referenced
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Bash.ts must reference Truncate constants MAX_LINES and MAX_BYTES
+- id: repo_bash_txt_template_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Bash.txt must have valid template syntax with command/timeout/directory
+    sections
 rubric:
 - rule: Update AGENTS.md to document that tool descriptions should not use project-specific
     paths like ${directory} to ensure prompt caching works correctly.
@@ -102,32 +143,27 @@ rubric:
 distractors:
 - rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory
     or per-project state that needs per-instance cleanup.
-  collision_type: architecture_boundary
-  why_distracting: The problem mentions that project-specific state (`Instance.directory`)
-    is breaking caching. An agent might try to refactor the tool to use `InstanceState`
-    to manage the directory context per-project, which is a massive overcomplication
-    when the fix is simply to remove the directory from the static tool description.
+  collision_type: would_cause_bug
+  why_distracting: The prompt mentions that `Instance.directory` is causing issues
+    because it makes the tool description project-specific. An agent might misinterpret
+    this as a state management issue and try to wrap the tool description or the bash
+    tool itself in `InstanceState` to handle per-directory scoping, which completely
+    misses the goal of making the string globally cacheable.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
-    lines: 25-26
-- rule: '`Instance.bind(fn)` captures the current Instance AsyncLocalStorage context...
-    Use it for native addon callbacks... that need to call `Bus.publish` or anything
-    that reads `Instance.directory`.'
-  collision_type: scope_ambiguity
-  why_distracting: The problem explicitly mentions `Instance.directory`. The rule
-    states that `Instance.bind` is needed for anything that reads `Instance.directory`.
-    An agent might mistakenly try to wrap the tool description generation in `Instance.bind`
-    to handle the directory context, rather than removing the directory from the description
-    entirely.
+    lines: 23-28
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: architecture_boundary
+  why_distracting: The agent might take the 'inlining' rule too far and attempt to
+    inline the entire contents of `bash.txt` directly into `bash.ts` to eliminate
+    the `DESCRIPTION` variable entirely, violating the project's architecture of keeping
+    prompt templates in separate text files.
   severity: medium
   source:
-    path: packages/opencode/AGENTS.md
-    lines: 48-52
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines
-  (like inlining variables), while `packages/opencode/AGENTS.md` provides highly specific
-  Effect and state management rules (`InstanceState`, `Instance.bind`). The specific
-  rules in the child config are dangerous distractors here because the problem mentions
-  `Instance.directory`, which triggers keywords in the child config, but the actual
-  solution requires a simple string manipulation following the root config's simplicity
-  guidelines.
+    path: AGENTS.md
+    lines: 46-55
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` and a package-specific
+  `packages/opencode/AGENTS.md`. The package-specific config introduces complex Effect-based
+  state management rules (`InstanceState`) that act as a strong distractor for a problem
+  that actually requires a simple string manipulation to fix an LLM caching issue.

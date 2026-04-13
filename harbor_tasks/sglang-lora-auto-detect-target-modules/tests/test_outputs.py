@@ -41,14 +41,118 @@ def test_repo_ruff_check():
     )
     assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
 
+    # Only check for critical errors (F821 undefined names, F401 unused imports)
+    # Ignore F541 (f-string without placeholders) as it's pre-existing in the repo
     r = subprocess.run(
-        ["ruff", "check", "python/sglang/srt/lora/utils.py"],
+        ["ruff", "check", "python/sglang/srt/lora/utils.py", "--select=F401,F821"],
         capture_output=True,
         text=True,
         timeout=60,
         cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff check failed on utils.py:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_ruff_check_lora_manager():
+    """Repo's ruff linter passes on lora_manager.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    # Only check for critical errors (F821 undefined names, F401 unused imports)
+    r = subprocess.run(
+        ["ruff", "check", "python/sglang/srt/lora/lora_manager.py", "--select=F401,F821"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on lora_manager.py:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_isort_check():
+    """Repo's isort check passes on modified LoRA files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr[-500:]}"
+
+    # Check isort compliance for both modified files
+    for f in ["python/sglang/srt/lora/utils.py", "python/sglang/srt/lora/lora_manager.py"]:
+        r = subprocess.run(
+            ["isort", "--check-only", f],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"isort check failed on {f}:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_black_check():
+    """Repo's black formatter check passes on modified LoRA files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr[-500:]}"
+
+    # Check black formatting for both modified files
+    for f in ["python/sglang/srt/lora/utils.py", "python/sglang/srt/lora/lora_manager.py"]:
+        r = subprocess.run(
+            ["black", "--check", f],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"black check failed on {f}:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_lora_manager_structure():
+    """lora_manager.py has correct imports and structure pre-fix (pass_to_pass)."""
+    source = Path(f"{REPO}/python/sglang/srt/lora/lora_manager.py").read_text()
+    tree = ast.parse(source)
+
+    # Check that get_normalized_target_modules is imported from sglang.srt.lora.utils
+    # (this exists in base commit and is the foundation for the new functionality)
+    has_import = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            # The module can be sglang.srt.lora.utils or .utils depending on Python version
+            if "utils" in node.module and "lora" in node.module:
+                for alias in node.names:
+                    if alias.name == "get_normalized_target_modules":
+                        has_import = True
+                        break
+
+    # Also check for the import by looking for the pattern in the source
+    if not has_import:
+        if "from sglang.srt.lora.utils import" in source and "get_normalized_target_modules" in source:
+            has_import = True
+
+    assert has_import, "get_normalized_target_modules not found in imports"
+
+    # Verify init_lora_shapes function exists
+    has_init_lora_shapes = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "init_lora_shapes":
+            has_init_lora_shapes = True
+            break
+
+    assert has_init_lora_shapes, "init_lora_shapes function not found"
 
 
 def test_repo_import_utils():

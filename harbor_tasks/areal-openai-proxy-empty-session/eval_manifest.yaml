@@ -28,6 +28,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: pytest is installed and functional
+- id: test_repo_ruff_lint_proxy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes for proxy module (ruff check areal/experimental/openai/proxy/)
+- id: test_repo_ruff_format_proxy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code formatting passes for proxy module (ruff format --check areal/experimental/openai/proxy/)
+- id: test_repo_server_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Proxy server module compiles without syntax errors
+- id: test_repo_pyproject_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is valid TOML and has required project section
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -105,30 +121,32 @@ rubric:
   evidence: The gold solution uses `logger.warning` to output the message about the
     empty session, avoiding the use of `print`.
   category: style
-distractors:
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a unit test for this edge case.
-    However, testing the online-mode proxy workflow requires complex mocking of async
-    sessions, stats trackers, and proxy servers. The prompt asks for a bug fix in
-    an experimental module, and adding tests would likely lead to a rabbit hole of
-    mocking errors.
-  severity: high
+- rule: never `print` for logging
   source:
-    path: CLAUDE.md
-    lines: '53'
-- rule: Use the `question` tool (structured options) when asking the user for decisions
-    or clarifications.
-  collision_type: meta_confusion
-  why_distracting: The agent might be tempted to ask the user whether to return `None`
-    or an empty dict, or how to format the warning message. However, the expected
-    behavior is explicitly defined in the prompt, so asking would be unnecessary and
-    waste a turn.
+    path: AGENTS.md
+    lines: 62-64
+  evidence: The gold solution uses `logger.warning` to output the empty session message
+    instead of using `print`, adhering to the logging constraints.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a complex async unit test for
+    this proxy workflow edge case, but this is a bug fix rather than 'new functionality',
+    and the gold solution does not include tests.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 29-30
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md provide similar high-level guidelines.
-  AGENTS.md provides more specific constraints on logging and performance. The rules
-  are consistent across both files, with AGENTS.md acting as a more detailed operational
-  guide.
+    lines: 27-27
+- rule: Register new loggers with color in `areal/utils/logging.py`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to register a new logger with color in `areal/utils/logging.py`
+    specifically for this warning, unnecessarily modifying another file instead of
+    using the existing logger.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 62-64
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md provide similar high-level guidelines.
+  The agent must apply the logging rule from AGENTS.md while recognizing that the
+  'add tests' rule does not strictly apply to this minor bug fix.

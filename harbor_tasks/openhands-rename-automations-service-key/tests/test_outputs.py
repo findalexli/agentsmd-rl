@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 
-# The repo path
+# The repo path - this is where the repo lives INSIDE the Docker container
 REPO = '/workspace/openhands'
 SERVICE_PATH = os.path.join(REPO, 'enterprise/server/routes/service.py')
 
@@ -33,7 +33,7 @@ def test_repo_enterprise_service_routes():
         cwd=os.path.join(REPO, 'enterprise')
     )
 
-    # Run the service routes tests
+    # Run the service routes tests - use correct path relative to REPO
     test_cmd = [
         'poetry', 'run', '--project=enterprise',
         'pytest', 'enterprise/tests/unit/routes/test_service.py',
@@ -68,7 +68,7 @@ def test_repo_enterprise_service_routes_lint():
         cwd=os.path.join(REPO, 'enterprise')
     )
 
-    # Run ruff lint check on service.py
+    # Run ruff lint check on service.py - use correct path relative to REPO
     lint_cmd = [
         'poetry', 'run', '--project=enterprise',
         'ruff', 'check', 'enterprise/server/routes/service.py',
@@ -99,7 +99,7 @@ def test_repo_enterprise_service_routes_format():
         cwd=os.path.join(REPO, 'enterprise')
     )
 
-    # Run ruff format check on service.py
+    # Run ruff format check on service.py - use correct path relative to REPO
     format_cmd = [
         'poetry', 'run', '--project=enterprise',
         'ruff', 'format', '--check', 'enterprise/server/routes/service.py',
@@ -125,6 +125,58 @@ def test_repo_service_py_syntax():
         )
     except py_compile.PyCompileError as e:
         assert False, f"Syntax error in service.py: {e}"
+
+
+def test_repo_pre_commit_hooks():
+    """Pre-commit hooks pass on service.py (pass_to_pass)."""
+    # Install poetry and pre-commit
+    install_cmd = ['pip', 'install', 'poetry', 'pre-commit', '-q']
+    subprocess.run(install_cmd, capture_output=True, timeout=300)
+
+    # Install enterprise dependencies
+    install_deps_cmd = ['poetry', 'install', '--with', 'dev,test', '-q']
+    subprocess.run(
+        install_deps_cmd,
+        capture_output=True,
+        timeout=300,
+        cwd=os.path.join(REPO, 'enterprise')
+    )
+
+    # Run pre-commit hooks on service.py - use correct path relative to REPO
+    precommit_cmd = [
+        'poetry', 'run', '--project=enterprise',
+        'pre-commit', 'run',
+        '--files', 'enterprise/server/routes/service.py',
+        '--config', 'enterprise/dev_config/python/.pre-commit-config.yaml'
+    ]
+    r = subprocess.run(
+        precommit_cmd,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+    assert r.returncode == 0, f"Pre-commit hooks failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_validate_pyproject():
+    """Enterprise pyproject.toml is valid (pass_to_pass)."""
+    # Install validate-pyproject
+    install_cmd = ['pip', 'install', 'validate-pyproject', '-q']
+    subprocess.run(install_cmd, capture_output=True, timeout=120)
+
+    # Validate pyproject.toml
+    validate_cmd = [
+        'validate-pyproject',
+        os.path.join(REPO, 'enterprise/pyproject.toml')
+    ]
+    r = subprocess.run(
+        validate_cmd,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_env_variable_name_in_code():

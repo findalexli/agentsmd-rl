@@ -11,23 +11,35 @@ checks:
   description: tests_fetcher.py must parse without errors
 - id: repo_ruff_check
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo's ruff check passes on tests_fetcher.py
 - id: repo_ruff_format_check
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo's ruff format check passes on tests_fetcher.py
 - id: repo_tests_fetcher_import
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo's tests_fetcher module can be imported without errors
 - id: repo_tests_fetcher_help
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo's tests_fetcher.py --help works
+- id: repo_tests_fetcher_filter_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tests_fetcher.py --filter_tests runs without error
+- id: repo_tests_fetcher_empty_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo tests_fetcher create_test_list_from_filter handles empty list
+- id: repo_tests_fetcher_with_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo tests_fetcher create_test_list_from_filter works with real tests
 - id: repo_syntax_all
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: All repo Python files have valid syntax
 - id: empty_list_skips_hub
   type: fail_to_pass
@@ -95,36 +107,30 @@ rubric:
     \ to_output:\n+        with open(file_name, \"w\") as f:\n+            f.write(\"\
     \\n\".join(files_to_test))"
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
   collision_type: meta_confusion
-  why_distracting: The prompt asks the agent to fix a specific bug but does not provide
-    an issue link or coordination evidence. If the agent follows this rule strictly,
-    it will refuse to output the fix and instead return an explanation of what is
-    missing.
+  why_distracting: The config strictly instructs agents to 'fail-closed' and not proceed
+    to PR-ready output if coordination evidence (like issue approval) is missing.
+    In a benchmark setting, the agent must bypass this policy to actually generate
+    the requested bug fix.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 54-58
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might misclassify this small, localized fix to a CI script
-    as a 'tiny edit' or 'low-value busywork' and refuse to generate the patch.
+    path: AGENTS.md
+    lines: 53-57
+- rule: Before proposing a PR, check for overlapping open PRs and issue ownership
+    using gh CLI commands.
+  collision_type: meta_confusion
+  why_distracting: The config requires running specific GitHub CLI commands (`gh issue
+    view`, `gh pr list`) to check for duplicate work before proposing a PR. An agent
+    might waste time trying to execute these commands or fail if the environment lacks
+    network access or the `gh` CLI.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 40-42
-- rule: 'Copies and Modular Models: We try to avoid direct inheritance between model-specific
-    files in src/transformers/models/.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to apply the `# Copied from` mechanism or look
-    for modular files, but this rule only applies to `src/transformers/models/`, whereas
-    the file being edited is `utils/tests_fetcher.py`.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 60-66
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are identical and apply at the
-  repository root. They contain strict meta-rules about agent behavior (fail-closed,
-  coordination) that conflict with the standard benchmark evaluation setup where agents
-  are expected to just output the fix.
+    path: AGENTS.md
+    lines: 32-38
+hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no deep hierarchy, but the rules within these
+  files present significant behavioral constraints (agent contribution policies) that
+  conflict with the standard benchmark objective of autonomously generating a code
+  fix.

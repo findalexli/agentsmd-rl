@@ -55,22 +55,19 @@ def test_react_perf_track():
 
 # [repo_tests] pass_to_pass
 def test_repo_flow():
-    """Repo Flow typecheck passes on shared package (pass_to_pass).
+    """Repo Flow typecheck passes (pass_to_pass).
 
-    Ensures the Flow type annotations in packages/shared/ are valid.
+    Runs Flow type checking with dom-node renderer (the recommended default).
+    Ensures Flow type annotations are valid across the codebase.
     """
     r = subprocess.run(
-        ["yarn", "flow", "check", "packages/shared/", "--max-warnings", "0"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    # Flow may exit 0 on success or 2 on type errors
-    if r.returncode not in (0, 2):
-        assert False, f"Flow check crashed:\n{r.stderr[-500:]}"
-    # Check for actual type errors in output
-    if "Error:" in r.stdout or "Found " in r.stdout and "error" in r.stdout.lower():
-        # Only fail if there are errors in our target file
-        if "ReactPerformanceTrackProperties" in r.stdout:
-            assert False, f"Flow type errors in ReactPerformanceTrackProperties:\n{r.stdout[-1000:]}"
+    # Flow exits 0 on success
+    assert r.returncode == 0, (
+        f"Flow type check failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    )
 
 
 # [repo_tests] pass_to_pass
@@ -85,6 +82,55 @@ def test_repo_lint():
     )
     assert r.returncode == 0, (
         f"ESLint check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_shared_package():
+    """Shared package tests pass (pass_to_pass).
+
+    Runs the shared package test suite. ReactPerformanceTrackProperties.js
+    is in the shared package, so these tests ensure related shared utilities
+    still work correctly.
+    """
+    r = subprocess.run(
+        ["yarn", "test", "--ci", "packages/shared", "--reporter=summary"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Shared package tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_react_symbols():
+    """ReactSymbols tests pass (pass_to_pass).
+
+    ReactSymbols defines REACT_ELEMENT_TYPE which is used by the modified code.
+    These tests verify the symbol system still works correctly.
+    """
+    r = subprocess.run(
+        ["yarn", "test", "--ci", "ReactSymbols", "--reporter=summary"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ReactSymbols tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_license_check():
+    """License check passes (pass_to_pass).
+
+    Verifies no PATENTS references have been accidentally introduced.
+    This is a standard CI check for the React repo.
+    """
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"License check failed:\n{r.stdout}{r.stderr}"
     )
 
 

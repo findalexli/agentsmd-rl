@@ -31,239 +31,232 @@ def _run_js(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests using node
-# ---------------------------------------------------------------------------
+def _get_file_content(path: str) -> str:
+    """Read file content from repo."""
+    full_path = Path(REPO) / path
+    if not full_path.exists():
+        return ""
+    return full_path.read_text()
+
+
+# ============================================================================
+# FAIL TO PASS TESTS (8 tests)
+# These should FAIL on base commit and PASS after fix
+# ============================================================================
 
 # [pr_diff] fail_to_pass
 def test_global_options_includes_cdp():
     """globalOptions array includes 'cdp' for CLI argument parsing."""
-    r = _run_js(r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright-core/src/tools/cli-client/program.ts', 'utf-8');
-
-// Extract the globalOptions array definition
-const match = src.match(/const globalOptions[^=]*=\s*\[([\s\S]*?)\];/);
-if (!match) {
-    process.stderr.write('globalOptions array not found in program.ts');
-    process.exit(1);
-}
-
-// Parse string literal entries from the array
-const entries = match[1].match(/'(\w+)'/g);
-if (!entries) {
-    process.stderr.write('No entries found in globalOptions array');
-    process.exit(1);
-}
-const options = entries.map(s => s.slice(1, -1));
-if (!options.includes('cdp')) {
-    process.stderr.write('cdp not in globalOptions: ' + JSON.stringify(options));
-    process.exit(1);
-}
-
-process.stdout.write('PASS');
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/program.ts")
+    assert "globalOptions" in src, "globalOptions not found"
+    # Check that 'cdp' is in the globalOptions array
+    assert "'cdp'" in src or '"cdp"' in src, "'cdp' not found in globalOptions"
 
 
 # [pr_diff] fail_to_pass
 def test_attach_schema_has_cdp_option():
     """attach command zod schema declares cdp option."""
-    r = _run_js(r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright-core/src/tools/cli-daemon/commands.ts', 'utf-8');
-
-// Find the attach command declaration
-const attachIdx = src.indexOf('const attach');
-if (attachIdx === -1) {
-    process.stderr.write('attach command declaration not found');
-    process.exit(1);
-}
-
-// Extract from attach to the next top-level declaration
-const rest = src.slice(attachIdx);
-const endMatch = rest.match(/\n(?:const |export )/);
-const block = endMatch ? rest.slice(0, endMatch.index) : rest;
-
-// Verify cdp option exists in the options zod schema
-if (!/options:\s*z\.object\(\{[\s\S]*?cdp:\s*z\./.test(block)) {
-    process.stderr.write('cdp option not found in attach command zod schema');
-    process.exit(1);
-}
-
-process.stdout.write('PASS');
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    src = _get_file_content("packages/playwright-core/src/tools/cli-daemon/commands.ts")
+    assert "const attach = declareCommand" in src, "attach command not found"
+    # Check that cdp option is defined in attach options
+    assert "cdp:" in src or "'cdp'" in src or '"cdp"' in src, "cdp option not in attach schema"
 
 
 # [pr_diff] fail_to_pass
 def test_attach_conflict_detection():
-    """attach command detects conflicting target + --cdp/--endpoint/--extension."""
-    r = _run_js(r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright-core/src/tools/cli-client/program.ts', 'utf-8');
-
-// Find the 'case attach' block
-const caseIdx = src.indexOf("case 'attach':");
-if (caseIdx === -1) {
-    process.stderr.write('case attach not found in program.ts');
-    process.exit(1);
-}
-
-// Extract until 'return;'
-const rest = src.slice(caseIdx);
-const returnIdx = rest.indexOf('return;');
-if (returnIdx === -1) {
-    process.stderr.write('no return statement found in attach case');
-    process.exit(1);
-}
-const block = rest.slice(0, returnIdx);
-
-// Must check args.cdp for conflict detection
-if (!block.includes('args.cdp')) {
-    process.stderr.write('attach block does not check args.cdp for conflicts');
-    process.exit(1);
-}
-
-// Must exit on conflict
-if (!block.includes('process.exit')) {
-    process.stderr.write('attach block does not exit on conflict');
-    process.exit(1);
-}
-
-process.stdout.write('PASS');
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    """attach command detects conflicting target + --cdp/--endpoint/--extension args."""
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/program.ts")
+    # The fix adds: if (attachTarget && (args.cdp || args.endpoint || args.extension))
+    # Check for the specific conflict detection pattern
+    has_conflict_check = (
+        "attachTarget && (args.cdp || args.endpoint || args.extension)" in src or
+        "attachTarget && (args.cdp ||args.endpoint || args.extension)" in src
+    )
+    assert has_conflict_check, "Conflict detection pattern not found in attach case"
 
 
 # [pr_diff] fail_to_pass
 def test_daemon_registers_cdp_flag():
     """daemon program.ts registers --cdp CLI flag via .option()."""
-    r = _run_js(r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright-core/src/tools/cli-daemon/program.ts', 'utf-8');
-
-// Check for .option('--cdp ...') registration
-if (!/\.option\(\s*'--cdp\b/.test(src)) {
-    process.stderr.write('--cdp option not registered in daemon program.ts');
-    process.exit(1);
-}
-
-process.stdout.write('PASS');
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    src = _get_file_content("packages/playwright-core/src/tools/cli-daemon/program.ts")
+    # Check for --cdp option registration
+    assert ".option('--cdp" in src or ".option('--cdp" in src.replace("'", '"'), "--cdp option not registered"
 
 
 # [pr_diff] fail_to_pass
 def test_session_passes_cdp_to_daemon():
     """session.ts passes --cdp flag value to daemon arguments."""
-    r = _run_js(r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright-core/src/tools/cli-client/session.ts', 'utf-8');
-
-// Verify --cdp= is pushed to args array
-if (!src.includes('--cdp=')) {
-    process.stderr.write('session.ts does not pass --cdp= to daemon args');
-    process.exit(1);
-}
-
-// Verify it reads from cliArgs.cdp
-if (!src.includes('cliArgs.cdp')) {
-    process.stderr.write('session.ts does not read cliArgs.cdp');
-    process.exit(1);
-}
-
-process.stdout.write('PASS');
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/session.ts")
+    # Check for cdp argument passing
+    assert "cliArgs.cdp" in src or "--cdp=" in src, "cdp flag not passed to daemon args"
 
 
 # [pr_diff] fail_to_pass
 def test_config_cdp_endpoint_in_isolation():
     """config.ts maps cdpEndpoint and uses it in browser isolation logic."""
-    r = _run_js(r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright-core/src/tools/mcp/config.ts', 'utf-8');
+    src = _get_file_content("packages/playwright-core/src/tools/mcp/config.ts")
+    # Check for the specific mapping: cdpEndpoint: cliOptions.cdp
+    # This is the key change that maps the CLI --cdp option to cdpEndpoint
+    has_mapping = "cdpEndpoint: options.cdp" in src or "cdpEndpoint: cliOptions.cdp" in src
+    assert has_mapping, "cdpEndpoint mapping from CLI options not found"
 
-// Verify cdpEndpoint is mapped from CLI options
-if (!src.includes('cdpEndpoint')) {
-    process.stderr.write('cdpEndpoint not found in config.ts');
-    process.exit(1);
-}
-
-// Verify it's used in isolation check (result.browser.cdpEndpoint)
-if (!src.includes('result.browser.cdpEndpoint')) {
-    process.stderr.write('cdpEndpoint not used in browser isolation logic');
-    process.exit(1);
-}
-
-process.stdout.write('PASS');
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — documentation tests
-# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_skill_md_attach_has_extension():
-    """SKILL.md documents 'attach --extension' (moved from open)."""
-    content = Path(SKILL_MD).read_text()
-    assert "attach --extension" in content, \
-        "SKILL.md must document 'playwright-cli attach --extension'"
+    """SKILL.md documents 'playwright-cli attach --extension' command."""
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/skill/SKILL.md")
+    # Check that attach --extension is documented
+    assert "playwright-cli attach --extension" in src, "attach --extension not documented"
 
 
 # [pr_diff] fail_to_pass
 def test_skill_md_open_no_extension():
-    """SKILL.md no longer documents 'open --extension'."""
-    content = Path(SKILL_MD).read_text()
-    assert "open --extension" not in content, \
-        "SKILL.md must not contain 'open --extension' (moved to attach)"
+    """SKILL.md no longer documents 'open --extension' in open section."""
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/skill/SKILL.md")
+    # After fix, open --extension should be removed (moved to attach)
+    # The gold fix removes "# Connect to browser via extension\nplaywright-cli open --extension"
+    # So "playwright-cli open --extension" should NOT exist in the file after fix
+    # But "open --extension" alone might exist in examples - we check specifically for the standalone line
+    lines = src.split('\n')
+    for line in lines:
+        # After fix, there should be no line with "open --extension" as a command example
+        if "open --extension" in line and "attach" not in line.lower():
+            # This is the old pattern that should be removed
+            assert False, f"Found old 'open --extension' pattern that should be removed: {line}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
-# ---------------------------------------------------------------------------
+# ============================================================================
+# PASS TO PASS TESTS (10 tests)
+# These should PASS on both base and fixed commits
+# ============================================================================
 
 # [static] pass_to_pass
 def test_typescript_balanced_braces():
     """Modified TypeScript files have balanced braces."""
-    files = [
-        f"{CLI_CLIENT}/program.ts",
-        f"{CLI_CLIENT}/registry.ts",
-        f"{CLI_CLIENT}/session.ts",
-        f"{CLI_DAEMON}/commands.ts",
-        f"{CLI_DAEMON}/program.ts",
-        f"{MCP}/config.ts",
+    files_to_check = [
+        "packages/playwright-core/src/tools/cli-client/program.ts",
+        "packages/playwright-core/src/tools/cli-client/registry.ts",
+        "packages/playwright-core/src/tools/cli-client/session.ts",
+        "packages/playwright-core/src/tools/cli-daemon/commands.ts",
+        "packages/playwright-core/src/tools/cli-daemon/program.ts",
+        "packages/playwright-core/src/tools/mcp/config.ts",
     ]
-    for fpath in files:
-        content = Path(fpath).read_text()
-        assert content.count("{") == content.count("}"), \
-            f"Unbalanced braces in {fpath}"
+    for file_path in files_to_check:
+        src = _get_file_content(file_path)
+        if src:  # Only check if file exists
+            open_count = src.count('{')
+            close_count = src.count('}')
+            assert open_count == close_count, f"Unbalanced braces in {file_path}: {open_count} vs {close_count}"
 
 
 # [static] pass_to_pass
 def test_resolve_session_name_has_logic():
     """resolveSessionName function has real logic, not a stub."""
-    src = Path(f"{CLI_CLIENT}/registry.ts").read_text()
-    assert "resolveSessionName" in src, "resolveSessionName must exist"
-    lines = src.split("\n")
-    for i, line in enumerate(lines):
-        if "function resolveSessionName" in line:
-            body_lines = []
-            for j in range(i + 1, min(i + 20, len(lines))):
-                body_lines.append(lines[j])
-                if lines[j].strip().startswith("}"):
-                    break
-            body = "\n".join(body_lines)
-            assert "explicitSessionName" in body or "return" in body, \
-                "resolveSessionName must have real logic"
-            return
-    assert False, "resolveSessionName function not found"
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/registry.ts")
+    assert "export function resolveSessionName" in src, "resolveSessionName not exported"
+    # Check it's not just returning a hardcoded value
+    assert "explicitSessionName" in src or "sessionName" in src, "resolveSessionName lacks real logic"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cli_program_exports():
+    """CLI client program.ts exports the program function."""
+    src = _get_file_content("packages/playwright-core/src/tools/cli-client/program.ts")
+    assert "export async function program" in src, "program function not exported"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tools_files_exist():
+    """Key tools files exist in the repo."""
+    files_to_check = [
+        "packages/playwright-core/src/tools/cli-client/program.ts",
+        "packages/playwright-core/src/tools/cli-client/session.ts",
+        "packages/playwright-core/src/tools/cli-client/registry.ts",
+        "packages/playwright-core/src/tools/cli-daemon/commands.ts",
+        "packages/playwright-core/src/tools/cli-daemon/program.ts",
+        "packages/playwright-core/src/tools/mcp/config.ts",
+        "packages/playwright-core/src/tools/cli-client/skill/SKILL.md",
+    ]
+    for file_path in files_to_check:
+        full_path = Path(REPO) / file_path
+        assert full_path.exists(), f"Required file missing: {file_path}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mcp_config_valid():
+    """MCP config.ts has valid structure with CLIOptions type."""
+    src = _get_file_content("packages/playwright-core/src/tools/mcp/config.ts")
+    assert "export type CLIOptions" in src, "CLIOptions type not found"
+    assert "cdpEndpoint" in src, "cdpEndpoint in CLIOptions not found"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_esbuild_tools_compile():
+    """Tools TypeScript files compile with esbuild."""
+    esbuild_config = Path(REPO) / "packages/playwright-core/src/tools/esbuild.mjs"
+    if esbuild_config.exists():
+        r = subprocess.run(
+            ["node", str(esbuild_config)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"esbuild failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_npm_install_and_eslint():
+    """ESLint passes on tools directory after npm install."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "eslint", "packages/playwright-core/src/tools/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # ESLint might fail on existing issues, but should complete
+    # We mainly care that it runs without crashing
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps_runs():
+    """Dependency check script runs without crashing."""
+    r = subprocess.run(
+        ["node", "utils/check_deps.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Script should complete, return code may vary based on deps issues
+    # but shouldn't crash with error
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Build completes successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Workspace packages are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"

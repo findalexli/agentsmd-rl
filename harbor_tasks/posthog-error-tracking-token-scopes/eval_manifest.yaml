@@ -34,6 +34,35 @@ checks:
   origin: repo_tests
   description: ErrorTrackingIssueViewSet has schema annotations on custom actions
     per AGENTS.md
+- id: test_repo_error_tracking_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking API code is properly formatted per ruff
+- id: test_repo_ruff_syntax_check_error_tracking
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking API has no syntax errors per ruff E9 rules
+- id: test_repo_error_tracking_pytest_collection
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking tests can be collected by pytest (29 tests discovered)
+- id: test_repo_error_tracking_test_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking test file has no syntax errors per ruff E9 rules
+- id: test_repo_tach_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tach dependency validation passes for the codebase (architectural
+    boundary check)
+- id: test_repo_ruff_check_issues_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: issues.py passes ruff linting (the modified file must be lint-free)
+- id: test_repo_ruff_format_issues_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: issues.py is properly formatted per ruff format rules
 - id: read_actions_includes_values
   type: fail_to_pass
   origin: pr_diff
@@ -80,31 +109,52 @@ rubric:
     patch that precisely targets the missing class attributes, without any high-level
     explanations or conversational filler.
   category: style
+- rule: Be terse
+  source:
+    path: .cursorrules
+    lines: 3-3
+  evidence: The gold solution only adds the exact class attributes (scope_object_read_actions
+    and scope_object_write_actions) needed to fix the scope mappings without unnecessary
+    refactoring or boilerplate.
+  category: style
+- rule: Please respect all code comments, they're usually there for a reason. Remove
+    them ONLY if they're completely irrelevant after a code change.
+  source:
+    path: .cursorrules
+    lines: 17-17
+  evidence: The gold solution modifies the ErrorTrackingIssueViewSet class to add
+    scope actions but carefully preserves all existing decorators and comments.
+  category: style
+- rule: Be accurate and thorough
+  source:
+    path: .cursorrules
+    lines: 6-6
+  evidence: The gold solution meticulously includes all standard DRF write actions
+    (`create`, `update`, `partial_update`, `patch`, `destroy`) and read actions (`list`,
+    `retrieve`) in addition to the new custom ac
 distractors:
 - rule: API views should declare request/response schemas — prefer `@validated_request`
     from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to fix the API access issue by adding or modifying
-    `@extend_schema` or `@validated_request` decorators on the custom action methods
-    (`merge`, `split`, etc.). However, the issue is strictly about token scope mappings
-    handled by `TeamAndOrgViewSetMixin` via the `scope_object_read_actions` and `scope_object_write_actions`
-    class attributes, not the OpenAPI schema definitions.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 58-60
-- rule: 'OpenAPI/types: `hogli build:openapi` (regenerate after changing serializers/viewsets)'
   collision_type: scope_ambiguity
-  why_distracting: The agent might run `hogli build:openapi` and attempt to commit
-    generated TypeScript files because it modified a ViewSet. However, adding internal
-    permission scope mappings does not change the public API schema, so running this
-    command is unnecessary and could lead to unrelated generated code changes.
+  why_distracting: The agent might try to fix the API access issue by adding or modifying
+    `@extend_schema` decorators on the custom action methods, confusing OpenAPI schema
+    generation with PostHog's custom token scope enforcement.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 28-28
-hierarchy_analysis: The `.cursorrules` file provides general behavioral instructions
-  (e.g., providing actual code, being terse), while `AGENTS.md` provides PostHog-specific
-  development guidelines. In this PR, the agent must follow the specific architecture
-  of `TeamAndOrgViewSetMixin` (which uses `scope_object_read_actions` and `scope_object_write_actions`)
-  rather than getting distracted by the general API schema rules in `AGENTS.md`.
+    lines: 64-66
+- rule: Be terse
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to be terse by only adding the commands to
+    the lists (e.g., `scope_object_write_actions = ["merge", "split", ...]`), which
+    would overwrite the base class defaults and break standard CRUD operations. The
+    agent must explicitly redefine the standard actions as well.
+  severity: high
+  source:
+    path: .cursorrules
+    lines: 3-3
+hierarchy_analysis: The config hierarchy is relatively flat, with `.cursorrules` providing
+  general behavioral instructions and `AGENTS.md` providing PostHog-specific architectural
+  guidelines. The agent must balance the general instruction to 'Be terse' against
+  the architectural reality of overriding class attributes in Django/DRF, where omitting
+  standard actions causes bugs.

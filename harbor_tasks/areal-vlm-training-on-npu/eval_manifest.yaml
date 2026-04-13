@@ -18,6 +18,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: No wildcard imports in areal/ directory per project conventions
+- id: test_repo_ruff_lint_areal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on areal/ directory per CI workflow
+- id: test_repo_ruff_lint_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on examples/ directory per CI workflow
+- id: test_repo_ruff_format_areal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on areal/ directory per CI workflow
+- id: test_repo_ruff_format_examples
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on examples/ directory per CI workflow
+- id: test_repo_all_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in the repository (excluding evaluation/) parse without
+    syntax errors
+- id: test_repo_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files in the repository pass clang-format --dry-run --Werror check
+- id: test_repo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All JSON files in the repository parse without errors (pre-commit check)
+- id: test_repo_python_end_with_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files end with a newline (pre-commit end-of-file-fixer check)
+- id: test_repo_python_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files have no trailing whitespace (pre-commit trailing-whitespace
+    check)
 - id: python_syntax
   type: pass_to_pass
   origin: static
@@ -81,6 +119,7 @@ rubric:
   source:
     path: AGENTS.md
     lines: 31-32
+  commit: b942ed019df2c66b851c397c0836fd31a3787b70
   evidence: The gold solution imports modules from `areal` (e.g., `areal.api.cli_args`,
     `areal.workflow.vision_rlvr`) and does not use the deprecated `realhf` package.
   category: architecture
@@ -89,8 +128,28 @@ rubric:
   source:
     path: AGENTS.md
     lines: 66-67
+    commit: b942ed019df2c66b851c397c0836fd31a3787b70
   evidence: The gold solution creates the new NPU training scripts and README inside
     the `examples/vlm_npu/` directory.
+  category: architecture
+- rule: 'Legacy code: `realhf/` is deprecated—do not modify or import from it; migrate
+    uses into `areal/` equivalents instead.'
+  source:
+    path: AGENTS.md
+    lines: 22-23
+  commit: b942ed019df2c66b851c397c0836fd31a3787b70
+  evidence: The gold solution imports all framework components from `areal.*` (e.g.,
+    `areal.api.cli_args`, `areal.workflow.vision_rlvr`) instead of the deprecated
+    `realhf` package.
+  category: architecture
+- rule: '`examples/` — End-to-end wiring scripts for math, RLHF, VLM, multi-turn,
+    search agents, and launcher recipes.'
+  source:
+    path: AGENTS.md
+    lines: ''
+    commit: b942ed019df2c66b851c397c0836fd31a3787b70
+  evidence: The new VLM training scripts and README are placed in the `examples/vlm_npu/`
+    directory, matching the repository map definition.
   category: architecture
 config_edits:
 - path: examples/vlm_npu/README.md
@@ -116,28 +175,25 @@ config_edits:
     \ GRPO-NPU   | 35.3       | 20.5             | 54.7           | **36.8** |"
   gold_removed: ''
 distractors:
-- rule: Docs source lives under `docs/` (Jupyter Book). Coordinate doc edits with
-    the docs build pipeline.
+- rule: 'Docs: Source lives under `docs/` (Jupyter Book).'
   collision_type: scope_ambiguity
-  why_distracting: The prompt explicitly requests a README documenting hardware requirements
-    and results under the new `examples/vlm_npu/` directory. If the agent strictly
-    follows the rule that all docs live under `docs/`, it might place the README in
-    the wrong location or attempt to integrate it into the Jupyter Book build pipeline
-    unnecessarily.
+  why_distracting: The agent might try to place the README documentation in the `docs/`
+    directory because the rule states that documentation source lives there. However,
+    the instruction explicitly asks for a README under `examples/vlm_npu/`.
   severity: high
   source:
     path: AGENTS.md
-    lines: 29-30
-- rule: Before editing code, outline the proposed plan and confirm it with the user.
-  collision_type: meta_confusion
-  why_distracting: In an automated evaluation setting, the agent must generate the
-    complete solution in one go. If it stops to outline a plan and wait for user confirmation,
-    it will fail to produce the required files and timeout.
+    lines: ''
+- rule: '`areal/reward/` — Built-in reward functions, math parsers, and helpers.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to place the reward functions (`format_reward`,
+    `acc_reward`, `geometry3k_reward_fn`) in `areal/reward/` because the rule designates
+    it for built-in reward functions. However, the instruction explicitly requests
+    the reward functions to be included directly in the Python training script `geometry3k_grpo.py`.
   severity: high
   source:
     path: AGENTS.md
-    lines: 33-34
-hierarchy_analysis: 'The configuration is flat, relying entirely on `AGENTS.md`. The
-  primary challenge is scope resolution: the agent must recognize that example-specific
-  documentation (a README in `examples/vlm_npu/`) is an exception to the global rule
-  that documentation belongs in `docs/`.'
+    lines: ''
+hierarchy_analysis: The configuration is contained within a single file (`AGENTS.md`).
+  The primary challenge is resolving conflicts between the general repository map guidelines
+  in the config and the specific, localized requirements of the PR instruction.

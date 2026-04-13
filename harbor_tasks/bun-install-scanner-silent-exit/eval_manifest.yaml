@@ -79,66 +79,84 @@ checks:
 - id: test_repo_banned_words
   type: pass_to_pass
   origin: repo_tests
-  description: Repo banned words check passes (CI check from package.json scripts)
+  description: Repo banned words check passes (CI check from package.json scripts.banned)
+- id: test_repo_glob_sources
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo glob-sources script passes (CI check from package.json scripts.glob-sources)
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on package.json (must exit 0)
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json is valid JSON and parseable by bun (validates name
+    and version fields)
+- id: test_repo_tsconfig_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo tsconfig.json is valid JSON and parseable by node (validates compilerOptions)
+- id: test_repo_harness_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test harness imports (bun:test and harness) resolve correctly via bun
 - id: test_repo_source_files_valid
   type: pass_to_pass
   origin: static
   description: Modified source files exist and have valid content structure
-- id: test_repo_zig_files_parseable
+- id: test_repo_zig_files_valid
   type: pass_to_pass
   origin: static
-  description: Zig source files are syntactically valid (basic parse check)
+  description: Zig source files have valid structure with expected keywords (performSecurityScanAfterResolution
+    present)
 - id: test_repo_typescript_check
   type: pass_to_pass
   origin: static
-  description: TypeScript regression test file exists and is readable
-- id: test_repo_glob_sources
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo glob-sources script passes (CI check from package.json scripts)
+  description: TypeScript regression test location is valid (passes if file doesn't
+    exist on base commit)
 rubric:
-- rule: Update README.md with the latest changes.
-  source:
-    path: README.md
 - rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    test/regression/issue/${issueNumber}.test.ts
+    `test/regression/issue/${issueNumber}.test.ts`.
   source:
     path: CLAUDE.md
-    lines: 32-32
-  evidence: The gold solution places the test for this bug in `test/regression/issue/28193.test.ts`,
-    following the strict issue-number naming convention.
+    lines: 30-32
+  evidence: The gold solution places the regression test in `test/regression/issue/28193.test.ts`
+    corresponding to the issue number.
   category: testing
-- rule: Use bun:test with files that end in *.test.{ts,js,jsx,tsx,mjs,cjs}
+  verification: llm_judge
+- rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
   source:
     path: test/CLAUDE.md
-    lines: 14-14
-  evidence: The test file uses the `.test.ts` extension as required for files using
-    the `bun:test` runner.
-  category: naming
+    lines: 24-25
+  evidence: The test file (implied by the edited files list and project conventions)
+    uses `bunExe` and `bunEnv` from `harness` to spawn the Bun process for testing
+    the install command.
+  category: testing
+  verification: llm_judge
 distractors:
-- rule: When a test file spawns a Bun process, we like for that file to end in *-fixture.ts
+- rule: When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`.
   collision_type: rule_conflict
-  why_distracting: The agent might try to name the regression test file `28193-fixture.ts`
-    because it spawns a Bun process to test `bun install`. This conflicts with the
-    strict `issue/${issueNumber}.test.ts` naming convention required for regression
-    tests.
-  severity: medium
-  source:
-    path: test/CLAUDE.md
-    lines: 69-69
-- rule: Always use bun.* APIs instead of std.* and use bun.sys for system calls
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to write to stderr using `bun.sys.write(bun.FD.stderr(),
-    ...)` or similar low-level system calls to avoid `std.debug.print`, missing the
-    existing `Output.errGeneric` abstraction that is standard for the package manager
-    architecture.
+  why_distracting: The agent might name the test file `28193-fixture.ts` because it
+    tests a CLI command by spawning a process, but the regression issue naming convention
+    strictly requires `${issueNumber}.test.ts`.
   severity: high
   source:
-    path: src/CLAUDE.md
-    lines: 16-31
-hierarchy_analysis: The root `CLAUDE.md` defines a strict naming convention for regression
-  tests (`test/regression/issue/${issueNumber}.test.ts`). The child `test/CLAUDE.md`
-  suggests naming files that spawn processes with `*-fixture.ts`. In this case, the
-  root rule for regression tests takes precedence over the child rule for fixture
-  naming, as the issue number format is a strict requirement for the regression test
-  runner.
+    path: test/AGENTS.md
+    lines: 79-80
+- rule: Always use `bun.*` APIs instead of `std.*`. Using std.fs, std.posix, or std.os
+    directly is wrong.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use `bun.sys.write` to write to stderr (fd
+    2) to avoid `std.*` functions, missing the higher-level `Output.errGeneric` abstraction
+    already used in the file for CLI error reporting.
+  severity: medium
+  source:
+    path: src/AGENTS.md
+    lines: 16-18
+hierarchy_analysis: The config hierarchy is moderate, with root-level rules defining
+  general test placement and directory-specific rules defining test naming conventions
+  and Zig system call patterns. There is a direct conflict between the root `AGENTS.md`
+  rule for issue test naming (`${issueNumber}.test.ts`) and the `test/AGENTS.md` rule
+  for process-spawning test naming (`*-fixture.ts`). The root rule takes precedence
+  for regression tests.

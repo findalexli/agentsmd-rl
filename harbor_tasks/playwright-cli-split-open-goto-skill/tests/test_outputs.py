@@ -121,6 +121,26 @@ def test_repo_eslint_modified_file():
     assert r.returncode == 0, f"ESLint failed: {r.stderr}\n{r.stdout}"
 
 
+def test_repo_eslint_cli_misc():
+    """ESLint passes on modified cli-misc.spec.ts (pass_to_pass)."""
+    _run_npm_install()
+    r = subprocess.run(
+        ["./node_modules/.bin/eslint", "tests/mcp/cli-misc.spec.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"ESLint failed: {r.stderr}\n{r.stdout}"
+
+
+def test_repo_tsc_html_reporter():
+    """TypeScript compiles for html-reporter package (pass_to_pass)."""
+    _run_npm_install()
+    r = subprocess.run(
+        ["npx", "tsc", "-p", "packages/html-reporter", "--noEmit"],
+        cwd=REPO, capture_output=True, text=True, timeout=120
+    )
+    assert r.returncode == 0, f"TypeScript check failed: {r.stderr}\n{r.stdout}"
+
+
 # -----------------------------------------------------------------------------
 # fail_to_pass (pr_diff) — behavioral: console output formatting
 # -----------------------------------------------------------------------------

@@ -14,6 +14,9 @@ Pass-to-pass tests (regression):
 - test_convert_command_help: Help output must be valid
 - test_repo_go_vet: Go vet must pass (repo CI/CD)
 - test_repo_build: Repo must build successfully (repo CI/CD)
+- test_repo_gofmt: Go code is properly formatted (repo CI/CD)
+- test_repo_go_mod_verify: Go modules verified (repo CI/CD)
+- test_repo_command_convert: Repo's convert test passes (repo CI/CD)
 """
 
 import subprocess
@@ -50,7 +53,15 @@ def test_convert_command_help():
     assert "Convert front matter to another format" in result.stdout
 
 
-
+def test_repo_go_vet():
+    """Repo's Go vet passes (pass_to_pass). Verifies go vet on commands package."""
+    # Run go vet on commands package only (where the changes are)
+    # Full repo vet runs out of disk space in Docker
+    r = subprocess.run(
+        ["go", "vet", "./commands/..."],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"go vet failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_build():
@@ -60,6 +71,35 @@ def test_repo_build():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"go build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_gofmt():
+    """Repo code is properly formatted (pass_to_pass). Verifies gofmt passes."""
+    r = subprocess.run(
+        ["gofmt", "-l", "."],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # gofmt -l outputs file names that need formatting; empty output means pass
+    assert r.returncode == 0, f"gofmt check failed:\n{r.stderr[-500:]}"
+    assert r.stdout.strip() == "", f"gofmt found formatting issues in files:\n{r.stdout}"
+
+
+def test_repo_go_mod_verify():
+    """Go modules are verified (pass_to_pass). Verifies go mod verify passes."""
+    r = subprocess.run(
+        ["go", "mod", "verify"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"go mod verify failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_command_convert():
+    """Repo's convert command test passes (pass_to_pass). Tests the actual convert functionality."""
+    r = subprocess.run(
+        ["go", "test", "-v", "-run", "TestCommands/convert", "-count=1", ".", "-tags", "none"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TestCommands/convert failed:\n{r.stderr[-1000:]}"
 
 
 def test_bundle_resource_preserved():
@@ -270,7 +310,6 @@ def test_convert_output_format_variations():
 
             assert result.returncode == 0, f"{fmt} failed:\n{result.stderr}"
 
-            
 
 
 if __name__ == "__main__":

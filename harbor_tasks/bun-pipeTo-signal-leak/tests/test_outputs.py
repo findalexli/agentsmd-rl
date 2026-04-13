@@ -435,7 +435,7 @@ def test_repo_clang_format():
     import subprocess
     subprocess.run(["apt-get", "update", "-qq"], check=True)
     subprocess.run(["apt-get", "install", "-y", "-qq", "clang-format-19"], check=True)
-    
+
     REPO = "/workspace/bun"
     files = [
         f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
@@ -450,6 +450,7 @@ def test_repo_clang_format():
     )
     assert r.returncode == 0, f"clang-format failed:\n{r.stderr[-500:]}"
 
+
 # [repo_tests] pass_to_pass
 def test_repo_cpp_syntax_check():
     """Modified C++ files compile successfully (clang syntax check)."""
@@ -463,13 +464,13 @@ def test_repo_cpp_syntax_check():
         f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h",
         f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
     ]
-    
+
     include_paths = [
         f"{REPO}/src/bun.js/bindings/webcore",
         f"{REPO}/src/bun.js/bindings",
         f"{REPO}/src/js/builtins",
     ]
-    
+
     webkit_paths = [
         f"{REPO}/vendor/WebKit/Source",
         f"{REPO}/vendor/webkit/Source",
@@ -478,11 +479,11 @@ def test_repo_cpp_syntax_check():
         if Path(wp).exists():
             include_paths.append(wp)
             break
-            
+
     include_args = []
     for p in include_paths:
         include_args.extend(["-I", p])
-        
+
     for f in files:
         r = subprocess.run(
             ["clang", "-fsyntax-only", "-std=c++20", "-xc++"] + include_args + [f],
@@ -490,3 +491,53 @@ def test_repo_cpp_syntax_check():
         )
         syntax_errors = [line for line in r.stderr.split("\n") if "error:" in line and "syntax" in line.lower()]
         assert len(syntax_errors) == 0, f"Syntax errors in {f}: {syntax_errors}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_syntax():
+    """CI shell scripts have valid syntax (repo CI check)."""
+    import subprocess
+    REPO = "/workspace/bun"
+    scripts = [
+        f"{REPO}/scripts/run-clang-format.sh",
+        f"{REPO}/scripts/check-node.sh",
+        f"{REPO}/scripts/check-node-all.sh",
+    ]
+    for script in scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True, text=True, timeout=30
+        )
+        assert r.returncode == 0, f"Shell syntax error in {script}: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cpp_encoding():
+    """Modified C++ files use UTF-8 encoding with LF line endings (repo CI check)."""
+    import subprocess
+    # Install file command if not present
+    subprocess.run(["apt-get", "update", "-qq"], check=False, capture_output=True)
+    subprocess.run(["apt-get", "install", "-y", "-qq", "file"], check=False, capture_output=True)
+
+    REPO = "/workspace/bun"
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    for f in files:
+        # Check file encoding with 'file' command
+        r = subprocess.run(
+            ["file", "--mime-encoding", f],
+            capture_output=True, text=True, timeout=30
+        )
+        # file command output format: <path>: <encoding>
+        encoding = r.stdout.strip().split(": ")[-1]
+        assert "utf-8" in encoding.lower() or "us-ascii" in encoding.lower(), \
+            f"{f}: Expected UTF-8 encoding, got {encoding}"
+
+        # Check for no CRLF line endings
+        content = open(f, "rb").read()
+        assert b"\r\n" not in content, f"{f}: Contains CRLF line endings (must be LF)"

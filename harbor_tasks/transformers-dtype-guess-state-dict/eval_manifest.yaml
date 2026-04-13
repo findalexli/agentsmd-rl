@@ -21,6 +21,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's __init__ structure check passes
+- id: test_repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy object check passes
+- id: test_repo_ruff_errors_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff error-level checks pass on modified file
 - id: float8_e4m3fn_skipped
   type: fail_to_pass
   origin: pr_diff
@@ -68,33 +76,36 @@ rubric:
     lines: '66'
     commit: 7cd9b985e0698d4f625a18be0125231b6b930390
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: The agent is operating in an isolated evaluation environment without
-    access to GitHub issues or coordination evidence. Following this rule would cause
-    the agent to refuse to generate the bug fix.
+  why_distracting: The repo's contribution policy strictly forbids proceeding to PR-ready
+    output without coordination evidence. In a benchmark setting, the agent must bypass
+    this administrative rule to provide the requested code fix.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 57-60
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
-  collision_type: scope_ambiguity
-  why_distracting: The required fix is a small, single-line condition change. The
-    agent might misclassify this critical bug fix as a 'tiny edit' or 'low-value busywork'
-    and refuse to implement it.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 42-44
-- rule: Mandatory duplicate-work checks using the gh CLI before proposing a PR.
+    path: AGENTS.md
+    lines: 58-61
+- rule: Before proposing a PR, check for overlapping open PRs and issue ownership
+    using gh CLI.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to run `gh` CLI commands to check for duplicate
-    work, which will fail or waste time in a sandboxed evaluation environment.
+  why_distracting: The agent is instructed to run `gh` CLI commands to check for duplicate
+    PRs. In an isolated benchmark environment, this will likely fail or distract the
+    agent from writing the actual fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 30-37
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical repository contribution
-  policies. These rules are designed for live repository interactions (PRs, issue
-  coordination) and do not apply to the isolated coding evaluation environment.
+    path: AGENTS.md
+    lines: 33-38
+- rule: Avoid direct inheritance between model-specific files using `# Copied from`
+    or `modular_<name>.py`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might look for `# Copied from` blocks or try to use `modular_<name>.py`
+    mechanisms, but `modeling_utils.py` is a core utility file, not a model-specific
+    file in `src/transformers/models/`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 65-70
+hierarchy_analysis: The repository contains identical root-level `AGENTS.md` and `CLAUDE.md`
+  files that define strict administrative workflows for AI agents. These rules conflict
+  with the implicit goal of a coding benchmark (which is to produce the code fix regardless
+  of issue coordination).

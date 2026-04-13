@@ -265,6 +265,132 @@ def test_repo_check_model_list():
     assert r.returncode == 0, f"check_model_list failed:\n{r.stderr.decode()[-500:]}"
 
 
+# [repo_tests] pass_to_pass — CI: check_models_have_kwargs (modified function)
+def test_repo_check_models_have_kwargs():
+    """Repo's check_models_have_kwargs() passes (pass_to_pass) — tests the fixed function."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/utils'); sys.path.insert(0, '{REPO}/src'); from check_repo import check_models_have_kwargs; check_models_have_kwargs(); print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"check_models_have_kwargs failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: ast.parse check on modified file
+def test_repo_ast_parse():
+    """Modified file utils/check_repo.py parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import ast; ast.parse(open('{CHECK_REPO}').read()); print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: ruff format check on modified file
+def test_repo_ruff_format():
+    """Modified file utils/check_repo.py follows ruff formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", CHECK_REPO, "--config", f"{REPO}/pyproject.toml"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: check_models_are_in_init
+def test_repo_check_models_are_in_init():
+    """Repo's check_models_are_in_init() passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/utils'); sys.path.insert(0, '{REPO}/src'); from check_repo import check_models_are_in_init; check_models_are_in_init(); print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_models_are_in_init failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: check_all_auto_mappings_importable
+def test_repo_check_all_auto_mappings_importable():
+    """Repo's check_all_auto_mappings_importable() passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/utils'); sys.path.insert(0, '{REPO}/src'); from check_repo import check_all_auto_mappings_importable; check_all_auto_mappings_importable(); print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_all_auto_mappings_importable failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: check_all_models_are_tested
+def test_repo_check_all_models_are_tested():
+    """Repo's check_all_models_are_tested() passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/utils'); sys.path.insert(0, '{REPO}/src'); from check_repo import check_all_models_are_tested; check_all_models_are_tested(); print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_all_models_are_tested failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: custom_init_isort check
+def test_repo_init_isort():
+    """Repo's init file isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            f"{REPO}/utils/custom_init_isort.py",
+            "--check_only",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"custom_init_isort failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: sort_auto_mappings check
+def test_repo_sort_auto_mappings():
+    """Repo's auto mappings sort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            f"{REPO}/utils/sort_auto_mappings.py",
+            "--check_only",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"sort_auto_mappings failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — CLAUDE.md rules
 # ---------------------------------------------------------------------------

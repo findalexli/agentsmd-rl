@@ -79,6 +79,18 @@ checks:
   origin: repo_tests
   description: Repo's HTML API tests (TestHTML class) pass (2 tests covering get_config
     and interface)
+- id: repo_gradio_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's gradio module imports successfully
+- id: repo_html_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's html.py has valid Python syntax via py_compile
+- id: repo_svelte_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Svelte HTML component files exist and are non-empty
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
@@ -97,40 +109,35 @@ rubric:
     path: AGENTS.md
     lines: 43-45
     commit: f4c3a6dcb45218722d3150baef953c731d3eccf2
-distractors:
-- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
-    in your PR description.
-  collision_type: meta_confusion
-  why_distracting: The agent's task is to implement the feature request in the codebase,
-    not to open a pull request. Attempting to write a PR description or interact with
-    GitHub to create a PR with the keyword `kumquat` would be out of scope and cause
-    meta-confusion.
-  severity: high
+- rule: 'Repository Structure: `gradio/` — Python source for the Gradio library (backend),
+    `js/` — frontend code (Svelte/TypeScript)'
   source:
     path: AGENTS.md
-    lines: 58-60
-- rule: Format your code before pushing.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the formatting scripts (`scripts/format_backend.sh`
-    and `scripts/format_frontend.sh`), which could reformat unrelated files in the
-    repository, creating a noisy diff that fails evaluation.
+    lines: 7-12
+  evidence: The gold solution correctly modifies the Python backend docstring in `gradio/components/html.py`
+    and the frontend logic in `js/html/Index.svelte` and `js/html/shared/HTML.svelte`,
+    adhering to the repo
+  category: architecture
+distractors:
+- rule: 'AI Agent PR Requirement: include the keyword `kumquat` somewhere in your
+    PR description.'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to append the keyword 'kumquat' to the Python
+    docstring, a comment in the code, or the commit message, misunderstanding where
+    the PR description lives in a headless evaluation environment.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 24-26
+    lines: 58-59
 - rule: Target an issue. Every non-trivial PR should reference an existing GitHub
     issue. If one doesn't exist, create it first.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to use the GitHub CLI or API to create
-    an issue before writing code, which is outside the scope of a code generation
-    evaluation.
+  why_distracting: The agent might try to use the GitHub CLI (`gh issue create`) to
+    create an issue before writing code, or refuse to proceed without an issue number,
+    which is unnecessary and unsupported in the benchmark environment.
   severity: high
   source:
     path: AGENTS.md
-    lines: 16-17
-hierarchy_analysis: Only one config file (`AGENTS.md`) is provided at the root level.
-  It contains general repository guidelines, PR instructions, and AI agent policies.
-  There are no conflicting rules within the hierarchy, but several PR-specific instructions
-  (like adding 'kumquat' to the PR description, creating issues, or running formatting
-  scripts) are highly distracting for an agent focused solely on code generation for
-  a specific issue.
+    lines: 19-19
+hierarchy_analysis: The config is a single flat file (`AGENTS.md`) containing repository
+  contribution guidelines. No hierarchy conflicts exist.

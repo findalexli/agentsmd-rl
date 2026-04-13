@@ -5,49 +5,45 @@ source:
   base_commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
   merge_commit: 287d33c71dc9dcbb1a12a9c30b562fb5c28238ec
 checks:
-- id: rust_syntax_valid
+- id: test_rustfmt_jsg_macros_syntax
   type: pass_to_pass
-  origin: static
-  description: Modified .rs files parse without rustfmt errors
-- id: rustfmt_config_valid
+  origin: repo_tests
+  description: jsg-macros lib.rs parses without rustfmt syntax errors
+- id: test_rustfmt_jsg_v8_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: jsg v8.rs parses without rustfmt syntax errors
+- id: test_rustfmt_config_valid
   type: pass_to_pass
   origin: static
   description: rustfmt.toml config exists with required settings
-- id: jsg_macros_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: jsg-macros lib.rs parses without rustfmt errors
-- id: jsg_v8_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: jsg v8.rs parses without rustfmt errors
-- id: jsg_ffi_cpp_syntax
+- id: test_jsg_ffi_cpp_exists
   type: pass_to_pass
   origin: static
-  description: jsg ffi.c++ exists with valid C++ syntax indicators
-- id: jsg_ffi_h_syntax
+  description: jsg ffi.c++ exists with valid C++ structure
+- id: test_jsg_ffi_h_exists
   type: pass_to_pass
   origin: static
-  description: jsg ffi.h exists with valid C++ header syntax indicators
-- id: jsg_method_static_detection
+  description: jsg ffi.h exists with valid C++ header structure
+- id: test_jsg_method_static_detection
   type: fail_to_pass
   origin: pr_diff
   description: jsg_method macro detects receiver to distinguish static vs instance
     methods
-- id: static_member_variant
+- id: test_static_member_variant
   type: fail_to_pass
   origin: pr_diff
   description: generate_resource_impl emits Member::StaticMethod for receiver-less
     methods
-- id: function_type_and_ffi
+- id: test_function_type_and_ffi
   type: fail_to_pass
   origin: pr_diff
   description: v8.rs defines Function type and ffi.h declares function_template_get_function
-- id: ffi_cpp_implements_get_function
+- id: test_ffi_cpp_implements_get_function
   type: fail_to_pass
   origin: pr_diff
   description: ffi.c++ implements function_template_get_function using V8 GetFunction
-- id: agents_md_documents_static_methods
+- id: test_agents_md_documents_static_methods
   type: fail_to_pass
   origin: agent_config
   description: src/rust/AGENTS.md documents that methods without &self become static
@@ -55,11 +51,11 @@ checks:
     path: AGENTS.md
     lines: '9'
     commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
-- id: readme_documents_static_instance
+- id: test_readme_documents_static_instance
   type: fail_to_pass
   origin: pr_diff
   description: jsg-macros README documents static vs instance method distinction
-- id: review_checklist_instance_static
+- id: test_review_checklist_instance_static
   type: fail_to_pass
   origin: pr_diff
   description: rust-review-checklist.md documents instance/static method behavior
@@ -80,7 +76,7 @@ rubric:
   evidence: The gold solution modifies the companion `ffi.c++` and `ffi.h` files in
     `src/rust/jsg/` to support the new V8 FFI layer requirements for static methods.
 - rule: 'JSG resources: must include `_state: jsg::ResourceState` field; `#[jsg_method]`
-    auto-converts `snake_case` → `camelCase`'
+    auto-converts `snake_case` -> `camelCase`'
   source:
     path: src/rust/AGENTS.md
     lines: 27-28
@@ -88,61 +84,73 @@ rubric:
   evidence: The gold solution updates this specific convention in `src/rust/AGENTS.md`
     to append the new rule that methods with receivers become instance methods, and
     those without become static methods.
+- rule: Document JSG resource conventions and `#[jsg_method]` behavior in the component-specific
+    AGENTS.md file.
+  source:
+    path: src/rust/AGENTS.md
+    lines: 27-29
+  evidence: The gold solution updates the existing `JSG resources` bullet point to
+    append the new behavior regarding `&self`/`&mut self` determining instance vs
+    static methods.
+  category: documentation
 config_edits:
 - path: src/rust/AGENTS.md
   tier: 1
   gold_added: '- **JSG resources**: must include `_state: jsg::ResourceState` field;
-    `#[jsg_method]` auto-converts `snake_case` → `camelCase`; methods with `&self`/`&mut
+    `#[jsg_method]` auto-converts `snake_case` -> `camelCase`; methods with `&self`/`&mut
     self` become instance methods, methods without a receiver become static methods'
   gold_removed: '- **JSG resources**: must include `_state: jsg::ResourceState` field;
-    `#[jsg_method]` auto-converts `snake_case` → `camelCase`'
+    `#[jsg_method]` auto-converts `snake_case` -> `camelCase`'
 - path: src/rust/jsg-macros/README.md
   tier: 2
-  gold_added: "The macro automatically detects whether a method is an instance method\
-    \ or a static method based on the presence of a receiver (`&self` or `&mut self`):\n\
-    \n- **Instance methods** (with `&self`/`&mut self`) are placed on the prototype,\
-    \ called on instances (e.g., `obj.getName()`).\n- **Static methods** (without\
-    \ a receiver) are placed on the constructor, called on the class itself (e.g.,\
-    \ `MyClass.create()`).\n\n    // Instance method: called as obj.parseCaaRecord(...)\n\
-    \    // Instance method: called as obj.getName()\n    // Instance method: void\
-    \ methods return undefined in JavaScript\n    }\n\n    // Static method: called\
-    \ as DnsUtil.create(...)\n    #[jsg_method]\n    pub fn create(name: String) ->\
-    \ Result<String, jsg::Error> {\n        Ok(name)\n        // Instance method on\
-    \ the prototype\n    }\n\n    #[jsg_method]\n    pub fn create(name: String) ->\
-    \ Result<String, jsg::Error> {\n        // Static method on the constructor (no\
-    \ &self)\nOn struct definitions, generates `jsg::Type`, wrapper struct, and `ResourceTemplate`\
-    \ implementations. On impl blocks, scans for `#[jsg_method]` attributes and generates\
-    \ the `Resource` trait implementation. Methods with a receiver (`&self`/`&mut\
-    \ self`) are registered as instance methods; methods without a receiver are registered\
-    \ as static methods."
-  gold_removed: "// Void methods return undefined in JavaScript\n        // implementation\n\
-    On struct definitions, generates `jsg::Type`, wrapper struct, and `ResourceTemplate`\
-    \ implementations. On impl blocks, scans for `#[jsg_method]` attributes and generates\
-    \ the `Resource` trait implementation."
+  gold_added: 'The macro automatically detects whether a method is an instance method     or
+    a static method based on the presence of a receiver (`&self` or `&mut self`):
+
+    - **Instance methods** (with `&self`/`&mut self`) are placed on the prototype,     called
+    on instances (e.g., `obj.getName()`). - **Static methods** (without     a receiver)
+    are placed on the constructor, called on the class itself (e.g.,     `MyClass.create()`).
+
+    // Instance method: called as obj.parseCaaRecord(...)     // Instance method:
+    called as obj.getName() // Instance method: void     methods return undefined
+    in JavaScript }
+
+    // Static method: called     as DnsUtil.create(...) #[jsg_method] pub fn create(name:
+    String) ->     Result<String, jsg::Error> { Ok(name) // Instance method on     the
+    prototype }
+
+    #[jsg_method] pub fn create(name: String) ->     Result<String, jsg::Error> {
+    // Static method on the constructor (no     &self) On struct definitions, generates
+    `jsg::Type`, wrapper struct, and `ResourceTemplate`     implementations. On impl
+    blocks, scans for `#[jsg_method]` attributes and generates     the `Resource`
+    trait implementation. Methods with a receiver (`&self`/`&mut     self`) are registered
+    as instance methods; methods without a receiver are registered     as static methods.'
+  gold_removed: // Void methods return undefined in JavaScript // implementation On
+    struct definitions, generates `jsg::Type`, wrapper struct, and `ResourceTemplate`     implementations.
+    On impl blocks, scans for `#[jsg_method]` attributes and generates     the `Resource`
+    trait implementation.
 distractors:
-- rule: 'Tests: inline `#[cfg(test)]` modules; JSG tests use `jsg_test::Harness::run_in_context()`'
-  source:
-    path: src/rust/AGENTS.md
-    lines: 30-31
+- rule: Suggest updates to AGENTS.md when you find new high-level information.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write new JSG tests for the static method
-    functionality. However, the prompt strictly asks for code changes and documentation
-    updates. Attempting to write tests would waste significant effort and likely overcomplicate
-    the PR.
+  why_distracting: The generic instruction to 'Suggest updates to AGENTS.md' might
+    lead the agent to update the root `AGENTS.md` file, even though the prompt specifically
+    requests updating `src/rust/AGENTS.md`.
   severity: medium
-- rule: 'Formatting: `rustfmt.toml` — `group_imports = "StdExternalCrate"`, `imports_granularity
-    = "Item"` (one `use` per import)'
+  source:
+    path: AGENTS.md
+    lines: 10-12
+- rule: 'CXX bridge: `#[cxx::bridge(namespace = "workerd::rust::<crate>")]` with companion
+    `ffi.c++`/`ffi.h` files'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying `jsg/ffi.c++` and `jsg/ffi.h`. The rule
+    about CXX bridges might cause the task agent to try to create new companion files
+    or alter namespaces unnecessarily, rather than just extending the existing FFI
+    declarations.
+  severity: low
   source:
     path: src/rust/AGENTS.md
-    lines: 28-29
-  collision_type: rule_conflict
-  why_distracting: The agent might try to reformat existing imports in `lib.rs` or
-    `v8.rs` to match this rule, which would introduce unnecessary diff churn unrelated
-    to the core task.
-  severity: low
-hierarchy_analysis: The root `AGENTS.md` provides general project instructions (like
-  updating AGENTS.md itself), while `src/rust/AGENTS.md` provides specific architectural
-  patterns (CXX bridges, JSG resources). The agent must synthesize these by applying
-  the CXX bridge pattern to implement the FFI changes, and then fulfilling the root
-  directive by updating the Rust-specific documentation in `src/rust/AGENTS.md` to
-  reflect the new JSG resource behavior.
+    lines: 24-25
+hierarchy_analysis: The root `AGENTS.md` provides a general directive to update `AGENTS.md`
+  files with new information. The `src/rust/AGENTS.md` file contains the specific
+  rule about `#[jsg_method]` that needs to be updated. The agent must navigate this
+  hierarchy to update the correct file and the correct line within that file, avoiding
+  the temptation to update the root file.

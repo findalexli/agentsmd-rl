@@ -74,44 +74,49 @@ checks:
   description: Repo's external.py and external_utils tests pass (consolidated network-independent
     subset)
 rubric:
-- rule: Python code is formatted with `ruff`.
+- rule: Code fix properly renames fn variable and formats gr.Interface across multiple
+    lines following Python style conventions.
   source:
-    path: AGENTS.md
-    lines: 38-40
-  evidence: The gold solution formats the `gr.Interface` instantiation in `gradio/external.py`
-    across multiple lines, adhering to standard Python line-length limits enforced
-    by formatters like `ruff`.
+    path: gradio/external.py
+  reference: "interface_fn = kwargs.pop(\"fn\", None)\ninterface = gr.Interface(\n\
+    \    interface_fn, inputs, outputs, **kwargs, api_name=\"predict\"\n)\n"
   category: style
+- rule: Code fix handles StopIteration with informative error message following existing
+    error handling patterns.
+  source:
+    path: gradio/external_utils.py
+  reference: "elif isinstance(e, StopIteration):\n    raise Error(\n        \"This\
+    \ model is not supported by any Hugging Face Inference Provider. \"\n        \"\
+    Please check the supported models at https://huggingface.co/docs/inference-providers.\"\
+    \n    ) from e\n"
+  category: correctness
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
     lines: 38-40
-  evidence: In `gradio/external_utils.py`, the new `elif isinstance(e, StopIteration):`
-    block and the `raise Error(...) from e` pattern perfectly match the existing error
-    handling structure in the `handle_hf_erro
+  evidence: The fix in `gradio/external.py` renames `fn` to `interface_fn` and formats
+    the `gr.Interface` instantiation over multiple lines, maintaining consistency
+    with the surrounding Ruff-formatted Python code
   category: style
 distractors:
 - rule: Target an issue. Every non-trivial PR should reference an existing GitHub
     issue. If one doesn't exist, create it first.
   collision_type: meta_confusion
-  why_distracting: The agent is operating in a headless evaluation environment and
-    cannot interact with GitHub to create or link issues. Attempting to use tools
-    or scripts to create an issue before fixing the code will waste time and lead
-    to failure.
+  why_distracting: The agent is operating in an isolated evaluation environment and
+    cannot interact with GitHub to create issues. Attempting to fulfill this requirement
+    would lead to wasted effort or hallucinated API calls.
   severity: high
   source:
     path: AGENTS.md
-    lines: 18-19
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to run the entire backend test suite using
-    `scripts/run_backend_tests.sh` to verify its fix. In an evaluation environment,
-    running the full suite can be extremely slow or fail due to unrelated environment
-    constraints, distracting the agent from the specific fix.
+    lines: 19-20
+- rule: 'Format your code before pushing. Backend: `bash scripts/format_backend.sh`'
+  collision_type: scope_ambiguity
+  why_distracting: Running a repository-wide formatting script (`bash scripts/format_backend.sh`)
+    might format unrelated files that were previously unformatted, leading to a bloated
+    diff that fails the evaluation's strict diff checking.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 31-32
-hierarchy_analysis: Only a single configuration file (`AGENTS.md`) is present at the
-  root level, so there are no hierarchical conflicts. The guidance is flat and applies
-  uniformly to the entire repository.
+    lines: 27-29
+hierarchy_analysis: The configuration hierarchy is flat, consisting of a single `AGENTS.md`
+  file at the repository root containing generic open-source contribution guidelines.

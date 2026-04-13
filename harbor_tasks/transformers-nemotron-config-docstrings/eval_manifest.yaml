@@ -59,49 +59,35 @@ checks:
   origin: repo_tests
   description: Repo's dummy objects check passes
 rubric:
-- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+- rule: For source-code-only docstring fixes, no CLAUDE.md or AGENTS.md modifications
+    are required. The gold solution correctly fixes the docstring without needing
+    to update agent configuration files.
   source:
     path: CLAUDE.md
-    lines: '66'
+    lines: '1'
     commit: 8dc7a52d766efe76c121c0654a5d24d633bffe9e
-- rule: When a `modular` file is present, generated files should not be edited, as
-    changes will be overwritten by `make fix-repo`.
-  source:
-    path: CLAUDE.md
-    lines: '67'
-    commit: 8dc7a52d766efe76c121c0654a5d24d633bffe9e
-- rule: '`make check-repo` — CI-style consistency checks'
-  source:
-    path: CLAUDE.md
-    lines: 5-5
-  evidence: The gold solution manually updates the docstring parameters (`n_groups`,
-    `expand`, `use_conv_bias`, `chunk_size`) to match the actual class attributes,
-    which directly resolves the `check_docstrings` f
-  category: documentation
+  reference: "(no changes required - this is a source code fix only)"
 distractors:
 - rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits (single
-    typo, isolated lint cleanup, one mutable default argument, etc.).'
+    typo, isolated lint cleanup, etc.).'
   collision_type: scope_ambiguity
-  why_distracting: The agent might refuse to fix the docstring mismatch, classifying
-    it as a 'tiny edit' or 'isolated lint cleanup'. However, this mismatch causes
-    the CI (`make check-repo`) to fail, making it a necessary build-breaking fix rather
-    than an optional low-value busywork PR.
+  why_distracting: The agent might classify fixing a docstring mismatch as a 'tiny
+    edit' or 'isolated lint cleanup' and refuse to complete the task, even though
+    it is required to fix a CI failure (`make check-repo`).
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 35-37
-- rule: '`make fix-repo`: auto-fixes copies, modular conversions, doc TOCs, docstrings
-    in addition to the `make style` fixes'
+    path: AGENTS.md
+    lines: 38-40
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent might rely entirely on running `make fix-repo` to fix
-    the issue, assuming the tool will automatically correct the docstring. However,
-    while the tool can flag the mismatch or format existing text, it cannot infer
-    the natural language descriptions for the new parameters (`n_groups`, `expand`,
-    etc.), so manual intervention is required.
-  severity: medium
+  why_distracting: The agent might refuse to output the fix because the prompt does
+    not provide links to issue discussion, coordination evidence, or human validation,
+    triggering the fail-closed behavior.
+  severity: high
   source:
-    path: CLAUDE.md
-    lines: 4-4
-hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
-  in content at Level 0. There are no conflicts between the files, and they provide
-  consistent guidance on repository tooling and contribution policies.
+    path: AGENTS.md
+    lines: 52-56
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. They provide strict meta-instructions regarding agent behavior,
+  specifically around refusing trivial PRs and requiring human coordination.

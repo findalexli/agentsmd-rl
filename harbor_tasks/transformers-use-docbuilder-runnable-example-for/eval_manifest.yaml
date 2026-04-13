@@ -33,6 +33,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's documentation TOC is valid
+- id: test_deps_table
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency versions table is valid
+- id: test_mypy_setup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Type check setup.py with mypy
 - id: docs_extra_defined
   type: fail_to_pass
   origin: pr_diff
@@ -58,94 +66,73 @@ rubric:
     lines: 49-70
     commit: a118714602774818c3a003b18d83ab48548e51d7
 - rule: Advanced example uses AutoProcessor for processor, not GlmAsrForConditionalGeneration
-  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
-    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
-    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
-    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
-    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
-    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
-    \ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
+  reference: "# CONTRIBUTING.md\\npip install \".[docs]\"\\n   If you're adding or editing\\
+    \\ runnable examples in Markdown docs, mark Python fences with `runnable` or\\
+    \\n\\   `runnable:<label>` and run them locally with `pytest`:\\n\\n\\   ```bash\\n   pytest\\
+    \\ -q docs/source/en/my_page.md\\n\\   pytest -q docs/source/en/\\n\\   ```\\n\\
+    \\n\\   For the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\\
+    \\ and\\n\\   `# doc-builder: hide`, see the\\n\\   [doc-builder runnable code blocks\\
+    \\ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
 - rule: CONTRIBUTING.md documents the runnable examples workflow with pytest
   source:
     path: CONTRIBUTING.md
     lines: 406-417
     commit: a118714602774818c3a003b18d83ab48548e51d7
-  reference: "pip install \".[docs]\"\n   If you're adding or editing runnable examples\
-    \ in Markdown docs, mark Python fences with `runnable` or\n   `runnable:<label>`\
-    \ and run them locally with `pytest`:\n\n   ```bash\n   pytest -q docs/source/en/my_page.md\n\
-    \   pytest -q docs/source/en/\n   ```\n\n   For the full runnable syntax, including\
-    \ continuation blocks, `# pytest-decorator:`, and\n   `# doc-builder: hide`, see\
-    \ the\n   [doc-builder runnable code blocks guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
+  reference: "pip install \".[docs]\"\\n\\   If you're adding or editing runnable examples\\
+    \\ in Markdown docs, mark Python fences with `runnable` or\\n\\   `runnable:<label>`\\
+    \\ and run them locally with `pytest`:\\n\\n\\   ```bash\\n\\   pytest -q docs/source/en/my_page.md\\
+    \\n\\   pytest -q docs/source/en/\\n\\   ```\\n\\n\\   For the full runnable syntax,\\
+    \\ including\\n\\   continuation blocks, `# pytest-decorator:`, and\\n\\   `# doc-builder:\
+    \\ hide`, see the\\n\\   [doc-builder runnable code blocks guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
 - rule: testing.md documents how to run runnable Markdown blocks
   source:
     path: docs/source/en/testing.md
     lines: 219-231
     commit: a118714602774818c3a003b18d83ab48548e51d7
-  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
-    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
-    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
-    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
-    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
-    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
-    \ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
+  reference: "# CONTRIBUTING.md\\npip install \".[docs]\"\\n   If you're adding or editing\\
+    \\ runnable examples in Markdown docs, mark Python fences with `runnable` or\\
+    \\n\\   `runnable:<label>` and run them locally with `pytest`:\\n\\n\\   ```bash\\n\\   pytest\\
+    \\ -q docs/source/en/my_page.md\\n\\   pytest -q docs/source/en/\\n\\   ```\\n\\
+    \\n\\   For the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\\
+    \\ and\\n\\   `# doc-builder: hide`, see the\\n\\   [doc-builder runnable code blocks\\
+    \\ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
 - rule: CONTRIBUTING.md install instruction updated from hf-doc-builder to .[docs]
-  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
-    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
-    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
-    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
-    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
-    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
-    \ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
+  reference: "# CONTRIBUTING.md\\npip install \".[docs]\"\\n   If you're adding or editing\\
+    \\ runnable examples in Markdown docs, mark Python fences with `runnable` or\\
+    \\n\\   `runnable:<label>` and run them locally with `pytest`:\\n\\n\\   ```bash\\n\\   pytest\\
+    \\ -q docs/source/en/my_page.md\\n\\   pytest -q docs/source/en/\\n\\   ```\\n\\
+    \\n\\   For the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\\
+    \\ and\\n\\   `# doc-builder: hide`, see the\\n\\   [doc-builder runnable code blocks\\
+    \\ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
 - rule: GLM-ASR doc code fences are marked with runnable labels
-  reference: "# CONTRIBUTING.md\npip install \".[docs]\"\n   If you're adding or editing\
-    \ runnable examples in Markdown docs, mark Python fences with `runnable` or\n\
-    \   `runnable:<label>` and run them locally with `pytest`:\n\n   ```bash\n   pytest\
-    \ -q docs/source/en/my_page.md\n   pytest -q docs/source/en/\n   ```\n\n   For\
-    \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
-    \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
-    \ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
-- rule: Many tests are marked as 'slow' and skipped by default in the CI.
-  source:
-    path: CLAUDE.md
-    lines: 6-6
-  evidence: 'The gold solution adds `# pytest-decorator: transformers.testing_utils.slow,
-    transformers.testing_utils.require_torch` to the runnable code blocks in `glmasr.md`,
-    ensuring these new doc tests are mark'
-  category: testing
-config_edits:
-- path: CONTRIBUTING.md
-  tier: 2
-  gold_added: "pip install \".[docs]\"\n   If you're adding or editing runnable examples\
-    \ in Markdown docs, mark Python fences with `runnable` or\n   `runnable:<label>`\
-    \ and run them locally with `pytest`:\n\n   ```bash\n   pytest -q docs/source/en/my_page.md\n\
-    \   pytest -q docs/source/en/\n   ```\n\n   For the full runnable syntax, including\
-    \ continuation blocks, `# pytest-decorator:`, and\n   `# doc-builder: hide`, see\
-    \ the\n   [doc-builder runnable code blocks guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
-  gold_removed: pip install hf-doc-builder
+  reference: "# CONTRIBUTING.md\\npip install \".[docs]\"\\n   If you're adding or editing\\
+    \\ runnable examples in Markdown docs, mark Python fences with `runnable` or\\
+    \\n\\   `runnable:<label>` and run them locally with `pytest`:\\n\\n\\   ```bash\\n\\   pytest\\
+    \\ -q docs/source/en/my_page.md\\n\\   pytest -q docs/source/en/\\n\\   ```\\n\\
+    \\n\\   For the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\\
+    \\ and\\n\\   `# doc-builder: hide`, see the\\n\\   [doc-builder runnable code blocks\\
+    \\ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: The agent might refuse to output the requested code changes because
-    there is no explicit coordination evidence or issue link provided in the prompt,
-    triggering the fail-closed behavior.
+  why_distracting: The agent is instructed to fix the GLM-ASR documentation, but the
+    agent policy strictly forbids proceeding to PR-ready output without coordination
+    evidence (issue links, approvals). The agent might output a refusal instead of
+    the requested fix.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 49-52
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits (single
-    typo, isolated lint cleanup, one mutable default argument, etc.).'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might classify fixing broken documentation examples as
-    a 'low-value busywork PR' or 'tiny edit' and refuse to generate the fix, even
-    though the prompt explicitly requests a comprehensive fix involving setup.py,
-    dependency tables, and documentation updates.
+    path: AGENTS.md
+    lines: 48-51
+- rule: Do not open one-off PRs for tiny edits... Mechanical cleanups are acceptable
+    but not as first contributions.
+  collision_type: meta_confusion
+  why_distracting: The agent might misclassify fixing documentation examples as a
+    'low-value busywork PR' or 'tiny edit' and refuse to generate the solution.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 36-38
-hierarchy_analysis: The repository contains identical `CLAUDE.md` and `AGENTS.md`
-  files at the root level. The rules focus heavily on agent contribution policies
-  (coordination, avoiding busywork, fail-closed behavior) which conflict with the
-  nature of an isolated coding task prompt where the agent is expected to generate
-  the solution directly without prior issue coordination.
+    path: AGENTS.md
+    lines: 35-36
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md are identical and sit
+  at the root. They contain meta-instructions for AI agents that conflict with the
+  benchmark's goal of evaluating code generation, as they instruct the agent to refuse
+  tasks without human coordination.

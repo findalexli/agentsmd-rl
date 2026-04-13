@@ -43,6 +43,10 @@ checks:
   type: pass_to_pass
   description: Cargo clippy passes with no warnings
   origin: repo_tests
+- id: test_cargo_clippy_full
+  type: pass_to_pass
+  description: Cargo clippy with full xclippy-style lints passes
+  origin: repo_tests
 - id: test_cargo_fmt
   type: pass_to_pass
   description: Cargo fmt --check passes (code is properly formatted)
@@ -79,47 +83,21 @@ rubric:
     lines: 116-131
     commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
 distractors:
-- rule: 'Storage Layer: Uses RocksDB for persistent storage'
-  collision_type: architecture_boundary
-  why_distracting: The config states that the storage layer 'Uses RocksDB for persistent
-    storage'. An agent might read this and attempt to implement the watermark storage
-    using RocksDB or look for a RocksDB connection. However, this specific crate (`sui-indexer-alt-object-store`)
-    is designed to interact with cloud object stores (like S3/GCS) via the `object_store`
-    crate, and watermarks must be stored as JSON objects/files in the object store
-    itself.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 76-79
-- rule: All new files must start with the following license in comments at the top
-    of the file
+- rule: 'All new files must start with the following license in comments at the top
+    of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
   collision_type: scope_ambiguity
-  why_distracting: The agent might decide to extract the new `ObjectStoreWatermark`
-    and `LegacyObjectStoreWatermark` structs into a new file (e.g., `watermark.rs`)
-    to keep `lib.rs` clean, and subsequently apply the required license header. However,
-    the gold solution keeps these structs inline within `lib.rs`, making a new file
-    unnecessary and out of scope for this specific fix.
-  severity: medium
+  why_distracting: The instruction mandates a specific license header for 'All new
+    files'. An agent might decide to extract the new `ObjectStoreWatermark` and `LegacyObjectStoreWatermark`
+    structs into a new file (e.g., `watermark.rs`) to follow modularity practices
+    and apply this license, whereas the gold solution simply appends them to the existing
+    `lib.rs`.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 15-18
-- rule: simtests must be run with `cargo simtest` to avoid false negatives... skip
-    simulation tests as they may cause false negatives with `cargo nextest`
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run standard `cargo test` to verify its
-    implementation of the watermark methods, which could lead to false negatives or
-    hangs due to simulation tests. The agent must use the specific `SUI_SKIP_SIMTESTS=1
-    cargo nextest run` or `cargo simtest` commands as instructed.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 28-33
-hierarchy_analysis: The root `CLAUDE.md` provides general architectural guidelines
-  (such as using RocksDB for storage) that apply primarily to the core validator node
-  (`sui-core`). These guidelines conflict with the specific purpose of the `sui-indexer-alt-object-store`
-  crate, which is designed to use cloud object storage. The agent must recognize that
-  the indexer's object store implementation operates under different architectural
-  constraints than the core node.
+    lines: 18-21
+hierarchy_analysis: The configuration consists of generic repository guidelines at
+  the root level (`CLAUDE.md` and `AGENTS.md`). No crate-specific configuration files
+  are provided to override or extend these defaults.
 version: '2.0'
 source:
   repo: MystenLabs/sui.git

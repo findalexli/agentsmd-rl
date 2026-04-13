@@ -112,6 +112,51 @@ def test_repo_cargo_test():
     assert r.returncode == 0, f"Cargo test failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+def test_repo_cargo_clippy():
+    """Repo's Rust code passes clippy linting (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "clippy", "--workspace", "--lib", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_doc():
+    """Repo's Rust documentation builds without errors (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    # Allow warnings but fail on errors
+    r = subprocess.run(
+        ["cargo", "doc", "--workspace", "--no-deps"],
+        capture_output=True, text=True, timeout=300, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Cargo doc failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_build_lib():
+    """Repo's Rust libraries build successfully (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "build", "--workspace", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Cargo build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_no_default_features():
+    """Repo's unit tests pass without default features (pass_to_pass)."""
+    cargo_bin = _setup_rust_env()
+    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "test", "--workspace", "--lib", "--no-default-features", "--no-fail-fast"],
+        capture_output=True, text=True, timeout=300, cwd=EDGEQUAKE_CRATES, env=env
+    )
+    assert r.returncode == 0, f"Unit tests (no-default-features) failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------

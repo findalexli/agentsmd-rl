@@ -6,7 +6,6 @@ cd /workspace/react
 # Idempotent: skip if already applied
 if grep -q 'export function parseConfigOverrides' compiler/apps/playground/lib/compilation.ts 2>/dev/null; then
     echo "Patch already applied."
-    # Check if changes are committed
     if [ -n "$(git status --porcelain)" ]; then
         git add -A && git commit -m "Apply fix"
     fi
@@ -30,19 +29,17 @@ const fs = require("fs");
 let content = fs.readFileSync("compiler/apps/playground/__tests__/e2e/page.spec.ts", "utf8");
 
 content = content.replace(
-  "config: `compilationMode: `,",
-  "config: `{ compilationMode: }`,"
+  "config: \`compilationMode: \`,",
+  "config: \`{ compilationMode: }\`,"
 );
 
 content = content.replace(
   ".toContain('Invalid override format');",
-  `.toContain(
-    'Unexpected failure when transforming configs',
-  );`
+  ".toContain('Unexpected failure when transforming configs');"
 );
 
-const before = "config: \`import type { PluginOptions } from 'babel-plugin-react-compiler/dist';\n\n({\n  compilationMode: \"123\"\n} satisfies PluginOptions);\`,`";
-const after = "config: \`{\n  compilationMode: \"123\"\n}\`,`";
+const before = "config: \`import type { PluginOptions } from 'babel-plugin-react-compiler/dist';\n\n({\n  compilationMode: \"123\"\n} satisfies PluginOptions);\`,";
+const after = "config: \`{\n  compilationMode: \"123\"\n}\`,";
 content = content.replace(before, after);
 
 fs.writeFileSync("compiler/apps/playground/__tests__/e2e/page.spec.ts", content);
@@ -156,7 +153,7 @@ const fs = require("fs");
 let content = fs.readFileSync("compiler/apps/playground/components/Editor/ConfigEditor.tsx", "utf8");
 
 content = content.replace(
-  `// @ts-expect-error - webpack asset/source loader handles .d.ts files as strings\nimport compilerTypeDefs from 'babel-plugin-react-compiler/dist/index.d.ts';\n\n`,
+  "// @ts-expect-error - webpack asset/source loader handles .d.ts files as strings\nimport compilerTypeDefs from 'babel-plugin-react-compiler/dist/index.d.ts';\n\n",
   ""
 );
 
@@ -228,49 +225,99 @@ cat > /tmp/fix_compilation2.js << 'JSEOF'
 const fs = require("fs");
 let content = fs.readFileSync("compiler/apps/playground/lib/compilation.ts", "utf8");
 
-const startMarker = "// Parse config overrides from config editor";
-const startIdx = content.indexOf(startMarker);
-if (startIdx >= 0) {
-  let braceCount = 0;
-  let foundFirstBrace = false;
-  let endIdx = startIdx;
+// Read the file line by line to find and replace the block
+const lines = content.split('\n');
+let result = [];
+let i = 0;
+let found = false;
+
+while (i < lines.length) {
+  const line = lines[i];
   
-  for (let i = startIdx; i < content.length; i++) {
-    if (content[i] === '{') {
-      braceCount++;
-      foundFirstBrace = true;
-    } else if (content[i] === '}') {
-      braceCount--;
-      if (foundFirstBrace && braceCount === 0) {
-        endIdx = i + 1;
+  // Look for the marker comment
+  if (line.includes('// Parse config overrides from config editor') && !found) {
+    found = true;
+    // Add the new single line
+    result.push(line);
+    result.push('  const configOverrideOptions = parseConfigOverrides(configOverrides);');
+    
+    // Skip until we find the closing brace of the if block (the '}' on its own line after the error)
+    while (i < lines.length) {
+      if (lines[i].trim() === '}' && lines[i-1] && lines[i-1].includes("throw new Error('Invalid override format')")) {
+        i++;
         break;
       }
+      i++;
     }
+    // Skip one more line if it's a closing brace (the outer if block)
+    if (i < lines.length && lines[i].trim() === '}') {
+      i++;
+    }
+    continue;
   }
   
-  const newCode = "// Parse config overrides from config editor\n  const configOverrideOptions = parseConfigOverrides(configOverrides);";
-  
-  content = content.substring(0, startIdx) + newCode + content.substring(endIdx);
-  fs.writeFileSync("compiler/apps/playground/lib/compilation.ts", content);
-  console.log("Updated compilation.ts (part 2)");
-} else {
-  console.log("Marker not found in compilation.ts");
+  result.push(line);
+  i++;
 }
+
+fs.writeFileSync("compiler/apps/playground/lib/compilation.ts", result.join('\n'));
+console.log("Updated compilation.ts (part 2)");
 JSEOF
 node /tmp/fix_compilation2.js
 
-# 8. Update defaultStore.ts using node
+# 8. Update defaultStore.ts - use line-by-line replacement
 cat > /tmp/fix_store.js << 'JSEOF'
 const fs = require("fs");
 let content = fs.readFileSync("compiler/apps/playground/lib/defaultStore.ts", "utf8");
 
-const oldPattern = /export const defaultConfig = `\\\nimport type \{ PluginOptions \} from 'babel-plugin-react-compiler\/dist';\n\n\(\{\n  \/\/compilationMode: "all"\n\} satisfies PluginOptions\);`;/;
+const lines = content.split('\n');
+let result = [];
+let i = 0;
+let inDefaultConfig = false;
+let braceCount = 0;
+let backtickCount = 0;
 
-const newPattern = `export const defaultConfig = \`{\n  //compilationMode: "all"\n}\`;`;
+while (i < lines.length) {
+  const line = lines[i];
+  
+  if (line.startsWith('export const defaultConfig = ')) {
+    inDefaultConfig = true;
+    // Add the new declaration
+    result.push('export const defaultConfig = `');
+    result.push('{');
+    result.push('  //compilationMode: "all"');
+    result.push('}`;');
+    
+    // Count backticks and braces in this line to know when to exit
+    backtickCount = (line.match(/`/g) || []).length;
+    
+    // Skip until we find the end of the declaration
+    while (i < lines.length) {
+      const currentLine = lines[i];
+      // Check for backticks in this line
+      backtickCount += (currentLine.match(/`/g) || []).length;
+      
+      // Track braces for the satisfies expression
+      for (const char of currentLine) {
+        if (char === '{') braceCount++;
+        if (char === '}') braceCount--;
+      }
+      
+      // End condition: we've seen 2 backticks (open and close) and braces balanced
+      if (backtickCount >= 2 && braceCount === 0 && currentLine.includes('`;')) {
+        i++;
+        break;
+      }
+      i++;
+    }
+    continue;
+  }
+  
+  result.push(line);
+  i++;
+}
 
-content = content.replace(oldPattern, newPattern);
-
-fs.writeFileSync("compiler/apps/playground/lib/defaultStore.ts", content);
+fs.writeFileSync("compiler/apps/playground/lib/defaultStore.ts", result.join('\n'));
 console.log("Updated defaultStore.ts");
 JSEOF
 node /tmp/fix_store.js
@@ -285,7 +332,10 @@ console.log("Updated package.json");
 JSEOF
 node /tmp/fix_pkg.js
 
-# 10. Commit all changes
+# 10. Format page.spec.ts with prettier (required for test_repo_prettier_check_page_spec)
+npx prettier --write compiler/apps/playground/__tests__/e2e/page.spec.ts
+
+# 11. Commit all changes
 git add -A
 git commit -m "Apply json5 config fix" || echo "Nothing to commit"
 

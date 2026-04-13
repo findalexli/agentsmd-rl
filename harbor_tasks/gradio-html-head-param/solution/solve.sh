@@ -4,14 +4,13 @@ set -euo pipefail
 cd /workspace/gradio
 
 # Idempotent: skip if already applied
-if grep -q 'self.head = head' gradio/components/html.py 2>/dev/null; then
+if grep -q "self.head = head" gradio/components/html.py 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
-git apply --whitespace=fix <<'PATCH'
+# Patch 1: html.py
+cat > /tmp/patch1.diff << 'DIFFEOF'
 diff --git a/gradio/components/html.py b/gradio/components/html.py
 index 2d477c2d001..803129b4ee2 100644
 --- a/gradio/components/html.py
@@ -58,49 +57,52 @@ index 2d477c2d001..803129b4ee2 100644
              description=description,
              author=author,
              tags=tags,
-diff --git a/.agents/skills/gradio/SKILL.md b/.agents/skills/gradio/SKILL.md
-index 78a53d584c6..35a0262ecdd 100644
---- a/.agents/skills/gradio/SKILL.md
-+++ b/.agents/skills/gradio/SKILL.md
-@@ -103,7 +103,7 @@ Creates a button that can be assigned arbitrary .click() events.
- ### `Markdown(value: str | I18nData | Callable | None = None, label: str | I18nData | None = None, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool | None = None, rtl: bool = False, latex_delimiters: list[dict[str, str | bool]] | None = None, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", sanitize_html: bool = True, line_breaks: bool = False, header_links: bool = False, height: int | str | None = None, max_height: int | str | None = None, min_height: int | str | None = None, buttons: list[Literal['copy']] | None = None, container: bool = False, padding: bool = False)`
- Used to render arbitrary Markdown output.
+DIFFEOF
 
--### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('click', function() { trigger('click') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, server_functions: list[Callable] | None = None, props: Any)`
-+### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('click', function() { trigger('click') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, head: str | None = None, server_functions: list[Callable] | None = None, props: Any)`
- Creates a component with arbitrary HTML.
+git apply --whitespace=fix /tmp/patch1.diff
+echo "html.py patched successfully."
 
-diff --git a/guides/03_building-with-blocks/06_custom-HTML-components.md b/guides/03_building-with-blocks/06_custom-HTML-components.md
-index ee9cbfeb88c..bb9ebf1cd40 100644
---- a/guides/03_building-with-blocks/06_custom-HTML-components.md
-+++ b/guides/03_building-with-blocks/06_custom-HTML-components.md
-@@ -118,6 +118,27 @@ watch(['value', 'color'], () => {
- });
- ```
+# Patch 2: SKILL.md
+sed -i 's/server_functions: list\[Callable\] | None = None, props: Any/head: str | None = None, server_functions: list[Callable] | None = None, props: Any/g' .agents/skills/gradio/SKILL.md
+echo "SKILL.md patched successfully."
 
-+## Loading Third-Party Scripts with `head`
-+
-+The `head` parameter lets you load external JavaScript or CSS libraries directly on the component. The `head` content is injected and loaded **before** `js_on_load` runs, so your code can immediately use the library.
-+
-+```python
-+gr.HTML(
-+    value=[30, 70, 45, 90, 60],
-+    html_template="<canvas id='chart'></canvas>",
-+    js_on_load="""
-+        new Chart(element.querySelector('#chart'), {
-+            type: 'bar',
-+            data: {
-+                labels: props.value.map((_, i) => 'Item ' + (i + 1)),
-+                datasets: [{ label: 'Values', data: props.value }]
-+            }
-+        });
-+    """,
-+    head='<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>',
-+)
-+```
-+
- ## Server Functions
+# Patch 3: guide using inline Python with escaped quotes
+python3 -c '
+filepath = "/workspace/gradio/guides/03_building-with-blocks/06_custom-HTML-components.md"
+with open(filepath) as f:
+    content = f.read()
 
-PATCH
+js_code = """
+new Chart(element.querySelector(#chart), {
+    type: bar,
+    data: {
+        labels: props.value.map((_, i) => Item  + (i + 1)),
+        datasets: [{ label: Values, data: props.value }]
+    }
+});
+""".strip()
 
-echo "Patch applied successfully."
+insert_section = """## Loading Third-Party Scripts with head
+
+The head parameter lets you load external JavaScript or CSS libraries directly on the component. The head content is injected and loaded before js_on_load runs, so your code can immediately use the library.
+
+gr.HTML(
+    value=[30, 70, 45, 90, 60],
+    html_template=<canvas id=chart></canvas>,
+    js_on_load=""" + chr(34) + chr(34) + chr(34) + js_code + chr(34) + chr(34) + chr(34) + """,
+    head=<script src=https://cdn.jsdelivr.net/npm/chart.js></script>,
+)
+
+"""
+
+content = content.replace("## Server Functions\n", insert_section + "## Server Functions\n")
+with open(filepath, "w") as f:
+    f.write(content)
+print("Guide patched successfully.")
+'
+
+# Patch 4: Update test_html.py to expect head: None in config
+sed -i 's/"buttons": \[\],/"buttons": [],\n            "head": None,/' test/components/test_html.py
+echo "test_html.py patched successfully."
+
+echo "All patches applied successfully."

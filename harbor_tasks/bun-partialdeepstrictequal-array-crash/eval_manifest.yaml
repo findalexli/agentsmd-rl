@@ -71,80 +71,64 @@ checks:
     commit: e59a147d615a0b95d446c75ba836717cf0dbc513
 - id: test_repo_no_strict_equality_undefined
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: 'Repo convention: No ''== undefined'' or ''!= undefined'' comparisons
-    (from ban-words.test.ts)'
+    (adapted from ban-words.test.ts)'
 - id: test_repo_basic_prettier_format
   type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo convention: No trailing whitespace, consistent indentation (from
-    format.yml)'
+  origin: static
+  description: 'Repo convention: No trailing whitespace (basic formatting check)'
 - id: test_repo_ts_no_bare_intrinsics
   type: pass_to_pass
-  origin: repo_tests
-  description: 'TypeScript sanity: Bun $-intrinsics follow conventions (from typecheck)'
+  origin: static
+  description: 'TypeScript sanity: Bun $-intrinsics follow conventions'
 - id: test_repo_no_debug_log_statements
   type: pass_to_pass
-  origin: repo_tests
-  description: 'Lint convention: No debug log statements in production code (from
-    oxlint config)'
+  origin: static
+  description: 'Lint convention: No debug log statements in production code'
+- id: test_repo_no_loose_undefined_equality
+  type: pass_to_pass
+  origin: static
+  description: 'Repo convention: No loose equality with undefined (== undefined, !=
+    undefined) from ban-words.test.ts'
 - id: test_repo_oxlint_assert
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: oxlint passes on assert.ts (from .github/workflows/lint.yml)'
+  description: 'Repo CI: oxlint passes on assert.ts via npx (from .github/workflows/lint.yml)'
 - id: test_repo_prettier_assert
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: prettier formatting check passes on assert.ts (from .github/workflows/format.yml)'
-- id: test_repo_no_loose_undefined_equality
+  description: 'Repo CI: prettier --check passes on assert.ts via npx (from .github/workflows/format.yml)'
+- id: test_repo_node_syntax_check
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo convention: No loose equality with undefined (== undefined, !=
-    undefined) from ban-words.test.ts'
-rubric:
-- rule: Follow existing code style. Check neighboring files for patterns when adding
-    new prototype extractions.
-  source:
-    path: CLAUDE.md
-    lines: '117'
-    commit: e59a147d615a0b95d446c75ba836717cf0dbc513
-- rule: Extract prototype methods to constants at module level (e.g., const SafeMapPrototypeSet
-    = SafeMap.prototype.set), not inline.
-  source:
-    path: src/js/CLAUDE.md
-    lines: 32-34
-    commit: e59a147d615a0b95d446c75ba836717cf0dbc513
-- rule: Use $call/$apply for prototype method invocation to avoid user tampering.
-    Direct method calls on user-controlled objects are unsafe.
-  source:
-    path: src/js/CLAUDE.md
-    lines: 56-65
-    commit: e59a147d615a0b95d446c75ba836717cf0dbc513
-- rule: 'CRITICAL: Use `.$call` and `.$apply`, never `.call` or `.apply` to ensure
-    tamper-proof execution.'
-  source:
-    path: src/js/CLAUDE.md
-    lines: 38-47
-  evidence: The gold solution extracts `SafeMap.prototype.set` and `SafeMap.prototype.delete`
-    and invokes them using `.$call(expectedCounts, ...)` instead of the standard `.call()`
-    method.
-  category: style
+  description: 'Repo CI: Node.js can parse assert.ts syntax (basic syntax validation)'
+- id: test_repo_editorconfig_assert
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: EditorConfig compliance (UTF-8, LF endings, final newline, no trailing whitespace)'
 distractors:
-- rule: Use the $ prefix for private APIs, such as `map.$set(key, value);` for private
-    methods.
+- rule: Use `$set` for private map methods (`map.$set(key, value);`)
   collision_type: would_cause_bug
-  why_distracting: The rule explicitly suggests using `map.$set(key, value)` for private
-    methods. However, the bug is caused precisely because `expectedCounts` is a `SafeMap`
-    whose prototype has been set to `null` via `makeSafe()`. Following this rule and
-    calling `.$set` or `.$delete` directly on the instance will continue to throw
-    a TypeError. The agent must instead extract the prototype method and use `.$call`.
+  why_distracting: The config explicitly shows `map.$set(key, value);` as the standard
+    way to call private map methods. However, the bug is specifically that `SafeMap`
+    instances have a null prototype, so calling `$set` directly on the instance throws
+    a TypeError. The agent must realize this config example is the exact cause of
+    the bug and cannot be used for `SafeMap`.
   severity: high
   source:
-    path: src/js/CLAUDE.md
-    lines: 49-51
-hierarchy_analysis: The hierarchy correctly narrows from general repository guidelines
-  in the root `CLAUDE.md` to JavaScript builtin-specific rules in `src/js/CLAUDE.md`.
-  The most critical interaction happens within `src/js/CLAUDE.md`, where the general
-  rule to use `$set` for private map methods conflicts with the specific architectural
-  reality of `SafeMap` instances having null prototypes. The agent must prioritize
-  the `.$call` rule over the `map.$set` rule to fix the bug.
+    path: src/js/AGENTS.md
+    lines: 63-65
+hierarchy_analysis: The config hierarchy is deep, with JS-builtin-specific rules located
+  in `src/js/AGENTS.md`. The agent must apply the `.$call` rule from this file while
+  actively rejecting the `map.$set` example in the exact same file due to the specific
+  null-prototype context of `SafeMap` described in the issue.
+rubric:
+- rule: Use `.$call` and `.$apply`, never `.call` or `.apply`
+  source:
+    path: src/js/AGENTS.md
+    lines: 54-61
+  evidence: The gold solution uses `SafeMapPrototypeSet.$call(expectedCounts, ...)`
+    and `SafeMapPrototypeDelete.$call(...)` instead of standard `.call(...)` to invoke
+    the uncurried prototype methods.
+  category: style

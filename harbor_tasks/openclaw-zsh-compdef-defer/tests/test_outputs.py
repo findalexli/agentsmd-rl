@@ -212,3 +212,33 @@ def test_repo_cli_unit_tests():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"CLI unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsgo():
+    """Repo's TypeScript type check (tsgo) passes (pass_to_pass)."""
+    _setup_env()
+    r = subprocess.run(
+        ["pnpm", "tsgo"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript type check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_no_conflict_markers():
+    """Repo has no Git merge conflict markers (pass_to_pass)."""
+    _setup_env()
+    r = subprocess.run(
+        ["pnpm", "check:no-conflict-markers"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_host_env_policy():
+    """Repo's host env security policy is up to date (pass_to_pass)."""
+    _setup_env()
+    r = subprocess.run(
+        ["pnpm", "check:host-env-policy:swift"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Host env policy check failed:\n{r.stderr[-500:]}"

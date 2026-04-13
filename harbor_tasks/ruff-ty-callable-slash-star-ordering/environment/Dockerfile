@@ -27,6 +27,3 @@ RUN git config --global user.email "agent@test.com" && \
 
 WORKDIR /workspace/ruff
 
-# Pre-compile ty_python_semantic test binary so incremental rebuilds are fast.
-ENV CARGO_PROFILE_DEV_OPT_LEVEL=1
-RUN cargo test --no-run -p ty_python_semantic 2>&1 || true

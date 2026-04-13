@@ -69,34 +69,78 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Gradio version can be retrieved (repo CI smoke test)
+- id: test_repo_component_props
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component props tests pass (repo CI) — tests component property handling
+- id: test_repo_blocks_load_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Blocks load from config test passes (repo CI test-python.yml)
+- id: test_repo_blocks_partial_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Blocks partial function in config test passes (repo CI test-python.yml)
+- id: test_repo_client_documentation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Client documentation tests pass (repo CI test-python.yml)
+- id: test_repo_button_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Button component tests pass (repo CI test-python.yml)
+- id: test_repo_function_types_documented
+  type: pass_to_pass
+  origin: repo_tests
+  description: Function types documented in config test passes (repo CI)
+- id: test_repo_events_clear
+  type: pass_to_pass
+  origin: repo_tests
+  description: Event clear test passes (repo CI) — tests basic event system
+- id: test_repo_events_consecutive
+  type: pass_to_pass
+  origin: repo_tests
+  description: Event consecutive/chaining test passes (repo CI test-python.yml)
 rubric:
+- rule: The solution modifies only the backend Python code (gradio/components/html.py)
+    and does not touch any frontend files in js/ directory.
+  source:
+    path: gradio/components/html.py
+    lines: 1-200
+    commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
+  reference: The fix is a pure Python backend change adding __getattr__ method to
+    the HTML component class.
+  evidence: The gold solution only modifies gradio/components/html.py with a __getattr__
+    method.
+  category: architecture_boundary
+- rule: Code follows the project's ruff formatting standards (ruff format and ruff check pass).
+  source:
+    path: gradio/components/html.py
+    lines: 1-200
+    commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
+  reference: The gold solution adds code that passes all ruff format and ruff lint checks. The added __getattr__ method is properly formatted with correct indentation, spacing, and import statements.
+  evidence: The solution passes test_ruff_format and test_ruff_lint tests.
+  category: style
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
+    lines: 38-40
+  evidence: The gold solution implements `__getattr__` using standard Python conventions,
+    raising an `AttributeError` with a descriptive message that matches standard Python
+    error formatting (`'{type(self).__name
+  category: style
 distractors:
 - rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
     subdirectory'
   collision_type: architecture_boundary
-  why_distracting: The bug involves JavaScript events triggered from the frontend,
-    so an agent might think it needs to modify the Svelte/TypeScript frontend code
-    for the HTML component in `js/` to explicitly pass custom events to the backend.
-    However, the gold solution handles this entirely in the Python backend by dynamically
-    intercepting `__getattr__` and checking the `js_on_load` string.
+  why_distracting: The issue heavily discusses JavaScript, `trigger()`, and frontend
+    events. The agent might use the repository structure guide to navigate to `js/`
+    and attempt to modify the Svelte frontend code for the HTML component to register
+    or pass through custom events. However, the fix is purely in the Python backend
+    to dynamically accept method calls via `__getattr__`.
   severity: high
   source:
     path: AGENTS.md
-    lines: 12-12
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The agent is tasked with fixing a bug in the code, not interacting
-    with GitHub's issue tracker or PR system. Trying to create or link an issue would
-    be a waste of time and out of scope for the coding task.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 22-22
-hierarchy_analysis: The AGENTS.md file provides high-level repository structure and
-  PR guidelines. There are no conflicting config files since only AGENTS.md is present.
+    lines: 9-10
+hierarchy_analysis: The config is a single flat file (`AGENTS.md`) providing general
+  repository guidelines. No complex hierarchy traversal is required.

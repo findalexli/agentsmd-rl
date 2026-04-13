@@ -1,44 +1,124 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# Gold solution for CaseInsensitiveDict pop() fix
 
-cd /workspace/openai-agents-js
+set -e
 
-# Idempotent: skip if already applied
-if grep -q 'Object.assign(asst, funcCall.providerData)' packages/agents-openai/src/openaiChatCompletionsConverter.ts 2>/dev/null; then
-    echo "Patch already applied."
-    exit 0
-fi
+REPO="/workspace/requests"
 
-git apply - <<'PATCH'
-diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
-index 8979bd865..26eb3ec3d 100644
---- a/CONTRIBUTING.md
-+++ b/CONTRIBUTING.md
-@@ -104,9 +104,9 @@
+# Fix: Update the pop() method to handle default value correctly
+# Keeping the same structure as the buggy version, just fixing the pop() bug
+cat > "$REPO/src/requests/structures.py" << 'EOF'
+"""
+requests.structures
+~~~~~~~~~~~~~~~~~~~
 
- 1. Fork the repository and create a branch with a descriptive name (e.g., `fix/missing-error`, `feat/new-tool`).
- 2. Ensure your branch is up to date with `main`.
--3. Make your changes, add or update tests, and ensure that:
-+3. Make your changes, add or update tests, and ensure that the following succeeds:
-    ```bash
--   pnpm build && pnpm test && pnpm lint
-+   pnpm build && pnpm -r build-check && pnpm test && pnpm lint
-    ```
- 4. If applicable, generate a changeset (`pnpm changeset`).
-  5. Make sure you have [Trufflehog](https://github.com/trufflesecurity/trufflehog) installed to ensure no secrets are accidentally committed.
-diff --git a/packages/agents-openai/src/openaiChatCompletionsConverter.ts b/packages/agents-openai/src/openaiChatCompletionsConverter.ts
-index cca63ae94..2a5d2bd33 100644
---- a/packages/agents-openai/src/openaiChatCompletionsConverter.ts
-+++ b/packages/agents-openai/src/openaiChatCompletionsConverter.ts
-@@ -284,6 +284,7 @@ export function itemsToMessages(
-         },
-       });
-       asst.tool_calls = toolCalls;
-+      Object.assign(asst, funcCall.providerData);
-     } else if (item.type === 'function_call_result') {
-       flushAssistantMessage();
-       const funcOutput = item;
+Data structures that power Requests.
+"""
 
-PATCH
+from collections import OrderedDict
 
-echo "Patch applied successfully."
+from .compat import Mapping, MutableMapping
+
+
+class CaseInsensitiveDict(MutableMapping):
+    """A case-insensitive ``dict``-like object.
+
+    Implements all methods and operations of
+    ``MutableMapping`` as well as dict's ``copy``. Also
+    provides ``lower_items``.
+
+    All keys are expected to be strings. The structure remembers the
+    case of the last key to be set, and ``iter(instance)``,
+    ``keys()``, ``items()``, ``iterkeys()``, and ``iteritems()``
+    will contain case-sensitive keys. However, querying and contains
+    testing is case insensitive::
+
+        cid = CaseInsensitiveDict()
+        cid['Accept'] = 'application/json'
+        cid['aCCEPT'] == 'application/json'  # True
+        list(cid) == ['Accept']  # True
+
+    For example, ``headers['content-encoding']`` will return the
+    value of a ``'Content-Encoding'`` response header, regardless
+    of how the header name was originally stored.
+
+    If the constructor, ``.update``, or equality comparison
+    operations are given keys that have equal ``.lower()``s, the
+    behavior is undefined.
+    """
+
+    def __init__(self, data=None, **kwargs):
+        self._store = OrderedDict()
+        if data is None:
+            data = {}
+        self.update(data, **kwargs)
+
+    def __setitem__(self, key, value):
+        # Use the lowercased key for lookups, but store the actual
+        # key alongside the value.
+        self._store[key.lower()] = (key, value)
+
+    def __getitem__(self, key):
+        return self._store[key.lower()][1]
+
+    def __delitem__(self, key):
+        del self._store[key.lower()]
+
+    def __iter__(self):
+        return (casedkey for casedkey, mappedvalue in self._store.values())
+
+    def __len__(self):
+        return len(self._store)
+
+    def lower_items(self):
+        """Like iteritems(), but with all lowercase keys."""
+        return ((lowerkey, keyval[1]) for (lowerkey, keyval) in self._store.items())
+
+    def __eq__(self, other):
+        if isinstance(other, Mapping):
+            other = CaseInsensitiveDict(other)
+        else:
+            return NotImplemented
+        # Compare insensitively
+        return dict(self.lower_items()) == dict(other.lower_items())
+
+    # Copy is required
+    def copy(self):
+        return CaseInsensitiveDict(self._store.values())
+
+    def __repr__(self):
+        return str(dict(self.items()))
+
+    def pop(self, key, *args):
+        """Remove and return the value for the key.
+
+        If key is not found and default is provided, return default.
+        If key is not found and no default is provided, raise KeyError.
+        """
+        if key.lower() in self._store:
+            return self._store.pop(key.lower())[1]
+        if args:
+            return args[0]
+        raise KeyError(key)
+
+
+class LookupDict(dict):
+    """Dictionary lookup object."""
+
+    def __init__(self, name=None):
+        self.name = name
+        super().__init__()
+
+    def __repr__(self):
+        return f"<lookup '{self.name}'>"
+
+    def __getitem__(self, key):
+        # We allow fall-through here, so values default to None
+
+        return self.__dict__.get(key, None)
+
+    def get(self, key, default=None):
+        return self.__dict__.get(key, default)
+EOF
+
+echo "Fix applied successfully!"

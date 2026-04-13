@@ -270,6 +270,95 @@ def test_repo_component_signatures():
             assert has_return, f"Component {func_name} missing return statement"
 
 
+# [repo_tests] pass_to_pass — Actual CI commands using subprocess
+# ---------------------------------------------------------------------------
+
+BUN_INSTALL_SCRIPT = """
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+if ! command -v bun &> /dev/null; then
+    curl -fsSL https://bun.sh/install 2>/dev/null | bash
+fi
+"""
+
+
+def _install_bun():
+    """Install bun if not already available."""
+    subprocess.run(
+        ["bash", "-c", BUN_INSTALL_SCRIPT],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck using tsgo
+def test_repo_tsgo_typecheck():
+    """TypeScript typecheck passes using repo's tsgo (pass_to_pass)."""
+    # Install bun and dependencies in one session
+    script = """
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+if ! command -v bun &> /dev/null; then
+    curl -fsSL https://bun.sh/install | bash
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+cd /workspace/opencode/packages/ui && ./node_modules/.bin/tsgo --noEmit 2>&1
+exit $?
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsgo typecheck failed: stderr={r.stderr[-1000:]} stdout={r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — Prettier format check
+def test_repo_prettier_check():
+    """Code formatting passes using repo's prettier config (pass_to_pass)."""
+    # Install bun and run prettier in one session
+    script = """
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+if ! command -v bun &> /dev/null; then
+    curl -fsSL https://bun.sh/install | bash
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+./node_modules/.bin/prettier --check packages/ui/src/components/message-part.tsx 2>&1
+exit $?
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed: stderr={r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Bun unit tests for UI package
+def test_repo_unit_tests():
+    """Unit tests for UI package pass using bun test (pass_to_pass)."""
+    # Install bun and run tests in one session
+    script = """
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+if ! command -v bun &> /dev/null; then
+    curl -fsSL https://bun.sh/install | bash
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+cd /workspace/opencode/packages/ui && bun test 2>&1
+exit $?
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed: stderr={r.stderr[-1000:]} stdout={r.stdout[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

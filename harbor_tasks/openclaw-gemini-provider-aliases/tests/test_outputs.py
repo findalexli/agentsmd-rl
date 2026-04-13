@@ -11,7 +11,7 @@ import re
 import subprocess
 from pathlib import Path
 
-REPO = "/workspace/openclaw"
+REPO = "/workspace/openclaw"  # Docker-internal path from Dockerfile WORKDIR
 INDEX_FILE = Path(REPO) / "extensions/google/index.ts"
 MODELS_FILE = Path(REPO) / "extensions/google/provider-models.ts"
 

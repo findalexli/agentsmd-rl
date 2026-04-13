@@ -94,6 +94,39 @@ def test_repo_ruff_format():
 
 
 
+def test_repo_flake8_check():
+    """Git hook passes flake8 linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["flake8", f"{REPO}/{GIT_HOOK_PATH}", "--max-line-length=110", "--extend-ignore=E203,W503"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Flake8 check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_bandit_security_check():
+    """Git hook passes bandit security scan (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "bandit", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["bandit", "-r", f"{REPO}/{GIT_HOOK_PATH}", "-ll", "-ii", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Bandit security check failed:\n{r.stdout}\n{r.stderr}"
+
 
 def test_repo_git_hook_imports():
     """Git hook module can be imported without errors (pass_to_pass)."""
@@ -127,72 +160,129 @@ def test_repo_git_hook_imports_work():
     assert "Import OK" in r.stdout
 
 
-def test_repo_git_hook_has_ast_structure():
-    """Git hook AST has expected structure (pass_to_pass)."""
+def test_repo_git_hook_unit_tests():
+    """Git provider unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "uv", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
     r = subprocess.run(
         [
-            "python",
-            "-c",
-            f"""
-import ast
-with open('{REPO}/providers/git/src/airflow/providers/git/hooks/git.py') as f:
-    source = f.read()
-tree = ast.parse(source)
-nodes = list(ast.walk(tree))
-print(f"AST parsed OK: {{len(nodes)}} nodes")
-assert any(isinstance(n, ast.ClassDef) and n.name == 'GitHook' for n in nodes), "Should have GitHook class"
-print("Has GitHook class")
-assert 'def _build_ssh_command' in source, "Should have _build_ssh_command method"
-print("Has _build_ssh_command method")
-assert 'def _process_git_auth_url' in source, "Should have _process_git_auth_url method"
-print("Has _process_git_auth_url method")
-print("All AST structure tests passed!")
-""",
+            "uv",
+            "run",
+            "--project",
+            f"{REPO}/providers/git",
+            "pytest",
+            f"{REPO}/providers/git/tests/unit/git/hooks/test_git.py",
+            "-x",
         ],
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=300,
     )
-    assert r.returncode == 0, f"GitHook AST test failed:\n{r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Git hook unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
-def test_repo_git_hook_has_expected_strings():
-    """Git hook source has expected strings (pass_to_pass)."""
+def test_repo_git_hook_ssh_tests():
+    """Git hook SSH command tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "uv", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
     r = subprocess.run(
         [
-            "python",
-            "-c",
-            f"""
-with open('{REPO}/providers/git/src/airflow/providers/git/hooks/git.py') as f:
-    source = f.read()
-
-# Check for expected imports
-assert 'import os' in source, "Should import os"
-assert 'import shlex' in source or 'from shlex import' in source, "Should import shlex"
-print("Test 1 passed: Has expected imports")
-
-# Check for GitHook class definition
-assert 'class GitHook' in source, "Should define GitHook class"
-print("Test 2 passed: GitHook class defined")
-
-# Check for expected methods
-assert 'def _build_ssh_command' in source, "Should have _build_ssh_command method"
-assert 'def _process_git_auth_url' in source, "Should have _process_git_auth_url method"
-print("Test 3 passed: Has expected methods")
-
-# Check for expected SSH options handling
-assert 'StrictHostKeyChecking' in source, "Should handle StrictHostKeyChecking"
-assert 'UserKnownHostsFile' in source, "Should handle UserKnownHostsFile"
-print("Test 4 passed: Has expected SSH option handling")
-
-print("All string check tests passed!")
-""",
+            "uv",
+            "run",
+            "--project",
+            f"{REPO}/providers/git",
+            "pytest",
+            f"{REPO}/providers/git/tests/unit/git/hooks/test_git.py::TestGitHook::test_env_var_with_configure_hook_env",
+            "-x",
         ],
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=120,
     )
-    assert r.returncode == 0, f"GitHook strings test failed:\n{r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Git hook SSH test failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_git_hook_proxy_tests():
+    """Git hook proxy command tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "uv", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        [
+            "uv",
+            "run",
+            "--project",
+            f"{REPO}/providers/git",
+            "pytest",
+            f"{REPO}/providers/git/tests/unit/git/hooks/test_git.py::TestGitHook::test_proxy_command",
+            "-x",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Git hook proxy test failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_git_hook_known_hosts_tests():
+    """Git hook known hosts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "uv", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        [
+            "uv",
+            "run",
+            "--project",
+            f"{REPO}/providers/git",
+            "pytest",
+            f"{REPO}/providers/git/tests/unit/git/hooks/test_git.py::TestGitHook::test_known_hosts_file",
+            "-x",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Git hook known hosts test failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_git_hook_ssh_config_tests():
+    """Git hook SSH config tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "uv", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        [
+            "uv",
+            "run",
+            "--project",
+            f"{REPO}/providers/git",
+            "pytest",
+            f"{REPO}/providers/git/tests/unit/git/hooks/test_git.py::TestGitHook::test_ssh_config_file",
+            "-x",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Git hook SSH config test failed:\n{r.stderr[-500:]}"
 
 
 # =============================================================================
@@ -434,4 +524,3 @@ def test_proxy_command_formatting():
 
     # Should use single quotes (shlex.quote style), not double quotes
     assert "ProxyCommand='ssh -W %h:%p bastion.example.com'" in cmd
-

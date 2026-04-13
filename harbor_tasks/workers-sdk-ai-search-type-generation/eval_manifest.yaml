@@ -21,6 +21,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's type-generation tests for wrangler pass
+- id: test_repo_wrangler_ai_search_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's AI Search tests for wrangler pass
+- id: test_repo_wrangler_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint check for wrangler passes
+- id: test_repo_wrangler_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxfmt check for wrangler passes
+- id: test_repo_catalog_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pnpm catalog dependencies are correctly referenced
+- id: test_repo_package_deps_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package dependencies are valid
+- id: test_repo_wrangler_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's wrangler package builds successfully
 - id: test_core_bindings_ai_search_namespace
   type: fail_to_pass
   origin: pr_diff
@@ -63,29 +87,45 @@ rubric:
   evidence: The gold solution modifies the existing `packages/wrangler/src/__tests__/type-generation.test.ts`
     file to update the expected types, adhering to the `.test.ts` naming convention.
   category: testing
+- rule: Add/modify a CLI command in `packages/wrangler/src/`
+  source:
+    path: AGENTS.md
+    lines: 54-55
+  evidence: The gold solution implements the type generation logic for the CLI command
+    within `packages/wrangler/src/type-generation/index.ts`.
+  category: architecture
+- rule: Add/modify a CLI command -> `packages/wrangler/src/`
+  source:
+    path: AGENTS.md
+    lines: 54-55
+  evidence: The gold solution correctly targets `packages/wrangler/src/type-generation/index.ts`
+    for modifying the CLI's type generation behavior, aligning with the architectural
+    guidance.
+  category: architecture
 distractors:
 - rule: Shared config types/validation -> `packages/workers-utils/src/config/`
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add validation logic for `ai_search` and
-    `ai_search_namespaces` in `packages/workers-utils/src/config/validation.ts`, but
-    the prompt explicitly states that the config parser and validator already support
-    these binding types.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 46-46
-- rule: Add a test fixture -> `fixtures/`
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to create a new full workspace fixture in `fixtures/`
-    to test the type generation, but the existing unit tests in `packages/wrangler/src/__tests__/type-generation.test.ts`
-    already contain the necessary mock data and just need their expected outputs updated.
+  why_distracting: The monorepo guide points to `packages/workers-utils/src/config/validation.ts`
+    for shared config types and validation. However, the task instruction explicitly
+    states that the config parser and validator already support these binding types.
+    An agent might be distracted by the guide and attempt to modify the validation
+    logic, wasting effort and expanding the PR scope unnecessarily.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 45-45
-hierarchy_analysis: The hierarchy correctly separates monorepo-wide concerns (`AGENTS.md`)
-  from Wrangler-specific concerns (`packages/wrangler/AGENTS.md`). The Wrangler-specific
-  rules provide concrete testing conventions (like `.test.ts` extensions) that apply
-  directly to the modified test file. The monorepo rules provide architectural boundaries
-  (like `workers-utils` for config validation and `fixtures/` for test fixtures) that
-  the agent must navigate carefully to avoid expanding the scope of the PR unnecessarily.
+    lines: 58-59
+- rule: Never import `expect` from vitest — use test context `({ expect }) => {}`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to refactor the existing tests in `type-generation.test.ts`
+    to use the test context `({ expect }) => {}` instead of a global import. Since
+    the PR only requires updating the expected string output in existing tests, this
+    would cause unnecessary churn and distract from the core task.
+  severity: low
+  source:
+    path: packages/wrangler/AGENTS.md
+    lines: 38-39
+hierarchy_analysis: The root `AGENTS.md` provides monorepo-wide architectural pointers,
+  while `packages/wrangler/AGENTS.md` provides Wrangler-specific constraints. The
+  agent must synthesize the root guide's pointer to `packages/wrangler/src/` for CLI
+  commands with the task's explicit constraint that config validation (which the root
+  guide says lives in `workers-utils`) is already complete.

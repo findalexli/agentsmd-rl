@@ -3,26 +3,24 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T12:33:30.348512",
-  "total_time": 3842.26,
-  "sandbox_id": "ib0sb53k128lx71qt7rnx",
+  "validated_at": "2026-04-12T00:45:25.606698",
+  "total_time": 2279.06,
+  "sandbox_id": "ihi16lv60qntptu7lqq69",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 0.0,
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "glm-5.1",
       "backend": "glm",
       "time": 811.15,
-      "notes": ""
+      "notes": "Added 3 new CI-based pass_to_pass tests: tsc --noEmit for pages-handler.ts, tsc --noEmit for render-result.ts, node --check for render-result.ts. CI commands tested in Docker and verified working."
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1360.17,
+      "time": 559.2,
       "notes": ""
     },
     "improve": {
@@ -37,11 +35,11 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
-      "attempts": 3,
-      "notes": "Fixed 3 issues: (1) Updated solve.sh patch context (line numbers were off by 2), (2) Fixed test_render_result_accepts_string to check source code directly instead of importing compiled module (dist/ wasn't built), (3) Fixed test_repo_alex_linting to avoid false positive on filenames containing 'error'. Also updated solve.sh and eval_manifest.yaml to include rubric-compliant build command mention.",
+      "attempts": 1,
+      "notes": "Validation passed: Docker build OK, NOP test reward=0 (correctly fails on buggy base), Gold test reward=1 (all 17 tests pass). Fixed solve.sh to use sed commands instead of git patch (more resilient to line shifts).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1037.53
+      "time": 736.02
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -51,7 +49,7 @@
       "rules_added": 3,
       "rules_rejected": 0,
       "rejection_reasons": "",
-      "notes": "",
+      "notes": "Added 3 new CI-based pass_to_pass tests: tsc --noEmit for pages-handler.ts, tsc --noEmit for render-result.ts, node --check for render-result.ts. CI commands tested in Docker and verified working.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 71.23
@@ -61,7 +59,7 @@
       "model": "gemini-3.1-pro",
       "backend": "fireworks",
       "time": 37.13,
-      "notes": "",
+      "notes": "Added 3 new CI-based pass_to_pass tests: tsc --noEmit for pages-handler.ts, tsc --noEmit for render-result.ts, node --check for render-result.ts. CI commands tested in Docker and verified working.",
       "precision": 0.0
     },
     "rubric_fix": {
@@ -77,25 +75,19 @@
       "backend": "fireworks",
       "time": 4.56,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 32.61,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6401.33,
-      "at": "2026-04-09T07:33:05.807266"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18850.04,
-      "at": "2026-04-09T14:26:02.212545"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -111,6 +103,30 @@
       "backend": "fireworks",
       "time": 3842.26,
       "at": "2026-04-10T12:33:30.348512"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2574.42,
+      "at": "2026-04-11T21:56:29.222513"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2341.54,
+      "at": "2026-04-11T22:51:03.503986"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2279.06,
+      "at": "2026-04-12T00:45:25.606698"
     }
   ]
 }

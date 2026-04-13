@@ -15,6 +15,13 @@ P2P CI commands tested and confirmed working in Docker:
 - ruff check (already present)
 - typos spell check
 - Python syntax check (py_compile, already present)
+- SPDX header check
+- Forbidden imports check
+- Boolean context manager check
+- Init lazy imports check
+- torch.cuda API prevention check
+- Attention backend docs check
+- YAML syntax validation
 """
 
 import ast
@@ -210,6 +217,143 @@ def test_repo_python_syntax():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_headers():
+    """Repo's SPDX license headers check passes on modified files (pass_to_pass)."""
+    # Install regex if not available
+    try:
+        import regex  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "regex", "-q"],
+            capture_output=True, check=True,
+        )
+
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph_defs.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+        f"{REPO}/vllm/model_executor/models/interfaces.py",
+        f"{REPO}/vllm/model_executor/models/qwen3_vl.py",
+        f"{REPO}/tests/v1/cudagraph/test_encoder_cudagraph.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/tools/pre_commit/check_spdx_header.py"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_forbidden_imports():
+    """Repo's forbidden imports check passes on worker files (pass_to_pass)."""
+    try:
+        import regex  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "regex", "-q"],
+            capture_output=True, check=True,
+        )
+
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/tools/pre_commit/check_forbidden_imports.py"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_boolean_context_manager():
+    """Repo's boolean context manager check passes on modified files (pass_to_pass)."""
+    try:
+        import regex  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "regex", "-q"],
+            capture_output=True, check=True,
+        )
+
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+        f"{REPO}/vllm/model_executor/models/qwen3_vl.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/tools/pre_commit/check_boolean_context_manager.py"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_init_lazy_imports():
+    """Repo's root init lazy imports check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/tools/pre_commit/check_init_lazy_imports.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init lazy imports check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_torch_cuda_calls():
+    """Repo's torch.cuda API prevention check passes on worker files (pass_to_pass)."""
+    try:
+        import regex  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "regex", "-q"],
+            capture_output=True, check=True,
+        )
+
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+    ]
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/tools/pre_commit/check_torch_cuda.py"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"torch.cuda check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_attention_backend_docs():
+    """Repo's attention backend documentation is up to date (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/tools/pre_commit/generate_attention_backend_docs.py", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Attention backend docs check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_syntax():
+    """YAML workflow files have valid syntax (pass_to_pass)."""
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "pyyaml", "-q"],
+            capture_output=True, check=True,
+        )
+
+    yaml_files = [
+        f"{REPO}/.github/workflows/pre-commit.yml",
+        f"{REPO}/.pre-commit-config.yaml",
+    ]
+    for f in yaml_files:
+        r = subprocess.run(
+            [sys.executable, "-c", f"import yaml; yaml.safe_load(open('{f}'))"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"YAML syntax error in {f}:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

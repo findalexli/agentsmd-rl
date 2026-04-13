@@ -48,10 +48,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Pint lint check passes on Network directory
-- id: test_composer_audit_p2p
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's composer dependencies pass security audit
 - id: test_cors_unit_tests_p2p
   type: pass_to_pass
   origin: repo_tests
@@ -60,6 +56,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Email validator unit tests pass
+- id: test_platform_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Platform unit tests pass
+- id: test_detector_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Detector unit tests pass
+- id: test_template_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Template unit tests pass
+- id: test_filter_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Filter unit tests pass
+- id: test_openssl_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's OpenSSL unit tests pass
+- id: test_task_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Task unit tests pass
 rubric:
 - rule: Use comprehensive PHPDoc comments for new constants and methods
   source:
@@ -87,29 +107,17 @@ rubric:
     the new scheme validation.
   category: testing
 distractors:
-- rule: Comprehensive PHPDoc comments
-  collision_type: rule_conflict
-  why_distracting: The agent might try to add a PHPDoc comment specifically for the
-    new `SCHEME_TAURI` constant. However, the surrounding constants (`SCHEME_ANDROID`,
-    `SCHEME_WINDOWS`, etc.) do not have individual PHPDoc comments, so adding one
-    would violate local file consistency.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 23-24
-- rule: Update documentation if adding features
+- rule: When adding new endpoints, make sure to use modules and follow its patterns.
   collision_type: scope_ambiguity
-  why_distracting: The agent might consider adding Tauri support as a 'feature' and
-    attempt to search for and update documentation files. In this specific PR, only
-    the validator and its tests need to be updated.
+  why_distracting: The task involves adding a new scheme to the platform, which an
+    agent might confuse with adding a new endpoint, leading it to look for `src/Appwrite/Platform/AGENTS.md`
+    or create unnecessary module files.
   severity: low
   source:
     path: AGENTS.md
-    lines: 71-72
-hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
-  `AGENTS.md`. The rules in `AGENTS.md` are general project guidelines. The agent
-  must balance global rules like 'Comprehensive PHPDoc comments' against local file
-  consistency, as the existing constants in `Platform.php` do not use individual PHPDocs.
+    lines: 78-79
+hierarchy_analysis: The configuration is essentially a flat single file, as `CLAUDE.md`
+  simply redirects to `AGENTS.md`.
 version: '2.0'
 source:
   repo: appwrite/appwrite

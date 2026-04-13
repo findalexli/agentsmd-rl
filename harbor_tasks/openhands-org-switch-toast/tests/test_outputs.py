@@ -201,6 +201,7 @@ def test_repo_build():
     assert result.returncode == 0,         f"Frontend build failed:\n{result.stderr[-1000:]}"
 
 
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

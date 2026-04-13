@@ -58,40 +58,37 @@ checks:
   origin: repo_tests
   description: Repo's __init__ structure check passes
 rubric:
+- rule: Code style compliance - imports arranged in alphabetical order per ruff/isort
+  reference: "from .image_utils import (\n    ChannelDimension,\n    SizeDict,\n \
+    \   is_vision_available,\n    validate_kwargs,\n)\n"
 - rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
     style checks'
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 2-2
-  evidence: The gold solution inserts `is_vision_available` into the `from .image_utils
-    import (...)` block in strict alphabetical order (between `SizeDict` and `validate_kwargs`),
-    adhering to the ruff/isort form
+  evidence: The new import `is_vision_available` is inserted alphabetically between
+    `SizeDict` and `validate_kwargs` in the `image_utils` import tuple, adhering to
+    the `make style` (ruff) formatting requirements.
   category: style
 distractors:
-- rule: 'Copies and Modular Models: Do not edit a `# Copied from` block... add a file
-    named `modular_<name>.py` in the model directory.'
-  collision_type: scope_ambiguity
-  why_distracting: The rule about `# Copied from` and modular models specifically
-    applies to `src/transformers/models/`. The file being edited is `src/transformers/video_processing_utils.py`,
-    which is a general utility. An agent might waste time looking for copy mechanisms
-    or worry about breaking inheritance, but this rule is out of scope for utility
-    files.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 61-66
-- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
-    open PRs and issue ownership using `gh` CLI.'
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent is instructed to run `gh issue view` and `gh pr list`
-    to check for duplicate work before proposing a PR. In a headless evaluation or
-    patch-generation environment, attempting to run these GitHub CLI commands will
-    fail or distract from actually writing the code fix.
+  why_distracting: The agent is operating in a benchmark/headless environment where
+    it cannot verify issue coordination or approval. If it strictly follows this rule,
+    it will refuse to generate the patch and fail the task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 55-58
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: scope_ambiguity
+  why_distracting: The required fix is very small (moving a single import line). The
+    agent might incorrectly classify this as a 'tiny edit' or 'low-value busywork'
+    and refuse to output the fix, even though it resolves a critical runtime crash.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 25-32
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  rules are heavily focused on the PR submission process, GitHub coordination, and
-  model-specific copy mechanisms, which are mostly out of scope for a direct bug-fix
-  patch generation task on a utility file.
+    path: AGENTS.md
+    lines: 39-41
+hierarchy_analysis: The configuration consists of two identical root-level files (`AGENTS.md`
+  and `CLAUDE.md`). There is no deep hierarchy or inheritance to navigate.

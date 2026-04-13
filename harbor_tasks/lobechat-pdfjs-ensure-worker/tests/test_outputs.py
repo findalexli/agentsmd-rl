@@ -162,3 +162,47 @@ def test_repo_component_tests_pass():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Component tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_hooks_tests_pass():
+    """Hook unit tests pass (pass_to_pass).
+    Verifies React hooks functionality is intact.
+    """
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/hooks"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Hooks tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_sharemodal_tests_pass():
+    """ShareModal tests pass (pass_to_pass).
+    Verifies ShareModal functionality including SharePdf components.
+    """
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/features/ShareModal"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ShareModal tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_features_tests_pass():
+    """Feature tests pass (pass_to_pass).
+    Verifies feature-level functionality across the app.
+    """
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/features"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Features tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_services_tests_pass():
+    """Service layer tests pass (pass_to_pass).
+    Verifies service layer functionality including file services.
+    """
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/services"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Services tests failed:\n{r.stderr[-1000:]}"

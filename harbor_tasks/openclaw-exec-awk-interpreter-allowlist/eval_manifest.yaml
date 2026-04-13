@@ -67,76 +67,47 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo security audit tests pass
-rubric:
-- rule: Add brief code comments for tricky or non-obvious logic.
-  source:
-    path: CLAUDE.md
-    lines: '163'
-    commit: b7b46ad185392f53a995124f6861d2b356f84976
-- rule: Tests must be colocated with source files as *.test.ts.
-  source:
-    path: CLAUDE.md
-    lines: '10'
-    commit: b7b46ad185392f53a995124f6861d2b356f84976
-- rule: Prefer discriminated unions when parameter shape changes runtime behavior.
-  source:
-    path: CLAUDE.md
-    lines: '149'
-    commit: b7b46ad185392f53a995124f6861d2b356f84976
-- rule: Keep files concise; extract helpers instead of 'V2' copies.
-  source:
-    path: CLAUDE.md
-    lines: '164'
-    commit: b7b46ad185392f53a995124f6861d2b356f84976
-- rule: Aim to keep files under ~700 LOC; split/refactor when it improves clarity
-    or testability.
-  source:
-    path: CLAUDE.md
-    lines: '165'
-    commit: b7b46ad185392f53a995124f6861d2b356f84976
-- rule: 'Tests: colocated `*.test.ts`.'
-  source:
-    path: CLAUDE.md
-    lines: 10-10
-  evidence: 'The gold solution adds tests for the new awk interpreter detection logic
-    directly in `src/infra/exec-approvals-allow-always.test.ts` and `src/infra/exec-inline-eval.test.ts`,
-    which are colocated with '
-  category: testing
-- rule: 'Source code: `src/` (... infra in `src/infra` ...)'
-  source:
-    path: CLAUDE.md
-    lines: 9-9
-  evidence: The gold solution correctly modifies the execution approval and inline
-    evaluation logic within the `src/infra/` directory, adhering to the project structure
-    guidelines for infrastructure code.
-  category: architecture
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no git conflict markers
 distractors:
 - rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
     listed owner explicitly asked for the change or is already reviewing it with you.
     Treat those paths as restricted surfaces, not drive-by cleanup.
   collision_type: rule_conflict
-  why_distracting: The task explicitly requires fixing a security bypass in `src/infra/exec-inline-eval.ts`
-    and `src/security/audit.test.ts`. The agent might refuse to make the necessary
-    edits, thinking it violates the security-focused CODEOWNERS restriction, failing
-    to complete the task.
+  why_distracting: The rule forbids editing security-focused files without explicit
+    owner permission. However, the task explicitly requires fixing a security bypass
+    in `src/infra/` and updating `src/security/audit.test.ts`. An agent might refuse
+    to make the necessary changes citing this rule.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 5-5
+    path: AGENTS.md
+    lines: 6-7
 - rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
     plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
-    core `src/**` directly.'
+    core `src/**`, `src/plugin-sdk-internal/**`, or another extension''s `src/**`
+    directly.'
   collision_type: architecture_boundary
-  why_distracting: The agent is editing core code in `src/infra/`, not an extension.
-    It might misinterpret this rule and avoid adding the necessary relative import
-    `import { isInterpreterLikeAllowlistPattern } from "./exec-inline-eval.js";` in
-    `src/infra/exec-approvals-allowlist.ts`, or try to route it through a public SDK
-    barrel.
+  why_distracting: The rule forbids importing core `src/**` directly, but this applies
+    specifically to 'extension production code'. The agent is working within core
+    (`src/infra/`), so it must use relative imports between core modules (e.g., importing
+    `isInterpreterLikeAllowlistPattern` from `./exec-inline-eval.js`). Applying this
+    extension-specific rule would prevent the correct fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 16-16
-hierarchy_analysis: The config hierarchy consists of `CLAUDE.md` and `AGENTS.md` at
-  the root level, which contain identical rules. There are no conflicting rules between
-  different levels of the hierarchy, but the agent must correctly distinguish between
-  core code (`src/infra/`) and extension code to apply the import boundary rules correctly.
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: The config hierarchy is flat but contains rules with specific
+  architectural scopes (core vs. extensions). The agent must correctly identify its
+  current scope (`src/infra/` as core) to avoid misapplying extension import boundaries.
+  It must also weigh the explicit task instruction to fix a security bug against the
+  general repository guideline forbidding edits to security-focused files.
+rubric:
+- rule: 'Tests: colocated `*.test.ts`.'
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  evidence: The gold solution adds tests to `src/infra/exec-approvals-allow-always.test.ts`
+    and `src/infra/exec-inline-eval.test.ts` alongside the modified source files.
+  category: testing

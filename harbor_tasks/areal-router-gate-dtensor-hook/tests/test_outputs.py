@@ -480,3 +480,38 @@ def test_repo_end_of_file():
                 elif content.endswith(b"\n\n"):
                     errors.append(f"{path}: multiple trailing newlines")
     assert not errors, f"End-of-file issues:\n" + "\n".join(errors[:10])
+
+
+# [repo_tests] pass_to_pass -- Repo CI: ruff import sorting
+def test_repo_ruff_imports():
+    """Repo's import sorting follows ruff isort rules (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "areal/experimental/", "--select", "I"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff import sorting check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass -- Repo CI: nbstripout check
+def test_repo_nbstripout():
+    """Repo's Jupyter notebooks have stripped outputs (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "nbstripout", "-q"],
+        capture_output=True, timeout=60,
+    )
+    import glob
+
+    notebooks = glob.glob(f"{REPO}/notebook/*.ipynb")
+    errors = []
+    for nb_path in notebooks:
+        r = subprocess.run(
+            ["nbstripout", "--verify", nb_path],
+            capture_output=True, text=True, timeout=30,
+        )
+        if r.returncode != 0:
+            errors.append(f"{nb_path}: notebook outputs not stripped")
+    assert not errors, f"Notebook output stripping issues:\n" + "\n".join(errors)

@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T00:04:48.767853",
-  "total_time": 7540.78,
-  "sandbox_id": "iic97m4n81gzndh37w5ej",
+  "validated_at": "2026-04-12T04:02:11.086715",
+  "total_time": 1459.99,
+  "sandbox_id": "i2jdot94sf3cs7dzrd0jz",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 331.69,
+      "time": 172.26,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -42,10 +41,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All four checks verified: Docker build OK, NOP reward=0 (fail-to-pass tests fail on buggy code), Gold reward=1 (all tests pass after fix), rubric ICR=1.0 (from prior validation). No fixes needed - task is properly configured.",
+      "notes": "Docker build OK. NOP reward=0 (fail-to-pass tests correctly fail on buggy code). Gold reward=1 (all tests pass after fix). Rubric ICR=0.0 because rubric rules check for SKILL.md modifications which are not applicable to this Python code fix (task modifies tokenizer_communicator_mixin.py, not C++ JIT kernels). Removed 2 mismatched C++-specific rubric rules from eval_manifest.yaml; kept 1 relevant rule about following code patterns in neighboring functions.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 219.55
+      "time": 238.69
     },
     "rubric_judge": {
       "status": "fail",
@@ -53,6 +52,16 @@
       "backend": "fireworks",
       "time": 1.35,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.2,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -71,6 +80,22 @@
       "backend": "fireworks",
       "time": 7540.78,
       "at": "2026-04-10T00:04:48.767853"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1807.79,
+      "at": "2026-04-12T02:53:34.078036"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1459.99,
+      "at": "2026-04-12T04:02:11.086715"
     }
   ]
 }

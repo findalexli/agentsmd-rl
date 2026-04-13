@@ -194,7 +194,7 @@ for (let i = 0; i < lines.length; i++) {
   if (lines[i].includes('doc-style-guide')) {
     // Check surrounding lines for 'contribute' context
     const start = Math.max(0, i - 20);
-    const end = Math.min(lines.length, i + 5);
+    end = Math.min(lines.length, i + 5);
     const ctx = lines.slice(start, end).join('\\n');
     if (ctx.includes('contribute')) {
       found = true;
@@ -232,3 +232,54 @@ def test_repo_lockfile_no_duplicates():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Lockfile verification failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_docs_structure_valid():
+    """Repo documentation structure is valid (pass_to_pass)."""
+    # Verify key documentation files exist for the style guide PR context
+    required_files = [
+        "AGENTS.md",
+        "CONTRIBUTING.md",
+        "docs",
+        "microsite/sidebars.ts",
+    ]
+    missing = []
+    for f in required_files:
+        if not (Path(REPO) / f).exists():
+            missing.append(f)
+    assert not missing, f"Required documentation files missing: {missing}"
+
+    # Verify sidebars.ts is valid TypeScript (can be parsed)
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('microsite/sidebars.ts', 'utf8');
+// Basic validation: should be non-empty and contain sidebar structure
+if (!content || content.length < 100) {
+  console.error('sidebars.ts is too short or empty');
+  process.exit(1);
+}
+if (!content.includes('contribute') || !content.includes('Sidebar')) {
+  console.error('sidebars.ts missing expected contribute section or Sidebar');
+  process.exit(1);
+}
+console.log('PASS sidebars.ts structure valid');
+""")
+    assert r.returncode == 0, f"Sidebar validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_doc_references_valid():
+    """Repo documentation cross-references are valid (pass_to_pass)."""
+    # Verify that CONTRIBUTING.md references docs directory
+    contributing = Path(REPO) / "CONTRIBUTING.md"
+    content = contributing.read_text()
+
+    # Should reference the docs directory
+    has_docs_ref = "docs" in content and ("[docs]" in content or "docs/" in content)
+    assert has_docs_ref, "CONTRIBUTING.md should reference docs directory"
+
+    # Verify AGENTS.md exists and has content
+    agents = Path(REPO) / "AGENTS.md"
+    assert agents.exists(), "AGENTS.md must exist"
+    agents_content = agents.read_text()
+    assert len(agents_content) > 500, "AGENTS.md should have substantial content"

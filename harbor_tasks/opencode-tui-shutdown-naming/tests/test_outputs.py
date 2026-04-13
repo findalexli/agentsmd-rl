@@ -34,30 +34,56 @@ def _run_bun(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 # [repo_tests] pass_to_pass
 def test_repo_typecheck():
-    """TypeScript files parse correctly using Bun transpiler (lightweight typecheck)."""
-    script = '''
-const transpiler = new Bun.Transpiler({ loader: "ts" });
-const files = [
-  "packages/opencode/src/cli/cmd/tui/thread.ts",
-  "packages/opencode/src/cli/cmd/tui/worker.ts"
-];
-for (const f of files) {
-  const content = await Bun.file(f).text();
-  try {
-    await transpiler.transform(content);
-    console.log("OK: " + f);
-  } catch(e) {
-    console.error("FAIL: " + f + " - " + e.message);
-    process.exit(1);
-  }
-}
-console.log("All files passed syntax check");
-'''
+    """TypeScript typecheck passes via bun turbo typecheck (repo CI)."""
+    # First install dependencies (required for workspace resolution)
+    install = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
+    )
+    assert install.returncode == 0, f"bun install failed: {install.stderr[-500:]}"
+    # Run the repo's actual typecheck command
     r = subprocess.run(
-        ["bun", "-e", script],
+        ["bun", "turbo", "typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_relevant():
+    """Repo unit tests for utilities pass (lightweight subset covering modified code)."""
+    # First install dependencies (required for workspace resolution)
+    install = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
+    )
+    assert install.returncode == 0, f"bun install failed: {install.stderr[-500:]}"
+    # Run only the util tests that test utility functions related to the modified code
+    r = subprocess.run(
+        ["bun", "test", "test/util/timeout.test.ts", "test/util/iife.test.ts", "test/util/lazy.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "packages/opencode"),
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Prettier code formatting check passes on modified files (repo CI)."""
+    # First install dependencies (required for prettier)
+    install = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
+    )
+    assert install.returncode == 0, f"bun install failed: {install.stderr[-500:]}"
+    # Run prettier check on the files modified by the PR
+    r = subprocess.run(
+        ["npx", "prettier", "--check",
+         "packages/opencode/src/cli/cmd/tui/thread.ts",
+         "packages/opencode/src/cli/cmd/tui/worker.ts",
+         "AGENTS.md"],
         capture_output=True, text=True, timeout=60, cwd=str(REPO),
     )
-    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

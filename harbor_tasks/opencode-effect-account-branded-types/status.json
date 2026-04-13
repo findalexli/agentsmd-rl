@@ -3,20 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T14:59:24.151715",
-  "total_time": 922.37,
-  "sandbox_id": "i6gdt9dyckwoayr3hj0dm",
+  "validated_at": "2026-04-12T02:09:49.049324",
+  "total_time": 2067.6,
+  "sandbox_id": "itaa7a5ddv4r3e9pgynsb",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 1.0,
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 345.08,
-      "notes": "Added 4 new p2p tests: repo_unit_tests_auth, repo_unit_tests_acp_agent_interface, repo_unit_tests_cli_github_remote. Verified CI commands: bun turbo typecheck (pass), bun test <file> for account/repo, account/service, storage/db, keybind, auth, acp/agent-interface, cli/github-remote (all pass). Total p2p tests: 9 (5 existing + 4 new)."
+      "notes": "Added 7 new p2p tests: repo_unit_tests_acp_event_subscription, repo_unit_tests_cli_github_action, repo_unit_tests_cli_import. Verified CI commands: bun turbo typecheck (pass), bun test <file> for account/repo, account/service, storage/db, keybind, auth, acp/agent-interface, acp/event-subscription, cli/github-remote, cli/github-action, cli/import (all pass). Total p2p tests: 12 (9 existing + 3 new)."
     },
     "improve": {
       "status": "skipped",
@@ -29,7 +27,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 392.04,
+      "time": 330.03,
       "notes": ""
     },
     "validate": {
@@ -38,10 +36,10 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "Fixed eval_manifest.yaml rubric rules: added source field to each rule pointing to packages/opencode/AGENTS.md, and updated rules to reference specific Effect guide documentation requirements rather than general repo conventions.",
+      "notes": "Removed redundant rubric rules 3, 4, 5 (snake_case rules already covered by pass_to_pass test; function composition rule not suitable for LLM judge). All 4 validation checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 400.22
+      "time": 327.53
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -72,33 +70,19 @@
       "backend": "fireworks",
       "time": 1.3,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 17.65,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6371.34,
-      "at": "2026-04-09T07:34:22.707861"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18881.84,
-      "at": "2026-04-09T14:26:34.014929"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18882.12,
-      "at": "2026-04-09T14:26:34.187214"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -114,6 +98,30 @@
       "backend": "fireworks",
       "time": 922.37,
       "at": "2026-04-10T14:59:24.151715"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2488.95,
+      "at": "2026-04-11T23:03:48.764928"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2249.73,
+      "at": "2026-04-11T23:44:22.458635"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2067.6,
+      "at": "2026-04-12T02:09:49.049324"
     }
   ]
 }

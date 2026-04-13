@@ -450,6 +450,52 @@ def test_repo_cmake_syntax():
         f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
 
 
+def test_repo_style_shell_scripts():
+    """Repo's shell scripts have valid syntax (pass_to_pass)."""
+    # Check syntax of various CI shell scripts
+    scripts = [
+        f"{REPO}/ci/jobs/scripts/check_style/check_cpp.sh",
+        f"{REPO}/ci/jobs/scripts/check_style/various_checks.sh",
+        f"{REPO}/ci/jobs/scripts/check_style/check_typos.sh",
+        f"{REPO}/ci/jobs/scripts/check_style/check_submodules.sh",
+    ]
+
+    for script in scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"Shell syntax error in {script}: {r.stderr}"
+
+
+def test_repo_style_python_scripts():
+    """Repo's Python CI scripts have valid syntax (pass_to_pass)."""
+    # Check syntax of main CI Python scripts
+    scripts = [
+        f"{REPO}/ci/jobs/check_style.py",
+        f"{REPO}/ci/jobs/fast_test.py",
+    ]
+
+    for script in scripts:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", script],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"Python syntax error in {script}: {r.stderr}"
+
+
+def test_repo_git_history():
+    """Repo's git history is accessible (pass_to_pass)."""
+    # Check that we can access git history
+    r = subprocess.run(
+        ["git", "diff", "--stat", "HEAD~1"],
+        capture_output=True, text=True, cwd=REPO, timeout=60,
+    )
+    assert r.returncode == 0, f"Git history check failed: {r.stderr}"
+    # Should produce some output (diff stat)
+    assert len(r.stdout) > 0, "Git diff produced no output"
+
+
 # =============================================================================
 # Code structure tests (verify the fix was applied correctly)
 # =============================================================================
@@ -597,3 +643,75 @@ def test_no_else_clause_for_w():
 
     # If we get here, the else clause was properly removed
     pass
+
+
+# =============================================================================
+# NEW: Repo CI/CD tests using actual CI commands (subprocess.run)
+# These tests run real CI tools from the repository
+# =============================================================================
+
+def test_repo_shellcheck_ci_scripts():
+    """Repo CI shell scripts pass shellcheck (pass_to_pass)."""
+    # Install shellcheck if not present
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=120,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Run shellcheck on check_submodules.sh (this script passes)
+    script = f"{REPO}/ci/jobs/scripts/check_style/check_submodules.sh"
+    if os.path.exists(script):
+        r = subprocess.run(
+            ["shellcheck", "-x", script],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"shellcheck failed for {script}:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_python_ci_scripts_py_compile():
+    """Repo Python CI scripts pass py_compile syntax check (pass_to_pass)."""
+    scripts = [
+        f"{REPO}/ci/jobs/check_style.py",
+        f"{REPO}/ci/jobs/fast_test.py",
+        f"{REPO}/ci/jobs/functional_tests.py",
+    ]
+    for script in scripts:
+        if os.path.exists(script):
+            r = subprocess.run(
+                ["python3", "-m", "py_compile", script],
+                capture_output=True, text=True, timeout=60,
+            )
+            assert r.returncode == 0, f"Python syntax error in {script}:\n{r.stderr}"
+
+
+def test_repo_clang_format_check_cpp():
+    """Repo formatDateTime.cpp can be processed by clang-format (pass_to_pass)."""
+    # Install clang-format if not present
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=120,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "clang-format"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # The file exists and clang-format can process it
+    target_file = f"{REPO}/src/Functions/formatDateTime.cpp"
+    assert os.path.exists(target_file), f"Target file not found: {target_file}"
+
+    # Run clang-format - the command should work (even if there are style diffs)
+    # We check that the tool works and can parse the file
+    r = subprocess.run(
+        ["clang-format", "--dry-run", target_file],
+        capture_output=True, text=True, timeout=120,
+    )
+    # clang-format --dry-run returns 0 even with style diffs
+    # We just verify the file can be parsed (no crash, no parse errors)
+    # If it has style diffs, that is OK - the file is still valid C++
+    assert r.returncode in [0, 1], f"clang-format failed to parse file: {r.stderr}"
+    # Should not have parsing errors
+    assert "error:" not in r.stderr.lower() or "clang-format-violations" in r.stderr.lower(), \
+        f"clang-format found parsing errors: {r.stderr}"

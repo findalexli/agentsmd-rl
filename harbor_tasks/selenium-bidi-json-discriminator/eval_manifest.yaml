@@ -41,6 +41,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: C# source files have proper copyright headers
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in the repo have valid syntax (py_compile check)
 - id: test_discriminator_basic_extraction
   type: fail_to_pass
   origin: pr_diff
@@ -69,7 +73,7 @@ rubric:
     path: dotnet/AGENTS.md
     lines: 14-44
     commit: 5c2bf6b42fb66f895d936cf13a392385fb032689
-- rule: Comments should explain *why*, not *what*
+- rule: Comments should explain *why*, not *what'
   source:
     path: AGENTS.md
     lines: 58-58
@@ -86,42 +90,37 @@ rubric:
     extracting new classes.
   category: style
 distractors:
-- rule: The codebase is migrating to async
+- rule: Use XML documentation comments for public APIs
+  collision_type: scope_ambiguity
+  why_distracting: '`GetDiscriminator` is a public method, so the agent might try
+    to add XML documentation comments to it. However, this is an existing method and
+    the task is focused on a specific bug fix, so adding XML docs is out of scope.'
+  severity: medium
+  source:
+    path: dotnet/AGENTS.md
+    lines: 24-32
+- rule: 'Logging: Add logging where users may need insight into what''s happening'
   collision_type: would_cause_bug
-  why_distracting: The codebase is migrating to async, but `Utf8JsonReader` is a `ref
-    struct` in C#. It cannot be used in async methods, captured in closures, or used
-    in async state machines. Attempting to make `GetDiscriminator` async would result
-    in a compilation error.
+  why_distracting: The agent might try to add logging to the JSON parsing loop to
+    provide insight into the discriminator extraction. This would cause performance
+    issues and string allocations, defeating the purpose of the optimization.
   severity: high
   source:
     path: dotnet/AGENTS.md
-    lines: 26-27
-- rule: Add logging where users may need insight into what's happening
-  collision_type: would_cause_bug
-  why_distracting: The primary goal of this PR is to optimize JSON parsing by avoiding
-    unnecessary string allocations. Adding `_logger.Debug()` inside this tight parsing
-    loop would introduce new allocations and performance overhead, directly undermining
-    the PR's objective.
-  severity: high
-  source:
-    path: dotnet/AGENTS.md
-    lines: 17-23
-- rule: prefer well-named methods over comments
-  collision_type: rule_conflict
-  why_distracting: The rule suggests preferring well-named methods over comments.
-    However, the prompt explicitly requests adding clear comments explaining each
-    reader movement. Furthermore, extracting methods for `Utf8JsonReader` operations
-    is cumbersome because it is a `ref struct` and must be passed by `ref`, making
-    inline comments the technically superior choice here.
+    lines: 12-17
+- rule: When implementing solutions prefer writing a test for it first
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write a unit test for the JSON parsing logic,
+    but the task only requires fixing the method and ensuring the project builds.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 58-58
-hierarchy_analysis: The root `AGENTS.md` provides general guidelines on logging, testing,
-  and comments, while `dotnet/AGENTS.md` provides C#-specific implementations (like
-  the `ILogger` syntax and async migration). In this specific PR, the C# language
-  constraints (`ref struct` limitations) override the general architectural directives
-  (async migration and logging).
+    lines: 46-47
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` and a .NET-specific
+  `dotnet/AGENTS.md`. The .NET specific file provides concrete examples of logging
+  and documentation that act as strong distractors for this low-level performance
+  optimization task. The agent must recognize that general guidelines like adding
+  logging or XML docs do not apply to a high-performance JSON parsing loop.
 version: '2.0'
 source:
   repo: SeleniumHQ/selenium

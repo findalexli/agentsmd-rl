@@ -39,49 +39,67 @@ checks:
   origin: pr_diff
   description: Key Svelte template bindings preserved (hide-container, fullscreen,
     flex-grow, etc.)
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes Prettier checks (pnpm format:check)
+- id: repo_block_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Block.svelte unit tests pass (pnpm test:run js/atoms/Block.test.ts)
 rubric:
-- rule: Agent must modify js/atoms/src/Block.svelte to fix the border inheritance
-    bug
+- rule: 'The fix must change .hide-container:not(.fullscreen) CSS to use border-width:
+    0 instead of --block-border-width: 0 to prevent CSS variable inheritance to child
+    blocks.'
   source:
     path: js/atoms/src/Block.svelte
+  category: fix_correctness
+- rule: 'The .block class CSS must declare its own border-width: var(--block-border-width)
+    to ensure child blocks retain their borders independent of parent container settings.'
+  source:
+    path: js/atoms/src/Block.svelte
+  category: fix_completeness
+- rule: 'Repository Structure: `js/` — frontend code (Svelte/TypeScript)'
+  source:
+    path: AGENTS.md
+    lines: 8-12
+  evidence: The gold solution correctly targets the frontend code in `js/atoms/src/Block.svelte`
+    to fix the UI bug, aligning with the repository structure documentation.
+  category: architecture
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: 37-39
-  evidence: 'The gold solution modifies the CSS in `Block.svelte` to fix the cascading
-    issue by changing `--block-border-width: 0` to `border-width: 0` and moving the
-    border-width property to the `.block` class, m'
+    lines: 38-40
+  evidence: The gold solution modifies the CSS within the existing `<style>` block
+    of the Svelte component and moves the inline style to the class definition, adhering
+    to the surrounding code style.
   category: style
 distractors:
+- rule: Target an issue and use the PR template with AI disclosure.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to create a GitHub issue, edit PR templates,
+    or add AI disclosures, which are irrelevant in a headless evaluation environment
+    focused only on code generation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-25
 - rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The agent is fixing a frontend CSS bug in a Svelte component. Running
+    backend Python tests is unnecessary and crosses architectural boundaries.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-32
+- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs to run backend tests locally, but this PR only
-    modifies frontend Svelte code (`js/atoms/src/Block.svelte`). Running backend tests
-    would be a waste of time and compute.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 27-28
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The agent is tasked with fixing a bug in the codebase, not managing
-    GitHub issues. Trying to create or link an issue via GitHub CLI during the coding
-    task is out of scope for the agent's environment.
+  why_distracting: Running the global frontend formatter script might format untouched
+    files and pollute the diff, causing the evaluation to fail due to out-of-scope
+    changes.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 15-16
-- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
-  collision_type: meta_confusion
-  why_distracting: The agent might try to edit the PR template file or create a PR
-    description file, which is not part of the code fix and distracts from solving
-    the actual bug.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 18-21
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present, providing general
-  repository guidelines. The agent must distinguish between frontend and backend workflows
-  based on the files being edited, applying frontend formatting and ignoring backend
-  testing.
+    lines: 38-39
+hierarchy_analysis: The configuration is flat, consisting of a single AGENTS.md file
+  at the root. No hierarchy traversal is required.

@@ -40,7 +40,7 @@ index 645ae8814ad..67f298b427e 100644
 +            Effect.sync(() => log.error("failed to load global config, using defaults", { error: String(error) })),
 +          ),
 +          Effect.orElseSucceed((): Info => ({}),
-+        ),
++        )),
 +        Duration.infinity,
 +      )
  
@@ -58,6 +58,9 @@ index 645ae8814ad..67f298b427e 100644
 PATCH
 
 echo "Patch applied successfully."
+
+# Run Prettier to fix any formatting issues from the patch
+npx prettier --write "$FILE" 2>/dev/null || true
 
 cat << 'DOC' >> packages/opencode/AGENTS.md
 

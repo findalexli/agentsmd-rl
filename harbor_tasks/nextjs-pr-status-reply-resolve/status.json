@@ -3,25 +3,38 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T14:51:25.017001",
-  "total_time": 443.21,
-  "sandbox_id": "iwcll0hbpizz3rgzxu7ts",
+  "validated_at": "2026-04-12T00:28:58.354624",
+  "total_time": 1786.14,
+  "sandbox_id": "i6t6pziblvg6wjscfi5m6",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 210.04,
-      "notes": ""
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP test reward=0 (5 f2p tests correctly fail on base), Gold test reward=1 (all 27 tests pass after fix), Rubric ICR=1.0 (used patched judge.py with code file hunk extraction and workflow.md pattern).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 179.03
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 36.47,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 242.83,
+      "time": 363.1,
       "notes": ""
     },
     "improve": {
@@ -30,90 +43,32 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
-    },
-    "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed test_reply_to_thread_uses_rest_api to check for addPullRequestReviewThreadReply(input: pattern instead of just bare string. All 4 checks pass.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 163.78
-    },
-    "rubric_enrichment": {
-      "status": "ok",
-      "configs_found": [
-        "CLAUDE.md",
-        ".agents/skills/authoring-skills/SKILL.md",
-        ".agents/skills/pr-status-triage/SKILL.md",
-        ".agents/skills/pr-status-triage/workflow.md",
-        "AGENTS.md"
-      ],
-      "rules_added": 3,
-      "rules_rejected": 2,
-      "rejection_reasons": "Rejected: 1) 'Structure for Action' rule from authoring-skills/SKILL.md lines 79-87 - too generic, not a specific code convention. 2) 'One-liner summary in AGENTS.md' rule from authoring-skills/SKILL.md line 97 - PR doesn't modify AGENTS.md.",
-      "notes": "",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 101.21
-    },
-    "rubric_validate": {
-      "status": "error",
-      "model": "gemini-3.1-pro",
-      "backend": "fireworks",
-      "time": 0.85,
-      "notes": "",
-      "precision": 1.0
-    },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 4.44,
-      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5776.78,
-      "at": "2026-04-09T07:22:47.216604"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 18670.96,
-      "at": "2026-04-09T14:23:03.153850"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18670.24,
-      "at": "2026-04-09T14:23:03.327123"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 2218.94,
-      "at": "2026-04-10T12:05:38.374610"
+      "time": 2246.89,
+      "at": "2026-04-11T21:49:42.122178"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 443.21,
-      "at": "2026-04-10T14:51:25.017001"
+      "time": 1964.05,
+      "at": "2026-04-11T22:39:58.796668"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1786.14,
+      "at": "2026-04-12T00:28:58.354624"
     }
   ]
 }

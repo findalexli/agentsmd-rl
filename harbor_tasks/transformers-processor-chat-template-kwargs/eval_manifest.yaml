@@ -74,47 +74,37 @@ config_edits:
 rubric:
 - rule: We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
   source:
-    path: CLAUDE.md
-    lines: 63-66
-  evidence: The gold solution implements the `apply_chat_template` fix independently
-    in both `src/transformers/models/smolvlm/processing_smolvlm.py` and `src/transformers/models/voxtral/processing_voxtral.py`
-    rat
+    path: src/transformers/processing_utils.py
+    lines: 1-10
+  reference: |
+    The gold solution implements the apply_chat_template fix independently in both
+    src/transformers/models/smolvlm/processing_smolvlm.py and
+    src/transformers/models/voxtral/processing_voxtral.py, each handling their own
+    processor_kwargs without sharing a new base class.
+  evidence: The gold solution modifies processing_smolvlm.py and processing_voxtral.py
+    independently without introducing a new shared base class, following the rule to avoid
+    direct inheritance between model-specific files.
   category: architecture
 distractors:
 - rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: In an automated evaluation environment, the agent is expected to
-    output the code fix directly. If it follows this rule, it will fail-closed and
-    refuse to generate the patch because no coordination evidence or issue link is
-    provided in the prompt.
+  why_distracting: The agent is operating in a headless benchmark environment where
+    it cannot gather coordination evidence or issue links. Following this rule would
+    cause the agent to refuse to generate the fix.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 57-61
-- rule: Pure code-agent PRs are not allowed... Do not raise PRs without human validation.
+    lines: 58-60
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end.'
   collision_type: meta_confusion
-  why_distracting: The agent might output conversational text asking for a human to
-    validate the changes or refuse to output the final patch entirely, which breaks
-    the automated evaluation harness that expects a direct code solution.
+  why_distracting: The agent might refuse to write the code because it knows it is
+    an AI and there is no human submitter in the loop to defend the change.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 47-55
-- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
-    Ideally you should edit the code it's copying from.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might assume that `apply_chat_template` in the model-specific
-    processing files (`processing_smolvlm.py`, `processing_voxtral.py`) are copied
-    from a common source and waste time looking for a non-existent source to edit,
-    or it might hesitate to modify these files directly out of fear that `make fix-repo`
-    will revert its changes.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 67-70
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical content. The rules
-  are heavily focused on meta-contribution guidelines (coordination, human validation,
-  fail-closed behavior) which are highly distracting for an autonomous coding agent
-  in a benchmark setting. The agent must ignore the meta-rules about refusing to work
-  without human coordination, while still adhering to the architectural rules about
-  model-specific files.'
+    lines: 48-50
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md contain identical rules
+  at the root level. The agent must navigate these instructions and recognize that
+  the strict fail-closed policies for real-world PRs must be bypassed to complete
+  the benchmark task.

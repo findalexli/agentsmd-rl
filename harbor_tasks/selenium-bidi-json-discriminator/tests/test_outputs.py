@@ -247,3 +247,29 @@ def test_repo_file_header():
 test_discriminator_basic_extraction = test_valuetextequals_usage
 test_discriminator_with_nested_objects = test_correct_read_skip_pattern
 test_discriminator_with_arrays = test_reader_advancement_comments
+
+
+def test_repo_python_syntax():
+    """
+    Pass-to-pass: Python scripts have valid syntax (pass_to_pass).
+
+    Runs 'python3 -m py_compile' on Python files in the scripts directory
+    to verify they have valid Python syntax.
+
+    This is a lightweight CI check used by the repo.
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"""
+        cd {REPO}
+        failed=0
+        for f in $(find scripts -name '*.py' -type f 2>/dev/null | head -20); do
+            python3 -m py_compile "$f" 2>&1 || {{ echo "SYNTAX_ERROR: $f"; failed=1; }}
+        done
+        exit $failed
+        """],
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+
+    assert result.returncode == 0, f"Python syntax errors found:\n{result.stderr[-500:]}"

@@ -222,6 +222,67 @@ print("All imports successful")
     assert r.returncode == 0, f"Import test failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_full():
+    """Repo's full ruff lint check passes on the codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "ruff_check"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ruff_check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_full():
+    """Repo's full ruff format check passes on the codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "ruff_format"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ruff_format failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_generic_flatten_dict():
+    """flatten_dict utility function works correctly (pass_to_pass)."""
+    script = """import sys
+sys.path.insert(0, '/workspace/transformers/src')
+from transformers.utils.generic import flatten_dict
+d = {"a": {"b": 1, "c": 2}, "d": 3}
+result = flatten_dict(d)
+expected = {"a.b": 1, "a.c": 2, "d": 3}
+assert result == expected, f"flatten_dict failed: {result} != {expected}"
+print("flatten_dict test OK")
+"""
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"flatten_dict test failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_generic_explicit_enum():
+    """ExplicitEnum utility class works correctly (pass_to_pass)."""
+    script = """import sys
+sys.path.insert(0, '/workspace/transformers/src')
+from transformers.utils.generic import ExplicitEnum
+
+class TestEnum(ExplicitEnum):
+    A = "alpha"
+    B = "beta"
+
+assert TestEnum("alpha") == TestEnum.A
+assert TestEnum("beta") == TestEnum.B
+print("ExplicitEnum test OK")
+"""
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ExplicitEnum test failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------
@@ -244,3 +305,33 @@ def test_format_ruff_passes():
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
     assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_types_check():
+    """Type annotations checker passes on src/transformers/utils (covers generic.py)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "types"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"types check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_init_isort():
+    """Import ordering in __init__.py files is correct (CI check)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "init_isort"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"init_isort check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_inits_check():
+    """Init file structure check passes (CI consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "inits"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"inits check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

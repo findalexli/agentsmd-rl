@@ -51,15 +51,26 @@ checks:
       lines: "287-290"
       commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
 
-rubric:
-  - rule: "When you add new arguments, please make sure the order in this class definition the same as the order in the function ServerArgs.add_cli_args."
-    source:
-      path: "python/sglang/srt/server_args.py"
-      lines: "287-289"
-      commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
 
-  - rule: "Please follow the existing style to group the new arguments into related groups or create new groups."
-    source:
-      path: "python/sglang/srt/server_args.py"
-      lines: "290"
-      commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified files"
+
+  - id: test_repo_compileall
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files compile without syntax errors"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "isort import ordering passes on modified files"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Black formatting check passes on modified files"
+# Rubric rules removed - they were PR instructions extracted from source code comments,
+# but the judge is designed for config file edits, not source code style evaluation.
+# The key ordering constraint is already verified by test_gc_threshold_in_class_and_cli.

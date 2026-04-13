@@ -38,6 +38,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo lockfile has no duplicate dependencies
+- id: test_repo_docs_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo documentation structure is valid (key files exist)
+- id: test_repo_doc_references_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo documentation cross-references are valid
 rubric:
 - rule: The documentation style guide content is consistent with the style and tone
     of the existing Backstage documentation.
@@ -94,14 +102,32 @@ rubric:
   evidence: The gold solution places the new documentation style guide inside the
     `docs/contribute/` directory.
   category: architecture
+- rule: 'The following files contain guidelines for the project: - `/CONTRIBUTING.md`:
+    comprehensive contribution guidelines.'
+  source:
+    path: AGENTS.md
+    lines: 13-19
+  evidence: The gold solution updates CONTRIBUTING.md to link to the new style guide,
+    respecting its role as the comprehensive contribution guidelines, and updates
+    AGENTS.md to ensure AI agents are aware of the n
+  category: documentation
+- rule: Project guidelines and standards must be referenced in AGENTS.md so that AI
+    contributors are aware of them.
+  source:
+    path: AGENTS.md
+    lines: 16-22
+  evidence: The gold solution updates AGENTS.md to include a reference to the newly
+    created doc-style-guide.md, following the established pattern of listing project
+    guideline files (like STYLE.md and CONTRIBUTING
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
   gold_added: 'Packages prefixed with `core-` (e.g., `@backstage/core-plugin-api`)
     are part of the old frontend system. Packages prefixed with `frontend-` (e.g.,
     `@backstage/frontend-plugin-api`) are part of the new frontend system. Packages
-    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of the
-    backend system.
+    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of
+    the backend system.
 
 
     ## Writing Standards
@@ -111,8 +137,8 @@ config_edits:
   gold_removed: Packages prefixed with `core-` (e.g., `@backstage/core-plugin-api`)
     are part of the old frontend system. Packages prefixed with `frontend-` (e.g.,
     `@backstage/frontend-plugin-api`) are part of the new frontend system (NFS). Packages
-    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of the
-    backend system.
+    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of
+    the backend system.
 - path: CONTRIBUTING.md
   tier: 2
   gold_added: 'Ready to get started? You can find all the documentation files in the
@@ -121,7 +147,7 @@ config_edits:
     Please take a look through [our style guide](./docs/contribute/doc-style-guide.md)
     as well for writing style tips.
 
-    If you have any questions or need help, feel free to reach out in the [Backstage
+    If you have have any questions or need help, feel free to reach out in the [Backstage
     Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940).'
   gold_removed: Ready to get started? You can find all the documentation files in
     the [docs](docs) directory! If you have any questions or need help, feel free
@@ -130,26 +156,26 @@ distractors:
 - rule: All changes that affect the published version of packages in the `/packages`
     and `/plugins` directories must be accompanied by a changeset.
   collision_type: scope_ambiguity
-  why_distracting: The agent might generate a changeset file because it is adding
-    a new feature (a style guide) to the repository. However, changesets are strictly
-    scoped to changes affecting published packages in `/packages` and `/plugins`,
-    not documentation or repository configuration.
+  why_distracting: The agent might generate a changeset file for this PR because it
+    is adding a new feature (a style guide). However, the CI workflow explicitly states
+    that changesets are only for packages in `/packages` and `/plugins`. Since this
+    PR only modifies `/docs` and root markdown files, a changeset is unnecessary and
+    would fail validation.
   severity: high
   source:
     path: AGENTS.md
-    lines: 44-46
-- rule: Before submitting a pull request with changes to any package in the workspace,
-    run `yarn build:api-reports` in the project root to generate API reports for all
-    packages.
+    lines: 43-46
+- rule: When writing or generating code, always match the existing coding style of
+    each individual package and file.
   collision_type: scope_ambiguity
-  why_distracting: The agent might run `yarn build:api-reports` before finishing the
-    task, assuming it is a required pre-PR step. However, this PR only modifies documentation
-    and markdown files, so no API reports need to be updated.
-  severity: low
+  why_distracting: The agent might try to infer and document code-specific style rules
+    (like TypeScript formatting or React conventions) into the documentation style
+    guide, confusing 'coding style' with 'writing style'.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 36-37
-hierarchy_analysis: The only configuration file provided is `AGENTS.md` at the root
-  level. The task requires the agent to modify the configuration files themselves
-  (`AGENTS.md` and `CONTRIBUTING.md`) to establish new rules for future contributors,
-  which requires meta-awareness of the repository's governance structure.
+    lines: 24-26
+hierarchy_analysis: The configuration is flat (a single AGENTS.md file at the root),
+  but the task is highly meta-referential. The agent must understand that AGENTS.md
+  is the very file that dictates its own behavior and the behavior of future AI agents,
+  and must modify it to enforce the new documentation rules it just created.

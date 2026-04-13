@@ -574,3 +574,343 @@ print("OK")
             capture_output=True, text=True, timeout=30,
         )
         assert r.returncode == 0, f"C++ style check failed for {cpp_file.name}: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — tree-sitter based Zig syntax validation
+def test_repo_zig_syntax_treesitter():
+    """Zig code has valid syntax according to tree-sitter parser (pass_to_pass).
+
+    Mirrors the 'zig fmt' and 'zig build check' CI steps.
+    Uses subprocess.run() with tree-sitter to validate Zig syntax,
+    which is a real parser check (not just brace counting).
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import subprocess
+import sys
+
+# Install tree-sitter if needed
+try:
+    from tree_sitter import Language, Parser
+    import tree_sitter_zig as ts_zig
+except ImportError:
+    subprocess.run(["pip3", "install", "tree-sitter", "tree-sitter-zig"],
+                   capture_output=True, timeout=60)
+    from tree_sitter import Language, Parser
+    import tree_sitter_zig as ts_zig
+
+parser = Parser(Language(ts_zig.language()))
+text = open("/workspace/bun/src/bun.js/test/expect.zig").read()
+tree = parser.parse(text.encode())
+root = tree.root_node
+
+errors = []
+def find_errors(node):
+    if node.type == "ERROR":
+        errors.append((node.start_point[0] + 1, text[node.start_byte:node.end_byte][:50]))
+    for child in node.children:
+        find_errors(child)
+
+find_errors(root)
+
+if errors:
+    print(f"Syntax errors found: {len(errors)}")
+    for line, snippet in errors[:5]:
+        print(f"  Line {line}: {snippet}...")
+    sys.exit(1)
+
+print(f"Zig syntax OK: parsed {len(text)} bytes")
+"""],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Tree-sitter Zig syntax check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — validate expect-extend test file
+def test_repo_expect_extend_test_valid():
+    """expect-extend.test.js has valid structure and patterns (pass_to_pass).
+
+    Validates the test file that exercises the expect.extend() functionality
+    which is directly related to the modified expect.zig code.
+    Uses subprocess.run() to check file structure.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+import json
+
+text = open("/workspace/bun/test/js/bun/test/expect-extend.test.js").read()
+
+# Check for required patterns
+required_patterns = [
+    "expect.extend",
+    "_toBeDivisibleBy",
+    "describe(",
+    "it(",
+]
+
+missing = [p for p in required_patterns if p not in text]
+if missing:
+    print(f"Missing patterns: {missing}")
+    sys.exit(1)
+
+# Count test cases
+test_count = text.count("it(")
+describe_count = text.count("describe(")
+
+if test_count < 10:
+    print(f"Too few test cases: {test_count}")
+    sys.exit(1)
+
+print(f"expect-extend.test.js OK: {test_count} tests in {describe_count} describe blocks")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"expect-extend test validation failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check expect.zig has proper targets for fix
+def test_repo_expect_zig_putmaybeindex_ready():
+    """expect.zig has the proper structure for putMayBeIndex fix (pass_to_pass).
+
+    Validates that expect.zig contains the three targets that need to be fixed
+    (expect_proto, expect_constructor, expect_static_proto) in the extend function.
+    Uses subprocess.run() to check file content.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+import re
+
+text = open("/workspace/bun/src/bun.js/test/expect.zig").read()
+
+# Find extend function
+idx = text.find("pub fn extend")
+if idx == -1:
+    print("pub fn extend not found")
+    sys.exit(1)
+
+# Extract function body
+brace = text.index("{", idx)
+depth, i = 1, brace + 1
+while i < len(text) and depth > 0:
+    if text[i] == "{":
+        depth += 1
+    elif text[i] == "}":
+        depth -= 1
+    i += 1
+body = text[brace+1:i-1]
+
+# Check for all three targets
+targets = ["expect_proto", "expect_constructor", "expect_static_proto"]
+missing = [t for t in targets if t not in body]
+
+if missing:
+    print(f"Missing targets in extend(): {missing}")
+    sys.exit(1)
+
+# Check for Bun__JSWrappingFunction__create (the wrapper creation)
+if "Bun__JSWrappingFunction__create" not in body:
+    print("Missing Bun__JSWrappingFunction__create in extend()")
+    sys.exit(1)
+
+print(f"expect.zig structure OK: all 3 targets found with wrapper creation")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"expect.zig structure check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — validate against actual repo ban-limits.json
+def test_repo_ban_limits_json_valid():
+    """ban-limits.json is valid JSON with expected structure (pass_to_pass).
+
+    Mirrors the ban-words CI check by validating the limits file
+    that controls banned word violations.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import sys
+
+try:
+    limits = json.load(open('/workspace/bun/test/internal/ban-limits.json'))
+
+    # Verify key banned patterns exist with expected limits
+    required_patterns = [
+        'std.debug.print',
+        'std.log',
+        ' catch bun.outOfMemory()',
+        'usingnamespace',
+    ]
+
+    for pattern in required_patterns:
+        if pattern not in limits:
+            print(f'Missing required pattern in ban-limits.json: {pattern}')
+            sys.exit(1)
+
+    # Verify zero-tolerance patterns have limit 0
+    zero_tolerance = ['std.debug.print', 'usingnamespace']
+    for pattern in zero_tolerance:
+        if limits.get(pattern, -1) != 0:
+            print(f'Zero-tolerance pattern {pattern} has limit {limits.get(pattern)}')
+            sys.exit(1)
+
+    print(f'ban-limits.json OK: {len(limits)} patterns defined')
+except json.JSONDecodeError as e:
+    print(f'Invalid JSON in ban-limits.json: {e}')
+    sys.exit(1)
+except FileNotFoundError:
+    print('ban-limits.json not found')
+    sys.exit(1)
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ban-limits.json validation failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — validate cmake/Sources.json used by ban-words CI
+def test_repo_cmake_sources_json_valid():
+    """cmake/Sources.json is valid and contains expected structure (pass_to_pass).
+
+    Mirrors the ban-words CI check which reads from Sources.json to find
+    which Zig files to scan.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import sys
+
+try:
+    sources = json.load(open('/workspace/bun/cmake/Sources.json'))
+
+    if not isinstance(sources, list):
+        print('Sources.json should be a list')
+        sys.exit(1)
+
+    # Check for expected structure
+    found_bun_zig = False
+    for entry in sources:
+        if not isinstance(entry, dict):
+            continue
+        paths = entry.get('paths', [])
+        if isinstance(paths, list):
+            for path in paths:
+                if 'bun' in path.lower() and '.zig' in path.lower():
+                    found_bun_zig = True
+                    break
+
+    if not found_bun_zig:
+        print('No bun-related Zig paths found in Sources.json')
+        # Not a failure, just info
+
+    print(f'Sources.json OK: {len(sources)} entries')
+except json.JSONDecodeError as e:
+    print(f'Invalid JSON in Sources.json: {e}')
+    sys.exit(1)
+except FileNotFoundError:
+    print('Sources.json not found - skipping')
+    sys.exit(0)  # Not a hard failure
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Sources.json validation failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — expect.zig passes CI ban-words check using repo config
+def test_repo_expect_zig_ban_words_with_limits():
+    """expect.zig passes ban-words check using repo's ban-limits.json (pass_to_pass).
+
+    Mirrors the actual CI ban-words test by reading banned patterns from
+    ban-words.test.ts and limits from ban-limits.json.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import re
+import sys
+
+# Read banned words from ban-words.test.ts
+ban_words_content = open('/workspace/bun/test/internal/ban-words.test.ts').read()
+match = re.search(r'const words.*?= \\{(.*?)\\};', ban_words_content, re.MULTILINE | re.DOTALL)
+if not match:
+    print('Could not find words dict in ban-words.test.ts')
+    sys.exit(1)
+
+body = match.group(1)
+# Extract the actual banned patterns
+patterns = re.findall(r'\"([^\"]+)\"\\s*:\\s*\\{', body)
+
+# Read limits
+limits = json.load(open('/workspace/bun/test/internal/ban-limits.json'))
+
+# Read expect.zig
+expect_zig = open('/workspace/bun/src/bun.js/test/expect.zig').read()
+
+# Check only zero-tolerance patterns (limit = 0)
+violations = []
+for pattern in patterns:
+    limit = limits.get(pattern, 0)
+    if limit == 0 and pattern in expect_zig:
+        # Skip patterns that are in comments
+        lines = expect_zig.split('\\n')
+        for i, line in enumerate(lines, 1):
+            if pattern in line:
+                stripped = line.strip()
+                if not stripped.startswith('//'):
+                    violations.append(f'{pattern} at line {i}')
+
+if violations:
+    print(f'Zero-tolerance violations in expect.zig: {violations[:5]}')
+    sys.exit(1)
+
+print(f'expect.zig ban-words OK: checked {len(patterns)} patterns')
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"expect.zig ban-words check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — validate expect test directory structure
+def test_repo_expect_test_directory_valid():
+    """expect test directory has required files and structure (pass_to_pass).
+
+    Validates the test/js/bun/test/ directory contains expected test files
+    related to expect functionality.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import os
+import sys
+
+test_dir = '/workspace/bun/test/js/bun/test/'
+if not os.path.isdir(test_dir):
+    print(f'Test directory not found: {test_dir}')
+    sys.exit(1)
+
+files = os.listdir(test_dir)
+
+# Check for essential expect-related test files
+required_files = [
+    'expect-extend.test.js',
+    'expect.test.js',
+]
+
+missing = [f for f in required_files if f not in files]
+if missing:
+    print(f'Missing required test files: {missing}')
+    sys.exit(1)
+
+# Check for harness import pattern in expect-extend test
+expect_extend_path = os.path.join(test_dir, 'expect-extend.test.js')
+if os.path.exists(expect_extend_path):
+    content = open(expect_extend_path).read()
+    if 'harness' not in content and 'bun:test' not in content:
+        print('expect-extend.test.js missing harness or bun:test import')
+        sys.exit(1)
+
+print(f'Test directory OK: {len(files)} files, required tests present')
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"expect test directory validation failed: {r.stdout}{r.stderr}"

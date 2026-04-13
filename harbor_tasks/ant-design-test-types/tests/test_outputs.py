@@ -3,6 +3,7 @@
 import subprocess
 import re
 import os
+from pathlib import Path
 
 REPO = "/workspace/ant-design"
 
@@ -322,3 +323,58 @@ def test_repo_test_node_passes():
 
     # The test may fail due to fake-timers issues on base commit, which is expected
     # We just verify it runs without TypeScript compilation errors
+
+
+def test_npm_version_passes():
+    """Pass-to-pass: npm run version generates version file successfully"""
+    # This is part of the npm run lint pipeline (npm run version)
+    result = subprocess.run(
+        "npm run version",
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=ENV,
+        shell=True
+    )
+
+    # Command should succeed
+    assert result.returncode == 0, f"npm run version failed:\n{result.stdout}\n{result.stderr}"
+
+    # Verify the version file was generated
+    version_file = Path(f"{REPO}/components/version/version.ts")
+    assert version_file.exists(), "Version file was not generated"
+
+
+def test_lint_md_passes():
+    """Pass-to-pass: Markdown lint passes (npm run lint:md)"""
+    # This is part of the npm run lint pipeline
+    result = subprocess.run(
+        "npm run lint:md",
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=ENV,
+        shell=True
+    )
+
+    # Should pass with no errors
+    assert result.returncode == 0, f"Markdown lint failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_lint_changelog_passes():
+    """Pass-to-pass: Changelog lint passes (npm run lint:changelog)"""
+    # This is part of the npm run lint pipeline
+    result = subprocess.run(
+        "npm run lint:changelog",
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=ENV,
+        shell=True
+    )
+
+    # Should pass with no errors
+    assert result.returncode == 0, f"Changelog lint failed:\n{result.stdout}\n{result.stderr}"

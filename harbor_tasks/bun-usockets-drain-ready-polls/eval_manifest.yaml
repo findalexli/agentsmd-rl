@@ -112,42 +112,68 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: C header file has valid structure with proper guards
+- id: test_c_file_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C file passes clang-format check (CI/CD from format.yml)
+- id: test_git_file_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are tracked in git (CI/CD git ls-files check)
+- id: test_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has no uncommitted changes at base commit (CI/CD git status
+    check)
+- id: test_repo_clang_format_c_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C file passes clang-format check (CI/CD from format.yml)
+- id: test_repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are tracked in git (CI/CD git ls-files check)
+- id: test_repo_git_history_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has valid git history (CI/CD sanity check)
 rubric:
-- rule: Follow existing code style. Check neighboring files for patterns.
+- rule: C code changes should use existing project conventions (LIBUS_MAX_READY_POLLS
+    constant instead of hardcoded 1024).
   source:
-    path: CLAUDE.md
-    lines: '198'
+    path: packages/bun-usockets/src/eventing/epoll_kqueue.c
+    lines: 295-325
     commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
-- rule: Use comments to explain invariants and design decisions, not to narrate what
-    the code does.
+- rule: Comments in low-level C code should explain invariants and design decisions,
+    such as why saturation checks and iteration caps are necessary.
   source:
-    path: scripts/build/CLAUDE.md
-    lines: 13-16
-    commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
+    path: packages/bun-usockets/src/eventing/epoll_kqueue.c
+    lines: 288-295
+    commit: ea83a741b4fd78331a8163a377cceccb0129e15f
 distractors:
-- rule: Write regression tests for specific numbered GitHub issues in test/regression/issue/
-  collision_type: would_cause_bug
-  why_distracting: The agent might attempt to write a JS test to reproduce the >1024
-    fd issue. However, creating >1024 simultaneous ready file descriptors in a test
-    environment will likely hit default OS `ulimit -n` limits (often 256 or 1024)
-    and fail or be flaky. The gold solution correctly omits a test for this low-level
-    event loop saturation.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 43-44
-- rule: Bun is written primarily in Zig with C++ for JavaScriptCore integration
-  collision_type: architecture_boundary
-  why_distracting: The config states Bun is written primarily in Zig with C++ for
-    JSC. An agent might try to fix the event loop polling logic in Zig or C++, but
-    `bun-usockets` is a C library fork. The fix must be implemented in C within the
-    existing `epoll_kqueue.c` file.
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a regression test for >1024 simultaneous
+    ready file descriptors to satisfy the testing instructions, but simulating event
+    loop saturation reliably in a test environment is highly complex and omitted from
+    the gold solution.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 1-3
-hierarchy_analysis: CLAUDE.md and AGENTS.md are identical and focus heavily on testing
-  and Zig/C++ architecture. However, this specific issue requires modifying a vendored
-  C library (`bun-usockets`). The agent must ignore the general testing directives
-  (due to OS ulimit constraints on FDs) and the Zig architecture norms to patch the
-  C code directly.
+    path: AGENTS.md
+    lines: 48-50
+- rule: Guides using bun.sys for system calls and file I/O in Zig. Use when implementing
+    file operations instead of std.fs or std.posix.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use `bun.sys` or bridge to Zig for system
+    calls, but the target file is a C file (`epoll_kqueue.c`) that must use standard
+    C system calls (`bun_epoll_pwait2`, `kevent64`).
+  severity: high
+  source:
+    path: .claude/skills/zig-system-calls
+    lines: 1-2
+hierarchy_analysis: The config files provide general guidance for Bun development
+  (Zig/C++ and JS tests), but the target file is a C file in a vendored/forked library
+  (`bun-usockets`). The agent must recognize that Zig-specific system call rules and
+  standard JS testing requirements do not cleanly apply to this low-level C event
+  loop patch.

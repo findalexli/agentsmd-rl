@@ -99,47 +99,26 @@ rubric:
     than a mechanical cleanup or tiny edit.
   category: testing
 distractors:
-- rule: Never use system python3 or bare pip/pip install. All Python commands must
-    go through uv and .venv/bin/python.
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to install `uv`, create a virtual environment,
-    and install dependencies inside `solve.sh`. This is unnecessary for a patch script
-    and could fail or time out in the evaluation sandbox.
+  why_distracting: The rule explicitly forbids 'pure code-agent PRs', which might
+    cause an autonomous agent to refuse to complete the task, believing it is violating
+    the project's contribution policy by acting without a human submitter.
   severity: high
   source:
     path: AGENTS.md
-    lines: 34-45
-- rule: 'Run all pre-commit hooks on staged files: pre-commit run'
+    lines: 24-25
+- rule: 'Fail-closed behavior: If work is duplicate/trivial busywork, do not proceed.
+    Return a short explanation of what is missing.'
   collision_type: meta_confusion
-  why_distracting: The agent might append `pre-commit run` to `solve.sh` to ensure
-    code quality, but this could fail on unrelated files or missing dependencies in
-    the isolated patch-application environment.
+  why_distracting: The agent might misinterpret the instruction to 'Fail-closed' and
+    refuse to proceed if it incorrectly classifies the bug fix as a one-off or trivial
+    PR, returning an explanation instead of generating the patch.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 65-75
-- rule: Run a specific test file (use .venv/bin/python directly...)
-  collision_type: meta_confusion
-  why_distracting: The agent might add `pytest` commands to `solve.sh` to verify the
-    fix. The evaluation framework handles test execution separately; running tests
-    in the patch script wastes time and might fail if ROCm hardware is not available
-    during the patch phase.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 56-62
-- rule: Add attribution using commit trailers such as Co-authored-by
-  collision_type: meta_confusion
-  why_distracting: The agent might try to create a git commit with the specified trailers
-    (e.g., `Co-authored-by`) instead of just applying the patch, which modifies git
-    history unnecessarily and falls outside the scope of `solve.sh`.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 78-86
-hierarchy_analysis: '`CLAUDE.md` simply includes `AGENTS.md`. `AGENTS.md` provides
-  repository-wide contribution guidelines, mostly focused on human workflows (PR submission,
-  local testing, commit messages). Since the agent is tasked with writing a `solve.sh`
-  patch script for an automated evaluation, these human-centric workflow rules create
-  meta-confusion, as the agent might try to automate the human workflow (running tests,
-  linters, setting up envs) inside the patch script.'
+    lines: 32-33
+hierarchy_analysis: The config hierarchy is effectively flat. `CLAUDE.md` simply redirects
+  to `AGENTS.md`, which contains generic repository contribution guidelines rather
+  than specific coding standards or architectural rules.

@@ -433,8 +433,92 @@ def test_repo_glob_sources():
     assert r.returncode == 0, f"glob-sources script failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — TypeScript typecheck
-# CI command: bun run typecheck (tsc --noEmit)
+
+# [repo_tests] pass_to_pass — package-json-lint.test.ts from CI
+# CI command: bun test test/package-json-lint.test.ts
+def test_repo_package_json_lint():
+    """Package.json lint test passes (pass_to_pass) - runs bun test test/package-json-lint.test.ts."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Install dependencies first
+    subprocess.run(
+        [str(bun_bin), "install"],
+        capture_output=True,
+        timeout=180,
+        cwd=str(REPO),
+        env=env,
+    )
+
+    # Run the package-json-lint test
+    r = subprocess.run(
+        [str(bun_bin), "test", "test/package-json-lint.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"Package-json-lint test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — bun.test.ts from CI (CLI tests)
+# CI command: bun test test/cli/bun.test.ts
+def test_repo_bun_cli():
+    """Bun CLI tests pass (pass_to_pass) - runs bun test test/cli/bun.test.ts."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Install dependencies first
+    subprocess.run(
+        [str(bun_bin), "install"],
+        capture_output=True,
+        timeout=180,
+        cwd=str(REPO),
+        env=env,
+    )
+
+    # Run the bun CLI test
+    r = subprocess.run(
+        [str(bun_bin), "test", "test/cli/bun.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"Bun CLI test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+# [repo_tests] pass_to_pass — TypeScript typecheck on root project
+# CI command: bun run tsc --noEmit --project tsconfig.json (root only, without test/)
+def test_repo_typecheck_root():
+    """Root project TypeScript typecheck passes (pass_to_pass) - runs tsc --noEmit on root project."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Install dependencies first
+    subprocess.run(
+        [str(bun_bin), "install"],
+        capture_output=True,
+        timeout=180,
+        cwd=str(REPO),
+        env=env,
+    )
+
+    # Run TypeScript typecheck on root project only (test/ has intentional errors in regression tests)
+    r = subprocess.run(
+        [str(bun_bin), "run", "tsc", "--noEmit", "--project", "tsconfig.json"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
 
 # ---------------------------------------------------------------------------
 # Repo CI/CD pass_to_pass gates — static analysis (no build tools required)
@@ -604,3 +688,60 @@ def test_no_std_debug_in_error_functions():
             assert pattern not in region, (
                 f"{fn_name} contains banned pattern '{pattern}' - use bun equivalent"
             )
+
+
+# [repo_tests] pass_to_pass — oxlint from CI
+# CI command: bun lint (which runs bunx oxlint --config=oxlint.json --format=github src/js)
+def test_repo_lint():
+    """JavaScript linting passes (pass_to_pass) - runs bun lint (oxlint)."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Install dependencies first
+    subprocess.run(
+        [str(bun_bin), "install"],
+        capture_output=True,
+        timeout=180,
+        cwd=str(REPO),
+        env=env,
+    )
+
+    # Fix oxlint.json - remove unsupported rules for oxlint v0.16+
+    # The no-undef-init rule is not supported but causes parse errors
+    subprocess.run(
+        ["sed", "-i", '/"no-undef-init":/d', str(REPO / "oxlint.json")],
+        capture_output=True,
+        timeout=10,
+        cwd=str(REPO),
+    )
+
+    # Run the linter (oxlint)
+    r = subprocess.run(
+        [str(bun_bin), "lint"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — prettier check from CI
+# CI command: npx prettier --check with plugin and config
+def test_repo_prettier_check():
+    """Prettier formatting check passes (pass_to_pass) - verifies JS/TS files are formatted."""
+    # Run prettier check on scripts directory using npx --yes (avoids npm install issues with workspaces)
+    r = subprocess.run(
+        [
+            "npx", "--yes", "prettier@latest", "--check",
+            "--config", ".prettierrc",
+            "scripts/*.ts", "scripts/*.mjs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

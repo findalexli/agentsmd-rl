@@ -241,6 +241,26 @@ def test_repo_syntax_valid():
         REPO / "enterprise/integrations/slack/slack_view.py",
         REPO / "openhands/core/config/agent_config.py",
         REPO / "openhands/server/services/conversation_service.py",
+        REPO / "openhands/utils/conversation_summary.py",
+    ]
+
+    for filepath in key_files:
+        if not filepath.exists():
+            continue
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(filepath)],
+            capture_output=True, text=True, timeout=30
+        )
+        assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
+
+
+def test_repo_enterprise_syntax_valid():
+    """Enterprise key Python files have valid syntax (pass_to_pass)."""
+    key_files = [
+        REPO / "enterprise/integrations/slack/slack_view.py",
+        REPO / "enterprise/integrations/resolver_org_router.py",
+        REPO / "enterprise/integrations/resolver_context.py",
+        REPO / "enterprise/storage/saas_conversation_store.py",
     ]
 
     for filepath in key_files:
@@ -255,14 +275,14 @@ def test_repo_syntax_valid():
 
 def test_repo_imports_resolve():
     """Key imports can be resolved after package installation (pass_to_pass)."""
-    # Install the package in editable mode
+    # Install the package using poetry
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", str(REPO), "-q"],
-        capture_output=True, text=True, timeout=180
+        ["poetry", "run", "pip", "install", "-e", str(REPO), "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO
     )
     assert r.returncode == 0, f"pip install failed: {r.stderr[-500:]}"
 
-    # Test that key imports work
+    # Test that key imports work using poetry run
     test_imports = [
         "from openhands.server.services.conversation_service import create_new_conversation",
         "from openhands.storage.data_models.conversation_metadata import ConversationMetadata",
@@ -271,64 +291,174 @@ def test_repo_imports_resolve():
 
     for import_stmt in test_imports:
         r = subprocess.run(
-            [sys.executable, "-c", import_stmt],
+            ["poetry", "run", "python", "-c", import_stmt],
             capture_output=True, text=True, cwd=REPO, timeout=30
         )
         assert r.returncode == 0, f"Import failed: {import_stmt}\n{r.stderr}"
 
 
 def test_repo_unit_tests_utils():
-    """Utils unit tests pass (pass_to_pass)."""
-    # Install the package
+    """Utils unit tests pass after package installation (pass_to_pass)."""
+    # Install dependencies and run utils tests using poetry
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", str(REPO), "-q"],
-        capture_output=True, text=True, timeout=180
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
     )
     if r.returncode != 0:
-        pytest.skip(f"Could not install package: {r.stderr}")
+        pytest.skip(f"Could not install pytest: {r.stderr}")
 
     # Run utils tests
     r = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/unit/utils", "-v", "--tb=short"],
-        capture_output=True, text=True, cwd=REPO, timeout=300
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/utils/test_circular_imports.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
     )
     assert r.returncode == 0, f"Utils tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_agent_server():
     """Agent server unit tests pass (pass_to_pass)."""
-    # Install the package
+    # Install dependencies and run tests using poetry
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", str(REPO), "-q"],
-        capture_output=True, text=True, timeout=180
+        ["poetry", "run", "pip", "install", "pytest", "pytest-asyncio", "pytest-mock", "freezegun", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
     )
     if r.returncode != 0:
-        pytest.skip(f"Could not install package: {r.stderr}")
+        pytest.skip(f"Could not install pytest: {r.stderr}")
 
     # Run agent_server tests
     r = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/unit/app_server/test_agent_server_env_override.py", "-v", "--tb=short"],
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/app_server/test_agent_server_env_override.py", "-v", "--tb=short"],
         capture_output=True, text=True, cwd=REPO, timeout=300
     )
     assert r.returncode == 0, f"Agent server tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_enterprise_syntax_valid():
-    """Enterprise key Python files have valid syntax (pass_to_pass)."""
-    key_files = [
-        REPO / "enterprise/integrations/slack/slack_view.py",
-        REPO / "enterprise/integrations/resolver_org_router.py",
-        REPO / "enterprise/storage/saas_conversation_store.py",
-    ]
+def test_repo_unit_tests_utils_circular_imports():
+    """Utils circular imports test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
 
-    for filepath in key_files:
-        if not filepath.exists():
-            continue
-        r = subprocess.run(
-            [sys.executable, "-m", "py_compile", str(filepath)],
-            capture_output=True, text=True, timeout=30
-        )
-        assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/utils/test_circular_imports.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"Circular imports test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_utils_git():
+    """Utils git tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/utils/test_git.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"Git tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_utils_import():
+    """Utils import tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/utils/test_import_utils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"Import utils tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_conversation_stats():
+    """Conversation stats unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/test_conversation_stats.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=180
+    )
+    assert r.returncode == 0, f"Conversation stats tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_conversation_summary():
+    """Conversation summary unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/test_conversation_summary.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"Conversation summary tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_azure_devops():
+    """Azure DevOps service unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "pytest-asyncio", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/test_azure_devops.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"Azure DevOps tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_forgejo():
+    """Forgejo service unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "pytest-asyncio", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/test_forgejo_service.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"Forgejo tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_llm_registry():
+    """LLM registry unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "run", "pip", "install", "pytest", "docker", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        pytest.skip(f"Could not install dependencies: {r.stderr}")
+
+    r = subprocess.run(
+        ["poetry", "run", "python", "-m", "pytest", "tests/unit/test_llm_registry.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120
+    )
+    assert r.returncode == 0, f"LLM registry tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
 if __name__ == "__main__":

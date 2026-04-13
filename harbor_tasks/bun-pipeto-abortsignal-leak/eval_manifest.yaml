@@ -29,6 +29,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: Header files have valid include guards or pragma once
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in the repo must pass shellcheck validation
+- id: test_repo_cpp_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ files have valid syntax (clang-format can parse them)
+- id: test_repo_check_node_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node compatibility check scripts must be syntactically valid
+- id: test_repo_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required repo directories and build files exist
 - id: test_cpp_pattern_compiles
   type: fail_to_pass
   origin: pr_diff
@@ -104,57 +120,33 @@ checks:
     lines: '218'
     commit: fe4a66e086bebd2c3c5a238effa801426d736278
 rubric:
-- rule: Follow existing code style — check neighboring files for patterns
-  source:
-    path: CLAUDE.md
-    lines: '228'
-    commit: fe4a66e086bebd2c3c5a238effa801426d736278
-- rule: 'GC Issues: Objects being freed prematurely. Ensure proper WriteBarrier usage
-    and visitChildren() implementation.'
-  source:
-    path: src/bun.js/bindings/v8/AGENTS.md
-    lines: '285'
-    commit: fe4a66e086bebd2c3c5a238effa801426d736278
-- rule: Place Web API tests in `test/js/web/` when no specific issue number is provided.
-  source:
-    path: CLAUDE.md
-    lines: 29-33
-  evidence: The test for the ReadableStream.pipeTo memory leak is placed in `test/js/web/streams/pipeTo-signal-leak.test.ts`,
-    correctly identifying it as a Web API test since no issue number was provided.
+- rule: Web API tests (fetch, WebSocket, streams, etc.) should be placed in `test/js/web/`.
+  evidence: The test is placed in `test/js/web/streams/pipeTo-signal-leak.test.ts`,
+    following the instruction to put Web API tests in `test/js/web/`.
+  reference: test/js/web/streams/pipeTo-signal-leak.test.ts
   category: testing
-- rule: Use `bun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`.
-  source:
-    path: test/CLAUDE.md
-    lines: 13-13
-  evidence: The test file is named `pipeTo-signal-leak.test.ts`, adhering to the required
-    `*.test.ts` extension for `bun:test` files.
-  category: naming
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`.
-  collision_type: scope_ambiguity
-  why_distracting: The rule explicitly forbids using `std.*` in favor of `bun.*` APIs.
-    While this applies to Zig code, the agent is modifying C++ files (`AbortSignal.cpp`)
-    where the C++ Standard Library (`std::exchange`, `std::make_pair`, `std::pair`)
-    is required. An agent might incorrectly try to remove `std::` usages in C++.
+- rule: Prefer concurrent tests over sequential tests
+  collision_type: would_cause_bug
+  why_distracting: The rule suggests making tests concurrent, but a memory leak test
+    using `bun:jsc` `heapStats()` relies on global heap state. Running it concurrently
+    with other tests would pollute the heap measurements and cause flaky tests.
   severity: high
   source:
-    path: src/CLAUDE.md
+    path: test/AGENTS.md
     lines: 16-18
-- rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
-  collision_type: would_cause_bug
-  why_distracting: The rule suggests using `Bun.spawn` with `bunExe` and `bunEnv`
-    for tests. However, testing a memory leak using `bun:jsc` `heapStats()` requires
-    running the code in the current process to measure the heap before and after GC.
-    Spawning a subprocess would make it difficult or impossible to accurately measure
-    the retained `AbortSignal` objects in the test runner's process.
+- rule: For single-file tests, prefer `-e` over `tempDir` and spawn a process.
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a template for single-file tests that spawns
+    a Bun process using `-e`. However, the bug description specifies verifying the
+    leak via `bun:jsc` `heapStats()`, which should be done in-process. Spawning a
+    process is unnecessary and complicates the memory assertion.
   severity: medium
   source:
-    path: test/CLAUDE.md
-    lines: 24-26
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` providing general
-  build and test organization guidelines, while `test/CLAUDE.md` provides specific
-  testing conventions and `src/CLAUDE.md` provides Zig-specific coding standards.
-  A significant conflict arises because `src/CLAUDE.md` strictly forbids `std.*` usage,
-  which is intended for Zig but could be disastrously misapplied to the C++ files
-  in `src/bun.js/bindings/webcore/`. The agent must recognize that `src/CLAUDE.md`'s
-  Zig rules do not cross the language boundary into C++.
+    path: test/AGENTS.md
+    lines: 43-60
+hierarchy_analysis: The config hierarchy has root-level `AGENTS.md` defining general
+  test placement, while `test/AGENTS.md` provides specific testing style rules. The
+  agent must synthesize the test placement rule from the root with the testing style
+  rules from the `test/` directory, while carefully ignoring the Zig-specific rules
+  in `src/AGENTS.md` since the fix requires C++ changes.

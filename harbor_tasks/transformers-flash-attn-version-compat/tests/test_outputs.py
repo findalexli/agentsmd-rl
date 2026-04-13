@@ -247,6 +247,28 @@ def test_repo_dummies_check():
     assert r.returncode == 0, f"Dummies check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_config_docstrings_check():
+    """Repository config docstrings check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/check_config_docstrings.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config docstrings check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_config_attributes_check():
+    """Repository config attributes check passes (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "utils/check_config_attributes.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config attributes check failed:\n{r.stdout}\n{r.stderr}"
+
+
 
 # [agent_config] pass_to_pass — AGENTS.md:2 @ b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
 def test_ruff_style_clean():

@@ -318,7 +318,54 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD checks (static analysis, no cargo/rustc)
+# Pass-to-pass (repo_tests) — CI/CD checks using subprocess
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python files pass ruff format check (pass_to_pass)."""
+    install = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(REPO / "python")],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validate_pyproject():
+    """pyproject.toml passes validation (pass_to_pass)."""
+    install = subprocess.run(
+        ["pip", "install", "-q", "validate-pyproject[all,store]"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["validate-pyproject", str(REPO / "pyproject.toml")],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"validate-pyproject failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck():
+    """Shell scripts pass shellcheck (pass_to_pass)."""
+    install = subprocess.run(
+        ["pip", "install", "-q", "shellcheck-py"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Find all shell scripts and run shellcheck
+    r = subprocess.run(
+        ["bash", "-c", f'find {REPO} -name "*.sh" -type f | xargs shellcheck --shell bash --severity style'],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"shellcheck failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Code quality checks using grep
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -347,9 +394,13 @@ def test_no_tab_characters():
     )
 
 
-# [repo_tests] pass_to_pass
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — File content checks
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
 def test_allows_installation_has_debug_logging():
-    """allows_installation must retain debug! logging statements (CI regression guard)."""
+    """allows_installation must retain debug! logging statements (regression guard)."""
     src = FILE.read_text()
     # Extract the allows_installation method
     m = re.search(r"fn\s+allows_installation\s*\([^)]*\)\s*->\s*bool\s*\{", src)
@@ -369,13 +420,12 @@ def test_allows_installation_has_debug_logging():
     assert "debug!(" in body, "allows_installation should contain debug! logging statements"
 
 
-
-# [repo_tests] pass_to_pass
+# [static] fail_to_pass
 def test_python_source_impl_methods_complete():
-    """PythonSource impl block should have consistent method structure."""
+    """PythonSource impl block should have is_explicit method (f2p: added by fix)."""
     src = FILE.read_text()
     # Find impl PythonSource block start and extract with brace counting
-    impl_start_match = re.search(r"impl\\s+PythonSource\\s*\\{", src)
+    impl_start_match = re.search(r"impl\s+PythonSource\s*\{", src)
     if not impl_start_match:
         pytest.skip("Could not find impl PythonSource block")
     start = impl_start_match.end()
@@ -391,32 +441,12 @@ def test_python_source_impl_methods_complete():
     # Check for expected methods in the impl block
     required_methods = ["is_explicit", "is_maybe_system"]
     for method in required_methods:
-        assert re.search(rf"(?:pub\(crate\)\s+)?fn\s+{method}\\b", impl_body), (
+        assert re.search(rf"(?:pub\(crate\)\s+)?fn\s+{method}\b", impl_body), (
             f"Method {method} not found in impl PythonSource block"
         )
 
 
-
-# [repo_tests] pass_to_pass
-def test_discovery_rs_compiles_base():
-    """discovery.rs should have valid structure for Rust compilation (pass_to_pass).
-
-    This is a lightweight static check that verifies basic Rust syntax
-    without needing cargo/rustc in the Docker image.
-    """
-    src = FILE.read_text()
-    # Skip brace and paren checks - flawed for files with raw strings
-    pytest.skip("Static brace/paren counting is flawed for files with raw strings")
-
-
-# [repo_tests] pass_to_pass
-def test_clippy_expect_instead_of_allow():
-    """Code should use #[expect(...)] instead of #[allow(...)] per CLAUDE.md (pass_to_pass)."""
-    # This check is skipped as #[allow(...)] may pre-exist in base commit
-    pytest.skip("#[allow(...)] pre-exists in base commit, not related to PR fix")
-
-
-# [repo_tests] pass_to_pass
+# [static] fail_to_pass
 def test_is_explicit_has_doc_comment():
     """is_explicit method should have a doc comment (code quality pass_to_pass)."""
     src = FILE.read_text()

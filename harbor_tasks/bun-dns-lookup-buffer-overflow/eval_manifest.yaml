@@ -28,7 +28,11 @@ checks:
 - id: test_zig_fmt_check
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: zig fmt --check on DNS file passes (from package.json fmt:zig)'
+  description: Repo CI zig fmt --check on DNS file passes (from package.json fmt:zig)
+- id: test_zig_ast_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI zig ast-check on DNS file runs without crashing (syntax validation)
 - id: test_no_fixed_buffer_used
   type: fail_to_pass
   origin: pr_diff
@@ -65,39 +69,26 @@ rubric:
     path: .claude/skills/zig-system-calls/SKILL.md
     lines: 30-40
     commit: 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314
-- rule: Never use `@import()` inline inside of functions. Always put them at the bottom
-    of the file or containing struct.
+- rule: Never use `@import()` inline inside of functions.
   source:
-    path: src/CLAUDE.md
-    lines: '11'
-  evidence: The gold solution uses `std.heap.stackFallback` and `bun.default_allocator`
-    directly within the `lookup` function without adding any inline `@import("std")`
-    or `@import("bun")` statements.
+    path: src/AGENTS.md
+    lines: 10-11
+  evidence: The gold solution uses `std.heap.stackFallback` without adding an inline
+    `@import("std")` inside the `lookup` function, adhering to the rule against inline
+    imports.
   category: style
 distractors:
 - rule: Always use `bun.*` APIs instead of `std.*`.
-  collision_type: scope_ambiguity
-  why_distracting: The rule explicitly states 'Always use bun.* APIs instead of std.*'.
-    An agent might strictly follow this and avoid using `std.heap.stackFallback`,
-    instead trying to guess a non-existent `bun.heap.stackFallback` or implementing
-    a custom allocator. The rule is intended for OS/FS/crypto wrappers, not standard
-    memory allocators.
+  collision_type: rule_conflict
+  why_distracting: The config explicitly states 'Always use `bun.*` APIs instead of
+    `std.*`'. An overzealous agent might try to modify the provided `std.heap.stackFallback`
+    snippet to use a non-existent `bun.heap.stackFallback` or `bun.stackFallback`
+    to comply with this strict repository rule.
   severity: high
   source:
-    path: src/CLAUDE.md
-    lines: '16'
-- rule: If no valid issue number is provided, find the best existing file to modify
-    instead, such as `test/js/bun/` for Bun-specific API tests.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a test for the >1024 byte DNS
-    resolution in `test/js/bun/`. Testing this specific buffer overflow requires complex
-    network mocking or specific OS-level DNS configurations that are likely to fail
-    or be flaky, which is why the gold solution omits a test.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 44-46
-hierarchy_analysis: The root `CLAUDE.md` provides general testing and building guidelines,
-  while `src/CLAUDE.md` provides Zig-specific coding conventions. The strict rule
-  in `src/CLAUDE.md` against using `std.*` APIs conflicts with the necessary use of
-  `std.heap.stackFallback` for this specific memory allocation fix.
+    path: src/AGENTS.md
+    lines: 15-16
+hierarchy_analysis: The repository contains duplicated config files at the root (`AGENTS.md`,
+  `CLAUDE.md`) and in `src/` (`src/AGENTS.md`, `src/CLAUDE.md`). The agent must navigate
+  this moderate hierarchy and recognize that the specific PR instruction to use `std.heap.stackFallback`
+  overrides the general repository rule against `std.*` APIs.

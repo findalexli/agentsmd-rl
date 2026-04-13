@@ -13,6 +13,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff format check passes on modified files
+- id: repo_mypy_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's mypy typecheck passes on modified files
+- id: repo_typos_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typos spell check passes on modified files
+- id: repo_spdx_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's SPDX license header check passes on modified files
+- id: repo_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's forbidden imports check passes on modified files
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -59,28 +75,23 @@ rubric:
     path: vllm/v1/worker/gpu/model_runner.py
     commit: b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e
 distractors:
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
-    one mutable default, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The agent might classify this small 4-line change as a 'tiny edit'
-    or 'low-value busywork' and refuse to implement it, failing to recognize that
-    fixing a CUDA event race condition is a substantive and critical concurrency fix.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 21-23
 - rule: Pure code-agent PRs are not allowed. A human submitter must understand and
     defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate the patch entirely, stating
-    that 'Pure code-agent PRs are not allowed' and a human must do it, misunderstanding
-    its role as an AI assistant generating the code for the human to review and submit.
+  why_distracting: The agent might refuse to complete the coding task, citing the
+    rule that pure code-agent PRs are not allowed and requiring a human submitter.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 23-24
+- rule: PR descriptions for AI-assisted work must include specific details like test
+    commands run and a clear statement of AI assistance.
+  collision_type: meta_confusion
+  why_distracting: The agent might find the solution in pre-commit config but would
+    need to understand the repo structure.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 25-27
-hierarchy_analysis: The AGENTS.md file provides repository-wide contribution guidelines.
-  Since the gold solution is a direct code patch fixing a specific bug, the workflow
-  and PR submission rules in AGENTS.md primarily act as meta-distractors, potentially
-  causing the agent to refuse the task due to misinterpreting the scope of the fix
-  or its role as an assistant.
+    lines: 25-29
+hierarchy_analysis: The config hierarchy is flat, consisting of a single AGENTS.md
+  file (referenced by CLAUDE.md) containing generic repository contribution guidelines.

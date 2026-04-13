@@ -42,77 +42,27 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified PowerShell scripts can be loaded by Get-Command
+- id: test_repo_all_ai_summary_scripts_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: All ai-summary-comment PowerShell scripts parse without errors
+- id: test_repo_all_ai_summary_scripts_loadable
+  type: pass_to_pass
+  origin: repo_tests
+  description: All ai-summary-comment PowerShell scripts are loadable by Get-Command
+- id: test_repo_core_powershell_scripts_loadable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core PR workflow PowerShell scripts are loadable by Get-Command
+- id: test_repo_verify_tests_script_loadable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify-tests-fail PowerShell script is loadable by Get-Command
+- id: test_repo_issue_triage_scripts_loadable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Issue triage PowerShell scripts are loadable by Get-Command
 rubric:
-- rule: Phase renumbering is consistent across all files (Gate=2, Fix=3, Report=4)
-  source:
-    path: .github/agents/pr.md
-    lines: 25-30
-    commit: 8e00547841e4063fa2d307633d76bd8bacba3697
-- rule: Config update is consistent with the style of existing documentation
-  source:
-    path: .github/README-AI.md
-    lines: 1-10
-    commit: d417bea8d060b23aed36aa2e5f4a2bda2eb84a88
-- rule: pr.md must describe a 4-phase workflow, not 5-phase
-  source:
-    path: .github/agents/pr.md
-    lines: 1-4
-    commit: 8e00547841e4063fa2d307633d76bd8bacba3697
-  reference: '# .github/copilot-instructions.md
-
-    1. **pr** - Sequential 4-phase workflow for reviewing and working on PRs
-
-
-    # .github/skills/ai-summary-comment/SKILL.md
-
-    - **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
-- rule: pr.md must not have a standalone Tests phase section
-  source:
-    path: .github/agents/pr.md
-    lines: 326-347
-    commit: d417bea8d060b23aed36aa2e5f4a2bda2eb84a88
-  reference: '# .github/copilot-instructions.md
-
-    1. **pr** - Sequential 4-phase workflow for reviewing and working on PRs
-
-
-    # .github/skills/ai-summary-comment/SKILL.md
-
-    - **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
-- rule: README-AI.md must reference 4-phase workflow, not 5-phase
-  source:
-    path: .github/README-AI.md
-    lines: 5-29
-    commit: 8e00547841e4063fa2d307633d76bd8bacba3697
-  reference: '# .github/copilot-instructions.md
-
-    1. **pr** - Sequential 4-phase workflow for reviewing and working on PRs
-
-
-    # .github/skills/ai-summary-comment/SKILL.md
-
-    - **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
-- rule: post-gate.md must reference phases 3-4, not 4-5
-  source:
-    path: .github/agents/pr/post-gate.md
-    lines: '1'
-    commit: 8e00547841e4063fa2d307633d76bd8bacba3697
-  reference: '# .github/copilot-instructions.md
-
-    1. **pr** - Sequential 4-phase workflow for reviewing and working on PRs
-
-
-    # .github/skills/ai-summary-comment/SKILL.md
-
-    - **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
 - rule: copilot-instructions.md must describe pr agent as 4-phase
   source:
     path: .github/copilot-instructions.md
@@ -125,24 +75,9 @@ rubric:
     path: .github/skills/ai-summary-comment/SKILL.md
     lines: '184'
     commit: 8e00547841e4063fa2d307633d76bd8bacba3697
-  reference: '- **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
-- rule: PLAN-TEMPLATE.md must not have a separate Tests phase checklist
-  source:
-    path: .github/agents/pr/PLAN-TEMPLATE.md
-    lines: 36-52
-    commit: 8e00547841e4063fa2d307633d76bd8bacba3697
-  reference: '# .github/copilot-instructions.md
-
-    1. **pr** - Sequential 4-phase workflow for reviewing and working on PRs
-
-
-    # .github/skills/ai-summary-comment/SKILL.md
-
-    - **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
+  reference: "- **Phase badge** (\U0001F50D Pre-Flight, \U0001F6A6 Gate, \U0001F527\
+    \ Fix, \U0001F4CB Report)\n\u2192 **Phase 2: Gate** - Verifying tests catch the\
+    \ bug"
 - rule: Agent instruction files must be updated to reflect the simplified 4-phase
     workflow.
   source:
@@ -151,6 +86,15 @@ rubric:
   evidence: The gold solution updates the copilot-instructions.md file to redefine
     the PR agent as a 4-phase workflow, ensuring the AI assistant's own instructions
     are consistent with the new architecture.
+  category: documentation
+- rule: Maintain accurate documentation of the repository's development workflow and
+    agent capabilities.
+  source:
+    path: .github/copilot-instructions.md
+    lines: ''
+  evidence: The gold solution updates the description of the PR agent in the copilot
+    instructions to reflect the new 4-phase workflow, ensuring the AI's own context
+    remains accurate.
   category: documentation
 config_edits:
 - path: .github/copilot-instructions.md
@@ -161,26 +105,26 @@ config_edits:
     on PRs
 - path: .github/skills/ai-summary-comment/SKILL.md
   tier: 1
-  gold_added: '- **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Gate** - Verifying tests catch the bug'
-  gold_removed: '- **Phase badge** (🔍 Pre-Flight, 🧪 Tests, 🚦 Gate, 🔧 Fix, 📋 Report)
-
-    → **Phase 2: Tests** - Analyzing test files and coverage'
+  gold_added: "- **Phase badge** (\U0001F50D Pre-Flight, \U0001F6A6 Gate, \U0001F527\
+    \ Fix, \U0001F4CB Report)\n\u2192 **Phase 2: Gate** - Verifying tests catch the\
+    \ bug"
+  gold_removed: "- **Phase badge** (\U0001F50D Pre-Flight, \U0001F9EA Tests, \U0001F6A6\
+    \ Gate, \U0001F527 Fix, \U0001F4CB Report)\n\u2192 **Phase 2: Tests** - Analyzing\
+    \ test files and coverage"
 distractors:
 - rule: When performing a code review on PRs that change functional code, run the
     pr-finalize skill to verify that the PR title and description accurately match
     the actual implementation.
   collision_type: meta_confusion
-  why_distracting: The instruction tells Copilot to run the pr-finalize skill when
-    performing a code review. An agent might get confused between its current task
-    (modifying the PR agent's workflow definitions) and the instructions meant for
-    the PR agent itself, potentially trying to invoke the skill or modify it incorrectly.
-  severity: medium
+  why_distracting: The instruction tells the agent to run the pr-finalize skill when
+    reviewing PRs. In this task, the agent is modifying the PR agent's instructions
+    and scripts, not reviewing a PR. If the agent gets confused by its own instructions
+    and tries to run pr-finalize or act as a reviewer, it will fail the task.
+  severity: high
   source:
     path: .github/copilot-instructions.md
-    lines: 9-12
-hierarchy_analysis: The repository contains meta-instructions for AI agents (.github/copilot-instructions.md)
-  that the agent must modify rather than follow as an active participant in this specific
-  task. The agent must distinguish between instructions for its own behavior during
-  the task and the content of the instructions it is editing.
+    lines: 11-13
+hierarchy_analysis: The task involves editing the very config files that govern the
+  agent's behavior. This creates a recursive meta-reference where the agent must distinguish
+  between instructions that apply to its current session versus instructions it is
+  authoring for future sessions.

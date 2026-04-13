@@ -410,3 +410,136 @@ def test_repo_data_schema_checks_tests_pass():
         timeout=120,
     )
     assert r.returncode == 0, f"Data-schema checks tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_data_schema_parse_tests_pass():
+    '''Data-schema parse tests pass (pass_to_pass).'''
+    r = subprocess.run(
+        [
+            'node',
+            '--experimental-strip-types',
+            '--test',
+            './src/lib/parse.test.ts',
+        ],
+        cwd=f'{REPO}/packages/data-schema',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f'Data-schema parse tests failed:\n{r.stdout}\n{r.stderr}'
+
+
+def test_repo_data_schema_lazy_tests_pass():
+    '''Data-schema lazy tests pass (pass_to_pass).'''
+    r = subprocess.run(
+        [
+            'node',
+            '--experimental-strip-types',
+            '--test',
+            './src/lib/lazy.test.ts',
+        ],
+        cwd=f'{REPO}/packages/data-schema',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f'Data-schema lazy tests failed:\n{r.stdout}\n{r.stderr}'
+
+
+def test_repo_data_schema_coerce_tests_pass():
+    '''Data-schema coerce tests pass (pass_to_pass).'''
+    r = subprocess.run(
+        [
+            'node',
+            '--experimental-strip-types',
+            '--test',
+            './src/lib/coerce.test.ts',
+        ],
+        cwd=f'{REPO}/packages/data-schema',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f'Data-schema coerce tests failed:\n{r.stdout}\n{r.stderr}'
+
+
+def test_repo_data_schema_pipe_tests_pass():
+    '''Data-schema pipe tests pass (pass_to_pass).'''
+    r = subprocess.run(
+        [
+            'node',
+            '--experimental-strip-types',
+            '--test',
+            './src/lib/pipe.test.ts',
+        ],
+        cwd=f'{REPO}/packages/data-schema',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f'Data-schema pipe tests failed:\n{r.stdout}\n{r.stderr}'
+
+
+def test_repo_data_schema_variant_tests_pass():
+    '''Data-schema variant tests pass (pass_to_pass).'''
+    r = subprocess.run(
+        [
+            'node',
+            '--experimental-strip-types',
+            '--test',
+            './src/lib/variant.test.ts',
+        ],
+        cwd=f'{REPO}/packages/data-schema',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f'Data-schema variant tests failed:\n{r.stdout}\n{r.stderr}'
+
+
+def test_repo_lint():
+    """Repo's linter passes on modified packages (pass_to_pass)."""
+    r = subprocess.run(
+        ['pnpm', 'lint', 'packages/data-table/src', 'packages/data-schema/src'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_format_check():
+    """Repo's format check passes on modified packages (pass_to_pass)."""
+    r = subprocess.run(
+        ['pnpm', 'format:check', 'packages/data-table', 'packages/data-schema'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_typecheck():
+    """Data-table typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ['pnpm', 'typecheck'],
+        cwd=f'{REPO}/packages/data-table',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Data-table typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_schema_typecheck():
+    """Data-schema typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ['pnpm', 'typecheck'],
+        cwd=f'{REPO}/packages/data-schema',
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Data-schema typecheck failed:\n{r.stderr[-500:]}"

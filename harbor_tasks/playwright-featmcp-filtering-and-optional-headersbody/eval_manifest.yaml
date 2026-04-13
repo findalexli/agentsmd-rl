@@ -21,6 +21,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ESLint passes on cli-daemon tools
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes
 - id: render_request_headers_and_body
   type: fail_to_pass
   origin: pr_diff
@@ -53,29 +57,9 @@ rubric:
     path: .github/copilot-instructions.md
     lines: 1-9
     commit: 4df350b1c81b61ea471ff12767efd8e05f773377
-- rule: New tool parameters have clear, helpful descriptions consistent with existing
-    param description style.
-  source:
-    path: packages/playwright-core/src/tools/backend/network.ts
-    lines: 30-33
-    commit: 998f35dccb1de560350765493073dec5ec2c811c
-- rule: Assume watch is running and code is up to date. Generated files (types, channels,
-    validators) are produced by watch automatically.
-  source:
-    path: CLAUDE.md
-    lines: 36-37
-  evidence: The gold solution modifies the Zod schema for the MCP tool in `network.ts`
-    but does not manually update any generated type files or validators, relying on
-    the watch process as instructed.
-  category: tooling
-config_edits:
-- path: .github/copilot-instructions.md
-  tier: 1
-  gold_added: '## PR Review Guidelines
-
+  reference: '## PR Review Guidelines
 
     When reviewing pull requests:
-
 
     - Only comment on semantically meaningful issues: bugs, incorrect logic, security
     problems, or API contract violations.
@@ -87,30 +71,66 @@ config_edits:
 
     - Do not write long descriptions or summaries of what the code does.
 
-    - Do not suggest refactors or improvements unrelated to the PR''s stated goal.'
+    - Do not suggest refactors or improvements unrelated to the PR''s stated goal.
+
+    '
+- rule: Assume watch is running and code is up to date. Generated files (types, channels,
+    validators) are produced by watch automatically.
+  source:
+    path: CLAUDE.md
+    lines: 38-39
+  evidence: The gold solution only edits the source TypeScript files (`network.ts`,
+    `commands.ts`) and does not manually update any generated files, relying on the
+    watch process.
+  category: tooling
+- rule: '`playwright-core` is the package for the browser automation engine, server,
+    and dispatchers.'
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+  evidence: The MCP tool backend is modified in `packages/playwright-core/src/tools/backend/network.ts`,
+    respecting the package boundary where core server/dispatcher logic lives.
+  category: architecture
+config_edits:
+- path: .github/copilot-instructions.md
+  tier: 1
+  gold_added: '## PR Review Guidelines
+
+    When reviewing pull requests:
+
+    - Only comment on semantically meaningful issues: bugs, incorrect logic, security
+    problems, or API contract violations.
+
+    - Skip style, formatting, naming, and whitespace observations unless they cause
+    functional problems.
+
+    - Keep each comment short — one or two sentences maximum.
+
+    - Do not write long descriptions or summaries of what the code does.
+
+    - Do not suggest refactors or improvements unrelated to the PR''s stated goal.
+
+    '
   gold_removed: ''
 distractors:
-- rule: Write and run tests for MCP tools in `tests/mcp/` using `npm run ctest-mcp`.
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
   collision_type: scope_ambiguity
-  why_distracting: The config provides detailed instructions on where and how to write
-    tests for MCP tools (`tests/mcp/`). An agent might spend time writing tests for
-    the new network request parameters, but the task does not require tests and the
-    gold solution does not include them.
+  why_distracting: The agent might try to document the new MCP tool parameters in
+    `docs/src/api/`, but MCP tools are internal/developer tools and their schema is
+    self-documenting via `zod`, not part of the public Playwright API.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 48-66
-- rule: Import boundaries are enforced via `DEPS.list` files.
+    lines: 24-25
+- rule: Import boundaries are enforced via DEPS.list files
   collision_type: scope_ambiguity
-  why_distracting: The config mentions that import boundaries are enforced via `DEPS.list`
-    files. An agent might try to find and update `DEPS.list` files when modifying
-    the MCP tool or CLI commands, but since no new cross-package imports are added,
-    this is unnecessary and wastes effort.
+  why_distracting: The agent might look for or try to modify `DEPS.list` files when
+    updating the network tool, but no new cross-package imports are needed for adding
+    simple boolean/string parameters.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 68-70
-hierarchy_analysis: The `CLAUDE.md` file provides general repository guidelines. The
-  task instructions override the general expectation to write tests by not requesting
-  them, making the testing guidelines in `CLAUDE.md` a distractor for this specific
-  PR.
+    lines: 67-68
+hierarchy_analysis: The repository uses a single CLAUDE.md file at the root. The primary
+  challenge is not config hierarchy, but the meta-referential nature of the task (creating
+  an instruction file for an AI).

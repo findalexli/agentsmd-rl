@@ -81,46 +81,67 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: SQL test files have valid structure and are readable
+- id: test_repo_typos_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse typos check (codespell) runs on source files
+- id: test_repo_submodules_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git submodules configuration validation passes
+- id: test_repo_sql_file_encoding
+  type: pass_to_pass
+  origin: repo_tests
+  description: SQL test files have valid UTF-8 encoding
+- id: test_repo_cpp_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse C++ basic style check passes
+- id: test_repo_ci_job_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax of CI job scripts is valid
+- id: test_repo_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: clang-format style check runs on target file
+- id: test_repo_file_modes_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git file modes are correct for source files
 rubric:
-- rule: When writing tests in tests/queries, prefer adding a new test instead of extending
-    existing ones
+- rule: The gold solution correctly adds empty string validation in the split_by_string_creator
+    lambda, checking value_as_string.empty() before adding to values vector
+  reference: "const auto & value_as_string = castAs<String>(value, \"separator\");\n\
+    \            if (value_as_string.empty())\n                throw Exception(\n\
+    \                    ErrorCodes::BAD_ARGUMENTS,\n                    \"Incorrect\
+    \ parameter of tokenizer '{}': the empty string cannot be used as a separator\"\
+    ,\n                    SplitByStringTokenizer::getExternalName());"
   source:
-    path: .claude/CLAUDE.md
-    lines: '141'
+    path: src/Interpreters/TokenizerFactory.cpp
+    lines: 190-200
     commit: 2ffea49f37f25c9a09a74b9ecb338b05eb426370
-- rule: When adding a new test, consult `./tests/queries/0_stateless/add-test` to
-    determine the correct name prefix for the new test
+- rule: The gold solution updates the error message for empty separators array to
+    use "the separators argument cannot be empty" instead of "separators cannot be
+    empty"
+  reference: '"Incorrect parameter of tokenizer ''{}'': the separators argument cannot
+    be empty"'
   source:
-    path: .claude/CLAUDE.md
-    lines: '143'
+    path: src/Interpreters/TokenizerFactory.cpp
+    lines: 200-210
     commit: 2ffea49f37f25c9a09a74b9ecb338b05eb426370
 distractors:
 - rule: 'When writing text such as documentation, comments, or commit messages, wrap
     literal names from ClickHouse SQL language, classes and functions, or literal
     excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
   collision_type: scope_ambiguity
-  why_distracting: An agent might try to add markdown backticks around the tokenizer
-    name or other literals within the C++ exception message (e.g., `"Incorrect parameter
-    of tokenizer `{}`"`), but this rule explicitly targets documentation, comments,
-    and commit messages, not C++ string literals for user-facing errors.
+  why_distracting: The agent might incorrectly apply markdown backticks to the C++
+    exception string literal, thinking it qualifies as 'text' like documentation or
+    comments.
   severity: medium
   source:
     path: AGENTS.md
     lines: 5-5
-- rule: When writing text such as documentation, comments, or commit messages, write
-    names of functions and methods as `f` instead of `f()` - we prefer it for mathematical
-    purity when it refers a function itself rather than its application.
-  collision_type: scope_ambiguity
-  why_distracting: An agent might try to apply the mathematical purity rule for function
-    names to the C++ error message or code, but this rule is scoped to text like documentation
-    and comments, not the actual implementation or user-facing exception strings.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 9-9
-hierarchy_analysis: The `AGENTS.md` file contains general guidelines for documentation,
-  commit messages, and text formatting. Since the task only involves modifying C++
-  code to add an exception, these text-formatting rules do not apply to the C++ string
-  literals. Agents must be careful not to over-apply documentation rules to user-facing
-  error messages in the codebase.
+hierarchy_analysis: The single AGENTS.md file contains general repository guidelines
+  that are mostly irrelevant to this specific C++ bug fix.
 version: '2.0'

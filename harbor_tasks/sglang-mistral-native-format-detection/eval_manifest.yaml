@@ -112,21 +112,68 @@ checks:
     origin: repo_tests
     description: "Repo's server_args.py file exists at expected path"
 
-rubric:
-  - rule: "Use helper functions to avoid deeply nested conditionals. Complex nested if/else blocks should be refactored into well-named helper functions."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "250-290"
-      commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"
+  - id: test_repo_precommit_check_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py passes pre-commit check-ast hook"
 
-  - rule: "Keep comments synchronized with related code. When functions interact with code in other files (e.g., name checks in get_config/get_tokenizer), add comments referencing the need to keep them in sync."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "30"
-      commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"
+  - id: test_repo_precommit_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py has no debug statements (pre-commit hook)"
 
-  - rule: "Use private constants (prefixed with underscore) for module-internal values that should not be part of the public API."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "36-40"
-      commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"
+  - id: test_repo_precommit_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py has no trailing whitespace (pre-commit hook)"
+
+  - id: test_repo_precommit_end_of_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py ends with newline (pre-commit hook)"
+
+  - id: test_repo_check_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CI workflow YAML passes pre-commit check-yaml"
+
+  - id: test_repo_check_toml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pyproject.toml passes pre-commit check-toml"
+
+  - id: test_repo_unit_test_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit test file for server_args parses as valid AST"
+
+  - id: test_repo_unit_test_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit test file for server_args.py compiles"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py passes ruff linter"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py passes black format check"
+
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's server_args.py passes isort import sorting check"
+
+# Rubric guidance (preserved for reference but not auto-judged):
+# - Use helper functions to avoid deeply nested conditionals (gold solution uses _check_format)
+# - Keep comments synchronized with related code (gold solution adds sync comment)
+# - Use private constants prefixed with underscore (gold solution uses _MISTRAL_NATIVE_CONFIG_PATTERNS)
+#
+# Note: These are code quality conventions, not config file edits. The gold solution
+# follows them but they're not auto-verified by the judge (which is designed for
+# checking agent config file modifications like CLAUDE.md, SKILL.md, etc.)
+#
+# rubric: []  # Empty - rules preserved as comments above for human reference

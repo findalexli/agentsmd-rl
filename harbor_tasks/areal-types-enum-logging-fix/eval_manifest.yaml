@@ -86,16 +86,18 @@ checks:
     commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
 - id: test_repo_py_compile
   type: pass_to_pass
-  origin: pr_diff
-  description: Modified Python files compile without syntax errors (repo CI check)
+  origin: repo_tests
+  description: Modified Python files compile without syntax errors (repo CI check
+    via py_compile)
 - id: test_repo_ruff_check
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Modified Python files pass ruff linting (repo CI check)
 - id: test_repo_ruff_format
   type: pass_to_pass
-  origin: pr_diff
-  description: Modified Python files are properly formatted (repo CI check)
+  origin: repo_tests
+  description: Modified Python files are properly formatted (repo CI check via ruff
+    format --check)
 - id: test_repo_ruff_check_fix
   type: pass_to_pass
   origin: repo_tests
@@ -105,65 +107,73 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified Python files follow isort conventions via ruff import sorting
+    check
+- id: test_repo_precommit_eof
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass end-of-file-fixer pre-commit hook (repo
+    CI check)
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass trailing-whitespace pre-commit hook (repo
+    CI check)
+- id: test_repo_precommit_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff-format pre-commit hook (repo CI check)
+- id: test_repo_precommit_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff lint pre-commit hook (repo CI check)
+- id: test_repo_precommit_check_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass check-added-large-files pre-commit hook
+    (repo CI check)
+- id: test_repo_precommit_detect_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass detect-private-key pre-commit hook (repo
+    CI check)
 rubric:
-- rule: Changes add str-compatible Enum classes (ApiType, InputName) with correct
-    member values in types.py.
-  reference: 'class ApiType(str, Enum): COMPLETION = ''completion'' RESPONSE = ''response''
-    NONE = ''none'''
-- rule: Changes add proper return type annotations (-> ApiType, -> InputName) on properties
-    in types.py.
-  reference: 'def api_type(self) -> ApiType: def input_name_for_logging(self) -> InputName:'
-- rule: Changes add areal.utils.logging import, create logger with PascalCase name,
-    and replace print() with logger.info() in clevr_count_70k.py.
-  reference: 'from areal.utils import logging
-
-    logger = logging.getLogger(''CLEVR70KReward'')
-
-    logger.info(f''completions: ...'')'
 - rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
-    `print`'
+    print'
   source:
     path: AGENTS.md
-    lines: 42-43
-  evidence: The gold solution removes the bare `print()` call in `areal/reward/clevr_count_70k.py`
-    and adds `logger = logging.getLogger("CLEVR70KReward")`, adhering to the requirement
-    to use `getLogger` with a Pa
+    lines: 40-42
+  evidence: The gold solution removes the bare `print()` call in `clevr_count_70k.py`
+    and replaces it with `logger = logging.getLogger("CLEVR70KReward")`.
   category: style
+  verification: llm_judge
+- rule: 'Returns: Reward value (float), typically 0.0 or 1.0'
+  source:
+    path: .claude/skills/add-reward/SKILL.md
+    lines: 26-28
+  evidence: The gold solution adds the `-> float` return type hint to `clevr_count_70k_reward_fn`
+    and updates `return 0` to `return 0.0`.
+  category: style
+  verification: llm_judge
 distractors:
-- rule: Register new loggers with color in `areal/utils/logging.py`
+- rule: Register new loggers with color in areal/utils/logging.py.
   collision_type: scope_ambiguity
-  why_distracting: The rule explicitly states to 'Register new loggers with color
-    in `areal/utils/logging.py`'. An agent following this would attempt to modify
-    `areal/utils/logging.py` to add a color mapping for `CLEVR70KReward`. However,
-    the gold solution only creates the logger locally without modifying the central
-    registry, making this an out-of-scope distraction.
+  why_distracting: The rule instructs to register new loggers with color in `areal/utils/logging.py`,
+    but the task instructions restrict modifications to only `types.py` and `clevr_count_70k.py`.
+    Attempting to edit `logging.py` would violate the file modification boundaries.
   severity: high
   source:
     path: AGENTS.md
-    lines: 43-44
+    lines: 67-68
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The rule requires adding tests for new functionality. An agent
-    might try to write unit tests for the new `ApiType` and `InputName` enums or the
-    modified reward function. Since this PR is strictly a bug fix and minor refactor
-    of existing code, adding tests is out of scope.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 30-30
-- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
-  collision_type: meta_confusion
-  why_distracting: The performance rule forbids `print(tensor)` to avoid GPU-CPU syncs.
-    An agent might overthink the removal of `print()` in the reward function, assuming
-    it's a tensor synchronization issue rather than a simple logging convention violation,
-    potentially leading to unnecessary tensor detach/cpu calls.
+  why_distracting: The rule requires adding tests for new functionality, but this
+    is a bug fix PR with explicitly restricted files to modify. Adding tests would
+    be out of scope.
   severity: low
   source:
     path: AGENTS.md
-    lines: 47-48
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` both provide high-level guidelines,
-  with `AGENTS.md` offering more specific coding style rules. The primary conflict
-  arises within `AGENTS.md` itself: the rule to use `getLogger` is followed, but the
-  subsequent instruction to register the logger with a color in `areal/utils/logging.py`
-  is ignored by the gold solution, likely because it is considered out of scope for
-  a simple bugfix PR.'
+    lines: 28-28
+hierarchy_analysis: The repository contains two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`) with overlapping guidelines. The agent must synthesize the specific
+  logging rules from `AGENTS.md` while ignoring the general testing and logger registration
+  rules that fall outside the scope of the requested bug fix.

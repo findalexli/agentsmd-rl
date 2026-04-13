@@ -13,11 +13,9 @@ def test_react_router_interface_to_type():
     with open(filepath, "r") as f:
         content = f.read()
 
-    assert "interface ShouldBlockFnLocation" not in content, \
-        "ShouldBlockFnLocation is still declared as interface (expected type)"
+    assert "interface ShouldBlockFnLocation" not in content,         "ShouldBlockFnLocation is still declared as interface (expected type)"
 
-    assert re.search(r"type ShouldBlockFnLocation\s*<[^>]+>\s*=\s*\{", content), \
-        "ShouldBlockFnLocation should be declared as type with ="
+    assert re.search(r"type ShouldBlockFnLocation\s*<[^>]+>\s*=\s*\{", content),         "ShouldBlockFnLocation should be declared as type with ="
 
 
 def test_solid_router_interface_to_type():
@@ -26,11 +24,9 @@ def test_solid_router_interface_to_type():
     with open(filepath, "r") as f:
         content = f.read()
 
-    assert "interface ShouldBlockFnLocation" not in content, \
-        "ShouldBlockFnLocation is still declared as interface (expected type)"
+    assert "interface ShouldBlockFnLocation" not in content,         "ShouldBlockFnLocation is still declared as interface (expected type)"
 
-    assert re.search(r"type ShouldBlockFnLocation\s*<[^>]+>\s*=\s*\{", content), \
-        "ShouldBlockFnLocation should be declared as type with ="
+    assert re.search(r"type ShouldBlockFnLocation\s*<[^>]+>\s*=\s*\{", content),         "ShouldBlockFnLocation should be declared as type with ="
 
 
 def test_vue_router_interface_to_type():
@@ -39,11 +35,9 @@ def test_vue_router_interface_to_type():
     with open(filepath, "r") as f:
         content = f.read()
 
-    assert "interface ShouldBlockFnLocation" not in content, \
-        "ShouldBlockFnLocation is still declared as interface (expected type)"
+    assert "interface ShouldBlockFnLocation" not in content,         "ShouldBlockFnLocation is still declared as interface (expected type)"
 
-    assert re.search(r"type ShouldBlockFnLocation\s*<[^>]+>\s*=\s*\{", content), \
-        "ShouldBlockFnLocation should be declared as type with ="
+    assert re.search(r"type ShouldBlockFnLocation\s*<[^>]+>\s*=\s*\{", content),         "ShouldBlockFnLocation should be declared as type with ="
 
 
 def test_useblocker_type_export_regression():
@@ -240,3 +234,66 @@ def test_repo_vue_router_attw():
         capture_output=True, text=True, timeout=60, cwd=f"{REPO}/packages/vue-router",
     )
     assert r.returncode == 0, f"vue-router attw failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_react_router_useblocker_tests():
+    """Repo's useBlocker-specific tests pass for react-router (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "tests/useBlocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/react-router",
+    )
+    assert r.returncode == 0, f"react-router useBlocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_react_router_blocker_tests():
+    """Repo's blocker-specific tests pass for react-router (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "tests/blocker.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/packages/react-router",
+    )
+    assert r.returncode == 0, f"react-router blocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_solid_router_useblocker_tests():
+    """Repo's useBlocker-specific tests pass for solid-router (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "tests/useBlocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/solid-router",
+    )
+    assert r.returncode == 0, f"solid-router useBlocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_solid_router_blocker_tests():
+    """Repo's blocker-specific tests pass for solid-router (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "tests/blocker.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/packages/solid-router",
+    )
+    assert r.returncode == 0, f"solid-router blocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vue_router_blocker_tests():
+    """Repo's blocker-specific tests pass for vue-router (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "tests/blocker.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/packages/vue-router",
+    )
+    assert r.returncode == 0, f"vue-router blocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_router_core_types_compile():
+    """TypeScript compilation passes for router-core (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/packages/router-core",
+    )
+    assert r.returncode == 0, f"router-core type check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_router_core_unit_tests():
+    """Repo's unit tests pass for router-core (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/router-core",
+    )
+    assert r.returncode == 0, f"router-core unit tests failed:\n{r.stderr[-500:]}"

@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T15:04:48.574082",
-  "total_time": 417.12,
-  "sandbox_id": "ippuqekm4mwpjne0q2nzq",
+  "validated_at": "2026-04-12T03:43:16.848478",
+  "total_time": 4131.0,
+  "sandbox_id": "i0mt342zi6xmeukr2joiq",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1093.71,
+      "time": 1117.78,
       "notes": ""
     },
     "p2p_enrich": {
@@ -35,11 +34,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All 4 validation checks passed:\\n1. Docker build: Success\\n2. NOP test: 4 passed, 4 failed, reward=0 (correct - base code does not have fix)\\n3. Gold test: 8 passed, reward=1 (correct - patch applies fix successfully)\\n4. Rubric judge: 0.5 (API key not available - expected in test environment)",
+      "attempts": 2,
+      "notes": "Fixed Dockerfile to remove pre-build step that was filling up disk space (17GB image -> 3.5GB). All 4 validation checks now pass: 1) Docker build: Success, 2) NOP test: 5 passed, 4 failed (fail-to-pass correctly failing), reward=0, 3) Gold test: 9 passed, reward=1, 4) Rubric: ICR=1.0",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.89
+      "time": 1181.47
     },
     "rubric_judge": {
       "status": "pass",
@@ -47,25 +46,19 @@
       "backend": "fireworks",
       "time": 5.55,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 19.49,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15978.2,
-      "at": "2026-04-09T13:38:10.474120"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1727.53,
-      "at": "2026-04-09T14:56:58.576914"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -87,8 +80,24 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 417.12,
-      "at": "2026-04-09T15:04:48.574082"
+      "time": 1727.69,
+      "at": "2026-04-09T14:56:58.693994"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4858.62,
+      "at": "2026-04-12T02:54:19.029487"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4131.0,
+      "at": "2026-04-12T03:43:16.848478"
     }
   ]
 }

@@ -32,7 +32,7 @@ diff --git a/.claude/skills/fetch-zulip-messages/fetch-zulip-web-public-messages
 index 720ee445140f1..d4d1abc920b7a 100755
 --- a/.claude/skills/fetch-zulip-messages/fetch-zulip-web-public-messages
 +++ b/.claude/skills/fetch-zulip-messages/fetch-zulip-web-public-messages
-@@ -40,15 +40,15 @@ def parse_zulip_url(url: str) -> tuple[str, int, str, str | None]:
+@@ -40,15 +40,16 @@ def parse_zulip_url(url: str) -> tuple[str, int, str, str | None]:
      server_url = f"{parsed.scheme}://{parsed.netloc}"
      fragment = parsed.fragment
 
@@ -47,7 +47,8 @@ index 720ee445140f1..d4d1abc920b7a 100755
          print(f"Error: Could not parse Zulip narrow URL: {url}", file=sys.stderr)
          print(
 -            "Expected format: https://HOSTNAME/#narrow/channel/ID-name/topic/TOPIC[/with/MSG_ID]",
-+            "Expected format: https://HOSTNAME/#narrow/channel/ID-name/topic/TOPIC[/with|near/MSG_ID]",
++            "Expected format: https://HOSTNAME/#narrow/channel/ID-name/topic/TOPIC"
++            "[/with|near/MSG_ID]",
              file=sys.stderr,
          )
          sys.exit(1)

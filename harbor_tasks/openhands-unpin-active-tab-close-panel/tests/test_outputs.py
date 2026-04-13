@@ -5,7 +5,7 @@ Tests for OpenHands PR #13648: Fix bug where unpinning active tab didn't close p
 This task tests:
 1. The fix is applied (fail-to-pass): check for proper handling of active tab unpinning
 2. Existing repo tests pass (pass-to-pass): vitest tests in the test file
-3. Code quality (pass-to-pass): lint and typecheck pass
+3. Code quality (pass-to-pass): lint, typecheck, prettier, eslint pass
 """
 
 import subprocess
@@ -120,6 +120,26 @@ def test_repo_vitest_tests_pass():
         f"Repo vitest tests failed:\n{result.stdout}\n{result.stderr}"
 
 
+def test_repo_vitest_all_conversation_tests_pass():
+    """
+    Pass-to-pass: All conversation-related vitest tests must pass.
+
+    Validates broader conversation feature functionality isn't broken.
+    Source: .github/workflows/fe-unit-tests.yml runs full vitest suite for PRs.
+    """
+    # Run all tests in the conversation features directory
+    result = subprocess.run(
+        ["npm", "run", "test", "--", "__tests__/components/features/conversation/"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    assert result.returncode == 0, \
+        f"Conversation vitest tests failed:\n{result.stdout}\n{result.stderr}"
+
+
 def test_repo_lint_passes():
     """
     Pass-to-pass: Frontend linting must pass (mandatory per AGENTS.md).
@@ -194,6 +214,44 @@ def test_repo_build():
 
     assert result.returncode == 0, \
         f"Frontend build failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_prettier_passes():
+    """
+    Pass-to-pass: Frontend code formatting must pass Prettier checks.
+
+    Prettier ensures consistent code style across the frontend.
+    Source: .github/workflows/lint.yml - part of frontend lint job.
+    """
+    result = subprocess.run(
+        ["npx", "prettier", "--check", "src/**/*.{ts,tsx}"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+
+    assert result.returncode == 0, \
+        f"Prettier check failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_eslint_passes():
+    """
+    Pass-to-pass: Frontend ESLint checks must pass.
+
+    ESLint catches potential bugs and enforces code quality rules.
+    Source: .github/workflows/lint.yml - part of frontend lint job.
+    """
+    result = subprocess.run(
+        ["npx", "eslint", "src", "--ext", ".ts,.tsx,.js"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, \
+        f"ESLint check failed:\n{result.stderr[-500:]}"
 
 
 def test_new_tests_for_active_tab_unpin():

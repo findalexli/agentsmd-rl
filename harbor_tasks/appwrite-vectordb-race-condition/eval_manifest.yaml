@@ -27,15 +27,15 @@ checks:
 - id: test_repo_lint
   description: Repo's PHP linting (Pint) passes on the codebase
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
 - id: test_repo_check
   description: Repo's PHP static analysis (PHPStan) passes on the codebase
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
 - id: test_repo_validate
   description: Repo's composer.json and composer.lock pass validation
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
 rubric:
 - rule: Follow PSR-12 formatting standards enforced by Pint. All PHP code must comply
     with PSR-12.
@@ -56,12 +56,12 @@ rubric:
     lines: 56-64
     commit: a5b0378138a6097e256a8d9553a18b892b6ba9ea
 - rule: Action pattern (HTTP endpoints) must be followed, with business logic placed
-    in the `action` method.
+    in the  method.
   source:
     path: AGENTS.md
     lines: 55-74
-  evidence: The gold solution implements the fix directly inside the `action()` method
-    of the `Create` class, preserving the required Action pattern structure and method
+  evidence: The gold solution implements the fix directly inside the  method
+    of the  class, preserving the required Action pattern structure and method
     signature without altering how the endpoin
   category: architecture
 - rule: File names in Http directories must only be Get.php, Update.php, Create.php,
@@ -70,37 +70,43 @@ rubric:
     path: src/Appwrite/Platform/AGENTS.md
     lines: 31-35
   evidence: The gold solution keeps the metadata initialization logic inline within
-    `Create.php` rather than creating a custom-named file like `Init.php` or `Bootstrap.php`
+     rather than creating a custom-named file like  or 
     to handle the metadata creation.
   category: naming
-distractors:
-- rule: PHP 8.3+, Swoole 6.x (async runtime, replaces PHP-FPM)
-  collision_type: architecture_boundary
-  why_distracting: Knowing the stack uses Swoole (an async runtime), an agent might
-    try to implement complex application-level locking (like Swoole coroutine locks,
-    mutexes, or Redis locks) to prevent the race condition before the `create()` call.
-    This is overkill, adds unnecessary complexity, and could cause deadlocks compared
-    to simply catching the database's native `DuplicateException`.
-  severity: high
+- rule: 'Stack: PHP 8.3+'
   source:
     path: AGENTS.md
-    lines: 18-19
-- rule: For non-CRUD operations, model the endpoint as a property update.
+    lines: 14-15
+  evidence: The gold solution uses a non-capturing catch block  which is a modern PHP feature, aligning with the repository's PHP 8.3+ requirement.
+  category: style
+- rule: Action pattern (HTTP endpoints) where endpoint logic resides in the 
+    method
+  source:
+    path: AGENTS.md
+    lines: 53-73
+  evidence: The gold solution correctly applies the fix inside the  method
+    of the  class, preserving the Action pattern structure for HTTP endpoints.
+  category: architecture
+distractors:
+- rule: Think of the resource and property it affects... both resources and properties
+    can be nested, and have separate directories.
   collision_type: scope_ambiguity
-  why_distracting: An agent might interpret the one-time metadata bootstrap as a non-CRUD
-    operation and attempt to extract it into a separate endpoint or file (e.g., `Metadata/Update.php`),
-    overcomplicating a simple inline race condition fix and expanding the scope of
-    the PR unnecessarily.
+  why_distracting: The rule suggests creating nested directories for specific properties/resources
+    (e.g., `Users/Status/Update.php`). An agent might over-engineer the solution by
+    trying to extract the metadata initialization into a separate `Metadata/Create.php`
+    endpoint to separate concerns. However, the metadata bootstrap is designed to
+    happen transparently during the main collection creation, and ensuring it happens
+    transparently during the main collection creation, and extracting it would
+    break the API contract.
   severity: medium
   source:
     path: src/Appwrite/Platform/AGENTS.md
     lines: 31-35
-hierarchy_analysis: The rules in `src/Appwrite/Platform/AGENTS.md` (Level 3) reinforce
-  and expand upon the base `AGENTS.md` (Level 0) regarding HTTP directory structure
-  and naming conventions. The base `AGENTS.md` provides the stack details (Swoole)
-  which is crucial for understanding the runtime environment, but in this specific
-  concurrency scenario, it acts as a distractor that could lead an agent to over-engineer
-  a solution.
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` defining the global
+  stack and architecture, and a module-specific `src/Appwrite/Platform/AGENTS.md`
+  detailing directory structures. The rules are complementary, but the agent must
+  recognize that the module-specific nesting rules apply to new endpoint creation,
+  not to internal transparent bootstrapping logic within an existing endpoint.
 version: '2.0'
 source:
   repo: appwrite/appwrite

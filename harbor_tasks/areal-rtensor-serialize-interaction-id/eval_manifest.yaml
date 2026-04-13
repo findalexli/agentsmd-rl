@@ -49,6 +49,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files exist in the repository
+- id: no_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are not excessively large (under 1000KB)
+- id: no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files contain no private keys
+- id: json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository JSON files are syntactically valid
 - id: py_compile_modified
   type: pass_to_pass
   origin: repo_tests
@@ -111,51 +123,52 @@ checks:
     lines: '95'
     commit: 3bf10c9c56eeae846b3de52dde8db42918f80690
 rubric:
-- rule: Follow existing code patterns in the same module
+- rule: No wildcard imports (`from x import *`).
   source:
-    path: AGENTS.md
-    lines: '40'
-    commit: 3bf10c9c56eeae846b3de52dde8db42918f80690
+    path: areal/experimental/openai/proxy/server.py
+    lines: 1-50
+  evidence: The gold solution has no wildcard imports. It uses explicit imports like
+    `from pydantic import BaseModel` and imports heavy deps inside functions like
+    `from areal.infra.rpc.serialization import serialize_value`.
+  category: style
 - rule: Heavy optional deps (torch, transformers) should be imported inside functions,
     not at module level
   source:
-    path: AGENTS.md
-    lines: 99-100
-    commit: 3bf10c9c56eeae846b3de52dde8db42918f80690
-- rule: Batch tensor operations over Python loops on tensor elements
-  source:
-    path: AGENTS.md
-    lines: '96'
-    commit: 3bf10c9c56eeae846b3de52dde8db42918f80690
-- rule: No wildcard imports (`from x import *`).
-  source:
-    path: AGENTS.md
-    lines: 21-22
-  evidence: The gold solution explicitly imports `RTensor` and `serialize_value` inside
-    the functions rather than using wildcard imports.
+    path: areal/experimental/inference_service/data_proxy/app.py
+    lines: 359-375
+  evidence: The gold solution places the import `from areal.infra.rpc.rtensor import
+    RTensor` inside the `export_trajectories` function, matching the existing pattern
+    of local function-level imports.
   category: style
-distractors:
-- rule: Batch ops over Python loops on tensor elements.
-  collision_type: would_cause_bug
-  why_distracting: An agent might try to avoid the `for item in interactions.values():`
-    loop by batching the `RTensor.remotize` calls. However, `interactions` is a dictionary
-    of `InteractionWithTokenLogpReward` objects, and `remotize` expects a tensor dict
-    cache. Attempting to batch this would cause a bug.
-  severity: high
+- rule: No hardcoded secrets, paths, or endpoints.
   source:
-    path: AGENTS.md
-    lines: 62-63
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: An agent might try to add a unit test for the serialization roundtrip.
-    However, this is a bug fix, not new functionality, and the test suite might require
-    complex mocking of the data proxy or multi-node hardware (as mentioned in the
-    constraints).
+    path: areal/experimental/inference_service/data_proxy/app.py
+    lines: 359-375
+  evidence: The gold solution dynamically passes `config.serving_addr` to `RTensor.remotize()`
+    rather than hardcoding a local or remote endpoint address.
+  category: architecture
+distractors:
+- rule: 'Ask first before: Deleting or renaming public APIs.'
+  collision_type: rule_conflict
+  why_distracting: The rule requires the agent to ask first before deleting or renaming
+    public APIs. The agent might pause to ask for permission before removing the `node_addr`
+    parameter from `serialize_interactions`, but the PR instruction explicitly requires
+    refactoring the serialization logic, making the parameter obsolete.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 43-44
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md provide overlapping rules (e.g.,
-  no wildcard imports, add tests). AGENTS.md acts as a more specific operational guide
-  for AI agents, adding performance constraints like avoiding Python loops on tensor
-  elements, which creates a potential collision in this PR.
+    path: AGENTS.md
+    lines: 42-43
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates adding tests for new functionality. The agent
+    might waste time trying to write unit tests for the serialization roundtrip, but
+    this is a bug fix rather than new functionality, and the gold solution does not
+    include tests.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: '35'
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` reside at the root level and
+  contain overlapping rules (e.g., pre-commit hooks, adding tests, asking before changing
+  APIs). There are no conflicts between the config files themselves, but the explicit
+  PR instructions override the general 'Ask first' constraints found in both files.

@@ -35,68 +35,70 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Prettier formatting passes on config.ts
-- id: test_repo_typescript
+- id: test_repo_lint_staged
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's TypeScript type check passes
-- id: test_repo_unit_tests
+  description: Repo's lint-staged configuration is valid
+- id: test_repo_package_json_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's unit tests for config warnings pass
+  description: Repo's package.json is valid JSON
+- id: test_repo_alex_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's language linting (alex) runs without errors on config.ts
+- id: test_repo_ast_grep
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ast-grep scan passes on config.ts
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript syntax is valid for config.ts
 rubric:
-- rule: When modifying experimental flags, maintain proper wiring across config-shared.ts,
-    config-schema.ts, and define-env.ts. If a flag is consumed in pre-compiled runtime
-    internals, also wire runtime env values (next-server.ts/export/worker.ts as needed).
-  source:
-    path: AGENTS.md
-    lines: 167-174
-    commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
 - rule: Replace deprecated experimental.dynamicIO with cacheComponents. The dynamicIO
     feature has been replaced by cacheComponents - error messages must clearly indicate
-    this migration path.
+    this migration path and suggest updating next.config file.
   source:
     path: .claude-plugin/plugins/cache-components/skills/cache-components/SKILL.md
     lines: 9,293-299
     commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+  reference: '`experimental.dynamicIO` has been replaced by `cacheComponents`. Please
+    update your next.config file accordingly.'
 - rule: Error messages for deprecated/invalid config options must include a link to
     relevant documentation for user guidance.
   source:
     path: AGENTS.md
     lines: 105-113
     commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
-- rule: Source code for the main Next.js framework is located in `packages/next/src/`,
-    while compiled output goes to `packages/next/dist/`.
+  reference: 'Learn more: https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents'
+- rule: Changes to Next.js framework code must target source files in packages/next/src/,
+    not compiled output in packages/next/dist/.
   source:
     path: CLAUDE.md
     lines: 24-33
-  evidence: The gold solution correctly targets the source file `packages/next/src/server/config.ts`
-    for the Next.js framework rather than attempting to modify compiled output in
+    commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+  reference: packages/next/src/server/config.ts
+- rule: Source code is located in `packages/next/src/`, and compiled output goes to
     `packages/next/dist/`.
+  source:
+    path: AGENTS.md
+    lines: 30-38
+  evidence: The gold solution edits the source file `packages/next/src/server/config.ts`
+    rather than attempting to modify the compiled output in `packages/next/dist/`.
   category: architecture
 distractors:
-- rule: This skill should be used when the user asks to 'update documentation for
-    my changes', 'sync docs with code', or 'scaffold docs for this feature'.
+- rule: Use the update-docs skill when the user asks to update documentation, check
+    docs, or sync docs with code.
   collision_type: scope_ambiguity
-  why_distracting: The task involves adding a documentation link to an error message.
-    The agent might mistakenly believe it needs to update or create the documentation
-    page for `cacheComponents` or `dynamicIO` using this skill, expanding the scope
-    unnecessarily when the prompt only asks to improve the error message.
-  severity: high
+  why_distracting: The task instruction mentions adding 'a link to the relevant documentation'
+    in the error message. An agent might misinterpret this and use the `update-docs`
+    skill to actually modify or scaffold documentation files for `dynamicIO` or `cacheComponents`,
+    which is out of scope for this specific PR.
+  severity: medium
   source:
     path: .claude/skills/update-docs
     lines: 1-2
-- rule: Skill for writing API reference documentation.
-  collision_type: scope_ambiguity
-  why_distracting: The new error message includes a URL pointing to an API reference
-    (`/docs/app/api-reference/config/next-config-js/cacheComponents`). The agent might
-    be tempted to use this skill to write or verify the actual API reference document,
-    which is out of scope.
-  severity: medium
-  source:
-    path: .claude/skills/write-api-reference
-    lines: 1-2
-hierarchy_analysis: The workspace uses `CLAUDE.md` and `AGENTS.md` interchangeably
-  for core repository instructions. The `.claude/skills/` directory contains various
-  documentation-related skills (`update-docs`, `write-api-reference`) that could distract
-  the agent from the core task of simply updating a string in the configuration validation
-  logic.
+hierarchy_analysis: The config hierarchy is essentially flat, consisting of identical
+  `AGENTS.md` and `CLAUDE.md` files at the root level, alongside various skill files.
+  There are no deep overrides or conflicting rules between parent and child directories.

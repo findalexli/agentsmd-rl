@@ -167,6 +167,26 @@ def test_repo_check_inits():
     assert r.returncode == 0, f"check_inits failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_dummies():
+    """Repo's dummy object check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_dummies failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_errors_only():
+    """Repo's ruff error-level checks pass on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", "src/transformers/modeling_utils.py"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff error checks failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

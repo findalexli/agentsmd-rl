@@ -61,12 +61,15 @@ rubric:
     path: AGENTS.md
     lines: 82-98
     commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
-- rule: Prefer single-word variable names for locals, params, and helper functions
-    (multi-word only when necessary for clarity)
+  note: Gold solution uses early returns in terminalID - no else statements
+- rule: Prefer single-word variable names for locals, params (task-required multi-word
+    function names are an exception)
   source:
     path: AGENTS.md
     lines: 21-32
     commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+  note: Gold solution uses single-word locals (term, next, id, state) and required
+    multi-word function names (waitTerminalReady, runTerminal)
 - rule: Avoid `else` statements. Prefer early returns.
   source:
     path: AGENTS.md
@@ -74,6 +77,7 @@ rubric:
   evidence: In `actions.ts`, the `terminalID` function uses an early return (`if (id)
     return id`) followed by a throw, completely avoiding an `else` block.
   category: style
+  outcome: The gold solution correctly avoids else statements.
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
     path: AGENTS.md
@@ -99,6 +103,37 @@ rubric:
     where the type is obvious from the assignment (e.g., `const next = term ?? ...`,
     `const id = await terminalID(next)`).
   category: style
+- rule: Prefer single word variable names where possible / Use single word names by
+    default for new locals (except when task requires specific multi-word function
+    names)
+  source:
+    path: AGENTS.md
+    lines: 23-31
+  evidence: In `actions.ts`, local variables are named with single words like `term`,
+    `next`, `id`, `state`, and `timeout`. Note that `waitTerminalReady` and `runTerminal`
+    are required by the task and should not be penalized.
+  category: naming
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: When accessing the custom test probe on the window object, the gold solution
+    casts it using `(window as E2EWindow)` instead of falling back to `any`.
+  category: style
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 82-90
+  evidence: In `actions.ts`, `terminalID` uses `if (id) return id` followed by a `throw`
+    statement, avoiding an `else` block.
+  category: style
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 25-35
+  evidence: In `actions.ts`, local variables are named `id`, `term`, `next`, `state`,
+    and `timeout`, strictly following the single-word naming convention.
+  category: naming
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -123,46 +158,31 @@ config_edits:
     - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.'
   gold_removed: ''
 distractors:
-- rule: 'Testing: Avoid mocks as much as possible. Test actual implementation, do
-    not duplicate logic into tests'
-  collision_type: architecture_boundary
-  why_distracting: The prompt requires adding a 'test-only probe system' to the production
-    terminal component (`terminal.tsx`) to expose internal state to `window`. An agent
-    might interpret the rule to 'Avoid mocks' and 'Test actual implementation' as
-    forbidding test-specific code in production components, leading it to stick to
-    flaky DOM polling instead of implementing the required probe.
+- rule: Avoid mocks as much as possible. Test actual implementation, do not duplicate
+    logic into tests
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly requires building a 'test-only probe system'
+    and a 'fixture-enabled test-only terminal driver' that hooks into the terminal
+    component. An agent might refuse to add test-specific probe logic to the production
+    `terminal.tsx` component, thinking it violates the rule against mocks and testing
+    actual implementation.
   severity: high
   source:
     path: AGENTS.md
-    lines: 86-88
-- rule: 'Browser Automation: Use `agent-browser` for web automation.'
-  collision_type: meta_confusion
-  why_distracting: This rule instructs the agent to use the `agent-browser` CLI tool
-    for its own web automation tasks during development. An agent might confuse this
-    meta-instruction with the task of writing Playwright e2e tests, potentially trying
-    to import or invoke `agent-browser` commands inside the test files instead of
-    using Playwright's `page` API.
-  severity: high
-  source:
-    path: packages/app/AGENTS.md
-    lines: 16-24
-- rule: 'Naming Enforcement: Use single word names by default for new locals, params,
-    and helper functions.'
-  collision_type: rule_conflict
-  why_distracting: The root config mandates single-word names for functions and variables.
-    However, the prompt explicitly requests functions named `waitTerminalReady` and
-    `runTerminal`, and the e2e config specifies camelCase for variables. An agent
-    strictly following the root rule might try to name the helpers `wait` and `run`,
-    violating the prompt's explicit instructions.
+    lines: 111-112
+- rule: 'Selectors: Use data-component, data-action, or semantic roles'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to expose the terminal's readiness state (connected,
+    settled write count) via `data-*` attributes on the DOM element to comply with
+    this selector rule, rather than exposing it via the `window` object as explicitly
+    requested by the prompt.
   severity: medium
   source:
-    path: AGENTS.md
-    lines: 20-29
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines
-  (e.g., single-word names, no destructuring, early returns). The `packages/app/e2e/AGENTS.md`
-  provides specific e2e testing guidelines (e.g., camelCase variables, specific file
-  structure). There is a direct conflict between the root's 'single word names' rule
-  and the e2e's 'camelCase' rule, as well as the prompt's explicit multi-word function
-  names. The prompt and deeper config (e2e) override the root config for exported
-  function names, while the root config's single-word rule is still successfully applied
-  to local variables (`term`, `id`, `next`).
+    path: packages/app/e2e/AGENTS.md
+    lines: 104-105
+hierarchy_analysis: The task involves a deep hierarchy (Level 0, Level 2, Level 3)
+  and is explicitly meta-referential, as the prompt requires the agent to edit `packages/app/e2e/AGENTS.md`
+  (Level 3) to document the new testing pattern. The agent must navigate the root
+  style rules (single-word locals, no destructuring, early returns) while implementing
+  a test-only probe that seemingly conflicts with the root testing rules ('Avoid mocks').
+  The agent must also correctly update its own future instructions.

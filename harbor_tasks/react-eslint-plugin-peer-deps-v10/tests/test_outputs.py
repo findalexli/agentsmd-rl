@@ -67,7 +67,7 @@ def test_v10_uses_or_separator():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression / anti-stub
+# Pass-to_pass (static) — regression / anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -82,7 +82,7 @@ def test_backward_compat_maintained():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI/CD checks
+# Pass-to_pass (repo_tests) — repo CI/CD checks
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -90,7 +90,7 @@ def test_repo_lint():
     """Repo's ESLint check passes (pass_to_pass)."""
     r = subprocess.run(
         ["node", "./scripts/tasks/eslint.js"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
@@ -98,8 +98,29 @@ def test_repo_lint():
 # [repo_tests] pass_to_pass
 def test_eslint_plugin_tests():
     """eslint-plugin-react-hooks tests pass (pass_to_pass)."""
+    # Build compiler first, then run jest with single worker to avoid memory issues
     r = subprocess.run(
-        ["yarn", "test"],
-        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/eslint-plugin-react-hooks",
+        ["bash", "-c", "yarn build:compiler && npx jest --maxWorkers=1"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/eslint-plugin-react-hooks",
     )
     assert r.returncode == 0, f"Tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_license():
+    """License check script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_print_warnings():
+    """Print warnings script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

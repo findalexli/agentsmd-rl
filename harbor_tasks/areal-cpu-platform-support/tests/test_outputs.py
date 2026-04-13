@@ -125,11 +125,21 @@ def test_repo_pyproject_toml_valid():
 
 # [repo_tests] pass_to_pass - YAML config validation
 def test_repo_example_configs_valid():
-    """Example YAML configs must be valid (repo CI check)."""
-    try:
-        import yaml
-    except ImportError:
-        pytest.skip("PyYAML not installed")
+    """Example YAML configs must be valid (repo CI check).
+
+    This test installs PyYAML and validates that example YAML configs
+    are syntactically correct.
+    """
+    # Install PyYAML for YAML validation
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install PyYAML: {r.stderr}"
+
+    import yaml
 
     repo_path = Path(REPO)
     yaml_files = list(repo_path.glob("examples/**/*.yaml"))
@@ -355,7 +365,7 @@ def test_scheduler_device_env_guard():
     """Scheduler must guard device_control_env_var assignment against empty string.
 
     When current_platform.device_control_env_var is empty (as with CpuPlatform),
-    the scheduler must not attempt env[\"\"] assignment which causes a KeyError.
+    the scheduler must not attempt env[""] assignment which causes a KeyError.
     This test verifies the guard exists and works by executing the relevant code.
     """
     code = '''
@@ -517,3 +527,81 @@ def test_repo_ruff_format():
         timeout=60,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Trailing whitespace check (pre-commit style)
+def test_repo_trailing_whitespace():
+    """Modified files must not have trailing whitespace (repo CI check).
+
+    This test runs a trailing whitespace check similar to the pre-commit
+    hook to ensure clean source files.
+    """
+    files = [
+        f"{REPO}/areal/infra/platforms/cpu.py",
+        f"{REPO}/areal/infra/scheduler/local.py",
+        f"{REPO}/areal/engine/fsdp_engine.py",
+        f"{REPO}/areal/experimental/engine/archon_engine.py",
+    ]
+
+    for fpath in files:
+        r = subprocess.run(
+            ["grep", "-n", "[[:space:]]$", fpath],
+            capture_output=True,
+            text=True,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            assert False, f"Trailing whitespace found in {fpath}:\n{r.stdout[:500]}"
+
+
+# [repo_tests] pass_to_pass - End of file newline check (pre-commit style)
+def test_repo_end_of_file_newline():
+    """Modified files must end with a newline (repo CI check).
+
+    This test verifies that all modified Python files end with a newline
+    character, matching the pre-commit end-of-file-fixer check.
+    """
+    files = [
+        f"{REPO}/areal/infra/platforms/cpu.py",
+        f"{REPO}/areal/infra/scheduler/local.py",
+        f"{REPO}/areal/engine/fsdp_engine.py",
+        f"{REPO}/areal/experimental/engine/archon_engine.py",
+    ]
+
+    for fpath in files:
+        r = subprocess.run(
+            ["tail", "-c", "1", fpath],
+            capture_output=True,
+        )
+        # Check if last byte is a newline (b'\n') or file is empty
+        if r.stdout and r.stdout != b'\n':
+            assert False, f"File {fpath} does not end with a newline"
+
+
+# [repo_tests] pass_to_pass - Import order check using ruff (isort rules)
+def test_repo_import_order():
+    """Import order follows project standards (repo CI check).
+
+    This test uses ruff to check import ordering (I001 rule) on the
+    modified files to ensure they follow the project's import style.
+    """
+    # Install ruff if not available (matches CI version from pyproject.toml)
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    # Check import order specifically (I001 is the isort unsorted-imports rule)
+    r = subprocess.run(
+        [
+            "ruff", "check", "--select", "I",
+            f"{REPO}/areal/infra/platforms/cpu.py",
+            f"{REPO}/areal/infra/scheduler/local.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Import order check failed:\n{r.stdout}\n{r.stderr}"

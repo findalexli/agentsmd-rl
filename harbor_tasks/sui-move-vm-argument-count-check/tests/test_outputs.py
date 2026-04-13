@@ -322,7 +322,22 @@ def test_repo_loader_tests():
         f"Expected 'test result: ok' in output:\n{result.stdout[-1000:]}"
 
 
+
+def test_repo_bad_entry_point_tests():
+    """PASS-TO-PASS: Repo CI bad_entry_point_tests module passes.
+
+    Runs the bad_entry_point_tests module to verify the VM properly handles
+    invalid entry point calls (non-existent modules, functions, types).
+    Related to the argument count validation changes in the PR.
+    """
+    result = run_cargo_test_module("bad_entry_point_tests")
+    assert result.returncode == 0, f"bad_entry_point_tests failed:\n{result.stderr[-2000:]}"
+    assert "test result: ok" in (result.stdout + result.stderr), \
+        f"Expected 'test result: ok' in output:\n{result.stdout[-1000:]}"
+
+
 def test_repo_move_clippy():
+
     """PASS-TO-PASS: Repo CI cargo move-clippy passes on external-crates/move.
 
     Ensures the external Move crates pass linting per the repo's CI standards.

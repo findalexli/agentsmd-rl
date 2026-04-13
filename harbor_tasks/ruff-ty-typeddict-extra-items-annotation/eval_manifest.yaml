@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: ty_python_semantic crate compiles without errors
+- id: ty_check_smoke
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty binary can check a simple Python file without crashing
 - id: ty_python_semantic_unit_tests
   type: pass_to_pass
   origin: repo_tests
@@ -81,17 +85,26 @@ rubric:
     and forward references.
   category: testing
 distractors:
-- rule: Reproducing and minimizing ty ecosystem changes using setup_primer_project.py
+- rule: If asked to reproduce changes in the ty ecosystem, use this script to clone
+    the project... uv run scripts/setup_primer_project.py
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to use `scripts/setup_primer_project.py`
-    to reproduce the issue, but this is a core type checker bug that should be reproduced
-    and tested directly using mdtests, not an ecosystem-wide regression. Attempting
-    to set up an ecosystem project would waste time and effort.
+  why_distracting: The instruction mentions a bug in the `ty` type checker. The agent
+    might misinterpret this as a need to 'reproduce changes in the ty ecosystem' and
+    waste time running the primer project script, which is unnecessary since the bug
+    is well-defined and reproducible via standard mdtests.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 48-52
-hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
-  referenced by `CLAUDE.md`. There are no hierarchical conflicts, but the agent must
-  carefully distinguish between core type checker development workflows (mdtests)
-  and ecosystem regression workflows.
+    lines: 41-45
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to avoid writing the necessary new logic for
+    annotation inference and qualifier validation, attempting instead to hack the
+    existing regular expression inference to save lines of code.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 61-62
+hierarchy_analysis: The configuration is flat, with CLAUDE.md simply pointing to AGENTS.md.
+  The rules are general repository guidelines rather than specific architectural constraints.

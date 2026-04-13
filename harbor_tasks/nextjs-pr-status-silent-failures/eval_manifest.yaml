@@ -23,19 +23,19 @@ checks:
   description: pr-status.js must parse without errors in strict mode
 - id: test_repo_pr_status_script_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: pr-status.js must have expected structure and exports
 - id: test_repo_pr_status_no_banned_patterns
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: pr-status.js must not contain banned/unsafe patterns
 - id: test_repo_pr_status_has_required_helpers
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: pr-status.js must have all required helper functions
 - id: test_repo_pr_status_uses_strict_mode_compatible_syntax
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: pr-status.js must use syntax compatible with strict mode
 - id: test_repo_node_syntax_check_pr_status
   type: pass_to_pass
@@ -45,6 +45,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Prettier formatting check on pr-status.js must pass
+- id: test_repo_pr_status_alex_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Alex language linting on pr-status.js must pass
+- id: test_repo_pr_status_node_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js must be able to parse pr-status.js without errors
+- id: test_repo_scripts_check_manifests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo check-manifests.js must run without errors
+- id: test_repo_scripts_validate_externals_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo validate-externals-doc.js must run without runtime errors
 - id: categorize_timed_out_as_failed
   type: fail_to_pass
   origin: pr_diff
@@ -107,29 +123,36 @@ rubric:
     CI analysis bug, aligning with the documented monorepo structure where build and
     maintenance scripts reside in the `scripts/` dire
   category: architecture
-distractors:
-- rule: 'Start watch build in background: pnpm --filter=next dev'
-  collision_type: scope_ambiguity
-  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev`
-    when changing Next.js source or integration tests. An agent might mistakenly apply
-    this to `scripts/pr-status.js`, wasting time starting a dev server for a standalone
-    CI script instead of recognizing it as a 'CI-only analysis' exception.
-  severity: high
+- rule: scripts/ directory contains Build and maintenance scripts
   source:
-    path: CLAUDE.md
-    lines: 65-72
-- rule: 'Always run a full bootstrap build after switching branches: pnpm build-all'
+    path: AGENTS.md
+    lines: 25-26
+  evidence: The gold solution modifies `scripts/pr-status.js` to fix the CI analysis
+    script, aligning with the directory structure documentation that designates `scripts/`
+    for build and maintenance scripts.
+  category: architecture
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source or integration tests.
   collision_type: scope_ambiguity
-  why_distracting: The rule requires running `pnpm build-all` after switching branches.
-    An agent might think it needs to bootstrap the entire workspace (including Rust
-    crates) just to run and test a standalone Node.js script, leading to unnecessary
-    build times.
+  why_distracting: The rule instructs to start the Next.js dev server before making
+    edits. However, the target file `scripts/pr-status.js` is a standalone CI analysis
+    script, not part of the Next.js core framework. Running the dev server is unnecessary
+    and the rule explicitly allows skipping for 'CI-only analysis'.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 84-89
-hierarchy_analysis: CLAUDE.md and AGENTS.md are identical symlinks containing the
-  same rules. The rules primarily focus on the core Next.js framework (`packages/next`)
-  and its build/test workflow. The agent must recognize that `scripts/pr-status.js`
-  falls outside the scope of the core framework's dev server and build requirements,
-  and instead treat it as a standalone Node script.
+    path: AGENTS.md
+    lines: 65-68
+- rule: 'Always run a full bootstrap build after switching branches: pnpm build-all'
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to run a full bootstrap build (`pnpm build-all`)
+    after switching branches. For a simple edit to a standalone Node.js script in
+    the `scripts/` directory, running a full monorepo build (including Rust crates)
+    is a massive waste of time and resources.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 88-91
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` being a symlink to
+  `AGENTS.md`. The agent must rely on the scope definitions within the single file
+  to determine which rules apply.

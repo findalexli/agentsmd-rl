@@ -450,6 +450,100 @@ def test_modified_files_exist():
             raise AssertionError(f"Modified path is not a file: {f}")
 
 
+# [repo_tests] pass_to_pass -- CI: file size check (from check-added-large-files pre-commit hook)
+def test_no_large_files():
+    """Modified files are not excessively large (pass_to_pass)."""
+    import subprocess
+
+    MAXKB = 1000  # Maximum file size in KB (matches pre-commit config)
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            [
+                "python",
+                "-c",
+                f"""
+import sys
+maxkb = {MAXKB}
+with open('{REPO}/{f}', 'rb') as file:
+    content = file.read()
+    size_kb = len(content) / 1024
+    if size_kb > maxkb:
+        print(f'{{repr(f)}}: File is too large ({{size_kb:.1f}}KB > {{maxkb}}KB)', file=sys.stderr)
+        sys.exit(1)
+print(f'{f}: OK ({{size_kb:.1f}}KB)')
+""",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"Large file check failed for {f}:\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: private key detection (from detect-private-key pre-commit hook)
+def test_no_private_keys():
+    """Modified files contain no private keys (pass_to_pass)."""
+    import subprocess
+
+    key_patterns = [
+        "BEGIN OPENSSH PRIVATE KEY",
+        "BEGIN RSA PRIVATE KEY",
+        "BEGIN DSA PRIVATE KEY",
+        "BEGIN EC PRIVATE KEY",
+        "BEGIN PGP PRIVATE KEY",
+        "BEGIN PRIVATE KEY",
+    ]
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            [
+                "python",
+                "-c",
+                f"""
+import sys
+patterns = {key_patterns}
+with open('{REPO}/{f}', 'r') as file:
+    content = file.read()
+    for pattern in patterns:
+        if pattern in content:
+            print(f'{{repr(f)}}: Potential private key detected: {{pattern}}', file=sys.stderr)
+            sys.exit(1)
+print(f'{f}: OK (no private keys)')
+""",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"Private key check failed for {f}:\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: JSON validation (from check-json pre-commit hook)
+def test_json_valid():
+    """Repository JSON files are syntactically valid (pass_to_pass)."""
+    import subprocess
+
+    json_files = [
+        f"{REPO}/skills-lock.json",
+    ]
+    for f in json_files:
+        result = subprocess.run(
+            ["python", "-m", "json.tool", f],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"JSON validation failed for {f}:\n{result.stderr}"
+            )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) -- rules from AGENTS.md / CLAUDE.md
 # ---------------------------------------------------------------------------

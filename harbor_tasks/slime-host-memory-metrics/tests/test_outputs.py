@@ -181,3 +181,12 @@ def test_repo_unit_sglang_config():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Sglang config tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_mask_utils():
+    """Repo's mask_utils unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/utils/test_mask_utils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mask utils tests failed:\n{r.stderr[-500:]}"

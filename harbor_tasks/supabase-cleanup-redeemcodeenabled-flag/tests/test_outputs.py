@@ -140,6 +140,21 @@ def test_repo_lint():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_lint_ratchet():
+    """Studio lint ratchet passes (pass_to_pass)."""
+    # Install dependencies first
+    r = _install_deps()
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run studio lint:ratchet (enforces stricter rules than basic lint)
+    r = subprocess.run(
+        ["bash", "-c", "pnpm --filter studio run lint:ratchet"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Studio lint:ratchet failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_prettier_check():
     """Code formatting check passes (pass_to_pass)."""
     # Install dependencies first
@@ -163,7 +178,7 @@ def test_repo_unit_tests():
 
     # Run stable unit tests (excluding known flaky tests in SupportFormPage)
     r = subprocess.run(
-        ["bash", "-c", "cd apps/studio && pnpm run test tests/unit tests/lib tests/config"],
+        ["bash", "-c", "cd apps/studio && pnpm vitest run --exclude '**/Support/**'"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

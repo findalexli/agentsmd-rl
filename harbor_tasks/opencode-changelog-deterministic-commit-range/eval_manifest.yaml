@@ -74,15 +74,31 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified files pass Prettier formatting check
+- id: test_repo_build_changelog
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript changelog.ts builds successfully via bun build
+- id: test_repo_build_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript version.ts builds successfully via bun build
 rubric:
 - rule: Use Bun APIs when possible, like `Bun.file()`
   source:
     path: AGENTS.md
-    lines: 15-15
-  evidence: The gold solution imports `{ $ } from "bun"` in `script/changelog.ts`
-    to execute shell commands deterministically, replacing the `@opencode-ai/sdk`
-    usage.
+    lines: 12-13
+  evidence: The gold solution imports and uses `$` from `bun` to execute shell commands
+    deterministically instead of relying on the LLM or Node's `child_process`.
   category: tooling
+  verification: llm_judge
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 55-56
+  evidence: The gold solution uses `const` for variable declarations and avoids `let`
+    when processing the commit range and formatting the changelog input.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
   collision_type: architecture_boundary

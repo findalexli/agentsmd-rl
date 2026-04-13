@@ -84,6 +84,16 @@ def test_repo_opencode_package_typecheck():
     assert r.returncode == 0, f"Package typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_acp_tests():
+    """ACP module tests pass (pass_to_pass) - covers ACP agent interface."""
+    r = subprocess.run(
+        ["bun", "test", "test/acp/", "--timeout", "30000"],
+        cwd=PKG, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ACP tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

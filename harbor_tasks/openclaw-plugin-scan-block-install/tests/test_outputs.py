@@ -407,3 +407,44 @@ def test_hooks_security_tests_pass():
         f"Hooks security tests failed (rc={r.returncode}).\n"
         f"{(r.stdout + r.stderr)[-1500:]}"
     )
+
+
+# [repo_tests] pass_to_pass — plugin contracts tests
+def test_plugin_contracts_pass():
+    """Repo's plugin contracts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "test:contracts:plugins"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Plugin contracts tests failed (rc={r.returncode}).\n"
+        f"{(r.stdout + r.stderr)[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — plugin discovery tests
+def test_plugin_discovery_pass():
+    """Repo's plugin discovery tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/discovery.test.ts", "--pool=forks", "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Plugin discovery tests failed (rc={r.returncode}).\n"
+        f"{(r.stdout + r.stderr)[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — plugin loader tests
+def test_plugin_loader_pass():
+    """Repo's plugin loader tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/loader.test.ts", "--pool=forks", "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"Plugin loader tests failed (rc={r.returncode}).\n"
+        f"{(r.stdout + r.stderr)[-1500:]}"
+    )

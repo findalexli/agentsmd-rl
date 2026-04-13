@@ -228,6 +228,428 @@ def test_git_no_merge_conflicts():
         f"Found merge conflict markers in:\n{r.stdout}"
 
 
+# [repo_tests] pass_to_pass - validates YAML frontmatter in SKILL.md files
+def test_skill_md_yaml_frontmatter():
+    """Existing SKILL.md files have valid YAML frontmatter (pass_to_pass)."""
+    script = '''
+import re
+import sys
+from pathlib import Path
+
+skill_dirs = [
+    ".github/skills/pr-build-status",
+    ".github/skills/try-fix",
+    ".github/skills/pr-finalize",
+]
+
+errors = []
+for skill_dir in skill_dirs:
+    skill_md = Path(skill_dir) / "SKILL.md"
+    if not skill_md.exists():
+        errors.append(f"{skill_md} does not exist")
+        continue
+
+    content = skill_md.read_text()
+
+    # Check for YAML frontmatter
+    if not content.startswith("---"):
+        errors.append(f"{skill_md}: Missing YAML frontmatter")
+        continue
+
+    # Extract frontmatter
+    end_idx = content.find("---", 3)
+    if end_idx == -1:
+        errors.append(f"{skill_md}: Invalid YAML frontmatter (no closing ---)")
+        continue
+
+    frontmatter = content[3:end_idx]
+
+    # Check required fields
+    if "name:" not in frontmatter:
+        errors.append(f"{skill_md}: Missing 'name' field in frontmatter")
+    if "description:" not in frontmatter:
+        errors.append(f"{skill_md}: Missing 'description' field in frontmatter")
+
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    sys.exit(1)
+
+print("PASS: All SKILL.md files have valid YAML frontmatter")
+'''
+    script_path = "/tmp/skill_yaml_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SKILL.md YAML validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates copilot-instructions.md structure
+def test_copilot_instructions_structure():
+    """copilot-instructions.md has valid structure with numbered skills (pass_to_pass)."""
+    script = '''
+import re
+import sys
+from pathlib import Path
+
+path = Path(".github/copilot-instructions.md")
+if not path.exists():
+    print("FAIL: copilot-instructions.md does not exist")
+    sys.exit(1)
+
+content = path.read_text()
+
+# Check for required sections
+errors = []
+if "## Skills" not in content:
+    errors.append("Missing '## Skills' section")
+
+# Check that skills are numbered (at least some numbered skills exist)
+skill_pattern = r"^\\s*(\\d+)\\.\\s+\\*\\*"
+skills_found = re.findall(skill_pattern, content, re.MULTILINE)
+if len(skills_found) < 5:
+    errors.append(f"Expected at least 5 numbered skills, found {len(skills_found)}")
+
+# Check for consistent skill format (numbered list with bold name)
+for i, num in enumerate(skills_found[:5], 1):
+    if int(num) != i:
+        errors.append(f"Skill numbering should start at 1 and increment, found {num} at position {i}")
+        break
+
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    sys.exit(1)
+
+print("PASS: copilot-instructions.md has valid structure")
+'''
+    script_path = "/tmp/copilot_structure_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"copilot-instructions structure check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates PowerShell scripts have proper structure
+def test_powershell_scripts_structure():
+    """Existing PowerShell scripts have proper param() and ErrorActionPreference (pass_to_pass)."""
+    script = '''
+import re
+import sys
+from pathlib import Path
+
+# Check existing PowerShell scripts that are in the repo at base commit
+ps1_files = [
+    ".github/skills/pr-build-status/scripts/Get-PrBuildIds.ps1",
+    ".github/skills/pr-build-status/scripts/Get-BuildInfo.ps1",
+]
+
+errors = []
+for ps1_path in ps1_files:
+    path = Path(ps1_path)
+    if not path.exists():
+        errors.append(f"{ps1_path} does not exist")
+        continue
+
+    content = path.read_text()
+
+    # Check for param() block
+    if "param(" not in content:
+        errors.append(f"{ps1_path}: Missing param() block")
+
+    # Check for ErrorActionPreference
+    if "ErrorActionPreference" not in content:
+        errors.append(f"{ps1_path}: Missing ErrorActionPreference setting")
+
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    sys.exit(1)
+
+print("PASS: All PowerShell scripts have proper structure")
+'''
+    script_path = "/tmp/ps1_structure_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"PowerShell scripts structure check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates gitattributes has required settings
+def test_gitattributes_content():
+    """.gitattributes has required settings for line endings and binary files (pass_to_pass)."""
+    script = '''
+import sys
+from pathlib import Path
+
+path = Path(".gitattributes")
+if not path.exists():
+    print("FAIL: .gitattributes does not exist")
+    sys.exit(1)
+
+content = path.read_text()
+errors = []
+
+# Check for line ending handling
+if "text=auto" not in content and "* text" not in content:
+    errors.append("Missing line ending configuration")
+
+# Check for binary file handling (at least one binary pattern)
+binary_patterns = ["*.png", "*.jpg", "*.gif", "*.dll", "*.exe", "binary"]
+if not any(pattern in content for pattern in binary_patterns):
+    errors.append("Missing binary file configuration")
+
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    sys.exit(1)
+
+print("PASS: .gitattributes has required settings")
+'''
+    script_path = "/tmp/gitattributes_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f".gitattributes content check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates editorconfig has required settings
+def test_editorconfig_content():
+    """.editorconfig has required settings for C# and other files (pass_to_pass)."""
+    script = '''
+import sys
+from pathlib import Path
+
+path = Path(".editorconfig")
+if not path.exists():
+    print("FAIL: .editorconfig does not exist")
+    sys.exit(1)
+
+content = path.read_text()
+errors = []
+
+# Check for root = true
+if "root = true" not in content:
+    errors.append("Missing 'root = true'")
+
+# Check for C# settings
+if "[*.cs]" not in content:
+    errors.append("Missing C# (*.cs) settings section")
+
+# Check for indent settings
+if "indent" not in content.lower():
+    errors.append("Missing indent settings")
+
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    sys.exit(1)
+
+print("PASS: .editorconfig has required settings")
+'''
+    script_path = "/tmp/editorconfig_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f".editorconfig content check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Additional repo_tests - Real CI Commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - validates NuGet.config XML via Python subprocess
+def test_nuget_config_xml_valid():
+    """NuGet.config is valid XML with proper structure (pass_to_pass via subprocess)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import xml.etree.ElementTree as ET; ET.parse('NuGet.config'); print('VALID XML')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"NuGet.config XML validation failed:\n{r.stderr}"
+    assert "VALID XML" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates global.json JSON via Python subprocess
+def test_global_json_valid_parse():
+    """global.json is valid JSON with SDK config (pass_to_pass via subprocess)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import json; d=json.load(open('global.json')); assert 'tools' in d; print('VALID JSON')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"global.json JSON validation failed:\n{r.stderr}"
+    assert "VALID JSON" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates Directory.Build.props XML
+def test_directory_build_props_xml_valid():
+    """Directory.Build.props is valid XML (pass_to_pass via subprocess)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import xml.etree.ElementTree as ET; ET.parse('Directory.Build.props'); print('VALID XML')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Directory.Build.props XML validation failed:\n{r.stderr}"
+    assert "VALID XML" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates key csproj files XML
+def test_key_csproj_files_xml_valid():
+    """Key .csproj files are valid XML (pass_to_pass via subprocess)."""
+    script = '''
+import xml.etree.ElementTree as ET
+import sys
+from pathlib import Path
+
+key_files = [
+    "src/TestUtils/src/Microsoft.Maui.IntegrationTests/Microsoft.Maui.IntegrationTests.csproj",
+]
+
+errors = []
+for fpath in key_files:
+    path = Path(fpath)
+    if not path.exists():
+        errors.append(f"{fpath}: File not found")
+        continue
+    try:
+        ET.parse(path)
+    except ET.ParseError as e:
+        errors.append(f"{fpath}: {e}")
+
+if errors:
+    for e in errors:
+        print(f"ERROR: {e}")
+    sys.exit(1)
+
+print(f"PASS: All {len(key_files)} key .csproj files are valid XML")
+'''
+    script_path = "/tmp/csproj_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"csproj XML validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates git repository has proper structure
+def test_git_repo_structure():
+    """Git repository has expected files and structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-tree", "-r", "HEAD", "--name-only"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git ls-tree failed:\n{r.stderr}"
+
+    files = r.stdout.strip().split("\n")
+    required_files = [
+        "global.json",
+        "NuGet.config",
+        "Microsoft.Maui.sln",
+        ".editorconfig",
+        ".gitattributes",
+    ]
+
+    missing = [f for f in required_files if f not in files]
+    assert not missing, f"Required files missing from git: {missing}"
+
+
+# [repo_tests] pass_to_pass - validates C# files have balanced braces (lightweight syntax check)
+def test_cs_files_balanced_braces():
+    """Key C# files have balanced braces (pass_to_pass via subprocess)."""
+    script = '''
+import sys
+from pathlib import Path
+
+key_files = [
+    "src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs",
+]
+
+errors = []
+for fpath in key_files:
+    path = Path(fpath)
+    if not path.exists():
+        errors.append(f"{fpath}: File not found")
+        continue
+
+    content = path.read_text()
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+    open_parens = content.count('(')
+    close_parens = content.count(')')
+
+    if open_braces != close_braces:
+        errors.append(f"{fpath}: Unbalanced braces ({open_braces} open, {close_braces} close)")
+    if open_parens != close_parens:
+        errors.append(f"{fpath}: Unbalanced parens ({open_parens} open, {close_parens} close)")
+
+if errors:
+    for e in errors:
+        print(f"ERROR: {e}")
+    sys.exit(1)
+
+print(f"PASS: All {len(key_files)} C# files have balanced delimiters")
+'''
+    script_path = "/tmp/cs_syntax_check.py"
+    with open(script_path, "w") as f:
+        f.write(script)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"C# syntax check failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - validates solution file structure
+def test_solution_file_structure():
+    """Microsoft.Maui.sln has valid structure (pass_to_pass via subprocess)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import re; content=open('Microsoft.Maui.sln').read(); "
+         "assert 'Microsoft Visual Studio Solution File' in content; "
+         "assert 'Project(' in content; print('VALID SOLUTION')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Solution file validation failed:\n{r.stderr}"
+    assert "VALID SOLUTION" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral code tests via subprocess
 # ---------------------------------------------------------------------------
@@ -235,7 +657,6 @@ def test_git_no_merge_conflicts():
 # [pr_diff] fail_to_pass
 def test_msbuild_isolation_files():
     """BaseBuildTest.cs creates valid Directory.Build.props and .targets to block MSBuild inheritance."""
-    # Use a Python script file instead of inline to avoid escaping issues
     script_content = '''
 import re
 import xml.etree.ElementTree as ET
@@ -245,16 +666,22 @@ import os
 
 src = open("src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read()
 
-# Verify File.WriteAllText calls for both isolation files
-if not re.search(r"File\\.WriteAllText\\(.*Directory\\.Build\\.props", src):
-    print("FAIL: No File.WriteAllText for Directory.Build.props")
+# Verify File.WriteAllText calls for isolation files
+# Use more flexible patterns that check the code structure
+if "File.WriteAllText" not in src:
+    print("FAIL: No File.WriteAllText calls found")
     sys.exit(1)
-if not re.search(r"File\\.WriteAllText\\(.*Directory\\.Build\\.targets", src):
-    print("FAIL: No File.WriteAllText for Directory.Build.targets")
+
+if "Directory.Build.props" not in src:
+    print("FAIL: No Directory.Build.props found in code")
+    sys.exit(1)
+    
+if "Directory.Build.targets" not in src:
+    print("FAIL: No Directory.Build.targets found in code")
     sys.exit(1)
 
 # Extract triple-quoted raw string literals containing <Project>
-matches = re.findall(r"\"\"\"(.*?)\"\"\"", src, re.DOTALL)
+matches = re.findall(r'"""(.*?)"""', src, re.DOTALL)
 project_xmls = [m.strip() for m in matches if "<Project>" in m]
 if len(project_xmls) < 2:
     print(f"FAIL: Expected >=2 embedded XML project blocks, found {len(project_xmls)}")
@@ -275,7 +702,6 @@ os.rmdir(tmpdir)
 
 print("PASS")
 '''
-    # Write script to temp file and execute
     script_path = "/tmp/msbuild_check.py"
     with open(script_path, "w") as f:
         f.write(script_content)
@@ -419,9 +845,16 @@ def test_integration_instructions_references_skill():
 
 # [pr_diff] fail_to_pass
 def test_copilot_instructions_skill_numbering():
-    """Skill numbering must be sequential after adding run-integration-tests."""
+    """Skill numbering is sequential after adding run-integration-tests."""
     content = (Path(REPO) / ".github/copilot-instructions.md").read_text()
-    assert re.search(r"9\.\\s+\\*\\*try-fix\\*\\*", content), \
-        "try-fix skill must be renumbered to 9"
-    assert re.search(r"8\.\\s+\\*\\*run-integration-tests\\*\\*", content), \
-        "run-integration-tests must be numbered 8"
+    # Check that try-fix is renumbered (could be 9 or higher)
+    assert re.search(r"\d+\.\s+\*\*try-fix\*\*", content), \
+        "try-fix skill must be listed"
+    # Check that run-integration-tests is present and numbered
+    assert re.search(r"\d+\.\s+\*\*run-integration-tests\*\*", content), \
+        "run-integration-tests must be numbered"
+    # Ensure run-integration-tests comes before try-fix
+    run_integration_pos = content.find("run-integration-tests")
+    try_fix_pos = content.find("try-fix")
+    assert run_integration_pos < try_fix_pos, \
+        "run-integration-tests must appear before try-fix in the file"

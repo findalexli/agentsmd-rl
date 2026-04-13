@@ -193,3 +193,23 @@ def test_repo_format_check():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — .github/workflows/check.yaml
+def test_repo_changes_validate():
+    """Repo's change files validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "changes:validate"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — .github/workflows/build.yaml
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

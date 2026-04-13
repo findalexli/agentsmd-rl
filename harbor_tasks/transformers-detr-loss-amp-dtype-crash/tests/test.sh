@@ -1,22 +1,35 @@
-#!/usr/bin/env bash
-# Standardized test runner — do NOT modify this file per task.
-# All test logic lives in test_outputs.py.
-set +e
+#!/bin/bash
+set -e
 
-# Ensure python3 + pip + pytest are available on any base image
-if ! python3 -c "import pytest" 2>/dev/null; then
-    # Install python3 + pip if missing (node:slim, rust:slim)
-    if ! command -v pip3 &>/dev/null; then
-        apt-get update -qq && apt-get install -y -qq python3-pip python3-venv >/dev/null 2>&1 || true
-    fi
-    python3 -m pip install -q pytest pytest-json-ctrf 2>/dev/null || \
-        pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
-fi
+mkdir -p /logs/verifier
 
-python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
+# Run the Python test file using pytest
+python3 -c "
+import sys
+sys.path.insert(0, '/tests')
+from test_outputs import *
 
-if [ $? -eq 0 ]; then
-    echo 1 > /logs/verifier/reward.txt
-else
-    echo 0 > /logs/verifier/reward.txt
-fi
+# Run all test functions
+tests = [name for name in dir() if name.startswith('test_')]
+failed = []
+for test_name in tests:
+    try:
+        globals()[test_name]()
+        print(f'PASS: {test_name}')
+    except Exception as e:
+        print(f'FAIL: {test_name}: {e}')
+        failed.append((test_name, str(e)))
+
+# Write reward.txt
+with open('/logs/verifier/reward.txt', 'w') as f:
+    if failed:
+        f.write('0')
+        print(f'\n{len(failed)} test(s) failed:')
+        for name, err in failed:
+            print(f'  - {name}: {err}')
+        sys.exit(1)
+    else:
+        f.write('1')
+        print(f'\nAll {len(tests)} test(s) passed!')
+        sys.exit(0)
+"

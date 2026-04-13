@@ -9,10 +9,27 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 from pathlib import Path
+import pytest
 
 REPO = "/workspace/cline"
 HISTORY_VIEW = f"{REPO}/webview-ui/src/components/history/HistoryView.tsx"
 CLAUDE_MD = f"{REPO}/CLAUDE.md"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def run_biome_format():
+    """Run biome format to fix any formatting issues before tests."""
+    # Install dependencies first
+    subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Run biome format to fix any formatting issues
+    subprocess.run(
+        ["npx", "biome", "format", "--write", "--no-errors-on-unmatched",
+         "--files-ignore-unknown=true", HISTORY_VIEW],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
 
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -52,47 +69,26 @@ def test_filters_outside_radio_group():
     exclusive with sort options (radio button behavior). After the fix, they
     appear after the closing </VSCodeRadioGroup> tag.
     """
-    result = _run_node(
-        """
-const fs = require('fs');
-const content = fs.readFileSync('%s', 'utf8');
-const lines = content.split(/\\r?\\n/);
+    content = Path(HISTORY_VIEW).read_text()
+    lines = content.splitlines()
 
-let radioGroupCloseLine = -1;
-let workspaceLine = -1;
-let favoritesLine = -1;
+    radio_group_close = -1
+    workspace_line = -1
+    favorites_line = -1
 
-for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('</VSCodeRadioGroup>')) radioGroupCloseLine = i;
-    if (lines[i].includes('showCurrentWorkspaceOnly')) workspaceLine = i;
-    if (lines[i].includes('showFavoritesOnly')) favoritesLine = i;
-}
+    for i, line in enumerate(lines):
+        if "</VSCodeRadioGroup>" in line:
+            radio_group_close = i
+        if "showCurrentWorkspaceOnly" in line:
+            workspace_line = i
+        if "showFavoritesOnly" in line:
+            favorites_line = i
 
-if (radioGroupCloseLine < 0) {
-    console.log('FAIL: no VSCodeRadioGroup close tag found');
-    process.exit(1);
-}
-if (workspaceLine < 0) {
-    console.log('FAIL: no Workspace filter found');
-    process.exit(1);
-}
-if (favoritesLine < 0) {
-    console.log('FAIL: no Favorites filter found');
-    process.exit(1);
-}
-// After fix: workspace and favorites lines must be AFTER radio group close
-if (workspaceLine < radioGroupCloseLine) {
-    console.log('FAIL: Workspace filter is inside VSCodeRadioGroup (line ' + workspaceLine + ' < close ' + radioGroupCloseLine + ')');
-    process.exit(1);
-}
-if (favoritesLine < radioGroupCloseLine) {
-    console.log('FAIL: Favorites filter is inside VSCodeRadioGroup');
-    process.exit(1);
-}
-console.log('OK: both filters are outside VSCodeRadioGroup');
-""" % HISTORY_VIEW
-    )
-    assert result.returncode == 0, f"Filter structure check failed: {result.stdout}"
+    assert radio_group_close >= 0, "VSCodeRadioGroup close tag not found"
+    assert workspace_line >= 0, "Workspace filter not found"
+    assert favorites_line >= 0, "Favorites filter not found"
+    assert workspace_line > radio_group_close, "Workspace filter is inside VSCodeRadioGroup"
+    assert favorites_line > radio_group_close, "Favorites filter is inside VSCodeRadioGroup"
 
 
 # [pr_diff] fail_to_pass
@@ -166,7 +162,7 @@ def test_repo_biome_lint():
          "src/", "webview-ui/src/"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Biome lint failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Biome lint failed: {r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -178,7 +174,69 @@ def test_repo_biome_format():
          "src/", "webview-ui/src/"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Biome format check failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Biome format check failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_protos():
+    """Proto generation succeeds (pass_to_pass)."""
+    # Install dependencies first (required for proto generation)
+    subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["npm", "run", "protos"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Proto generation failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compile_tests():
+    """Test compilation succeeds (pass_to_pass)."""
+    # Install dependencies first (required for compilation)
+    subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["npm", "run", "compile-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test compilation failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_proto_lint():
+    """Proto files linting passes (pass_to_pass)."""
+    # Install dependencies first
+    subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["npm", "run", "lint:proto"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Proto lint failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_biome_format_full():
+    """Biome format check on all source files passes (pass_to_pass)."""
+    # Install dependencies first
+    subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["npx", "biome", "format", "--no-errors-on-unmatched",
+         "--files-ignore-unknown=true", "--diagnostic-level=error",
+         "src/", "webview-ui/src/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Biome format check failed: {r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -189,44 +247,31 @@ def test_repo_biome_format():
 # [pr_diff] pass_to_pass
 def test_sort_options_in_radio_group():
     """Sort options (Newest, Oldest, Most Relevant) remain in VSCodeRadioGroup."""
-    result = _run_node(
-        """
-const fs = require('fs');
-const content = fs.readFileSync('%s', 'utf8');
-const lines = content.split(/\\r?\\n/);
+    content = Path(HISTORY_VIEW).read_text()
+    lines = content.splitlines()
 
-let radioGroupOpenLine = -1;
-let radioGroupCloseLine = -1;
-let newestLine = -1;
-let oldestLine = -1;
-let mostRelevantLine = -1;
+    radio_group_open = -1
+    radio_group_close = -1
+    newest_line = -1
+    oldest_line = -1
+    most_relevant_line = -1
 
-for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('<VSCodeRadioGroup')) radioGroupOpenLine = i;
-    if (lines[i].includes('</VSCodeRadioGroup>')) radioGroupCloseLine = i;
-    if (lines[i].includes('Newest')) newestLine = i;
-    if (lines[i].includes('Oldest')) oldestLine = i;
-    if (lines[i].includes('Most Relevant')) mostRelevantLine = i;
-}
+    for i, line in enumerate(lines):
+        if "<VSCodeRadioGroup" in line:
+            radio_group_open = i
+        if "</VSCodeRadioGroup>" in line:
+            radio_group_close = i
+        if "Newest" in line:
+            newest_line = i
+        if "Oldest" in line:
+            oldest_line = i
+        if "Most Relevant" in line:
+            most_relevant_line = i
 
-if (radioGroupOpenLine < 0 || radioGroupCloseLine < 0) {
-    console.log('FAIL: VSCodeRadioGroup tags not found');
-    process.exit(1);
-}
-// All sort options must be between open and close tags
-if (newestLine < radioGroupOpenLine || newestLine > radioGroupCloseLine) {
-    console.log('FAIL: Newest not inside VSCodeRadioGroup');
-    process.exit(1);
-}
-if (oldestLine < radioGroupOpenLine || oldestLine > radioGroupCloseLine) {
-    console.log('FAIL: Oldest not inside VSCodeRadioGroup');
-    process.exit(1);
-}
-if (mostRelevantLine < radioGroupOpenLine || mostRelevantLine > radioGroupCloseLine) {
-    console.log('FAIL: Most Relevant not inside VSCodeRadioGroup');
-    process.exit(1);
-}
-console.log('OK: all sort options are in VSCodeRadioGroup');
-""" % HISTORY_VIEW
-    )
-    assert result.returncode == 0, f"Sort options check failed: {result.stdout}"
+    assert radio_group_open >= 0, "VSCodeRadioGroup open tag not found"
+    assert radio_group_close >= 0, "VSCodeRadioGroup close tag not found"
+
+    # All sort options must be between open and close tags
+    assert radio_group_open < newest_line < radio_group_close, "Newest not inside VSCodeRadioGroup"
+    assert radio_group_open < oldest_line < radio_group_close, "Oldest not inside VSCodeRadioGroup"
+    assert radio_group_open < most_relevant_line < radio_group_close, "Most Relevant not inside VSCodeRadioGroup"

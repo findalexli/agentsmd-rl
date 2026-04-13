@@ -17,7 +17,8 @@ WORKDIR /workspace/pytorch
 
 # Install minimal Python deps needed for codegen testing
 # We only need sympy for the MetalExprPrinter tests
-RUN pip install --no-cache-dir sympy filelock typing-extensions pyyaml
+# ruff is needed for linting checks
+RUN pip install --no-cache-dir sympy filelock typing-extensions pyyaml ruff
 
 # Set PYTHONPATH so torch internals can be imported for codegen testing
 ENV PYTHONPATH="/workspace/pytorch"

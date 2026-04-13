@@ -44,6 +44,24 @@ def test_repo_lint_packages():
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_test_types():
+    """Repo's test types check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test types failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node in the repo directory."""
     script = Path(REPO) / "_eval_tmp.mjs"

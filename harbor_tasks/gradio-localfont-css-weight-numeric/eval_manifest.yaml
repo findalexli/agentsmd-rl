@@ -85,37 +85,84 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: LocalFont generates expected CSS structure with @font-face rules
+- id: gradio_fonts_full_api
+  type: pass_to_pass
+  origin: repo_tests
+  description: Fonts module exports all expected classes and functions (Font, GoogleFont,
+    LocalFont, FontEncoder, as_font)
+- id: ci_ruff_check_gradio_themes
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - ruff check on gradio/themes/ directory passes
+- id: ci_ruff_format_gradio_themes
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - ruff format check on gradio/themes/ passes
+- id: ci_pytest_themes_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - pytest on TestBuiltInThemes passes
+- id: ci_gradio_module_imports_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - gradio module imports without errors
+- id: ci_generate_theme_script_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - generate_theme.py runs and produces valid CSS output
 rubric:
-- rule: Be consistent with the style of the surrounding code.
+- rule: Be consistent with the style of the surrounding code in gradio/themes/utils/fonts.py
   source:
-    path: AGENTS.md
-    lines: '45'
+    path: gradio/themes/utils/fonts.py
+    lines: 85-106
     commit: 0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467
+  reference: '# Uses clear variable names (file_weight, css_weight) matching the surrounding
+    code style
+
+    file_weight = ("Regular" if weight == 400 else "Bold" if weight == 700 else str(weight))
+
+    css_weight=weight
+
+    '
+- rule: 'Repository Structure: `gradio/` is Python backend, `js/` is frontend code.'
+  source:
+    path: scripts/generate_theme.py
+    lines: 1-20
+    commit: 0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467
+  reference: '# Backend Python code in scripts/
+
+    parser.add_argument("--website", action="store_true", help="Adjust paths for SvelteKit
+    website")
+
+    # Frontend config in js/_website/package.json uses the --website flag
+
+    "dev": "...python ../../scripts/generate_theme.py --website --outfile ..."
+
+    '
+  evidence: The gold solution correctly navigates the repository structure by modifying
+    `gradio/themes/utils/fonts.py` for the backend Python logic and `js/_website/package.json`
+    for the frontend website build script.
+  category: architecture
 distractors:
-- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
-  collision_type: architecture_boundary
-  why_distracting: The rule states that `js/` contains frontend code (Svelte/TypeScript).
-    An agent might try to fix the website font path issue by modifying Svelte components,
-    Vite configuration, or writing a URL-rewriting script inside `js/_website/`. However,
-    the correct architectural fix is to modify the Python theme generation script
-    (`scripts/generate_theme.py`) to output the correct URLs and update the `package.json`
-    to pass a flag.
+- rule: Every non-trivial PR should reference an existing GitHub issue. If one doesn't
+    exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in a headless evaluation environment and
+    cannot create GitHub issues or interact with the GitHub API. Trying to fulfill
+    this rule would lead to tool errors or hallucinated issue numbers.
   severity: high
   source:
     path: AGENTS.md
-    lines: 12-12
-- rule: 'Format your code before pushing. Frontend: `bash scripts/format_frontend.sh`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent modifies `js/_website/package.json` and might attempt
-    to run `bash scripts/format_frontend.sh` as instructed. Running this script could
-    format unrelated frontend files, polluting the PR with out-of-scope changes, or
-    fail if the agent's environment lacks the necessary Node.js dependencies.
-  severity: medium
+    lines: 17-18
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md,
+    including AI disclosure.
+  collision_type: meta_confusion
+  why_distracting: The agent is generating a patch for evaluation, not opening a pull
+    request. Attempting to fill out a PR template or add AI disclosure checkboxes
+    is impossible or irrelevant in this context.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 31-34
-hierarchy_analysis: The repository has a single `AGENTS.md` configuration file at
-  the root level. The rules are general and apply to the entire repository. The primary
-  challenge is interpreting architectural boundaries (Python backend vs. JS frontend)
-  when a Python script generates assets consumed by the JS frontend.
+    lines: 20-23
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level. There is no hierarchy to traverse or override.

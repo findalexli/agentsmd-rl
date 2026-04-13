@@ -382,6 +382,56 @@ print('OK: Image processing imports work')
     assert r.returncode == 0, f"Image processing imports failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_check_modeling_structure():
+    """Repo's modeling structure check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"check_modeling_structure failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_doc_toc():
+    """Repo's documentation TOC check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"check_doc_toc failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_custom_init_isort():
+    """Repo's init file isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/custom_init_isort.py", "--check_only"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"custom_init_isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_sort_auto_mappings():
+    """Repo's auto mappings sort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/sort_auto_mappings.py", "--check_only"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"sort_auto_mappings check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_doctest_list():
+    """Repo's doctest list check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"check_doctest_list failed:\n{r.stderr[-500:]}"
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:2 @ 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
 @pytest.mark.skipif(not shutil.which("ruff"), reason="ruff not installed")
 def test_ruff_style_check():

@@ -244,7 +244,7 @@ def test_repo_ruff_check():
 
 # [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
 def test_repo_pytest_cancel_tests():
-    """Repo's cancel-related tests pass (pass_to_pass)."""
+    """Repo's TestCancel tests pass (all 3 cancel-related tests) (pass_to_pass)."""
     import sys
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "-q", "hypothesis", "pytest-asyncio"],
@@ -259,7 +259,7 @@ def test_repo_pytest_cancel_tests():
 
 # [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
 def test_repo_safe_aclose_iterator():
-    """Repo's safe_aclose_iterator tests pass (pass_to_pass)."""
+    """Repo's TestSafeAcloseIterator tests pass (2 tests for safe_aclose_iterator) (pass_to_pass)."""
     import sys
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "-q", "hypothesis", "pytest-asyncio"],
@@ -270,3 +270,45 @@ def test_repo_safe_aclose_iterator():
         cwd=REPO, capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, f"safe_aclose_iterator tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml (lint script)
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "gradio/routes.py"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ruff format check failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
+def test_repo_sync_to_async_iterator_aclose():
+    """Repo's TestSyncToAsyncIteratorAclose tests pass (4 aclose tests) (pass_to_pass)."""
+    import sys
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "hypothesis", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestSyncToAsyncIteratorAclose", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"SyncToAsyncIterator aclose tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — combined all iterator-related tests from repo CI
+def test_repo_all_iterator_tests():
+    """Repo's all iterator utility tests pass (6 tests: 4 aclose + 2 safe_aclose) (pass_to_pass)."""
+    import sys
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "hypothesis", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestSyncToAsyncIteratorAclose", "test/test_utils.py::TestSafeAcloseIterator", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Iterator tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

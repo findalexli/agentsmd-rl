@@ -327,3 +327,25 @@ def test_repo_asset_model_tests():
     if result.returncode != 0:
         output = result.stdout + result.stderr
         raise AssertionError(f"Asset model tests failed:\n{output[-1000:]}")
+
+
+def test_shared_serialization_tests():
+    """P2P: Shared serialization distribution tests pass.
+
+    The fix involves SerializedDagModel interaction - verifying the shared
+    serialization utilities work correctly ensures the serialization layer
+    is healthy for the dags_needing_dagruns method.
+    """
+    result = subprocess.run(
+        [
+            "uv", "run", "--group", "dev", "pytest",
+            "-q", "--tb=short"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=f"{REPO}/shared/serialization",
+    )
+    if result.returncode != 0:
+        output = result.stdout + result.stderr
+        raise AssertionError(f"Shared serialization tests failed:\n{output[-1000:]}")

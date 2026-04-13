@@ -64,43 +64,78 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's unit tests for completion-cli pass
+- id: test_repo_tsgo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type check (tsgo) passes
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no Git merge conflict markers
+- id: test_repo_host_env_policy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's host env security policy is up to date
 rubric:
-- rule: Keep files concise; extract helpers instead of duplicating logic or making
-    'V2' copies.
+- rule: Fix applied to correct location in src/cli/completion-cli.ts
   source:
-    path: CLAUDE.md
-    lines: '115'
-    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
-- rule: Add brief code comments for tricky or non-obvious logic.
-  source:
-    path: CLAUDE.md
-    lines: '114'
-    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
-- rule: 'Written English: use American spelling and grammar in code, comments, docs,
-    and UI strings.'
-  source:
-    path: CLAUDE.md
-    lines: '118'
-    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+    path: src/cli/completion-cli.ts
+    lines: 414-430
+  evidence: The gold solution modifies src/cli/completion-cli.ts to fix the completion
+    script generation, adhering to the rule that CLI wiring lives in src/cli.
+  category: architecture
+  reference: '+_${rootCmd}_register_completion() {
+
+    +  if (( ! $+functions[compdef] )); then
+
+    +    return 0
+
+    +  fi
+
+    +
+
+    +  compdef _${rootCmd}_root_completion ${rootCmd}
+
+    +  precmd_functions=(${precmd_functions:#_${rootCmd}_register_completion})
+
+    +  unfunction _${rootCmd}_register_completion 2>/dev/null
+
+    +}
+
+    +
+
+    +_${rootCmd}_register_completion
+
+    +if (( ! $+functions[compdef] )); then
+
+    +  typeset -ga precmd_functions
+
+    +  if [[ -z "${precmd_functions[(r)_${rootCmd}_register_completion]}" ]]; then
+
+    +    precmd_functions+=(_${rootCmd}_register_completion)
+
+    +  fi
+
+    +fi
+
+    '
 - rule: 'Source code: `src/` (CLI wiring in `src/cli`...)'
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 10-10
-  evidence: The gold solution modifies `src/cli/completion-cli.ts` to fix the completion
-    script generation, adhering to the rule that CLI wiring lives in `src/cli`.
+  evidence: The gold solution correctly modifies `src/cli/completion-cli.ts`, adhering
+    to the architectural guideline that CLI wiring belongs in `src/cli`.
   category: architecture
 distractors:
 - rule: 'Installers served from `https://openclaw.ai/*`: live in the sibling repo
     `../openclaw.ai` (`public/install.sh`, `public/install-cli.sh`, `public/install.ps1`).'
   collision_type: architecture_boundary
-  why_distracting: The issue involves shell scripts and CLI setup (zsh completion).
-    An agent might read the rule about installers living in `../openclaw.ai` (`install-cli.sh`)
-    and attempt to fix the completion sourcing issue there, rather than in the TypeScript
-    generator `src/cli/completion-cli.ts`.
-  severity: high
+  why_distracting: The agent might mistakenly believe that CLI completion scripts
+    (which are often part of the installation process) should be modified in the sibling
+    repo's `install-cli.sh` instead of the core repo's `src/cli/completion-cli.ts`.
+  severity: low
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 18-18
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical rules. The agent
-  must apply the architectural boundaries correctly, distinguishing between the CLI''s
-  internal completion generator (`src/cli`) and external installer scripts (`../openclaw.ai`).'
+hierarchy_analysis: The configuration consists of two identical root-level files (`AGENTS.md`
+  and `CLAUDE.md`). There is no deep hierarchy or overriding required.

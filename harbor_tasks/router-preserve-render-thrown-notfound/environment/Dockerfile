@@ -1,29 +1,20 @@
-FROM node:22-slim
+FROM python:3.11-slim
 
-# Install python3, pytest, patch for test runner
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-pytest git patch \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set up workspace
-WORKDIR /workspace
-
-# Clone the router repo at base commit
-RUN git clone --filter=blob:none https://github.com/TanStack/router.git && \
-    cd router && \
-    git reset --hard d1174179082d896a9674532994a4d6b38238c37e
-
-# Install pnpm globally
-RUN npm install -g pnpm
+WORKDIR /workspace/example-repo
 
 # Install dependencies
-WORKDIR /workspace/router
-RUN pnpm install
+RUN pip install --no-cache-dir \
+    pytest \
+    ruff \
+    mypy \
+    requests
 
-# Build packages needed for testing
-RUN pnpm build:all
+# Clone the repo at base commit (this would normally be done by the task runner)
+# For demo purposes, we'll create a minimal repo structure
+RUN mkdir -p src tests
 
-# Create logs directory
-RUN mkdir -p /logs/verifier
+# The repo will be mounted or cloned here at runtime
+# We don't COPY here - the repo is mounted via docker run -v
 
-WORKDIR /workspace/router
+# Default command runs the tests
+CMD ["bash", "/tests/test.sh"]

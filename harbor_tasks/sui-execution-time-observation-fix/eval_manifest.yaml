@@ -1,23 +1,3 @@
-rubric:
-- rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
-    business logic, temporary timeouts/thresholds, complex calculations, subtle race
-    conditions, and assumptions. Do NOT comment simple variable assignments, standard
-    library usage, self-descriptive function calls, or basic control flow.
-  source:
-    path: CLAUDE.md
-    lines: 116-131
-    commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
-- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions.
-    Fix the underlying issues instead.'
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
-- rule: 'For async tests, use #[tokio::test] instead of #[test].'
-  source:
-    path: CLAUDE.md
-    lines: '114'
-    commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
 checks:
 - id: test_rust_syntax_valid
   type: pass_to_pass
@@ -61,43 +41,74 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repository has clean git status
+- id: test_cargo_metadata_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo metadata is valid and parseable
+- id: test_rustfmt_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rustfmt is available and working
+- id: test_cargo_doc_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation can be generated without errors
+- id: test_target_file_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file can be parsed by rustfmt
+- id: test_git_log_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log shows the expected base commit
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's custom xlint tool passes
+- id: test_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git-checks.sh script passes
 distractors:
-- rule: '`cargo xclippy does not recognize -p option`'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run `cargo xclippy -p sui-core` to check
-    its work, which will fail because `cargo xclippy` doesn't support `-p`. This could
-    lead the agent down a rabbit hole of trying to fix the command or the linting
-    setup.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 48-49
-- rule: skip simulation tests as they may cause false negatives with `cargo nextest`
-  collision_type: would_cause_bug
-  why_distracting: The agent might run `cargo nextest run` without setting `SUI_SKIP_SIMTESTS=1`,
-    which can cause false negatives (spurious test failures) and distract the agent
-    from the actual task.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 31-32
 - rule: All new files must start with the following license in comments at the top
     of the file
   collision_type: scope_ambiguity
-  why_distracting: The agent might see the license header requirement and try to prepend
-    it to `execution_time_estimator.rs` if it doesn't see one, even though it's not
-    a new file.
+  why_distracting: The rule requires adding a specific license header to all 'new
+    files'. An agent might misinterpret this and attempt to prepend the license to
+    the existing `execution_time_estimator.rs` file, duplicating the header or modifying
+    existing comments unnecessarily.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 18-21
-hierarchy_analysis: The repository has a root CLAUDE.md and AGENTS.md. The AGENTS.md
-  defers to CLAUDE.md. The root CLAUDE.md provides essential commands for building,
-  testing, and linting, along with high-level architectural context. There are no
-  conflicting rules between the provided config files.
+    lines: 16-20
+- rule: Run e2e tests with `cargo simtest` and Rust unittests with `cargo nextest
+    run`
+  collision_type: rule_conflict
+  why_distracting: The config strongly encourages running `cargo simtest` and `cargo
+    nextest`, noting that tests can take at least 10 minutes. The task instruction
+    only requires `cargo check -p sui-core`. Attempting to run the full test suite
+    would waste significant time and compute resources for a simple assertion fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 28-42
+hierarchy_analysis: The hierarchy is flat, consisting of two root-level files (`AGENTS.md`
+  and `CLAUDE.md`). `AGENTS.md` simply defers to `CLAUDE.md` and crate-specific files.
+  There are no crate-specific config files provided in the context, so the agent only
+  needs to rely on the root `CLAUDE.md` and the explicit task instructions.
 version: '2.0'
 source:
   repo: MystenLabs/sui
   pr: 26123
   base_commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
   merge_commit: a9773b63b34983935554286a637dc8a62b2233c8
+rubric:
+- rule: Use `cargo check` to check code without building (preferred)
+  source:
+    path: CLAUDE.md
+    lines: 21-26
+  evidence: The prompt explicitly requests ensuring the code compiles with `cargo
+    check -p sui-core`, which aligns with the project's preferred method of checking
+    code without building.
+  category: tooling
+  verification: llm_judge

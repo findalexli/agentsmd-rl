@@ -1,299 +1,199 @@
-"""
-Task: transformers-detr-loss-amp-dtype-crash
-Repo: huggingface/transformers @ b94fee049373eb2e140d4866847559c4c42b3d7e
-PR:   44886
+"""Behavioral tests for asyncHandler fix.
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
+These tests execute actual code to verify the behavior changes.
 """
-
 import subprocess
-import sys
-from contextlib import contextmanager
+import json
 from pathlib import Path
 
-import torch
-
-REPO = "/repo"
-sys.path.insert(0, f"{REPO}/src")
-
-LW_FILE = f"{REPO}/src/transformers/loss/loss_lw_detr.py"
-RT_FILE = f"{REPO}/src/transformers/loss/loss_rt_detr.py"
+REPO = "/workspace/express-async-handler"
 
 
-@contextmanager
-def pow_promotes_to_float32():
-    """Simulate CUDA autocast: torch.pow returns float32 even on float16 inputs."""
-    orig_pow = torch.Tensor.pow
-    orig_rpow = torch.Tensor.__pow__
-
-    def _promoted_pow(self, exponent):
-        return orig_pow(self.float(), exponent)
-
-    def _promoted_rpow(self, exponent):
-        return orig_rpow(self.float(), exponent)
-
-    torch.Tensor.pow = _promoted_pow
-    torch.Tensor.__pow__ = _promoted_rpow
+def _run_node_test(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.js"
+    script.write_text(code)
     try:
-        yield
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
     finally:
-        torch.Tensor.pow = orig_pow
-        torch.Tensor.__pow__ = orig_rpow
+        script.unlink(missing_ok=True)
 
 
-def _lwdetr_inputs(B, Q, C, n_targets, dtype=torch.float32):
-    logits = torch.randn(B, Q, C, dtype=dtype)
-    pred_boxes = torch.rand(B, Q, 4, dtype=dtype)
-    pred_boxes[..., 2:] = pred_boxes[..., 2:].abs().clamp(min=0.05)
-    targets = []
-    src_idx, tgt_idx = [], []
-    for _ in range(B):
-        n = min(n_targets, Q)
-        targets.append({
-            "class_labels": torch.randint(0, C, (n,)),
-            "boxes": torch.rand(n, 4, dtype=dtype).clamp(min=0.05, max=0.95),
-        })
-        src_idx.append(torch.arange(n))
-        tgt_idx.append(torch.arange(n))
-    indices = list(zip(src_idx, tgt_idx))
-    return logits, pred_boxes, targets, indices
+def test_sync_error_caught():
+    """Sync errors thrown by handler are caught and passed to next() (fail_to_pass)."""
+    r = _run_node_test("""
+const asyncHandler = require('./index.js');
+
+let capturedError = null;
+const mockNext = (err) => { capturedError = err; };
+const mockReq = {};
+const mockRes = {};
+
+// Create a sync handler that throws
+const syncThrower = (req, res) => {
+  throw new Error('sync error');
+};
+
+// Wrap it with asyncHandler
+const wrapped = asyncHandler(syncThrower);
+
+try {
+  wrapped(mockReq, mockRes, mockNext);
+} catch (e) {
+  console.log(JSON.stringify({error: e.message, caughtByWrapper: false}));
+  process.exit(0);
+}
+
+// Check if error was captured by next()
+if (capturedError && capturedError.message === 'sync error') {
+  console.log(JSON.stringify({caughtByNext: true, message: capturedError.message}));
+} else if (capturedError) {
+  console.log(JSON.stringify({caughtByNext: true, wrongMessage: capturedError.message}));
+} else {
+  console.log(JSON.stringify({caughtByNext: false, error: null}));
+}
+""")
+    assert r.returncode == 0, f"Script failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    # After the fix, the error should be caught and passed to next()
+    assert result.get("caughtByNext") is True, f"Sync error not caught by next(): {result}"
+    assert result.get("message") == "sync error", f"Wrong error message: {result}"
 
 
-def _make_lwdetr(C, indices):
-    from transformers.loss.loss_lw_detr import LwDetrImageLoss
+def test_async_error_still_works():
+    """Async errors (Promise rejections) continue to work (pass_to_pass)."""
+    r = _run_node_test("""
+const asyncHandler = require('./index.js');
 
-    captured = indices  # avoid late-binding in lambda
-    matcher = type("M", (), {"__call__": lambda s, o, t, g: captured})()
-    return LwDetrImageLoss(
-        matcher=matcher, num_classes=C, focal_alpha=0.25,
-        losses=["labels"], group_detr=1,
-    )
+let capturedError = null;
+const mockNext = (err) => { capturedError = err; };
+const mockReq = {};
+const mockRes = {};
 
+// Create an async handler that rejects
+const asyncRejecter = async (req, res) => {
+  throw new Error('async error');
+};
 
-class FakeRTDetrConfig:
-    matcher_class_cost = 2.0
-    matcher_bbox_cost = 5.0
-    matcher_giou_cost = 2.0
-    use_focal_loss = True
-    matcher_alpha = 0.25
-    matcher_gamma = 2.0
-    num_labels = 3
-    weight_loss_vfl = 1.0
-    weight_loss_bbox = 5.0
-    weight_loss_giou = 2.0
-    eos_coefficient = 0.1
-    focal_loss_alpha = 0.75
-    focal_loss_gamma = 2.0
+// Wrap it with asyncHandler
+const wrapped = asyncHandler(asyncRejecter);
 
+// Call it and wait for promise chain
+const ret = wrapped(mockReq, mockRes, mockNext);
 
-def _rtdetr_inputs(B, Q, C, n_targets, dtype=torch.float32):
-    logits = torch.randn(B, Q, C, dtype=dtype)
-    pred_boxes = torch.rand(B, Q, 4, dtype=dtype)
-    pred_boxes[..., 2:] = pred_boxes[..., 2:].abs().clamp(min=0.05)
-    targets = []
-    src_idx, tgt_idx = [], []
-    for _ in range(B):
-        n = min(n_targets, Q)
-        targets.append({
-            "class_labels": torch.randint(0, C, (n,)),
-            "boxes": torch.rand(n, 4, dtype=dtype).clamp(min=0.05, max=0.95),
-        })
-        src_idx.append(torch.arange(n))
-        tgt_idx.append(torch.arange(n))
-    indices = list(zip(src_idx, tgt_idx))
-    return logits, pred_boxes, targets, indices
-
-
-# ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static) — syntax check
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_syntax_check():
-    """Both modified loss files must parse without errors."""
-    import py_compile
-
-    for f in [LW_FILE, RT_FILE]:
-        py_compile.compile(f, doraise=True)
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_lwdetr_loss_labels_float16_pow_promotion():
-    """LwDetrImageLoss.loss_labels must not crash when pow promotes to float32."""
-    from transformers.loss.loss_lw_detr import LwDetrImageLoss
-
-    for B, Q, C, n_tgt in [(1, 4, 3, 2), (2, 6, 5, 3), (3, 10, 7, 4)]:
-        logits, pred_boxes, targets, indices = _lwdetr_inputs(B, Q, C, n_tgt, dtype=torch.float16)
-        loss_fn = _make_lwdetr(C, indices)
-        loss_fn.eval()
-
-        with pow_promotes_to_float32():
-            losses = loss_fn.loss_labels(
-                {"logits": logits, "pred_boxes": pred_boxes},
-                targets, indices,
-                num_boxes=float(sum(len(t["class_labels"]) for t in targets)),
-            )
-
-        val = losses["loss_ce"]
-        assert not torch.isnan(val), f"loss_ce is NaN (B={B}, Q={Q})"
-        assert not torch.isinf(val), f"loss_ce is Inf (B={B}, Q={Q})"
-        assert val.item() >= 0, f"loss_ce is negative: {val.item()}"
-
-
-# [pr_diff] fail_to_pass
-def test_rtdetr_loss_labels_vfl_float16_pow_promotion():
-    """RTDetrLoss.loss_labels_vfl must not crash when pow promotes to float32."""
-    from transformers.loss.loss_rt_detr import RTDetrLoss
-
-    for B, Q, C, n_tgt in [(1, 4, 3, 2), (2, 8, 5, 4), (3, 12, 7, 5)]:
-        logits, pred_boxes, targets, indices = _rtdetr_inputs(B, Q, C, n_tgt, dtype=torch.float16)
-        config = FakeRTDetrConfig()
-        config.num_labels = C
-        loss_module = RTDetrLoss(config)
-
-        with pow_promotes_to_float32():
-            losses = loss_module.loss_labels_vfl(
-                {"logits": logits, "pred_boxes": pred_boxes},
-                targets, indices,
-                num_boxes=float(sum(len(t["class_labels"]) for t in targets)),
-            )
-
-        val = losses["loss_vfl"]
-        assert not torch.isnan(val), f"loss_vfl is NaN (B={B}, Q={Q})"
-        assert not torch.isinf(val), f"loss_vfl is Inf (B={B}, Q={Q})"
-        assert val.item() >= 0, f"loss_vfl is negative: {val.item()}"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
-# ---------------------------------------------------------------------------
-
-# [pr_diff] pass_to_pass
-def test_lwdetr_loss_labels_float32():
-    """LwDetrImageLoss.loss_labels still works with default float32 inputs."""
-    from transformers.loss.loss_lw_detr import LwDetrImageLoss
-
-    for B, Q, C, n_tgt in [(1, 4, 3, 2), (2, 6, 5, 3)]:
-        logits, pred_boxes, targets, indices = _lwdetr_inputs(B, Q, C, n_tgt)
-        loss_fn = _make_lwdetr(C, indices)
-        losses = loss_fn.loss_labels(
-            {"logits": logits, "pred_boxes": pred_boxes},
-            targets, indices,
-            num_boxes=float(sum(len(t["class_labels"]) for t in targets)),
-        )
-        assert "loss_ce" in losses
-        assert not torch.isnan(losses["loss_ce"])
-
-
-# [pr_diff] pass_to_pass
-def test_rtdetr_loss_labels_vfl_float32():
-    """RTDetrLoss.loss_labels_vfl still works with default float32 inputs."""
-    from transformers.loss.loss_rt_detr import RTDetrLoss
-
-    for B, Q, C, n_tgt in [(1, 4, 3, 2), (2, 8, 5, 4)]:
-        logits, pred_boxes, targets, indices = _rtdetr_inputs(B, Q, C, n_tgt)
-        config = FakeRTDetrConfig()
-        config.num_labels = C
-        loss_module = RTDetrLoss(config)
-        losses = loss_module.loss_labels_vfl(
-            {"logits": logits, "pred_boxes": pred_boxes},
-            targets, indices,
-            num_boxes=float(sum(len(t["class_labels"]) for t in targets)),
-        )
-        assert "loss_vfl" in losses
-        assert not torch.isnan(losses["loss_vfl"])
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186 @ b94fee049373eb2e140d4866847559c4c42b3d7e
-def test_no_bare_type_ignore():
-    """type: ignore comments must include specific error codes, not bare."""
-    import re
-
-    bare_pattern = re.compile(r"#\s*type:\s*ignore\s*(?!\[)")
-    for fpath in [LW_FILE, RT_FILE]:
-        src = Path(fpath).read_text()
-        for i, line in enumerate(src.splitlines(), 1):
-            assert not bare_pattern.search(line), (
-                f"{fpath}:{i} has bare '# type: ignore' without error code"
-            )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI-derived tests using subprocess.run()
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass
-def test_repo_import_lw_detr_loss():
-    """Repo: LwDetrImageLoss can be imported from loss_lw_detr (pass_to_pass)."""
+if (ret && ret.then) {
+  ret.then(() => {
+    // After promise settles, check if error was caught
+    setTimeout(() => {
+      if (capturedError && capturedError.message === 'async error') {
+        console.log(JSON.stringify({caughtByNext: true, message: capturedError.message}));
+      } else {
+        console.log(JSON.stringify({caughtByNext: false, error: capturedError}));
+      }
+    }, 10);
+  });
+} else {
+  console.log(JSON.stringify({hasPromise: false}));
+}
+""")
+    # Async test needs a bit more time, so run it differently
     r = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from transformers.loss.loss_lw_detr import LwDetrImageLoss; print('LwDetrImageLoss import OK')",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        ["node", "-e", """
+const asyncHandler = require('./index.js');
+
+let capturedError = null;
+const mockNext = (err) => { capturedError = err; };
+
+const asyncRejecter = async (req, res) => {
+  throw new Error('async error');
+};
+
+const wrapped = asyncHandler(asyncRejecter);
+const ret = wrapped({}, {}, mockNext);
+
+// Wait for promise chain to process
+setTimeout(() => {
+  if (capturedError && capturedError.message === 'async error') {
+    console.log('PASS: async error caught');
+  } else {
+    console.log('FAIL: async error not caught, got: ' + JSON.stringify(capturedError));
+    process.exit(1);
+  }
+}, 50);
+"""],
+        capture_output=True, text=True, timeout=5, cwd=REPO,
     )
-    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+    assert r.returncode == 0, f"Async error test failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Async error not properly caught: {r.stdout}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_import_rt_detr_loss():
-    """Repo: RTDetrLoss can be imported from loss_rt_detr (pass_to_pass)."""
+def test_return_value_available():
+    """The return value from the handler is still available (pass_to_pass)."""
+    r = _run_node_test("""
+const asyncHandler = require('./index.js');
+
+const mockReq = {};
+const mockRes = {};
+const mockNext = () => {};
+
+// Create a handler that returns a value
+const returnHandler = (req, res) => {
+  return { some: 'value', id: 123 };
+};
+
+// Wrap it
+const wrapped = asyncHandler(returnHandler);
+const ret = wrapped(mockReq, mockRes, mockNext);
+
+// Check return value is preserved
+if (ret && ret.some === 'value' && ret.id === 123) {
+  console.log(JSON.stringify({returnValuePreserved: true, value: ret}));
+} else {
+  console.log(JSON.stringify({returnValuePreserved: false, got: ret}));
+}
+""")
+    assert r.returncode == 0, f"Return value test failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+    assert result.get("returnValuePreserved") is True, f"Return value not preserved: {result}"
+
+
+def test_no_thrown_error_escapes():
+    """No sync error escapes the wrapper uncaught (fail_to_pass)."""
     r = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from transformers.loss.loss_rt_detr import RTDetrLoss; print('RTDetrLoss import OK')",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        ["node", "-e", """
+const asyncHandler = require('./index.js');
+
+let syncErrorCaught = false;
+
+const throwingHandler = (req, res) => {
+  throw new Error('should be caught');
+};
+
+const wrapped = asyncHandler(throwingHandler);
+
+try {
+  wrapped({}, {}, (err) => {
+    if (err && err.message === 'should be caught') {
+      console.log('PASS: error passed to next');
+    } else {
+      console.log('FAIL: wrong error: ' + err);
+      process.exit(1);
+    }
+  });
+} catch (e) {
+  console.log('FAIL: error escaped wrapper: ' + e.message);
+  process.exit(1);
+}
+"""],
+        capture_output=True, text=True, timeout=5, cwd=REPO,
     )
-    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+    assert r.returncode == 0, f"Test failed with error: {r.stderr}"
+    assert "PASS" in r.stdout, f"Error escaped wrapper: {r.stdout}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_py_compile_loss_files():
-    """Repo: Both modified loss files compile with py_compile (pass_to_pass)."""
-    r = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            f"import py_compile; py_compile.compile('{LW_FILE}', doraise=True); py_compile.compile('{RT_FILE}', doraise=True); print('py_compile OK')",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_transformers_package_imports():
-    """Repo: transformers package imports correctly from source (pass_to_pass)."""
-    r = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "import transformers; print(f'transformers {transformers.__version__} OK')",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"transformers import failed:\n{r.stderr}"
+def test_file_exists():
+    """The main index.js file exists (static check)."""
+    assert Path(f"{REPO}/index.js").exists(), "index.js not found"

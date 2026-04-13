@@ -41,6 +41,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's init lazy imports check passes on modified files
+- id: test_repo_boolean_context_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's boolean context manager check passes on modified files
+- id: test_repo_validate_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config validation check passes on modified files
 - id: pixtral_processor_init_signature
   type: fail_to_pass
   origin: pr_diff
@@ -80,39 +88,50 @@ checks:
   origin: static
   description: Modified files must not be trivially small (>= 50 lines each)
 rubric:
-- rule: Pixtral and Voxtral processor classes must accept their multimodal components
-    as explicit constructor parameters
+- rule: Processor classes must accept their multimodal components as explicit constructor
+    parameters for Transformers v5 compatibility
   source:
-    path: vllm/transformers_utils/processors
-    lines: 1-100
+    path: vllm/transformers_utils/processors/pixtral.py
+    lines: 50-70
+  reference: Pixtral and Voxtral processors now accept image_processor and feature_extractor
+    as explicit __init__ parameters, enabling external control over these components.
 - rule: Model classes must pass pre-constructed components to processors rather than
     letting processors create them internally
   source:
-    path: vllm/model_executor/models
-    lines: 1-100
+    path: vllm/model_executor/models/pixtral.py
+    lines: 130-145
+  reference: Pixtral and Voxtral models now create image_processor and feature_extractor
+    in separate helper methods, then pass them to processor constructors.
 distractors:
 - rule: Pure code-agent PRs are not allowed. A human submitter must understand and
     defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The rule explicitly states that 'Pure code-agent PRs are not allowed'
-    and requires a human submitter. An AI agent operating autonomously in an evaluation
-    environment might strictly interpret this policy and refuse to generate the code
-    fix, believing it is violating repository rules.
+  why_distracting: The agent might refuse to generate the fix because the instructions
+    explicitly forbid pure code-agent PRs and require a human submitter.
   severity: high
   source:
     path: AGENTS.md
-    lines: 22-26
-- rule: Before proposing a PR, run duplicate-work checks using the `gh` CLI.
+    lines: 24-26
+- rule: 'Before proposing a PR, run these checks: gh issue view <issue_number> --repo
+    vllm-project/vllm --comments'
   collision_type: meta_confusion
-  why_distracting: The rule requires running `gh issue view` and `gh pr list` to check
-    for duplicate work before proceeding. In a sandboxed evaluation environment, the
-    agent might attempt to run these commands, which will fail due to lack of GitHub
-    authentication or network access, potentially causing the agent to halt the task.
+  why_distracting: The agent might attempt to execute `gh` CLI commands to check for
+    duplicate PRs before proceeding, which will likely fail in the sandbox environment
+    and waste execution time.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 8-14
-hierarchy_analysis: The hierarchy is flat, with CLAUDE.md simply delegating to AGENTS.md.
-  AGENTS.md contains repository-wide contribution policies and local development workflows.
-  There are no conflicting rules between files, but the strict human-in-the-loop contribution
-  policies conflict directly with the autonomous nature of an AI evaluation environment.
+    lines: 9-13
+- rule: 'PR descriptions for AI-assisted work must include: Why this is not duplicating
+    an existing PR. Test commands run and results. Clear statement that AI assistance
+    was used.'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to write a PR description or refuse to proceed
+    because it cannot fulfill the requirement to provide test commands run and results.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 27-30
+hierarchy_analysis: The hierarchy is essentially flat. `CLAUDE.md` simply points to
+  `AGENTS.md`, which contains generic project boilerplate and contribution guidelines.
+  There are no conflicting rules or deep overrides.

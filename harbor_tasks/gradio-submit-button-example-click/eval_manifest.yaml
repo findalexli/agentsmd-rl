@@ -39,70 +39,71 @@ checks:
 - id: repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ruff check passes on gradio module
-- id: repo_chat_interface_unit_tests
+  description: Repo's ruff check passes on gradio/chat_interface.py (CI lint check)
+- id: repo_ruff_check_client
   type: pass_to_pass
   origin: repo_tests
-  description: Chat interface unit tests pass
-- id: repo_ruff_format_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's ruff format check passes on chat_interface.py
-- id: repo_chat_interface_init_unit_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Chat interface init unit tests pass (tests that don't require frontend
-    build)
-- id: repo_chat_interface_textbox_conflict_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Chat interface textbox conflict tests pass
-- id: repo_chat_interface_example_messages_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Chat interface example messages tests pass (tests that don't require
-    frontend build)
+  description: Repo's ruff check passes on gradio_client module (CI lint_backend.sh)
 - id: repo_gradio_import
   type: pass_to_pass
   origin: repo_tests
-  description: Gradio module imports successfully
+  description: Gradio module imports successfully (basic smoke test)
+- id: repo_chat_interface_init_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface TestInit unit tests pass (non-connect tests from test_chat_interface.py)
+- id: repo_chat_interface_textbox_conflict_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface textbox conflict tests pass (TestTextboxParameterConflicts)
+- id: repo_chat_interface_example_messages_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface example messages tests pass (TestExampleMessages non-connect subset)
+- id: repo_chat_interface_api_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface API tests pass (test_get_api_info from test_chat_interface.py)
+- id: repo_event_chaining_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Event chaining tests pass (test_consecutive_events, test_load_chaining from test_events.py)
+- id: repo_cancel_functionality_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Event cancellation tests pass (TestCancel from test_blocks.py - relevant for _setup_stop_events)
+- id: repo_load_events_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Load events tests pass (TestComponentsInBlocks from test_blocks.py)
 rubric:
-- rule: Python code must pass ruff format and lint checks (enforced by pass_to_pass
-    tests)
+- rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '43'
-    commit: fe955348f24115744015d85639e170b8518b28c1
-- rule: Python code is formatted with `ruff`... Be consistent with the style of the
-    surrounding code.
-  source:
-    path: AGENTS.md
-    lines: 36-38
-  evidence: The gold solution formats the new `.then()` call with proper indentation,
-    trailing commas, and line breaks consistent with `ruff` formatting, and uses `utils.async_lambda`
-    and `api_visibility="undocum
+    lines: 42-44
+  evidence: The gold solution uses `utils.async_lambda` and passes `api_visibility="undocumented"`
+    in the new `.then()` call, perfectly matching the style and conventions of the surrounding
+    event setup code in `_
   category: style
 distractors:
 - rule: Target an issue. Every non-trivial PR should reference an existing GitHub
     issue. If one doesn't exist, create it first.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to use the GitHub CLI or API to create
-    an issue or search for an issue number to include in the code/commit, which is
-    out of scope for this code-fixing task.
+  why_distracting: The rule instructs the agent to create a GitHub issue if one doesn't
+    exist. In an isolated evaluation environment, attempting to use the GitHub CLI
+    or API to create issues is out of scope, will likely fail, and wastes agent steps.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 18-20
-- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+    lines: 18-19
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
   collision_type: meta_confusion
-  why_distracting: The agent might try to create, modify, or fill out `.github/PULL_REQUEST_TEMPLATE.md`
-    or write a PR description in a markdown file, wasting effort on PR metadata instead
-    of fixing the bug.
-  severity: medium
+  why_distracting: The agent might attempt to create, edit, or fill out `.github/PULL_REQUEST_TEMPLATE.md`
+    or draft a PR description in a markdown file, which distracts from the actual
+    code-level bug fix required to pass the evaluation.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 22-25
-hierarchy_analysis: The repository has a single configuration file (`AGENTS.md`) at
-  the root level. The rules are mostly high-level PR and contribution guidelines.
-  There are no conflicting rules within the hierarchy, but the PR-centric rules create
-  meta-level confusion for an agent focused purely on code generation.
+    lines: 21-24
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level. There is no complex hierarchy or overriding of rules.

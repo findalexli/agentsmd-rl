@@ -15,6 +15,18 @@ checks:
   description: Repo clippy lints pass
   type: pass_to_pass
   origin: repo_tests
+- id: repo_cargo_check
+  description: Repo compilation check for sui-analytics-indexer passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_cargo_check_tests
+  description: Repo cargo check --tests for sui-analytics-indexer passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_cargo_manifest
+  description: Repo Cargo.toml for sui-analytics-indexer is valid
+  type: pass_to_pass
+  origin: repo_tests
 - id: compilation
   description: Crate compiles successfully after migration
   type: fail_to_pass
@@ -79,24 +91,29 @@ rubric:
     starts exactly with the required `// Copyright (c) Mysten Labs, Inc.` and `//
     SPDX-License-Identifier: Apa'
   category: style
+- rule: 'All new files must start with the following license in comments at the top
+    of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
+  source:
+    path: CLAUDE.md
+    lines: 18-20
+  evidence: The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs`
+    starts with the exact copyright and SPDX license header specified in the config.
+  category: documentation
 distractors:
-- rule: Core Components Structure lists `sui-indexer-alt` as the primary indexer and
-    omits `sui-analytics-indexer`.
-  collision_type: scope_ambiguity
-  why_distracting: The architecture diagram lists `sui-indexer-alt` as the 'Blockchain
-    data indexer' but completely omits `sui-analytics-indexer`. An agent might incorrectly
-    assume it should modify `sui-indexer-alt` instead of `sui-analytics-indexer`,
-    or try to migrate the analytics indexer into `sui-indexer-alt` to match the documented
-    core structure.
+- rule: 'Storage Layer: Uses RocksDB for persistent storage'
+  collision_type: architecture_boundary
+  why_distracting: The architecture section states that the storage layer uses RocksDB
+    for persistent storage. The agent might try to retain RocksDB usage for the new
+    package cache or implement a RocksDB layer for `sui-rpc-resolver`, conflicting
+    with the instruction to remove the old package cache and use the built-in caching
+    of `sui-rpc-resolver`.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 58-68
-hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md`. The root
-  `CLAUDE.md` provides general guidelines, including license headers which are strictly
-  followed in the new `system_package_eviction.rs` file. The architecture section
-  in `CLAUDE.md` is incomplete regarding the analytics indexer, which could cause
-  scope confusion, but the prompt explicitly directs the agent to the analytics indexer.
+    lines: 65-66
+hierarchy_analysis: The hierarchy is flat, with only root-level `CLAUDE.md` and `AGENTS.md`
+  files applying to the task. The agent must apply the root-level license header rule
+  to the newly created file.
 version: '2.0'
 source:
   repo: MystenLabs/sui

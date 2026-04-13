@@ -92,27 +92,26 @@ rubric:
   evidence: The patch correctly targets files within the `packages/fetch-router/`
     directory, adhering to the specified monorepo workspace structure.
   category: architecture
+- rule: Run `pnpm run lint` and resolve any lint errors before reporting completion.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  evidence: The instruction explicitly requires cleaning up imports that were only
+    used by the deleted tests in `router.test.ts`, which ensures no 'unused import'
+    lint errors remain.
+  category: tooling
 distractors:
-- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].*.md'
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].*.md`'
   collision_type: rule_conflict
-  why_distracting: The agent might try to create a new `.changes` file to document
-    the removal of the `router.run` API. However, the instructions explicitly state
-    that the API was never released and the existing unreleased change file should
-    just be deleted. Creating a new change file would be a mistake.
+  why_distracting: The agent might create a new `.changes` file to document the removal
+    of `router.run()`, following the general rule for adding changes. However, the
+    instruction explicitly states the API was never released, so the agent should
+    only delete the existing unreleased change file without creating a new one.
   severity: high
   source:
     path: AGENTS.md
-    lines: 45-45
-- rule: 'Demos: Accessible navigation and Clean shutdown'
-  collision_type: scope_ambiguity
-  why_distracting: The agent is instructed to update `demos/bookstore/README.md`.
-    Seeing rules about demo servers, the agent might start auditing or modifying the
-    bookstore demo code to ensure it complies with accessible navigation or clean
-    shutdown rules, which is out of scope for simply removing the `router.run` API.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 39-41
-hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines. The specific
-  PR instructions override the general rule to create a `.changes` file, because the
-  API being removed was never released.
+    lines: 43-44
+hierarchy_analysis: The configuration is a flat single file (`AGENTS.md`). The primary
+  interaction is a conflict between the general repository rule to document changes
+  via `.changes` files and the specific PR context where an unreleased feature is
+  being removed, negating the need for a new changelog entry.

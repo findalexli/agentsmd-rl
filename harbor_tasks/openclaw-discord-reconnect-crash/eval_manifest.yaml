@@ -108,55 +108,70 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Discord extension target file must pass oxlint (repo's linter)
+- id: repo_discord_format_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Discord extension target file must be correctly formatted (oxfmt)
+- id: repo_discord_provider_lifecycle_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Discord provider lifecycle tests must pass (repo's own tests for provider.lifecycle.ts)
+- id: repo_discord_provider_allowlist_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Discord provider allowlist tests must pass (repo's own tests)
+- id: repo_discord_gateway_supervisor_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Discord gateway supervisor tests must pass (repo's own tests)
 - id: repo_unit_test_harness
   type: pass_to_pass
   origin: repo_tests
   description: Repo unit test framework (vitest) must work for basic test
 rubric:
-- rule: Prefer strict typing; avoid `any`.
+- rule: Prefer strict typing; avoid \`any\`.
   source:
-    path: CLAUDE.md
-    lines: '102'
-    commit: 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+    path: extensions/discord/src/monitor/provider.lifecycle.ts
 - rule: Add brief code comments for tricky or non-obvious logic.
   source:
-    path: CLAUDE.md
-    lines: '114'
-    commit: 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+    path: extensions/discord/src/monitor/provider.lifecycle.ts
 - rule: 'Written English: use American spelling and grammar in code, comments, docs,
     and UI strings.'
   source:
-    path: CLAUDE.md
-    lines: '118'
-    commit: 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+    path: extensions/discord/src/monitor/provider.lifecycle.ts
 - rule: Aim to keep files under ~700 LOC; split/refactor when it improves clarity
     or testability.
   source:
-    path: CLAUDE.md
-    lines: '116'
-    commit: 496a1a35bd7ac7a1719d39a3723a731e2d131e8b
+    path: extensions/discord/src/monitor/provider.lifecycle.ts
 - rule: Discord provider lifecycle tests pass (repo's own tests for the modified provider.lifecycle.ts)
+  source:
+    path: extensions/discord/src/monitor/provider.lifecycle.test.ts
+- rule: 'Tests: colocated \`*.test.ts\`.'
+  source:
+    path: extensions/discord/src/monitor/provider.lifecycle.test.ts
+  evidence: The gold solution updates the colocated test file \`extensions/discord/src/monitor/provider.lifecycle.test.ts\`
+    to match the new behavior in \`provider.lifecycle.ts\`.
+  category: testing
 - rule: 'Tests: colocated `*.test.ts`.'
   source:
-    path: CLAUDE.md
-    lines: '10'
+    path: AGENTS.md
+    lines: 10-10
   evidence: The gold solution updates the colocated test file `extensions/discord/src/monitor/provider.lifecycle.test.ts`
-    to match the new behavior in `provider.lifecycle.ts`.
+    alongside the implementation file.
   category: testing
 distractors:
 - rule: 'Messaging channels: always consider all built-in + extension channels when
     refactoring shared logic.'
   collision_type: scope_ambiguity
-  why_distracting: The rule asks to consider all built-in and extension channels when
-    refactoring shared logic. An agent might mistakenly interpret the Discord gateway
-    lifecycle fix as 'shared logic' and attempt to apply similar `reconnect-exhausted`
-    handling to other channels like Telegram or Slack, which have different connection
-    lifecycles and would lead to out-of-scope or buggy changes.
+  why_distracting: The rule instructs to consider all built-in and extension channels
+    when refactoring shared logic. An agent might mistakenly interpret the gateway
+    lifecycle fix as shared logic and attempt to apply similar `reconnect-exhausted`
+    handling to other channels (Telegram, Slack, etc.), which would be out of scope
+    and potentially introduce bugs since this is a Discord-specific gateway event.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 18-21
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  rules are straightforward, but the agent must correctly identify that the Discord
-  gateway fix is specific to the Discord extension and not shared routing/channel
-  logic that requires cross-channel updates.
+    path: AGENTS.md
+    lines: 20-24
+hierarchy_analysis: The configuration consists of two identical root-level files (`AGENTS.md`
+  and `CLAUDE.md`). There is no deep hierarchy or conflicting overrides between them.
+  The rules apply globally to the repository.

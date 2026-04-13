@@ -51,12 +51,20 @@ checks:
   description: Git repository is in clean state
 - id: test_repo_padstring_sql_test_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: pad_string SQL test files exist and are valid
 - id: test_repo_leftpad_fixedstring_test_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: leftPad FixedString test exists
+- id: test_repo_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file follows project clang-format style
+- id: test_repo_yamllint_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML files pass yamllint validation
 - id: test_repo_file_in_git
   type: pass_to_pass
   origin: repo_tests
@@ -65,6 +73,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: C++ file can be parsed by clang-format
+- id: test_repo_no_executable_bit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file does not have executable bit set
+- id: test_repo_no_bom
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file has no UTF-8/UTF-16 byte order mark
+- id: test_repo_no_duplicate_includes
+  type: pass_to_pass
+  origin: static
+  description: Source file has no duplicate
+- id: test_repo_git_whitespace_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git whitespace check passes
 rubric:
 - rule: Use accurate type descriptions in FunctionArgumentDescriptor. String arguments
     should be described as 'String or FixedString' not 'Array', and length arguments
@@ -83,18 +107,16 @@ distractors:
     literal names from ClickHouse SQL language, classes and functions, or literal
     excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
   collision_type: scope_ambiguity
-  why_distracting: The rule requires wrapping literal names and log excerpts in backticks
-    for documentation and comments. An agent might mistakenly apply this to the C++
-    string literals used for error messages (e.g., changing to `"\`String or FixedString\`"`),
-    which would cause literal backticks to appear in the actual user-facing error
-    output.
+  why_distracting: The agent might apply markdown backticks to the C++ string literals
+    (e.g., `"\`String\` or \`FixedString\`"`) because they are used in error messages
+    and contain ClickHouse SQL types, misinterpreting the scope of 'text such as documentation,
+    comments, or commit messages'.
   severity: high
   source:
     path: AGENTS.md
     lines: 5-5
-hierarchy_analysis: The AGENTS.md file contains rules primarily focused on documentation,
-  commit messages, and git workflow. Since this PR only modifies C++ string literals
-  used for error messages, most rules do not apply directly to the code changes.
+hierarchy_analysis: The single AGENTS.md file contains documentation and commit message
+  guidelines that do not apply to the C++ string literals being modified.
 version: '2.0'
 source:
   repo: ClickHouse/ClickHouse

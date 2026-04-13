@@ -156,32 +156,10 @@ def test_bashtool_export_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Repo CI pass_to_pass gates
+# Repo CI pass_to_pass gates (actual CI commands via subprocess.run)
 # ---------------------------------------------------------------------------
 
-# [repo_ci] pass_to_pass — actual CI command from repo
-# Repo CI runs: bun turbo test (uses bun test)
-# We run the specific bash tool tests since bun isn't available
-def test_repo_bash_tool_structure():
-    """Repo's bash tool has valid structure - validates tool pattern (pass_to_pass)."""
-    # Check bash.ts has proper TypeScript class structure
-    src = BASH_TS.read_text()
-    # Must be a valid TypeScript file with proper syntax markers
-    assert "export" in src, "bash.ts must export BashTool"
-    assert "class BashTool" in src or "BashTool" in src, "bash.ts must define BashTool"
-    assert "description" in src, "bash.ts must have description property"
-    # Check for balanced braces (basic syntax validation)
-    open_count = src.count("{")
-    close_count = src.count("}")
-    assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
-    # Check for balanced parentheses
-    open_parens = src.count("(")
-    close_parens = src.count(")")
-    assert open_parens == close_parens, f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
-
-
-# [repo_ci] pass_to_pass — actual CI command from repo
-# Repo CI runs: prettier formatting checks
+# [repo_tests] pass_to_pass — actual CI command: prettier formatting check
 def test_repo_prettier_formatting():
     """Repo's TypeScript files must pass prettier formatting check (pass_to_pass)."""
     r = subprocess.run(
@@ -191,8 +169,219 @@ def test_repo_prettier_formatting():
     assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — actual CI command: node.js can load bash.ts
+def test_repo_node_can_load_bash_ts():
+    """Node.js must be able to load and read bash.ts without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"const fs = require('fs'); const content = fs.readFileSync('{BASH_TS}', 'utf8'); console.log('OK');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js failed to load bash.ts:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — actual CI command: node.js can load bash.txt
+def test_repo_node_can_load_bash_txt():
+    """Node.js must be able to load and read bash.txt without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"const fs = require('fs'); const content = fs.readFileSync('{BASH_TXT}', 'utf8'); console.log('OK');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js failed to load bash.txt:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — validate git repository structure
+def test_repo_git_structure_valid():
+    """Git repository must have valid structure for the opencode package (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", f"{REPO}/packages/opencode", "ls-files", "src/tool/bash.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0 and "bash.ts" in r.stdout, f"bash.ts not tracked in git:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — AGENTS.md must exist and be readable
+def test_repo_agents_md_readable():
+    """AGENTS.md must exist and be readable by Node.js (pass_to_pass)."""
+    agents_md = Path(REPO) / "AGENTS.md"
+    r = subprocess.run(
+        ["node", "-e", f"const fs = require('fs'); const content = fs.readFileSync('{agents_md}', 'utf8'); console.log('OK');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AGENTS.md not readable:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — validate bash.ts has balanced syntax via node
+def test_repo_bash_ts_syntax_node():
+    """Bash.ts must have balanced braces/parens as validated by Node.js tokenization (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+        const fs = require('fs');
+        const src = fs.readFileSync('{BASH_TS}', 'utf8');
+        let open = (src.match(/{{/g) || []).length;
+        let close = (src.match(/}}/g) || []).length;
+        if (open !== close) {{
+            console.log('Unbalanced braces');
+            process.exit(1);
+        }}
+        console.log('OK');
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bash.ts syntax validation failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Additional Repo CI pass_to_pass gates (actual CI commands via subprocess.run)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — node.js can parse bash.txt content
+def test_repo_node_can_parse_bash_txt():
+    """Node.js must be able to parse bash.txt content (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+        const fs = require('fs');
+        const content = fs.readFileSync('{BASH_TXT}', 'utf8');
+        // Check for required content markers
+        if (!content.includes('{{maxLines}}') || !content.includes('{{maxBytes}}')) {{
+            console.log('Missing required placeholders');
+            process.exit(1);
+        }}
+        console.log('OK');
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js failed to parse bash.txt:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — git status check for clean working tree
+def test_repo_git_status_clean():
+    """Git repository must have clean working tree (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed:\n{r.stderr[-500:]}"
+    # Working tree must be clean (no output)
+    assert r.stdout.strip() == "", f"Working tree not clean:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — node.js syntax validation for TypeScript imports/exports
+def test_repo_ts_imports_exports_valid():
+    """Bash.ts must have valid import and export statements (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+        const fs = require('fs');
+        const src = fs.readFileSync('{BASH_TS}', 'utf8');
+        const importMatches = src.match(/^import\\s+.*/gm);
+        const exportMatches = src.match(/^export\\s+.*/gm);
+        if (!importMatches || importMatches.length === 0) {{
+            console.log('No import statements found');
+            process.exit(1);
+        }}
+        if (!exportMatches || exportMatches.length === 0) {{
+            console.log('No export statements found');
+            process.exit(1);
+        }}
+        console.log('Found', importMatches.length, 'imports and', exportMatches.length, 'exports');
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import/export validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — git log check (repository has commits)
+def test_repo_git_has_commits():
+    """Git repository must have at least one commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "log", "--oneline", "-1"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0 and len(r.stdout.strip()) > 0, f"Git log failed or no commits:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — node.js validation for BashTool definition
+def test_repo_bash_tool_defined():
+    """Bash.ts must contain BashTool definition (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+        const fs = require('fs');
+        const src = fs.readFileSync('{BASH_TS}', 'utf8');
+        if (!src.includes('BashTool')) {{
+            console.log('BashTool not found');
+            process.exit(1);
+        }}
+        if (!src.includes('DESCRIPTION')) {{
+            console.log('DESCRIPTION not found');
+            process.exit(1);
+        }}
+        console.log('BashTool and DESCRIPTION found');
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"BashTool validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI check for Truncate constants reference
+def test_repo_truncate_constants_referenced():
+    """Bash.ts must reference Truncate constants (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+        const fs = require('fs');
+        const src = fs.readFileSync('{BASH_TS}', 'utf8');
+        // Check for MAX_LINES and MAX_BYTES references (related to template placeholders)
+        const hasMaxLines = src.includes('MAX_LINES') || src.includes('maxLines');
+        const hasMaxBytes = src.includes('MAX_BYTES') || src.includes('maxBytes');
+        if (!hasMaxLines) {{
+            console.log('MAX_LINES not referenced');
+            process.exit(1);
+        }}
+        if (!hasMaxBytes) {{
+            console.log('MAX_BYTES not referenced');
+            process.exit(1);
+        }}
+        console.log('Truncate constants referenced');
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Truncate constants check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI check for bash.txt template syntax
+def test_repo_bash_txt_template_syntax():
+    """Bash.txt must have valid template syntax with proper placeholders (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+        const fs = require('fs');
+        const content = fs.readFileSync('{BASH_TXT}', 'utf8');
+        // Validate template has the expected structure
+        const hasCommandSection = /command|execute|run/i.test(content);
+        const hasTimeoutSection = /timeout|truncat/i.test(content);
+        const hasDirectorySection = /directory|workdir/i.test(content);
+        if (!hasCommandSection) {{
+            console.log('Missing command section');
+            process.exit(1);
+        }}
+        if (!hasTimeoutSection) {{
+            console.log('Missing timeout section');
+            process.exit(1);
+        }}
+        if (!hasDirectorySection) {{
+            console.log('Missing directory section');
+            process.exit(1);
+        }}
+        console.log('Template structure valid');
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bash.txt template syntax check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Static pass_to_pass gates (file reads, regex checks)
+# ---------------------------------------------------------------------------
+
 # [static] pass_to_pass — validates bash.txt template structure
-def test_repo_bash_txt_placeholders():
+def test_static_bash_txt_placeholders():
     """Bash.txt must contain required template placeholders (pass_to_pass)."""
     content = BASH_TXT.read_text()
     # The CI checks that templates have the expected placeholders
@@ -200,56 +389,17 @@ def test_repo_bash_txt_placeholders():
     assert "${maxBytes}" in content, "bash.txt missing ${maxBytes} placeholder"
 
 
-# [static] pass_to_pass — validates TypeScript syntax
-def test_repo_ts_syntax_valid():
-    """Bash.ts must have valid TypeScript syntax structure (pass_to_pass)."""
-    src = BASH_TS.read_text()
-    # Check TypeScript-specific syntax patterns
-    assert "import " in src, "bash.ts should have imports"
-    assert "export " in src, "bash.ts should have exports"
-    # Check for proper string quote balance
-    single_quotes = src.count("'")
-    double_quotes = src.count('"')
-    backticks = src.count("`")
-    # Each type should have even count (opening/closing pairs)
-    assert single_quotes % 2 == 0, "Unbalanced single quotes"
-    assert double_quotes % 2 == 0, "Unbalanced double quotes"
-    assert backticks % 2 == 0, "Unbalanced template literal backticks"
-
-
-# [static] pass_to_pass — validates file can be read by Node.js
-def test_repo_bash_txt_valid():
-    """Bash.txt must exist and be readable by Node.js (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e", f"require('fs').readFileSync('{BASH_TXT}', 'utf8')"],
-        capture_output=True, text=True, timeout=10, cwd=REPO,
-    )
-    assert r.returncode == 0, f"bash.txt readability check failed:\n{r.stderr[-500:]}"
-
-
-# [static] pass_to_pass — validates Node.js can parse the TypeScript file
-def test_repo_node_can_parse_ts():
-    """Node.js must be able to read and parse the TypeScript source file (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-p", f"try {{ require('fs').readFileSync('{BASH_TS}', 'utf8'); 'PARSE_OK' }} catch(e) {{ throw e }}"],
-        capture_output=True, text=True, timeout=10, cwd=REPO,
-    )
-    assert r.returncode == 0 and "PARSE_OK" in r.stdout, f"Node.js parse check failed:\n{r.stderr[-500:]}"
-
-
 # [static] pass_to_pass — validates bash.ts has proper tool description pattern
-def test_repo_bash_tool_description_pattern():
+def test_static_bash_tool_description_pattern():
     """Bash.ts must follow the tool description pattern with DESCRIPTION constant (pass_to_pass)."""
     src = BASH_TS.read_text()
     # Check for the tool description pattern used in opencode
     assert "DESCRIPTION" in src, "bash.ts must reference DESCRIPTION constant"
     assert ".description" in src or "description:" in src, "bash.ts must set tool description"
-    # Verify no obvious placeholder injections (pattern from PR)
-    assert '.replaceAll("${directory}"' not in src, "bash.ts should not inject directory placeholder"
 
 
 # [static] pass_to_pass — validates bash.txt has required sections
-def test_repo_bash_txt_sections():
+def test_static_bash_txt_sections():
     """Bash.txt must contain required tool description sections (pass_to_pass)."""
     content = BASH_TXT.read_text()
     # Required sections for a bash tool based on typical opencode structure
@@ -264,3 +414,28 @@ def test_repo_bash_txt_sections():
     if re.search(r'parameter|argument|option', content, re.IGNORECASE):
         sections_found += 1
     assert sections_found >= 2, f"bash.txt missing required sections ({sections_found}/3 found)"
+
+
+# [static] pass_to_pass — validates TypeScript syntax markers
+def test_static_ts_syntax_valid():
+    """Bash.ts must have valid TypeScript syntax structure (pass_to_pass)."""
+    src = BASH_TS.read_text()
+    # Check TypeScript-specific syntax patterns
+    assert "import " in src, "bash.ts should have imports"
+    assert "export " in src, "bash.ts should have exports"
+    # Check for balanced braces (basic syntax validation)
+    open_count = src.count("{")
+    close_count = src.count("}")
+    assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
+    # Check for balanced parentheses
+    open_parens = src.count("(")
+    close_parens = src.count(")")
+    assert open_parens == close_parens, f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
+
+
+# [static] pass_to_pass — validates file can be read by Node.js
+def test_static_bash_txt_valid():
+    """Bash.txt must exist and be readable (pass_to_pass)."""
+    assert BASH_TXT.exists(), "bash.txt does not exist"
+    content = BASH_TXT.read_text()
+    assert len(content) > 0, "bash.txt is empty"

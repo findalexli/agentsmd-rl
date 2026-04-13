@@ -16,7 +16,7 @@ RUN git init /workspace/slime && \
 
 # Install torch (cpu) and test dependencies
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir ruff pytest pyyaml pytest-json-ctrf
+RUN pip install --no-cache-dir ruff pytest pyyaml pytest-json-ctrf isort black
 
 RUN mkdir -p /logs/verifier
 

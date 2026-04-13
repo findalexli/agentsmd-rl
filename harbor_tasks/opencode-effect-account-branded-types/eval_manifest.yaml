@@ -68,32 +68,36 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: ACP agent interface tests pass - tests agent SDK compliance
+- id: repo_unit_tests_acp_event_subscription
+  type: pass_to_pass
+  origin: repo_tests
+  description: ACP event subscription tests pass - tests agent event handling
 - id: repo_unit_tests_cli_github_remote
   type: pass_to_pass
   origin: repo_tests
   description: CLI github remote tests pass - tests CLI utility functions
+- id: repo_unit_tests_cli_github_action
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI github action tests pass - tests GitHub action utilities
+- id: repo_unit_tests_cli_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI import tests pass - tests share URL/import utilities
 rubric:
 - rule: packages/opencode/AGENTS.md must include an Effect guide section documenting
     Schema patterns (Schema.Class for multi-field types, Schema.brand for single-value
     types)
   source:
     path: packages/opencode/AGENTS.md
-  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data\n    types
-    with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
+  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data
+    types with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
 - rule: packages/opencode/AGENTS.md Effect guide must document Layer.effect pattern
     with ServiceName.of() for service implementations
   source:
     path: packages/opencode/AGENTS.md
-  reference: '## Services\n- In `Layer.effect`, always return service implementations\n    with
-    `ServiceName.of({ ... })`, never a plain object.'
-- rule: tables and columns use snake_case
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 4-5
-  evidence: In `packages/opencode/src/account/account.sql.ts`, the gold solution maintains
-    snake_case column names like `access_token`, `refresh_token`, and `active_account_id`
-    when adding the `$type<...>()` anno
-  category: naming
+  reference: '## Services\n- In `Layer.effect`, always return service implementations
+    with `ServiceName.of({ ... })`, never a plain object.'
 config_edits:
 - path: packages/opencode/AGENTS.md
   tier: 1
@@ -161,29 +165,27 @@ config_edits:
     would be unclear or ambiguous.'
   gold_removed: ''
 distractors:
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+- rule: Use single word names by default... Do not introduce new camelCase compounds
+    when a short single-word alternative is clear.
   collision_type: rule_conflict
-  why_distracting: The task requires explicitly typing Drizzle columns with `$type<BrandedType>()`
-    to enforce the new branded types at the database boundary. Relying on type inference
-    would leave them as plain strings, defeating the purpose of the refactor.
+  why_distracting: The config strictly forbids multi-word camelCase compounds and
+    mandates single-word names, but the task explicitly requires creating branded
+    types named `RefreshToken`, `DeviceCode`, `UserCode`, `AccessToken`, and `AccountID`.
   severity: high
   source:
     path: AGENTS.md
-    lines: 15-16
-- rule: Use single word names by default for new locals, params, and helper functions.
+    lines: 20-33
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
   collision_type: rule_conflict
-  why_distracting: The task explicitly requires creating multi-word branded types
-    (`RefreshToken`, `DeviceCode`, `UserCode`) and extracting multi-word helpers (`fetchOrgs`,
-    `fetchUser`). An agent strictly following the single-word rule might try to name
-    them `Token`, `Code`, `orgs`, or `user`, which would reduce domain clarity and
-    violate the prompt's explicit instructions.
+  why_distracting: The config advises avoiding explicit type annotations, but the
+    task requires adding explicit `$type<...>()` annotations to the Drizzle schema
+    to enforce the new branded types.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 23-25
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript guidelines (type
-  inference, single-word naming), but the specific task instructions to use branded
-  types and extract specific helpers override these general rules. The agent must
-  recognize that domain-specific identifiers and explicit boundary typing (like Drizzle's
-  `$type`) are exceptions to the general 'infer everything' and 'single word' rules.
+    lines: 14-15
+hierarchy_analysis: The agent must navigate a 3-level hierarchy. Crucially, the task
+  requires the agent to edit the level 2 config file (`packages/opencode/AGENTS.md`)
+  to add new rules based on the refactor, making this a meta-referential task where
+  the agent writes its own future instructions.

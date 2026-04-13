@@ -52,6 +52,74 @@ def test_repo_deps_install():
     assert r.returncode == 0, f"Dependencies install failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_ast_grep_segment_cache():
+    """Repo's ast-grep static analysis passes on segment-cache files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "ast-grep", "scan", TEST_DIR],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_segment_cache_src():
+    """Repo's Prettier check passes on segment-cache source TSX files (pass_to_pass)."""
+    r = subprocess.run(
+        ["./node_modules/.bin/prettier", "--check", f"{TEST_DIR}/components", f"{TEST_DIR}/app"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check on source files failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_alex_next_docs():
+    """Repo's language linting (alex) passes on Next.js documentation (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", "-q", f"{REPO}/packages/next/README.md"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Note: alex returns 0 if file is ignored or has no issues
+    assert r.returncode == 0, f"Alex language check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_error_codes():
+    """Repo's error code check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "packages/next/check-error-codes.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error code check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_segment_cache():
+    """Repo's ESLint check passes on segment-cache test files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.config.mjs",
+         f"{TEST_DIR}/segment-cache-per-page-dynamic-stale-time.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_src():
+    """Repo's Prettier check passes on segment-cache source TSX files (pass_to_pass)."""
+    r = subprocess.run(
+        ["./node_modules/.bin/prettier", "--check",
+         f"{TEST_DIR}/components",
+         f"{TEST_DIR}/app"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check on source files failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_alex_docs():
+    """Repo's language linting (alex) passes on Next.js docs (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", "-q", f"{REPO}/docs"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Note: alex returns 0 if files are ignored or have no issues
+    assert r.returncode == 0, f"Alex language check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - code behavior tests
 # ---------------------------------------------------------------------------

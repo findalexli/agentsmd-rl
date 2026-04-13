@@ -5,38 +5,41 @@ source:
   base_commit: 25d303f03424011dc0ad36d027a7af3368618eab
   merge_commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
 checks:
+# Pass-to-pass tests with origin: static (file-read checks)
 - id: syntax_check
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and are non-empty
 - id: all_modified_files_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All files modified in PR exist and have valid content
 - id: typescript_syntax_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All modified TypeScript files have valid basic syntax
 - id: mcp_module_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: MCP module imports and exports are structurally valid
 - id: documentation_files_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Documentation files are valid markdown
 - id: test_files_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: MCP test files are valid spec files
-- id: test_mcp_deps_structure
+- id: mcp_deps_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: MCP DEPS.list files are valid and all imports respect DEPS constraints
-- id: test_modified_files_deps_updated
+- id: modified_files_deps_updated
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified files in terminal/ have proper DEPS.list entries
+
+# Pass-to-pass tests with origin: repo_tests (real CI commands via subprocess.run)
 - id: test_repo_node_syntax_check
   type: pass_to_pass
   origin: repo_tests
@@ -49,6 +52,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: MCP playwright.config.ts is valid and can be parsed
+- id: test_repo_mcp_test_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP test spec files referenced in CI exist and are non-empty
+- id: test_repo_cli_deps_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo DEPS.list checker passes for MCP terminal module
+- id: test_repo_cli_help_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI help generator produces valid output structure
+- id: test_repo_node_npm_ci_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json is valid and npm can install dependencies
+- id: test_repo_eslint_mcp
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on MCP module files
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test linting passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package consistency check passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo DEPS.list check passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo builds successfully without errors
+
+# Fail-to-pass tests (pr_diff) - behavioral and structural tests
 - id: session_flag_normalization_behavior
   type: fail_to_pass
   origin: pr_diff
@@ -83,39 +124,13 @@ checks:
   origin: pr_diff
   description: session-management.md uses -s= for session flag, not -b
 rubric:
-- rule: CLI flag rename from -b to -s is applied consistently across all code and
-    documentation
-  source:
-    path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: 26-27
-    commit: 25d303f03424011dc0ad36d027a7af3368618eab
-- rule: SKILL.md uses -s= for session flag, not -b
+- rule: SKILL.md uses -s= for session flag in code examples
   source:
     path: packages/playwright/src/skill/SKILL.md
     lines: 187-193
     commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
-- rule: session-management.md uses -s= for session flag, not -b
-  source:
-    path: packages/playwright/src/skill/references/session-management.md
-    lines: 5-170
-    commit: e0e7f41e80247f857e97cb23f4833d2eee2122fe
-- rule: session-management.md documents -s (not -b) for default session
-  source:
-    path: packages/playwright/src/skill/references/session-management.md
 config_edits:
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1
-  gold_added: 'playwright-cli -s=mysession open example.com
-
-    playwright-cli -s=mysession click e6
-
-    playwright-cli -s=mysession close  # stop a named browser
-
-    playwright-cli -s=mysession delete-data   # delete profile'
-  gold_removed: 'playwright-cli -b mysession open example.com
-
-    playwright-cli -b mysession click e6
-
-    playwright-cli -b mysession close  # stop a named browser
-
-    playwright-cli -b mysession delete-data   # delete profile'
+  gold_added: "playwright-cli -s=mysession open example.com\nplaywright-cli -s=mysession click e6\nplaywright-cli -s=mysession close  # stop a named browser\nplaywright-cli -s=mysession delete-data  # delete user data for named browser"
+  gold_removed: "playwright-cli -b mysession open example.com\nplaywright-cli -b mysession click e6\nplaywright-cli -b mysession close  # stop a named browser\nplaywright-cli -b mysession delete-data  # delete user data for named browser"

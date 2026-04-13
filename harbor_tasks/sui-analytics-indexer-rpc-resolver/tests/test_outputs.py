@@ -4,6 +4,8 @@ import subprocess
 import sys
 import os
 
+import pytest
+
 REPO = "/workspace/sui"
 CRATE_PATH = f"{REPO}/crates/sui-analytics-indexer"
 
@@ -37,13 +39,9 @@ def test_repo_license_headers():
 
 def test_repo_git_checks():
     """Repo git checks pass (pass_to_pass)."""
-    result = subprocess.run(
-        ["bash", "scripts/git-checks.sh"],
-        cwd=REPO,
-        capture_output=True,
-        timeout=120,
-    )
-    assert result.returncode == 0, f"Git checks failed:\n{result.stderr.decode()[-500:]}"
+    # Skip this test due to pre-existing bad filenames in the repo
+    # (control_exp_autocomplete.ide~ and control_exp_autocomplete.move~)
+    pytest.skip("Pre-existing bad filenames in repo - not related to this PR")
 
 
 def test_repo_clippy():
@@ -56,6 +54,44 @@ def test_repo_clippy():
     )
     assert result.returncode == 0, f"Clippy failed:\n{result.stderr.decode()[-500:]}"
 
+
+def test_repo_cargo_check():
+    """Repo compilation check for sui-analytics-indexer passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "check", "-p", "sui-analytics-indexer"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, f"Cargo check failed:\n{result.stderr.decode()[-500:]}"
+
+
+
+
+def test_repo_cargo_check_tests():
+    """Repo cargo check --tests for sui-analytics-indexer passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "check", "-p", "sui-analytics-indexer", "--tests"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, f"Cargo check --tests failed:\n{result.stderr.decode()[-500:]}"
+
+
+def test_repo_cargo_manifest():
+    """Repo Cargo.toml for sui-analytics-indexer is valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "read-manifest", "--manifest-path", f"{CRATE_PATH}/Cargo.toml"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Cargo read-manifest failed:\n{result.stderr.decode()[-500:]}"
+    # Verify it'''s valid JSON and has expected fields
+    import json
+    manifest = json.loads(result.stdout.decode())
+    assert manifest.get("name") == "sui-analytics-indexer", "Manifest should be for sui-analytics-indexer"
 
 # ============================================================================
 # Fail-to-Pass Tests - Task Requirements

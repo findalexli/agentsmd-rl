@@ -3,12 +3,11 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:57:32.720778",
-  "total_time": 5317.73,
-  "sandbox_id": "ig26z2p9jtlj8064d3skt",
+  "validated_at": "2026-04-12T02:02:39.530870",
+  "total_time": 3563.95,
+  "sandbox_id": "iaz0b97chki5vnpz70ifq",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -21,7 +20,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1227.02,
+      "time": 1214.19,
       "notes": ""
     },
     "improve": {
@@ -35,11 +34,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All four validation checks passed: (1) Docker build successful, (2) NOP test returns 0 (correctly fails on buggy base code), (3) Gold test returns 1 (all 19 tests pass after solve.sh patch applied), (4) Rubric judge ICR=0.5 but HTTP 401 indicates infrastructure auth issue not task issue. The solve.sh patch correctly adds webhook in-flight limiter with: beginWebhookRequestPipelineOrReject guard, module-level limiter shared across handlers, account-scoped in-flight key, try/finally release lifecycle, and statusCode getter/setter sync in makeRes().",
+      "attempts": 2,
+      "notes": "All four validation checks passed. Fixed test_outputs.py: line 318 regex had non-capturing groups but tried to access group(1). Added capturing group around the pattern.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2199.29
+      "time": 1162.8
     },
     "rubric_judge": {
       "status": "pass",
@@ -47,33 +46,19 @@
       "backend": "fireworks",
       "time": 3.34,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 32.85,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 796.76,
-      "at": "2026-04-09T14:41:27.968270"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 797.07,
-      "at": "2026-04-09T14:41:28.148931"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 227.51,
-      "at": "2026-04-09T15:01:38.980102"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -89,6 +74,30 @@
       "backend": "fireworks",
       "time": 5317.73,
       "at": "2026-04-10T18:57:32.720778"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3808.09,
+      "at": "2026-04-11T23:06:36.903183"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1322.36,
+      "at": "2026-04-11T23:28:28.103332"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3563.95,
+      "at": "2026-04-12T02:02:39.530870"
     }
   ]
 }

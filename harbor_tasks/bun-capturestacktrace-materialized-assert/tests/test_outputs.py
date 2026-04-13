@@ -406,3 +406,91 @@ def test_repo_git_tracks_file():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0 and r.stdout.strip(), f"C++ source file not tracked by git"
+
+
+def test_repo_cpp_basic_syntax():
+    """Modified C++ file must have valid basic syntax (pass_to_pass repo_tests).
+    CI validates that C++ source files have required structural elements."""
+    script = '''
+import re
+import sys
+
+with open("/workspace/bun/src/bun.js/bindings/FormatStackTraceForJS.cpp") as f:
+    content = f.read()
+
+required_patterns = [
+    ("JSC_DEFINE_HOST_FUNCTION", "Function definition"),
+    ("return", "Return statement"),
+    ("#include", "Include directive"),
+    ("errorConstructorFuncCaptureStackTrace", "Target function name"),
+]
+
+for pattern, desc in required_patterns:
+    if pattern not in content:
+        print(f"Missing required element: {desc}")
+        sys.exit(1)
+
+print("Basic C++ syntax validation passed")
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"C++ syntax validation failed:\n{r.stderr}"
+
+
+def test_repo_cpp_structure_validation():
+    '''Modified C++ file must have complete structure with required components (pass_to_pass repo_tests).
+    CI validates that C++ bindings have all necessary JSC API patterns.'''
+    script = '''
+import re
+import sys
+
+cpp_file = "/workspace/bun/src/bun.js/bindings/FormatStackTraceForJS.cpp"
+with open(cpp_file) as f:
+    content = f.read()
+
+patterns = [
+    ("JSC_DEFINE_HOST_FUNCTION", "Host function definition"),
+    ("errorConstructorFuncCaptureStackTrace", "Target function name"),
+    ("hasMaterializedErrorInfo", "Materialized error check"),
+    ("setStackFrames", "Stack frames setter"),
+    ("putDirect", "Direct property setter"),
+    ("computeErrorInfoToJSValue", "Error info computation"),
+    ("RETURN_IF_EXCEPTION", "Exception safety"),
+]
+
+failed = 0
+for pattern, desc in patterns:
+    if pattern not in content:
+        print(f"Missing: {desc}")
+        failed += 1
+
+if failed > 0:
+    sys.exit(1)
+
+print("C++ structure validation passed")
+'''
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"C++ structure validation failed:\n{r.stderr}"
+
+
+def test_repo_additional_shell_scripts():
+    '''Additional repo shell scripts must have valid bash syntax (pass_to_pass repo_tests).
+    CI validates shell script syntax as part of linting.'''
+    shell_scripts = [
+        f"{REPO}/test/bundler/run-single-bundler-test.sh",
+        f"{REPO}/scripts/check-node.sh",
+        f"{REPO}/scripts/check-node-all.sh",
+    ]
+    for script in shell_scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Shell script syntax check failed for {script}:\n{r.stderr}"
+
+

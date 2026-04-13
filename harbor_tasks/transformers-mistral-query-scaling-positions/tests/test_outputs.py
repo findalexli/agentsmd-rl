@@ -406,3 +406,125 @@ sys.exit(1)
     r = _run_py(code)
     assert r.returncode == 0, f"Mistral4 modular absolute_positions check failed: {{r.stderr}}"
     assert "PASS" in r.stdout
+
+
+# -----------------------------------------------------------------------------
+# Additional Pass-to-pass (repo_tests) — CI-style quality checks
+# -----------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass - Modeling structure check
+def test_repo_modeling_structure():
+    """Modeling structure check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modeling structure check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Doctest list check
+def test_repo_doctest_list():
+    """Doctest list check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Doctest list check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Dummies check
+def test_repo_check_dummies():
+    """Check dummies passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check dummies failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Ruff linter check on modified files
+def test_repo_ruff_check():
+    """Ruff linter passes on modified model files - installs ruff if needed (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "pip install ruff --quiet && ruff check src/transformers/models/ministral3/ src/transformers/models/mistral4/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Ruff format check on modified files
+def test_repo_ruff_format():
+    """Ruff format check passes on modified model files - installs ruff if needed (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "pip install ruff --quiet && ruff format --check src/transformers/models/ministral3/ src/transformers/models/mistral4/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - All affected files are valid Python (AST check via subprocess)
+def test_repo_all_files_syntax():
+    """All affected files parse as valid Python via AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         f"""
+import ast
+import sys
+from pathlib import Path
+
+files = [
+    "{REPO}/src/transformers/models/ministral3/modeling_ministral3.py",
+    "{REPO}/src/transformers/models/ministral3/modular_ministral3.py",
+    "{REPO}/src/transformers/models/mistral4/modeling_mistral4.py",
+    "{REPO}/src/transformers/models/mistral4/modular_mistral4.py",
+]
+
+for f in files:
+    try:
+        src = Path(f).read_text()
+        ast.parse(src)
+    except SyntaxError as e:
+        print(f"SYNTAX_ERROR: {{f}}: {{e}}")
+        sys.exit(1)
+
+print("ALL_SYNTAX_OK")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}"
+    assert "ALL_SYNTAX_OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass - Ministral3 modeling module is importable with classes
+def test_repo_ministral3_modeling_import():
+    """Ministral3 modeling module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         f"""
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.ministral3.modeling_ministral3 import Ministral3Attention, get_llama_4_attn_scale
+print("MINISTRAL3_IMPORT_OK")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ministral3 import failed: {r.stderr}"
+    assert "MINISTRAL3_IMPORT_OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass - Mistral4 modeling module is importable with classes
+def test_repo_mistral4_modeling_import():
+    """Mistral4 modeling module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         f"""
+import sys
+sys.path.insert(0, "{REPO}/src")
+from transformers.models.mistral4.modeling_mistral4 import Mistral4Attention, get_llama_4_attn_scale
+print("MISTRAL4_IMPORT_OK")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mistral4 import failed: {r.stderr}"
+    assert "MISTRAL4_IMPORT_OK" in r.stdout

@@ -241,3 +241,49 @@ def test_add_rule_script_valid():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax error in add_rule.py: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_setup_primer_script_valid_ast():
+    """setup_primer_project.py has valid Python AST (pass_to_pass)."""
+    script_path = Path(REPO) / "scripts" / "setup_primer_project.py"
+    if not script_path.exists():
+        return  # File doesn't exist at base commit
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import ast; ast.parse(open('{script_path}').read()); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parsing failed: {r.stderr}"
+    assert "OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_validate_pyproject_scripts():
+    """scripts/pyproject.toml passes validate-pyproject (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "validate-pyproject", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install validate-pyproject: {r.stderr}"
+    pyproject_path = Path(REPO) / "scripts" / "pyproject.toml"
+    r = subprocess.run(
+        ["validate-pyproject", str(pyproject_path)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"validate-pyproject failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_typos_scripts():
+    """No typos detected in scripts directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "typos", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install typos: {r.stderr}"
+    r = subprocess.run(
+        ["typos", str(Path(REPO) / "scripts")],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos found:\n{r.stdout}\n{r.stderr}"

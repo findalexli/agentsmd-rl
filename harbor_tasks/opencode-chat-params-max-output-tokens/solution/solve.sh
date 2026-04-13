@@ -85,4 +85,5 @@ cat << 'MD' >> AGENTS.md
 - Avoid using the `any` type
 - Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
 - Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
+- Avoid unnecessary destructuring. Use dot notation to preserve context.
 MD

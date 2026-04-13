@@ -249,6 +249,24 @@ def test_repo_cascader_a11y_tests():
     assert r.returncode == 0, f"Cascader a11y tests failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_cascader_type_tests():
+    """Repo's Cascader TypeScript type tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "components/cascader/__tests__/type.test.tsx", "--maxWorkers=1", "--testTimeout=60000"],
+        capture_output=True, text=True, timeout=600, cwd=REPO_DIR
+    )
+    assert r.returncode == 0, f"Cascader type tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cascader_semantic_tests():
+    """Repo's Cascader semantic styling tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "components/cascader/__tests__/semantic.test.tsx", "--maxWorkers=1", "--testTimeout=60000"],
+        capture_output=True, text=True, timeout=600, cwd=REPO_DIR
+    )
+    assert r.returncode == 0, f"Cascader semantic tests failed:\n{r.stderr[-500:]}"
+
+
 def calculate_reward():
     """Calculate the final reward based on test results."""
     tests = [
@@ -264,6 +282,8 @@ def calculate_reward():
         test_repo_cascader_index_tests,
         test_repo_cascader_demo_tests,
         test_repo_cascader_a11y_tests,
+        test_repo_cascader_type_tests,
+        test_repo_cascader_semantic_tests,
     ]
 
     passed = 0

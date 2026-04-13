@@ -62,6 +62,30 @@ def test_repo_prettier_check_workflow_md():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+def test_repo_prettier_check_local_repro():
+    """Repo's prettier formatting passes on local-repro.md (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/local-repro.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_workflow():
+    """Repo's prettier formatting passes on workflow.md (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/workflow.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 def test_repo_node_syntax():
     """scripts/pr-status.js must have valid Node.js syntax (pass_to_pass)."""
     r = subprocess.run(
@@ -85,6 +109,118 @@ def test_repo_module_loads():
     )
     # Should not have syntax errors - runtime errors (gh not found) are expected
     assert "SyntaxError" not in r.stderr, f"Module loading failed with syntax error:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_agents_dir():
+    """Repo's prettier formatting passes on .agents directory files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed on .agents dir:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_node_acorn_parse():
+    """pr-status.js must be parseable by Node.js acorn/parser (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+        const fs = require('fs');
+        const code = fs.readFileSync('./scripts/pr-status.js', 'utf8');
+        try {
+            // Use Node's internal parser (indirectly via --check style validation)
+            new Function(code + '; return {};');
+            console.log('Code parses correctly');
+        } catch(e) {
+            if (e instanceof SyntaxError) {
+                console.error('Syntax error:', e.message);
+                process.exit(1);
+            }
+            // Other errors are runtime errors, not syntax issues
+            console.log('Code parses correctly (runtime errors expected)');
+        }
+        """],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO),
+    )
+    # Script should either succeed or have runtime (not syntax) errors
+    assert "Syntax error" not in r.stderr, f"Acorn parse failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_markdown_links_skill():
+    """SKILL.md must have valid markdown links (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "markdown-link-check", ".agents/skills/pr-status-triage/SKILL.md", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Markdown link check failed for SKILL.md:\n{r.stderr[-500:]}"
+
+
+def test_repo_markdown_links_workflow():
+    """workflow.md must have valid markdown links (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "markdown-link-check", ".agents/skills/pr-status-triage/workflow.md", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Markdown link check failed for workflow.md:\n{r.stderr[-500:]}"
+
+
+def test_repo_markdown_links_local_repro():
+    """local-repro.md must have valid markdown links (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "markdown-link-check", ".agents/skills/pr-status-triage/local-repro.md", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Markdown link check failed for local-repro.md:\n{r.stderr[-500:]}"
+
+
+def test_repo_alex_lint_skill():
+    """SKILL.md must pass alex linting for insensitive language (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", ".agents/skills/pr-status-triage/SKILL.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Alex lint failed for SKILL.md:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_alex_lint_workflow():
+    """workflow.md must pass alex linting for insensitive language (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", ".agents/skills/pr-status-triage/workflow.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Alex lint failed for workflow.md:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_alex_lint_local_repro():
+    """local-repro.md must pass alex linting for insensitive language (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", ".agents/skills/pr-status-triage/local-repro.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Alex lint failed for local-repro.md:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # ---------- pass_to_pass: static checks ----------

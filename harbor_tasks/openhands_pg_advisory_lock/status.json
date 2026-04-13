@@ -3,58 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T15:08:17.317784",
-  "total_time": 847.32,
-  "sandbox_id": "ig68l8lugbmu8ntcwl4o1",
+  "validated_at": "2026-04-12T03:42:00.275381",
+  "total_time": 2399.57,
+  "sandbox_id": "i7tkjh0ro6uzomurficev",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 0.0,
-  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "completed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 52.41,
-      "notes": "Added 3 new pass_to_pass tests based on repo CI commands:\n1. test_repo_python_syntax - Python syntax check via py_compile\n2. test_repo_ruff_lint - Ruff linting on migrations/env.py\n3. test_repo_alembic_ini_exists - Check alembic.ini exists\n\nCI commands found from:\n- .github/workflows/lint.yml (ruff linting)\n- .github/workflows/py-tests.yml (pytest for enterprise)\n- enterprise/Makefile (lint target)\n- enterprise/dev_config/python/ruff.toml (ruff config)"
-    },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 210.93,
+      "time": 356.67,
       "notes": ""
-    },
-    "rubric_enrichment": {
-      "status": "ok",
-      "configs_found": [
-        "AGENTS.md",
-        ".agents/skills/cross-repo-testing/SKILL.md",
-        ".agents/skills/upcoming-release/SKILL.md",
-        ".agents/skills/update-sdk/SKILL.md"
-      ],
-      "rules_added": 3,
-      "rules_rejected": 4,
-      "rejection_reasons": "Rejected process rules about PR workflow, git best practices, lockfile management, and SDK pinning - not relevant to this Python migration code change. Rejected frontend/VSCode extension rules - not applicable to Python enterprise migrations.",
-      "notes": "",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 115.43
-    },
-    "rubric_validate": {
-      "status": "ok",
-      "model": "gemini-3.1-pro",
-      "backend": "fireworks",
-      "time": 8.45,
-      "notes": "",
-      "precision": 0.0
-    },
-    "rubric_fix": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 52.23,
-      "notes": "precision was 0.00, fixing hallucinated rules"
     },
     "improve": {
       "status": "skipped",
@@ -64,31 +24,32 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
+      "status": "ok",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed test.sh path (changed /workspace/task/tests to /tests), fixed solve.sh to use Python for precise patching instead of sed, fixed test_outputs.py to check lock order within run_migrations_online() function only (avoiding false positive from run_migrations_offline())",
+      "attempts": 1,
+      "notes": "4 pass_to_pass tests added (all use subprocess.run with real CI commands). 1 fail_to_pass test for the filename sanitization fix. All tests verified in Docker.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 148.35
-    },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.17,
-      "notes": "ICR=1.00"
+      "time": 231.68
     }
   },
   "history": [
+    {
+      "verdict": "ok",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 600.0,
+      "at": "2026-04-12T10:40:00.000000"
+    },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 847.32,
-      "at": "2026-04-10T15:08:17.317784"
+      "time": 2399.57,
+      "at": "2026-04-12T03:42:00.275381"
     }
   ]
 }

@@ -69,6 +69,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: uv-cli crate passes clippy linting (repo CI)
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Rust code passes formatting checks (repo CI)
 - id: no_unwrap_in_new_service_code
   type: pass_to_pass
   origin: agent_config
@@ -125,32 +129,38 @@ rubric:
   evidence: The gold solution uses descriptive, unshortened variable names `service_format`
     and `service_url` in `AuditArgs` rather than abbreviations like `svc_fmt` or `url`.
   category: naming
-distractors:
-- rule: ALWAYS attempt to add a test case for changed behavior
-  collision_type: scope_ambiguity
-  why_distracting: The gold solution does not add any tests for the new CLI arguments.
-    An agent might waste significant time trying to figure out how to write integration
-    tests for `uv audit` with the new flags, which could be complex due to network
-    requests or requiring mock servers, whereas the PR's scope is just wiring up the
-    configuration.
-  severity: high
+- rule: AVOID shortening variable names
   source:
     path: CLAUDE.md
-    lines: 2-2
+    lines: 16-17
+  evidence: The new CLI arguments and struct fields are named `service_format` and
+    `service_url` rather than shortened versions like `svc_fmt` or `url`.
+  category: naming
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution does not add any tests. An agent strictly following
+    this rule might waste significant time trying to mock the OSV API or write integration
+    tests for the new CLI flags, which is out of scope for this specific architectural
+    plumbing PR.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-3
 - rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
     --precise` to make lockfile changes
   collision_type: meta_confusion
-  why_distracting: The agent needs to update `Cargo.lock` because it added a new dependency
-    (`clap` to `uv-audit`). The rule says to use `cargo update --precise`, which is
-    intended for updating existing dependency versions, not for adding new workspace
-    dependencies. An agent might get confused and try to run `cargo update --precise
-    clap`, which would fail, instead of just running `cargo check` to let Cargo update
-    the lockfile automatically.
+  why_distracting: The agent needs to add `clap` as a dependency to `uv-audit`. This
+    naturally requires updating the lockfile (usually via `cargo check` or `cargo
+    build`). The rule about using `cargo update --precise` applies to version bumps
+    of existing dependencies, not adding new ones. An agent might get confused and
+    try to use `cargo update --precise` inappropriately or fail to commit the lockfile
+    changes.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 12-13
-hierarchy_analysis: The repository has a single `CLAUDE.md` configuration file at
-  the root level. No hierarchical conflicts exist, but some rules (like testing and
-  lockfile updates) require contextual interpretation to avoid over-application on
-  structural/wiring PRs.
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md` at the repository
+  root. There are no hierarchical conflicts, but the agent must apply these global
+  rules appropriately to a multi-crate workspace refactoring task.

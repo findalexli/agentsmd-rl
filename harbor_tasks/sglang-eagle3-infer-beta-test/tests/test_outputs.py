@@ -291,3 +291,117 @@ def test_repo_target_file_ast_parse():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"AST parse failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_workflow_job_names():
+    """Workflow job names are unique across workflows (pass_to_pass)."""
+    # Install pyyaml if needed and run the check
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "scripts/ci/check_workflow_job_names.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workflow job names check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Target file passes codespell check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "codespell", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eagle_test_imports():
+    """EAGLE test dependencies can be imported (pass_to_pass)."""
+    # Check that key test dependencies are importable
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "from sglang.test.test_utils import ("
+            "DEFAULT_DRAFT_MODEL_EAGLE, DEFAULT_TARGET_MODEL_EAGLE, "
+            "DEFAULT_DRAFT_MODEL_EAGLE3, DEFAULT_TARGET_MODEL_EAGLE3, "
+            "CustomTestCase, DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH, "
+            "DEFAULT_URL_FOR_TEST, popen_launch_server)"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"EAGLE test imports failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_kits_importable():
+    """Test kits modules are importable (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "from sglang.test.kits.matched_stop_kit import MatchedStopMixin; "
+            "from sglang.test.kits.radix_cache_server_kit import run_radix_attention_test"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test kits import failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Target file passes black format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["black", "--check", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Target file passes isort import ordering check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["isort", "--check", TARGET_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_hooks_yaml():
+    """GitHub workflow YAML files pass pre-commit check-yaml (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Use the check-yaml hook approach from pre-commit
+    yaml_files = [
+        ".github/workflows/lint.yml",
+    ]
+    failed = []
+    for rel_path in yaml_files:
+        full_path = Path(REPO) / rel_path
+        if not full_path.exists():
+            continue
+        r = subprocess.run(
+            ["python3", "-c", f"import yaml; yaml.safe_load(open('{full_path}'))"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        if r.returncode != 0:
+            failed.append(f"{rel_path}: {r.stderr[:200]}")
+    assert not failed, f"YAML validation errors:\n" + "\n".join(failed)

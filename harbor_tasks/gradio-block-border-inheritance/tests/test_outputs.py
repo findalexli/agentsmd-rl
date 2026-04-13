@@ -19,6 +19,11 @@ def read_svelte_file():
         return f.read()
 
 
+def run_command(cmd, timeout=300):
+    """Run a command in the REPO directory and return the result."""
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO)
+
+
 # === fail_to_pass tests: These should FAIL on base commit (buggy code) ===
 
 def test_hide_container_no_inherited_border_var():
@@ -36,24 +41,44 @@ def test_hide_container_no_inherited_border_var():
 def test_hide_container_uses_direct_border_zero():
     """FAIL_TO_PASS: hide-container must zero its own border directly, not via inherited CSS variable.
 
-    The fix uses border-width: 0 directly on .hide-container.
+    The fix uses border-width: 0 directly on .hide-container (replacing --block-border-width: 0).
     """
     content = read_svelte_file()
-    # Check that .hide-container has direct border-width: 0
-    match = re.search(r'\.hide-container:not\(\.fullscreen\)\s*\{[^\}]*border-width:\s*0', content, re.DOTALL)
-    assert match is not None, f"BUG: .hide-container should use direct 'border-width: 0', not '--block-border-width: 0'"
+    # Find the .hide-container:not(.fullscreen) CSS block specifically
+    match = re.search(r'\.hide-container:not\(\.fullscreen\)\s*\{([^\}]*)\}', content, re.DOTALL)
+    assert match is not None, f"BUG: .hide-container:not(.fullscreen) CSS block not found"
+
+    css_content = match.group(1)
+    # The fixed version should have direct border-width: 0, not --block-border-width: 0
+    has_direct_border = 'border-width: 0' in css_content
+    has_var_border = '--block-border-width: 0' in css_content
+
+    # On base commit: has_var_border=True, has_direct_border=False
+    # On fixed commit: has_var_border=False, has_direct_border=True
+    assert has_direct_border and not has_var_border, \
+        f"BUG: .hide-container should use direct 'border-width: 0' (found direct={has_direct_border}, var={has_var_border})"
 
 
 def test_child_block_retains_border():
     """FAIL_TO_PASS: Child .block inside hide-container should retain its border.
 
-    This is tested by verifying the .block class sets its own border-width,
-    which would override any inherited --block-border-width.
+    This is tested by verifying:
+    1. The .block class sets its own border-width (in CSS)
+    2. The inline style:border-width is removed from the template (the fix)
+    This ensures child blocks retain their borders independent of parent hide-container.
     """
     content = read_svelte_file()
-    # Check that .block class has border-width: var(--block-border-width)
+
+    # Check 1: .block class has border-width in CSS (this exists in both base and gold)
     match = re.search(r'\.block\s*\{[^\}]*border-width:\s*var\(--block-border-width\)', content, re.DOTALL)
     assert match is not None, f"BUG: .block class should set border-width to retain its border"
+
+    # Check 2: The inline style:border-width on the svelte:element is removed in the fix
+    # Base commit has: style:border-width="var(--block-border-width)" in the template
+    # Gold commit has this removed
+    has_inline_style = 'style:border-width="var(--block-border-width)"' in content
+    assert not has_inline_style, \
+        f"BUG: inline style:border-width should be removed from template (found={has_inline_style})"
 
 
 # === pass_to_pass tests: These should PASS on fixed code ===
@@ -106,3 +131,37 @@ def test_svelte_template_integrity():
     assert "class:fullscreen" in content, "Missing fullscreen class binding"
     assert "style:flex-grow" in content, "Missing flex-grow style binding"
     assert "<slot" in content, "Missing slot for content"
+
+
+# === pass_to_pass repo_tests: CI/CD tests from the repo ===
+
+def test_repo_format_check():
+    """PASS_TO_PASS: Repo code formatting passes Prettier checks (repo_tests).
+
+    Runs: pnpm format:check
+    """
+    # Setup: enable pnpm via corepack
+    setup = run_command(["bash", "-c", "corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install"], timeout=180)
+    assert setup.returncode == 0, f"Setup failed:\n{setup.stderr[-500:]}"
+
+    result = run_command(["pnpm", "format:check"], timeout=120)
+    assert result.returncode == 0, f"Format check failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_block_unit_tests():
+    """PASS_TO_PASS: Block.svelte unit tests pass (repo_tests).
+
+    Runs: pnpm test:run js/atoms/Block.test.ts
+    Tests the accessibility and rendering of the Block component.
+    """
+    # Setup: enable pnpm via corepack
+    setup = run_command(["bash", "-c", "corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install"], timeout=180)
+    assert setup.returncode == 0, f"Setup failed:\n{setup.stderr[-500:]}"
+
+    # Build client first (required for tests)
+    build = run_command(["bash", "-c", "pnpm --filter @gradio/client build"], timeout=120)
+    assert build.returncode == 0, f"Client build failed:\n{build.stderr[-500:]}"
+
+    # Run the specific Block.test.ts
+    result = run_command(["pnpm", "test:run", "js/atoms/Block.test.ts"], timeout=120)
+    assert result.returncode == 0, f"Block unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"

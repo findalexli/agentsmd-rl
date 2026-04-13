@@ -260,3 +260,75 @@ def test_existing_async_info_test_passes():
     assert r.returncode == 0 or "PASS" in output, (
         f"Existing async info test failed:\n{output[-3000:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_client_all_tests():
+    """All React Flight client tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn",
+            "test",
+            "packages/react-client/src/__tests__/",
+            "--no-watchman",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env=ENV,
+    )
+    output = r.stdout + r.stderr
+    assert r.returncode == 0 or "PASS" in output, (
+        f"React Flight client tests failed:\n{output[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_server_async_debug_tests():
+    """React Flight async debug info tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn",
+            "test",
+            "packages/react-server/src/__tests__/ReactFlightAsyncDebugInfo-test.js",
+            "--no-watchman",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+    )
+    output = r.stdout + r.stderr
+    assert r.returncode == 0 or "PASS" in output, (
+        f"React Flight async debug info tests failed:\n{output[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_extract_errors():
+    """Error code extraction passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "extract-errors"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=ENV,
+    )
+    assert r.returncode == 0, f"Extract errors failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flags():
+    """Feature flags check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=ENV,
+    )
+    assert r.returncode == 0, f"Flags check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

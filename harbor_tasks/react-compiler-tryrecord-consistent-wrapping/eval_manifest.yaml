@@ -53,6 +53,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Jest unit tests pass on babel-plugin-react-compiler
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes on babel-plugin-react-compiler
 rubric:
 - rule: When modifying the compiler, you MUST read the documentation about that pass
     in compiler/packages/babel-plugin-react-compiler/docs/passes/ to learn more about
@@ -61,6 +65,8 @@ rubric:
     path: compiler/CLAUDE.md
     lines: '7'
     commit: cebe42e24521ce02bf427fd482009d01e1466277
+  reference: "The gold solution adds documentation updates to fault-tolerance-overview.md\n\
+    \  describing the tryRecord() wrapping cleanup and recordErrors() normalization."
 - rule: 'React Compiler: `/compiler/` directory'
   source:
     path: CLAUDE.md
@@ -69,28 +75,43 @@ rubric:
     directory, respecting the monorepo structure and boundary between React core and
     the React Compiler.
   category: architecture
+  reference: "All changes are within /compiler/: Pipeline.ts, BuildHIR.ts, ValidateNoDerivedComputationsInEffects.ts,\n\
+    \  ValidatePreservedManualMemoization.ts, ValidateSourceLocations.ts, and fault-tolerance-overview.md"
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution strictly modifies files within the `/compiler/` directory,
+    respecting the monorepo boundary defined for the React Compiler.
+  category: architecture
+- rule: React Compiler files are located in the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution only modifies files within the `compiler/` directory,
+    adhering to the monorepo structure for the React Compiler.
+  category: architecture
 distractors:
-- rule: This repository uses Sapling (`sl`) for version control... new/deleted files
-    must be explicitly added/removed.
+- rule: Use Sapling (`sl`) for version control and commit changes using `sl commit`.
   collision_type: meta_confusion
-  why_distracting: The agent might try to use Sapling (`sl`) commands for version
-    control operations in its script, which could fail in a standard git-based evaluation
-    environment (the gold solution uses standard `git apply`).
-  severity: high
+  why_distracting: The agent might attempt to use Sapling (`sl`) commands to commit
+    its changes, which is unnecessary for the benchmark and could lead to environment
+    errors.
+  severity: low
   source:
     path: compiler/CLAUDE.md
-    lines: 49-62
+    lines: 44-58
 - rule: When modifying the compiler, you MUST read the documentation about that pass
-    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`.
   collision_type: scope_ambiguity
-  why_distracting: The agent might waste time trying to read or update documentation
-    in `docs/passes/` for the validation passes being modified, but the changes are
-    purely infrastructural (error handling) and the relevant documentation is actually
-    `fault-tolerance-overview.md`.
-  severity: medium
+  why_distracting: The agent might waste time trying to read documentation for all
+    the validation passes it modifies, even though the task instructions are already
+    explicit about what code changes to make.
+  severity: low
   source:
     path: compiler/CLAUDE.md
-    lines: 7-8
-hierarchy_analysis: The root CLAUDE.md correctly delegates to compiler/CLAUDE.md for
-  compiler-specific instructions. The compiler config focuses heavily on tooling (Sapling,
-  yarn snap) which is mostly distracting for this specific code refactoring task.
+    lines: 9-10
+hierarchy_analysis: The hierarchy is shallow (2 levels). `CLAUDE.md` defines the monorepo
+  split, and `compiler/CLAUDE.md` provides compiler-specific knowledge. There are
+  no conflicts between the levels, and the rules are mostly informational or related
+  to local development workflows rather than code conventions.

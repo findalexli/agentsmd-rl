@@ -131,29 +131,63 @@ rubric:
   evidence: The gold solution uses `const` for all new variables (`dist`, `files`,
     `imports`, `entries`, `spec`) and avoids reassignment.
   category: style
-distractors:
-- rule: Reduce total variable count by inlining when a value is only used once.
-  collision_type: rule_conflict
-  why_distracting: The variables `imports` and `entries` are only used once in the
-    final return array. Inlining them would make the return statement a massive nested
-    structure, reducing readability. The gold solution explicitly extracts them for
-    clarity.
-  severity: medium
+- rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
-    lines: 41-49
+    lines: 25-33
+  evidence: The gold solution introduces new variables using single-word names (`files`,
+    `imports`, `entries`, `spec`) instead of multi-word alternatives like `fileList`,
+    `importStatements`, or `importSpecifier`.
+  category: naming
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 62-63
+  evidence: 'The gold solution uses `const` for all variable declarations and employs
+    a ternary operator (`spec.startsWith(".") ? spec : ...`) instead of an `if/else`
+    block with a `let` reassignment.'
+  category: style
+- rule: Prefer single word variable names where possible. Use single word names by
+    default for new locals.
+  source:
+    path: AGENTS.md
+    lines: 20-32
+  evidence: The gold solution introduces new variables with single-word names like
+    `dist`, `files`, `imports`, `entries`, and `spec`, adhering to the strict naming
+    enforcement.
+  category: naming
+distractors:
 - rule: Prefer `Path.Path`, `Config`, `Clock`, and `DateTime` when those concerns
     are already inside Effect code.
   collision_type: architecture_boundary
-  why_distracting: The agent might see path manipulation (`path.join`, `path.relative`)
-    and try to import `Path` from `@effect/platform` or effectify the script. However,
-    this is a simple Node/Bun build script, not an Effect service.
+  why_distracting: The agent might try to import and use Effect's `Path.Path` service
+    instead of Node's built-in `path` module. However, this is a plain Node/Bun build
+    script, not an Effect service, so introducing Effect dependencies here is incorrect.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
-    lines: 33-34
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and Node/Bun
-  guidelines, while `packages/opencode/AGENTS.md` introduces strict Effect rules.
-  Since this is a build script (`script/build.ts`) and not part of the core application
-  logic (`src/`), the Effect rules in the package-level config should be ignored in
-  favor of standard Node/Bun APIs.
+    lines: 38-40
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to refactor the `createEmbeddedWebUIBundle`
+    async function into an `Effect.gen` generator. This would unnecessarily complicate
+    a simple build script that doesn't use the Effect runtime.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 16-17
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to inline the `imports` and `entries` arrays
+    directly into the final returned array since they are only used once. This would
+    make the template literal logic overly dense and harder to read, conflicting with
+    general readability.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 45-46
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the package-level
+  `packages/opencode/AGENTS.md`. The package-level rules are heavily focused on Effect
+  and Drizzle, which are irrelevant for a build script. The agent must recognize the
+  architectural boundary and apply the general style rules from the root config while
+  ignoring the domain-specific rules from the package config.

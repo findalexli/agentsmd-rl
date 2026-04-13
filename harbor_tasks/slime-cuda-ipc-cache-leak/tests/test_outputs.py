@@ -92,7 +92,7 @@ pp_weights = MagicMock()
 events = []
 torch_mock.cuda.ipc_collect.side_effect = lambda: events.append("ipc_collect")
 dist_mock.barrier.side_effect = lambda **kw: events.append("barrier")
-dist_mock.get_rank.return_value = 1   # non-zero rank → skip rank-0 blocks
+dist_mock.get_rank.return_value = 1   # non-zero rank -> skip rank-0 blocks
 ray_mock.get.side_effect = lambda refs: events.append("ray_get")
 
 ns = {
@@ -262,7 +262,7 @@ def test_ray_and_dist_integration():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — Repo CI/CD checks
+# Pass-to-pass (repo_tests) — Repo CI/CD checks (enriched)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -293,3 +293,33 @@ def test_repo_isort_imports():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_autoflake_unused_imports():
+    """Repo's autoflake check for unused imports passes on target directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["autoflake", "--check", "--remove-all-unused-imports", "-r", "slime/backends/megatron_utils/update_weight/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"autoflake unused imports check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI enrichment
+def test_repo_python_syntax():
+    """Target file has valid Python syntax (pass_to_pass). CI enrichment."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI enrichment
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml is valid TOML and parseable (pass_to_pass). CI enrichment."""
+    r = subprocess.run(
+        ["python", "-c", f"import tomllib; tomllib.load(open('{REPO}/pyproject.toml', 'rb'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}"

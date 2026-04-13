@@ -455,3 +455,118 @@ def test_repo_code_style_basic():
         if filtered:
             errors = filtered[:3]
             assert False, f"Style violations found:\n" + '\n'.join(errors)
+
+
+def test_repo_no_conflict_markers():
+    """P2P: Target file has no git conflict markers (ClickHouse CI check).
+
+    Checks for conflict markers (<<<<<<<, =======, >>>>>>>) that could be
+    accidentally left in the code after a merge conflict.
+    Source: ci/jobs/scripts/check_style/various_checks.sh lines 177-179
+    """
+    result = subprocess.run(
+        ["grep", "-P", "^(<<<<<<<|=======|>>>>>>>)$", FILE_PATH],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+    # grep returns 1 if no matches found (good - no conflict markers)
+    # grep returns 0 if matches found (bad - conflict markers exist)
+    if result.returncode == 0:
+        lines = result.stdout.strip().split('\n')[:3]
+        assert False, f"Git conflict markers found:\n" + '\n'.join(lines)
+    elif result.returncode != 1:
+        assert False, f"grep failed with return code {result.returncode}: {result.stderr}"
+
+
+def test_repo_no_dos_newlines():
+    """P2P: Target file has no DOS/Windows newlines (ClickHouse CI check).
+
+    Checks for carriage return characters (\r) which indicate DOS-style newlines.
+    ClickHouse uses Unix-style newlines (\n only).
+    Source: ci/jobs/scripts/check_style/various_checks.sh line 182
+    """
+    result = subprocess.run(
+        ["grep", "-l", "-P", "\r$", FILE_PATH],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+    # grep returns 1 if no matches found (good - no DOS newlines)
+    # grep returns 0 if matches found (bad - DOS newlines exist)
+    if result.returncode == 0:
+        assert False, "DOS/Windows newlines (\\r\\n) found - use Unix newlines (\\n)"
+    elif result.returncode != 1:
+        assert False, f"grep failed with return code {result.returncode}: {result.stderr}"
+
+
+def test_repo_file_permissions_valid():
+    """P2P: Target file has valid git file permissions (ClickHouse CI check).
+
+    Source files should have mode 100644 (regular file) or 120000 (symlink).
+    Executable bits on source files are not allowed.
+    Source: ci/jobs/scripts/check_style/various_checks.sh lines 92-93
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"git ls-files -s {FILE_PATH} | awk '$1 != \"120000\" && $1 != \"100644\" {{ print $4 }}'"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+    # If any files are output, they have wrong permissions
+    if result.stdout.strip():
+        assert False, f"File has invalid permissions (should be 100644 or 120000): {result.stdout.strip()}"
+
+
+def test_repo_no_pragma_once_in_cpp():
+    """P2P: Target C++ file does not use #pragma once (ClickHouse CI check).
+
+    #pragma once is acceptable in header files but should not be used in .cpp files.
+    Source: ci/jobs/scripts/check_style/check_cpp.sh lines 201 (header check)
+    """
+    result = subprocess.run(
+        ["grep", "-n", "^#pragma once$", FILE_PATH],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+    # grep returns 1 if no matches found (good - no #pragma once in cpp)
+    # grep returns 0 if matches found (bad - #pragma once found)
+    if result.returncode == 0:
+        lines = result.stdout.strip().split("\n")[:3]
+        assert False, f"#pragma once found in .cpp file (acceptable in headers only):\n" + "\n".join(lines)
+    elif result.returncode != 1:
+        assert False, f"grep failed with return code {result.returncode}: {result.stderr}"
+
+
+def test_repo_no_forbidden_std_containers():
+    """P2P: Target file does not use forbidden std containers in restricted dirs.
+
+    Only specific directories (AggregateFunctions, Columns, Dictionaries) are checked
+    for forbidden std containers. Source: ci/jobs/scripts/check_style/check_cpp.sh lines 246-259
+    """
+    # The CI check only applies to these specific directories
+    restricted_dirs = ["/src/AggregateFunctions/", "/src/Columns/", "/src/Dictionaries/"]
+    is_restricted = any(d in FILE_PATH for d in restricted_dirs)
+
+    if is_restricted:
+        result = subprocess.run(
+            ["grep", "-n", "-E", r"std::(deque|list|map|multimap|multiset|queue|set|unordered_map|unordered_multimap|unordered_multiset|unordered_set|vector)<", FILE_PATH],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO
+        )
+        # grep returns 1 if no matches found (good - no forbidden containers)
+        # grep returns 0 if matches found (check for exceptions)
+        if result.returncode == 0:
+            lines = result.stdout.strip().split("\n")
+            # Filter out lines with STYLE_CHECK_ALLOW_STD_CONTAINERS
+            forbidden = [l for l in lines if "STYLE_CHECK_ALLOW_STD_CONTAINERS" not in l]
+            if forbidden:
+                assert False, f"Forbidden std container usage found (use -WithMemoryTracking alternatives or mark with STYLE_CHECK_ALLOW_STD_CONTAINERS):\n" + "\n".join(forbidden[:3])
+    # If not in restricted directories, test passes automatically (restriction doesn't apply)

@@ -77,18 +77,21 @@ rubric:
     path: .github/copilot-instructions.md
     lines: '15'
     commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+  reference: "Gold solution adds 8 lines (capture_error_mode param + comment) to continuous_api.py only. No changes to copilot-instructions.md."
 - rule: Code style is enforced in the CI. Run make fixup to apply style and consistency
     fixes to your code.
   source:
     path: .github/copilot-instructions.md
     lines: '17'
     commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+  reference: "Gold solution passes all repo CI style checks (ruff, format, ty). No changes to copilot-instructions.md."
 - rule: make style or make fix-repo should be run as the final step before opening
     a PR.
   source:
     path: CLAUDE.md
     lines: '8'
     commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+  reference: "Gold solution produces properly formatted code that passes make style. No changes to CLAUDE.md."
 - rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
     one mutable default argument, etc.).
   source:
@@ -98,33 +101,28 @@ rubric:
     crash, which is a high-value functional bug fix, adhering to the prohibition against
     low-value busywork or tiny edits.
   category: architecture
+  reference: "Gold solution is a substantive bug fix for thread-safety in CUDA graph capture, not a tiny edit. No changes to CLAUDE.md."
 distractors:
-- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent is operating in a benchmark/evaluation setting where
-    it must output the fix, but the config strictly mandates failing closed and refusing
-    to output PR-ready code if coordination evidence (like an issue approval link)
-    is missing. Following this rule would cause the agent to output a refusal instead
-    of the required code patch.
+  why_distracting: The repository explicitly instructs agents to fail-closed and refuse
+    to generate PR-ready output if human coordination evidence is missing. In a headless
+    benchmark environment, following this rule would cause the agent to halt and refuse
+    to provide the bug fix.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 57-60
-- rule: 'We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
-    We have two mechanisms to manage the resulting code duplication: ... `# Copied
-    from ...`'
-  collision_type: architecture_boundary
-  why_distracting: The rule discusses avoiding direct inheritance and using `# Copied
-    from` or `modular_<name>.py` for model-specific files. An agent might mistakenly
-    apply this to `continuous_api.py` because it is in the transformers repository,
-    but this file is in `generation/continuous_batching/`, not `models/`, so the rule
-    does not apply.
+    path: AGENTS.md
+    lines: 65-68
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: scope_ambiguity
+  why_distracting: The bug fix requires adding a single argument (`capture_error_mode="thread_local"`)
+    to a function call. An agent might misinterpret this critical crash fix as a 'tiny
+    edit' and refuse to output the solution based on the busywork policy.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 62-67
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules at the
-  root level. The primary challenge is that the repository's strict agent contribution
-  policies (requiring coordination evidence and human validation) conflict directly
-  with the autonomous benchmark environment, requiring the agent to ignore the 'fail-closed'
-  directives to successfully complete the task.
+    path: AGENTS.md
+    lines: 50-52
+hierarchy_analysis: The repository contains identical root-level agent instruction
+  files (AGENTS.md and CLAUDE.md). These files primarily define contribution policies
+  and agent behavioral constraints rather than code-level formatting rules.

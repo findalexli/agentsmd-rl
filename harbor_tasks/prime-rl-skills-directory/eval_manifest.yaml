@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: AGENTS.md must exist and be readable
+- id: agents_md_frontmatter_valid
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md has valid YAML frontmatter if present
+- id: test_repo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TOML config files are valid
 - id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
@@ -17,6 +25,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Python formatting passes
+- id: test_repo_python_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python source files have valid syntax
+- id: test_repo_skill_md_frontmatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Any SKILL.md files have valid YAML frontmatter
 - id: skills_directory_exists
   type: fail_to_pass
   origin: pr_diff
@@ -52,21 +68,37 @@ rubric:
     path: AGENTS.md
     lines: 7-8
     commit: 31b48b8b10db390d835909a6fd976f29d9880c81
+  reference: The gold solution removes verbose documentation from AGENTS.md and replaces
+    it with a reference to the skills directory, keeping AGENTS.md sparse.
 - rule: All code should be runnable with `uv run` or `uv run <command>`.
   source:
-    path: AGENTS.md
-    lines: 36-37
-  evidence: The examples in `skills/inference-server/SKILL.md` prefix the commands
-    with `uv run` (e.g., `uv run inference @ path/to/config.toml`) rather than just
-    calling the entry point directly.
-  category: documentation
+    path: skills/inference-server/SKILL.md
+  reference: uv run inference @ path/to/config.toml
 - rule: Config files use `@` syntax and CLI overrides use `--key value` format.
   source:
+    path: skills/inference-server/SKILL.md
+  reference: uv run inference @ path/to/config.toml --model.name Qwen/Qwen3-0.6B
+- rule: Config files use `@` syntax and CLI flags can override config values.
+  source:
+    path: skills/toml-config/SKILL.md
+  reference: 'uv run inference @ config.toml --model.name Qwen/Qwen3-0.6B --server.port
+    8001
+
+    '
+- rule: 'Config files use `@` syntax: `uv run sft @ path/to/config.toml`'
+  source:
     path: AGENTS.md
-    lines: 42-45
-  evidence: 'The `inference-server` skill documentation correctly demonstrates the
-    `@` syntax for configs (`uv run inference @ path/to/config.toml`) and the CLI
-    override syntax (`--model.name Qwen/Qwen3-0.6B`) as '
+    lines: 38-39
+  evidence: The gold solution correctly documents the `@` syntax for loading configs
+    in both `inference-server/SKILL.md` and `toml-config/SKILL.md`.
+  category: documentation
+- rule: Config files use `@` syntax
+  source:
+    path: AGENTS.md
+    lines: 42-42
+  evidence: The `skills/inference-server/SKILL.md` file documents the `@` syntax for
+    loading configs (`uv run inference @ path/to/config.toml`), adhering to the CLI
+    Usage rule defined in AGENTS.md.
   category: documentation
 config_edits:
 - path: AGENTS.md
@@ -96,191 +128,30 @@ config_edits:
     100`'
 - path: skills/inference-server/SKILL.md
   tier: 1
-  gold_added: "---\nname: inference-server\ndescription: Start and test the prime-rl\
-    \ inference server. Use when asked to run inference, start vLLM, test a model,\
-    \ or launch the inference server.\n---\n\n# Inference Server\n\n## Starting the\
-    \ server\n\nAlways use the `inference` entry point — never `vllm serve` or `python\
-    \ -m vllm.entrypoints.openai.api_server` directly. The entry point runs `setup_vllm_env()`\
-    \ which configures environment variables (LoRA, multiprocessing) before vLLM is\
-    \ imported.\n\n```bash\n# With a TOML config\nuv run inference @ path/to/config.toml\n\
-    \n# With CLI overrides\nuv run inference --model.name Qwen/Qwen3-0.6B --model.max_model_len\
-    \ 2048 --model.enforce_eager\n\n# Combined\nuv run inference @ path/to/config.toml\
-    \ --server.port 8001 --gpu-memory-utilization 0.5\n```\n\n## Custom endpoints\n\
-    \nThe server extends vLLM with:\n\n- `/v1/chat/completions/tokens` — accepts token\
-    \ IDs as prompt input (used by multi-turn RL rollouts)\n- `/update_weights` —\
-    \ hot-reload model weights from the trainer\n- `/load_lora_adapter` — load LoRA\
-    \ adapters at runtime\n- `/init_broadcaster` — initialize weight broadcast for\
-    \ distributed training\n\n## Testing the server\n\n```bash\ncurl http://localhost:8000/v1/chat/completions\
-    \ \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"model\": \"Qwen/Qwen3-0.6B\"\
-    ,\n    \"messages\": [{\"role\": \"user\", \"content\": \"Hi\"}],\n    \"max_tokens\"\
-    : 50\n  }'\n```\n\n## Key files\n\n- `src/prime_rl/inference/server.py` — entry\
-    \ point, env var setup\n- `src/prime_rl/inference/config.py` — `InferenceConfig`\
-    \ and all sub-configs\n- `src/prime_rl/inference/vllm/server.py` — FastAPI routes\
-    \ and vLLM monkey-patches\n- `configs/debug/infer.toml` — minimal debug config"
-  gold_removed: ''
-- path: skills/toml-config/SKILL.md
-  tier: 1
-  gold_added: '---
-
-    name: toml-config
-
-    description: How to write and use TOML configs in prime-rl. Use when creating
-    config files, running commands with configs, or overriding config values via CLI.
-
-    ---
-
-
-    # TOML Config
-
-
-    All prime-rl commands use pydantic-settings with TOML configs and CLI overrides.
-
-
-    ## Running with configs
-
-
-    ```bash
-
-    # Load a config file with @ syntax
-
-    uv run inference @ configs/debug/infer.toml
-
-    uv run sft @ configs/debug/sft/train.toml
-
-    uv run rl @ configs/debug/rl/train.toml
-
-
-    # CLI overrides (take precedence over TOML)
-
-    uv run inference @ config.toml --model.name Qwen/Qwen3-0.6B --server.port 8001
-
-
-    # Boolean flags: no value needed
-
-    uv run inference --model.enforce_eager          # sets to true
-
-    uv run inference --no-model.enforce_eager       # sets to false
-
-
-    # CLI-only (no TOML file)
-
-    uv run inference --model.name Qwen/Qwen3-0.6B --model.max_model_len 2048
-
-    ```
-
-
-    ## TOML structure
-
-
-    Top-level fields must come before any `[section]` header — this is a TOML rule.
-
-
-    ```toml
-
-    # Top-level fields first
-
-    gpu_memory_utilization = 0.5
-
-    seed = 42
-
-
-    # Then sections
-
-    [model]
-
-    name = "Qwen/Qwen3-0.6B"
-
-    max_model_len = 4096
-
-
-    [server]
-
-    port = 8000
-
-    ```
-
-
-    Putting a top-level field after a section header nests it inside that section,
-    which causes validation errors.
-
-
-    ## Config inheritance
-
-
-    Configs can inherit from other TOML files:
-
-
-    ```toml
-
-    toml_files = ["base.toml"]
-
-
-    [model]
-
-    name = "Qwen/Qwen3-0.6B"  # overrides base
-
-    ```
-
-
-    Paths in `toml_files` are relative to the file containing the field.
-
-
-    ## Setting None
-
-
-    Use the string `"None"` in TOML to set a field to None:
-
-
-    ```toml
-
-    max_model_len = "None"
-
-    ```
-
-
-    ## Available commands
-
-
-    All accept `@ config.toml` and CLI overrides:
-
-
-    | Command | Config class | Description |
-
-    |---------|-------------|-------------|
-
-    | `uv run rl` | full RL pipeline | Orchestrator + inference + trainer |
-
-    | `uv run inference` | `InferenceConfig` | vLLM inference server |
-
-    | `uv run trainer` | trainer config | RL trainer |
-
-    | `uv run orchestrator` | orchestrator config | Rollout orchestrator |
-
-    | `uv run env-server` | env server config | Environment server |
-
-    | `uv run sft` | SFT config | Supervised fine-tuning |
-
-
-    ## Key files
-
-
-    - `src/prime_rl/utils/pydantic_config.py` — `parse_argv`, `BaseSettings`, `@`
-    syntax parsing
-
-    - `configs/` — all config files, organized by task'
+  gold_added: '---\nname: inference-server\ndescription: Start and test the prime-rl
+    inference server...'
   gold_removed: ''
 distractors:
-- rule: Boolean flags don't need `true`... Override config values with CLI flags...
-  collision_type: meta_confusion
-  why_distracting: The task explicitly instructs to 'replace the detailed bullet points
-    with a reference to the skill'. An agent might hesitate to delete these existing
-    rules from its own instruction file (`AGENTS.md`), leading it to append the reference
-    while keeping the redundant bullet points.
-  severity: high
+- rule: 'Boolean flags don''t need `true`: use `--model.optim_cpu_offload` not `--model.optim_cpu_offload
+    true`, use `--no-model.optim_cpu_offload` to pass False. Override config values
+    with CLI flags...'
   source:
     path: AGENTS.md
-    lines: 44-45
-hierarchy_analysis: 'The hierarchy is flat with `CLAUDE.md` simply pointing to `AGENTS.md`.
-  The primary challenge is meta-level: the agent is tasked with refactoring its own
-  instruction file (`AGENTS.md`) by moving specific CLI usage rules into a new progressively-disclosed
-  skills system.'
+    lines: 33-34
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed to replace detailed bullet points in the
+    CLI Usage section with a reference to the new skill. Because these are existing
+    agent instructions, the agent might hesitate to delete them or might try to keep
+    them while adding the reference, leading to duplicated instructions.
+  severity: high
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
+    tests.
+  source:
+    path: AGENTS.md
+    lines: 37-38
+  collision_type: scope_ambiguity
+  why_distracting: The AGENTS.md file mandates writing tests as plain functions with
+    pytest fixtures. The task requires documenting how to test the inference server.
+    An agent might try to document a pytest approach instead of the requested `curl`
+    example.
+  severity: medium

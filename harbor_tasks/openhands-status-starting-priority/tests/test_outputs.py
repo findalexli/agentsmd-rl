@@ -40,7 +40,7 @@ def get_status_code_function(content):
 def test_conversation_starting_priority_with_disconnected_websocket():
     """
     FAIL-TO-PASS: When conversation status is STARTING and WebSocket is DISCONNECTED,
-    should return COMMON\$STARTING, not DISCONNECTED.
+    should return COMMON$STARTING, not DISCONNECTED.
     """
     with open(STATUS_TS, 'r') as f:
         content = f.read()
@@ -61,7 +61,7 @@ def test_conversation_starting_priority_with_disconnected_websocket():
 def test_conversation_starting_priority_with_connected_websocket():
     """
     FAIL-TO-PASS: When conversation status is STARTING with CONNECTED WebSocket and null agent state,
-    should return COMMON\$STARTING, not runtime status.
+    should return COMMON$STARTING, not runtime status.
     """
     with open(STATUS_TS, 'r') as f:
         content = f.read()
@@ -140,8 +140,8 @@ def test_test_file_exists():
 
 def test_repo_typecheck():
     """
-    PASS-TO-PASS: Repo TypeScript typecheck passes (repo CI command).
-    Ensures the fix doesn't introduce type errors.
+    PASS-TO-PASS: Repo TypeScript typecheck passes (origin: repo_tests).
+    Runs 'npm run typecheck' to ensure no type errors in the fix.
     """
     result = subprocess.run(
         ["npm", "run", "typecheck"],
@@ -155,9 +155,8 @@ def test_repo_typecheck():
 
 def test_repo_unit_tests():
     """
-    PASS-TO-PASS: Repo unit tests pass (repo CI command).
-    Runs the frontend test suite with vitest. Some flaky tests may fail
-    but the overall test suite should complete with majority passing.
+    PASS-TO-PASS: Repo unit tests pass (origin: repo_tests).
+    Runs the full frontend test suite with vitest.
     """
     result = subprocess.run(
         ["npm", "test", "--", "--run"],
@@ -183,8 +182,8 @@ def test_repo_unit_tests():
 
 def test_repo_build():
     """
-    PASS-TO-PASS: Repo frontend build passes (repo CI command).
-    Ensures the fix doesn't break the production build.
+    PASS-TO-PASS: Repo frontend build passes (origin: repo_tests).
+    Runs 'npm run build' to ensure production build works.
     """
     result = subprocess.run(
         ["npm", "run", "build"],
@@ -198,9 +197,8 @@ def test_repo_build():
 
 def test_repo_lint():
     """
-    PASS-TO-PASS: Repo lint checks pass (repo CI command).
-    Ensures the fix follows code style and quality standards.
-    Runs eslint, typecheck, and prettier checks.
+    PASS-TO-PASS: Repo lint checks pass (origin: repo_tests).
+    Runs 'npm run lint' for eslint, typecheck, and prettier.
     """
     result = subprocess.run(
         ["npm", "run", "lint"],
@@ -214,8 +212,8 @@ def test_repo_lint():
 
 def test_repo_status_tests():
     """
-    PASS-TO-PASS: Status utility-specific tests pass (repo CI command).
-    Ensures the fix doesn't break existing status utility tests.
+    PASS-TO-PASS: Status utility-specific tests pass (origin: repo_tests).
+    Runs only the status.test.ts tests to verify status logic.
     """
     result = subprocess.run(
         ["npm", "test", "--", "--run", "status.test.ts"],
@@ -229,8 +227,8 @@ def test_repo_status_tests():
 
 def test_repo_translation_completeness():
     """
-    PASS-TO-PASS: Translation completeness check passes (repo CI command).
-    Ensures all translation keys have complete language coverage.
+    PASS-TO-PASS: Translation completeness check passes (origin: repo_tests).
+    Runs 'npm run check-translation-completeness'.
     """
     result = subprocess.run(
         ["npm", "run", "check-translation-completeness"],

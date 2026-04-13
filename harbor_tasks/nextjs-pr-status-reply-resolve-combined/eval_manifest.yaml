@@ -43,6 +43,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ast-grep scan passes on scripts/pr-status.js (no pattern violations)
+- id: repo_node_check_pr_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's scripts/pr-status.js passes node --check validation
 - id: skill_md_thread_interaction_commands
   type: fail_to_pass
   origin: agent_config
@@ -68,50 +72,75 @@ rubric:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: '22'
     commit: fea754747872122d167dd8bf1fc5581044e50521
+  reference: '6. After addressing review comments, reply to the thread describing
+    what was done, then resolve it. Use `reply-and-resolve-thread` to do both in one
+    step, or use `reply-thread` + `resolve-thread` separately.
+
+    Thread interaction commands documenting reply-and-resolve-thread alongside reply-thread
+    and resolve-thread.
+
+    '
 - rule: 'Codebase structure: `scripts/` is designated for build and maintenance scripts.'
   source:
-    path: CLAUDE.md
-    lines: 17-18
+    path: scripts/pr-status.js
+    lines: 1-50
   evidence: The gold solution correctly modifies `scripts/pr-status.js` which is located
     in the `scripts/` directory, aligning with the architectural definition that this
     directory is for maintenance scripts.
   category: architecture
+  reference: 'Added reply-and-resolve-thread subcommand handler in main() function.
+
+    Modified replyToThread() to use REST API /repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies.
+
+    Added reply-and-resolve-thread template to generateThreadMd() output for unresolved
+    threads.
+
+    '
 - rule: Read local documentation (like READMEs or skill docs) to identify and follow
     local patterns and conventions before editing files in a subdirectory.
   source:
-    path: CLAUDE.md
-    lines: 40-42
-  evidence: The gold solution updates `.agents/skills/pr-status-triage/SKILL.md` and
-    `workflow.md` by seamlessly integrating the new command into the existing 'Quick
-    Commands' and 'Resolving Review Threads' secti
+    path: .agents/skills/pr-status-triage/workflow.md
+    lines: 29-44
+  evidence: The gold solution reads and updates skill docs in `.agents/skills/pr-status-triage/`,
+    adding the new command to both SKILL.md and workflow.md following existing patterns.
   category: documentation
+  reference: 'Added "Or do both in one step:" section in workflow.md documenting the
+    combined reply-and-resolve-thread command.
+
+    '
+- rule: The `scripts/` directory is designated for build and maintenance scripts,
+    separate from the core Next.js framework packages.
+  source:
+    path: AGENTS.md
+    lines: 13-22
+  evidence: The gold solution implements the new PR maintenance command `reply-and-resolve-thread`
+    directly in `scripts/pr-status.js`, aligning with the directory's designated purpose.
+  category: architecture
 distractors:
 - rule: 'Default agent rule: If you are changing Next.js source or integration tests,
     start `pnpm --filter=next dev` in a separate terminal session before making edits.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might start the Next.js dev server (`pnpm --filter=next
-    dev`) because it is editing a JavaScript file. However, `scripts/pr-status.js`
-    is a standalone Node.js maintenance script, not part of the Next.js framework
-    source (`packages/next/src/`). Starting the dev server is unnecessary and wastes
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` when changing
+    Next.js source. An agent might misinterpret `scripts/pr-status.js` as core source
+    and start the dev server, which is useless for a standalone Node script and wastes
     time.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 60-62
+    path: AGENTS.md
+    lines: 66-68
 - rule: 'Always run a full bootstrap build after switching branches: `pnpm build-all`'
   collision_type: scope_ambiguity
-  why_distracting: The agent might run `pnpm build-all` to ensure the workspace is
-    bootstrapped after checking out the branch. Since the changes are strictly isolated
-    to a standalone script and markdown files, a full build of the JS and Rust code
-    is completely unnecessary and would waste significant time.
+  why_distracting: The rule suggests running `pnpm build-all` after switching branches.
+    An agent might trigger this 5+ minute build before or after editing the script,
+    wasting time since the script is executed directly via Node and does not require
+    monorepo compilation.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 81-85
-hierarchy_analysis: 'The configuration relies on a single root-level `CLAUDE.md` (symlinked
-  to `AGENTS.md`). The primary challenge is scope ambiguity: the config heavily emphasizes
-  Next.js core development workflows (dev servers, Rust/JS builds, test isolation),
-  but this PR is strictly modifying a standalone maintenance script and agent skill
-  documentation. Agents must correctly identify that `scripts/` falls outside the
-  ''Next.js source'' scope to avoid triggering expensive and irrelevant build/dev
-  commands.'
+    path: AGENTS.md
+    lines: 88-92
+hierarchy_analysis: 'The config hierarchy is flat (Level 0 `AGENTS.md` and `CLAUDE.md`
+  are identical). The primary challenge is meta-referential: the agent must edit its
+  own skill definition files (`.agents/skills/pr-status-triage/SKILL.md` and `workflow.md`)
+  as if they were regular source files, without confusing them with its active system
+  prompt instructions. The config files provide general Next.js build instructions
+  that are largely distracting for this standalone script task.'

@@ -53,24 +53,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's typos check passes on modified file
-rubric:
-- rule: Run pre-commit hooks (ruff, mypy) on changed files to ensure code style and
-    type safety.
-  source:
-    path: AGENTS.md
-    lines: 86-102
-    commit: 171775f306a333a9cf105bfd533bf3e113d401d9
-- rule: Use `uv` and `.venv/bin/python` for Python commands; never use system `python3`
-    or bare `pip install`.
-  source:
-    path: AGENTS.md
-    lines: '42'
-    commit: 171775f306a333a9cf105bfd533bf3e113d401d9
-- rule: Prefer 'search for X' patterns instead of hardcoding file paths that may change.
-  source:
-    path: docs/contributing/editing-agent-instructions.md
-    lines: 51-52
-    commit: 171775f306a333a9cf105bfd533bf3e113d401d9
+- id: repo_spdx_header
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's SPDX header check passes on modified file
+- id: repo_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's forbidden imports check passes on modified file
+- id: repo_torch_cuda
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's torch.cuda check passes on modified file
+rubric: []
 distractors:
 - rule: Pure code-agent PRs are not allowed. A human submitter must understand and
     defend the change end-to-end.

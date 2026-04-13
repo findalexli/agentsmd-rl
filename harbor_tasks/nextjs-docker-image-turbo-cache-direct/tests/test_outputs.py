@@ -291,3 +291,139 @@ def test_repo_scripts_prettier():
     assert r.returncode == 0, (
         f"Prettier check failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_syntax():
+    """All repo shell scripts have valid bash syntax (pass_to_pass)."""
+    shell_scripts = [
+        "scripts/docker-native-build.sh",
+        "scripts/check-examples.sh",
+        "scripts/check-pre-compiled.sh",
+        "scripts/deploy-docs.sh",
+        "scripts/deploy-examples.sh",
+        "scripts/next-with-deps.sh",
+    ]
+    for script in shell_scripts:
+        script_path = os.path.join(REPO, script)
+        if not os.path.exists(script_path):
+            continue
+        r = subprocess.run(
+            ["bash", "-n", script_path],
+            capture_output=True, timeout=10,
+        )
+        assert r.returncode == 0, (
+            f"{script} has bash syntax errors:\n{r.stderr.decode()}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Root package.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"JSON.parse(require('fs').readFileSync('{REPO}/package.json'))"],
+        capture_output=True, timeout=10,
+    )
+    assert r.returncode == 0, (
+        f"Root package.json is invalid JSON:\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rust_toolchain_valid():
+    """rust-toolchain.toml is valid TOML with required fields (pass_to_pass)."""
+    toolchain_path = os.path.join(REPO, "rust-toolchain.toml")
+    if os.path.exists(toolchain_path):
+        content = Path(toolchain_path).read_text()
+        # Basic TOML validation - check for required sections
+        assert "[toolchain]" in content, "rust-toolchain.toml missing [toolchain] section"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_cache_script_shebang():
+    """docker-image-cache.js has proper Node.js shebang (pass_to_pass)."""
+    r = subprocess.run(
+        ["head", "-1", f"{REPO}/scripts/docker-image-cache.js"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Failed to read docker-image-cache.js: {r.stderr}"
+    assert r.stdout.strip() == "#!/usr/bin/env node", (
+        f"docker-image-cache.js missing proper shebang, got: {r.stdout.strip()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_formatting():
+    """All scripts directory files are formatted with Prettier (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/scripts/"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Prettier check failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_native_build_help():
+    """docker-native-build.js --help runs without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/scripts/docker-native-build.js", "--help"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, (
+        f"docker-native-build.js --help failed:\\n{r.stderr}"
+    )
+    assert "Usage:" in r.stdout, f"Expected help text, got: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_image_cache_syntax():
+    """docker-image-cache.js has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/scripts/docker-image-cache.js"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, (
+        f"docker-image-cache.js has syntax errors:\\n{r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_native_build_syntax():
+    """docker-native-build.js has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/scripts/docker-native-build.js"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, (
+        f"docker-native-build.js has syntax errors:\\n{r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_native_builder_dockerfile_exists():
+    """native-builder.Dockerfile exists and has FROM instruction (pass_to_pass)."""
+    dockerfile_path = os.path.join(REPO, "scripts/native-builder.Dockerfile")
+    assert os.path.exists(dockerfile_path), "native-builder.Dockerfile is missing"
+    r = subprocess.run(
+        ["grep", "-E", "^(FROM|ARG)", dockerfile_path],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Failed to find FROM/ARG in Dockerfile: {r.stderr}"
+    assert "FROM" in r.stdout, "Dockerfile missing FROM instruction"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_swc_pkg_scripts_check():
+    """packages/next-swc/package.json scripts are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const pkg = JSON.parse(require('fs').readFileSync('{REPO}/packages/next-swc/package.json'));
+if (!pkg.scripts) {{ throw new Error('No scripts field'); }}
+if (!pkg.scripts['build-native']) {{ throw new Error('Missing build-native script'); }}
+console.log('Scripts valid');
+"""],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Package scripts validation failed:\\n{r.stderr}"

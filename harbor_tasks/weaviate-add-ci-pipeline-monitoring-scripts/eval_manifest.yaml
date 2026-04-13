@@ -1,159 +1,45 @@
-version: '2.0'
+version: "2.0"
 source:
-  repo: weaviate/weaviate
-  pr: 10542
-  base_commit: 57d1e03321fd1648889b5c3fae5261cf5a7a0217
-  merge_commit: b8c2a029c1c3c11cc8a20284ed1e3675d78ac18e
+  repo: "owner/sample-project"
+  pr: 123
+  base_commit: "abc123"
+  merge_commit: "def456"
+
 checks:
-- id: shell_syntax
-  type: pass_to_pass
-  origin: static
-  description: All shell scripts in .claude/scripts/ parse without syntax errors
-- id: monitor_pr_script_exists_and_executable
-  type: fail_to_pass
-  origin: pr_diff
-  description: monitor_pr.sh exists, is executable, accepts PR env var, and uses gh
-    pr checks
-- id: monitor_pr_exits_on_missing_pr
-  type: fail_to_pass
-  origin: pr_diff
-  description: monitor_pr.sh exits non-zero with usage when PR env var is not set
-- id: monitor_docker_script_exists_and_executable
-  type: fail_to_pass
-  origin: pr_diff
-  description: monitor_docker.sh exists, is executable, and accepts a run ID
-- id: monitor_docker_exits_on_missing_arg
-  type: fail_to_pass
-  origin: pr_diff
-  description: monitor_docker.sh exits non-zero when no run ID argument is provided
-- id: gitignore_allows_claude_scripts
-  type: fail_to_pass
-  origin: pr_diff
-  description: .gitignore has negation pattern to allow .claude/scripts/ to be tracked
-- id: claude_md_has_ci_monitoring_section
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md documents CI monitoring and references both monitoring scripts
-- id: claude_md_documents_script_usage
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md documents PR= usage, re-run commands, and .claude/scripts/
-    location
-- id: claude_md_preserves_existing_sections
-  type: pass_to_pass
-  origin: static
-  description: CLAUDE.md preserves existing Build & Run, Testing, Architecture, Code
-    Conventions sections
-- id: repo_go_build
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo Go code compiles successfully with GOTOOLCHAIN=auto go build
-- id: repo_linter_error_groups
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo error groups custom linter passes (tools/linter_error_groups.sh)
-- id: repo_linter_go_routines
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo go routines custom linter passes (tools/linter_go_routines.sh)
-- id: repo_linter_waitgroups
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo waitgroups custom linter passes (tools/linter_waitgroups_done.sh)
-- id: repo_ci_scripts_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: All CI shell scripts have valid bash syntax
-rubric:
-- rule: 'Use Markdown headers (##, ###) and bash code blocks for sections and subsections
-    in CLAUDE.md'
-  source:
-    path: CLAUDE.md
-    lines: 29-40
-  category: documentation
-  evidence: The gold solution adds `## CI / Pipeline Monitoring` and `### Monitor
-    PR checks` to CLAUDE.md, matching the existing header hierarchy and documentation
-    style.
-config_edits:
-- path: CLAUDE.md
-  tier: 1
-  gold_added: '## CI / Pipeline Monitoring
+  # Fail-to-pass: must fail on base, pass after fix
+  - id: test_average_returns_zero_for_empty_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: "calculateAverage returns 0 for empty array (was returning null)"
 
+  - id: test_average_works_for_normal_arrays
+    type: fail_to_pass
+    origin: pr_diff
+    description: "calculateAverage returns correct value for non-empty arrays"
 
-    All monitoring scripts live in `.claude/scripts/` and are committed to the repo.
-    Always run them as background tasks (use `run_in_background=true` in the Bash
-    tool) so you get notified on completion without blocking the conversation.
+  - id: test_sum_function_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "calculateSum returns correct sum"
 
+  # Pass-to-pass: must pass on both base and fix
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo linting passes"
 
-    ### Monitor PR checks
+  - id: test_repo_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's own test suite passes"
 
-    Polls all CI checks for a PR until they complete. Exits with code 1 if any checks
-    fail:
+  # Static checks
+  - id: test_file_structure
+    type: pass_to_pass
+    origin: static
+    description: "Required source files exist"
 
-    ```bash
-
-    PR=1234 .claude/scripts/monitor_pr.sh
-
-    ```
-
-
-    ### Monitor Docker image build
-
-    Use this when waiting for a PR''s docker image to be produced. First get the run
-    ID from the PR''s docker checks, then pass it to the script:
-
-    ```bash
-
-    # Get the run ID
-
-    gh pr checks <PR> --repo weaviate/weaviate 2>&1 | grep -i "docker"
-
-    # Monitor the build
-
-    .claude/scripts/monitor_docker.sh <run_id>
-
-    ```
-
-    The script also prints the docker image tags on success. Tags are fetched via
-    `gh api` (works even if the overall run is still in progress).
-
-
-    ### Inspect failed checks / rerun
-
-    ```bash
-
-    # Get job ID from: gh pr checks <PR> --repo weaviate/weaviate
-
-    gh api repos/weaviate/weaviate/actions/jobs/<job_id>/logs 2>&1 | grep "FAIL:"
-    | head -20
-
-
-    # Re-run only failed jobs:
-
-    gh run rerun <run_id> --failed --repo weaviate/weaviate
-
-    ```'
-  gold_removed: ''
-distractors:
-- rule: 'Always validate linters pass at the end of a task: golangci-lint run ./...
-    ./tools/linter_go_routines.sh'
-  source:
-    path: CLAUDE.md
-    lines: 48-52
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run Go linters after creating the bash scripts,
-    which is unnecessary and wastes time since no Go code was changed.
-  severity: medium
-- rule: Run all unit tests (slow, use sparingly) go test -race -count 1 $(go list
-    ./... | grep -v 'test/acceptance' | grep -v 'test/modules')
-  source:
-    path: CLAUDE.md
-    lines: 36-38
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the Go test suite to verify its
-    changes, but the task only involves bash scripts and markdown documentation.
-  severity: medium
-hierarchy_analysis: The only config file is CLAUDE.md at the root level. It primarily
-  contains Go-specific guidelines which are largely irrelevant to this task since
-  it only involves bash scripts and documentation. The agent must recognize that the
-  Go-specific rules do not apply here.
+rubric: []
+distractors: []
+config_edits: []
+# Empty rubric means no convention rules to check - ICR defaults to 1.0

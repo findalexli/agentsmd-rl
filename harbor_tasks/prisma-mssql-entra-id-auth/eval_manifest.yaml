@@ -62,6 +62,58 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - parseConnectionString function executes and parses basic connection strings
+- id: test_repo_prettier_formatting_src
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check on entire src/ directory
+- id: test_repo_tsx_syntax_all_src
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TypeScript syntax validation on all src/ files via tsx
+- id: test_repo_connection_string_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts exports all expected functions
+- id: test_repo_user_param_aliases
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts handles all user parameter aliases (user, username, uid, userid)
+- id: test_repo_password_param_aliases
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts handles password parameter aliases (password, pwd)
+- id: test_repo_database_param_aliases
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts handles database parameter aliases (database, initial catalog)
+- id: test_repo_encrypt_boolean_values
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts handles encrypt boolean values correctly (true, false, case insensitive)
+- id: test_repo_connection_pool_params
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts parses pool parameters correctly (connectionLimit, poolTimeout)
+- id: test_repo_timeout_params
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts parses timeout parameters correctly (connectTimeout, loginTimeout, socketTimeout)
+- id: test_repo_application_name_params
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts parses application name parameters correctly (applicationName, "application name")
+- id: test_repo_isolation_level_params
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts parses isolation level parameters correctly (READ COMMITTED, etc.)
+- id: test_repo_error_handling
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - connection-string.ts throws appropriate errors for invalid input
+- id: test_repo_extract_schema_from_connection_string
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - extractSchemaFromConnectionString function works correctly
 rubric:
 - rule: Documentation examples should be consistent with the code style used in existing
     README examples
@@ -69,70 +121,24 @@ rubric:
     path: packages/adapter-mssql/README.md
     lines: 1-41
     commit: a60fe90928873bcec23b0fd07a002c164d7f4d27
-- rule: parseConnectionString has real logic, not a stub
-  reference: '# packages/adapter-mssql/README.md
-
-    ### 2. Instantiate Prisma Client using the driver adapter
-
-
-    You can also instantiate the adapter with a [JDBC](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15)
-    connection string:
-
-
-    ```ts
-
-    import { PrismaMssql } from ''@prisma/adapter-mssql''
-
-    import { PrismaClient } from ''@prisma/client''
-
-
-    const adapter = new PrismaMssql(''sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true'')
-
-    const pri'
 - rule: README.md documents Entra ID authentication options
   source:
     path: packages/adapter-mssql/README.md
-    lines: 51-96
+    lines: 69-96
     commit: ef1f424579b68020f682348f3786e171a54e166f
-  reference: '### 2. Instantiate Prisma Client using the driver adapter
-
-
-    You can also instantiate the adapter with a [JDBC](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15)
-    connection string:
-
-
-    ```ts
-
-    import { PrismaMssql } from ''@prisma/adapter-mssql''
-
-    import { PrismaClient } from ''@prisma/client''
-
-
-    const adapter = new PrismaMssql(''sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true'')
-
-    const prisma = new PrismaClient({ adapter })'
+  reference: "Entra ID authentication is supported. Connection string parsing supports authentication options: DefaultAzureCredential, ActiveDirectoryPassword, ActiveDirectoryManagedIdentity, ActiveDirectoryServicePrincipal"
 - rule: README.md documents connection string instantiation of the adapter
   source:
     path: packages/adapter-mssql/README.md
-    lines: 42-50
+    lines: 42-68
     commit: ef1f424579b68020f682348f3786e171a54e166f
-  reference: '### 2. Instantiate Prisma Client using the driver adapter
-
-
-    You can also instantiate the adapter with a [JDBC](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15)
-    connection string:
-
-
-    ```ts
-
-    import { PrismaMssql } from ''@prisma/adapter-mssql''
-
-    import { PrismaClient } from ''@prisma/client''
-
-
-    const adapter = new PrismaMssql(''sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true'')
-
-    const prisma = new PrismaClient({ adapter })'
+  reference: "You can also instantiate the adapter with a [JDBC] connection string. Example: const adapter = new PrismaMssql('sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true')"
+- rule: README section numbering is corrected
+  source:
+    path: packages/adapter-mssql/README.md
+    lines: 16-20
+    commit: ef1f424579b68020f682348f3786e171a54e166f
+  reference: "### 2. Instantiate Prisma Client using the driver adapter"
 config_edits:
 - path: packages/adapter-mssql/README.md
   tier: 2
@@ -159,3 +165,4 @@ config_edits:
     \ and secret, set:\n  - `authentication=ActiveDirectoryServicePrincipal`\n  -\
     \ `userName=<client id>`\n  - `password=<client secret>`"
   gold_removed: '### 3. Instantiate Prisma Client using the driver adapter'
+

@@ -407,3 +407,42 @@ def test_repo_gofmt():
     assert result.returncode == 0, f"gofmt failed:\n{result.stderr}"
     # gofmt -l outputs file names that need formatting; empty output means all files are formatted
     assert result.stdout.strip() == "", f"The following files need formatting:\n{result.stdout}"
+
+
+def test_repo_lint_sorted():
+    """Go files have sorted blocks after lint:sorted directives (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "run", "./tools/lint-sorted/", "-path", "./tools", "-include", "*.go"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert result.returncode == 0, f"lint-sorted failed:\n{result.stderr}"
+
+
+def test_repo_no_merge_conflicts():
+    """No git merge conflict markers in source files (pass_to_pass)."""
+    result = subprocess.run(
+        ["./tools/check-merge-conflicts.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Merge conflict check failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_shell_scripts_syntax():
+    """All shell scripts in tools/ have valid bash syntax (pass_to_pass)."""
+    import glob
+    scripts = glob.glob(f"{REPO}/tools/*.sh")
+    for script in scripts:
+        result = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Syntax error in {script}:\n{result.stderr}"

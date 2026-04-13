@@ -76,44 +76,48 @@ checks:
     commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
 - id: test_repo_test_classes_follow_naming
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All test classes follow Test* naming convention (matches ruff/pre-commit)
 - id: test_repo_no_bare_excepts
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: No bare 'except:' clauses in test files (matches ruff E722)
 - id: test_repo_yaml_files_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All YAML files in the repo are valid (matches pre-commit check-yaml
     hook)
 - id: test_repo_pyproject_toml_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: pyproject.toml is valid TOML (basic syntax check for repo's main config)
 - id: test_repo_trailing_whitespace
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: No trailing whitespace in test files (matches pre-commit trailing-whitespace
     hook)
 - id: test_repo_end_of_file_newline
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Test files end with single newline (matches pre-commit end-of-file-fixer
     hook)
 - id: test_repo_no_tabs
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: No tab characters in test files (matches ruff W191)
 - id: test_repo_py_compile
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All test files compile to valid Python bytecode (matches py_compile
     pre-commit check)
 - id: test_repo_no_merge_conflict_markers
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: No merge conflict markers in test files (standard pre-commit check)
+- id: test_repo_no_unused_imports
+  type: pass_to_pass
+  origin: static
+  description: No obviously unused standard library imports in test files (AST analysis)
 rubric:
 - rule: Follow existing code patterns in the same module
   source:
@@ -146,31 +150,36 @@ rubric:
     required for LocalScheduler")` and `@pytest.mark.skipif(not has_gpu(), reason="GPU
     required")` when modifying the fixt
   category: testing
+- rule: Integration tests require multi-node hardware -- explain skips explicitly.
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: When rewriting the `local_scheduler` and `gateway_controller` fixtures
+    to be module-scoped, the gold solution preserves the explicit `pytest.skip("GPU
+    required...")` calls, adhering to the rule to exp
+  category: testing
 distractors:
-- rule: Follow existing code patterns in the same module
+- rule: Follow existing code patterns in the same module.
   collision_type: rule_conflict
-  why_distracting: The existing code pattern uses per-class `@pytest.mark.slow` markers
-    and function-scoped fixtures. The PR's explicit goal is to break this pattern
-    by introducing module-level markers (`pytestmark = pytest.mark.sglang`) and module-scoped
-    fixtures to improve performance. Following the existing pattern would prevent
-    the necessary refactoring.
+  why_distracting: The rule instructs the agent to 'Follow existing code patterns
+    in the same module'. The existing pattern uses `@pytest.mark.slow` on every class
+    and function-scoped fixtures. Following this rule would cause the agent to maintain
+    the redundant boilerplate, directly conflicting with the instruction to use a
+    module-level `pytestmark` and module-scoped fixtures.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 47-48
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The PR instructions explicitly require removing the `should_accept_fn`
-    tests because they are incompatible with shared fixtures. An agent might misinterpret
-    the rule to 'Add tests for new functionality' (or maintain test coverage) by trying
-    to rewrite these tests to work with module-scoped fixtures, which is impossible
-    due to stateful re-entrance issues.
+    path: AGENTS.md
+    lines: 39-39
+- rule: Add tests for new functionality.
+  collision_type: rule_conflict
+  why_distracting: The rule says to 'Add tests for new functionality'. An agent might
+    try to rewrite the `should_accept_fn` tests to work with the new module-scoped
+    fixture to preserve test coverage, rather than following the explicit instruction
+    to remove them.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 47-49
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical or very similar
-  rules regarding testing, hardcoded paths, and code patterns. They reinforce each
-  other without conflict. The primary conflict is between the general repository rule
-  to 'Follow existing code patterns' and the specific PR objective to refactor those
-  exact patterns for performance.
+    path: AGENTS.md
+    lines: 40-40
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` contain similar high-level rules.
+  The task relies heavily on the explicit prompt instructions overriding the general
+  repository rules found in the config files.

@@ -487,3 +487,62 @@ def test_doc_toc_check():
     assert r.returncode == 0, (
         f"Documentation TOC check failed:\n{r.stderr[-500:]}"
     )
+
+# [repo_tests] pass_to_pass — inits check
+def test_check_inits():
+    """Repo inits check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"check_inits failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — dummies check
+def test_check_dummies():
+    """Repo dummies check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"check_dummies failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — doctest list check
+def test_check_doctest_list():
+    """Repo doctest list check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"check_doctest_list failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — ruff format check
+def test_ruff_format_check():
+    """Changed file passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )

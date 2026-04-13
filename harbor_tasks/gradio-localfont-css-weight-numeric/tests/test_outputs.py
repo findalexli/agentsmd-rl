@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -344,13 +345,111 @@ def test_localfont_css_structure():
     result = subprocess.run(
         [sys.executable, "-c",
          "from gradio.themes.utils.fonts import LocalFont; " +
-         "f = LocalFont(\'IBM Plex Mono\'); " +
+         "f = LocalFont('IBM Plex Mono'); " +
          "r = f.stylesheet(); " +
-         "assert \"@font-face\" in r[\"css\"]; " +
-         "assert \"font-family\" in r[\"css\"]; " +
-         "assert \"url(\" in r[\"css\"]; " +
-         "assert \"woff2\" in r[\"css\"]; " +
-         "print(\"OK\")"],
+         "assert '@font-face' in r['css']; " +
+         "assert 'font-family' in r['css']; " +
+         "assert 'url(' in r['css']; " +
+         "assert 'woff2' in r['css']; " +
+         "print('OK')"],
         capture_output=True, text=True, cwd=REPO,
     )
     assert result.returncode == 0, f"LocalFont CSS structure test failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_fonts_full_api():
+    """Fonts module exports all expected classes and functions (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-c",
+         "from gradio.themes.utils.fonts import Font, GoogleFont, LocalFont, FontEncoder, as_font; " +
+         "from gradio.themes.utils.fonts import json, textwrap; " +  # verify module internals available
+         "print('OK')"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Fonts full API test failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI tests from test-python.yml and test-hygiene.yml
+def test_ci_ruff_check_gradio_themes():
+    """CI: ruff check on gradio/themes/ directory passes (pass_to_pass)."""
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        ruff_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+        )
+        if ruff_result.returncode != 0:
+            import pytest
+            pytest.skip("ruff not available in this environment")
+        ruff_cmd = [sys.executable, "-m", "ruff"]
+    else:
+        ruff_cmd = [ruff]
+
+    result = subprocess.run(
+        ruff_cmd + ["check", f"{REPO}/gradio/themes/"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff check on gradio/themes/ failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI tests
+def test_ci_ruff_format_gradio_themes():
+    """CI: ruff format check on gradio/themes/ passes (pass_to_pass)."""
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        ruff_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+        )
+        if ruff_result.returncode != 0:
+            import pytest
+            pytest.skip("ruff not available in this environment")
+        ruff_cmd = [sys.executable, "-m", "ruff"]
+    else:
+        ruff_cmd = [ruff]
+
+    result = subprocess.run(
+        ruff_cmd + ["format", "--check", f"{REPO}/gradio/themes/"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff format check on gradio/themes/ failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI tests
+def test_ci_pytest_themes_utils():
+    """CI: pytest on theme utils related tests passes (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_theme_sharing.py::TestBuiltInThemes", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    assert result.returncode == 0, f"Theme utils pytest failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI tests
+def test_ci_gradio_module_imports_clean():
+    """CI: gradio module imports without errors and version is accessible (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-c", "import gradio; print(gradio.__version__)"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert result.returncode == 0, f"Gradio import failed:\n{result.stderr}"
+    assert result.stdout.strip(), "Gradio version should be available"
+
+
+# [repo_tests] pass_to_pass - CI tests
+def test_ci_generate_theme_script_runs():
+    """CI: generate_theme.py runs and produces valid CSS output (pass_to_pass)."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".css", delete=False) as f:
+        tmp = f.name
+    try:
+        result = subprocess.run(
+            [sys.executable, f"{REPO}/scripts/generate_theme.py", "--outfile", tmp],
+            capture_output=True, text=True, cwd=REPO, timeout=30,
+        )
+        assert result.returncode == 0, f"generate_theme.py failed:\n{result.stderr}"
+        content = Path(tmp).read_text()
+        assert len(content) > 0, "Generated CSS file should not be empty"
+        assert ":root {" in content, "Generated CSS should contain :root selector"
+    finally:
+        os.unlink(tmp)

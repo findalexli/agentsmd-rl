@@ -139,6 +139,16 @@ def test_repo_bookstore_account_tests():
     assert r.returncode == 0, f"Bookstore account tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
 
 
+def test_repo_data_table_tests():
+    """Data-table package unit tests pass (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "test"],
+        capture_output=True, text=True, timeout=180, cwd=str(REPO / "packages/data-table"),
+    )
+    assert r.returncode == 0, f"Data-table tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # fail_to_pass / pr_diff — behavioral tests using subprocess
 # ---------------------------------------------------------------------------

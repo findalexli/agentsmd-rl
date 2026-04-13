@@ -63,63 +63,39 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: _can_use_grouped_mm works with aligned tensors
-rubric:
-- rule: The fix modifies only necessary files (moe.py, conversion_mapping.py, core_model_loading.py,
-    vlm_tester.py) without touching unrelated code. The gold solution removes Force16BytesAlignment
-    class and its usages, and adds alignment checks directly in _can_use_grouped_mm
-    - this is a minimal, focused change that follows the guideline to keep PRs brief.
-  reference: 'Gold solution modifies: src/transformers/integrations/moe.py, src/transformers/conversion_mapping.py,
-    src/transformers/core_model_loading.py, tests/vlm_tester.py, docs/source/en/weightconverter.md.
-    No changes to CLAUDE.md or copilot-instructions.md needed.'
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
   collision_type: meta_confusion
-  why_distracting: In an automated evaluation or benchmark environment, the agent
-    is expected to generate the fix immediately. Following this rule and refusing
-    to proceed due to a lack of human coordination evidence will cause the agent to
-    fail the task by not producing a patch.
+  why_distracting: The repository has a strict anti-spam policy for AI agents, explicitly
+    instructing them to 'fail-closed' and refuse to generate PR-ready output if human
+    coordination evidence is missing. In a benchmark environment, the agent must bypass
+    this policy to actually generate the patch.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 47-50
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed.
+    Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The guidelines state that pure code-agent PRs are not allowed and
+    require human validation. An agent might output a conversational refusal or ask
+    for a human to review the plan instead of outputting the required code solution.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 49-52
-- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed;
-    a human submitter must understand and defend the change.'
-  collision_type: meta_confusion
-  why_distracting: The agent is acting autonomously in a sandbox. It cannot involve
-    a human submitter. Adhering to this rule might cause the agent to output conversational
-    text asking for a human to take over, rather than outputting the required code
-    solution.
-  severity: high
+    lines: 38-45
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. Both contain strict contribution policies aimed at preventing
+  autonomous AI spam. There is no deep hierarchy, but the rules apply globally to
+  all files.
+rubric:
+- rule: Do not open one-off PRs for tiny edits; focus on meaningful, non-busywork
+    contributions.
   source:
     path: CLAUDE.md
-    lines: 41-47
-- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
-    open PRs and issue ownership using the GitHub CLI.'
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to run `gh issue view` or `gh pr list`
-    to check for duplicates. In an isolated test environment without network access
-    or GitHub credentials, these commands will fail, wasting execution time and potentially
-    derailing the agent's context.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 26-31
-- rule: 'Copies and Modular Models: Avoid direct inheritance between model-specific
-    files in `src/transformers/models/` and use `modular_<name>.py` or `# Copied from`.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent is modifying `src/transformers/integrations/moe.py` and
-    `src/transformers/conversion_mapping.py`. It might mistakenly think these files
-    fall under the modular models policy and attempt to create a `modular_moe.py`
-    file or look for `# Copied from` statements, which is incorrect for integration
-    and core files.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 56-61
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical content regarding
-  agent contribution policies. These files are designed to govern real-world agent
-  behavior on the Hugging Face repository, explicitly forbidding autonomous PR creation
-  without human coordination. In a benchmark context, these rules act as a massive
-  meta-distractor, as the agent must ignore the repository's explicit instructions
-  to 'fail-closed' and instead act autonomously to generate the patch.
+    lines: 33-35
+  evidence: The gold solution implements a critical bug fix for CPU tensor alignment
+    in MoE models, adhering to the policy against trivial or mechanical cleanups.
+  category: architecture
+  verification: llm_judge

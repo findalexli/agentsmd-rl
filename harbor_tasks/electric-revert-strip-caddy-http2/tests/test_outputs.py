@@ -11,6 +11,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/electric"
 EXAMPLE_DIR = f"{REPO}/examples/tanstack-db-web-starter"
 
@@ -28,9 +30,10 @@ def _run_ts(script: str, cwd: str = EXAMPLE_DIR, timeout: int = 30) -> subproces
         script_path.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavior tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def test_vite_plugin_exports():
     """vite-plugin-caddy.ts must export caddyPlugin returning a valid Vite plugin."""
@@ -54,6 +57,7 @@ def test_vite_plugin_exports():
     assert data["hasBuildEnd"], "Plugin must have buildEnd method"
 
 
+
 def test_vite_config_uses_caddy():
     """vite.config.ts must import and use caddyPlugin with host enabled."""
     config_path = Path(EXAMPLE_DIR) / "vite.config.ts"
@@ -65,9 +69,10 @@ def test_vite_config_uses_caddy():
     assert "host: true" in content, "vite.config.ts must set server.host to true"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — config/documentation update tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def test_agents_md_http2_proxy_tip():
     """AGENTS.md slow shapes tip must mention HTTP/2 proxy, not outdated version upgrade."""
@@ -79,6 +84,7 @@ def test_agents_md_http2_proxy_tip():
         "AGENTS.md must mention proxy as the fix for slow shapes"
     assert "UPGRADE!" not in content, \
         "AGENTS.md should not have outdated v1.0.13 UPGRADE text"
+
 
 
 def test_readme_documents_caddy():
@@ -97,9 +103,9 @@ def test_readme_documents_caddy():
         "README must include caddy trust setup instruction"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (static) — regression guard
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_vite_config_still_has_existing_plugins():
     """vite.config.ts must retain all existing plugins (tanstack, react, tailwind)."""
@@ -108,3 +114,152 @@ def test_vite_config_still_has_existing_plugins():
     assert "tanstackStart" in content, "Must still use tanstackStart plugin"
     assert "viteReact" in content, "Must still use viteReact plugin"
     assert "tailwindcss" in content, "Must still use tailwindcss plugin"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification
+# These run actual CI commands found in the repo's GitHub workflows
+# -----------------------------------------------------------------------------
+
+def test_repo_stylecheck_all():
+    """Repo-wide stylecheck passes (pass_to_pass).
+
+    Runs `pnpm run stylecheck-all` which executes eslint across all packages
+    and examples, as configured in the root package.json CI.
+    """
+    # Install pnpm and dependencies
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install dependencies (without --frozen-lockfile as the fix may update package.json)
+    r = subprocess.run(
+        ["pnpm", "install", "--ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run stylecheck
+    r = subprocess.run(
+        ["pnpm", "run", "stylecheck-all"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"stylecheck-all failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_typescript_client_stylecheck():
+    """TypeScript client package stylecheck passes (pass_to_pass).
+
+    Runs `pnpm run stylecheck` in packages/typescript-client as per CI workflow.
+    """
+    pkg_dir = f"{REPO}/packages/typescript-client"
+    # Install pnpm and dependencies
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "run", "stylecheck"],
+        capture_output=True, text=True, timeout=120, cwd=pkg_dir,
+    )
+    assert r.returncode == 0, f"typescript-client stylecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typescript_client_typecheck():
+    """TypeScript client package typecheck passes (pass_to_pass).
+
+    Runs `pnpm run typecheck` in packages/typescript-client as per CI workflow.
+    """
+    pkg_dir = f"{REPO}/packages/typescript-client"
+    # Install pnpm and dependencies
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=pkg_dir,
+    )
+    assert r.returncode == 0, f"typescript-client typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tanstack_plugin_syntax():
+    """New vite-plugin-caddy.ts has valid JavaScript/TypeScript syntax (pass_to_pass).
+
+    Runs `node --check` on the new plugin file to verify basic syntax is valid.
+    This test passes trivially if the file doesn't exist yet (pre-fix state).
+    """
+    plugin_path = Path(f"{EXAMPLE_DIR}/src/vite-plugin-caddy.ts")
+    if not plugin_path.exists():
+        return  # File doesn't exist at base commit, test passes trivially
+
+    r = subprocess.run(
+        ["node", "--check", str(plugin_path)],
+        capture_output=True, text=True, timeout=30, cwd=EXAMPLE_DIR,
+    )
+    assert r.returncode == 0, f"Plugin syntax check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tanstack_plugin_lint():
+    """New vite-plugin-caddy.ts passes eslint (pass_to_pass).
+
+    Runs `npx eslint` on the new plugin file as per the example's CI configuration.
+    This test passes trivially if the file doesn't exist yet (pre-fix state).
+    """
+    plugin_path = Path(f"{EXAMPLE_DIR}/src/vite-plugin-caddy.ts")
+    if not plugin_path.exists():
+        return  # File doesn't exist at base commit, test passes trivially
+
+    # Install pnpm and dependencies (without --frozen-lockfile as the fix may update package.json)
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "eslint", "src/vite-plugin-caddy.ts"],
+        capture_output=True, text=True, timeout=60, cwd=EXAMPLE_DIR,
+    )
+    assert r.returncode == 0, f"Plugin lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_tanstack_plugin_format():
+    """New vite-plugin-caddy.ts passes prettier formatting check (pass_to_pass).
+
+    Runs `npx prettier --check` on the new plugin file as per the example's CI configuration.
+    This test passes trivially if the file doesn't exist yet (pre-fix state).
+    """
+    plugin_path = Path(f"{EXAMPLE_DIR}/src/vite-plugin-caddy.ts")
+    if not plugin_path.exists():
+        return  # File doesn't exist at base commit, test passes trivially
+
+    # Install pnpm and dependencies (without --frozen-lockfile as the fix may update package.json)
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/vite-plugin-caddy.ts"],
+        capture_output=True, text=True, timeout=60, cwd=EXAMPLE_DIR,
+    )
+    assert r.returncode == 0, f"Plugin format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

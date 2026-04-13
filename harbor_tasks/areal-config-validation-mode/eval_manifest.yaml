@@ -68,6 +68,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified file passes ruff format check
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes ruff lint check matching pyproject.toml config
+- id: test_repo_precommit_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit hooks pass (ruff, yaml check, trailing whitespace, etc.)
+- id: test_repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All YAML files are valid (pre-commit check-yaml)
+- id: test_repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in source files (pre-commit check)
 rubric:
 - rule: Implement __post_init__ method with mode validation that raises ValueError
     for invalid modes
@@ -88,26 +104,36 @@ rubric:
     fields, matching the existing pattern for CLI argument dataclasses in the module,
     rather than just adding a simple type hint.
   category: style
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '32'
+  evidence: 'The gold solution redefines the `mode` attribute using `dataclasses.field`
+    with `metadata={help: ..., choices: ...}`, adhering to the established pattern
+    for CLI argument dataclasses in the module'
+  category: style
 distractors:
-- rule: 'Ask First: Modifying config structures in areal/api/cli_args.py'
+- rule: 'Ask first before: Modifying config structures in areal/api/cli_args.py.'
   collision_type: meta_confusion
-  why_distracting: The user explicitly requested modifications to `areal/api/cli_args.py`
-    to fix the validation issue. If the agent pauses to ask for permission as dictated
-    by the config, it fails the autonomous execution of the task.
+  why_distracting: The repository instructions explicitly forbid modifying config
+    structures in `areal/api/cli_args.py` without asking first. However, the user
+    prompt explicitly commands the agent to modify this exact file to add validation.
+    An overly compliant agent might halt and ask for permission, failing to complete
+    the task.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 50-52
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The gold solution does not include tests. Attempting to write tests
-    for this validation would expand the scope beyond the requested fix and might
-    lead to modifying unrelated test files or getting stuck on test environment setup.
+    path: AGENTS.md
+    lines: 35-36
+- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names -- never
+    print or logging.__name__.'
+  collision_type: rule_conflict
+  why_distracting: The agent might be tempted to use the repository's custom logger
+    (`areal.utils.logging.getLogger`) to report the invalid mode, but the prompt explicitly
+    requires raising a `ValueError` to fail fast.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 48-48
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules regarding
-  asking first before modifying `areal/api/cli_args.py` and adding tests. The agent
-  must recognize that explicit user instructions in the prompt override the 'Ask First'
-  directive in the repository configuration.
+    path: AGENTS.md
+    lines: 60-62
+hierarchy_analysis: The agent must recognize that the specific user instruction to
+  modify `areal/api/cli_args.py` overrides the general repository constraint in `AGENTS.md`
+  and `CLAUDE.md` that requires asking for permission before modifying config structures.

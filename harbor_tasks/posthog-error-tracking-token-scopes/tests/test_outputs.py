@@ -36,7 +36,7 @@ def _get_class_attr(class_name: str, attr_name: str):
 def test_syntax_check():
     """Target file parses without syntax errors (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", f"import ast; ast.parse(open(\"{REPO}/{TARGET}\").read())"],
+        ["python3", "-c", f"import ast; ast.parse(open(\'{REPO}/{TARGET}\').read())"],
         capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in {TARGET}:\n{r.stderr.decode()}"
@@ -60,7 +60,7 @@ def test_importable():
     """Target module can be imported without ImportError (pass_to_pass)."""
     # This checks that basic Python syntax and imports are valid
     r = subprocess.run(
-        ["python3", "-c", f"import ast; ast.parse(open(\"{REPO}/{TARGET}\").read())"],
+        ["python3", "-c", f"import ast; ast.parse(open(\'{REPO}/{TARGET}\').read())"],
         capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Import check failed (syntax error):\n{r.stderr}"
@@ -73,7 +73,7 @@ def test_importable():
 def test_repo_error_tracking_syntax():
     """Error tracking test file has valid syntax (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", "import ast; ast.parse(open(\"/workspace/posthog/products/error_tracking/backend/api/test/test_error_tracking_api.py\").read()); print(\"OK\")"],
+        ["python3", "-c", "import ast; ast.parse(open(\'/workspace/posthog/products/error_tracking/backend/api/test/test_error_tracking_api.py\').read()); print(\'OK\')"],
         capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Test file syntax error:\n{r.stderr}"
@@ -81,6 +81,11 @@ def test_repo_error_tracking_syntax():
 
 def test_repo_ruff_check_error_tracking():
     """Error tracking code passes ruff linting (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
     r = subprocess.run(
         ["python3", "-m", "ruff", "check", "/workspace/posthog/products/error_tracking/backend/api/"],
         capture_output=True, text=True, timeout=60,
@@ -90,6 +95,11 @@ def test_repo_ruff_check_error_tracking():
 
 def test_repo_ruff_format_check():
     """Error tracking code is properly formatted (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
     r = subprocess.run(
         ["python3", "-m", "ruff", "format", "--check", "/workspace/posthog/products/error_tracking/backend/api/issues.py"],
         capture_output=True, text=True, timeout=60,
@@ -149,6 +159,128 @@ def test_repo_viewset_schema_annotations():
             )
 
 
+def test_repo_error_tracking_ruff_format():
+    """Error tracking API code is properly formatted per ruff (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", f"{REPO}/products/error_tracking/backend/api/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed for error_tracking API:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_ruff_syntax_check_error_tracking():
+    """Error tracking API has no syntax errors per ruff E9 rules (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "--select=E9", f"{REPO}/products/error_tracking/backend/api/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff syntax check failed for error_tracking API:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_error_tracking_pytest_collection():
+    """Error tracking tests can be collected by pytest (pass_to_pass).
+
+    This verifies that the test file has valid pytest structure and all
+    imports are resolvable without running the actual tests (which need DB).
+    """
+    # Install uv if not available
+    try:
+        subprocess.run(["uv", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "uv==0.10.2", "-q"], capture_output=True, timeout=60)
+    # Run pytest collection for error tracking tests
+    r = subprocess.run(
+        [
+            "uv", "run", "--python", "3.12.12",
+            "pytest", "--collect-only",
+            f"{REPO}/products/error_tracking/backend/api/test/test_error_tracking_api.py",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pytest collection failed for error_tracking tests:\n{r.stderr[-500:]}"
+    # Verify we collected some tests
+    assert "test session starts" in r.stdout, "Expected pytest output not found"
+
+
+def test_repo_error_tracking_test_syntax():
+    """Error tracking test file has no syntax errors (pass_to_pass).
+
+    Uses ruff E9 rules to verify the test file has valid Python syntax.
+    """
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "--select=E9", f"{REPO}/products/error_tracking/backend/api/test/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Test file syntax check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_tach_check():
+    """Tach dependency validation passes for the codebase (pass_to_pass).
+
+    Verifies that the error_tracking product follows proper dependency boundaries
+    as defined in tach.toml. This is run in CI to ensure architectural boundaries.
+    """
+    # Install tach with correct version if not available
+    try:
+        subprocess.run(["tach", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "tach~=0.20.0", "-q"], capture_output=True, timeout=120)
+    r = subprocess.run(
+        ["tach", "check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tach dependency check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_check_issues_py():
+    """issues.py passes ruff linting (pass_to_pass).
+
+    The modified file must pass ruff linting as it runs in CI.
+    """
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", f"{REPO}/products/error_tracking/backend/api/issues.py"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed for issues.py:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_ruff_format_issues_py():
+    """issues.py is properly formatted (pass_to_pass).
+
+    The modified file must be properly formatted as per ruff format rules.
+    """
+    # Install ruff if not available
+    try:
+        subprocess.run(["python3", "-m", "ruff", "--version"], capture_output=True, check=True, timeout=30)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", f"{REPO}/products/error_tracking/backend/api/issues.py"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed for issues.py:\n{r.stdout}{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -156,11 +288,11 @@ def test_repo_viewset_schema_annotations():
 def test_read_actions_includes_values():
     actions = _get_class_attr("ErrorTrackingIssueViewSet", "scope_object_read_actions")
     assert actions is not None, (
-        "scope_object_read_actions is not defined on ErrorTrackingIssueViewSet — "
-        "custom read actions like \"values\" will not be scoped for API tokens"
+        "scope_object_read_actions is not defined on ErrorTrackingIssueViewSet - "
+        "custom read actions like values will not be scoped for API tokens"
     )
     assert "values" in actions, (
-        f"\"values\" not in scope_object_read_actions: {actions}. "
+        f"values not in scope_object_read_actions: {actions}. "
         "The values endpoint will reject Personal API keys with error_tracking:read scope."
     )
 
@@ -168,7 +300,7 @@ def test_read_actions_includes_values():
 def test_write_actions_includes_custom_actions():
     actions = _get_class_attr("ErrorTrackingIssueViewSet", "scope_object_write_actions")
     assert actions is not None, (
-        "scope_object_write_actions is not defined on ErrorTrackingIssueViewSet — "
+        "scope_object_write_actions is not defined on ErrorTrackingIssueViewSet - "
         "custom write actions will not be scoped for API tokens"
     )
     required = {"merge", "split", "assign", "cohort", "bulk"}
@@ -184,7 +316,7 @@ def test_standard_read_actions_preserved():
     assert actions is not None, "scope_object_read_actions not defined"
     for std in ["list", "retrieve"]:
         assert std in actions, (
-            f"Standard DRF action \"{std}\" missing from scope_object_read_actions: {actions}. "
+            f"Standard DRF action {std} missing from scope_object_read_actions: {actions}. "
             "Setting this attribute overrides defaults, so standard actions must be included."
         )
 
@@ -194,7 +326,7 @@ def test_standard_write_actions_preserved():
     assert actions is not None, "scope_object_write_actions not defined"
     for std in ["create", "update", "partial_update"]:
         assert std in actions, (
-            f"Standard DRF action \"{std}\" missing from scope_object_write_actions: {actions}. "
+            f"Standard DRF action {std} missing from scope_object_write_actions: {actions}. "
             "Setting this attribute overrides defaults, so standard actions must be included."
         )
 
@@ -206,7 +338,7 @@ def test_standard_write_actions_preserved():
 def test_scope_object_still_error_tracking():
     val = _get_class_attr("ErrorTrackingIssueViewSet", "scope_object")
     assert val == "error_tracking", (
-        f"scope_object should be \"error_tracking\", got: {val!r}"
+        f"scope_object should be error_tracking, got: {val!r}"
     )
 
 
@@ -220,7 +352,7 @@ def test_viewset_class_has_substance():
                 if not isinstance(s, (ast.Pass, ast.Expr))
             ]
             assert len(body_stmts) >= 5, (
-                f"ErrorTrackingIssueViewSet body has only {len(body_stmts)} statements — "
+                f"ErrorTrackingIssueViewSet body has only {len(body_stmts)} statements - "
                 "expected a substantial class with scope attrs, queryset, serializer, and methods"
             )
             return

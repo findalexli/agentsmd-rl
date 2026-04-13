@@ -415,3 +415,38 @@ def test_isort_imports_modified():
         cwd=REPO,
     )
     assert result.returncode == 0, f"isort check failed:\n{result.stderr or result.stdout}"
+
+
+
+# [repo_tests] pass_to_pass
+def test_codespell_modified():
+    """Repo's codespell passes on modified files (pass_to_pass)."""
+    # Install codespell if not already present
+    subprocess.run(["pip", "install", "codespell", "-q"], check=True, capture_output=True)
+    result = subprocess.run(
+        ["codespell"] + ALL_FILES,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"codespell failed:\n{result.stderr or result.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_no_debug_statements():
+    """No debug statements (breakpoint, pdb) in modified files (pass_to_pass)."""
+    import re
+    debug_patterns = [
+        r"breakpoint\s*\(",  # breakpoint()
+        r"import\s+pdb",      # import pdb
+        r"from\s+pdb\s+import",  # from pdb import
+        r"pdb\.set_trace",    # pdb.set_trace()
+        r"ipdb\.set_trace",   # ipdb.set_trace()
+        r"import\s+ipdb",     # import ipdb
+    ]
+    combined = re.compile("|".join(debug_patterns))
+    for filepath in ALL_FILES:
+        source = Path(filepath).read_text()
+        if combined.search(source):
+            assert False, f"Debug statement found in {filepath}"

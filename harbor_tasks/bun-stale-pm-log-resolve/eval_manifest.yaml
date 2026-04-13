@@ -72,51 +72,51 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     equivalent: bun run banned
-- id: test_repo_typecheck
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's TypeScript typecheck passes (tsc --noEmit)
-  source:
-    path: package.json
-    equivalent: tsc --noEmit
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's JavaScript linting passes (oxlint src/js)
+  description: Repo's JavaScript linting passes using oxlint (via npx)
   source:
     path: package.json
-    equivalent: bun run lint
-- id: test_repo_package_json_valid
+    equivalent: npx oxlint --quiet src/js
+- id: test_repo_prettier_check
   type: pass_to_pass
   origin: repo_tests
+  description: Repo's JS/TS files are properly formatted (prettier --check via npx)
+  source:
+    path: package.json
+    equivalent: npx prettier --check src/js/*.ts
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: static
   description: package.json is valid JSON with required CI scripts
   source:
     path: package.json
-    equivalent: npm validate
+    equivalent: json.parse and key existence check
 - id: test_repo_claude_md_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: CLAUDE.md documentation exists and has content
   source:
     path: src/CLAUDE.md
     equivalent: file existence check
 - id: test_repo_zig_file_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: VirtualMachine.zig exists and contains target function
   source:
     path: src/bun.js/VirtualMachine.zig
     equivalent: file structure check
 - id: test_repo_oxlint_config
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: oxlint configuration file exists and is valid JSON
   source:
     path: oxlint.json
-    equivalent: config validation
+    equivalent: config existence check
 - id: test_repo_prettier_config
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Prettier configuration file exists
   source:
     path: .prettierrc
@@ -155,42 +155,29 @@ rubric:
     in standard (non-ASAN) CI environments
   category: testing
 distractors:
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    test/regression/issue/${issueNumber}.test.ts... If no valid issue number is provided,
-    find the best existing file to modify instead
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output. These tests will never fail in CI.
   collision_type: scope_ambiguity
-  why_distracting: The bug description provides a clear reproduction using `mock.module()`.
-    An agent might feel compelled to write a regression test in `test/js/bun/` or
-    `test/regression/`. However, since this is an ASAN-specific stack-buffer-overflow,
-    a standard test would be ineffective and wasted effort.
-  severity: medium
+  why_distracting: The bug is a stack-buffer-overflow that causes a crash. An agent
+    might naturally try to write a test that triggers the bug and verifies the process
+    doesn't crash or panic. However, the config explicitly forbids tests that check
+    for 'no panic', as they won't reliably fail in standard CI without ASAN. The gold
+    solution correctly omits a test.
+  severity: high
   source:
-    path: CLAUDE.md
-    lines: 28-36
-- rule: For multi-file tests, prefer tempDir and Bun.spawn.
-  collision_type: scope_ambiguity
-  why_distracting: An agent might try to use `Bun.spawn` to run a script that triggers
-    the `mock.module()` auto-install crash, attempting to capture stderr to check
-    for the ASAN trace. This would result in a complex, brittle test setup that is
-    ultimately unnecessary for this specific memory safety fix.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 40-41
-- rule: Never use @import() inline inside of functions. Always put them at the bottom
-    of the file or containing struct.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might see the need to access the package manager or logger
-    and attempt to add an import for it. If it tries to follow this rule, it might
-    move existing imports or add new ones at the bottom of the file, creating unnecessary
-    diffs, when the `package_manager` is already accessible via `jsc_vm.transpiler.resolver.package_manager`.
+    path: AGENTS.md
+    lines: 68-69
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to use `std.log` or `std.debug.print` to fix
+    or debug the logging pointer issue, but the codebase strictly requires using Bun's
+    internal wrappers and custom `logger.Log`.
   severity: low
   source:
-    path: src/CLAUDE.md
-    lines: 14-16
-hierarchy_analysis: The root `CLAUDE.md` provides extensive testing instructions,
-  which might mislead an agent into thinking a test is required for every bug fix.
-  However, the specific rule about not writing tests that check for 'no panic' overrides
-  the general testing guidelines in the context of this ASAN-specific crash. The `src/CLAUDE.md`
-  provides Zig-specific guidelines that are mostly irrelevant since the fix is a simple
-  pointer assignment.
+    path: src/AGENTS.md
+    lines: 14-15
+hierarchy_analysis: The hierarchy separates root-level testing/build instructions
+  (`AGENTS.md`) from `src/`-level Zig conventions (`src/AGENTS.md`). The agent must
+  synthesize the root-level testing constraints (no panic tests) with the nature of
+  the bug (a memory corruption crash) to correctly conclude that a test should not
+  be added.

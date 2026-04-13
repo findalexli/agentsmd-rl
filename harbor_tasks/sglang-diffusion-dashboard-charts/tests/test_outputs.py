@@ -419,3 +419,51 @@ def test_repo_script_help():
     )
     assert r.returncode == 0, f"Script --help failed:\n{r.stderr[-500:]}"
     assert "Generate diffusion cross-framework comparison dashboard" in r.stdout, "Unexpected help output"
+
+
+# [repo] pass_to_pass
+def test_repo_python_compileall():
+    """Diffusion script passes Python compileall check (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python3", "-m", "compileall", "-q", "scripts/ci/utils/diffusion/generate_diffusion_dashboard.py"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"compileall check failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass
+def test_repo_no_trailing_whitespace():
+    """Diffusion script has no trailing whitespace (matches pre-commit hook) (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["bash", "-c", "grep -n '  *$' scripts/ci/utils/diffusion/generate_diffusion_dashboard.py || true"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    # grep returns lines with trailing whitespace; should be empty
+    trailing_lines = [line for line in r.stdout.strip().split('\n') if line.strip()]
+    assert len(trailing_lines) == 0, f"Found trailing whitespace on lines:\n{r.stdout[:500]}"
+
+
+# [repo] pass_to_pass
+def test_repo_file_ends_with_newline():
+    """Diffusion script ends with newline (matches pre-commit end-of-file-fixer) (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["bash", "-c", "tail -c 1 scripts/ci/utils/diffusion/generate_diffusion_dashboard.py | od -c | head -1"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    # Check that last character is newline
+    assert "\\n" in r.stdout or "nl" in r.stdout.lower(), f"File does not end with newline:\n{r.stdout}"

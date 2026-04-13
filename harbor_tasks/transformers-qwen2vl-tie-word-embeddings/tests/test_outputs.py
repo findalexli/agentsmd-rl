@@ -97,6 +97,46 @@ def test_repo_inits():
     assert r.returncode == 0, f"check_inits.py failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_dummies():
+    """Repo's dummy model files consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_dummies.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modeling_structure():
+    """Repo's modeling structure check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_modeling_structure.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_doctest_list():
+    """Repo's doctest list consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_doctest_list.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pipeline_typing():
+    """Repo's pipeline typing check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_pipeline_typing.py"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_pipeline_typing.py failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------

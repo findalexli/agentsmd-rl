@@ -94,6 +94,15 @@ checks:
   type: pass_to_pass
   origin: static
   description: All modified Python files have valid syntax
+- id: test_repo_rope_basic_functionality
+  type: pass_to_pass
+  origin: repo_tests
+  description: RotaryEmbeddingConfigMixin module loads and basic operations work
+- id: test_repo_rope_validate_none
+  type: pass_to_pass
+  origin: repo_tests
+  description: RoPE validation handles None rope_parameters gracefully
+
 rubric:
 - rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
   source:
@@ -139,36 +148,24 @@ rubric:
 distractors:
 - rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: The agent is operating in an evaluation environment where it must
-    produce a patch. Following the 'fail-closed' policy due to missing coordination
-    evidence (like GitHub issue links) will cause it to refuse to generate the fix.
+  why_distracting: The rule instructs the agent to 'fail-closed' and not proceed to
+    PR-ready output if coordination evidence is missing. Since the benchmark prompt
+    does not provide an issue link or coordination evidence, an agent might refuse
+    to generate the patch.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 49-52
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end. Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The rule states that pure code-agent PRs are not allowed and requires
+    human validation. An agent might output a refusal or ask for human intervention
+    instead of completing the coding task.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 54-58
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The fix for the RoPE validation crash is a very small change (changing
-    `is None` to `not rope_parameters_dict`). An agent might misclassify this critical
-    bug fix as a 'tiny edit' or 'low-value busywork' and refuse to implement it.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 39-41
-- rule: We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions that config classes inherit parameters from
-    `PreTrainedConfig`, causing long docstrings. An agent might misapply the 'avoid
-    direct inheritance' rule (which is strictly for `models/`) to `configuration_utils.py`
-    and attempt to remove inheritance between config classes, breaking the configuration
-    architecture.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 60-60
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical in this context. The
-  rules are heavily focused on human-in-the-loop contribution policies and repository
-  maintenance mechanics. Agents must distinguish between meta-instructions meant for
-  real-world repository interaction (like checking GitHub issues) and the actual coding
-  task at hand in an isolated evaluation environment.'
+    lines: 39-47
+hierarchy_analysis: The configuration consists of two identical root-level files (AGENTS.md
+  and CLAUDE.md). They provide generic repository contribution guidelines and agent
+  behavioral constraints rather than code-specific rules.

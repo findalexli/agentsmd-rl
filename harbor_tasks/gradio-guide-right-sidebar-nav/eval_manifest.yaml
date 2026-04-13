@@ -11,39 +11,50 @@ checks:
   description: Target Svelte file exists and has substantial script + template sections
 - id: repo_svelte_file_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: 'Target Svelte file has valid structure: script block, template, proper
     syntax'
 - id: repo_svelte_types_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: TypeScript type declarations in Svelte file are syntactically valid
 - id: repo_svelte_template_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Svelte template section has valid syntax and required elements
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Prettier format check passes (pnpm format:check)'
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Frontend unit tests pass (pnpm test:run)'
+- id: repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: @gradio/client package builds successfully (pnpm --filter @gradio/client build)'
 - id: repo_typescript_syntax_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: TypeScript script block has balanced braces, parentheses, and valid
-    type declarations
+  origin: static
+  description: TypeScript script block has balanced braces and valid type declarations
 - id: repo_svelte_imports_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Svelte imports follow valid ES module syntax with SvelteKit export
     let data declaration
 - id: repo_svelte_template_bindings_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Svelte template bindings and directives (bind:, svelte:window) are
     syntactically valid
 - id: repo_html_structure_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: Template HTML elements are properly balanced and comments are closed
+  origin: static
+  description: Template HTML elements are properly balanced
 - id: repo_js_expressions_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: JavaScript expressions in templates have balanced parentheses and valid
     syntax
 - id: level_field_in_slug_type
@@ -87,24 +98,7 @@ checks:
     path: AGENTS.md
     lines: '45'
     commit: 41e98f9468bcf322ed55d1470e31e7b4021d0480
-rubric:
-- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
-  source:
-    path: AGENTS.md
-    lines: 12-12
-  evidence: 'The gold solution correctly modifies a `.svelte` file in the `js/` directory
-    and uses TypeScript type annotations like `let header_targets: { [key: string]:
-    HTMLElement } = {};`.'
-  category: architecture
-- rule: Be consistent with the style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: 45-45
-  evidence: 'The gold solution uses Svelte reactive statements (`$: if (...)`) for
-    scroll tracking and Tailwind CSS classes for the sidebar layout, matching the
-    existing patterns in the `+page.svelte` file.'
-  category: style
+rubric: []
 distractors:
 - rule: '`guides/` — written guides and tutorials for the website'
   collision_type: architecture_boundary

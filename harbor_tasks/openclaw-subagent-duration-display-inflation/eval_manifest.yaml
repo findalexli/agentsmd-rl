@@ -70,54 +70,55 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo has no git conflict markers
+- id: test_repo_ts_check_subagents_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript syntax check on subagents-format.ts passes
+- id: test_repo_modified_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check on all modified files passes
+- id: test_repo_format_time_related_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All format-time related unit tests pass
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git workspace is clean at base commit
 rubric:
-- rule: Add brief code comments for tricky or non-obvious logic.
-  source:
-    path: CLAUDE.md
-    lines: '163'
-    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
-- rule: 'Written English: use American spelling and grammar in code, comments, docs,
-    and UI strings.'
-  source:
-    path: CLAUDE.md
-    lines: '167'
-    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
-- rule: 'Source code: `src/` (... infra in `src/infra` ...)'
+- rule: 'Source code: `src/` (... infra in `src/infra`...)'
   source:
     path: CLAUDE.md
     lines: 8-8
-  evidence: The gold solution correctly imports the canonical time formatting utility
-    from the `src/infra` directory (`../infra/format-time/format-duration.ts`), aligning
-    with the architectural definition of infr
+  evidence: The gold solution re-exports the canonical implementation from `src/infra/format-time/format-duration.ts`,
+    aligning with the architectural definition that infra code lives in `src/infra`.
   category: architecture
+  verification: llm_judge
 distractors:
-- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
-    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
-    core `src/**` ... directly.'
+- rule: 'Import boundaries: extension production code should treat openclaw/plugin-sdk/*
+    ... as the public surface. Do not import core src/** ... directly.'
   collision_type: scope_ambiguity
-  why_distracting: An agent might mistakenly apply this rule to `src/shared/subagents-format.ts`
-    and refuse to import `src/infra/format-time/format-duration.ts`, thinking it violates
-    the import boundary. However, `src/shared` is part of core, not an extension,
-    so it is allowed to import from `src/infra`.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 14-14
-- rule: 'Messaging channels: always consider all built-in + extension channels when
-    refactoring shared logic (routing, allowlists, pairing, command gating, onboarding,
-    docs).'
-  collision_type: scope_ambiguity
-  why_distracting: The agent is refactoring shared logic (`src/shared/subagents-format.ts`)
-    and might think it needs to audit or update all messaging channels (`src/telegram`,
-    `src/discord`, etc.) to ensure they handle the new duration format. However, the
-    duration format is just a string and the specific callers are already updated
-    in the PR.
+  why_distracting: The rule forbids importing core `src/**` directly from extension
+    production code. An agent might mistakenly treat `src/shared/` or `src/agents/`
+    as an extension and avoid importing the canonical formatter from `src/infra/`,
+    instead trying to duplicate it or use a different workaround.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 17-17
-hierarchy_analysis: The repository has identical rules in `CLAUDE.md` and `AGENTS.md`.
-  The primary challenge is correctly identifying the architectural boundaries of the
-  files being edited. The files in `src/shared/`, `src/agents/`, and `src/auto-reply/`
-  are core files, not extension production code, so the strict import boundaries for
-  extensions do not apply to them.
+    path: AGENTS.md
+    lines: 16-16
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change... Treat those paths as restricted surfaces,
+    not drive-by cleanup.
+  collision_type: scope_ambiguity
+  why_distracting: The rule warns against editing files covered by security-focused
+    CODEOWNERS rules. An agent might hesitate to modify `src/agents/subagent-control.ts`
+    or `src/shared/subagents-format.ts` fearing they are restricted surfaces, even
+    though they are the exact files needing the bug fix.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no deep hierarchy or overriding behavior required;
+  the rules are flat and apply globally.

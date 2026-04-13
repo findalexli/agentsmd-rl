@@ -57,30 +57,53 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - TypeScript typecheck passes on e2e directory
+- id: repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check passes on modified files
+- id: repo_biome_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Biome lint check passes on e2e actions.ts
+- id: repo_tsc_spec_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TypeScript syntax check on modified spec files
+- id: repo_biome_lint_specs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Biome lint check passes on modified spec files
+- id: repo_prettier_check_agents_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check passes on AGENTS.md
+- id: repo_prettier_check_specs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check passes on all modified spec files
 rubric:
 - rule: E2E spec files must use shared helper functions from '../actions' rather than
     defining duplicate local helpers
   source:
     path: packages/app/e2e/AGENTS.md
     lines: '171'
-    commit: be9b4d1bcde39341c7813b66c5c19150a01bb8c2
   reference: When validating routing, use shared helpers from `../actions`.
 - rule: Document new helper functions in the E2E testing guide and place reusable
     actions in `actions.ts`.
   source:
     path: packages/app/e2e/AGENTS.md
     lines: 40-50
-  evidence: The gold solution adds `slugFromUrl` and `waitSlug` to `actions.ts` and
+  reference: The gold solution adds `slugFromUrl` and `waitSlug` to `actions.ts` and
     documents them in `packages/app/e2e/AGENTS.md` under the Helper Functions section.
   category: documentation
-- rule: Avoid `else` statements and prefer early returns for control flow.
+- rule: 'Helper Functions: Actions (`actions.ts`): Reusable action helpers'
   source:
-    path: AGENTS.md
-    lines: 80-90
-  evidence: The `waitSlug` function uses multiple `if` statements with early returns
-    (`if (!slug) return ""`, `if (skip.includes(slug)) return ""`) instead of `else`
-    blocks.
-  category: style
+    path: packages/app/e2e/AGENTS.md
+    lines: 36-46
+  reference: The gold solution moves the `slugFromUrl` and `waitSlug` functions into
+    `packages/app/e2e/actions.ts`, following the architectural guideline that reusable
+    action helpers belong in this file.
+  category: architecture
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -96,39 +119,25 @@ config_edits:
 distractors:
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   collision_type: would_cause_bug
-  why_distracting: The `waitSlug` function needs to track the slug value across multiple
-    executions of the `expect.poll` callback to ensure it has settled. This inherently
-    requires mutable state (`let prev`, `let next`) outside the callback. Trying to
-    avoid `let` and reassignment would make it impossible to track consecutive identical
-    values.
+  why_distracting: The `waitSlug` helper must track state across multiple polling
+    iterations to ensure the slug has settled. This requires using `let` and reassigning
+    `prev` and `next` variables. Avoiding reassignment would make it impossible to
+    track the previous value across `expect.poll` calls.
   severity: high
   source:
     path: AGENTS.md
     lines: 68-78
 - rule: Use single word names by default for new locals, params, and helper functions.
   collision_type: rule_conflict
-  why_distracting: The prompt explicitly requests moving `slugFromUrl` and `waitSlug`.
-    Renaming them to single words like `slug` or `wait` to satisfy the naming rule
-    would violate the prompt's instructions and make the helper names ambiguous.
+  why_distracting: The task explicitly requires creating helper functions named `slugFromUrl`
+    and `waitSlug`. An agent strictly following the single-word naming rule might
+    try to name them `slug` and `wait`, which would violate the explicit task instructions.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 28-38
-- rule: In `withProject(...)` tests that create sessions or extra workspaces, call
-    `trackSession(sessionID, directory?)` and `trackDirectory(directory)`.
-  collision_type: scope_ambiguity
-  why_distracting: The agent is editing spec files that use `withProject` to replace
-    local helpers with shared ones. While editing these files, the agent might notice
-    missing `trackSession` calls and try to add them to satisfy this rule, expanding
-    the scope of the PR unnecessarily and potentially breaking existing test teardown
-    logic.
-  severity: medium
-  source:
-    path: packages/app/e2e/AGENTS.md
-    lines: 88-92
-hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` with general TypeScript/style
-  guidelines, an app-level `AGENTS.md` for web dev, and an e2e-specific `AGENTS.md`
-  for Playwright testing. The root rule preferring `const` over `let` conflicts with
-  the stateful polling requirement of `waitSlug`. The root naming rule conflicts with
-  the explicit multi-word function names requested in the prompt. The e2e-specific
-  rule about `trackSession` creates scope ambiguity when editing existing test files.
+    lines: 28-35
+hierarchy_analysis: The task involves editing `packages/app/e2e/AGENTS.md`, which
+  is a Level 3 config file. This means the agent is modifying its own instructions
+  for future tasks. The Level 0 config enforces strict rules on naming and variable
+  reassignment, but the specific requirements of the E2E polling logic (tracking state
+  across polls) and the explicit task instructions override these general style rules.

@@ -353,6 +353,30 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass — CI/CD: syntax check on all src files
+def test_syntax_check_all_src():
+    """All Python files in src/prime_rl parse without syntax errors (pass_to_pass)."""
+    src_dir = Path(f"{REPO}/src/prime_rl")
+    py_files = list(src_dir.rglob("*.py"))
+    assert len(py_files) > 0, f"No Python files found in {src_dir}"
+    for fpath in py_files:
+        ast.parse(fpath.read_text())
+
+
+# [repo_tests] pass_to_pass — CI/CD: pyproject.toml is valid
+def test_repo_pyproject_valid():
+    """pyproject.toml is valid TOML and parseable (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "tomli", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python3", "-c", "import tomli; f=open('pyproject.toml','rb'); tomli.load(f)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml is invalid TOML: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md rules
 # ---------------------------------------------------------------------------

@@ -25,6 +25,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo ACP agent interface tests pass
+- id: repo_acp_event_subscription_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ACP event subscription tests pass
 - id: flag_constant_defined
   type: fail_to_pass
   origin: pr_diff
@@ -58,21 +62,46 @@ rubric:
 - rule: Prefer single word names for variables and functions. Only use multiple words
     if necessary.
   source:
-    path: AGENTS.md
-    lines: 21-22
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
     commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  reference: The gold solution names the extracted boolean variable `question` rather
+    than a multi-word name like `enableQuestionTool` or `shouldEnableQuestion`.
+  category: naming
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   source:
-    path: AGENTS.md
-    lines: 59-63
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
     commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  reference: The gold solution declares the `question` variable using `const`.
+  category: style
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
-    path: AGENTS.md
-    lines: 42-43
-  evidence: The gold solution accesses the flags using dot notation (`Flag.OPENCODE_CLIENT`
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The gold solution accesses the flags using dot notation (`Flag.OPENCODE_CLIENT`
     and `Flag.OPENCODE_ENABLE_QUESTION_TOOL`) rather than destructuring them from
     the `Flag` object.
+  category: style
+- rule: Prefer single word variable names where possible
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The gold solution names the extracted boolean variable `question` rather
+    than a multi-word name like `enableQuestionTool` or `shouldEnableQuestion`.
+  category: naming
+- rule: Prefer `const` over `let`.
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The gold solution declares the `question` variable using `const`.
+  category: style
+- rule: Rely on type inference when possible; avoid explicit type annotations
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The `question` variable is declared without an explicit boolean type
+    annotation, relying on inference from the logical expression.
   category: style
 config_edits:
 - path: .opencode/agent/translator.md
@@ -82,26 +111,14 @@ config_edits:
 distractors:
 - rule: Reduce total variable count by inlining when a value is only used once.
   collision_type: rule_conflict
-  why_distracting: The gold solution explicitly extracts the condition into `const
-    question` to keep the array literal readable, even though it is only used once
-    in the subsequent ternary. Strict adherence to this rule would lead to an overly
-    complex and unreadable inline ternary.
+  why_distracting: The gold solution extracts the complex boolean condition into a
+    `question` variable to keep the array construction readable, even though it is
+    only used once. Strictly following the inline rule would result in a very long,
+    hard-to-read ternary expression inline.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 31-32
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
-  collision_type: scope_ambiguity
-  why_distracting: The environment variable and exported flag must be named `OPENCODE_ENABLE_QUESTION_TOOL`
-    to match the PR instructions and existing conventions. An agent might try to shorten
-    this to `OPENCODE_QUESTION` to comply with the single-word rule, which would violate
-    the explicit requirements.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 22-23
+    lines: 30-38
 hierarchy_analysis: The root `AGENTS.md` provides general style guidelines that apply
-  to this PR. The `packages/opencode/AGENTS.md` provides database-specific guidelines
-  which are irrelevant here. The main conflicts arise from the root style guidelines
-  (inlining and naming) conflicting with readability and specific PR requirements.
+  to the TypeScript edits. The child `packages/opencode/AGENTS.md` is loaded but only
+  contains database-specific rules which are irrelevant to this PR.

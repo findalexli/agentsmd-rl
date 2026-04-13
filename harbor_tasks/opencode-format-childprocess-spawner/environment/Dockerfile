@@ -1,30 +1,21 @@
-FROM node:22-slim
+FROM python:3.11-slim
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 tmux unzip && \
-    rm -rf /var/lib/apt/lists/*
+# Install git and basic tools
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install bun
-RUN curl -fsSL https://bun.sh/install | bash
-ENV BUN_INSTALL=/root/.bun
-ENV PATH=$BUN_INSTALL/bin:$PATH
+# Set working directory to match where the repo will be mounted
+WORKDIR /workspace/taskforge
 
-# Clone opencode at base commit (before fix)
-RUN git init /workspace/opencode && \
-    cd /workspace/opencode && \
-    git remote add origin https://github.com/anomalyco/opencode.git && \
-    git fetch --depth=1 origin c8909908f50afc3622d354cd8fd7a83dc3445706 && \
-    git checkout FETCH_HEAD
+# Copy the taskforge code
+COPY taskforge/ /workspace/taskforge/taskforge/
 
-# Install dependencies (at base commit — no new deps needed by fix)
-RUN cd /workspace/opencode && bun install
+# Install Python dependencies
+RUN pip install --no-cache-dir pydantic pyyaml pytest
 
-# Configure git
-RUN cd /workspace/opencode && \
-    git config user.email "agent@test.com" && \
-    git config user.name "Agent"
+# Tests will be mounted at runtime via -v
+RUN mkdir -p /tests /logs/verifier
 
-RUN mkdir -p /logs/verifier
-
-WORKDIR /workspace/opencode
+ENV PYTHONPATH=/workspace/taskforge

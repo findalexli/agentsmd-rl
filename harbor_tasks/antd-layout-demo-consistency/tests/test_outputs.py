@@ -111,6 +111,34 @@ def test_repo_layout_demo_tests():
     assert r.returncode == 0, f"Layout demo tests failed:\n{err_out}\n{std_out}"
 
 
+def test_repo_prettier_layout():
+    """Repo's Prettier formatting check passes on layout demo files (pass_to_pass).
+
+    Verifies the layout demo files follow the project's Prettier formatting rules.
+    """
+    r = run_repo_command(
+        ["npx", "prettier", "--check", "components/layout/demo/*.tsx"],
+        timeout=60,
+    )
+    err_out = r.stderr[-500:] if r.stderr else ""
+    std_out = r.stdout[-500:] if r.stdout else ""
+    assert r.returncode == 0, f"Prettier check failed:\n{err_out}\n{std_out}"
+
+
+def test_repo_node_tests():
+    """Repo's Node.js environment tests pass (pass_to_pass).
+
+    Verifies the Node.js-specific tests (SSR/rendering) pass.
+    """
+    r = run_repo_command(
+        ["npm", "run", "test:node"],
+        timeout=180,
+    )
+    err_out = r.stderr[-1000:] if r.stderr else ""
+    std_out = r.stdout[-1000:] if r.stdout else ""
+    assert r.returncode == 0, f"Node tests failed:\n{err_out}\n{std_out}"
+
+
 # =============================================================================
 # Original Task Tests
 # =============================================================================

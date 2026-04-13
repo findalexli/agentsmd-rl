@@ -287,6 +287,242 @@ for (const f of files) {
     assert r.returncode == 0, f"package.json validation failed: {r.stderr}"
 
 
+def test_repo_build():
+    """Run the build script to ensure project compiles (pass_to_pass repo test).
+
+    Note: This test runs npm ci first to install dependencies, then runs build.js.
+    The build compiles TypeScript and bundles resources.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node utils/build/build.js 2>&1
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_check_deps():
+    """Run check-deps to verify package dependencies are valid (pass_to_pass repo test).
+
+    Note: This test runs npm ci first to install dependencies, then runs check_deps.js.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node utils/check_deps.js 2>&1
+"""],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Run lint-packages to verify workspace package consistency (pass_to_pass repo test).
+
+    Note: This test runs npm ci first to install dependencies, then runs workspace lint check.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+npm run lint-packages 2>&1
+"""],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_build_mcp_bundles():
+    """Build only MCP bundle to verify bundling works (pass_to_pass repo test).
+
+    Note: This is a lightweight check focusing on the MCP bundle build.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+# Build only the MCP bundle
+node -e '
+const { build } = require("esbuild");
+const path = require("path");
+const fs = require("fs");
+
+async function buildMCPBundle() {
+  const srcDir = "packages/playwright-core/bundles/mcp/src/mcpBundleImpl.ts";
+  const outDir = "packages/playwright-core/bundles/mcp/lib";
+
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
+
+  await build({
+    entryPoints: [srcDir],
+    bundle: true,
+    platform: "node",
+    target: "node18",
+    format: "cjs",
+    outfile: path.join(outDir, "mcpBundleImpl.js"),
+    external: ["playwright"],
+    logLevel: "error"
+  });
+
+  console.log("MCP bundle built successfully");
+}
+
+buildMCPBundle().catch(e => {
+  console.error(e);
+  process.exit(1);
+});
+' 2>&1
+"""],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP bundle build failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_mcp_source_compile():
+    """Compile MCP TypeScript source files to verify they have valid syntax (pass_to_pass repo test).
+
+    Note: This uses esbuild to transpile the modified MCP source files.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+# Compile the modified MCP source files using esbuild
+node -e '
+const { build } = require("esbuild");
+const path = require("path");
+const fs = require("fs");
+
+async function compileMCP() {
+  const files = [
+    "packages/playwright/src/mcp/browser/config.ts",
+    "packages/playwright/src/mcp/browser/response.ts",
+    "packages/playwright/src/mcp/browser/tab.ts",
+    "packages/playwright/src/mcp/browser/tools/evaluate.ts",
+    "packages/playwright/src/mcp/browser/tools/tool.ts",
+    "packages/playwright/src/mcp/program.ts",
+    "packages/playwright/src/mcp/terminal/commands.ts"
+  ];
+
+  const tempDir = "/tmp/mcp-compile-test";
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  for (const file of files) {
+    if (!fs.existsSync(file)) {
+      console.error("File not found: " + file);
+      process.exit(1);
+    }
+
+    await build({
+      entryPoints: [file],
+      bundle: false,
+      platform: "node",
+      target: "node18",
+      format: "cjs",
+      outfile: path.join(tempDir, path.basename(file, ".ts") + ".js"),
+      logLevel: "error"
+    });
+    console.log("Compiled: " + file);
+  }
+
+  console.log("All MCP source files compiled successfully");
+}
+
+compileMCP().catch(e => {
+  console.error(e);
+  process.exit(1);
+});
+' 2>&1
+"""],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP source compile failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_mcp_build_minimal():
+    """Run minimal build check for MCP-related bundles (pass_to_pass repo test).
+
+    Note: This builds only the packages needed for MCP functionality.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+# Build the project first
+node utils/build/build.js 2>&1 | tail -20
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP build check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_eslint_full():
+    """Run ESLint on all modified MCP files including test files (pass_to_pass repo test).
+
+    Note: This validates code style for all files modified in the PR.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+npx eslint --cache \
+    packages/playwright/src/mcp/browser/config.ts \
+    packages/playwright/src/mcp/browser/response.ts \
+    packages/playwright/src/mcp/browser/tab.ts \
+    packages/playwright/src/mcp/browser/tools/evaluate.ts \
+    packages/playwright/src/mcp/browser/tools/tool.ts \
+    packages/playwright/src/mcp/program.ts \
+    packages/playwright/src/mcp/terminal/commands.ts \
+    tests/mcp/cli.spec.ts \
+    tests/mcp/dialogs.spec.ts \
+    tests/mcp/files.spec.ts \
+    --ext .ts 2>&1
+"""],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint full check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_generate_channels():
+    """Run generate_channels.js to verify channel definitions are valid (pass_to_pass repo test).
+
+    Note: This validates that protocol channel definitions can be regenerated.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node utils/generate_channels.js 2>&1
+"""],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Generate channels failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_copyright_check():
+    """Run copyright check on source files (pass_to_pass repo test).
+
+    Note: Validates that source files have proper copyright headers.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node utils/copyright.js 2>&1
+"""],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Copyright check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------
@@ -321,7 +557,7 @@ console.log('PASS');
 
 
 def test_eval_auto_wrap():
-    """evaluate tool must auto-wrap expressions that don't contain '=>',
+    """evaluate tool must auto-wrap expressions without arrow functions,
     verified by checking source for the pattern and testing the logic."""
     js_code = """
 const fs = require('fs');
@@ -332,7 +568,7 @@ const hasArrowCheck = code.indexOf("=>") !== -1 && code.indexOf("includes") !== 
 if (!hasArrowCheck) { console.error('evaluate.ts has no arrow-detection check'); process.exit(1); }
 
 // Source must contain the wrapping pattern
-const hasWrap = code.includes('() => (') || code.includes('`() => (`');
+const hasWrap = code.includes('() => (') || code.includes('\`() => (\`');
 if (!hasWrap) { console.error('evaluate.ts has no auto-wrap pattern'); process.exit(1); }
 
 // Replicate the exact logic and test it

@@ -157,7 +157,7 @@ def test_repo_ruff_lint():
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_ast_validity():
     """Repo's Python AST parsing passes on modified file (pass_to_pass)."""
     import ast
@@ -169,7 +169,7 @@ def test_repo_ast_validity():
     assert "DeepseekV2DecoderLayer" in classes, "DeepseekV2DecoderLayer class not found"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_file_structure():
     """Modified file has proper Python file structure (pass_to_pass)."""
     import ast
@@ -230,6 +230,23 @@ def test_repo_isort():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo's codespell check passes on modified file (pass_to_pass)."""
+    import subprocess
+
+    try:
+        subprocess.run(["pip", "install", "-q", "codespell"], check=True, capture_output=True)
+    except Exception:
+        pass
+
+    r = subprocess.run(
+        ["codespell", TARGET_FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [static] pass_to_pass

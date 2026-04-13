@@ -45,65 +45,54 @@ checks:
     errors)
   source:
     path: scripts/git-checks.sh
+- id: test_repo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes cargo xlint license check
+  source:
+    path: .cargo/config.toml
+- id: test_repo_cargo_check_benchmark
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-benchmark package compiles with cargo check (relevant to modified
+    code)
+  source:
+    path: .github/workflows/rust.yml
 rubric:
-- rule: 'All new files must start with Apache-2.0 license header: ''Copyright (c)
-    Mysten Labs, Inc.'' and ''SPDX-License-Identifier: Apache-2.0'''
+- rule: 'Code changes must compile with cargo check --package sui-benchmark'
   source:
-    path: CLAUDE.md
-    lines: 17-20
-    commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
-- rule: 'Code must pass `cargo xclippy` linting - never use #[allow(dead_code)], #[allow(unused)],
-    or lint suppressions; fix underlying issues'
+    path: crates/sui-benchmark/src/options.rs
+  reference: cargo check --package sui-benchmark passes
+- rule: 'Code changes must pass cargo fmt --check linting'
   source:
-    path: CLAUDE.md
-    lines: 115-117
-    commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
-- rule: Comments should explain non-obvious logic, not repeat what code does - avoid
-    commenting simple assignments or standard library usage
-  source:
-    path: CLAUDE.md
-    lines: 120-135
-    commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
-- rule: For faster iteration, use -p to select only the most relevant packages
-  source:
-    path: CLAUDE.md
-    lines: 39-40
-  evidence: The prompt and expected workflow use the `-p` (or `--package`) flag with
-    `cargo check --package sui-benchmark` to isolate the build to the modified crate,
-    following the instruction for faster iteratio
-  category: tooling
+    path: crates/sui-benchmark/src/bin/stress.rs
+  reference: cargo fmt --check passes
 distractors:
-- rule: Run e2e tests with cargo simtest and Rust unittests with cargo nextest run
+- rule: Use `#[cfg(test)]` for test-only code used within the same crate.
+  collision_type: would_cause_bug
+  why_distracting: The prompt states the new flag is needed for 'CI smoke tests'.
+    An agent might misinterpret this as 'test-only code' and added the `#[cfg(test)]`
+    attribute to the `min_tps` field or its validation logic. Doing so would compile
+    the feature out of the actual stress binary used in CI, breaking the requested
+    functionality.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 74-76
+- rule: All new files must start with the following license in comments at the top
+    of the file
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the full test suite (`cargo simtest`
-    or `cargo nextest run`) which takes over 10 minutes, or try to write new tests,
-    whereas the task only requires verifying compilation with `cargo check`.
+  why_distracting: The task instruction states 'The project requires all files to
+    have Apache-2.0 license headers', but the config clarifies this applies to 'All
+    new files'. An agent might waste effort trying to prepend license headers to the
+    existing `stress.rs` and `options.rs` files, potentially duplicating existing headers.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 29-34
-- rule: Consult crate-specific CLAUDE.md or AGENTS.md files when changing files in
-    those crates.
-  collision_type: meta_confusion
-  why_distracting: The agent might try to read `crates/sui-benchmark/CLAUDE.md` which
-    is not provided in the context, wasting time and potentially causing tool errors.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 4-5
-- rule: All new files must start with the following license in comments at the top
-    of the file
-  collision_type: architecture_boundary
-  why_distracting: The agent might think it needs to create a new file for the TPS
-    validation logic to satisfy modularity and add the license header, but the logic
-    is small enough to be inline in `stress.rs`.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 14-17
-hierarchy_analysis: The hierarchy consists of a root CLAUDE.md and AGENTS.md. The
-  root CLAUDE.md provides general Rust tooling commands. AGENTS.md delegates to crate-specific
-  files which do not exist for sui-benchmark in this context.
+    lines: 14-19
+hierarchy_analysis: The hierarchy is flat, with `AGENTS.md` simply deferring to the
+  root `CLAUDE.md`. All relevant rules are contained within a single root configuration
+  file.
 version: '2.0'
 source:
   repo: MystenLabs/sui

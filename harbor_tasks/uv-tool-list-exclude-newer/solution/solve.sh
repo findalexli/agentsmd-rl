@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd /workspace/uv
 
-# Idempotent: skip if already applied
-if grep -q 'pub exclude_newer: Option<ExcludeNewerValue>' crates/uv-cli/src/lib.rs 2>/dev/null; then
+# Idempotent: skip if already applied (check specifically in ToolListArgs struct)
+if grep -A50 'pub struct ToolListArgs' crates/uv-cli/src/lib.rs 2>/dev/null | grep -q 'pub exclude_newer:'; then
     echo "Patch already applied."
     exit 0
 fi
@@ -17,7 +17,7 @@ index ab86c9e53bb3e..c431e3ef10f7a 100644
 @@ -5801,6 +5801,19 @@ pub struct ToolListArgs {
      #[arg(long, overrides_with("outdated"), hide = true)]
      pub no_outdated: bool,
-
+ 
 +    /// Limit candidate packages to those that were uploaded prior to the given date.
 +    ///
 +    /// Accepts RFC 3339 timestamps (e.g., `2006-12-02T02:07:43Z`), local dates in the same format
@@ -46,7 +46,7 @@ index a2674f23aae69..8f8d3e26f6cb1 100644
 +use uv_settings::{Combine, ResolverInstallerOptions};
  use uv_tool::InstalledTools;
  use uv_warnings::warn_user;
-
+ 
 @@ -34,6 +34,8 @@ pub(crate) async fn list(
      show_extras: bool,
      show_python: bool,
@@ -70,7 +70,7 @@ index a2674f23aae69..8f8d3e26f6cb1 100644
 +                        ResolverInstallerOptions::from(tool.options().clone()).combine(filesystem),
                      ));
                      let interpreter = tool_env.environment().interpreter();
-
+ 
 diff --git a/crates/uv/src/lib.rs b/crates/uv/src/lib.rs
 index ea3d9ba89bb3f..075ac91ac7b1c 100644
 --- a/crates/uv/src/lib.rs
@@ -95,7 +95,7 @@ index e0230020f29e3..bbd3007965dd5 100644
 +    pub(crate) args: ResolverInstallerOptions,
 +    pub(crate) filesystem: ResolverInstallerOptions,
  }
-
+ 
  impl ToolListSettings {
      /// Resolve the [`ToolListSettings`] from the CLI and filesystem configuration.
 -    #[expect(clippy::needless_pass_by_value)]
@@ -112,7 +112,7 @@ index e0230020f29e3..bbd3007965dd5 100644
              python_preference: _,
              no_python_downloads: _,
          } = args;
-
+ 
 +        let filesystem = filesystem.map(FilesystemOptions::into_options);
 +        let filesystem = ResolverInstallerOptions {
 +            exclude_newer: filesystem.and_then(|options| options.top_level.exclude_newer),
@@ -134,7 +134,6 @@ index e0230020f29e3..bbd3007965dd5 100644
          }
      }
  }
-
 PATCH
 
 echo "Patch applied successfully."

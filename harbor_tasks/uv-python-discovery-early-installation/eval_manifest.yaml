@@ -64,6 +64,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python files in uv-python crate pass ruff format check
+- id: test_repo_python_syntax_uv_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files in uv-python crate have valid syntax
 - id: no_unwrap_panic_unreachable
   type: pass_to_pass
   origin: agent_config
@@ -115,22 +119,12 @@ rubric:
 distractors:
 - rule: ALWAYS attempt to add a test case for changed behavior
   collision_type: scope_ambiguity
-  why_distracting: This PR is a pure internal refactoring that changes tuples to a
-    struct (`PythonInstallation`) without altering any observable behavior. Attempting
-    to add tests would be wasted effort and misinterprets the scope of 'changed behavior'.
+  why_distracting: The PR is a pure internal refactoring (changing a return type from
+    a tuple to a struct) and does not change any observable behavior. Attempting to
+    add a test case would be out of scope and waste effort.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 2-2
-- rule: PREFER patterns like `if let` to handle fallibility
-  collision_type: architecture_boundary
-  why_distracting: The code processes an iterator of `Result`s using `itertools` methods
-    like `filter_ok` and `map_ok`. An agent might try to rewrite these elegant iterator
-    chains into `for` loops with `if let Ok(...)` to handle fallibility, which would
-    make the code more verbose and break the functional pipeline architecture.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 8-8
-hierarchy_analysis: Only one config file (`CLAUDE.md`) is present at the root level.
-  No hierarchy conflicts exist.
+hierarchy_analysis: The config hierarchy is flat, consisting of a single `CLAUDE.md`
+  file at the root. The rules are general project guidelines.

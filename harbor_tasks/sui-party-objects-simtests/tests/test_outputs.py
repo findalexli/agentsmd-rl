@@ -95,7 +95,7 @@ def test_party_tests_no_longer_skip_mainnet():
 
 
 def test_cargo_check_passes():
-    """Verify that the code compiles with cargo check."""
+    """Verify that the code compiles with cargo check (pass_to_pass)."""
     result = subprocess.run(
         ["cargo", "check", "-p", "sui-e2e-tests"],
         cwd=REPO,
@@ -109,7 +109,7 @@ def test_cargo_check_passes():
 
 
 def test_rustfmt_check():
-    """Verify that the code is properly formatted."""
+    """Verify that the code is properly formatted (pass_to_pass)."""
     result = subprocess.run(
         ["cargo", "fmt", "--", "--check"],
         cwd=REPO,
@@ -184,7 +184,7 @@ def test_new_test_has_proper_test_structure():
 
 
 def test_party_tests_have_sim_test_attribute():
-    """Verify that party tests have the #[sim_test] attribute."""
+    """Verify that party tests have the #[sim_test] attribute (pass_to_pass)."""
     target_file = os.path.join(REPO, "crates/sui-e2e-tests/tests/party_objects_tests.rs")
 
     with open(target_file, 'r') as f:
@@ -205,6 +205,32 @@ def test_party_tests_have_sim_test_attribute():
         match = re.search(pattern, content)
         assert match is not None, \
             f"Test {test_name} should have #[sim_test] attribute"
+
+
+def test_repo_xlint():
+    """Repo's license headers and lints pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, \
+        f"cargo xlint failed:\n{result.stderr[-1000:]}"
+
+
+def test_repo_rustfmt():
+    """Repo's code formatting passes rustfmt check (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"cargo fmt check failed:\n{result.stdout}\n{result.stderr}"
 
 
 if __name__ == "__main__":

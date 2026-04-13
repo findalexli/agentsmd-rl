@@ -39,13 +39,14 @@ def test_todowrite_is_effect():
     """TodoWriteTool must be an Effect (built via Tool.defineEffect), not a plain object."""
     check = PKG_DIR / "_check_effect.ts"
     check.write_text(
-        'import { Effect } from "effect"\n'
-        'const { TodoWriteTool } = await import("./src/tool/todo")\n'
-        'if (!Effect.isEffect(TodoWriteTool)) {\n'
-        '  console.error("FAIL: TodoWriteTool is not an Effect")\n'
-        '  process.exit(1)\n'
-        '}\n'
-        'console.log("OK")\n'
+        '''import { Effect } from "effect"
+const { TodoWriteTool } = await import("./src/tool/todo")
+if (!Effect.isEffect(TodoWriteTool)) {
+  console.error("FAIL: TodoWriteTool is not an Effect")
+  process.exit(1)
+}
+console.log("OK")
+'''
     )
     try:
         r = subprocess.run(
@@ -64,7 +65,7 @@ def test_todowrite_is_effect():
 def test_todo_default_layer_exported():
     """Todo.defaultLayer must be exported (public) from session/todo.ts."""
     src = SESSION_TODO_TS.read_text()
-    assert re.search(r'\bexport\s+const\s+defaultLayer\b', src), (
+    assert re.search(r"\bexport\s+const\s+defaultLayer\b", src), (
         "Todo.defaultLayer is not exported from session/todo.ts"
     )
 
@@ -76,7 +77,7 @@ def test_registry_provides_todo_layer():
     assert "Todo.defaultLayer" in src, (
         "ToolRegistry.defaultLayer does not provide Todo.defaultLayer"
     )
-    assert re.search(r'import\s.*Todo.*from', src), (
+    assert re.search(r"import\s.*Todo.*from", src), (
         "registry.ts does not import Todo"
     )
 
@@ -134,6 +135,113 @@ def test_repo_session_prompt_effect():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_tool_registry():
+    """Tool registry tests pass (covers ToolRegistry.defaultLayer with Todo.defaultLayer)."""
+    r = subprocess.run(
+        ["bun", "test", "test/tool/registry.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Tool registry tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_snapshot_tool_race():
+    """Snapshot tool race tests pass (covers Todo.layer integration in test setup)."""
+    r = subprocess.run(
+        ["bun", "test", "test/session/snapshot-tool-race.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Snapshot tool race tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_processor_effect():
+    """Session processor-effect tests pass (covers Effect patterns used in refactored code)."""
+    r = subprocess.run(
+        ["bun", "test", "test/session/processor-effect.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Session processor-effect tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_effect_instance_state():
+    """Effect instance-state tests pass (covers Effect patterns used in Todo.defaultLayer)."""
+    r = subprocess.run(
+        ["bun", "test", "test/effect/instance-state.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Effect instance-state tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_effect_run_service():
+    """Effect run-service tests pass (covers makeRuntime used by Todo.defaultLayer)."""
+    r = subprocess.run(
+        ["bun", "test", "test/effect/run-service.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Effect run-service tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_compaction():
+    """Session compaction tests pass (covers Effect patterns in session management)."""
+    r = subprocess.run(
+        ["bun", "test", "test/session/compaction.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Session compaction tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_retry():
+    """Session retry tests pass (covers Effect error handling patterns)."""
+    r = subprocess.run(
+        ["bun", "test", "test/session/retry.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Session retry tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Prettier formatting check passes on modified files (CI lint gate)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check",
+         "packages/opencode/src/tool/todo.ts",
+         "packages/opencode/src/tool/registry.ts",
+         "packages/opencode/src/session/todo.ts"],
+        cwd=str(REPO),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Prettier check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
@@ -142,7 +250,7 @@ def test_repo_session_prompt_effect():
 def test_effect_gen_composition():
     """todo.ts must use Effect.gen(function* () { ... }) for composition."""
     src = TODO_TS.read_text()
-    assert re.search(r'Effect\.gen\s*\(\s*function\s*\*', src), (
+    assert re.search(r"Effect\.gen\s*\(\s*function\s*\*", src), (
         "todo.ts does not use Effect.gen(function* () { ... }) for composition "
         "(required by packages/opencode/AGENTS.md)"
     )
@@ -150,13 +258,13 @@ def test_effect_gen_composition():
 
 # [agent_config] pass_to_pass — AGENTS.md:13 @ ae7e2eb3
 def test_no_any_type():
-    """Modified tool files must not use the `any` type annotation."""
+    """Modified tool files must not use the any type annotation."""
     for f in [TODO_TS]:
         src = f.read_text()
         lines = [l for l in src.splitlines()
                  if not l.strip().startswith("//") and not l.strip().startswith("*")]
         code = "\n".join(lines)
-        matches = re.findall(r':\s*any\b', code)
+        matches = re.findall(r":\s*any\b", code)
         assert len(matches) == 0, (
-            f"Found {len(matches)} `: any` type annotations in {f.name}"
+            f"Found {len(matches)} \": any\" type annotations in {f.name}"
         )

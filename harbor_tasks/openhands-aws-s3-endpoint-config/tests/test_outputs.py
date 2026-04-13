@@ -119,6 +119,43 @@ def test_repo_unit_tests_config_event_service_selection():
     assert r.returncode == 0, f"Config tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
 
 
+def test_repo_mypy_clean():
+    """Repo's mypy type checking passes on target file (pass_to_pass)."""
+    # Install mypy and required dependencies
+    r = subprocess.run(
+        ['pip', 'install', 'mypy', 'boto3', 'botocore', 'pydantic', 'types-requests', 'types-setuptools', 'types-pyyaml', 'types-toml', 'types-docker', 'types-Markdown', 'lxml', '-q'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run mypy on target file
+    r = subprocess.run(
+        ['mypy', '--config-file', 'dev_config/python/mypy.ini', 'openhands/app_server/event/aws_event_service.py'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MyPy check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_validate_pyproject():
+    """Repo's pyproject.toml is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ['pip', 'install', 'validate-pyproject', '-q'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ['validate-pyproject', 'pyproject.toml'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_imports_clean():
+    """Target file can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ['python', '-c', 'from openhands.app_server.event.aws_event_service import AwsEventServiceInjector'],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import check failed:\n{r.stderr[-500:]}"
+
+
 def _load_source():
     """Load the source code of the target file."""
     with open(SOURCE_PATH) as f:
@@ -170,8 +207,7 @@ def test_injector_uses_self_endpoint_url():
     source = _load_source()
 
     # Check that self.endpoint_url is used in the boto3.client call
-    assert 'endpoint_url=self.endpoint_url' in source, \
-        "Should use self.endpoint_url in boto3.client call"
+    assert 'endpoint_url=self.endpoint_url' in source,         "Should use self.endpoint_url in boto3.client call"
 
 
 def test_get_default_aws_endpoint_url_function_exists():
@@ -205,8 +241,7 @@ def test_get_default_aws_endpoint_url_returns_none_when_no_env():
 
     # Check the function handles the case where env var is not set
     # Should check for endpoint_url being falsy and return None
-    assert 'if not endpoint_url' in func_source or 'if endpoint_url' in func_source, \
-        "Should check if endpoint_url is set"
+    assert 'if not endpoint_url' in func_source or 'if endpoint_url' in func_source,         "Should check if endpoint_url is set"
     assert 'return None' in func_source, "Should return None when endpoint not set"
 
 
@@ -267,8 +302,7 @@ def test_injector_endpoint_url_type():
             if node.target.id == 'endpoint_url':
                 # Check the annotation contains str and None
                 annotation_str = ast.unparse(node.annotation)
-                assert 'str' in annotation_str and 'None' in annotation_str, \
-                    f"endpoint_url should be annotated as str | None, got: {annotation_str}"
+                assert 'str' in annotation_str and 'None' in annotation_str,                     f"endpoint_url should be annotated as str | None, got: {annotation_str}"
                 return
 
     assert False, "Should find endpoint_url annotated field"
@@ -284,8 +318,7 @@ def test_injector_endpoint_url_has_default_factory():
     # Check for Field with default_factory
     assert 'Field' in cls_source, "Should use pydantic Field"
     assert 'default_factory' in cls_source, "Should use default_factory parameter"
-    assert '_get_default_aws_endpoint_url' in cls_source, \
-        "Should use _get_default_aws_endpoint_url as default_factory"
+    assert '_get_default_aws_endpoint_url' in cls_source,         "Should use _get_default_aws_endpoint_url as default_factory"
 
 
 def test_injector_endpoint_url_not_required():
@@ -293,7 +326,5 @@ def test_injector_endpoint_url_not_required():
     source = _load_source()
 
     # The field should have a default value (via Field(default_factory=...))
-    assert 'endpoint_url:' in source or 'endpoint_url =' in source, \
-        "endpoint_url should be defined as a field"
-    assert 'Field' in source and 'default_factory' in source, \
-        "endpoint_url should have a default factory"
+    assert 'endpoint_url:' in source or 'endpoint_url =' in source,         "endpoint_url should be defined as a field"
+    assert 'Field' in source and 'default_factory' in source,         "endpoint_url should have a default factory"

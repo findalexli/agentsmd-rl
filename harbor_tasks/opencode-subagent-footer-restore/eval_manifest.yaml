@@ -51,6 +51,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified TSX files have balanced braces via Node.js parser
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo typecheck passes via bun turbo typecheck
+- id: repo_bun_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass via bun test
 - id: no_else_blocks_in_modified_files
   type: fail_to_pass
   origin: agent_config
@@ -91,66 +99,40 @@ checks:
     path: AGENTS.md
     lines: '17'
     commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
-rubric:
-- rule: Keep things in one function unless composable or reusable
-  source:
-    path: AGENTS.md
-    lines: '11'
-    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
-- rule: Prefer single word variable names where possible
-  source:
-    path: AGENTS.md
-    lines: '14'
-    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
-- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
-  source:
-    path: AGENTS.md
-    lines: '57'
-    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
-- rule: Reduce total variable count by inlining when a value is only used once.
-  source:
-    path: AGENTS.md
-    lines: '44'
-    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity.
-  source:
-    path: AGENTS.md
-    lines: '16'
-    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
-- rule: Avoid `else` statements. Prefer early returns.
-  source:
-    path: AGENTS.md
-    lines: 68-78
-  evidence: 'In `packages/opencode/src/cli/cmd/tui/component/dialog-model.tsx`, the
-    `else` block is removed and replaced with an early return (`return` inside the
-    `if` block, and `dialog.clear()` moved to the end '
-  category: style
 distractors:
-- rule: Use single word names by default for new locals, params, and helper functions.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to name the new component `Footer` and the
-    file `footer.tsx` to comply with the strict single-word naming rule. However,
-    `SubagentFooter` is necessary to avoid ambiguity with generic footers and clearly
-    describe the component's specific role.
+- rule: Keep things in one function unless composable or reusable
+  collision_type: rule_conflict
+  why_distracting: The rule 'Keep things in one function unless composable or reusable'
+    might lead an agent to inline the new subagent footer directly into the massive
+    `Session` component in `index.tsx`. However, the gold solution correctly creates
+    a separate `SubagentFooter` component in a new file to maintain readability and
+    match existing component patterns.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 25-36
-- rule: Use `Effect.gen(function* () { ... })` for composition.
-  collision_type: architecture_boundary
-  why_distracting: The agent might attempt to use Effect (`Effect.gen`, `Effect.fn`)
-    for the new component's state or logic. However, this is a SolidJS TUI component
-    that should rely on SolidJS reactive primitives (`createSignal`, `createMemo`)
-    rather than the backend Effect runtime.
-  severity: high
+    lines: 13-13
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  collision_type: scope_ambiguity
+  why_distracting: The strict 'single word names' enforcement might cause the agent
+    to name the new component `Footer` or `Subagent` instead of `SubagentFooter`.
+    Given the context of a complex TUI with many specific components, a multi-word
+    name is required to avoid ambiguity.
+  severity: medium
   source:
-    path: packages/opencode/AGENTS.md
-    lines: 15-16
-hierarchy_analysis: 'The root `AGENTS.md` provides general TypeScript and style guidelines
-  (like avoiding `else` blocks) which apply universally and are correctly followed
-  in the UI components. The package-level `packages/opencode/AGENTS.md` introduces
-  highly specific rules for the Effect runtime and Drizzle database. Agents must recognize
-  the architectural boundary here: the TUI components are built with SolidJS, so the
-  Effect and Drizzle rules from the package-level config should be ignored for this
-  specific frontend task.'
+    path: AGENTS.md
+    lines: 24-35
+hierarchy_analysis: The task relies on the root `AGENTS.md` for general TypeScript/SolidJS
+  style guidelines. The deeper `packages/opencode/AGENTS.md` contains Effect and Database
+  rules which are irrelevant to this UI/TUI task, requiring the agent to filter out
+  the noise from the deeper config and focus on the root style guide.
+rubric:
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 76-92
+  evidence: In `dialog-model.tsx`, the gold solution removes the `else` block and
+    replaces it with an early return (`return` inside the `if` block, followed by
+    `dialog.clear()` outside), directly following the 'Control Flow' style guide.
+  category: style
+  verification: llm_judge

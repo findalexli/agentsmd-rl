@@ -282,3 +282,12 @@ def test_repo_syntax_tool_skill_test():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_skill_discovery():
+    """Syntax check skill/discovery.ts — dependency of skill/index.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "--experimental-strip-types", "packages/opencode/src/skill/discovery.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"

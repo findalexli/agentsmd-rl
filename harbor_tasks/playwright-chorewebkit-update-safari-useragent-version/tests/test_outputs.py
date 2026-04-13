@@ -280,3 +280,187 @@ print("PASS: wkBrowser.ts structure valid")
     )
     assert r.returncode == 0, f"wkBrowser.ts check failed: {{r.stderr}}"
     assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — npm run build
+def test_repo_npm_build():
+    """Repo builds successfully with npm run build (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"""
+cd {REPO}
+npm ci 2>/dev/null
+npm run build 2>&1
+echo EXIT:$?
+"""],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"npm build failed: {{r.stderr[-500:]}}"
+    assert "EXIT:0" in r.stdout, f"npm build did not exit cleanly: {{r.stdout[-500:]}}"
+
+
+# [repo_tests] pass_to_pass — npm run check-deps
+def test_repo_npm_check_deps():
+    """Repo DEPS check passes with npm run check-deps (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"""
+cd {REPO}
+npm ci 2>/dev/null
+npm run build 2>/dev/null
+npm run check-deps 2>&1
+echo EXIT:$?
+"""],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"check-deps failed: {{r.stderr[-500:]}}"
+    assert "EXIT:0" in r.stdout, f"check-deps did not exit cleanly: {{r.stdout[-500:]}}"
+
+
+# [repo_tests] pass_to_pass — npm run lint-packages
+def test_repo_npm_lint_packages():
+    """Repo package lint passes with npm run lint-packages (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"""
+cd {REPO}
+npm ci 2>/dev/null
+npm run build 2>/dev/null
+npm run lint-packages 2>&1
+echo EXIT:$?
+"""],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"lint-packages failed: {{r.stderr[-500:]}}"
+    assert "EXIT:0" in r.stdout, f"lint-packages did not exit cleanly: {{r.stdout[-500:]}}"
+
+
+# [repo_tests] pass_to_pass — npm run lint-tests
+def test_repo_npm_lint_tests():
+    """Repo test lint passes with npm run lint-tests (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"""
+cd {REPO}
+npm ci 2>/dev/null
+npm run build 2>/dev/null
+npm run lint-tests 2>&1
+echo EXIT:$?
+"""],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"lint-tests failed: {{r.stderr[-500:]}}"
+    assert "EXIT:0" in r.stdout, f"lint-tests did not exit cleanly: {{r.stdout[-500:]}}"
+
+
+# [repo_tests] pass_to_pass — browsers.json strict validation
+def test_repo_browsers_json_strict():
+    """browsers.json has valid webkit entry with browserVersion (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+from pathlib import Path
+repo = "/workspace/playwright"
+path = Path(repo) / "packages" / "playwright-core" / "browsers.json"
+data = json.loads(path.read_text())
+assert "browsers" in data, "Missing browsers key"
+webkit = [b for b in data["browsers"] if b.get("name") == "webkit"]
+assert len(webkit) == 1, f"Expected 1 webkit, got {len(webkit)}"
+assert "browserVersion" in webkit[0], "Missing browserVersion"
+assert "revision" in webkit[0], "Missing revision"
+assert "title" in webkit[0], "Missing title"
+print("PASS: browsers.json is valid")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"browsers.json strict check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — deviceDescriptorsSource.json strict validation
+def test_repo_device_descriptors_strict():
+    """deviceDescriptorsSource.json has webkit devices with valid userAgent (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+from pathlib import Path
+repo = "/workspace/playwright"
+path = Path(repo) / "packages" / "playwright-core" / "src" / "server" / "deviceDescriptorsSource.json"
+data = json.loads(path.read_text())
+webkit_count = 0
+for name, desc in data.items():
+    if desc.get("defaultBrowserType") == "webkit":
+        webkit_count += 1
+        ua = desc.get("userAgent", "")
+        assert "Safari" in ua or len(ua) == 0, f"WebKit device {name} missing Safari in UA"
+assert webkit_count > 10, f"Expected >10 webkit devices, got {webkit_count}"
+print(f"PASS: {webkit_count} webkit devices found with valid user agents")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"device descriptors check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — release notes markdown structure
+def test_repo_release_notes_structure():
+    """Release notes files have valid markdown structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+repo = "/workspace/playwright"
+for lang in ("js", "python", "java", "csharp"):
+    path = Path(repo) / "docs" / "src" / f"release-notes-{lang}.md"
+    content = path.read_text()
+    assert content.startswith("---"), f"{path} missing frontmatter"
+    assert "id:" in content, f"{path} missing id in frontmatter"
+    assert "title:" in content, f"{path} missing title in frontmatter"
+    assert len(content) > 500, f"{path} too short"
+print("PASS: All release notes have valid structure")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"release notes check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — SKILL.md valid markdown
+def test_repo_skill_md_valid():
+    """SKILL.md exists and has valid structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+repo = "/workspace/playwright"
+path = Path(repo) / ".claude" / "skills" / "playwright-dev" / "SKILL.md"
+content = path.read_text()
+assert content.startswith("---"), "Missing frontmatter"
+assert "name:" in content, "Missing name field"
+assert "description:" in content, "Missing description field"
+assert "- [" in content, "Missing skill links"
+print("PASS: SKILL.md has valid structure")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"SKILL.md check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — wkBrowser.ts TypeScript syntax
+def test_repo_wkbrowser_ts_syntax():
+    """wkBrowser.ts has valid TypeScript syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re
+from pathlib import Path
+repo = "/workspace/playwright"
+path = Path(repo) / "packages" / "playwright-core" / "src" / "server" / "webkit" / "wkBrowser.ts"
+content = path.read_text()
+# Check for TypeScript class structure
+assert "export class" in content or "class WKBrowser" in content, "Missing class declaration"
+assert "extends" in content, "Missing extends clause"
+assert "constructor" in content, "Missing constructor"
+# Check BROWSER_VERSION format
+version_match = re.search(r"const BROWSER_VERSION\\s*=\\s*'([0-9.]+)'", content)
+assert version_match, "BROWSER_VERSION not in expected format"
+print(f"PASS: wkBrowser.ts has valid TS syntax, version={version_match.group(1)}")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"wkBrowser.ts syntax check failed: {r.stderr}"
+    assert "PASS" in r.stdout

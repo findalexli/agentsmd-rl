@@ -299,6 +299,63 @@ def test_gc_invoked_in_launch_subprocesses():
     raise AssertionError("GC threshold logic not invoked during subprocess launch")
 
 
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", "python/sglang/srt/server_args.py", "python/sglang/srt/entrypoints/engine.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compileall():
+    """Modified files compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "compileall", "python/sglang/srt/server_args.py", "python/sglang/srt/entrypoints/engine.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compileall failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """isort import ordering passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check", "python/sglang/srt/server_args.py", "python/sglang/srt/entrypoints/engine.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Black formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check", "python/sglang/srt/server_args.py", "python/sglang/srt/entrypoints/engine.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr}"
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------

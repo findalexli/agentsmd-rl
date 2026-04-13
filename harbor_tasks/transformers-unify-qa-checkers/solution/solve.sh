@@ -573,7 +573,7 @@ index 000000000000..dfef9aea285e
 +    parser = argparse.ArgumentParser(description="Run check/fix scripts.")
 +    parser.add_argument(
 +        "checkers",
-+        nargs="+",
++        nargs="*",
 +        help='Comma-separated checker names, or "all". Use --list to see available checkers.',
 +    )
 +    parser.add_argument("--fix", action="store_true", help="Run in fix mode instead of check mode.")

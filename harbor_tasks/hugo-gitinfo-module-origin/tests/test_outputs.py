@@ -23,7 +23,7 @@ def test_module_origin_iszero_true_when_empty():
 
     This verifies the new IsZero() method added in modules/module.go.
     """
-    test_code = '''
+    test_code = """
 package main
 
 import (
@@ -51,24 +51,26 @@ func main() {
 
 	fmt.Println("PASS: IsZero() works correctly")
 }
-'''
+"""
     # Write and run the test
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.go', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".go", delete=False) as f:
         f.write(test_code)
         test_file = f.name
 
     try:
         # Compile and run in the hugo repo context
         result = subprocess.run(
-            ['go', 'run', test_file],
+            ["go", "run", test_file],
             cwd=REPO,
             capture_output=True,
             text=True,
             timeout=60
         )
         output = result.stdout + result.stderr
-        assert result.returncode == 0, f"Test code failed:\n{output}"
-        assert "PASS: IsZero() works correctly" in output, f"IsZero() test failed:\n{output}"
+        assert result.returncode == 0, f"Test code failed:\
+{output}"
+        assert "PASS: IsZero() works correctly" in output, f"IsZero() test failed:\
+{output}"
     finally:
         os.unlink(test_file)
 
@@ -77,7 +79,7 @@ def test_loadgitinfo_returns_error():
     """Test that loadGitInfo returns errors instead of just logging them.
 
     This verifies the behavioral change in hugo_sites.go where
-    'h.Log.Errorln("Failed to read Git log:", err)' was changed to 'return err'.
+    \'h.Log.Errorln("Failed to read Git log:", err)\' was changed to \'return err\'.
     """
     # Read the hugo_sites.go file and verify the fix is present
     hugo_sites_path = Path(HUGOLIB_DIR) / "hugo_sites.go"
@@ -88,7 +90,7 @@ def test_loadgitinfo_returns_error():
 
     # Make sure the old logging-only pattern is not present in loadGitInfo
     # We look for the context around where the error handling occurs
-    lines = content.split('\n')
+    lines = content.split("\n")
     in_loadgitinfo = False
     found_return = False
     for i, line in enumerate(lines):
@@ -103,7 +105,7 @@ def test_loadgitinfo_returns_error():
                     found_return = True
                 # The old code had "h.Log.Errorln" which we should not find
                 # in the error handling section after newGitInfo
-                if "h.Log.Errorln(\"Failed to read Git log:\"" in lines[j]:
+                if "h.Log.Errorln(\"Failed to read Git log:\":" in lines[j]:
                     assert False, "Found old logging-only error handling"
 
     assert found_return, "loadGitInfo should return error when newGitInfo fails"
@@ -150,7 +152,7 @@ def test_client_handles_nil_origin():
 def test_syntax_compiles():
     """Test that the modified Go code compiles without syntax errors."""
     result = subprocess.run(
-        ['go', 'build', './...'],
+        ["go", "build", "./..."],
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -164,23 +166,25 @@ def test_syntax_compiles():
         if "syntax error" in stderr or "cannot find" in stderr or "undefined:" in stderr:
             # Build just the modules package to verify our changes compile
             result2 = subprocess.run(
-                ['go', 'build', './modules'],
+                ["go", "build", "./modules"],
                 cwd=REPO,
                 capture_output=True,
                 text=True,
                 timeout=60
             )
-            assert result2.returncode == 0, f"Modules package failed to compile:\n{result2.stderr}"
+            assert result2.returncode == 0, f"Modules package failed to compile:\
+{result2.stderr}"
 
             # Build hugolib
             result3 = subprocess.run(
-                ['go', 'build', './hugolib'],
+                ["go", "build", "./hugolib"],
                 cwd=REPO,
                 capture_output=True,
                 text=True,
                 timeout=60
             )
-            assert result3.returncode == 0, f"Hugolib package failed to compile:\n{result3.stderr}"
+            assert result3.returncode == 0, f"Hugolib package failed to compile:\
+{result3.stderr}"
 
 
 def test_module_origin_struct_has_fields():
@@ -198,39 +202,43 @@ def test_module_origin_struct_has_fields():
 
 # =============================================================================
 # Pass-to-Pass Tests: Repository CI/CD Gates
-# These tests verify the repo's own CI/CD checks pass on both base and fixed.
+# These tests verify the repo\'s own CI/CD checks pass on both base and fixed.
 # =============================================================================
 
 
 def test_repo_gofmt():
-    """Repo's Go code passes gofmt formatting check (pass_to_pass)."""
+    """Repo\'s Go code passes gofmt formatting check (pass_to_pass)."""
     r = subprocess.run(
         ["gofmt", "-l", "."],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     # gofmt -l returns list of files with formatting issues; should be empty
-    assert r.returncode == 0, f"gofmt check failed with error:\n{r.stderr}"
-    assert r.stdout == "", f"gofmt found formatting issues in files:\n{r.stdout}"
+    assert r.returncode == 0, f"gofmt check failed with error:\
+{r.stderr}"
+    assert r.stdout == "", f"gofmt found formatting issues in files:\
+{r.stdout}"
 
 
 def test_repo_vet():
-    """Repo's Go code passes go vet static analysis (pass_to_pass)."""
+    """Repo\'s Go code passes go vet static analysis (pass_to_pass)."""
     # Vet only the packages we care about (not the whole repo - too slow)
     for pkg in ["./modules/...", "./hugolib/..."]:
         r = subprocess.run(
             ["go", "vet", pkg],
             capture_output=True, text=True, timeout=60, cwd=REPO,
         )
-        assert r.returncode == 0, f"go vet failed for {pkg}:\n{r.stderr[-500:]}"
+        assert r.returncode == 0, f"go vet failed for {pkg}:\
+{r.stderr[-500:]}"
 
 
 def test_repo_build():
-    """Repo's Go code builds successfully (pass_to_pass)."""
+    """Repo\'s Go code builds successfully (pass_to_pass)."""
     r = subprocess.run(
         ["go", "build", "./..."],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"go build failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"go build failed:\
+{r.stderr[-500:]}"
 
 
 def test_repo_modules_tests():
@@ -239,7 +247,8 @@ def test_repo_modules_tests():
         ["go", "test", "-failfast", "-timeout", "60s", "./modules/..."],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"modules tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"modules tests failed:\
+{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_hugolib_tests():
@@ -260,7 +269,71 @@ def test_repo_hugolib_tests():
         if "asciidoctor" in stderr_out.lower() or "pandoc" in stderr_out.lower():
             # These are external tool issues, not code bugs - test passes
             return
-    assert r.returncode == 0, f"hugolib tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"hugolib tests failed:\
+{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_staticcheck():
+    """Repo\'s Go code passes staticcheck linter (pass_to_pass)."""
+    # Install staticcheck (required for this test)
+    r = subprocess.run(
+        ["go", "install", "honnef.co/go/tools/cmd/staticcheck@latest"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"staticcheck install failed:\
+{r.stderr[-500:]}"
+
+    # Get GOPATH to find the staticcheck binary
+    gopath_r = subprocess.run(
+        ["go", "env", "GOPATH"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    gopath = gopath_r.stdout.strip()
+    staticcheck_bin = f"{gopath}/bin/staticcheck"
+
+    # Run staticcheck on the modified packages
+    for pkg in ["./modules/...", "./hugolib/..."]:
+        r = subprocess.run(
+            [staticcheck_bin, pkg],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"staticcheck failed for {pkg}:\
+{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_go_mod_verify():
+    """Go module checksums are verified (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "mod", "verify"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"go mod verify failed:\
+{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_check_sh_modules():
+    """Repo\'s check.sh passes for modules package (pass_to_pass)."""
+    r = subprocess.run(
+        ["./check.sh", "./modules/..."],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check.sh failed for modules:\
+{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_check_sh_hugolib():
+    """Repo\'s check.sh passes for hugolib package (pass_to_pass)."""
+    r = subprocess.run(
+        ["./check.sh", "./hugolib/..."],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Allow failure due to external tool dependencies (asciidoctor, pandoc)
+    if r.returncode != 0:
+        stderr_out = r.stderr + r.stdout
+        if "asciidoctor" in stderr_out.lower() or "pandoc" in stderr_out.lower():
+            return
+    assert r.returncode == 0, f"check.sh failed for hugolib:\
+{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 if __name__ == "__main__":

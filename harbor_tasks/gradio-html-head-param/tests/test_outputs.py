@@ -91,6 +91,77 @@ def test_repo_html_syntax():
     assert "OK" in r.stdout
 
 
+def test_repo_ruff_check_on_test_files():
+    """Repo's ruff lint passes on HTML test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "test/components/test_html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on test file failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_format_on_test_files():
+    """Repo's ruff format check passes on HTML test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "test/components/test_html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on test file failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_components_syntax():
+    """All components parse without syntax errors (pass_to_pass)."""
+    code = """
+import ast
+import sys
+from pathlib import Path
+
+components_dir = Path('gradio/components')
+errors = []
+for py_file in components_dir.glob('*.py'):
+    try:
+        ast.parse(py_file.read_text())
+    except SyntaxError as e:
+        errors.append(f'{py_file}: {e}')
+
+if errors:
+    print('Syntax errors found:')
+    for err in errors:
+        print(err)
+    sys.exit(1)
+else:
+    print('OK')
+"""
+    r = subprocess.run(
+        ["python", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Components syntax check failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout
+
+
+
+
+
+
+def test_repo_ruff_format_components_dir():
+    """Ruff format check passes on entire components directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/components/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on components dir failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_gradio_import():
+    """Gradio package imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import gradio; print(gradio.__version__); print('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Gradio import failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - code behavior
 # ---------------------------------------------------------------------------
@@ -105,23 +176,23 @@ from pathlib import Path
 tree = ast.parse(Path("gradio/components/html.py").read_text())
 found = False
 for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef):
+    if isinstance(node, ast.ClassDef) and node.name == "HTML":
         for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                param_names = [arg.arg for arg in item.args.args]
-                assert "head" in param_names, (
-                    f"head not found in __init__ params: {param_names}"
+                # Check both regular args and keyword-only args
+                regular_params = [arg.arg for arg in item.args.args]
+                kwonly_params = [arg.arg for arg in item.args.kwonlyargs]
+                all_params = regular_params + kwonly_params
+                assert "head" in all_params, (
+                    f"head not found in __init__ params: {all_params}"
                 )
                 # head must come before server_functions
-                if "server_functions" in param_names:
-                    head_idx = param_names.index("head")
-                    sf_idx = param_names.index("server_functions")
+                if "server_functions" in all_params:
+                    head_idx = all_params.index("head")
+                    sf_idx = all_params.index("server_functions")
                     assert head_idx < sf_idx, (
                         "head param must come before server_functions"
                     )
-                # head must have a default of None
-                defaults = item.args.defaults
-                kw_defaults = item.args.kw_defaults  # for keyword-only args
                 found = True
                 print("PASS")
                 break
@@ -144,7 +215,7 @@ source = Path("gradio/components/html.py").read_text()
 tree = ast.parse(source)
 
 for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef):
+    if isinstance(node, ast.ClassDef) and node.name == "HTML":
         for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                 # Check for self.head = head assignment

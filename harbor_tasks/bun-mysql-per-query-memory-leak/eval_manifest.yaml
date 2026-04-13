@@ -64,58 +64,44 @@ checks:
   description: No @import() calls inline inside function bodies in modified files
 - id: test_repo_zig_syntax_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: Modified Zig files have balanced braces and valid syntax (repo CI gate)
-- id: test_repo_modified_files_readable
-  type: pass_to_pass
-  origin: repo_tests
-  description: All modified SQL/MySQL files are readable and non-empty (repo CI gate)
-- id: test_repo_required_fields_exist
-  type: pass_to_pass
-  origin: repo_tests
-  description: Required struct fields (name_or_index, params) exist in modified files
-- id: test_repo_bun_allocator_used
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files use bun.default_allocator for memory (repo CI gate)
-- id: test_repo_no_std_allocator_usage
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files do not use std.heap or std.mem.Allocator directly (repo
-    CI gate)
+  origin: static
+  description: Modified Zig files have balanced braces and valid syntax (CI-style gate)
 - id: test_repo_no_banned_words
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified files do not contain banned words/patterns from ban-words.test.ts
     CI check
-- id: test_repo_no_autofix_comments
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files should not have autofix todo comments (repo CI gate)
-- id: test_repo_no_enum_tagname
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files should use bun.tagName instead of std.enums.tagName
-    (repo CI gate)
-- id: test_repo_decls_use_decl_literals
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files use decl literals convention per CLAUDE.md (repo CI
-    gate)
-- id: test_repo_allocator_consistency
-  type: pass_to_pass
-  origin: repo_tests
-  description: Memory allocation and deallocation use consistent allocator patterns
-    (repo CI gate)
-- id: test_repo_no_debug_log_patterns
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files do not have std.debug.print or std.log patterns (repo
-    CI gate)
 - id: test_repo_mysql_structs_complete
   type: pass_to_pass
-  origin: repo_tests
-  description: MySQL structs have required fields and deinit methods (repo CI gate)
+  origin: static
+  description: MySQL structs have required fields and deinit methods (CI-style gate)
+- id: test_repo_allocator_consistency
+  type: pass_to_pass
+  origin: static
+  description: Memory allocation and deallocation use consistent allocator patterns
+    (CI-style gate)
+- id: test_repo_no_autofix_comments
+  type: pass_to_pass
+  origin: static
+  description: Modified files should not have autofix todo comments (CI-style gate)
+- id: test_repo_no_enum_tagname
+  type: pass_to_pass
+  origin: static
+  description: Modified files should use bun.tagName instead of std.enums.tagName
+    (CI-style gate)
+- id: test_repo_no_debug_log_patterns
+  type: pass_to_pass
+  origin: static
+  description: Modified files do not have std.debug.print or std.log patterns (CI-style
+    gate)
+- id: test_repo_no_std_unicode
+  type: pass_to_pass
+  origin: static
+  description: Modified files use bun.strings instead of std.unicode (CI-style gate)
+- id: test_repo_no_fs_api_misuse
+  type: pass_to_pass
+  origin: static
+  description: Modified files use bun.sys instead of std.fs APIs (CI-style gate)
 rubric:
 - rule: 'Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0,
     .value = 0 };`'
@@ -137,20 +123,44 @@ rubric:
   evidence: The gold solution uses anonymous struct literals `.{}` to zero-initialize
     `ColumnDefinition41` structs (`col.* = .{};`) in `MySQLConnection.zig`.
   category: style
-distractors:
-- rule: Writing Tests and Test Organization
-  collision_type: scope_ambiguity
-  why_distracting: The config provides extensive instructions on writing and organizing
-    tests. However, testing a native Zig memory leak (RSS growth without JS heap growth)
-    from JavaScript is highly flaky, complex, and often unreliable in CI. The gold
-    solution correctly omits a test, but an agent might waste significant time trying
-    to write one.
-  severity: high
+- rule: Decl literals in Zig are recommended (using `.{ ... }`).
   source:
-    path: CLAUDE.md
-    lines: 43-78
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md`/`AGENTS.md` focusing
-  on build and test instructions, and `src/CLAUDE.md`/`src/AGENTS.md` focusing on
-  Zig-specific coding conventions. The root-level testing rules create a strong distraction
-  because native memory leaks are exceptionally hard to test reliably in CI, conflicting
-  with the general expectation to add tests for bug fixes.
+    path: src/AGENTS.md
+    lines: 6-7
+  evidence: The gold solution initializes the allocated `ColumnDefinition41` structs
+    using the anonymous struct literal `.{}` (`col.* = .{};`) instead of explicitly
+    naming the type.
+  category: style
+- rule: Decl literals in Zig are recommended (e.g., `.{ ... }`).
+  source:
+    path: src/AGENTS.md
+    lines: 6-7
+  evidence: The gold solution uses anonymous struct literals `.{}` to zero-initialize
+    the `ColumnDefinition41` structs in `MySQLConnection.zig` (`for (statement.columns)
+    |*col| col.* = .{};`).
+  category: style
+distractors:
+- rule: Write tests using Bun's Jest-compatible test runner with proper test fixtures
+    (Bun.spawn, tempDir).
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions for writing tests using
+    Bun.spawn and tempDir. An agent might waste significant effort trying to write
+    a reliable memory leak test (e.g., measuring RSS after 5000 queries), which is
+    notoriously flaky in CI environments and is omitted from the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 50-80
+- rule: Always use bun.* APIs instead of std.*
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates replacing std.* APIs with bun.* APIs. An agent
+    might get distracted trying to refactor existing standard library usage in the
+    MySQL adapter files instead of focusing strictly on the memory leak fix.
+  severity: low
+  source:
+    path: src/AGENTS.md
+    lines: 15-26
+hierarchy_analysis: The hierarchy consists of root-level general guidelines (AGENTS.md/CLAUDE.md)
+  and src-level Zig-specific guidelines (src/AGENTS.md/src/CLAUDE.md). They are accumulative
+  and do not conflict, but neither provides direct guidance for native memory management
+  or allocator usage beyond a general preference for bun.* APIs.

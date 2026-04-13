@@ -47,6 +47,63 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Security-guidance hook script has valid Python syntax (python3 -m py_compile)
+- id: test_repo_all_plugin_jsons_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All plugin.json files across plugins are syntactically valid JSON
+- id: test_repo_all_hooks_jsons_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All hooks.json files across plugins are syntactically valid JSON
+- id: test_repo_agent_sdk_dev_plugin_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Agent-sdk-dev plugin manifest JSON is syntactically valid (python3
+    json module)
+- id: test_repo_feature_dev_plugin_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Feature-dev plugin manifest JSON is syntactically valid (python3 json
+    module)
+- id: test_repo_pr_review_plugin_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: PR-review-toolkit plugin manifest JSON is syntactically valid (python3
+    json module)
+- id: test_repo_examples_hook_valid_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: Examples hook (bash_command_validator_example.py) has valid Python
+    syntax (python3 -m py_compile)
+- id: test_repo_marketplace_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugin marketplace.json is syntactically valid JSON (python3 json module)
+- id: test_repo_devcontainer_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Devcontainer configuration JSON is syntactically valid (python3 json
+    module)
+- id: test_repo_devcontainer_script_valid_bash
+  type: pass_to_pass
+  origin: repo_tests
+  description: Devcontainer init script has valid bash syntax (bash -n)
+- id: test_repo_plugins_readme_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugins README.md exists
+- id: test_repo_plugins_readme_has_plugin_structure_docs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugins README documents the plugin.json structure
+- id: test_repo_code_review_readme_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code-review plugin README exists
+- id: test_repo_commit_commands_readme_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Commit-commands plugin README exists
 rubric:
 - rule: New plugins must include a plugin.json manifest in the .claude-plugin/ directory
     for plugin metadata
@@ -54,12 +111,95 @@ rubric:
     path: plugins/README.md
     lines: 82-86
     commit: 4dc23d0275ff615ba1dccbdd76ad2b12a3ede591
+  reference: |
+    {
+      "name": "explanatory-output-style",
+      "version": "1.0.0",
+      "description": "Adds educational insights about implementation choices and codebase patterns (mimics the deprecated Explanatory output style)",
+      "author": {
+        "name": "Dickson Tsai",
+        "email": "dickson@anthropic.com"
+      }
+    }
 - rule: New plugins must include a comprehensive README.md documenting the plugin's
     purpose, usage, and structure
   source:
     path: plugins/README.md
     lines: '94'
     commit: 4dc23d0275ff615ba1dccbdd76ad2b12a3ede591
+  reference: |
+    # Explanatory Output Style Plugin
+
+    This plugin recreates the deprecated Explanatory output style as a SessionStart
+    hook.
+
+    WARNING: Do not install this plugin unless you are fine with incurring the token
+    cost of this plugin's additional instructions and output.
+
+    ## What it does
+
+    When enabled, this plugin automatically adds instructions at the start of each
+    session that encourage Claude to:
+
+    1. Provide educational insights about implementation choices
+    2. Explain codebase patterns and decisions
+    3. Balance task completion with learning opportunities
+
+    ## How it works
+
+    The plugin uses a SessionStart hook to inject additional context into every
+    session. This context instructs Claude to provide brief educational explanations
+    before and after writing code, formatted as:
+
+    ```
+    `★ Insight ─────────────────────────────────────`
+    [2-3 key educational points]
+    `─────────────────────────────────────────────────`
+    ```
+
+    ## Usage
+
+    Once installed, the plugin activates automatically at the start of every
+    session. No additional configuration is needed.
+
+    The insights focus on:
+
+    - Specific implementation choices for your codebase
+    - Patterns and conventions in your code
+    - Trade-offs and design decisions
+    - Codebase-specific details rather than general programming concepts
+
+    ## Migration from Output Styles
+
+    This plugin replaces the deprecated "Explanatory" output style setting. If you
+    previously used:
+
+    ```json
+    {
+      "outputStyle": "Explanatory"
+    }
+    ```
+
+    You can now achieve the same behavior by installing this plugin instead.
+
+    More generally, this SessionStart hook pattern is roughly equivalent to
+    CLAUDE.md, but it is more flexible and allows for distribution through plugins.
+
+    Note: Output styles that involve tasks besides software development, are better
+    expressed as
+    [subagents](https://docs.claude.com/en/docs/claude-code/sub-agents), not as
+    SessionStart hooks. Subagents change the system prompt while SessionStart hooks
+    add to the default system prompt.
+
+    ## Managing changes
+
+    - Disable the plugin - keep the code installed on your device
+    - Uninstall the plugin - remove the code from your device
+    - Update the plugin - create a local copy of this plugin to personalize this
+      plugin
+      - Hint: Ask Claude to read
+        https://docs.claude.com/en/docs/claude-code/plugins.md and set it up for
+        you!
 config_edits:
 - path: plugins/explanatory-output-style/README.md
   tier: 2
@@ -73,12 +213,12 @@ config_edits:
     \ opportunities\n\n## How it works\n\nThe plugin uses a SessionStart hook to inject\
     \ additional context into every\nsession. This context instructs Claude to provide\
     \ brief educational explanations\nbefore and after writing code, formatted as:\n\
-    \n```\n`★ Insight ─────────────────────────────────────`\n[2-3 key educational\
-    \ points]\n`─────────────────────────────────────────────────`\n```\n\n## Usage\n\
-    \nOnce installed, the plugin activates automatically at the start of every\nsession.\
-    \ No additional configuration is needed.\n\nThe insights focus on:\n\n- Specific\
-    \ implementation choices for your codebase\n- Patterns and conventions in your\
-    \ code\n- Trade-offs and design decisions\n- Codebase-specific details rather\
+    \n```\n`★ Insight ─────────────────────────────────────────`\n[2-3 key educational\
+    \ points]\n`─────────────────────────────────────────────────────`\n```\n\n##\
+    \ Usage \nOnce installed, the plugin activates automatically at the start of every\n\
+    session. No additional configuration is needed.\n\nThe insights focus on:\n\n\
+    - Specific implementation choices for your codebase\n- Patterns and conventions\
+    \ in your\n- Trade-offs and design decisions\n- Codebase-specific details rather\
     \ than general programming concepts\n\n## Migration from Output Styles\n\nThis\
     \ plugin replaces the deprecated \"Explanatory\" output style setting. If you\n\
     previously used:\n\n```json\n{\n  \"outputStyle\": \"Explanatory\"\n}\n```\n\n\
@@ -86,7 +226,7 @@ config_edits:
     \ generally, this SessionStart hook pattern is roughly equivalent to\nCLAUDE.md,\
     \ but it is more flexible and allows for distribution through plugins.\n\nNote:\
     \ Output styles that involve tasks besides software development, are better\n\
-    \ expressed as\n[subagents](https://docs.claude.com/en/docs/claude-code/sub-agents),\
+    expressed as\n[subagents](https://docs.claude.com/en/docs/claude-code/sub-agents),\
     \ not as\nSessionStart hooks. Subagents change the system prompt while SessionStart\
     \ hooks\nadd to the default system prompt.\n\n## Managing changes\n\n- Disable\
     \ the plugin - keep the code installed on your device\n- Uninstall the plugin\

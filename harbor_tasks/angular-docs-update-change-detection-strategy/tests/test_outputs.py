@@ -188,7 +188,7 @@ def test_jsdoc_comments_structure():
     """JSDoc comments in modified files are well-formed (pass_to_pass)."""
     # Use shell commands to validate JSDoc structure
     r = subprocess.run(
-        """cd /workspace/angular && \
+        r"""cd /workspace/angular && \
            grep -c '/\\*\\*' packages/core/src/change_detection/constants.ts && \
            grep -c '\\*/' packages/core/src/change_detection/constants.ts && \
            grep -c '/\\*\\*' packages/core/src/metadata/directives.ts && \
@@ -236,7 +236,7 @@ def test_markdown_frontmatter():
 def test_clang_format_check():
     """Modified TypeScript files conform to repo formatting rules (pass_to_pass)."""
     r = subprocess.run(
-        """cd /workspace/angular && \
+        r"""cd /workspace/angular && \
            apt-get update -qq && apt-get install -y -qq clang-format 2>/dev/null && \
            clang-format --style=file --dry-run \
              packages/core/src/change_detection/constants.ts \
@@ -254,7 +254,7 @@ def test_clang_format_check():
 def test_repo_copyright_headers():
     """Modified source files have required Google copyright headers (pass_to_pass)."""
     r = subprocess.run(
-        """cd /workspace/angular && \
+        r"""cd /workspace/angular && \
            grep -l 'Copyright Google LLC' \
              packages/core/src/change_detection/constants.ts \
              packages/core/src/metadata/directives.ts""",
@@ -271,7 +271,7 @@ def test_repo_copyright_headers():
 def test_repo_file_validity():
     """Modified files are valid ASCII/UTF-8 text files (pass_to_pass)."""
     r = subprocess.run(
-        """cd /workspace/angular && \
+        r"""cd /workspace/angular && \
            apt-get update -qq && apt-get install -y -qq file 2>/dev/null && \
            file packages/core/src/change_detection/constants.ts \
                 packages/core/src/metadata/directives.ts""",
@@ -293,6 +293,71 @@ def test_git_log_commit():
     assert len(r.stdout.strip()) > 0, "Git log is empty"
     # Should show the base commit
     assert "c1261b0" in r.stdout or True, "Git log accessible"
+
+def test_repo_tslint():
+    """Repo's TSLint passes on all source files (pass_to_pass)."""
+    r = subprocess.run(
+        "cd /workspace/angular && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 && apt-get install -y nodejs 2>/dev/null && curl -fsSL https://get.pnpm.io/install.sh | bash - 2>/dev/null && export PNPM_HOME=/root/.local/share/pnpm && export PATH=$PNPM_HOME:$PATH && pnpm install --frozen-lockfile --ignore-scripts 2>/dev/null >/dev/null && pnpm tslint",
+        capture_output=True, text=True, timeout=300, shell=True,
+    )
+    assert r.returncode == 0, f"TSLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_tooling_setup():
+    """Repo's tooling setup compiles correctly (pass_to_pass)."""
+    r = subprocess.run(
+        "cd /workspace/angular && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 && apt-get install -y nodejs 2>/dev/null && curl -fsSL https://get.pnpm.io/install.sh | bash - 2>/dev/null && export PNPM_HOME=/root/.local/share/pnpm && export PATH=$PNPM_HOME:$PATH && pnpm install --frozen-lockfile --ignore-scripts 2>/dev/null >/dev/null && pnpm check-tooling-setup",
+        capture_output=True, text=True, timeout=300, shell=True,
+    )
+    assert r.returncode == 0, f"check-tooling-setup failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ts_circular_deps():
+    """Repo has no circular dependencies in TypeScript imports (pass_to_pass)."""
+    r = subprocess.run(
+        "cd /workspace/angular && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 && apt-get install -y nodejs 2>/dev/null && curl -fsSL https://get.pnpm.io/install.sh | bash - 2>/dev/null && export PNPM_HOME=/root/.local/share/pnpm && export PATH=$PNPM_HOME:$PATH && pnpm install --frozen-lockfile --ignore-scripts 2>/dev/null >/dev/null && pnpm ts-circular-deps:check",
+        capture_output=True, text=True, timeout=300, shell=True,
+    )
+    assert r.returncode == 0, f"Circular deps check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ng_dev_skills():
+    """Repo's agent skills configuration is valid (pass_to_pass)."""
+    r = subprocess.run(
+        "cd /workspace/angular && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 && apt-get install -y nodejs 2>/dev/null && curl -fsSL https://get.pnpm.io/install.sh | bash - 2>/dev/null && export PNPM_HOME=/root/.local/share/pnpm && export PATH=$PNPM_HOME:$PATH && pnpm install --frozen-lockfile --ignore-scripts 2>/dev/null >/dev/null && pnpm ng-dev ai skills validate",
+        capture_output=True, text=True, timeout=300, shell=True,
+    )
+    assert r.returncode == 0, f"ng-dev skills validate failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ng_dev_pullapprove():
+    """Repo's PullApprove configuration is valid (pass_to_pass)."""
+    r = subprocess.run(
+        "cd /workspace/angular && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 && apt-get install -y nodejs 2>/dev/null && curl -fsSL https://get.pnpm.io/install.sh | bash - 2>/dev/null && export PNPM_HOME=/root/.local/share/pnpm && export PATH=$PNPM_HOME:$PATH && pnpm install --frozen-lockfile --ignore-scripts 2>/dev/null >/dev/null && pnpm ng-dev pullapprove verify",
+        capture_output=True, text=True, timeout=300, shell=True,
+    )
+    assert r.returncode == 0, f"ng-dev pullapprove verify failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ng_dev_ngbot():
+    """Repo's NgBot configuration is valid (pass_to_pass)."""
+    r = subprocess.run(
+        "cd /workspace/angular && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 && apt-get install -y nodejs 2>/dev/null && curl -fsSL https://get.pnpm.io/install.sh | bash - 2>/dev/null && export PNPM_HOME=/root/.local/share/pnpm && export PATH=$PNPM_HOME:$PATH && pnpm install --frozen-lockfile --ignore-scripts 2>/dev/null >/dev/null && pnpm ng-dev ngbot verify",
+        capture_output=True, text=True, timeout=300, shell=True,
+    )
+    assert r.returncode == 0, f"ng-dev ngbot verify failed:\n{r.stderr[-500:]}"
+
+
+
+
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - core source JSDoc updates
+# ---------------------------------------------------------------------------
+
+
+
 
 
 # ---------------------------------------------------------------------------

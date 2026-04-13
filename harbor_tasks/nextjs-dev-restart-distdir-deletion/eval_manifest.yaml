@@ -68,65 +68,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Critical source files exist and are readable
-rubric:
-- rule: File watching with directory deletion detection should be inside an isDev
-    or __NEXT_DEV_SERVER guard (dev-server-only behavior)
-  source:
-    path: AGENTS.md
-    lines: 265-270
-    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
-- rule: File watching code for config changes should be inside the if (isDev) guard
-    and use process.exit(RESTART_EXIT_CODE) for restarts
-  source:
-    path: AGENTS.md
-    lines: 428-432
-    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
-- rule: Use Log.warn() for config change warnings and Log.error() for directory deletion
-    errors, not console.log
-  source:
-    path: packages/next/src/server/lib/start-server.ts
-    lines: 73-86
-    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
-- rule: The main Next.js framework lives in `packages/next/`. Source code is in `packages/next/src/`.
-  source:
-    path: CLAUDE.md
-    lines: 19-23
-  evidence: The gold solution correctly modifies the source file in `packages/next/src/server/lib/start-server.ts`
-    to implement the fix within the core framework package's source directory.
-  category: architecture
+- id: test_repo_unit_parse_page_static_info
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for parse-page-static-info pass (server startup page parsing)
+- id: test_repo_unit_find_page_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for find-page-file pass (dev server page lookup)
+- id: test_repo_unit_find_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for find-config pass (next.config.js location during startup)
+- id: test_repo_typescript_check_start_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript can parse start-server.ts without errors
+- id: test_repo_watchpack_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Watchpack import exists in start-server.ts for directory watching
+- id: test_repo_isdev_guard_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: isDev guard block exists for dev-only code in start-server.ts
+- id: test_repo_config_files_constant
+  type: pass_to_pass
+  origin: repo_tests
+  description: CONFIG_FILES constant is imported for config watching
+rubric: []
 distractors:
-- rule: 'Key entry points: Dev server: `src/cli/next-dev.ts` → `src/server/dev/next-dev-server.ts`'
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to add the directory watching logic in `next-dev-server.ts`
-    or `next-dev.ts` because they are explicitly listed as the key entry points for
-    the dev server. However, the file watching logic for config files (which is where
-    the `.next` directory watching should be added) is actually located in `src/server/lib/start-server.ts`.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 25-27
-- rule: Compiled output goes to `packages/next/dist/` (mirrors src/ structure).
-  collision_type: meta_confusion
-  why_distracting: The issue is about the `.next` directory (the user app's build
-    output) being deleted. The agent might confuse this with the framework's compiled
-    output directory (`packages/next/dist/`) mentioned in the instructions, leading
-    to watching the wrong directory.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 31-31
-- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
-    pnpm testheadless test/path/to/test.ts'
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
   collision_type: would_cause_bug
-  why_distracting: The agent might try to write a test using `testheadless` (which
-    runs without worker isolation to be fast), but testing a process exit (`process.exit(RESTART_EXIT_CODE)`)
-    would kill the test runner itself if not properly isolated.
+  why_distracting: The rule instructs the agent to start the dev server in the background.
+    However, the bug being fixed causes the dev server to hang when `.next` is deleted.
+    If the agent follows this rule and reproduces the bug, the background process
+    will hang, which could interfere with testing the fix or cause environment issues.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 66-70
-hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical symlinks.
-  They provide high-level architectural guidance and development workflows. The main
-  challenge is that the architectural guidance points to `next-dev-server.ts` as the
-  dev server entry point, which conflicts with the actual location of the file watching
-  logic in `start-server.ts`.
+    path: AGENTS.md
+    lines: 83-85
+hierarchy_analysis: The config is a flat, single-file generic repository guide (AGENTS.md/CLAUDE.md)
+  containing boilerplate workflow instructions rather than specific coding constraints.

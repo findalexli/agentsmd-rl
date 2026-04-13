@@ -53,22 +53,42 @@ checks:
     path: AGENTS.md
     lines: '76'
     commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
-- id: cargo_check_ty_all_targets
-  type: pass_to_pass
-  origin: repo_tests
-  description: ty crate compiles with all targets and features
-- id: cargo_clippy_ty
-  type: pass_to_pass
-  origin: repo_tests
-  description: ty crate passes clippy linting
 - id: cargo_fmt_check
   type: pass_to_pass
   origin: repo_tests
   description: Code passes rustfmt formatting checks
-- id: ty_python_semantic_semantic_index_tests
+- id: overloads_md_exists
   type: pass_to_pass
   origin: repo_tests
-  description: Semantic index tests pass - tests builder.rs module
+  description: Upstream overloads mdtest file exists and contains expected test content
+- id: cargo_metadata
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo metadata command works and includes ty_python_semantic
+- id: ty_binary_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty binary executes without errors and shows version
+- id: ty_check_valid_overloads
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty correctly handles valid overloads in TYPE_CHECKING block
+- id: cargo_doc_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation for ty_python_semantic crate builds without errors
+- id: mdtest_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Overloads mdtest file exists and contains expected TYPE_CHECKING content
+- id: no_tabs_in_builder_rs
+  type: pass_to_pass
+  origin: static
+  description: Source code uses spaces not tabs for indentation
+- id: builder_rs_has_type_checking_logic
+  type: pass_to_pass
+  origin: static
+  description: Builder.rs contains TYPE_CHECKING state tracking where fix is applied
 rubric:
 - rule: Use comments purposefully. Don't use comments to narrate code, but do use
     them to explain invariants and why something unusual was done a particular way.
@@ -107,47 +127,18 @@ rubric:
     verifies the behavior of overloaded functions inside nested conditional blocks
     within `if TYPE_CHECKING:`.
   category: testing
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem.
-  source:
-    path: AGENTS.md
-    lines: 71-72
-  evidence: The gold solution fixes the bug by simply updating the boolean assignment
-    to `is_outer_block_in_type_checking || clause_in_type_checking` using existing
-    variables, rather than introducing new state tr
-  category: architecture
 distractors:
-- rule: If asked to reproduce changes in the ty ecosystem, use this script to clone
-    the project... `uv run scripts/setup_primer_project.py`
+- rule: Rust imports should always go at the top of the file, never locally in functions.
   collision_type: scope_ambiguity
-  why_distracting: The problem description provides a clear, minimal example of the
-    bug. The agent does not need to run `uv run scripts/setup_primer_project.py` to
-    clone an entire ecosystem project to reproduce this, which would waste time and
-    context window.
+  why_distracting: The rule states that imports should always go at the top of the
+    file and never locally. However, this rule explicitly applies to Rust code. The
+    Python test case added in the markdown file requires a local import (`import sys`
+    inside `if TYPE_CHECKING:`) to properly set up the nested conditional block scenario.
+    An agent might mistakenly apply this Rust rule to the Python test code, moving
+    the import and potentially altering the test's behavior.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 46-56
-- rule: Always run `uvx prek run -a` at the end of a task, after every rebase, after
-    addressing any review comment, and before pushing any code.
-  collision_type: meta_confusion
-  why_distracting: The agent is generating a patch for a specific bug fix. Running
-    a full pre-commit hook suite (`uvx prek run -a`) might format unrelated files
-    or fail due to missing environment setup, distracting from the core fix.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 70-71
-- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
-    the `ty` GitHub label.
-  collision_type: meta_confusion
-  why_distracting: The agent is tasked with fixing the code and generating a patch,
-    not interacting with GitHub or creating a PR. Attempting to use the `gh` CLI or
-    write PR descriptions is out of scope.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 59-60
-hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
-  `AGENTS.md`. All rules originate from `AGENTS.md`, so there are no conflicts between
-  different levels of the hierarchy.
+    lines: 66-67
+hierarchy_analysis: The configuration is essentially flat, with `CLAUDE.md` simply
+  including `AGENTS.md`. The rules provided are generic repository guidelines.

@@ -56,7 +56,7 @@ import { readFileSync } from 'fs';
 const src = readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
 
 // Extract command names from all declareCommand calls
-const names = [...src.matchAll(/declareCommand\\(\\{[\\s\\S]*?name:\\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
+const names = [...src.matchAll(/declareCommand\\(\\{[\\s\\S]*?name:\\s*['\"]([^'\"]+)['\"]/g)].map(m => m[1]);
 
 const required = ['list', 'close-all', 'kill-all'];
 const missing = required.filter(c => !names.includes(c));
@@ -103,7 +103,7 @@ if (typeStr.includes("'session'")) {
 }
 
 // Check category assignments in commands
-const cats = [...cmdsTs.matchAll(/category:\\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
+const cats = [...cmdsTs.matchAll(/category:\\s*['\"]([^'\"]+)['\"]/g)].map(m => m[1]);
 if (cats.includes('session')) {
     console.error(JSON.stringify({ error: 'session_category_in_commands' }));
     process.exit(1);
@@ -127,7 +127,7 @@ def test_program_switch_uses_new_names():
 import { readFileSync } from 'fs';
 const src = readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
 
-const cases = [...src.matchAll(/case\\s+['"]([^'"]+)['"]/g)].map(m => m[1]);
+const cases = [...src.matchAll(/case\\s+['\"]([^'\"]+)['\"]/g)].map(m => m[1]);
 
 const required = ['list', 'close-all', 'kill-all'];
 const missing = required.filter(c => !cases.includes(c));
@@ -318,6 +318,56 @@ def test_program_still_handles_open_close():
     assert "case 'delete-data'" in content, "program.ts must handle 'delete-data' command"
 
 
+def test_modified_typescript_files_have_balanced_braces():
+    """Modified TypeScript files have balanced braces (static)."""
+    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
+        content = ts_file.read_text()
+        open_count = content.count('{')
+        close_count = content.count('}')
+        assert open_count == close_count, f"{ts_file.name}: Unbalanced braces ({open_count} open, {close_count} close)"
+
+
+def test_modified_typescript_files_have_balanced_parentheses():
+    """Modified TypeScript files have balanced parentheses (static)."""
+    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
+        content = ts_file.read_text()
+        open_count = content.count('(')
+        close_count = content.count(')')
+        assert open_count == close_count, f"{ts_file.name}: Unbalanced parentheses ({open_count} open, {close_count} close)"
+
+
+def test_skill_documentation_files_exist():
+    """SKILL.md and session-management.md exist and are non-empty (static)."""
+    assert SKILL_MD.exists(), 'SKILL.md must exist'
+    assert SKILL_MD.stat().st_size > 0, 'SKILL.md must not be empty'
+    assert SESSION_MGMT_MD.exists(), 'session-management.md must exist'
+    assert SESSION_MGMT_MD.stat().st_size > 0, 'session-management.md must not be empty'
+
+
+def test_command_ts_has_category_type():
+    """command.ts defines Category type (static)."""
+    content = COMMAND_TS.read_text()
+    assert 'type Category' in content, 'command.ts must define Category type'
+
+
+def test_commands_ts_has_declare_command():
+    """commands.ts uses declareCommand (static)."""
+    content = COMMANDS_TS.read_text()
+    assert 'declareCommand' in content, 'commands.ts must use declareCommand'
+
+
+def test_program_ts_has_switch_structure():
+    """program.ts has command dispatch switch (static)."""
+    content = PROGRAM_TS.read_text()
+    assert 'switch(commandName)' in content or 'switch (commandName)' in content, 'program.ts must have command dispatch switch statement'
+
+
+def test_help_generator_has_categories():
+    """helpGenerator.ts defines categories array (static)."""
+    content = HELP_GEN_TS.read_text()
+    assert 'categories' in content, 'helpGenerator.ts must define categories'
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — repo CI/CD validation
 # These tests validate the repo's structural integrity passes on both
@@ -342,71 +392,32 @@ def test_repo_npm_run_eslint():
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-def test_repo_npm_run_test_mcp_cli_help():
-    """Repo CI check: MCP cli-help tests pass (pass_to_pass)."""
+def test_repo_npm_run_check_deps():
+    """Repo CI check: npm run check-deps passes (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "playwright", "test", "--config=tests/mcp/playwright.config.ts", "cli-help.spec.ts"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"MCP cli-help tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    assert r.returncode == 0, f"check-deps failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-def test_modified_typescript_files_have_balanced_braces():
-    """Repo CI check: Modified TypeScript files have balanced braces (pass_to_pass)."""
-    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
-        content = ts_file.read_text()
-        open_count = content.count('{')
-        close_count = content.count('}')
-        assert open_count == close_count, f"{ts_file.name}: Unbalanced braces ({open_count} open, {close_count} close)"
+def test_repo_npm_run_lint_packages():
+    """Repo CI check: npm run lint-packages passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-def test_modified_typescript_files_have_balanced_parentheses():
-    """Repo CI check: Modified TypeScript files have balanced parentheses (pass_to_pass)."""
-    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
-        content = ts_file.read_text()
-        open_count = content.count('(')
-        close_count = content.count(')')
-        assert open_count == close_count, f"{ts_file.name}: Unbalanced parentheses ({open_count} open, {close_count} close)"
-
-
-def test_terminal_files_are_valid_typescript():
-    """Repo CI check: Terminal TypeScript files have valid structure (pass_to_pass)."""
-    # Check that files have proper TypeScript structure markers
-    for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:
-        content = ts_file.read_text()
-        # Check for import statements or exports (valid TS module markers)
-        has_import = 'import ' in content
-        has_export = 'export ' in content
-        assert has_import or has_export, f"{ts_file.name}: Missing import or export statements"
-
-
-def test_skill_documentation_files_exist():
-    """Repo CI check: SKILL.md and session-management.md exist and are non-empty (pass_to_pass)."""
-    assert SKILL_MD.exists(), 'SKILL.md must exist'
-    assert SKILL_MD.stat().st_size > 0, 'SKILL.md must not be empty'
-    assert SESSION_MGMT_MD.exists(), 'session-management.md must exist'
-    assert SESSION_MGMT_MD.stat().st_size > 0, 'session-management.md must not be empty'
-
-
-def test_command_ts_has_category_type():
-    """Repo CI check: command.ts defines Category type (pass_to_pass)."""
-    content = COMMAND_TS.read_text()
-    assert 'type Category' in content, 'command.ts must define Category type'
-
-
-def test_commands_ts_has_declare_command():
-    """Repo CI check: commands.ts uses declareCommand (pass_to_pass)."""
-    content = COMMANDS_TS.read_text()
-    assert 'declareCommand' in content, 'commands.ts must use declareCommand'
-
-
-def test_program_ts_has_switch_structure():
-    """Repo CI check: program.ts has command dispatch switch (pass_to_pass)."""
-    content = PROGRAM_TS.read_text()
-    assert 'switch(commandName)' in content or 'switch (commandName)' in content, 'program.ts must have command dispatch switch statement'
-
-
-def test_help_generator_has_categories():
-    """Repo CI check: helpGenerator.ts defines categories array (pass_to_pass)."""
-    content = HELP_GEN_TS.read_text()
-    assert 'categories' in content, 'helpGenerator.ts must define categories'
+def test_repo_npx_eslint_modified_files():
+    """Repo CI check: npx eslint passes on modified terminal files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--no-cache",
+         "packages/playwright/src/mcp/terminal/command.ts",
+         "packages/playwright/src/mcp/terminal/commands.ts",
+         "packages/playwright/src/mcp/terminal/helpGenerator.ts",
+         "packages/playwright/src/mcp/terminal/program.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on modified files failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

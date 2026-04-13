@@ -41,17 +41,36 @@ checks:
   origin: static
   description: worker.js is valid ES module with correct imports from streams-util
     and a fetch handler
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes on sample JS files
+- id: test_repo_node_syntax_streams_util
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js syntax validation passes on streams-util.js
+- id: test_repo_node_syntax_worker
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js syntax validation passes on worker.js
+- id: test_repo_npm_install
+  type: pass_to_pass
+  origin: repo_tests
+  description: npm install completes successfully (repo dependencies installable)
+- id: test_repo_sample_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sample directory exists with all required files after patch
 rubric:
-- rule: Sample follows the same structure as existing samples in the samples/ directory
+- rule: Sample follows the same structure as existing samples (config.capnp, worker.js,
+    README.md, util file)
   source:
-    path: CLAUDE.md
-    lines: '30'
-    commit: 87abde7e73188dd0543944255fa6c0632d857fe8
-- rule: README.md is consistent in style with other sample READMEs (e.g., samples/eventsource/README.md)
+    path: samples/web-streams/worker.js
+    commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f
+- rule: README.md is consistent in style with other sample READMEs
   source:
-    path: CLAUDE.md
-    lines: '7'
-    commit: 87abde7e73188dd0543944255fa6c0632d857fe8
+    path: samples/web-streams/README.md
+    commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f
 - rule: README.md documents all four stream endpoints (/sync, /async, /bytes/sync,
     /bytes/async)
   source:
@@ -63,26 +82,21 @@ rubric:
     path: samples/web-streams/README.md
     lines: 14-32
     commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f
-- rule: Check README.md files for package/directory level information
+- rule: README.md files provide package/directory level information
   source:
     path: CLAUDE.md
     lines: 8-9
-  evidence: The gold solution creates `samples/web-streams/README.md` containing directory-level
-    information such as endpoints, running instructions, and testing commands.
+  evidence: The gold solution creates a README.md file in the new sample directory
+    that provides directory-level information, including endpoints, running instructions,
+    and testing commands.
   category: documentation
-- rule: Sample configurations in `samples/` directory
+- rule: Sample configurations belong in the samples/ directory and use Cap'n Proto
+    format
   source:
     path: CLAUDE.md
-    lines: 61-62
-  evidence: The gold solution places the new sample configuration and code in the
-    `samples/web-streams/` directory.
-  category: architecture
-- rule: Uses Cap'n Proto for configuration files (.capnp format)
-  source:
-    path: CLAUDE.md
-    lines: 59-60
-  evidence: The gold solution creates `samples/web-streams/config.capnp` for the workerd
-    configuration.
+    lines: 64-65
+  evidence: The gold solution creates a config.capnp file inside the new samples/web-streams/
+    directory.
   category: architecture
 config_edits:
 - path: samples/web-streams/README.md
@@ -143,25 +157,22 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: 'Unit Tests: `.wd-test` files use Cap''n Proto config format'
+- rule: Suggest updates to CLAUDE.md when you find new high-level information
   collision_type: scope_ambiguity
-  why_distracting: The prompt mentions the sample is for 'internal testing of streams-related
-    improvements', which might lead an agent to create a `.wd-test` file. However,
-    the prompt explicitly requests HTTP endpoints for `curl` testing and lists the
-    exact files to create, none of which are `.wd-test` files.
+  why_distracting: The agent might attempt to edit CLAUDE.md to document the new web-streams
+    sample, misinterpreting the addition of a sample as 'new high-level information'.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 31-32
-- rule: Suggest updates to CLAUDE.md when you find new high-level information
-  collision_type: meta_confusion
-  why_distracting: An agent might think adding a new sample directory constitutes
-    'new high-level information' and attempt to modify `CLAUDE.md`, which is unnecessary
-    and out of scope for this PR.
-  severity: low
+    lines: 10-11
+- rule: 'Unit Tests: `.wd-test` files use Cap''n Proto config format'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a `.wd-test` file for the sample,
+    but the prompt specifically requests documenting how to test the sample via `curl`
+    in the README.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 10-11
-hierarchy_analysis: Only one config file (`CLAUDE.md`) is present at the root level,
-  so there are no inter-file conflicts. The rules are applied directly from the root
-  level.
+    lines: 34-35
+hierarchy_analysis: The configuration is a flat, single file (CLAUDE.md) at the root
+  level. There is no complex hierarchy to navigate.

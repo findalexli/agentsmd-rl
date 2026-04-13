@@ -205,3 +205,146 @@ def test_repo_tokenization_auto_imports():
         timeout=30,
     )
     assert r.returncode == 0, f"Tokenization auto imports failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check_copies.py ensures Copied from blocks are consistent
+def test_repo_check_copies():
+    """Copied from blocks are consistent (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_copies failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check_dummies.py ensures dummy objects are correctly defined
+def test_repo_check_dummies():
+    """Dummy objects are correctly defined (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_dummies failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check_inits.py ensures __init__ files are correctly set up
+def test_repo_check_inits():
+    """__init__ files are correctly set up (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_inits failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — ruff check on auto directory
+def test_repo_ruff_auto_dir():
+    """Ruff check passes on transformers/models/auto/ directory."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "src/transformers/models/auto/"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff check on auto dir failed:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — check_doc_toc.py ensures documentation TOC is valid
+def test_repo_check_doc_toc():
+    """Documentation TOC is valid (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"check_doc_toc failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — tokenizer mapping structure unit test
+def test_repo_tokenizer_mapping_structure():
+    """Tokenizer mapping names structure is valid (unit test from test_tokenization_auto.py)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            "from tests.models.auto.test_tokenization_auto import AutoTokenizerTest; "
+            "t = AutoTokenizerTest(); "
+            "t.test_tokenizer_mapping_names_use_single_entries(); "
+            "print('PASS')",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0 and "PASS" in r.stdout, f"Test failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — model name edge cases in mappings
+def test_repo_model_name_edge_cases():
+    """Model name edge cases in tokenizer mappings are handled correctly."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            "from tests.models.auto.test_tokenization_auto import AutoTokenizerTest; "
+            "t = AutoTokenizerTest(); "
+            "t.test_model_name_edge_cases_in_mappings(); "
+            "print('PASS')",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0 and "PASS" in r.stdout, f"Test failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check_config_attributes.py
+def test_repo_check_config_attributes():
+    """Config attributes are correctly documented (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_config_attributes.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_config_attributes failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check_config_docstrings.py
+def test_repo_check_config_docstrings():
+    """Config docstrings are correctly formatted (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_config_docstrings.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_config_docstrings failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — check_pipeline_typing.py
+def test_repo_check_pipeline_typing():
+    """Pipeline typing is correctly defined (repo consistency check)."""
+    r = subprocess.run(
+        ["python", "utils/check_pipeline_typing.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_pipeline_typing failed:\n{r.stdout}\n{r.stderr}"

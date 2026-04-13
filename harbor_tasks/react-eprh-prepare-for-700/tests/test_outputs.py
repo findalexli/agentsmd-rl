@@ -261,3 +261,162 @@ def test_repo_index_ts_no_syntax_errors():
     assert r.returncode == 0, f"grep failed: {r.stderr}"
     count = int(r.stdout.strip())
     assert count >= 1, f"Expected at least one 'export default', found {count}"
+
+
+def test_repo_ci_license_check():
+    """Repo CI license check passes - no unexpected PATENTS references (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_git_base_commit_exists():
+    """Repo contains the expected base commit in git history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "cat-file", "-t", "9724e3e66e4ad3cc82c728e5c732c21986825b06"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Base commit not found in git history: {r.stderr}"
+    assert "commit" in r.stdout, f"Expected commit object, got: {r.stdout}"
+
+
+
+def test_repo_eslint_plugin_configs_structure():
+    """ESLint plugin configs object has valid structure with expected keys (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", r"grep -E '^(const|let|var)\s+configs' packages/eslint-plugin-react-hooks/src/index.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"configs declaration not found: {r.stderr}"
+
+
+def test_repo_eslint_plugin_meta_name():
+    """ESLint plugin meta object has name field (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "grep -q 'name.*:.*eslint-plugin-react-hooks' packages/eslint-plugin-react-hooks/src/index.ts && echo 'found'"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"grep failed: {r.stderr}"
+    assert "found" in r.stdout, "meta name not found in index.ts"
+
+
+def test_repo_eslint_plugin_typescript_syntax():
+    """ESLint plugin TypeScript files have valid syntax (balanced braces check) (pass_to_pass)."""
+    cmd = """cd packages/eslint-plugin-react-hooks && open=$(grep -o '{' src/index.ts | wc -l) && close=$(grep -o '}' src/index.ts | wc -l) && [ "$open" -eq "$close" ] && echo 'balanced' || echo 'unbalanced'"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}"
+    assert "balanced" in r.stdout, f"Braces not balanced in index.ts: {r.stdout}"
+
+
+def test_repo_eslint_plugin_has_export_default():
+    """ESLint plugin index.ts exports a default plugin object (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "grep -q 'export default' packages/eslint-plugin-react-hooks/src/index.ts && echo 'found'"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Export default not found: {r.stderr}"
+    assert "found" in r.stdout, "export default not found in index.ts"
+
+
+def test_repo_eslint_plugin_rules_directory():
+    """ESLint plugin rules directory contains expected rule files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ls", "packages/eslint-plugin-react-hooks/src/rules/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ls failed: {r.stderr}"
+    rules = ["RulesOfHooks.ts", "ExhaustiveDeps.ts"]
+    for rule in rules:
+        assert rule in r.stdout, f"Expected rule {rule} not found in rules directory"
+
+
+def test_repo_eslint_fixtures_structure():
+    """ESLint fixtures have expected structure with valid configs (pass_to_pass)."""
+    # Check that fixture directories exist and have expected configs
+    fixtures = ["eslint-v6", "eslint-v7", "eslint-v8"]
+    for fixture in fixtures:
+        r = subprocess.run(
+            ["ls", "-la", f"fixtures/{fixture}/"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Fixture {fixture} directory missing: {r.stderr}"
+        has_config = ".eslintrc.json" in r.stdout or "eslint.config.js" in r.stdout
+        assert has_config, f"No eslint config found in {fixture}"
+
+
+def test_repo_eslint_plugin_compiler_rules_exist():
+    """ESLint plugin shared directory contains ReactCompiler rules (pass_to_pass)."""
+    r = subprocess.run(
+        ["ls", "packages/eslint-plugin-react-hooks/src/shared/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ls failed: {r.stderr}"
+    assert "ReactCompiler.ts" in r.stdout, "ReactCompiler.ts not found in shared directory"
+
+
+def test_repo_react_versions_file():
+    """ReactVersions.js contains expected package versions (pass_to_pass)."""
+    r = subprocess.run(
+        ["cat", "ReactVersions.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cat failed: {r.stderr}"
+    assert "eslint-plugin-react-hooks" in r.stdout, "eslint-plugin-react-hooks not in ReactVersions.js"
+
+
+def test_repo_git_ls_files():
+    """Git tracks expected files in packages/eslint-plugin-react-hooks (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", "packages/eslint-plugin-react-hooks/src/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+    files = r.stdout.strip().split("\n")
+    assert len(files) > 0, "No tracked files found"
+    assert any("index.ts" in f for f in files), "index.ts not tracked by git"
+
+
+def test_repo_root_package_json_scripts():
+    """Root package.json has expected CI scripts (pass_to_pass)."""
+    r = subprocess.run(
+        ["cat", "package.json"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cat failed: {r.stderr}"
+    assert '"test"' in r.stdout, "test script not found in package.json"
+    assert '"lint"' in r.stdout, "lint script not found in package.json"
+
+
+def test_repo_scripts_ci_directory():
+    """CI scripts directory has expected files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ls", "scripts/ci/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ls failed: {r.stderr}"
+    assert "check_license.sh" in r.stdout, "check_license.sh not in ci scripts"
+
+
+def test_repo_eslint_config_valid():
+    """Root eslintrc.js exists and has valid structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["head", "-20", ".eslintrc.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"head failed: {r.stderr}"
+    assert "module.exports" in r.stdout, "Invalid eslintrc.js - missing module.exports"
+
+
+def test_repo_babel_config_valid():
+    """Babel config files exist and have valid structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["cat", "babel.config.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cat failed: {r.stderr}"
+    assert "module.exports" in r.stdout, "Invalid babel.config.js"

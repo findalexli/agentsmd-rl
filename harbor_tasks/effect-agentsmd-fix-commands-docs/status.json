@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T18:13:49.036584",
-  "total_time": 2700.26,
-  "sandbox_id": "iprq5k6n5sqabneibsjpy",
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-11T22:13:21.901590",
+  "total_time": 6394.9,
+  "sandbox_id": "ifcg9lwrdoafgr82qxr9t",
   "backend": "fireworks",
   "pipeline": "agents",
   "nodes": {
@@ -13,12 +13,12 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1041.12,
+      "time": 1402.99,
       "notes": ""
     },
     "p2p_enrichment_check": {
       "status": "ok",
-      "notes": "CI commands verified working: pnpm lint (eslint), pnpm check (tsc), pnpm circular (madge), pnpm test-types (tstyche), pnpm vitest run <specific tests>"
+      "notes": "16 p2p tests verified: test_repo_lint, test_repo_typecheck, test_repo_circular, test_repo_type_tests, test_repo_ai_chat_tests, test_repo_ai_languagemodel_tests, test_repo_ai_tool_tests, test_repo_ai_prompt_tests, test_repo_sql_tests, test_repo_schema_userland_tests, test_repo_docgen, test_repo_platform_node_tests (original 12) + test_repo_schema_arbitrary_tests, test_repo_codegen (2 new). All pass on base commit 5487cfb65a69a308e7c0b29ae666c8a9ddcab159."
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -42,15 +42,20 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 3,
+      "notes": "Fixed solve.sh to properly apply gold solution using Python string replacement. Fixed tests to find correct @example blocks. All 29 tests pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1647.51
+      "time": 3397.15
     },
     "rubric_validate": {
       "status": "ok",
       "model": "gemini-3.1-pro",
       "backend": "fireworks",
-      "time": 21.98,
+      "time": "21.98",
       "notes": "",
       "precision": 0.33
     },
@@ -60,48 +65,58 @@
       "backend": "fireworks",
       "time": 49.8,
       "notes": "precision was 0.33, fixing hallucinated rules"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 22.12,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
     {
       "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1711.79,
-      "at": "2026-04-09T14:56:42.911451"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1712.06,
-      "at": "2026-04-09T14:56:43.069054"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "nop": -1,
+      "gold": -1,
       "backend": "fireworks",
       "time": 3228.29,
       "at": "2026-04-10T12:07:45.159774"
     },
     {
       "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "nop": -1,
+      "gold": -1,
       "backend": "fireworks",
-      "time": 4556.81,
-      "at": "2026-04-10T15:59:58.298003"
+      "time": 3228.29,
+      "at": "2026-04-10T12:07:45.159774"
     },
     {
       "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "nop": -1,
+      "gold": -1,
       "backend": "fireworks",
       "time": 2700.26,
       "at": "2026-04-10T18:13:49.036584"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1,
+      "gold": -1,
+      "backend": "fireworks",
+      "time": 5802.12,
+      "at": "2026-04-11T20:43:12.961734"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 6394.9,
+      "at": "2026-04-11T22:13:21.901590"
     }
   ]
 }

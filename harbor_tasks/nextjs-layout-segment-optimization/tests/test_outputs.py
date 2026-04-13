@@ -356,3 +356,326 @@ def test_repo_file_structure():
     assert (REPO / "turbopack/crates/turbopack-core/src/module_graph").is_dir(), (
         "turbopack module_graph directory missing"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_app_page_syntax():
+    """Modified app-page.ts has valid JavaScript/TypeScript syntax (pass_to_pass).
+
+    Runs Node.js syntax check to ensure the file is syntactically valid.
+    This validates the TypeScript import with syntax introduced in the PR.
+    """
+    r = subprocess.run(
+        ["node", "--check", str(APP_PAGE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, (
+        f"app-page.ts has syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chunk_group_info_structure():
+    """Chunk group info Rust file has expected enum structure (pass_to_pass).
+
+    Validates the file contains the expected enum definitions and patterns
+    that the PR will modify.
+    """
+    r = subprocess.run(
+        ["grep", "-c", "pub enum ChunkGroupEntry", str(CHUNK_GROUP)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "ChunkGroupEntry enum not found in chunk_group_info.rs"
+    )
+
+    r = subprocess.run(
+        ["grep", "-c", "pub enum ChunkGroup", str(CHUNK_GROUP)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "ChunkGroup enum not found in chunk_group_info.rs"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_api_structure():
+    """Next API Rust file has expected app_module_graphs function (pass_to_pass).
+
+    Validates the file contains the app_module_graphs function that the PR modifies.
+    """
+    r = subprocess.run(
+        ["grep", "-c", "fn app_module_graphs", str(APP_RS)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "app_module_graphs function not found in app.rs"
+    )
+
+# [repo_tests] pass_to_pass
+def test_repo_loader_tree_structure():
+    """App page loader tree has expected metadata import pattern (pass_to_pass).
+
+    Validates the file contains fillMetadataSegment import that the PR modifies.
+    """
+    r = subprocess.run(
+        ["grep", "-c", "fillMetadataSegment", str(LOADER_TREE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "fillMetadataSegment not found in app_page_loader_tree.rs"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_app_page_syntax_check():
+    """Repo CI: app-page.ts TypeScript syntax is valid (pass_to_pass).
+
+    Runs Node.js syntax check to validate the template file compiles.
+    This is a CI-style check similar to what the repo runs.
+    """
+    r = subprocess.run(
+        ["node", "--check", str(APP_PAGE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, (
+        f"app-page.ts has syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_turbopack_chunk_group_structure():
+    """Repo CI: Turbopack chunk_group_info.rs has expected enum structure (pass_to_pass).
+
+    Validates the file contains expected ChunkGroupEntry, ChunkGroup, and ChunkGroupKey enums.
+    This is a CI-style structural check.
+    """
+    # Check for ChunkGroupEntry enum
+    r = subprocess.run(
+        ["grep", "-c", "pub enum ChunkGroupEntry", str(CHUNK_GROUP)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "ChunkGroupEntry enum not found"
+    )
+
+    # Check for ChunkGroup enum
+    r = subprocess.run(
+        ["grep", "-c", "pub enum ChunkGroup", str(CHUNK_GROUP)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "ChunkGroup enum not found"
+    )
+
+    # Check for ChunkGroupKey enum
+    r = subprocess.run(
+        ["grep", "-c", "pub enum ChunkGroupKey", str(CHUNK_GROUP)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "ChunkGroupKey enum not found"
+    )
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_turbopack_chunk_group_file_size():
+    """Repo CI: chunk_group_info.rs has substantial content (pass_to_pass).
+
+    Validates the chunk_group_info.rs file has expected size and structure.
+    This is a CI-style check for file content validation.
+    """
+    r = subprocess.run(
+        ["wc", "-l", str(CHUNK_GROUP)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"wc command failed: {r.stderr}"
+    line_count = int(r.stdout.strip().split()[0])
+    assert line_count >= 150, (
+        f"chunk_group_info.rs has {line_count} lines, expected >= 150"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_app_rs_structure():
+    """Repo CI: next-api/src/app.rs has expected function structure (pass_to_pass).
+
+    Validates the file contains app_module_graphs function with expected signature.
+    """
+    # Check for app_module_graphs function
+    r = subprocess.run(
+        ["grep", "-c", "fn app_module_graphs", str(APP_RS)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "app_module_graphs function not found in app.rs"
+    )
+
+    # Check for has_layout_segments parameter (should exist in base commit)
+    r = subprocess.run(
+        ["grep", "-c", "has_layout_segments", str(APP_RS)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "has_layout_segments not found in app.rs (expected in base commit)"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_api_client_runtime_entries():
+    """Repo CI: next-api/src/app.rs has client_runtime_entries usage (pass_to_pass).
+
+    Validates the file contains client_runtime_entries which is used by the PR changes.
+    """
+    r = subprocess.run(
+        ["grep", "-c", "client_runtime_entries", str(APP_RS)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "client_runtime_entries not found in app.rs"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_app_page_imports_structure():
+    """Repo CI: app-page.ts has expected import structure with transitions (pass_to_pass).
+
+    Validates the template file has the expected import pattern structure.
+    This is a CI-style structural check for the modified TypeScript template.
+    """
+    # Check for turbopack-transition annotations
+    r = subprocess.run(
+        ["grep", "-c", "turbopack-transition", str(APP_PAGE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "turbopack-transition annotations not found in app-page.ts"
+    )
+
+    # Check for next-server-utility transition
+    r = subprocess.run(
+        ["grep", "-c", "next-server-utility", str(APP_PAGE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "next-server-utility transition not found in app-page.ts"
+    )
+
+    # Check for entry-base import
+    r = subprocess.run(
+        ["grep", "-c", "entry-base", str(APP_PAGE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "entry-base import not found in app-page.ts"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: TypeScript template syntax validation
+def test_repo_app_page_template_syntax():
+    """Repo CI: app-page.ts has valid TypeScript syntax (pass_to_pass).
+
+    Runs Node.js --check to validate the template file syntax.
+    This matches the repo's CI approach for validating build templates.
+    """
+    r = subprocess.run(
+        ["node", "--check", str(APP_PAGE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, (
+        f"app-page.ts template has syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: Build template syntax validation
+def test_repo_build_templates_syntax():
+    """Repo CI: All build templates have valid syntax (pass_to_pass).
+
+    Validates TypeScript syntax for all template files in the build directory.
+    """
+    templates = [
+        REPO / "packages/next/src/build/templates/app-page.ts",
+        REPO / "packages/next/src/build/templates/app-route.ts",
+        REPO / "packages/next/src/build/templates/edge-app-route.ts",
+        REPO / "packages/next/src/build/templates/edge-ssr-app.ts",
+        REPO / "packages/next/src/build/templates/edge-ssr.ts",
+        REPO / "packages/next/src/build/templates/helpers.ts",
+    ]
+    for template in templates:
+        if template.exists():
+            r = subprocess.run(
+                ["node", "--check", str(template)],
+                capture_output=True, text=True, timeout=30, cwd=str(REPO),
+            )
+            assert r.returncode == 0, (
+                f"{template.name} has syntax errors:\n{r.stderr[-200:]}"
+            )
+
+
+# [repo_tests] pass_to_pass — CI: chunk_group_info.rs structure validation
+def test_repo_chunk_group_info_compiles():
+    """Repo CI: chunk_group_info.rs has valid Rust structure (pass_to_pass).
+
+    Validates the Rust file contains syntactically correct enum definitions.
+    Uses grep to verify the expected enum structure exists.
+    """
+    # Check for all three enum definitions
+    for enum_name in ["ChunkGroupEntry", "ChunkGroup", "ChunkGroupKey"]:
+        r = subprocess.run(
+            ["grep", "-c", f"pub enum {enum_name}", str(CHUNK_GROUP)],
+            capture_output=True, text=True, timeout=30, cwd=str(REPO),
+        )
+        assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+            f"{enum_name} enum not found in chunk_group_info.rs"
+        )
+
+
+# [repo_tests] pass_to_pass — CI: app.rs function signature validation
+def test_repo_app_rs_function_signatures():
+    """Repo CI: app.rs has expected function signatures (pass_to_pass).
+
+    Validates the Rust file contains expected function signatures.
+    """
+    # Check for app_module_graphs function
+    r = subprocess.run(
+        ["grep", "-c", "fn app_module_graphs", str(APP_RS)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "app_module_graphs function not found in app.rs"
+    )
+
+    # Check for client_runtime_entries function
+    r = subprocess.run(
+        ["grep", "-c", "fn client_runtime_entries", str(APP_RS)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "client_runtime_entries function not found in app.rs"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: app_page_loader_tree.rs structure
+def test_repo_app_page_loader_tree_structure():
+    """Repo CI: app_page_loader_tree.rs has expected structure (pass_to_pass).
+
+    Validates the Rust file contains expected imports and patterns.
+    """
+    # Check for fillMetadataSegment
+    r = subprocess.run(
+        ["grep", "-c", "fillMetadataSegment", str(LOADER_TREE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "fillMetadataSegment not found in app_page_loader_tree.rs"
+    )
+
+    # Check for AppPageLoaderTreeBuilder
+    r = subprocess.run(
+        ["grep", "-c", "AppPageLoaderTreeBuilder", str(LOADER_TREE)],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0 and int(r.stdout.strip()) > 0, (
+        "AppPageLoaderTreeBuilder not found in app_page_loader_tree.rs"
+    )

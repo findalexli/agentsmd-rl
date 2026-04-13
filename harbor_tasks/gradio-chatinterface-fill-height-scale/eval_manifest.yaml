@@ -111,21 +111,36 @@ rubric:
     path: AGENTS.md
     lines: '45'
     commit: bb127c74bd6301e3782e0ce4744161ae976a8481
-distractors:
-- rule: 'Repository Structure: `gradio/` — Python source (backend), `js/` — frontend
-    code (Svelte/TypeScript)'
-  collision_type: architecture_boundary
-  why_distracting: The explicit separation of the Python backend (`gradio/`) and Svelte
-    frontend (`js/`) might cause an agent to try fixing the layout issue entirely
-    within one boundary (e.g., only changing Python component props or only modifying
-    Svelte CSS). The actual fix requires crossing this boundary by updating the Python
-    component, the TypeScript interface (`types.ts`), and the Svelte frontend logic
-    to properly pass and handle the `fill_height` configuration.
-  severity: high
+- rule: 'Repository Structure: `gradio/` for Python backend and `js/` for frontend
+    code.'
   source:
     path: AGENTS.md
-    lines: 7-12
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
-  The rules are straightforward, but the repository structure implies a strict separation
-  of concerns between backend and frontend that must be bridged to fix this specific
-  bug.
+    lines: 5-10
+  evidence: The patch correctly targets `gradio/chat_interface.py` for the backend
+    changes and `js/core/src/...` for the frontend Svelte/TypeScript changes, aligning
+    with the defined repository structure.
+  category: architecture
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use the GitHub CLI to create an issue
+    or modify the PR template to link a non-existent issue, which is out of scope
+    for an isolated code-fixing evaluation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: 'Format your code before pushing. Backend: bash scripts/format_backend.sh
+    Frontend: bash scripts/format_frontend.sh'
+  collision_type: scope_ambiguity
+  why_distracting: Running repository-wide formatting scripts (`format_backend.sh`
+    and `format_frontend.sh`) might reformat untouched files if the baseline is out
+    of sync, polluting the PR diff.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 26-28
+hierarchy_analysis: The configuration consists of a single root-level `AGENTS.md`
+  file containing generic contribution guidelines. There is no complex hierarchy or
+  overriding of rules.

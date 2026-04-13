@@ -172,6 +172,9 @@ def test_readme_documents_usage():
 
 # Existing plugin paths for pass-to-pass testing
 EXISTING_PLUGIN_DIR = f"{REPO}/plugins/security-guidance"
+AGENT_SDK_DEV_DIR = f"{REPO}/plugins/agent-sdk-dev"
+FEATURE_DEV_DIR = f"{REPO}/plugins/feature-dev"
+PR_REVIEW_DIR = f"{REPO}/plugins/pr-review-toolkit"
 
 
 def test_repo_security_guidance_plugin_json_valid():
@@ -209,3 +212,175 @@ def test_repo_security_guidance_hook_script_valid_python():
         cwd=REPO,
     )
     assert result.returncode == 0, f"security_reminder_hook.py has Python syntax errors: {result.stderr}"
+
+
+def test_repo_all_plugin_jsons_valid():
+    """All plugin.json files across plugins are syntactically valid JSON (pass_to_pass)."""
+    # Use raw string to avoid escape sequence warnings
+    cmd = (
+        r"find " + REPO + r"/plugins -name 'plugin.json' -exec python3 -c "
+        r"'import json; json.load(open(\"{}\"))' \;"
+    )
+    result = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Plugin JSON validation failed: {result.stderr}"
+
+
+def test_repo_all_hooks_jsons_valid():
+    """All hooks.json files across plugins are syntactically valid JSON (pass_to_pass)."""
+    # Use raw string to avoid escape sequence warnings
+    cmd = (
+        r"find " + REPO + r"/plugins -name 'hooks.json' -exec python3 -c "
+        r"'import json; json.load(open(\"{}\"))' \;"
+    )
+    result = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Hooks JSON validation failed: {result.stderr}"
+
+
+def test_repo_agent_sdk_dev_plugin_json_valid():
+    """Agent-sdk-dev plugin manifest JSON is syntactically valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{AGENT_SDK_DEV_DIR}/.claude-plugin/plugin.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"agent-sdk-dev plugin.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_feature_dev_plugin_json_valid():
+    """Feature-dev plugin manifest JSON is syntactically valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{FEATURE_DEV_DIR}/.claude-plugin/plugin.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"feature-dev plugin.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_pr_review_plugin_json_valid():
+    """PR-review-toolkit plugin manifest JSON is syntactically valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{PR_REVIEW_DIR}/.claude-plugin/plugin.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"pr-review-toolkit plugin.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_examples_hook_valid_python():
+    """Examples hook (bash_command_validator_example.py) has valid Python syntax (pass_to_pass)."""
+    script_path = f"{REPO}/examples/hooks/bash_command_validator_example.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"bash_command_validator_example.py has Python syntax errors: {result.stderr}"
+
+
+def test_repo_marketplace_json_valid():
+    """Plugin marketplace.json is syntactically valid JSON (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{REPO}/.claude-plugin/marketplace.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"marketplace.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_devcontainer_json_valid():
+    """Devcontainer configuration JSON is syntactically valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{REPO}/.devcontainer/devcontainer.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"devcontainer.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_devcontainer_script_valid_bash():
+    """Devcontainer init script has valid bash syntax (pass_to_pass)."""
+    script_path = f"{REPO}/.devcontainer/init-firewall.sh"
+    result = subprocess.run(
+        ["bash", "-n", script_path],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"init-firewall.sh has bash syntax errors: {result.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Additional Pass-to-pass (repo_tests) — Plugin README structure validation
+# ---------------------------------------------------------------------------
+
+def test_repo_plugins_readme_exists():
+    """Plugins README.md exists (pass_to_pass)."""
+    result = subprocess.run(
+        ["test", "-f", f"{REPO}/plugins/README.md"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, "plugins/README.md does not exist"
+
+
+def test_repo_plugins_readme_has_plugin_structure_docs():
+    """Plugins README documents the plugin structure (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-q", "plugin.json", f"{REPO}/plugins/README.md"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, "plugins/README.md does not document plugin.json structure"
+
+
+def test_repo_code_review_readme_exists():
+    """Code-review plugin README exists (pass_to_pass)."""
+    result = subprocess.run(
+        ["test", "-f", f"{REPO}/plugins/code-review/README.md"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, "code-review README.md does not exist"
+
+
+def test_repo_commit_commands_readme_exists():
+    """Commit-commands plugin README exists (pass_to_pass)."""
+    result = subprocess.run(
+        ["test", "-f", f"{REPO}/plugins/commit-commands/README.md"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, "commit-commands README.md does not exist"

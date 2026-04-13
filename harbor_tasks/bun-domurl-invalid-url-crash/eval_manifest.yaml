@@ -84,6 +84,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's git file tracking works correctly for BunString.cpp
+- id: repo_cmake_sources_json_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cmake/Sources.json exists and is valid JSON
+- id: repo_prettier_js_web_url
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's URL test files are properly formatted (prettier --check)
+- id: repo_git_log_depth
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git history has sufficient depth for CI operations
+- id: repo_bindings_dir_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bindings directory contains expected C++ files
+- id: repo_url_domurl_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: URL/DOMURL tests pass - relevant to BunString__toJSDOMURL fix
+- id: repo_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ bindings files have valid clang-format syntax
+- id: repo_cmake_sources_json_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cmake/Sources.json has valid structure
 - id: uses_return_if_exception_macro
   type: fail_to_pass
   origin: agent_config
@@ -130,30 +158,29 @@ rubric:
     handle exceptions and pass the project's JavaScr
   category: architecture
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`
+- rule: Always use bun.* APIs instead of std.*
   collision_type: architecture_boundary
-  why_distracting: This rule dictates avoiding `std.*` in favor of `bun.*` APIs. Because
-    the agent is editing a C++ file, it might mistakenly avoid C++ `std::` namespace
-    features or attempt to call Zig `bun.*` wrappers from C++, causing compilation
-    failures.
+  why_distracting: The rule mandates using bun.* APIs instead of std.* for system
+    calls, but this applies exclusively to Zig code. The agent is editing a C++ file
+    (BunString.cpp) where standard C++ or WebCore/JSC APIs must be used. Attempting
+    to apply Zig conventions here would cause syntax errors or hallucinated C++ APIs.
   severity: high
   source:
-    path: src/CLAUDE.md
-    lines: 15-26
-- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
-    in the test output
+    path: src/AGENTS.md
+    lines: 16-20
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts
   collision_type: scope_ambiguity
-  why_distracting: The bug causes a hard crash/segfault. If the agent decides to write
-    a test for this fix, this rule forbidding checks for 'panic' or 'uncaught exception'
-    might confuse them on how to assert that the crash is resolved, potentially leading
-    to a brittle test or wasted effort.
+  why_distracting: The rule specifies test placement for numbered GitHub issues. The
+    prompt does not provide an issue number, which might lead the agent to create
+    a placeholder issue file (violating the 'REAL issue number' rule) or waste effort
+    trying to satisfy test organization rules when the gold solution only requires
+    a one-line C++ exception check.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 63-64
-hierarchy_analysis: The root `CLAUDE.md` provides general project structure and testing
-  commands, while `src/CLAUDE.md` provides highly specific Zig conventions. Because
-  this PR modifies a C++ file (`BunString.cpp`), the Zig-specific rules in `src/CLAUDE.md`
-  act as distractors. The agent must recognize the architecture boundary between Zig
-  and C++ and selectively ignore the `src/CLAUDE.md` rules while applying the JSC
-  exception handling concepts implied by the root config.
+    path: AGENTS.md
+    lines: 26-28
+hierarchy_analysis: The hierarchy includes root-level testing/build rules and src-level
+  Zig rules. The agent must recognize that the src-level Zig rules do not apply to
+  the C++ files in src/bun.js/bindings/, requiring it to filter instructions based
+  on the target file's language and subsystem.

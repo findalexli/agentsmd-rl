@@ -68,6 +68,39 @@ checks:
   description: Verify old from_modules_for_testing is no longer used in setup_test_storage
   type: fail_to_pass
   origin: pr_diff
+- id: p2p_compilation
+  description: cargo check -p move-unit-test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_fmt
+  description: cargo fmt --check -p move-unit-test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_clippy
+  description: cargo clippy -p move-unit-test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_unit_tests
+  description: cargo test -p move-unit-test --lib passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_vm_runtime_unit_tests
+  description: cargo test -p move-vm-runtime --lib passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_move_package_compiles
+  description: cargo check -p move-package --all-targets passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_move_cli_unit_tests
+  description: cargo test -p move-cli --lib passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_integration_tests
+  description: cargo test -p move-unit-test --test move_unit_test_testsuite passes
+    (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: external-crates/ contains the Move compiler and VM
   source:
@@ -78,39 +111,24 @@ rubric:
     in `external-crates/`.
   category: architecture
 distractors:
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add a license header to test_runner.rs,
+    but the rule explicitly states it only applies to new files.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 19-22
 - rule: Always consult CLAUDE.md files in sub-crates.
   collision_type: meta_confusion
-  why_distracting: The agent might waste time trying to read or find a `CLAUDE.md`
-    file in `external-crates/move/crates/move-unit-test/` which doesn't exist in the
-    provided context.
-  severity: medium
+  why_distracting: The agent might waste time trying to find or read a local CLAUDE.md
+    file in the move-unit-test sub-crate, which is not provided or necessary for this
+    task.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 10-11
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the Sui e2e simtests (`cargo simtest
-    -p sui-e2e-tests`) to verify its changes. However, the modified code is in the
-    standalone Move unit test runner, making Sui e2e simtests out of scope and a massive
-    waste of time.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 28-29
-- rule: Use -p to select only the most relevant packages for testing... e.g. `cargo
-    nextest run -p sui-types -p sui-core`
-  collision_type: scope_ambiguity
-  why_distracting: The agent might blindly copy the example command `cargo nextest
-    run -p sui-types -p sui-core` to run tests, which would test the wrong crates
-    instead of the modified `move-unit-test` crate.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 38-39
-hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` and a root `AGENTS.md`.
-  Both emphasize checking local crate-specific `CLAUDE.md` files, which creates a
-  potential wild goose chase since none are provided for the `external-crates/move`
-  directory. The root `CLAUDE.md` provides heavy guidance on Sui-specific testing
-  (`sui-e2e-tests`, `sui-core`), which is architecturally distinct from the `external-crates/move`
-  upstream repository code being modified here.
+    lines: 6-8
+hierarchy_analysis: The hierarchy consists of root-level AGENTS.md and CLAUDE.md files
+  with generic repository guidelines. No sub-crate specific config files are provided.
 version: '2.0'

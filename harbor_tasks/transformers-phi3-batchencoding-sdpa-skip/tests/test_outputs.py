@@ -294,6 +294,99 @@ def test_repo_ast_parse():
             raise AssertionError(f"AST parse error in {rel_path}: {e}")
 
 
+def test_repo_files_tracked():
+    """Target files are tracked in git (pass_to_pass)."""
+    for rel_path, desc in REPO_TESTS:
+        r = subprocess.run(
+            ["git", "ls-files", rel_path],
+            capture_output=True, text=True, cwd=REPO,
+        )
+        assert r.returncode == 0, f"git ls-files failed for {rel_path}"
+        assert r.stdout.strip(), f"{rel_path} is not tracked in git"
+
+
+def test_repo_git_valid():
+    """Git repository is valid and has a clean working tree (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+
+
+def test_repo_python_version():
+    """Python version is 3.10+ as required by pyproject.toml (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 0, "Python version must be 3.10 or higher"
+
+
+# CI-derived pass-to-pass tests based on repo's actual CI commands
+
+
+def test_repo_no_bare_except_phi3():
+    """Phi3 test file has no bare except clauses (pass_to_pass).
+
+    From pyproject.toml ruff config: S110 (bandit's try-except-pass) is enabled in CI.
+    This test runs a lightweight ruff check for a specific quality issue.
+    """
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/tests/models/phi3/test_modeling_phi3.py", "--select", "S110", "--quiet"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ruff S110 check failed for phi3:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_no_bare_except_common():
+    """Common modeling test file has no bare except clauses (pass_to_pass).
+
+    From pyproject.toml ruff config: S110 (bandit's try-except-pass) is enabled in CI.
+    This test runs a lightweight ruff check for a specific quality issue.
+    """
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/tests/test_modeling_common.py", "--select", "S110", "--quiet"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ruff S110 check failed for common:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _find_function(tree, name):
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
+            return node
+    return None
+
+
+def _count_code_changes(filepath):
+    for ref in ["HEAD", "--cached", "HEAD~1"]:
+        args = ["git", "diff"]
+        if ref == "--cached":
+            args.append("--cached")
+        else:
+            args.append(ref)
+        args.extend(["--", filepath])
+        result = subprocess.run(args, capture_output=True, text=True, cwd=REPO)
+        if result.stdout.strip():
+            lines = result.stdout.splitlines()
+            code = [
+                l
+                for l in lines
+                if (l.startswith("+") or l.startswith("-"))
+                and not l.startswith("+++")
+                and not l.startswith("---")
+            ]
+            meaningful = [
+                l for l in code if l[1:].strip() and not l[1:].strip().startswith("#")
+            ]
+            return len(meaningful)
+    return 0
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

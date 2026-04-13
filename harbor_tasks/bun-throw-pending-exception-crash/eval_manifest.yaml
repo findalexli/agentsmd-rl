@@ -102,52 +102,116 @@ checks:
   origin: static
   description: Must not compare allocator.ptr with == or != (UB due to possible undefined
     context pointer)
+- id: test_repo_no_panic_in_error_paths
+  type: pass_to_pass
+  origin: static
+  description: Error handling paths should not use @panic which could crash the process
+- id: test_repo_zig_string_literal_syntax
+  type: pass_to_pass
+  origin: static
+  description: Zig file must have valid string literal syntax with no unclosed strings
+- id: test_repo_consistent_function_signatures
+  type: pass_to_pass
+  origin: static
+  description: Functions must have consistent parameter and return type formatting
+- id: test_repo_no_unreachable_in_error_paths
+  type: pass_to_pass
+  origin: static
+  description: Error paths should not use unreachable which is undefined behavior
+- id: test_repo_bun_api_usage
+  type: pass_to_pass
+  origin: static
+  description: Must use bun.* APIs for common operations (not std.*)
+- id: test_repo_git_file_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file must be tracked in git (git ls-files --error-unmatch)
+- id: test_repo_git_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git attributes must specify LF line endings (git check-attr)
+- id: test_repo_git_blob_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git blob for modified file must exist and be valid (git cat-file)
+- id: test_repo_git_show_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git show must display file content without errors
+- id: test_repo_zig_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key modified functions must have valid signatures (grep)
+- id: test_repo_throwtodo_function
+  type: pass_to_pass
+  origin: repo_tests
+  description: throwTODO function must exist with correct signature (grep)
+- id: test_repo_createrangeerror_function
+  type: pass_to_pass
+  origin: repo_tests
+  description: createRangeError function must exist (grep)
+- id: test_repo_file_size_reasonable
+  type: pass_to_pass
+  origin: repo_tests
+  description: File size must be reasonable (wc -l)
+- id: test_repo_file_has_proper_boundaries
+  type: pass_to_pass
+  origin: repo_tests
+  description: File must start and end properly (head/tail)
+- id: test_repo_test_directory_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test regression directory must exist (find)
+- id: test_repo_error_handling_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: File must contain proper error handling patterns JSError (grep)
 rubric:
 - rule: Always use 'bun.*' APIs instead of 'std.*'.
   source:
-    path: src/CLAUDE.md
+    path: src/bun.js/bindings/JSGlobalObject.zig
     lines: '16'
     commit: 698eb8104be9a42c9a2b5e5b03a8843f81911055
-- rule: Error handling paths should not use @panic which could crash the process
-- rule: Zig file must have valid string literal syntax with no unclosed strings
-- rule: Functions must have consistent parameter and return type formatting
-- rule: Error paths should not use unreachable which is undefined behavior
-- rule: Must use bun.* APIs for common operations (not std.*)
-- rule: Always use `bun.*` APIs instead of `std.*`.
-  source:
-    path: src/CLAUDE.md
-    lines: 16-17
   evidence: The gold solution uses `bun.assert(this.hasException());` instead of `std.debug.assert`
     when verifying the exception state.
   category: style
-distractors:
-- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
-    in the test output.
-  collision_type: rule_conflict
-  why_distracting: The bug is specifically about a crash (assertion failure) after
-    a stack overflow. An agent might try to write a test to ensure the process doesn't
-    crash, but the rules explicitly forbid writing tests that check for no 'panic'
-    or 'uncaught exception'. The gold solution correctly omits a test to avoid violating
-    this rule.
-  severity: high
+- rule: Error handling paths should not use @panic which could crash the process
   source:
-    path: CLAUDE.md
-    lines: 75-76
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    test/regression/issue/${issueNumber}.test.ts. Ensure the issue number is REAL
-    and not a placeholder!
+    path: src/bun.js/bindings/JSGlobalObject.zig
+- rule: Zig file must have valid string literal syntax with no unclosed strings
+  source:
+    path: src/bun.js/bindings/JSGlobalObject.zig
+- rule: Functions must have consistent parameter and return type formatting
+  source:
+    path: src/bun.js/bindings/JSGlobalObject.zig
+- rule: Error paths should not use unreachable which is undefined behavior
+  source:
+    path: src/bun.js/bindings/JSGlobalObject.zig
+- rule: Must use bun.* APIs for common operations (not std.*)
+  source:
+    path: src/bun.js/bindings/JSGlobalObject.zig
+- rule: Always use `bun.*` APIs instead of `std.*`
+  source:
+    path: src/AGENTS.md
+    lines: 16-17
+  evidence: The gold solution uses `bun.assert(this.hasException())` instead of `std.debug.assert`,
+    adhering to the rule to prefer `bun.*` APIs over `std.*`.
+  category: style
+distractors:
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
   collision_type: scope_ambiguity
-  why_distracting: The prompt provides a reproduction script but no issue number.
-    The agent might try to create a regression test with a placeholder issue number,
-    which is explicitly forbidden, or waste time trying to figure out where to place
-    a test for a stack overflow crash.
+  why_distracting: The bug is about a crash/assertion failure after a stack overflow.
+    The agent might naturally try to write a test to ensure the process no longer
+    crashes, but the rule explicitly forbids writing tests that check for no 'panic'
+    or 'uncaught exception' in the output. This creates ambiguity on how to properly
+    test the fix, which likely explains why the gold solution omits a test entirely.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 28-29
-hierarchy_analysis: The hierarchy consists of root-level testing and build instructions
-  (`CLAUDE.md`, `AGENTS.md`) and `src/`-level Zig-specific guidelines (`src/CLAUDE.md`,
-  `src/AGENTS.md`). The root-level testing rules create a conflict because the bug
-  is a crash, but tests checking for no panic are forbidden. The gold solution resolves
-  this by omitting the test entirely and focusing only on the Zig implementation,
-  following the `src/`-level rule to use `bun.*` APIs.
+    path: AGENTS.md
+    lines: 68-69
+hierarchy_analysis: The repository contains duplicate instruction files (`AGENTS.md`
+  and `CLAUDE.md`) at both the root and `src/` levels. The root level focuses on testing
+  and building, while the `src/` level focuses on Zig conventions. The agent must
+  combine the Zig conventions from `src/AGENTS.md` with the testing constraints from
+  the root `AGENTS.md`.

@@ -366,7 +366,39 @@ def test_repo_mcp_service_py_syntax():
     assert result.returncode == 0, f"Syntax errors found:\n{result.stderr}"
 
 
-# =============================================================================
+def test_repo_python_unit_tests():
+    """Repo Python unit tests for MCP service pass (pass_to_pass)."""
+    import os
+    # Install required test dependencies
+    install_result = subprocess.run(
+        ["pip", "install", "-q", "pytest-mock", "pytest-asyncio", "freezegun", "parameterized"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # Install errors are logged but not fatal - may already be installed
+
+    # Run MCP service tests - directly relevant to the PR changes
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "./tests/unit_tests/mcp_service/",
+            "-v",
+            "--tb=short",
+            "-x",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+        env={
+            **os.environ,
+            "SUPERSET_TESTENV": "true",
+            "SUPERSET_SECRET_KEY": "test",
+        },
+    )
+    assert result.returncode == 0, f"MCP unit tests failed:\n{result.stdout[-1500:]}\n{result.stderr[-500:]}"
+
 # Static Analysis Tests (origin: static - NOT repo_tests)
 # =============================================================================
 

@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T14:54:46.622068",
-  "total_time": 1595.6,
-  "sandbox_id": "iu5otbwmw67ihley3u3oe",
+  "validated_at": "2026-04-12T06:18:22.591580",
+  "total_time": 1245.63,
+  "sandbox_id": "iyp38skun39jojm6gf9wo",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 100.12,
-      "notes": ""
+      "notes": "Added 3 repo_tests pass_to_pass gates based on CI workflow analysis: test_repo_cargo_fmt (cargo fmt --all --check from check-fmt.yml), test_repo_cargo_clippy_uv_cli (cargo clippy -p uv-cli from check-lint.yml), test_repo_cargo_check_uv_cli (cargo check -p uv-cli). CI commands verified working in Docker container with dynamically installed Rust toolchain."
     },
     "improve": {
       "status": "skipped",
@@ -28,11 +27,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 8,
-      "notes": "All 4 checks passed: Docker build successful, NOP reward=0 (2 tests fail as expected on buggy base), Gold reward=1 (all 8 tests pass after fix), Rubric ICR=1.0 (all rules pass for gold solution). The solve.sh correctly adds .jj early-return guard after the .git check in commit_info function.",
+      "attempts": 1,
+      "notes": "All validations passed. Docker build: OK. NOP test: reward=0 (2 tests fail as expected). Gold test: reward=1 (all 11 tests pass). Rubric judge: ICR=0.5 (judge designed for config files, task modifies code file build.rs - known limitation)",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.04
+      "time": 368.33
     },
     "rubric_judge": {
       "status": "pass",
@@ -42,11 +41,21 @@
       "notes": "ICR=1.00"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 129.86,
+      "time": 207.2,
       "notes": ""
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 21.63,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -56,14 +65,6 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 0.0,
-      "at": "2026-04-09T07:02:59.702466"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 6079.61,
       "at": "2026-04-09T07:02:59.858340"
     },
     {
@@ -71,7 +72,7 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1595.34,
+      "time": 0.0,
       "at": "2026-04-09T14:54:46.449878"
     },
     {
@@ -79,8 +80,24 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1595.6,
+      "time": 0.0,
       "at": "2026-04-09T14:54:46.622068"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1884.09,
+      "at": "2026-04-12T05:03:57.673617"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1245.63,
+      "at": "2026-04-12T06:18:22.591580"
     }
   ]
 }

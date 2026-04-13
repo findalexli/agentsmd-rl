@@ -331,6 +331,65 @@ def test_nodejs_available():
 # Repo CI/CD pass_to_pass gates — verified to work on base commit
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass — CSS theme generation (CI: css)
+def test_repo_css_generation():
+    """CSS theme generation works (pass_to_pass).
+
+    This mirrors the CI command: pnpm css
+    Ensures the theme CSS can be generated from pollen config.
+    """
+    # First ensure pnpm is available
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "css"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CSS generation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Client unit tests (CI: test:client)
+def test_repo_client_unit_tests():
+    """Client package unit tests pass (pass_to_pass).
+
+    This mirrors the CI command: pnpm --filter @gradio/client test
+    Runs the specific client library unit tests.
+    """
+    # First ensure pnpm is available
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    # Build client first (required for tests)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client unit tests failed:\n{r.stderr[-500:]}"
+
+
 # [repo_tests] pass_to_pass — Client library build (CI: client build)
 def test_repo_client_build():
     """Repo's client library builds successfully (pass_to_pass).

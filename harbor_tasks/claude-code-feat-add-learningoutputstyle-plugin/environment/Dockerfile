@@ -11,16 +11,16 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (use --depth=N for large monorepos)
-RUN git clone --filter=blob:none https://github.com/{{OWNER}}/{{REPO}}.git /workspace/{{REPO_SHORT}} && \
-    cd /workspace/{{REPO_SHORT}} && \
-    git checkout {{BASE_COMMIT}} && \
+RUN git clone --filter=blob:none https://github.com/anthropics/claude-code.git /workspace/claude-code && \
+    cd /workspace/claude-code && \
+    git checkout ae411f846195b38c8bec88914dd06132e00eadf8 && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 
-WORKDIR /workspace/{{REPO_SHORT}}
+WORKDIR /workspace/claude-code
 
 # For Python repos: uncomment if tests import from the repo
-# ENV PYTHONPATH="/workspace/{{REPO_SHORT}}"
+# ENV PYTHONPATH="/workspace/claude-code"
 
 # For Rust repos: pre-fetch deps for faster agent builds
 # RUN cargo fetch && cargo check 2>&1 || true

@@ -29,6 +29,59 @@ checks:
   type: pass_to_pass
   origin: static
   description: Fixture file retains existing walrus and basic call test cases
+- id: test_repo_ruff_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on the repository's Python files
+- id: test_repo_ruff_formatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff formatter check passes on repository Python files
+- id: test_repo_scripts_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on repository scripts
+- id: test_repo_scripts_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff formatter check passes on repository scripts
+- id: test_fixture_ruf050_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: RUF050.py fixture file has valid Python syntax
+- id: test_fixture_ruf050_ruf047_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: RUF050_RUF047.py fixture file has valid Python syntax
+- id: test_fixture_ruf050_f401_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: RUF050_F401.py fixture file has valid Python syntax
+- id: test_repo_ruf050_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: RUF050 unit tests pass - validates RUF050 rule behavior
+
+- id: test_repo_unnecessary_if_integration
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unnecessary_if integration tests pass - validates fix iterations
+
+- id: test_repo_ruff_linter_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff_linter crate compiles without errors
+
+- id: test_repo_ruff_linter_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Rust file follows rustfmt formatting
+
+- id: test_repo_ruff_linter_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff_linter crate passes clippy linting
+
 - id: no_panic_unwrap
   type: pass_to_pass
   origin: agent_config
@@ -53,7 +106,6 @@ checks:
     path: AGENTS.md
     lines: '81'
     commit: c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
-rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: AGENTS.md
@@ -109,22 +161,68 @@ rubric:
   evidence: 'The gold solution uses a let chain in `condition_as_expression_statement`:
     `if has_top_level_line_break && let Some(range) = parenthesized_range(...)`.'
   category: style
-distractors:
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism.
-  collision_type: would_cause_bug
-  why_distracting: An agent might try to avoid writing the custom `has_top_level_line_break`
-    token-iterating function, assuming there must be an existing AST method to detect
-    multiline expressions. This could lead to incorrect heuristics (like just checking
-    the start and end line numbers of the AST node), which would fail to distinguish
-    between top-level line breaks and nested line breaks (e.g., inside a function
-    call).
-  severity: high
+- rule: Prefer let chains (`if let` combined with `&&`)
   source:
     path: AGENTS.md
-    lines: 50-51
-hierarchy_analysis: 'The configuration consists of a single file (`AGENTS.md`) included
-  via `CLAUDE.md`. There are no hierarchical conflicts. The primary tension is internal
-  to `AGENTS.md`: balancing the directive to ''look for existing utilities'' with
-  the need to write custom token-parsing logic when no exact utility exists for the
-  specific problem.'
+    lines: 63-64
+  evidence: The gold solution uses an `if` statement combined with a `let` binding
+    (`if has_top_level_line_break && let Some(range) = parenthesized_range(...)`)
+    in `condition_as_expression_statement`.
+  category: style
+distractors:
+- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
+    the `ty` GitHub label.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction specifies that PR titles should start with `[ty]`
+    when working on ty. However, this task is to fix a Ruff linter rule (`RUF050`),
+    so applying ty-specific conventions would be incorrect.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 55-56
+- rule: 'Run tests for a specific crate: cargo nextest run -p ty_python_semantic'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides a specific command to run tests for the `ty_python_semantic`
+    crate. An agent might blindly copy this command to run tests, but the changes
+    are in `ruff_linter`, so running `ty_python_semantic` tests would not verify the
+    fix.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 15-17
+hierarchy_analysis: The configuration is essentially a flat single file, as `CLAUDE.md`
+  simply includes `@AGENTS.md`. The agent must read `AGENTS.md` and distinguish between
+  `ruff`-specific and `ty`-specific instructions based on the context of the task.
+rubric:
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 60-61
+  evidence: The gold solution appends new test cases for multiline expressions directly
+    to the existing `crates/ruff_linter/resources/test/fixtures/ruff/RUF050.py` file
+    rather than creating a new fixture file.
+  category: testing
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: 63-64
+  evidence: The gold solution adds `Tokens` and `parenthesized_range` to the existing
+    `use ruff_python_ast::token::TokenKind;` import at the top of `unnecessary_if.rs`
+    instead of importing them locally within the
+  category: style
+- rule: Prefer let chains (`if let` combined wit
+  source:
+    path: AGENTS.md
+    lines: 68-68
+  evidence: 'The gold solution uses a let chain in `condition_as_expression_statement`:
+    `if has_top_level_line_break && let Some(range) = parenthesized_range(...)`.'
+  category: style
+- rule: Prefer let chains (`if let` combined with `&& let`)
+  source:
+    path: AGENTS.md
+    lines: 68-69
+  evidence: The gold solution uses an `if let` chain (`if has_top_level_line_break
+    && let Some(range) = parenthesized_range(...)`) in the `condition_as_expression_statement`
+    function.
+  category: style

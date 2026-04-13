@@ -21,6 +21,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's client TypeScript compiles without errors
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client package builds successfully
+- id: test_repo_utils_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/utils package builds successfully
 - id: package_json_exports_download_command
   type: fail_to_pass
   origin: pr_diff
@@ -70,19 +78,19 @@ checks:
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
-    path: AGENTS.md
-    lines: '45'
+    path: js/tootils/README.md
+    lines: 1-300
     commit: 30bf54c187478cdafa70037f088e353f5629a995
 - rule: README documentation should be comprehensive and include code examples for
     each utility function.
   source:
-    path: AGENTS.md
+    path: js/tootils/README.md
     lines: '45'
     commit: 30bf54c187478cdafa70037f088e353f5629a995
-- rule: js/ — frontend code (Svelte/TypeScript)
+- rule: "js/ \u2014 frontend code (Svelte/TypeScript)"
   source:
-    path: AGENTS.md
-    lines: '12'
+    path: js/tootils/README.md
+    lines: 1-35
   evidence: The gold solution correctly places the new TypeScript files (`fixtures.ts`,
     `download.ts`) in the `js/tootils/src/` directory, adhering to the repository
     structure for frontend code.
@@ -118,27 +126,25 @@ config_edits:
     \n#### `listen`\n\nCreates a `vi.fn()` mock that "
   gold_removed: ''
 distractors:
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: scope_ambiguity
-  why_distracting: The rule explicitly mentions running backend tests locally, which
-    might lead the agent to run `bash scripts/run_backend_tests.sh`. However, this
-    PR only touches frontend JS testing utilities, making backend tests irrelevant
-    and a waste of time.
-  severity: low
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The rule forbids pure code-agent PRs and requires human accountability.
+    An agent might refuse to complete the task autonomously or halt to ask for human
+    review, failing the automated evaluation.
+  severity: high
   source:
     path: AGENTS.md
-    lines: '35'
-- rule: 'gradio: Build Gradio web UIs and demos in Python.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to use the `gradio` skill to build a Python
-    Gradio app to test the file upload/download, but the task requires adding Vitest/Playwright
-    utilities in the JS package `@gradio/tootils`.
+    lines: 58-60
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The rule prohibits one-off PRs for tiny edits. The agent might
+    ignore the instruction to fix the `js/tootils/README.md` thinking it violates
+    this rule, even though it is explicitly requested and bundled with a larger feature.
   severity: medium
   source:
-    path: .agents/skills/gradio
-    lines: 1-2
-hierarchy_analysis: The repository has a clear separation between Python backend (`gradio/`)
-  and JS frontend (`js/`). The `AGENTS.md` file provides rules for both, which can
-  cause scope ambiguity for agents working exclusively on one side. The agent must
-  recognize that this task is strictly within the frontend (`js/tootils/`) and ignore
-  backend-specific rules (like running backend tests or formatting Python code).
+    path: AGENTS.md
+    lines: 53-55
+hierarchy_analysis: Flat single file (`AGENTS.md`) containing generic repository and
+  PR guidelines. No deep hierarchy or overriding rules.

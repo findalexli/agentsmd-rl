@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux shellcheck clang-format && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone bun at the base commit (BEFORE the fix)

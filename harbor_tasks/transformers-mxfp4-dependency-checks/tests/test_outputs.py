@@ -231,3 +231,95 @@ def test_repo_imports():
     )
     assert r.returncode == 0, f"Import test failed:\n{r.stderr[-500:]}"
     assert "OK" in r.stdout, f"Import test did not complete successfully: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mxfp4_config_test():
+    """Repo's MXFP4 config unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "unittest", "tests.quantization.mxfp4.test_mxfp4.Mxfp4ConfigTest", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MXFP4 config tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mxfp4_quantizer_test():
+    """Repo's MXFP4 quantizer unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "unittest", "tests.quantization.mxfp4.test_mxfp4.Mxfp4QuantizerTest", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MXFP4 quantizer tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mxfp4_integration_test():
+    """Repo's MXFP4 integration unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "unittest", "tests.quantization.mxfp4.test_mxfp4.Mxfp4IntegrationTest", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MXFP4 integration tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mxfp4_syntax():
+    """Modified quantizer_mxfp4.py has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", f"import ast; ast.parse(open('{TARGET}').read()); print('Syntax OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
+    assert "Syntax OK" in r.stdout, f"Syntax check did not complete successfully"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check():
+    """Modified file passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_copies():
+    """Repo's check_copies passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_copies failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_inits():
+    """Repo's check_inits passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_inits failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_doc_toc():
+    """Repo's check_doc_toc passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_doc_toc failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_transformers():
+    """Transformers imports work without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import transformers; from transformers import AutoModelForCausalLM; print('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Transformers import failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, f"Import test did not complete successfully"

@@ -161,6 +161,24 @@ def test_child_process_unref_survives():
     assert r.returncode == 0, f"child_process unref survives test failed:\n{r.stderr}"
 
 
+def test_child_process_fork_conditions():
+    """Repo's child_process fork conditions spec test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "run", "-A", "tests/specs/node/child_process_fork_conditions/main.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"child_process fork conditions test failed:\n{r.stderr}"
+
+
+def test_child_process_node_cli_args():
+    """Repo's child_process node CLI args spec test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "run", "-A", "--unstable-detect-cjs", "tests/specs/node/child_process_node_cli_args/main.js", "eval"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"child_process node CLI args test failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass — regression tests (PR behavior preservation)
 # ---------------------------------------------------------------------------

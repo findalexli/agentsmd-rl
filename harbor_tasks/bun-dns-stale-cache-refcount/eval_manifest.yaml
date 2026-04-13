@@ -68,6 +68,28 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
+- id: repo_buffer_concat
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo buffer concat test passes (regression check)
+  source:
+    path: test/js/node/buffer-concat.test.ts
+    commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+- id: repo_dns_prefetch
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo DNS prefetch test passes (regression check for DNS module)
+  source:
+    path: test/js/bun/dns/dns-prefetch.test.ts
+    commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+- id: repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json lint test passes
+  source:
+    path: test/package-json-lint.test.ts
+    commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
 - id: zig_no_undefined_comparisons
   type: pass_to_pass
   origin: static
@@ -75,6 +97,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_arguments_old
   type: pass_to_pass
   origin: static
@@ -82,6 +105,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_usingnamespace
   type: pass_to_pass
   origin: static
@@ -89,6 +113,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_std_mutex
   type: pass_to_pass
   origin: static
@@ -96,6 +121,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_std_strings
   type: pass_to_pass
   origin: static
@@ -104,6 +130,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_std_hash_maps
   type: pass_to_pass
   origin: static
@@ -111,6 +138,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_bun_import_inline
   type: pass_to_pass
   origin: static
@@ -119,6 +147,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall and line parsing on source code
 - id: zig_no_jsboolean_true_false
   type: pass_to_pass
   origin: static
@@ -126,6 +155,7 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: zig_no_allocator_ptr_compare
   type: pass_to_pass
   origin: static
@@ -133,12 +163,27 @@ checks:
   source:
     path: test/internal/ban-words.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+    note: File-read check - uses re.findall on source code
 - id: repo_ban_words
   type: pass_to_pass
   origin: repo_tests
   description: Run the repo's ban-words CI check using bun
   source:
     path: test/internal/ban-words.test.ts
+    commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+- id: repo_dns_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run the repo's DNS tests to validate basic DNS functionality
+  source:
+    path: test/js/bun/dns
+    commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
+- id: repo_int_from_float
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run the repo's int_from_float internal test
+  source:
+    path: test/internal/int_from_float.test.ts
     commit: 7960fe985dfa3418b507777a5a61289defbdb9dc
 - id: repo_zig_syntax_valid
   type: pass_to_pass
@@ -167,32 +212,21 @@ rubric:
     without introducing any `std` library impor
   category: architecture
 distractors:
-- rule: 'All return `Maybe(T)` — a tagged union of `.result: T` or `.err: bun.sys.Error`'
-  collision_type: architecture_boundary
-  why_distracting: The agent might see the `err` parameter in the `freeaddrinfo` callback
-    and try to refactor it to use Bun's `Maybe(T)` error handling pattern. However,
-    this callback interfaces with C code (c-ares or system DNS) and must maintain
-    its C ABI signature with an integer error code.
-  severity: high
-  source:
-    path: src/CLAUDE.md
-    lines: 28-33
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    `test/regression/issue/${issueNumber}.test.ts`. Ensure the issue number is REAL
-    and not a placeholder!
-  collision_type: meta_confusion
-  why_distracting: The agent might try to write a test for this bug fix. Since no
-    issue number is provided in the prompt, it might create a placeholder issue file
-    (violating the rule) or struggle to write a reliable test for an in-flight DNS
-    request race condition, which is highly prone to flakiness. The gold solution
-    correctly focuses only on the Zig fix.
+- rule: Write tests for changes and place them in the appropriate test directory (e.g.,
+    test/js/bun/).
+  collision_type: scope_ambiguity
+  why_distracting: The config instructs the agent to write tests for new features
+    or bug fixes in specific directories (e.g., `test/js/bun/`). However, testing
+    internal DNS cache refcount behavior and memory management deterministically from
+    JavaScript is extremely difficult and prone to flakiness. The gold solution correctly
+    omits a test, but an agent might waste significant effort trying to satisfy the
+    testing requirement.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 24-25
-hierarchy_analysis: The hierarchy consists of root-level config files focusing on
-  building and testing, and `src/`-level config files focusing on Zig conventions
-  and internal APIs. For this PR, the `src/` level rules are more relevant to the
-  code changes. The root-level testing rules create potential distractions, as writing
-  a reliable test for this network race condition is difficult and not included in
-  the gold solution.
+    path: AGENTS.md
+    lines: 30-40
+hierarchy_analysis: The config hierarchy provides general testing guidelines at the
+  root (AGENTS.md) and Zig-specific conventions in the `src/` directory. However,
+  the bug is a pure logic error regarding refcounts and TTLs, so neither the system
+  call wrappers (`bun.sys`) nor the testing guidelines directly apply to the required
+  fix.

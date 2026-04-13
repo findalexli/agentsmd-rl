@@ -106,113 +106,66 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Syntax check test/tool/skill.test.ts using Node.js
+- id: test_repo_syntax_skill_discovery
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check skill/discovery.ts using Node.js — dependency of skill/index.ts
 rubric:
-- rule: Use Effect.fn("Domain.method") for named/traced effects and Effect.fnUntraced
-    for internal helpers.
+- rule: Use `Effect.fnUntraced` for internal helpers.
   source:
     path: packages/opencode/AGENTS.md
-    lines: '607'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Effect.fn / Effect.fnUntraced accept pipeable operators as extra arguments,
-    so avoid unnecessary outer .pipe() wrappers.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: '608'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: In effectified services, prefer yielding existing Effect services over dropping
-    down to ad hoc platform APIs.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 631-632
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Do the work directly in the InstanceState.make closure -- ScopedCache handles
-    run-once semantics. Don't add fibers, ensure() callbacks, or started flags on
-    top.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: '625'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Keep things in one function unless composable or reusable.
-  source:
-    path: AGENTS.md
-    lines: '11'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Prefer single word variable names where possible.
-  source:
-    path: AGENTS.md
-    lines: '14'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity.
-  source:
-    path: AGENTS.md
-    lines: '16'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Reduce total variable count by inlining when a value is only used once.
-  source:
-    path: AGENTS.md
-    lines: '44'
-    commit: 21023337fa8011568b2570a3bd49fffed842ce86
-- rule: Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced`
-    for internal helpers.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 13-14
-  evidence: The internal helper functions `add`, `scan`, and `loadSkills` are converted
-    from plain async functions to Effect generators using `Effect.fnUntraced(function*
-    (...) { ... })`.
+    lines: 16-17
+  evidence: The helper functions `add`, `scan`, and `loadSkills` are wrapped in `Effect.fnUntraced(function*
+    (...) { ... })` instead of using `Effect.gen` or plain async functions.
   category: architecture
 - rule: Avoid `try`/`catch` where possible
   source:
     path: AGENTS.md
     lines: 11-12
-  evidence: 'The gold solution avoids native `try/catch` blocks, instead using `Effect.tryPromise({
-    try: ..., catch: ... })` and `Effect.catch` to handle promise rejections and errors.'
+  evidence: 'The gold solution uses `Effect.tryPromise({ try: ..., catch: ... })`
+    and `Effect.catch` instead of native `try`/`catch` blocks for error handling.'
   category: style
-- rule: 'Control Flow: Avoid `else` statements. Prefer early returns.'
+- rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
-    lines: 68-69
-  evidence: In the `scan` error handler, the code uses an early return `if (!opts?.scope)
-    return Effect.die(error)` instead of wrapping the subsequent logging and return
-    in an `else` block.
-  category: style
+    lines: 21-22
+  evidence: The gold solution introduces single-word variable names like `bus`, `config`,
+    `err`, and `md` when refactoring the functions.
+  category: naming
 distractors:
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: rule_conflict
+  why_distracting: The rule suggests using `Effect.gen(function* () { ... })` for
+    composition. An agent might wrap the helper functions in `Effect.gen` instead
+    of `Effect.fnUntraced`, which violates the specific instruction for internal helpers.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 15-16
 - rule: Prefer `FileSystem.FileSystem` instead of raw `fs/promises` for effectful
     file I/O.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to replace `Glob.scan` or `Filesystem.isDir`
-    with `FileSystem.FileSystem` methods. However, `Glob.scan` is a specific utility
-    and the goal of this PR is strictly to fix Effect dependency injection and lifecycle
-    management, not to rewrite the underlying file scanning implementation.
+  collision_type: architecture_boundary
+  why_distracting: The rule says to prefer `FileSystem.FileSystem` instead of raw
+    `fs/promises`. The existing code uses `Glob.scan` and `Filesystem.isDir`. An agent
+    might attempt to rewrite these using Effect's `FileSystem` module, which is out
+    of scope and crosses an architecture boundary for this specific dependency injection
+    fix.
   severity: medium
   source:
     path: packages/opencode/AGENTS.md
     lines: 38-39
-- rule: '`Effect.fn` / `Effect.fnUntraced` accept pipeable operators as extra arguments,
-    so avoid unnecessary outer `.pipe()` wrappers.'
-  collision_type: meta_confusion
-  why_distracting: The gold solution uses `.pipe(Effect.catch(...))` on the `Effect.tryPromise`
-    call inside the generator. An agent might misinterpret this rule and try to pass
-    the `Effect.catch` as an argument to `Effect.fnUntraced`, or try to avoid `.pipe()`
-    on `Effect.tryPromise` (which does not accept operators as extra arguments), leading
-    to incorrect error handling or type errors.
-  severity: high
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 14-15
-- rule: Use Bun APIs when possible, like `Bun.file()`
-  collision_type: architecture_boundary
-  why_distracting: The agent might attempt to rewrite the file reading or globbing
-    logic using Bun-specific APIs like `Bun.file()`. This would cross an architecture
-    boundary since the codebase already uses `Glob.scan` and `ConfigMarkdown.parse`
-    for these specific tasks, and changing the I/O mechanism is out of scope.
-  severity: low
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  collision_type: rule_conflict
+  why_distracting: The rule says to prefer functional array methods (flatMap, filter,
+    map) over for loops. The original code uses `Promise.all(matches.map(...))`. An
+    agent might try to keep `.map()` inside an Effect context, but the correct Effect
+    pattern is to use `Effect.forEach` with concurrency options.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 14-15
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines
-  (like avoiding try/catch and early returns), while `packages/opencode/AGENTS.md`
-  provides highly specific Effect migration patterns. The Effect-specific rules in
-  the package config take precedence for architectural decisions, but the general
-  style rules from the root still apply to the internal logic of the Effect generators.
+    lines: 15-16
+hierarchy_analysis: The agent must synthesize rules from both `AGENTS.md` and `packages/opencode/AGENTS.md`.
+  The root config provides general style guidelines (avoid try/catch, single-word
+  naming), while the package-level config provides highly specific Effect migration
+  patterns. The agent must prioritize the package-level `Effect.fnUntraced` rule over
+  the general `Effect.gen` rule for internal helpers.

@@ -66,50 +66,32 @@ rubric:
 - rule: Add a rule to CLAUDE.md about using bun for Windows ARM64 to avoid crashes.
   source:
     path: CLAUDE.md
-- rule: Any `bun run build*` command (and `bun bd`, and `bun scripts/build.ts` directly)
-    accepts trailing args which are passed to the built executable after building.
-  source:
-    path: CLAUDE.md
-    lines: 20-21
-  evidence: The gold solution changes the runtime for Windows ARM64 to `bun`, invoking
-    `bun scripts/build.ts` directly with trailing arguments, which is explicitly supported
-    by the tooling.
-  category: tooling
+  reference: When addressing Windows ARM64 specific bugs (like the 0xC0000409 crash),
+    prefer using the bun runtime over node.
 distractors:
-- rule: 'The smell: if configure code calls spawnSync to compile something... Make
-    it a build edge — n.rule() + n.build().'
+- rule: Make it a build edge — n.rule() + n.build(). Size doesn't matter; a 1-file
+    compile is still a build edge.
   collision_type: architecture_boundary
   why_distracting: The agent might try to implement the binary size check as a Ninja
-    build edge (`n.rule()` + `n.build()`) within the build system, but the prompt
-    requires aggregating sizes across multiple release builds, which must be done
-    as a BuildKite CI step (`getBinarySizeStep()`).
+    build edge (using n.rule() and n.build()) within the TypeScript build system,
+    especially since scripts/build/ci.ts is listed in 'Files to Look At'. However,
+    this is a CI pipeline concern that belongs in .buildkite/ci.mjs.
   severity: high
   source:
     path: scripts/build/CLAUDE.md
-    lines: 39-41
-- rule: 'Comparing builds: ... If you need to preserve a build as a comparison point
-    ... --build-dir parks it somewhere the next build won''t overwrite'
+    lines: 35-38
+- rule: 'Comparing builds: use --build-dir to park a build somewhere the next build
+    won''t overwrite for comparison points.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to use `--build-dir=build/baseline` to store
-    the canary/release baseline for binary size comparison locally, but the CI pipeline
-    needs to compare against a downloaded artifact (`binary-sizes.json`) from the
-    latest main build.
+  why_distracting: The agent might try to use the --build-dir flag to preserve the
+    baseline build for size comparison. In a distributed CI environment, baselines
+    are compared against artifacts from previous pipeline runs (latest main), not
+    preserved locally on the same runner using --build-dir.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 29-32
-- rule: One flat Config struct. All derived booleans computed once in resolveConfig().
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to add `skipSizeCheck` to the Ninja build `Config`
-    struct in `scripts/build/config.ts`, but this is a CI pipeline option that should
-    be parsed from commit messages in `.buildkite/ci.mjs`.
-  severity: medium
-  source:
-    path: scripts/build/CLAUDE.md
-    lines: 20-22
-hierarchy_analysis: The repository has a clear separation between CI pipeline configuration
-  (`.buildkite/ci.mjs`) and the Ninja build system generator (`scripts/build/`). Rules
-  in `scripts/build/CLAUDE.md` strictly apply to the Ninja build graph generation,
-  not the CI pipeline orchestration. Agents must recognize this architecture boundary
-  and not apply build-system rules (like `n.rule()` or `Config` struct) to CI pipeline
-  tasks (like aggregating binary sizes across platforms).
+    path: AGENTS.md
+    lines: 28-32
+hierarchy_analysis: The task spans the root CI configuration (.buildkite/ci.mjs) and
+  the build scripts (scripts/build/). The agent must recognize that rules in scripts/build/CLAUDE.md
+  apply strictly to the Ninja build graph generation, and should not be applied to
+  CI pipeline orchestration steps.

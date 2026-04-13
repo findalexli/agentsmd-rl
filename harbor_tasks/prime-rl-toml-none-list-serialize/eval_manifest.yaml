@@ -73,65 +73,61 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff format check passes on the modified config.py (p2p_enrichment)
+- id: test_repo_imports_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff import check (I rules) passes on the modified config.py (p2p_enrichment)
 rubric:
-- rule: Simple is better than complex.
+- rule: Code should have minimal unnecessary comments and work process notes in config.py.
   source:
-    path: AGENTS.md
-    lines: '16'
-    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
-- rule: Flat is better than nested.
-  source:
-    path: AGENTS.md
-    lines: '18'
-    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
-- rule: Readability counts.
-  source:
-    path: AGENTS.md
-    lines: '20'
-    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
-- rule: Errors should never pass silently.
-  source:
-    path: AGENTS.md
-    lines: '23'
-    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process, do not refer to old code.
-  source:
-    path: AGENTS.md
-    lines: 6-7
-  evidence: The gold solution adds a clean docstring to `_convert_none` without any
-    inline comments explaining the bug fix, the previous behavior, or the work process.
+    path: src/prime_rl/utils/config.py
+    lines: 1-30
+  reference: |
+    def _convert_none(obj):
+        """Recursively convert None values to 'None' strings."""
+        if isinstance(obj, dict):
+            return {k: _convert_none(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [_convert_none(item) for item in obj]
+        elif obj is None:
+            return "None"
+        return obj
   category: style
-- rule: Avoid try/except blocks unless it's really necessary.
+- rule: Avoid try/except blocks unless it's really necessary in config.py.
   source:
-    path: AGENTS.md
-    lines: 3-4
-  evidence: The gold solution uses explicit `isinstance` checks to handle dicts and
-    lists rather than using `try/except` blocks to catch `AttributeError` when calling
-    `.items()` on non-dict objects.
+    path: src/prime_rl/utils/config.py
+    lines: 1-30
+  reference: |
+    def _convert_none(obj):
+        if isinstance(obj, dict):
+            return {k: _convert_none(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [_convert_none(item) for item in obj]
+        elif obj is None:
+            return "None"
+        return obj
   category: style
 distractors:
 - rule: Flat is better than nested.
-  collision_type: scope_ambiguity
-  why_distracting: The data structure being processed is inherently nested (dicts
-    containing lists containing dicts). An agent strictly adhering to 'Flat is better
-    than nested' might try to write an iterative flattener or avoid the recursive
-    `_convert_none` helper, leading to much more complicated and bug-prone code.
+  collision_type: rule_conflict
+  why_distracting: The data structure being serialized is inherently nested (dicts
+    containing lists containing dicts). An agent might try to follow 'Flat is better
+    than nested' by avoiding recursion and writing a complex iterative stack-based
+    implementation, which would violate 'Simple is better than complex'.
   severity: medium
   source:
     path: AGENTS.md
     lines: 15-15
-- rule: Errors should never pass silently.
-  collision_type: would_cause_bug
-  why_distracting: The agent might interpret 'Errors should never pass silently' as
-    a mandate to raise an exception for unhandled types in the recursive helper. However,
-    the correct behavior is to pass other types (like int, str) through unmodified
-    (`return value`). Raising an error would break config serialization.
+- rule: You are responsible for maintaining the skills folder. When a workflow fails
+    and you fix it... you must update the skills to make implicit knowledge explicit.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to edit the `toml-config` skill file to
+    document that `None` values inside lists are now supported. However, this is an
+    internal bug fix for serialization, not a workflow change or new implicit knowledge
+    that belongs in user-facing skill documentation.
   severity: high
   source:
     path: AGENTS.md
-    lines: 20-20
-hierarchy_analysis: The hierarchy is flat with `CLAUDE.md` simply including `AGENTS.md`.
-  The rules in `AGENTS.md` provide general Python guidelines (Zen of Python, testing,
-  comments). The main challenge is interpreting the Zen of Python principles correctly
-  in the context of a recursive data structure transformation.
+    lines: 40-42
+hierarchy_analysis: The hierarchy is effectively flat, as CLAUDE.md simply includes
+  AGENTS.md. The rules are global and generic, with no deep overriding logic required.

@@ -82,27 +82,38 @@ checks:
     origin: repo_tests
     description: "isort formatting check passes on modified files"
 
+  - id: test_repo_precommit_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "YAML syntax check passes via pre-commit"
+
+  - id: test_repo_precommit_private_key
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Private key detection check passes via pre-commit"
+
+  - id: test_repo_precommit_large_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Large files check passes via pre-commit"
+
+  - id: test_repo_precommit_case_conflict
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Case conflict check passes via pre-commit"
+
 rubric:
-  - rule: "Follow existing naming patterns and conventions from neighboring code. When adding public methods, follow the naming style of similar methods in the same class."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "37, 54"
-      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+  # Note: This is a pure code-change task (no config file modifications).
+  # The rubric rules below are enforced through the test assertions in test_outputs.py
+  # rather than LLM-based config file evaluation.
+  - rule: "Follow existing naming patterns when adding public methods - use get_* naming for accessors"
+    reference: "test_public_get_metrics_router_addr validates get_metrics_router_addr naming"
 
-  - rule: "When wrapping private methods for public/remote access, provide a clean public wrapper that maintains the same return type semantics."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "70-79"
-      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+  - rule: "Public wrappers should delegate cleanly to private implementations without changing semantics"
+    reference: "test_public_get_metrics_router_addr validates wrapper calls _get_metrics_router_addr"
 
-  - rule: "Keep utility functions focused and behavior-specific. Bridge/wrapper functions should delegate cleanly to their implementations without adding unnecessary indirection."
-    source:
-      path: ".claude/skills/add-reward-function/SKILL.md"
-      lines: "71-77"
-      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+  - rule: "Bridge functions should delegate cleanly without unnecessary indirection"
+    reference: "test_update_tracking_bridge_exists validates direct delegation to reinit_wandb_primary_with_open_metrics"
 
-  - rule: "When modifying WandB integration code, handle the initialization lifecycle correctly: finish existing runs before reinitializing, and provide early returns for disabled/offline modes."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "95-98"
-      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+  - rule: "WandB integration code must handle lifecycle correctly: finish before init, resume mode, early returns"
+    reference: "test_reinit_calls_wandb_finish_and_init, test_reinit_noop_when_no_router validate lifecycle handling"

@@ -28,16 +28,16 @@ checks:
     properly defined
   type: fail_to_pass
   origin: pr_diff
-- id: p2p_schema_updated
+- id: f2p_schema_updated
   description: JSON schema files include InitContainerImage and InitContainerWithStructuredImage
     definitions
   type: fail_to_pass
   origin: pr_diff
-- id: p2p_helpers_tpl
+- id: f2p_helpers_tpl
   description: Helm template helpers for init container image processing are defined
   type: fail_to_pass
   origin: pr_diff
-- id: p2p_deployment_template
+- id: f2p_deployment_template
   description: deployment-user.yaml uses the dagster.initContainer helper
   type: fail_to_pass
   origin: pr_diff
@@ -45,38 +45,63 @@ checks:
   description: Run the repo's own schema_tests/test_user_deployments.py tests (65
     tests)
   origin: repo_tests
-  type: fail_to_pass
+  type: pass_to_pass
 - id: p2p_repo_helm_lint
   description: Run helm lint on dagster-user-deployments chart
   origin: repo_tests
-  type: fail_to_pass
+  type: pass_to_pass
+- id: p2p_repo_helm_lint_main
+  description: Run helm lint on main dagster chart with subcharts and strict mode
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_schema_all
+  description: Run all compatible schema tests (user_deployments, dagit, daemon, celery)
+    - 161 tests
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_schema_dagit
+  description: Run dagit schema tests (~40 tests)
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_schema_daemon
+  description: Run dagster-daemon schema tests (~30 tests)
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_helm_lint_user_deployments
+  description: Run helm lint on dagster-user-deployments chart with strict mode
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_ruff
+  description: Run ruff linter on Helm schema code (repo CI requirement)
+  origin: repo_tests
+  type: pass_to_pass
 rubric:
 - rule: Helm chart changes follow the existing schema patterns in helm/dagster/schema/
+- rule: After ANY Python code changes, ALWAYS run `make ruff` - this is mandatory
+    and must never be skipped.
+  source:
+    path: CLAUDE.md
+    lines: 11-12
+  evidence: The gold solution modifies Python files (`kubernetes.py`, `user_deployments.py`)
+    to add the required schema models. To comply with the repository's strict CI requirements,
+    the agent must run `make ruf
+  category: tooling
 distractors:
 - rule: ALWAYS check this before writing data structures - use @record instead of
     @dataclass.
-  collision_type: would_cause_bug
-  why_distracting: The instructions explicitly require adding an `InitContainerImage`
-    Pydantic model. Pydantic models must inherit from `BaseModel`. Using Dagster's
-    `@record` decorator instead of a Pydantic model would break the Helm schema generation
-    which relies on Pydantic's specific features.
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly requires adding an `InitContainerImage`
+    Pydantic model for Helm schema validation. The agent must ignore the general repository
+    rule to 'use @record instead of @dataclass' for data structures, as Helm schema
+    definitions in this codebase rely on Pydantic.
   severity: high
   source:
     path: CLAUDE.md
     lines: 10-11
-- rule: 'Python: Core framework in python_modules/dagster/, libraries in python_modules/libraries/'
-  collision_type: architecture_boundary
-  why_distracting: The agent might restrict its search for Python files to the `python_modules/`
-    directory, but the Helm schema Python files required for this task are located
-    in `helm/dagster/schema/`.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 38-38
-hierarchy_analysis: The CLAUDE.md file provides general Python and UI development
-  guidelines, but lacks specific instructions for Helm chart development. The rules
-  are heavily biased towards the core Python framework and React UI, which can mislead
-  an agent working on the Helm schema generation scripts located in the `helm/` directory.
+hierarchy_analysis: The repository has a single root-level CLAUDE.md file containing
+  general Python coding conventions. The agent must recognize that the specific task
+  instructions (which dictate using a Pydantic model for Helm schema validation) override
+  the general repository convention to use `@record`.
 version: '2.0'
 source:
   repo: dagster-io/dagster

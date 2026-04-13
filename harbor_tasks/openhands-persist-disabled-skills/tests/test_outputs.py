@@ -392,7 +392,7 @@ def test_storage_user_column_order():
 
 
 # =============================================================================
-# NEW PASS-TO-PASS TESTS (Repo CI/CD - actual subprocess.run() commands)
+# PASS-TO-PASS TESTS (Repo CI/CD - actual subprocess.run() commands)
 # These tests MUST use subprocess.run() with real CI commands
 # origin: repo_tests in eval_manifest.yaml
 # =============================================================================
@@ -412,36 +412,6 @@ def test_repo_py_compile_enterprise_storage():
         assert r.returncode == 0, f"py_compile failed for {py_file.name}: {r.stderr}"
 
 
-def test_repo_ruff_check_enterprise_storage():
-    """Repo CI: Ruff linting passes on enterprise/storage files (pass_to_pass)."""
-    # Install ruff if not available
-    r = subprocess.run(
-        ["pip", "install", "ruff", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    # Run ruff check on enterprise/storage files (syntax errors only)
-    r = subprocess.run(
-        ["ruff", "check", "--select=E9,F63,F7,F82,F", "--target-version=py312", "enterprise/storage/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
-
-
-def test_repo_ruff_check_migrations():
-    """Repo CI: Ruff linting passes on migration files (pass_to_pass)."""
-    # Install ruff if not available
-    subprocess.run(
-        ["pip", "install", "ruff", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    # Run ruff check on migration files (syntax errors only)
-    r = subprocess.run(
-        ["ruff", "check", "--select=E9,F63,F7,F82,F", "--target-version=py312", "enterprise/migrations/versions/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff check failed on migrations:\n{r.stdout}\n{r.stderr}"
-
-
 def test_repo_py_compile_migrations():
     """Repo CI: All migration files compile without errors (pass_to_pass)."""
     migrations_dir = ENTERPRISE_DIR / "migrations" / "versions"
@@ -456,19 +426,64 @@ def test_repo_py_compile_migrations():
         assert r.returncode == 0, f"py_compile failed for {py_file.name}: {r.stderr}"
 
 
-def test_repo_ruff_check_user_py():
-    """Repo CI: Ruff linting passes on user.py (pass_to_pass)."""
+def test_repo_enterprise_ruff_check():
+    """Repo CI: Enterprise storage files pass ruff lint check (pass_to_pass)."""
     # Install ruff if not available
     subprocess.run(
         ["pip", "install", "ruff", "-q"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Run ruff check specifically on user.py
+    # Run ruff check using enterprise config on storage directory
     r = subprocess.run(
-        ["ruff", "check", "--select=E9,F63,F7,F82,F", "--target-version=py312", "enterprise/storage/user.py"],
+        ["ruff", "check", "--config", "enterprise/dev_config/python/ruff.toml", "enterprise/storage/"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Ruff check failed on user.py:\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_enterprise_ruff_format_check():
+    """Repo CI: Enterprise storage files pass ruff format check (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff format check using enterprise config on storage directory
+    r = subprocess.run(
+        ["ruff", "format", "--config", "enterprise/dev_config/python/ruff.toml", "--check", "enterprise/storage/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_migrations_ruff_check():
+    """Repo CI: Migration files pass ruff lint check (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff check using enterprise config on migrations
+    r = subprocess.run(
+        ["ruff", "check", "--config", "enterprise/dev_config/python/ruff.toml", "enterprise/migrations/versions/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on migrations failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_migrations_ruff_format_check():
+    """Repo CI: Migration files pass ruff format check (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff format check using enterprise config on migrations
+    r = subprocess.run(
+        ["ruff", "format", "--config", "enterprise/dev_config/python/ruff.toml", "--check", "enterprise/migrations/versions/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on migrations failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_repo_migration_chain_integrity():
@@ -566,3 +581,18 @@ def test_repo_no_bare_excepts_in_migrations():
 
     error_msg = "Bare except errors:" + "\n" + "\n".join(errors[:10])
     assert not errors, error_msg
+
+
+def test_repo_pre_commit_hooks():
+    """Repo CI: Enterprise files pass all pre-commit hooks (pass_to_pass)."""
+    # Install pre-commit if not available
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run pre-commit hooks on enterprise files
+    r = subprocess.run(
+        ["pre-commit", "run", "--all-files", "--config", "enterprise/dev_config/python/.pre-commit-config.yaml"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit hooks failed:\n{r.stdout}\n{r.stderr}"

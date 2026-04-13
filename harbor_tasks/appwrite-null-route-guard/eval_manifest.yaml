@@ -78,34 +78,35 @@ rubric:
   evidence: The gold solution adds `testConsoleRootWithoutRouteDoesNotFatal` to `tests/e2e/General/HTTPTest.php`
     to verify the 404 behavior.
   category: testing
-distractors:
-- rule: Action pattern (HTTP endpoints) using `class [Name] extends Action`.
-  collision_type: architecture_boundary
-  why_distracting: The config details a new `Action` class pattern for HTTP endpoints.
-    However, `app/controllers/shared/api.php` uses an older closure-based middleware
-    pattern (`->action(function (...) { ... })`). An agent might attempt to refactor
-    this shared middleware into the new class-based pattern, which would be a massive,
-    out-of-scope rewrite.
-  severity: high
+- rule: tests/e2e/ -- end-to-end tests per service
   source:
     path: AGENTS.md
-    lines: 51-72
-- rule: File names in Http directories must only be Get.php, Create.php, Update.php,
-    Delete.php, or XList.php.
+    lines: 27-28
+  evidence: The gold solution adds a test case `testConsoleRootWithoutRouteDoesNotFatal`
+    in `tests/e2e/General/HTTPTest.php` to verify the fix, aligning with the E2E testing
+    structure.
+  category: testing
+- rule: Pint (PSR-12) formatting
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution correctly indents the `throw` statement with 4 spaces
+    inside the `if` block, adhering to PSR-12 formatting standards.
+  category: style
+distractors:
+- rule: Action pattern (HTTP endpoints) using dedicated classes extending Action
   collision_type: scope_ambiguity
-  why_distracting: The config mandates that HTTP endpoint files must only be named
-    `Get.php`, `Create.php`, `Update.php`, `Delete.php`, or `XList.php`. An agent
-    might think `api.php` violates this and try to rename or split it, failing to
-    realize this rule only applies to the new `src/Appwrite/Platform/Modules/` structure,
-    not legacy shared controllers.
+  why_distracting: The config outlines a strict class-based Action pattern for HTTP
+    endpoints (extending `Action` with `__construct` and `action` methods). `api.php`
+    uses inline `->action(function (...) { ... })` definitions. An agent might attempt
+    to refactor `api.php` to match the documented class pattern, which would violate
+    the instruction to keep the fix minimal.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 44-46
-hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply including
-  `AGENTS.md`. The primary tension arises from `AGENTS.md` heavily documenting the
-  new module architecture (`src/Appwrite/Platform/Modules/`), while the bug is located
-  in the legacy shared controller system (`app/controllers/shared/api.php`).
+    lines: 48-68
+hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
+  simply redirects to AGENTS.md.
 version: '2.0'
 source:
   repo: appwrite/appwrite

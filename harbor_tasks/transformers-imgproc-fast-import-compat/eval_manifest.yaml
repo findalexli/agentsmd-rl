@@ -106,6 +106,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's check_doc_toc.py utility passes
+- id: test_repo_check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_doctest_list.py utility passes
+- id: test_repo_check_pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_pipeline_typing.py utility passes
 rubric:
 - rule: Module aliases for backward compatibility should be registered in sys.modules
     with __file__ explicitly set to avoid triggering circular imports via inspect
@@ -136,29 +144,26 @@ rubric:
     as an unused import, ensuring the code will pass t'
   category: tooling
 distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
-  collision_type: scope_ambiguity
-  why_distracting: An agent might misclassify this backward compatibility alias fix
-    as a 'tiny edit' or 'low-value busywork' and refuse to generate the patch, even
-    though it fixes a critical `ImportError` for remote code execution.
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the patch entirely, citing the
+    fail-closed behavior and lack of coordination evidence or issue links in the prompt.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 40-42
+    path: AGENTS.md
+    lines: 48-51
 - rule: 'Copies and Modular Models: mark classes or functions with `# Copied from
     ...` to manage code duplication.'
-  collision_type: architecture_boundary
-  why_distracting: An agent might attempt to use the `# Copied from` mechanism to
-    duplicate `divide_to_patches` or `BaseImageProcessorFast` into the new module
-    to preserve backward compatibility. However, this mechanism is specifically designed
-    for `src/transformers/models/` and would be inappropriate and brittle for core
-    utility modules.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to duplicate the code for `divide_to_patches`
+    or `TorchvisionBackend` and use `# Copied from` comments, rather than using Python
+    imports and module aliases. This rule specifically applies to `src/transformers/models/`
+    but an agent might misapply it globally.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 60-65
-hierarchy_analysis: 'Both `CLAUDE.md` and `AGENTS.md` contain identical content at
-  the root level, focusing heavily on PR workflow, agent coordination, and model-specific
-  copy mechanisms. The primary challenge is scope resolution: the agent must discern
-  that the `# Copied from` rule applies strictly to `src/transformers/models/` and
-  not to core utility files like `image_processing_backends.py`.'
+    path: AGENTS.md
+    lines: 55-58
+hierarchy_analysis: The config hierarchy is flat, consisting of two identical root-level
+  files (`AGENTS.md` and `CLAUDE.md`). The rules are generic repository contribution
+  guidelines rather than specific architectural constraints for the files being edited.

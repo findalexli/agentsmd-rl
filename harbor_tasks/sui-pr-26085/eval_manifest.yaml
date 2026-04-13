@@ -65,23 +65,28 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: sui-move crate passes cargo check
-rubric:
-- rule: New macros should have proper doc comments explaining behavior
-- rule: Implementation should follow existing macro patterns in the file
-- rule: Tests should be comprehensive and validate edge cases
+rubric: []
 distractors:
 - rule: Use `#[cfg(test)]` for test-only code used within the same crate.
   collision_type: would_cause_bug
-  why_distracting: The PR requires adding tests to a Move file (`option_tests.move`).
-    The global config specifies using `#[cfg(test)]` for test-only code, which is
-    a Rust-specific attribute. Applying this to Move code instead of Move's native
-    `#[test]` attribute would cause syntax/compilation errors.
+  why_distracting: The rule instructs using `#[cfg(test)]` for test-only code, which
+    is a Rust attribute. The agent is writing tests in Move (`.move` files), which
+    use the `#[test]` attribute. Applying the Rust-specific rule to Move code would
+    cause a syntax error.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 65-67
-hierarchy_analysis: The repository uses a root CLAUDE.md file that primarily focuses
-  on Rust development patterns (like `cargo nextest` and `#[cfg(test)]`). Since the
-  target files for this task are Move source code (`.move`), agents must be careful
-  not to blindly apply Rust-specific rules to Move files.
+    lines: 69-70
+- rule: All new files must start with the license in comments at the top of the file.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding a license header to all new files. The
+    agent is modifying existing files (`option.move` and `option_tests.move`), so
+    applying this rule would incorrectly duplicate the license header.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 15-18
+hierarchy_analysis: The config hierarchy is flat, consisting of root-level AGENTS.md
+  and CLAUDE.md files. The primary challenge is filtering out Rust-specific instructions
+  when working on Move code.
 version: '2.0'

@@ -18,4 +18,7 @@ WORKDIR /workspace/uv
 # Pre-fetch cargo dependencies to speed up builds
 RUN cargo fetch 2>/dev/null || true
 
+# Install rustfmt and clippy for CI checks
+RUN rustup component add rustfmt clippy
+
 RUN mkdir -p /logs/verifier

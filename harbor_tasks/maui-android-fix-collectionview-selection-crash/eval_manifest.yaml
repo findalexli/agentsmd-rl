@@ -9,6 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified C# files must have valid syntax
+- id: test_repo_adapter_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Modified adapter file exists and is readable
+- id: test_repo_no_trailing_whitespace_in_adapter
+  type: pass_to_pass
+  origin: static
+  description: Modified adapter file has no trailing whitespace
+- id: test_repo_copilot_instructions_exists
+  type: pass_to_pass
+  origin: static
+  description: copilot-instructions.md exists and is valid
+- id: test_repo_dotnet_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code passes dotnet format whitespace checks
+- id: test_repo_dotnet_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code passes dotnet format style checks
 - id: header_footer_guard_exists
   type: fail_to_pass
   origin: pr_diff
@@ -59,6 +79,15 @@ rubric:
     lines: 45-46
   evidence: The gold solution modifies `SelectableItemsViewAdapter.cs` which is correctly
     located in the `Android` folder under `src/Controls/src/Core/Handlers/Items/Android/Adapters/`.
+  reference: "The gold solution correctly places Android-specific code in an Android-labeled folder: src/Controls/src/Core/Handlers/Items/Android/Adapters/SelectableItemsViewAdapter.cs"
+  category: architecture
+- rule: Android specific code is inside folders labeled `Android`
+  source:
+    path: .github/copilot-instructions.md
+    lines: 56-57
+  evidence: The modified file `SelectableItemsViewAdapter.cs` is located in `src/Controls/src/Core/Handlers/Items/Android/Adapters/`,
+    adhering to the rule that Android specific code is inside folders labeled `Android`.
+  reference: "The gold solution correctly places Android-specific code in an Android-labeled folder: src/Controls/src/Core/Handlers/Items/Android/Adapters/SelectableItemsViewAdapter.cs"
   category: architecture
 config_edits:
 - path: .github/copilot-instructions.md
@@ -81,28 +110,28 @@ config_edits:
     $f\"\ndone\n```"
   gold_removed: ''
 distractors:
-- rule: Run the pr-finalize skill when performing a code review on PRs that change
-    functional code
-  collision_type: meta_confusion
-  why_distracting: The instructions tell the agent to run `pr-finalize` when performing
-    a code review. The agent might get confused about its role (fixing a bug vs reviewing
-    a PR) and attempt to invoke this skill instead of just writing the fix.
-  severity: medium
-  source:
-    path: .github/copilot-instructions.md
-    lines: 11-13
-- rule: Use xUnit for Unit tests and NUnit for UI tests
+- rule: 'Platform-specific files use naming conventions to control compilation: .android.cs
+    - Android TFM only'
   collision_type: scope_ambiguity
-  why_distracting: The config lists testing frameworks (xUnit, NUnit) and the agent
-    has access to `write-ui-tests` and `write-xaml-tests` skills. The agent might
-    waste time trying to write tests for this Android-specific UI crash, which is
-    not required by the gold solution and is notoriously difficult to mock.
+  why_distracting: The agent might try to rename `SelectableItemsViewAdapter.cs` to
+    `SelectableItemsViewAdapter.android.cs` to comply with the file extension pattern,
+    but the file is already scoped to Android via its folder path and renaming it
+    would cause issues.
   severity: medium
   source:
     path: .github/copilot-instructions.md
-    lines: 25-28
-hierarchy_analysis: The repository uses a single `.github/copilot-instructions.md`
-  file for agent instructions. The gold solution updates this file to add a critical
-  rule about `#nullable enable` in `PublicAPI.Unshipped.txt` files, demonstrating
-  that the agent must not only follow existing architectural rules but also correctly
-  append new meta-rules to the config file itself.
+    lines: 64-65
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill
+  collision_type: meta_confusion
+  why_distracting: The agent might try to invoke the `pr-finalize` skill because it
+    is modifying functional code, but the task is to implement a fix and update instructions,
+    not to perform a code review.
+  severity: low
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-12
+hierarchy_analysis: The config hierarchy is flat, consisting of a single `.github/copilot-instructions.md`
+  file. The agent must navigate this file to understand project structure and naming
+  conventions, while simultaneously being tasked with modifying this very file to
+  add a new rule.

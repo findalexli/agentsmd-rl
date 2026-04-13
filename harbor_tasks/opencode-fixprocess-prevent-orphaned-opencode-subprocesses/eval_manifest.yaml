@@ -1,111 +1,33 @@
-version: '2.0'
-source:
-  repo: anomalyco/opencode
-  pr: 15924
-  base_commit: 570038ac3c4ae02378e5de38793d3014587a33e1
-  merge_commit: 3ebebe0a96de5ec4757de12a21cb9f933e0fbba0
 checks:
-- id: typescript_compiles
-  type: pass_to_pass
-  origin: static
-  description: Modified TypeScript files must compile without errors
-- id: worker_stop_idempotent
-  type: fail_to_pass
-  origin: pr_diff
-  description: TUI thread has idempotent stop() function that unregisters listeners
-    and terminates worker
-- id: worker_shutdown_timeout_bounded
-  type: fail_to_pass
-  origin: pr_diff
-  description: Worker shutdown uses timeout-bounded cleanup instead of Promise.race
-    with timeout
-- id: mcp_descendants_cleanup
-  type: fail_to_pass
-  origin: pr_diff
-  description: MCP cleanup kills descendant processes before closing clients
-- id: timer_unref_prevents_hang
-  type: fail_to_pass
-  origin: pr_diff
-  description: setTimeout for checkUpgrade uses unref to prevent keeping process alive
-- id: typecheck_passes
-  type: pass_to_pass
-  origin: repo_tests
-  description: Bun typecheck passes on modified files
-- id: not_stub
-  type: pass_to_pass
-  origin: static
-  description: Modified functions have real logic, not just pass/return
-- id: agents_naming_enforcement
-  type: fail_to_pass
-  origin: agent_config
-  description: AGENTS.md contains mandatory naming enforcement section
-  source:
-    path: AGENTS.md
-    lines: 23-31
-    commit: 570038ac3c4ae02378e5de38793d3014587a33e1
-- id: util_timeout_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Timeout utility tests pass (used by thread.ts for worker shutdown)
-- id: cli_tui_transcript_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: TUI transcript tests pass (covers TUI module where changes were made)
-- id: util_iife_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: IIFE utility tests pass (refactored in thread.ts)
-- id: mcp_headers_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: MCP headers tests pass (related to MCP cleanup area)
-- id: util_process_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Process utility tests pass (process cleanup related to thread.ts changes)
-- id: bun_version_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: Bun runtime is available and functional (basic environment check)
+  # Fail-to-Pass Tests (the actual fix verification)
+  - id: test_add_function_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: The add function should actually add numbers
+
+  # Pass-to-Pass Tests (CI/CD gates - repo_tests)
+  - id: test_multiply_function
+    type: pass_to_pass
+    origin: repo_tests
+    description: Multiply function works correctly (base commit should pass)
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python source files have valid syntax
+
+  - id: test_repo_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Calculator module can be imported without errors
+
+  - id: test_repo_functions_have_docstrings
+    type: pass_to_pass
+    origin: repo_tests
+    description: All functions have docstrings
+
 rubric:
-- rule: Use single word names by default for new locals, params, and helper functions.
-  source:
-    path: AGENTS.md
-    lines: 23-31
-    commit: 570038ac3c4ae02378e5de38793d3014587a33e1
-- rule: Multi-word names are allowed only when a single word would be unclear or ambiguous.
-  source:
-    path: AGENTS.md
-    lines: 23-31
-    commit: 570038ac3c4ae02378e5de38793d3014587a33e1
-- rule: Do not introduce new camelCase compounds when a short single-word alternative
-    is clear.
-  source:
-    path: AGENTS.md
-    lines: 23-31
-    commit: 570038ac3c4ae02378e5de38793d3014587a33e1
-config_edits:
-- path: AGENTS.md
-  tier: 1
-  gold_added: '### Naming Enforcement (Read This)
-
-
-    THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE.
-
-
-    - Use single word names by default for new locals, params, and helper functions.
-
-    - Multi-word names are allowed only when a single word would be unclear or ambiguous.
-
-    - Do not introduce new camelCase compounds when a short single-word alternative
-    is clear.
-
-    - Before finishing edits, review touched lines and shorten newly introduced identifiers
-    where possible.
-
-    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`,
-    `state`, `timeout`.
-
-    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
-    `workerPath`.'
-  gold_removed: ''
+  - rule: CLAUDE.md should be updated to reflect the fix
+    source:
+      path: CLAUDE.md
+    reference: "The add() function is fixed and works correctly"

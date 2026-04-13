@@ -3,6 +3,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Target file exists with refreshObjects function and ZooKeeperRetriesControl
+- id: test_repo_ci_tools_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Essential CI tooling (python3, grep, git, sed, awk) is available
+- id: test_repo_python_env
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python environment has pytest and pyyaml for CI operations
+- id: test_repo_git_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git is available and functional for CI operations
 - id: test_repo_no_tabs
   type: pass_to_pass
   origin: repo_tests
@@ -84,43 +96,27 @@ checks:
 rubric:
 - rule: Use Allman-style braces (opening brace on a new line) for C++ code.
   source:
-    path: AGENTS.md
-    lines: '95'
-    commit: 255e0773744e57c9b6435e713a6f8417ee690ea5
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+  reference: 'The code uses Allman brace style: opening braces on new lines for control structures like retryLoop([&]\n    {)'
+  category: style
 - rule: When mentioning logical errors, say 'exception' instead of 'crash', because
     they don't crash the server in the release build.
   source:
-    path: AGENTS.md
-    lines: '13'
-    commit: 255e0773744e57c9b6435e713a6f8417ee690ea5
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+  reference: 'The comment states "the exception propagates to the caller" rather than "crash"'
+  category: style
 - rule: 'When writing comments, wrap literal names from ClickHouse SQL language, classes
     and functions inside inline code blocks, such as: `MergeTree`.'
   source:
-    path: AGENTS.md
-    lines: '9'
-    commit: 255e0773744e57c9b6435e713a6f8417ee690ea5
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+  reference: 'Comments refer to ZooKeeper concepts appropriately, following ClickHouse conventions'
+  category: style
 - rule: When writing comments, write names of functions and methods as `f` instead
     of `f()` for mathematical purity when referring to a function itself rather than
     its application.
   source:
-    path: AGENTS.md
-    lines: '12'
-    commit: 255e0773744e57c9b6435e713a6f8417ee690ea5
-- rule: When writing text such as documentation, comments, or commit messages, write
-    names of functions and methods as `f` instead of `f()`
-  source:
-    path: AGENTS.md
-    lines: 7-7
-  evidence: The updated C++ comments refer to functions like `tryLoadObject` and `setAllObjects`
-    without appending parentheses.
-  category: style
-- rule: When mentioning logical errors, say 'exception' instead of 'crash'
-  source:
-    path: AGENTS.md
-    lines: 9-9
-  evidence: The updated comment states 'the exception propagates to the caller' rather
-    than mentioning a crash, despite the PR description explicitly mentioning server
-    crashes.
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+  reference: 'Comments refer to tryLoadObject and setAllObjects without parentheses'
   category: style
 distractors:
 - rule: When writing text such as documentation, comments, or commit messages, wrap

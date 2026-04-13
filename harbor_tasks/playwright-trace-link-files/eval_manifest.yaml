@@ -76,32 +76,35 @@ rubric:
     and `packages/playwright-core/src/tools/trace/traceUtils.ts`, aligning with the
     architecture that the core engine, se
   category: architecture
-distractors:
-- rule: 'Tooling Packages: `trace-viewer` is the Trace viewer UI.'
-  collision_type: architecture_boundary
-  why_distracting: The issue is about opening `.trace` files via the Playwright trace
-    CLI. The rule states `trace-viewer` is the 'Trace viewer UI'. An agent might mistakenly
-    try to add the `.link` file creation or trace loading logic in the `trace-viewer`
-    package. However, the CLI and trace file extraction/loading utilities are actually
-    part of `playwright-core`.
-  severity: high
+- rule: Always run `flint` before committing (which includes eslint checks).
   source:
     path: CLAUDE.md
-    lines: 16-20
+    lines: 46-51
+  evidence: The gold solution includes `// eslint-disable-next-line no-restricted-syntax`
+    when using the `delete` operator on `browserContext.tracing`, ensuring that the
+    strict eslint rules enforced by `npm run f
+  category: tooling
+distractors:
 - rule: 'Decision rule: Does the test need browser/browserType/context -> tests/library/.
     Just needs page + server -> tests/page/.'
   collision_type: scope_ambiguity
-  why_distracting: The rule provides a strict decision matrix for where to put tests
-    (`tests/page/` vs `tests/library/`). An agent might try to force CLI or trace
-    loader tests into one of these directories, even though they are meant for browser/page
-    user interactions and lifecycle, not CLI unit tests or trace file utilities.
-  severity: medium
+  why_distracting: The agent might try to add tests for the trace loader in tests/page/
+    or tests/library/, but trace loader is an isomorphic utility and CLI tool, which
+    doesn't fit neatly into the page/library browser test dichotomy, potentially causing
+    confusion about where to place tests.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 63-70
-hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
-  The guidance is heavily focused on testing, linting, and package architecture. The
-  primary challenge for an agent is correctly mapping the feature request (Trace CLI
-  and trace loading) to the correct package (`playwright-core` vs `trace-viewer`),
-  as the documentation broadly categorizes `trace-viewer` as the tooling package for
-  traces, but the backend loading logic resides in `playwright-core`.
+    lines: 65-66
+- rule: Always run `flint` before committing. Do not use `tsc --noEmit` or individual
+    lint commands separately.
+  collision_type: meta_confusion
+  why_distracting: The agent might run the full `flint` suite which runs all lint
+    checks in parallel. In an agentic environment, this could be slow or surface unrelated
+    monorepo lint errors, distracting from the specific trace loader fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 41-42
+hierarchy_analysis: The config is a single flat file (CLAUDE.md) at the root. There
+  is no hierarchy or overriding of rules.

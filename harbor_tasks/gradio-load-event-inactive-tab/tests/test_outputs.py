@@ -289,6 +289,7 @@ def test_repo_client_tests():
     assert r.returncode == 0, f"Client tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+
 # [repo_tests] pass_to_pass — CI: pnpm test:run
 def test_repo_unit_tests():
     """Repo's unit tests pass (pass_to_pass)."""
@@ -299,6 +300,14 @@ def test_repo_unit_tests():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — CI: vitest run for js/core tests (tests the modified file)
+def test_repo_core_tests():
+    """Repo's js/core tests pass - directly tests the modified init.svelte.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm --filter @gradio/client build >/dev/null 2>&1 && pnpm vitest run --config .config/vitest.config.ts js/core"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Core tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

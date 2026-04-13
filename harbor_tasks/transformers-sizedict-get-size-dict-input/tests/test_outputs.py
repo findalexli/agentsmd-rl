@@ -249,3 +249,80 @@ def test_repo_sizedict_import():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"SizeDict import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Type checker (ty) from Makefile: make typing
+def test_repo_typing_check():
+    """Repo type checker passes on image_processing_utils.py (pass_to_pass)."""
+    # Install ty if not already present
+    subprocess.run(
+        ["pip", "install", "--quiet", "ty"],
+        cwd=REPO, capture_output=True,
+    )
+    r = subprocess.run(
+        ["python3", "utils/check_types.py", "src/transformers/image_processing_utils.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Check convert_to_size_dict function
+def test_repo_convert_to_size_dict():
+    """Repo convert_to_size_dict function works with various inputs (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from transformers.image_processing_utils import convert_to_size_dict
+
+# Test int with default_to_square=True
+result = convert_to_size_dict(224, default_to_square=True)
+assert result == {'height': 224, 'width': 224}, f'Failed: {result}'
+
+# Test int with default_to_square=False
+result = convert_to_size_dict(256, default_to_square=False)
+assert result == {'shortest_edge': 256}, f'Failed: {result}'
+
+# Test tuple input
+result = convert_to_size_dict((300, 400), height_width_order=True)
+assert result == {'height': 300, 'width': 400}, f'Failed: {result}'
+
+# Test None input
+result = convert_to_size_dict(None, max_size=512, default_to_square=False)
+assert result == {'longest_edge': 512}, f'Failed: {result}'
+
+print('convert_to_size_dict tests passed')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"convert_to_size_dict test failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Run all ImageProcessingUtilsTester tests via unittest
+def test_repo_image_processing_utils_all():
+    """Repo's ImageProcessingUtilsTester passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "unittest", "tests.utils.test_image_processing_utils.ImageProcessingUtilsTester", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ImageProcessingUtilsTester failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Check get_size_dict with max_size parameter
+def test_repo_get_size_dict_max_size():
+    """Repo get_size_dict handles max_size parameter correctly (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from transformers.image_processing_utils import get_size_dict
+
+# Test int with max_size and default_to_square=False
+result = get_size_dict(224, max_size=256, default_to_square=False)
+assert result == {'shortest_edge': 224, 'longest_edge': 256}, f'Failed: {result}'
+
+# Test None with max_size and default_to_square=False
+result = get_size_dict(None, max_size=512, default_to_square=False)
+assert result == {'longest_edge': 512}, f'Failed: {result}'
+
+print('get_size_dict max_size tests passed')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_size_dict max_size test failed:\n{r.stdout}\n{r.stderr}"

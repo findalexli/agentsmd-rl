@@ -33,9 +33,27 @@ def _run_tsx(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — existing repo test for tags module
+# [repo_tests] pass_to_pass — Run repo's actual vitest for tags module
+def test_repo_vitest_tags():
+    """Repo's vitest tests for tags module pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "npx", "vitest", "run",
+            "code/core/src/manager-api/tests/tags.test.js",
+            "--config", "code/core/vitest.config.ts",
+            "--reporter=verbose"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Vitest tags tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — existing repo test for tags module (tsx runner)
 def test_repo_tags_module():
-    """Repo's tags module functionality works (pass_to_pass)."""
+    """Repo's tags module functionality works via tsx (pass_to_pass)."""
     script = textwrap.dedent("""\
         import { parseTagsParam, serializeTagsParam } from './code/core/src/manager-api/modules/tags.ts';
 

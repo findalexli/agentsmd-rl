@@ -307,3 +307,249 @@ def test_repo_check_error_codes():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"check-error-codes failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_file_trace_fixtures_valid():
+    """Repo's node-file-trace test fixtures have valid syntax (pass_to_pass).
+
+    Validates that all create-require test fixture files have valid Node.js
+    syntax by parsing them with Node.js. This ensures the fixtures used by
+    turbopack-tracing unit tests are well-formed JavaScript/TypeScript.
+    """
+    fixtures_dir = f"{REPO}/turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit"
+
+    # All create-require fixtures to validate
+    create_require_fixtures = [
+        "module-create-require",
+        "module-create-require-destructure",
+        "module-create-require-destructure-namespace",
+        "module-create-require-ignore-other",
+        "module-create-require-named-import",
+        "module-create-require-named-require",
+        "module-create-require-no-mixed",
+    ]
+
+    for fixture in create_require_fixtures:
+        fixture_dir = f"{fixtures_dir}/{fixture}"
+        # Find input files (input.js or input.mjs)
+        for input_file in ["input.js", "input.mjs"]:
+            input_path = f"{fixture_dir}/{input_file}"
+            if os.path.isfile(input_path):
+                # Validate syntax by trying to parse with Node.js
+                r = subprocess.run(
+                    ["node", "--check", input_path],
+                    capture_output=True, text=True, timeout=30, cwd=REPO,
+                )
+                assert r.returncode == 0, (
+                    f"Fixture {fixture}/{input_file} has invalid syntax:\n{r.stderr}"
+                )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo's test fixtures follow prettier formatting rules (pass_to_pass).
+
+    Validates that the create-require test fixture files follow the repo's
+    prettier formatting conventions. This ensures consistency with the
+    Next.js codebase style standards.
+    """
+    # Check formatting of the create-require test fixtures
+    fixtures = [
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require/input.js",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-destructure/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-ignore-other/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-named-import/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-named-require/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-no-mixed/input.mjs",
+    ]
+
+    for fixture in fixtures:
+        fixture_path = f"{REPO}/{fixture}"
+        if os.path.isfile(fixture_path):
+            r = subprocess.run(
+                ["npx", "prettier", "--check", fixture],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+            assert r.returncode == 0, f"Prettier check failed for {fixture}:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_syntax_valid():
+    """Repo's CI scripts have valid Node.js syntax (pass_to_pass).
+
+    Validates that the Node.js scripts used in CI have valid syntax
+    by parsing them with Node.js --check. This catches basic syntax errors.
+    """
+    scripts = [
+        "scripts/check-unused-turbo-tasks.mjs",
+        "packages/next/check-error-codes.js",
+    ]
+
+    for script in scripts:
+        script_path = f"{REPO}/{script}"
+        r = subprocess.run(
+            ["node", "--check", script_path],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Script {script} has invalid syntax:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo's package.json files are valid JSON (pass_to_pass).
+
+    Validates that all package.json files in the repo are valid JSON
+    by parsing them with Node.js. This catches JSON syntax errors.
+    """
+    import json
+    import os
+
+    package_json_files = [
+        "package.json",
+        "packages/next/package.json",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/package.json",
+    ]
+
+    for pkg_file in package_json_files:
+        pkg_path = f"{REPO}/{pkg_file}"
+        if os.path.isfile(pkg_path):
+            r = subprocess.run(
+                ["node", "-e", f"JSON.parse(require('fs').readFileSync('{pkg_path}'))"],
+                capture_output=True, text=True, timeout=30, cwd=REPO,
+            )
+            assert r.returncode == 0, f"package.json {pkg_file} is invalid JSON:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pnpm_check_error_codes():
+    """Repo's check-error-codes pnpm script passes (pass_to_pass).
+
+    Runs the check-error-codes script via pnpm to validate that error codes
+    in the Next.js package are correctly formatted.
+    """
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Continue even if npm install fails (pnpm might already be available)
+
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "check-error-codes"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm check-error-codes failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pnpm_check_unused_turbo_tasks():
+    """Repo's check-unused-turbo-tasks pnpm script passes (pass_to_pass).
+
+    Runs the check-unused-turbo-tasks script via pnpm to validate that
+    known unused turbo-tasks items match the baseline.
+    """
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "check-unused-turbo-tasks"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # The base commit has 2 known unused items (size_bytes)
+    # We verify the script runs and produces expected output
+    if r.returncode != 0:
+        known_unused = [
+            "turbopack/crates/turbopack-browser/src/ecmascript/chunk.rs:133",
+            "turbopack/crates/turbopack-core/src/output.rs:48",
+        ]
+        for item in known_unused:
+            assert item in r.stdout, f"Unexpected unused items found beyond known baseline"
+        assert "Found 2 unused turbo-tasks item(s)" in r.stdout, (
+            f"Expected 2 unused items (baseline), got different count:\n{r.stdout[-1000:]}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_all_create_require_fixtures():
+    """All create-require test fixtures follow prettier formatting (pass_to_pass).
+
+    Runs prettier --check on all create-require test fixture files to ensure
+    they follow the repo's code formatting conventions.
+    """
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    fixtures = [
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require/input.js",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-destructure/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-destructure-namespace/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-ignore-other/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-named-import/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-named-require/input.mjs",
+        "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit/module-create-require-no-mixed/input.mjs",
+    ]
+
+    for fixture in fixtures:
+        fixture_path = f"{REPO}/{fixture}"
+        if os.path.isfile(fixture_path):
+            r = subprocess.run(
+                ["npx", "prettier", "--check", fixture],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+            assert r.returncode == 0, f"Prettier check failed for {fixture}:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_core_files():
+    """Core Next.js source files pass ESLint checks (pass_to_pass).
+
+    Validates that key Next.js source files pass ESLint validation
+    using the repo's eslint configuration.
+    """
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    # Test a few core source files with eslint
+    core_files = [
+        "packages/next/src/bin/next.ts",
+        "packages/next/src/server/next.ts",
+    ]
+
+    for core_file in core_files:
+        core_path = f"{REPO}/{core_file}"
+        if os.path.isfile(core_path):
+            r = subprocess.run(
+                ["npx", "eslint", "--config", "eslint.config.mjs", core_file],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+            assert r.returncode == 0, f"ESLint check failed for {core_file}:\n{r.stderr[-500:]}"

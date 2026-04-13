@@ -131,28 +131,27 @@ rubric:
     of using wildcard imports.
   category: style
 distractors:
-- rule: Add tests for new functionality.
-  collision_type: scope_ambiguity
-  why_distracting: The fix addresses a complex distributed training crash (FP8 + TP
-    + MoE) which requires multi-node hardware to test properly. Attempting to add
-    unit tests for this would likely result in complex, fragile mocks or tests that
-    fail in CI without GPUs, wasting agent effort.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 35-35
 - rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
-  collision_type: meta_confusion
-  why_distracting: The prompt requires fixing scattered mode checks by centralizing
-    the FP8 enabled check, which necessitates modifying `areal/api/cli_args.py`. If
-    the agent stops to ask permission, it will fail to provide the complete patch
-    in a single-turn evaluation.
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly requires centralizing the FP8 mode check,
+    which necessitates modifying `ArchonFP8Config` in `areal/api/cli_args.py`. Following
+    the 'Ask first' rule would cause the agent to halt or avoid making the necessary
+    change.
   severity: high
   source:
     path: AGENTS.md
-    lines: 39-41
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules regarding
-  wildcard imports, adding tests, and asking before modifying `cli_args.py`. `AGENTS.md`
-  acts as a condensed operational guide for agents, reinforcing the constraints in
-  `CLAUDE.md`. The conflict arises between the strict 'Ask first' directive and the
-  implicit requirement of single-turn agent evaluations to provide a complete fix.
+    lines: 43-44
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The bug fix involves complex distributed FP8 Tensor Parallelism
+    and MoE interactions. The config mandates adding tests for new functionality,
+    but also notes integration tests require multi-node hardware. Attempting to write
+    tests for this specific hardware-dependent bug would waste effort and is not expected
+    in the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '38'
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
+  overlapping rules. The agent must weigh the explicit task instruction (centralize
+  mode checks) against the repository's general cautiousness around `cli_args.py`.

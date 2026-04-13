@@ -58,12 +58,9 @@ checks:
   origin: repo_tests
   description: Repo's build passes (pnpm build)
 rubric:
-- rule: Documentation updates are consistent with the style of existing README and
-    CONTRIBUTING sections
+- rule: 'Documentation: README.md and CONTRIBUTING.md have correct nightly sections'
   source:
     path: README.md
-    lines: 1-10
-    commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
   reference: '## Installation
 
 
@@ -98,14 +95,6 @@ rubric:
     ```
 
     '
-- rule: 'Monorepo: pnpm workspace with packages in `packages/` directory'
-  source:
-    path: AGENTS.md
-    lines: 14-16
-  evidence: The `.github/workflows/nightly.yml` file correctly uses `pnpm` actions
-    and commands (`pnpm install --frozen-lockfile`, `pnpm run setup-installable-branch`)
-    to interact with the monorepo.
-  category: tooling
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -172,32 +161,32 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
-    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
-    Node.js APIs'
-  collision_type: architecture_boundary
-  why_distracting: The agent is writing a repository management script (`scripts/setup-installable-branch.ts`)
-    and updating a utility (`scripts/utils/process.ts`) that need to execute git commands
-    and manipulate the filesystem. Applying the 'runtime-agnostic / avoid Node.js
-    APIs' rule here would prevent the use of necessary Node modules like `child_process`
-    and `fs`, which are required for build scripts.
+- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
+    `src` that defines the public API by re-exporting from within `src/lib`'
+  collision_type: rule_conflict
+  why_distracting: The task instruction explicitly requires the script to 'Apply `publishConfig`
+    overrides so exports point to `dist/` instead of `src/`'. The config rule states
+    that all exports have a dedicated file in `src`. An agent might incorrectly prioritize
+    the config rule and fail to implement the `publishConfig` override, or try to
+    implement complex re-exporting logic instead of a simple path replacement.
   severity: high
   source:
     path: AGENTS.md
-    lines: 18-19
+    lines: 16-16
 - rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
     files.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might create a change file to document the new nightly
-    build feature. However, change files are only for published packages in `packages/*`.
-    This PR only modifies repository infrastructure and documentation, so a change
-    file is not required and would be out of scope.
+  why_distracting: The rule mandates creating a `.changes/` markdown file for changes.
+    However, this rule is explicitly scoped to `packages/*` (published packages).
+    This PR only adds repository infrastructure (GitHub Actions, scripts) and updates
+    root documentation, so no change file is needed. An agent might blindly create
+    a change file in a non-existent package or the root directory.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 44-46
-hierarchy_analysis: 'The `AGENTS.md` file provides general guidelines for the repository.
-  However, some rules like ''Philosophy: Web standards-first'' and ''Adding changes''
-  are implicitly scoped to the published packages themselves, not the repository infrastructure
-  or scripts. The agent must distinguish between package source code and internal
-  tooling scripts when applying these rules.'
+    lines: 38-38
+hierarchy_analysis: The config is a flat single file (`AGENTS.md`). The agent must
+  synthesize the task instructions with the config rules, specifically recognizing
+  that the instruction to override `publishConfig` to `dist/` takes precedence for
+  this specific nightly build script over the general architectural rule about exports
+  pointing to `src/`.

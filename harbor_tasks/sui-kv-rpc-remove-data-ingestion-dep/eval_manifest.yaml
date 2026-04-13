@@ -59,26 +59,57 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Cargo dependencies pass cargo-deny license/advisory checks
+- id: test_cargo_toml_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Cargo.toml has no trailing whitespace
+- id: test_get_checkpoint_rs_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified get_checkpoint.rs has no trailing whitespace
 rubric:
-- rule: Do NOT comment the obvious. Comments should not simply repeat what the code
-    does. Only comment non-obvious algorithms, temporary exclusions/timeouts, complex
-    calculations, subtle race conditions, or assumptions about external state.
+- rule: All new files must start with the following license in comments at the top
+    of the file
   source:
     path: CLAUDE.md
-    lines: 116-131
-    commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
-- rule: Follow existing code style when modifying files. Check neighboring files for
-    patterns around imports, error handling, and function structure.
+    lines: 16-19
+  evidence: 'The gold solution preserves the existing `Copyright (c) Mysten Labs,
+    Inc.` and `SPDX-License-Identifier: Apache-2.0` header at the top of `crates/sui-kv-rpc/src/v2/get_checkpoint.rs`.'
+  category: documentation
+  verification: llm_judge
+- rule: Check code without building (preferred) using `cargo check`
   source:
     path: CLAUDE.md
-    lines: 5-8
-    commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
-- rule: When refactoring code (such as replacing API calls), remove unnecessary complexity
-    and prefer simplified patterns that match the new dependency's recommended usage.
+    lines: 24-25
+  evidence: The gold solution ensures the code compiles without needing a full build,
+    aligning with the preference to check code without building.
+  category: tooling
+  verification: llm_judge
+distractors:
+- rule: cargo xclippy does not recognize -p option
+  collision_type: rule_conflict
+  why_distracting: The config file warns that `cargo xclippy does not recognize -p
+    option`, which might lead the agent to avoid using `-p` or to use `cargo xclippy`
+    instead of the explicitly requested `cargo clippy -p sui-kv-rpc -- -D warnings`
+    from the task instructions.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 110-114
-    commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
+    lines: 52-53
+- rule: Run e2e tests with `cargo simtest` and Rust unittests with `SUI_SKIP_SIMTESTS=1
+    cargo nextest run`
+  collision_type: scope_ambiguity
+  why_distracting: The config file suggests running `cargo simtest` or `cargo nextest
+    run` for testing. However, the task instructions explicitly specify running only
+    `cargo check` and `cargo clippy`. Running the full test suite would waste time
+    and potentially hit the 10-minute timeouts mentioned in the config.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 34-40
+hierarchy_analysis: The hierarchy is flat, consisting only of root-level `CLAUDE.md`
+  and `AGENTS.md` files. The `AGENTS.md` file defers to `CLAUDE.md`, which provides
+  generic repository guidelines.
 version: '2.0'
 source:
   repo: MystenLabs/sui.git

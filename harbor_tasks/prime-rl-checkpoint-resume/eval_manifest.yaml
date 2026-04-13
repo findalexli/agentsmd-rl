@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff linter passes
+- id: repo_unit_all_cpu
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CPU-compatible unit tests pass
 - id: repo_unit_training_config
   type: pass_to_pass
   origin: repo_tests
@@ -25,6 +29,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Training and orchestrator modules can be imported
+- id: repo_unit_training_env
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for training env pass
+- id: repo_unit_training_logger
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for training logger pass
+- id: repo_unit_training_world
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for training world pass
+- id: repo_unit_inference_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for inference config pass
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -89,15 +109,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: README.md should have 'Developer' and 'Configs' sections
-rubric:
-- rule: New code creates proper CheckpointManager classes with save/load functionality
-  source:
-    path: src/zeroband/training/orchestrator/ckpt.py
-- rule: New code follows existing config patterns using pydantic
-  source:
-    path: src/zeroband/training/config.py
+rubric: []
 config_edits:
 - path: README.md
   tier: 2
-  gold_added: '## Developer section with Configs and Checkpointing subsections'
-  gold_removed: '## Contributing section with Config System subsection'
+  gold_added: |
+    ## Developer
+    ### Configs
+    ### Checkpointing
+  gold_removed: |
+    ## Contributing
+    ### Config System

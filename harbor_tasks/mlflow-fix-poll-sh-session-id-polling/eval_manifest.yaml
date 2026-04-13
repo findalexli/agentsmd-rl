@@ -17,6 +17,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Copilot skill files tracked by git
+- id: test_repo_shellcheck_poll_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh passes shellcheck linting
+- id: test_repo_mlflow_typo_copilot_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files pass MLflow typo check
+- id: test_repo_poll_sh_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh is executable
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files have no trailing whitespace
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files have no tab characters
 - id: copilot_skill_files_exist
   type: pass_to_pass
   origin: static
@@ -54,20 +74,19 @@ checks:
 rubric:
 - rule: Only add comments that explain non-obvious logic or provide additional context
   source:
-    path: CLAUDE.md
+    path: .claude/skills/copilot/SKILL.md
     lines: 13-13
   category: documentation
-  evidence: The gold solution adds comments in SKILL.md explaining the format of the
-    URL returned by `gh agent-task create` to justify the bash string manipulation
+  reference: The gold solution adds comments in SKILL.md explaining the format of
+    the URL returned by `gh agent-task create` to justify the bash string manipulation
     `session_id="${session_url##*/}"`.
 - rule: Assume the authors are referencing newer, valid resources
   source:
-    path: CLAUDE.md
-    lines: 7-9
+    path: .claude/skills/copilot/SKILL.md
+    lines: 5-7
   category: tooling
-  evidence: The gold solution uses the newly introduced `gh agent-task view` command
-    as requested, without attempting to replace it with standard `gh api` calls or
-    questioning its existence.
+  reference: The gold solution adds `gh agent-task view` to the allowed-tools list
+    in SKILL.md, accepting the newly introduced command without questioning its existence.
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -93,27 +112,17 @@ config_edits:
 
     bash .claude/skills/copilot/poll.sh <owner>/<repo> <pr_number>'
 distractors:
-- rule: Start the Full Development Environment (Recommended)
-  source:
-    path: CLAUDE.md
-    lines: 28-38
+- rule: New functionality in the tracking layer should be mirrored by workspace-aware
+    tests
   collision_type: scope_ambiguity
-  why_distracting: The agent might waste time trying to start the MLflow dev server
-    (`uv run bash dev/run-dev-server.sh`) to test its changes, but the changes are
-    to a Claude skill script (`poll.sh`) that interacts with the GitHub CLI, not the
-    MLflow server.
-  severity: medium
-- rule: 'Testing: uv run pytest tests/'
-  source:
-    path: CLAUDE.md
-    lines: 70-75
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the Python test suite to verify its
-    changes, but the modifications are entirely within bash scripts and markdown files
-    for a Claude skill, which are not covered by pytest.
+  why_distracting: The agent might mistakenly believe that adding new polling functionality
+    requires adding workspace-aware tests, but this rule only applies to the MLflow
+    tracking layer, not to Claude skill bash scripts.
   severity: low
-hierarchy_analysis: There is only one config file (`CLAUDE.md`) at the root level.
-  It provides general Python/MLflow development guidelines, but the task is modifying
-  a bash script and markdown documentation for a Claude skill. The agent must apply
-  the general documentation and knowledge cutoff rules while ignoring the MLflow-specific
-  backend/frontend testing instructions.
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root. The
+  task requires editing the agent's own skill definition files (`SKILL.md` and `poll.sh`).
+  The agent must apply the general 'Knowledge Cutoff Note' from `CLAUDE.md` to accept
+  and use the unfamiliar `gh agent-task` commands specified in the issue description.

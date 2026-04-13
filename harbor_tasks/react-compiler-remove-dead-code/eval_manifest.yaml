@@ -64,34 +64,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Build produces dist/index.js output file
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo'''s ESLint check runs (yarn lint). Base commit has 8 pre-existing errors.
 rubric:
-- rule: When modifying the compiler, read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/
-    to understand its role
+- rule: Dead code removal should be complete - including type definitions, imports, class properties, switch cases, and unused file deletion
   source:
-    path: compiler/CLAUDE.md
-    lines: 6-7
-    commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
-- rule: Use CompilerError.throwTodo() for unsupported but known patterns (graceful
-    bailout), and CompilerError.invariant() for truly unexpected/invalid states (hard
-    failure)
-  source:
-    path: compiler/CLAUDE.md
-    lines: 233-248
-    commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
-- rule: Remove dead code completely - including type definitions, imports, class properties,
-    and switch cases that reference the removed functionality
-  source:
-    path: compiler/CLAUDE.md
-    lines: 51-62
-    commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
-- rule: React Compiler code is located in the `/compiler/` directory and has its own
-    instructions.
-  source:
-    path: CLAUDE.md
-    lines: 6-7
-  evidence: All modified files are correctly located within the `compiler/` directory,
-    specifically targeting the `compiler/packages/babel-plugin-react-compiler/` package.
-  category: architecture
+    path: compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts
+  reference: |
+    // CompileProgramMetadata type removed
+    // compileProgram now returns void instead of CompileProgramMetadata | null
+    export function compileProgram(
+      program: NodePath<t.Program>,
+      pass: CompilerPass,
+    ): void {
+      // ... returns void (no return value with metadata)
 distractors:
 - rule: This repository uses Sapling (`sl`) for version control. Use `sl status`,
     `sl addremove`, and `sl commit`.

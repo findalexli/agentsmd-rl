@@ -57,7 +57,15 @@ checks:
 - id: test_repo_style_check
   type: pass_to_pass
   origin: repo_tests
-  description: Target file should pass repo's ruff check via utils/checkers.py
+  description: Target file should pass repo ruff check via utils/checkers.py
+- id: test_repo_init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Import ordering must follow repo isort standards via utils/checkers.py
+- id: test_repo_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Auto mappings must be correctly sorted via utils/checkers.py
 rubric:
 - rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
     only one or two lines long, and do not need large comments, docstrings or new
@@ -71,41 +79,29 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 6-7
-  evidence: The gold solution modifies `test_model_3b_generation` which is decorated
-    with `@slow`, aligning with the repository's convention of marking long-running
-    integration tests (like text generation) as slo
+  evidence: The gold solution modifies test_model_3b_generation which is decorated
+    with @slow
   category: testing
 distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits (single
-    typo, isolated lint cleanup, one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The fix requires a very small code change (swapping `temperature=0`
-    for `do_sample=False` and updating a string). An agent might misclassify this
-    critical test determinism fix as a 'tiny edit' or 'low-value busywork' and refuse
-    to implement it.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 40-42
-- rule: Fail-closed behavior for agents - If work is duplicate or only trivial busywork,
-    do not proceed to PR-ready output.
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: Because the required patch is so small, the agent might trigger
-    the fail-closed behavior and output an explanation instead of the actual code
-    patch, blocking the resolution of the issue.
+  why_distracting: The agent might refuse to generate the patch because the prompt
+    does not provide coordination evidence or issue approval, as required by the fail-closed
+    policy.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 54-57
-- rule: Copies and Modular Models - Do not edit a `# Copied from` block, as it will
-    be reverted by `make fix-repo`.
-  collision_type: architecture_boundary
-  why_distracting: The agent might search for `# Copied from` comments or try to find
-    a `modular_smollm3.py` file to make the change. However, this rule specifically
-    applies to `src/transformers/models/`, not the integration tests in `tests/models/`.
+    path: AGENTS.md
+    lines: 58-59
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might consider changing a few generation parameters as
+    a 'tiny edit' or 'low-value busywork' and refuse to implement the fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 59-65
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  agent should apply the rules uniformly without conflict between the two files.
+    path: AGENTS.md
+    lines: 40-41
+hierarchy_analysis: The configuration consists of identical AGENTS.md and CLAUDE.md
+  files at the root level. The primary challenge is that these files contain strict
+  repository contribution guidelines that conflict with the autonomous nature of a
+  benchmark task.

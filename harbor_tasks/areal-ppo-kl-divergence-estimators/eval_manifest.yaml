@@ -76,10 +76,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's areal module has no critical syntax errors (ruff E9,F63,F7,F82)
-- id: test_repo_all_py_syntax
+- id: test_repo_ruff_critical_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Critical PPO Python files compile without syntax errors (py_compile)
+  description: Repo's test files have no critical syntax errors (ruff E9,F63,F7,F82)
+- id: test_repo_ruff_format_ppo
+  type: pass_to_pass
+  origin: repo_tests
+  description: PPO module passes ruff format check (repo CI standard)
+- id: test_repo_py_compile_ppo
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PPO Python files compile without syntax errors (py_compile)
+- id: test_repo_actor_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: actor.py parses as valid Python AST
+- id: test_repo_ruff_format_constants
+  type: pass_to_pass
+  origin: repo_tests
+  description: Constants module (PROX_APPROX enums) passes ruff format check
+- id: test_repo_constants_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: constants.py parses as valid Python AST
 rubric:
 - rule: Follow existing code patterns in the same module. Look at neighboring code
     for tensor operations, stats logging, and control flow conventions.
@@ -107,38 +127,42 @@ rubric:
     tensor math (`log_ratio**2 / 2.0` and `log_ratio.exp() - 1 - log_ratio`) rather
     than iterating over elements.
   category: style
-- rule: Follow existing code patterns in the same module.
+- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
   source:
     path: AGENTS.md
-    lines: 24-25
-  evidence: The gold solution registers the stats using `stats_tracker.stat(..., denominator="n_valid_tokens")`,
-    matching the existing pattern in the file for tracking metrics.
-  category: architecture
+    lines: 65-66
+  evidence: The gold solution computes the estimators using tensor operations and
+    passes the tensors directly to `stats_tracker.stat()` without calling `.item()`
+    or `.tolist()`.
+  category: style
+- rule: Explicit `dtype`/`device`
+  source:
+    path: AGENTS.md
+    lines: '58'
+  evidence: The gold solution explicitly casts the tensors to float using `.float()`
+    before performing the subtraction.
+  category: style
 distractors:
 - rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
     `print` or `logging.__name__`.'
-  collision_type: meta_confusion
-  why_distracting: The prompt asks to 'log KL divergence estimators', which might
-    lead the agent to use the standard text logger (`areal.utils.logging.getLogger`).
-    However, in this context, 'logging' refers to tracking metrics via `stats_tracker.stat`
-    for TensorBoard. Using a text logger would spam the console and likely require
-    `.item()`, which would violate the rule against GPU-CPU syncs in hot paths.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 58-60
-- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to create a new test file or modify existing
-    tests to verify the math of the KL estimators. However, this is a simple metric
-    tracking addition to an existing function, and the gold solution does not include
-    tests.
+  why_distracting: The agent might try to use `areal.utils.logging.getLogger` to log
+    the KL divergence values, confusing standard text logging with the required metric
+    tracking via `stats_tracker.stat()`.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 26-27
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain similar rules regarding
-  testing and following existing patterns. `AGENTS.md` provides more specific guidance
-  on logging and performance (e.g., avoiding `.item()`, batch ops). The conflict arises
-  from the overloaded term 'log' in the prompt versus the strict text logging rules
-  in `AGENTS.md`.
+    lines: 51-52
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write unit tests for the new KL divergence
+    estimators, which is out of scope for this specific PR and not requested in the
+    instructions.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: '26'
+hierarchy_analysis: The configuration hierarchy is flat, consisting of two Level 0
+  files (`AGENTS.md` and `CLAUDE.md`) that apply globally. There are no direct conflicts
+  between the files, but the agent must carefully distinguish between general logging
+  rules in the config and the specific metric tracking API requested in the prompt.

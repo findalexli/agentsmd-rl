@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:04:55.845268",
-  "total_time": 2160.63,
-  "sandbox_id": "ijgw42i7f9v52aydiwsu7",
+  "validated_at": "2026-04-12T01:21:31.664114",
+  "total_time": 1463.29,
+  "sandbox_id": "i2rkqikuiazn5z8dhyoss",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 333.98,
+      "time": 333.38,
       "notes": ""
     },
     "p2p_enrich": {
@@ -35,11 +34,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validations passed: Docker build successful, NOP test correctly returns reward=0 (3 fail-to-pass tests fail as expected on buggy base commit), Gold test correctly returns reward=1 (all 19 tests pass after solve.sh patch applied). Tests cover: streamReceivedTokens reset, isFinalized guard, pendingFinalize awaiting, single-segment suppression, group chat passthrough, stub detection, cross-boundary imports, ts-nocheck, escaped imports, SDK self-imports, plus 9 repo_tests for file structure, debug code, import validity, private keys, TypeScript syntax, merge conflict markers, target file parsing, secrets baseline, and git validity.",
+      "attempts": 2,
+      "notes": "Fixed test_single_segment_suppression_preserved: (1) removed trailing comma after multiMedia?.text === undefined, (2) changed closing bracket from ] to } for JSON.stringify object. All 4 validations pass: Docker build OK, NOP test reward=0 (3 fail-to-pass tests fail on buggy code), Gold test reward=1 (30 tests pass), rubric judge was previously validated (ICR=1.00)",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 200.11
+      "time": 295.78
     },
     "rubric_judge": {
       "status": "pass",
@@ -58,25 +57,19 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 53.79
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 17.23,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 800.31,
-      "at": "2026-04-09T14:41:31.476980"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 800.57,
-      "at": "2026-04-09T14:41:31.642992"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,8 +91,24 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 2160.63,
-      "at": "2026-04-10T18:04:55.845268"
+      "time": 0,
+      "at": "2026-04-12T06:30:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1100.6,
+      "at": "2026-04-11T23:17:41.879326"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1463.29,
+      "at": "2026-04-12T01:21:31.664114"
     }
   ]
 }

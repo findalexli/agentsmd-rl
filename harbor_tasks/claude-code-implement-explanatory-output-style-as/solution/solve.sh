@@ -145,3 +145,7 @@ add to the default system prompt.
 EOF
 
 echo "Plugin created successfully."
+
+# Git add and commit so judge can detect the changes
+git add plugins/explanatory-output-style/
+git commit -m "Add explanatory-output-style plugin" --quiet

@@ -150,76 +150,103 @@ checks:
   origin: repo_tests
   description: 'Verify cipher.ts file integrity via git hash check (subprocess: git
     ls-tree)'
+- id: cipher_file_git_diff_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Verify cipher.ts has no uncommitted changes at base commit (subprocess:
+    git diff HEAD)'
+- id: cipher_ts_structure_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Validate cipher.ts has required TS structure using Python regex (subprocess:
+    python3 -c)'
+- id: cipher_ts_imports_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Validate cipher.ts imports required Deno core ops (subprocess: python3
+    -c)'
+- id: repo_license_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Verify LICENSE.md has correct copyright (subprocess: grep)'
+- id: cipher_ts_line_count_via_wc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts line count using wc -l (CI-style check)
+- id: cipher_ts_git_catfile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts blob via git cat-file (CI-style check)
+- id: unit_node_crypto_dir_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify unit_node crypto test directory structure (CI check)
+- id: cipher_ts_not_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts does not have executable bit set (CI check)
+- id: cipher_ts_is_regular_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts is a regular file via test -f (CI check)
+- id: crypto_parent_dir_is_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify crypto polyfill parent is directory (CI check)
+- id: cipher_ts_first_line_copyright
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts starts with copyright header via head (CI check)
+- id: cipher_ts_ends_with_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts ends with newline via tail (CI check)
+- id: cipher_ts_full_read
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts can be read completely via cat (CI check)
+- id: cipher_ts_file_stat
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts file metadata via stat command (CI check)
+- id: cipher_ts_md5sum
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts produces valid md5 checksum (CI check)
+- id: crypto_dir_git_ls_tree
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify crypto directory has expected files via git ls-tree -r (CI check)
+- id: cipher_ts_word_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts word count is reasonable via wc -w (CI check)
+- id: cipher_ts_byte_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts byte count is reasonable via wc -c (CI check)
+- id: cipher_ts_git_check_ignore
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts is not gitignored via git check-ignore (CI check)
+distractors:
+- rule: Before committing, make sure tools/format.js is run to format your code
+  collision_type: rule_conflict
+  why_distracting: The agent might attempt to run `./tools/format.js` on the entire
+    file or repository. If the existing code has formatting deviations, this would
+    create a massive diff of unrelated changes, directly violating the 'minimal changes'
+    rule.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 19-20
+hierarchy_analysis: The configuration consists of a single root-level CLAUDE.md file
+  containing generic repository guidelines. There is no complex inheritance to navigate.
 rubric:
-- rule: Keep changes minimal and focused. Avoid drive-by changes or unrelated modifications.
-  source:
-    path: CLAUDE.md
-    lines: 55-58
-    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
-- rule: Use comments to explain behavior rationale (e.g., why a check exists), not
-    to narrate obvious code.
-  source:
-    path: CLAUDE.md
-    lines: 52-54
-    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
-- rule: For Node.js polyfills (ext/node/polyfills/), check behavior against Node.js
-    conventions and document compatibility intentions.
-  source:
-    path: .github/copilot-instructions.md
-    lines: 220-225
-    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
-- rule: Internal symbols in JS polyfills should use the k prefix convention (e.g.,
-    kHandle). When modifying existing code, match existing patterns.
-  source:
-    path: .github/copilot-instructions.md
-    lines: 217-220
-    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
-- rule: Verify cipher.ts line count via wc (CI check - subprocess)
-- rule: Verify cipher.ts git hash-object works (CI check - subprocess)
-- rule: Verify cipher.ts tracked in git tree (CI check - subprocess)
-- rule: Verify cipher.ts has correct git file mode (CI check - subprocess)
-- rule: Verify cipher.ts has git history via git log (CI check - subprocess)
 - rule: Keep your changes minimal, don't do drive-by changes in a PR.
   source:
     path: CLAUDE.md
-    lines: 39-41
-  evidence: 'The gold solution strictly adds the 3-line `if` statement for buffer
-    length validation in `Cipheriv.prototype.update` and `Decipheriv.prototype.update`,
-    without refactoring surrounding code or fixing '
-  category: style
-distractors:
-- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
-    --js` and fix any lint errors before committing
-  collision_type: rule_conflict
-  why_distracting: The agent might run the linter and attempt to fix pre-existing
-    lint errors in `ext/node/polyfills/internal/crypto/cipher.ts`, which would violate
-    the 'Keep your changes minimal' rule and introduce drive-by changes.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 29-30
-- rule: Before committing, make sure `tools/format.js` is run to format your code
-  collision_type: rule_conflict
-  why_distracting: The agent might run `tools/format.js` on the entire file, potentially
-    reformatting untouched lines and creating a noisy diff that violates the minimal
-    changes rule.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 28-28
-- rule: The `deno_runtime` crate (`./runtime`) assembles the JavaScript runtime, including
-    all 'extensions' (native functionality exposed to JavaScript). The extensions
-    themselves are in the `ext/` directory, and provide system access to JavaScript
-  collision_type: architecture_boundary
-  why_distracting: Because the issue mentions OpenSSL and C `int` limits, the agent
-    might try to implement the buffer size check in the Rust extension code instead
-    of the JS polyfill, crossing an architecture boundary unnecessarily when a simple
-    JS check suffices.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 51-54
-hierarchy_analysis: Only one config file (`CLAUDE.md`) is provided, so there are no
-  inter-file conflicts. The primary tension within the file is between the instruction
-  to fix lint/formatting errors and the instruction to keep changes minimal. The gold
-  solution prioritizes minimal changes over opportunistic cleanup.
+    lines: 28-30
+  evidence: This is a code-only fix in cipher.ts that adds exactly two minimal size
+    checks (one in each update method). No config files are modified.
+  category: minimal_code_change

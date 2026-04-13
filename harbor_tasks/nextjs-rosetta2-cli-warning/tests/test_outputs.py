@@ -324,12 +324,48 @@ def test_repo_file_exists():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_file_readable():
-    """Target file must be readable and have valid structure (pass_to_pass)."""
+def test_repo_prettier_check():
+    """Repo's Prettier check passes on the target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "--yes", "prettier", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_valid():
+    """Git repository is valid and has expected commit history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
+    # Verify we're at the expected base commit
+    assert "a6df8603" in r.stdout, f"Unexpected commit: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax():
+    """Target file has valid Node.js/TypeScript syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    # Note: --check validates JS syntax; TS files may have imports
+    # that fail at runtime but syntax should be valid
+    # Alternative: use acorn or just verify the file isn't garbage
     src = Path(TARGET).read_text()
-    # Must be a reasonable size
-    assert len(src) > 200, "File is suspiciously small"
-    # Check balanced braces
+    # Basic syntax validation - check for balanced braces
     depth = 0
     for ch in src:
         if ch == "{":
@@ -362,3 +398,46 @@ def test_repo_import_syntax_valid():
     assert "from 'next/dist/compiled/commander'" in src, "Missing commander import"
     # Check that the warn function is imported from the right place
     assert "from '../build/output/log'" in src, "Missing log import"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_check():
+    """Repo CI - Node.js can parse the file syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shebang_valid():
+    """Repo CI - CLI entry point has valid shebang (pass_to_pass)."""
+    r = subprocess.run(
+        ["head", "-1", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to read shebang:\n{r.stderr}"
+    assert "#!/usr/bin/env node" in r.stdout, f"Invalid shebang: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_show_base_commit():
+    """Repo CI - Git can show the expected base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "show", "--stat", "--oneline", "-s", "a6df8603a4e164da7d758d0eb4082dc70353450d"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git show failed:\n{r.stderr}"
+    # Verify this is a turbopack-related commit
+    assert "turbopack" in r.stdout.lower() or "cache" in r.stdout.lower(), \
+        f"Unexpected commit content: {r.stdout}"

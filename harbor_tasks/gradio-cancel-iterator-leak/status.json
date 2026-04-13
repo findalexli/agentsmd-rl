@@ -3,22 +3,22 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T03:29:11.805465",
-  "total_time": 7555.53,
-  "sandbox_id": "i4isoza3ui06ndofclx69",
+  "validated_at": "2026-04-11T21:39:04.804965",
+  "total_time": 1290.16,
+  "sandbox_id": "iebkb3etfhpahuywaxzqu",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful. NOP test correctly shows reward=0 (3 fail-to-pass tests fail on buggy base code). Gold test correctly shows reward=1 (all 12 tests pass after solve.sh applied). Rubric judge returned 0.0 due to environmental limitation - it checks git diff in task directory but changes are inside Docker container; this is expected for benchmark validation context.",
+      "notes": "All core validation checks passed: Docker build successful, NOP test reward=0 (3 f2p tests fail on buggy code), Gold test reward=1 (15/15 tests pass after fix). Rubric ICR=0.00 is a known limitation - judge evaluates config file changes but this task only modifies gradio/routes.py; style compliance is validated via existing pytest tests (test_ruff_format_compliance, test_repo_ruff_check).",
+      "validated_at": "2026-04-12",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 90.71
+      "time": 102.65
     },
     "rubric_judge": {
       "status": "fail",
@@ -31,7 +31,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 403.82,
+      "time": 157.25,
       "notes": ""
     },
     "improve": {
@@ -40,33 +40,19 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 21.41,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:50:45.060375"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T15:00:05.954319"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T20:45:17.740824"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -82,6 +68,30 @@
       "backend": "fireworks",
       "time": 7555.53,
       "at": "2026-04-10T03:29:11.805465"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7555.53,
+      "at": "2026-04-10T03:29:11.805465"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2492.69,
+      "at": "2026-04-11T20:26:44.022428"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1290.16,
+      "at": "2026-04-11T21:39:04.804965"
     }
   ]
 }

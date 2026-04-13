@@ -61,11 +61,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Upstream MCP test suite passes with modifications
+- id: test_mcp_route_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP route tests pass - covers route.ts capability changes
+- id: test_mcp_cli_route_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP CLI route tests pass - covers route CLI commands
+- id: test_mcp_capabilities_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP capabilities tests pass - covers config.d.ts capability changes
 - id: not_stub_install_skills
   type: pass_to_pass
   origin: static
-  description: The installSkills function must have real implementation, not just
-    a stub
+  description: The installSkills function must have real implementation, not just a stub
 - id: skill_file_updated_when_adding_commands
   type: pass_to_pass
   origin: agent_config
@@ -83,33 +94,18 @@ checks:
     lines: '39'
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
 rubric:
-- rule: The skill file is located at packages/playwright/src/skill/SKILL.md. Update
-    it whenever you add new commands or tools.
+- rule: The skill file is located at packages/playwright/src/skill/SKILL.md. Update it whenever you add new commands or tools.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 41-43
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
-- rule: At any point in time you can run npm run playwright-cli -- --help to see the
-    latest available commands and use them to update the skill file.
+- rule: At any point in time you can run npm run playwright-cli -- --help to see the latest available commands and use them to update the skill file.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '43'
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
-- rule: Run npm run flint to lint everything before commit.
-  source:
-    path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: '39'
-    commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
 config_edits:
 - path: .claude/skills/playwright-mcp-dev/SKILL.md
   tier: 1
-  gold_added: '# SKILL File
-
-
-    The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains
-    documentation for all available CLI commands and MCP tools. Update it whenever
-    you add new commands or tools.
-
-    At any point in time you can run "npm run playwright-cli -- --help" to see the
-    latest available commands and use them to update the skill file.'
+  gold_added: "# SKILL File\n\nThe skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.\n\nAt any point in time you can run \"npm run playwright-cli -- --help\" to see the latest available commands and use them to update the skill file."
   gold_removed: ''

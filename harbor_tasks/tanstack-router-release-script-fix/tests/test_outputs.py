@@ -224,6 +224,71 @@ def test_repo_git_valid():
     assert result.stdout.strip(), "Git log returned empty output"
 
 
+def test_repo_workspace_config_formatting():
+    """Repo's workspace config files follow Prettier formatting (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "prettier", "--check", "pnpm-workspace.yaml", "nx.json"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Workspace config formatting check failed:\n{result.stdout[-500:]}"
+
+
+
+
+def test_repo_all_scripts_syntax():
+    """All scripts (.mjs, .js, .ts) in the repo have valid syntax (pass_to_pass)."""
+    scripts_dir = REPO / "scripts"
+    script_files = list(scripts_dir.glob("*.mjs")) + list(scripts_dir.glob("*.js")) + list(scripts_dir.glob("*.ts"))
+    assert script_files, "No script files found in scripts directory"
+
+    for script_file in script_files:
+        result = subprocess.run(
+            ["node", "--check", str(script_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert result.returncode == 0, f"Script {script_file.name} has syntax errors: {result.stderr}"
+
+
+def test_repo_all_scripts_individual_formatting():
+    """Each script file follows Prettier formatting (pass_to_pass)."""
+    scripts_dir = REPO / "scripts"
+    script_files = list(scripts_dir.glob("*.mjs")) + list(scripts_dir.glob("*.js")) + list(scripts_dir.glob("*.ts"))
+
+    for script_file in script_files:
+        result = subprocess.run(
+            ["npx", "prettier", "--check", str(script_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert result.returncode == 0, f"Script {script_file.name} formatting check failed:\n{result.stdout[-500:]}"
+
+
+def test_repo_git_status_clean():
+    """Repo has clean working tree (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Git status failed: {result.stderr}"
+
+
+def test_repo_npmrc_exists():
+    """Repo has required .npmrc configuration (pass_to_pass)."""
+    result = subprocess.run(
+        ["test", "-f", ".npmrc"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert result.returncode == 0, ".npmrc file should exist"
+
+
+def test_repo_node_version_specified():
+    """Repo has .nvmrc specifying Node version (pass_to_pass)."""
+    result = subprocess.run(
+        ["cat", ".nvmrc"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert result.returncode == 0, f".nvmrc read failed: {result.stderr}"
+    assert result.stdout.strip(), ".nvmrc should specify a Node version"
+
 if __name__ == "__main__":
     # Run all tests
     import pytest

@@ -174,6 +174,58 @@ def test_repo_prettier_modified_files():
     assert r.returncode == 0, f"Prettier failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ast_grep():
+    """Repo's ast-grep lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-ast-grep"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_error_codes():
+    """Repo's error codes check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check-error-codes"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error codes check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_language():
+    """Repo's language lint (alex) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-language"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Language lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_send_payload():
+    """Repo's ESLint check passes on send-payload.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs",
+         "packages/next/src/server/send-payload.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on send-payload.ts:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_render_result():
+    """Repo's ESLint check passes on render-result.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs",
+         "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on render-result.ts:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

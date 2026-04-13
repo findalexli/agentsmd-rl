@@ -7,7 +7,7 @@ source:
 checks:
 - id: compilation
   type: pass_to_pass
-  origin: static
+  origin: repo_tests
   description: Crate ty_python_semantic must compile without errors
 - id: test_repo_fmt
   type: pass_to_pass
@@ -17,6 +17,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo code must pass clippy linting for ty_python_semantic
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic library unit tests pass
+- id: test_repo_class_mdtests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Class-related mdtests pass — covers static_literal.rs call site
+- id: test_repo_enum_mdtests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enum-related mdtests pass — covers enums.rs call site
+- id: test_repo_corpus_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Corpus tests (no-panic tests on real-world code) pass
+- id: test_repo_ruff_db_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff_db library unit tests pass — foundational crate for ty_python_semantic
+- id: test_repo_ty_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty library unit tests pass — consumer of ty_python_semantic
 - id: any_reachable_method_exists
   type: fail_to_pass
   origin: pr_diff
@@ -35,7 +59,7 @@ checks:
   origin: pr_diff
   description: No remaining .all_reachable() calls in the crate source
 - id: any_reachable_not_stub
-  type: fail_to_pass
+  type: pass_to_pass
   origin: pr_diff
   description: any_reachable method has real logic, not just a stub
 rubric:
@@ -70,16 +94,14 @@ distractors:
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   collision_type: scope_ambiguity
-  why_distracting: This is a pure performance optimization that preserves existing
-    semantics (changing `!all(is_undefined_or(P))` to `any(is_defined_and(!P))`).
-    The existing test suite for class literals and enums already covers these code
-    paths. An agent trying to strictly follow this rule might waste time writing redundant
-    unit tests for `any_reachable` when the existing behavioral tests are sufficient.
+  why_distracting: The PR is a pure performance optimization that preserves existing
+    semantics (applying De Morgan's laws to the iterator and predicate). The agent
+    might waste time trying to write new tests for an internal iterator method, when
+    the existing test suite for class fields and enums already covers these code paths.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 59-59
-hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
-  `AGENTS.md`. The rules in `AGENTS.md` provide general development guidelines. The
-  primary challenge is interpreting the scope of the testing requirement for a pure
-  refactor/optimization.
+    lines: 62-62
+hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply including
+  `AGENTS.md`. The rules are generic repository guidelines rather than specific architectural
+  constraints for this subsystem.

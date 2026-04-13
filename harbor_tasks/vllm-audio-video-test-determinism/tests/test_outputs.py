@@ -370,3 +370,95 @@ def test_repo_init_lazy_imports():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Init lazy imports check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_filenames():
+    """Repo's filename check passes - no spaces in filenames (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", 'git ls-files | grep " " && echo "Filenames should not contain spaces!" && exit 1 || exit 0'],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Filename check failed (spaces in filenames):\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_symlink_utils():
+    """Repo's symlink utils check passes on target test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import sys; "
+         "from pathlib import Path; "
+         "content = Path(sys.argv[1]).read_text(); "
+         "sys.exit(1 if 'from vllm.utils import' in content and 'symlink' in content else 0)",
+         TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Symlink utils check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validate_config():
+    """Repo's config validation passes on target test file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/validate_config.py", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config validation failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck():
+    """Repo's shellcheck passes on shell scripts (pass_to_pass)."""
+    # Install shellcheck
+    r = subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "shellcheck", "-qq"],
+        capture_output=True,
+        timeout=120,
+    )
+    # Run shellcheck via the repo's script
+    r = subprocess.run(
+        ["bash", f"{REPO}/tools/pre_commit/shellcheck.sh"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shellcheck failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_actionlint():
+    """Repo's actionlint passes on GitHub workflow files (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "actionlint-py", "--quiet"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["actionlint", f"{REPO}/.github/workflows/pre-commit.yml"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Actionlint failed:\n{r.stdout}\n{r.stderr}"

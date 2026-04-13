@@ -33,6 +33,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's pyproject.toml is valid TOML
+- id: repo_ruff_check_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo-wide ruff lint check passes
+- id: repo_ruff_format_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo-wide ruff format check passes
 - id: dppo_config_fields
   type: fail_to_pass
   origin: pr_diff
@@ -62,43 +70,52 @@ checks:
   origin: pr_diff
   description: Negative advantages with low violations are still masked
 rubric:
-- rule: Config field renames must update all usages consistently across the codebase
-    (config definition, loss implementation, tests).
-  source:
-    path: skills/config/SKILL.md
-    commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
-- rule: Use targeted comments to clarify logic. Don't explain your work process or
-    reference old code.
+- rule: Code changes use targeted comments to clarify logic without explaining work
+    process
   source:
     path: AGENTS.md
-    lines: '6'
     commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
-- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
-    tests.
+  evidence: Gold solution rewrites loss.py docstring to explain DPPO+KL logic directly
+    without referencing old IPO/GRPO/CISPO code or work process
+  reference: 'The docstring in default_loss_fn is rewritten to explain the new advantage-conditioned
+    masking logic while completely removing the previous paragraph that referenced
+    the old code''s design choices (IPO, GRPO, CISPO).
+
+    '
+- rule: 'Targeted comments: don''t explain your work process or reference old code.
+    Use targeted comments sparingly to clarify ambiguous logic.'
   source:
     path: AGENTS.md
-    lines: '44'
-    commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
-- rule: 'Targeted comments: don''t explain your work process or reference old code.'
-  source:
-    path: AGENTS.md
-    lines: 6-7
-  evidence: The gold solution rewrites the docstring in `default_loss_fn` to explain
-    the new DPPO+KL logic, completely removing the old references to IPO, GRPO, and
-    CISPO rather than leaving comments explaining t
+    lines: 5-6
+  evidence: The gold solution updates the docstring in `default_loss_fn` to explain
+    the new DPPO+KL logic and advantage-conditioned masking without referencing the
+    old IPO code or the refactoring process.
   category: documentation
+config_edits:
+- path: src/prime_rl/configs/trainer.py
+  tier: 1
+  gold_added: dppo_mask_low, dppo_mask_high
+  gold_removed: ipo_mask_low, ipo_mask_high
+- path: src/prime_rl/trainer/rl/loss.py
+  tier: 1
+  gold_added: dppo_invalid_mask, dppo_mask_low, dppo_mask_high, advantages sign-conditioned
+    masking
+  gold_removed: ipo_invalid_mask, ipo_mask_low, ipo_mask_high, IPO/GRPO/CISPO references
+- path: tests/unit/train/rl/test_loss.py
+  tier: 2
+  gold_added: dppo_mask_high
+  gold_removed: ipo_mask_high
 distractors:
 - rule: 'Skills: When you make changes to the codebase, check if any skills need to
     be updated to stay accurate.'
   collision_type: scope_ambiguity
-  why_distracting: The agent is renaming config fields (`ipo_mask_low` to `dppo_mask_low`)
-    which are part of the trainer config. The agent might waste time searching through
-    the `skills/` directory (like `skills/config` or `skills/entrypoints`) to see
-    if these specific fields are documented and need updating, but the gold solution
-    correctly scopes the PR to just the code and tests.
+  why_distracting: The agent might attempt to update the `skills/config` file because
+    it modified `src/prime_rl/configs/trainer.py`, but the skills files document general
+    workflows, not specific config fields.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 32-37
-hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply including `AGENTS.md`.
-  The rules in `AGENTS.md` apply globally to the repository.
+    lines: 27-30
+hierarchy_analysis: The configuration is a flat, single-file structure where `CLAUDE.md`
+  simply includes `AGENTS.md`. There are no conflicting rules or deep hierarchical
+  overrides.

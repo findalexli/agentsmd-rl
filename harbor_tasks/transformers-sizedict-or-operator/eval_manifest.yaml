@@ -29,6 +29,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: SizeDict attribute access works for all standard fields
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff check passes on image_utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff format check passes on image_utils.py
+- id: test_repo_typing_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ty type checker runs on image_utils.py without errors
+- id: test_repo_sizedict_pickle
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict can be pickled and unpickled
+- id: test_repo_sizedict_repr
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict repr is valid and contains expected fields
 - id: sizedict_or_dict
   type: fail_to_pass
   origin: pr_diff
@@ -121,29 +141,36 @@ rubric:
     and `-> dict`) for the new dunder methods, ensuring compatibility with the repository's
     type checker.
   category: tooling
+- rule: Run the ty type checker and model structure rules via `make typing`
+  source:
+    path: AGENTS.md
+    lines: 3-3
+  evidence: The gold solution includes return type annotations (`-> "SizeDict"` and
+    `-> dict`) for the newly added `__or__` and `__ror__` methods, aligning with the
+    repository's emphasis on passing type checkers.
+  category: tooling
 distractors:
-- rule: 'Copies and Modular Models: avoid direct inheritance between model-specific
-    files in `src/transformers/models/`.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to apply the `# Copied from` or modular model
-    rules to `SizeDict`, but these rules strictly apply to `src/transformers/models/`,
-    whereas `image_utils.py` is a core utility file.
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
+  collision_type: meta_confusion
+  why_distracting: The task requires a small, isolated addition of two dunder methods
+    to a single class. The agent might misinterpret this as a 'low-value busywork
+    PR' or 'tiny edit' and refuse to implement it.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 54-59
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+    path: AGENTS.md
+    lines: 54-57
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The agent might refuse to implement the fix, misclassifying the
-    addition of two short dunder methods as a 'low-value busywork PR' or 'tiny edit',
-    when it is actually a critical functional fix for downstream libraries like vLLM.
-  severity: high
+  why_distracting: The task requires a small, isolated addition of two dunder methods
+    to a single class. The agent might misinterpret this as a 'low-value busywork
+    PR' or 'tiny edit' and refuse to implement it.
+  severity: medium
   source:
-    path: CLAUDE.md
-    lines: 35-37
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  rules focus heavily on PR workflow, coordination, and model-specific architecture
-  (`src/transformers/models/`). Since the target file `src/transformers/image_utils.py`
-  is a core utility, the model-specific copying rules do not apply, and the agent
-  must rely on general Python data model knowledge (dunder methods) while adhering
-  to the repository's typing standards.
+    path: AGENTS.md
+    lines: 38-40
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. These files define strict meta-rules regarding agent behavior
+  and PR submission processes that conflict with the implicit benchmark goal of unconditionally
+  generating the requested code.

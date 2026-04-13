@@ -24,38 +24,38 @@ def _get_process_validation_response_func():
     """
     queueing_path = Path(REPO) / "gradio" / "queueing.py"
     content = queueing_path.read_text()
-    
+
     # Parse the AST
     tree = ast.parse(content)
-    
+
     # Find the function definition
     func_node = None
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "process_validation_response":
             func_node = node
             break
-    
+
     if func_node is None:
         raise RuntimeError("Could not find process_validation_response function in queueing.py")
-    
+
     # Get the source lines
     with open(queueing_path) as f:
         lines = f.readlines()
-    
+
     # Extract the function source
     start_line = func_node.lineno - 1  # AST uses 1-indexed line numbers
     end_line = func_node.end_lineno
     func_source = "".join(lines[start_line:end_line])
-    
+
     # Replace the BlockFunction type hint with Any to avoid import issues
     func_source = func_source.replace("BlockFunction", "Any")
-    
+
     # Create namespace with required imports
     namespace = {'inspect': inspect, 'Any': Any}
-    
+
     # Execute the function definition in the namespace
     exec(compile(ast.parse(func_source), '<string>', 'exec'), namespace)
-    
+
     return namespace['process_validation_response']
 
 
@@ -248,3 +248,40 @@ def test_repo_block_function_compile():
         timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in gradio/block_function.py:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check_related():
+    """Ruff format check passes on modified file and related files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "gradio/queueing.py", "gradio/block_function.py", "test/test_queueing.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_test_file():
+    """Ruff lint passes on test/test_queueing.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "test/test_queueing.py", "--select=E,W,F", "--ignore=E501", "--no-fix"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed on test/test_queueing.py:\n{r.stdout.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_parse_modified_files():
+    """All modified and related files parse as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import ast; [ast.parse(open(f).read()) for f in ['gradio/queueing.py', 'gradio/block_function.py', 'test/test_queueing.py']]"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"AST parsing failed:\n{r.stderr.decode()[-500:]}"

@@ -55,6 +55,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Bazel build of DevTools module passes
+- id: test_repo_bazel_test_command_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel CommandTests (unit tests) pass
+- id: test_repo_dotnet_format_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dotnet format style check passes
 - id: test_cs_files_balanced_braces
   type: pass_to_pass
   origin: static
@@ -111,43 +119,37 @@ rubric:
     to verify the reference equality of the domain properties, fulfilling the requirement
     for small unit tests.
   category: testing
+- rule: When implementing solutions prefer writing a test for it first
+  source:
+    path: AGENTS.md
+    lines: 46-47
+  evidence: The gold solution includes a new test file `dotnet/test/webdriver/DevTools/DevToolsDomainsTests.cs`
+    to verify the reference equality behavior.
+  category: testing
 distractors:
-- rule: 'Async patterns: The codebase is migrating to async'
+- rule: The codebase is migrating to async
   collision_type: rule_conflict
-  why_distracting: The rule states 'The codebase is migrating to async'. An agent
-    might try to change the properties to async methods (e.g., `GetNetworkAsync()`)
-    or use an async lazy pattern. This would break the `DevToolsDomains` base class
-    contract and violate the API compatibility rule.
+  why_distracting: The agent might try to change the properties to async methods (e.g.,
+    `GetNetworkAsync()`) or use an async lazy initialization pattern, which would
+    break the public API and violate the explicit instruction to use standard `Lazy<T>`.
   severity: high
   source:
     path: dotnet/AGENTS.md
-    lines: 23-24
-- rule: 'Logging: Add logging where users may need insight into what''s happening'
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests adding logging for actionable/useful/diagnostic
-    events. An agent might add logging inside the `Lazy<T>` factory methods to log
-    when a domain is initialized. This is unnecessary for a simple property getter
-    and would add noise.
-  severity: medium
-  source:
-    path: dotnet/AGENTS.md
-    lines: 12-16
+    lines: 25-26
 - rule: Comments should explain *why*, not *what* - prefer well-named methods over
     comments
-  collision_type: rule_conflict
-  why_distracting: The rule says 'Comments should explain *why*, not *what*'. An agent
-    might see the existing XML docs (e.g., 'Gets the object used for manipulating
-    network information') and delete or rewrite them because they explain 'what'.
-    This would cause unnecessary churn and violate the .NET XML doc conventions.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might delete the existing XML documentation comments
+    on the properties (e.g., `/// Gets the object used for manipulating network information...`)
+    because they describe 'what' the property does rather than 'why', but doing so
+    would violate documentation standards and create unnecessary diffs.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 58-58
-hierarchy_analysis: The root `AGENTS.md` provides general invariants like API compatibility
-  and minimal diffs, while `dotnet/AGENTS.md` provides .NET-specific patterns like
-  async migration and logging. In this PR, the root rule 'Maintain API/ABI compatibility'
-  strictly overrides the .NET-specific 'migrating to async' rule, because changing
-  properties to async methods would break the public API and base class overrides.
-  The agent must prioritize the root invariant over the language-specific migration
-  trend.
+    lines: 63-64
+hierarchy_analysis: The hierarchy is moderate (root `AGENTS.md` -> `dotnet/AGENTS.md`).
+  The root file emphasizes API compatibility and small diffs, while the .NET specific
+  file mentions migrating to async. The root rule 'Maintain API/ABI compatibility'
+  must override the .NET rule 'migrating to async' to prevent breaking the public
+  properties.
 version: '2.0'

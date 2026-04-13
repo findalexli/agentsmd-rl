@@ -422,6 +422,23 @@ def test_repo_cargo_test_bench_util():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_cargo_tree():
+    """Cargo dependency tree resolves correctly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "tree", "-p", "deno_bench_util", "--depth", "2"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"cargo tree failed:\n{r.stderr[-500:]}"
+
+    # Verify the output contains expected dependencies
+    assert "deno_bench_util" in r.stdout, "deno_bench_util not in dependency tree"
+    assert "deno_core" in r.stdout, "deno_core not in dependency tree"
+
+
+# [repo_tests] pass_to_pass
 def test_cargo_lock_updated():
     """Cargo.lock is consistent with Cargo.toml after workspace changes."""
     r = subprocess.run(

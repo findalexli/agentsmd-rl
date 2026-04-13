@@ -17,10 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo Python scripts are properly formatted
+- id: test_repo_ruff_check_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo python/ directory passes ruff linting
 - id: test_repo_shellcheck_scripts
   type: pass_to_pass
   origin: repo_tests
-  description: Repo shell scripts pass shellcheck
+  description: Repo shell scripts pass shellcheck at warning severity
+- id: test_repo_shellcheck_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo shell scripts pass shellcheck style checks
 - id: test_repo_validate_pyproject
   type: pass_to_pass
   origin: repo_tests
@@ -29,6 +37,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo has no typos
+- id: test_repo_readme_transform
+  type: pass_to_pass
+  origin: repo_tests
+  description: README transform script works for PyPI target
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Rust code is properly formatted
+- id: test_repo_prettier_workflows
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workflow YAML files are properly formatted
 - id: workflow_sets_insta_env_vars
   type: fail_to_pass
   origin: pr_diff
@@ -56,24 +76,14 @@ rubric:
 - rule: The script follows the coding style of existing scripts in the repo (set -euo
     pipefail, proper error handling)
   source:
-    path: CLAUDE.md
-    lines: 1-15
-    commit: dd0d76cd83821e22a7054de21eb73051eb23274d
+    path: scripts/apply-ci-snapshots.sh
+    lines: 1-20
+    commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
 - rule: apply-ci-snapshots.sh exists with valid bash shebang and syntax
-  reference: '# CONTRIBUTING.md
-
-    A script is available to update the snapshots based on results in CI. This is
-    useful for updating
-
-    snapshots without re-running the test suite and for updating platform-specific
-    snapshots.
-
-
-    ```shell
-
-    ./scripts/apply-ci-snapshots.sh
-
-    ```'
+  source:
+    path: scripts/apply-ci-snapshots.sh
+    lines: 1-5
+    commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
 - rule: CONTRIBUTING.md documents the CI snapshot apply script
   source:
     path: CONTRIBUTING.md
@@ -109,24 +119,15 @@ rubric:
 
     ```'
 - rule: Cargo.toml specifies insta >= 1.46.0 for INSTA_PENDING_DIR support
-  reference: '# CONTRIBUTING.md
-
-    A script is available to update the snapshots based on results in CI. This is
-    useful for updating
-
-    snapshots without re-running the test suite and for updating platform-specific
-    snapshots.
-
-
-    ```shell
-
-    ./scripts/apply-ci-snapshots.sh
-
-    ```'
+  source:
+    path: Cargo.toml
+    lines: 318-322
+    commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
 - rule: Read CONTRIBUTING.md for guidelines on how to run tools
   source:
-    path: CLAUDE.md
-    lines: 2-2
+    path: CONTRIBUTING.md
+    lines: 115-122
+    commit: 273d29b8f21e95fb80c9e7ca8b1d28f605212bde
   evidence: The gold solution updates `CONTRIBUTING.md` to include usage instructions
     for the new `./scripts/apply-ci-snapshots.sh` script, ensuring the file remains
     the central source of truth for how to run pro
@@ -150,24 +151,26 @@ config_edits:
 distractors:
 - rule: ALWAYS attempt to add a test case for changed behavior
   collision_type: scope_ambiguity
-  why_distracting: The PR involves adding a developer utility bash script and modifying
-    GitHub Actions CI workflows. Attempting to write automated tests for these infrastructure/tooling
-    changes is out of scope and would lead to wasted effort.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 3-3
-- rule: When making changes for Windows from Unix, use `cargo xwin clippy` to check
-    compilation
-  collision_type: scope_ambiguity
-  why_distracting: The PR modifies the Windows CI job in `.github/workflows/test.yml`
-    to upload artifacts, but does not modify any Rust source code. Running `cargo
-    xwin clippy` is unnecessary and irrelevant for YAML workflow changes.
+  why_distracting: The instruction asks to add a bash script and update CI workflows.
+    The rule demands adding test cases for changed behavior, which an agent might
+    misinterpret as needing to write tests for the bash script or CI changes, wasting
+    effort on out-of-scope testing.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 5-5
-hierarchy_analysis: Only one config file (`CLAUDE.md`) is present. The rules are heavily
-  skewed towards Rust development, which creates scope ambiguity when the task involves
-  CI infrastructure (YAML) and shell scripting. The agent must recognize that Rust-specific
-  testing and compilation rules do not apply to these file types.
+    lines: 2-3
+- rule: When making changes for Windows from Unix, use `cargo xwin clippy` to check
+    compilation
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies the Windows CI job in `test.yml`. An agent might
+    think it needs to run `cargo xwin clippy` to verify the Windows changes, but this
+    is a YAML configuration change, not a Rust code change.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+hierarchy_analysis: The config is a flat single file (`CLAUDE.md`). The rules are
+  primarily focused on Rust development, while the task involves CI configuration,
+  bash scripting, and documentation. The agent must discern which rules apply to the
+  non-Rust components of the repository and correctly identify `CONTRIBUTING.md` as
+  the target for documentation updates.

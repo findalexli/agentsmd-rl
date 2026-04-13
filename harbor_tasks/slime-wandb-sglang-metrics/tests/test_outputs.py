@@ -506,3 +506,67 @@ def test_repo_isort():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"isort failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_yaml():
+    """YAML syntax check passes via pre-commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit check-yaml failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_private_key():
+    """Private key detection check passes via pre-commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit detect-private-key failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_large_files():
+    """Large files check passes via pre-commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit check-added-large-files failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_case_conflict():
+    """Case conflict check passes via pre-commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-case-conflict", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit check-case-conflict failed:\n{r.stderr[-500:]}"

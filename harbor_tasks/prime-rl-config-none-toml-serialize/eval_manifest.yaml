@@ -99,24 +99,6 @@ rubric:
     path: AGENTS.md
     lines: '29'
     commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process, do not refer to old code.
-  source:
-    path: AGENTS.md
-    lines: 7-7
-  evidence: The gold solution modifies the serialization logic in `inference.py`,
-    `rl.py`, and `sft.py` without adding any inline comments explaining the removal
-    of `exclude_none=True` or the addition of `none_to
-  category: style
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process.
-  source:
-    path: AGENTS.md
-    lines: 6-7
-  evidence: The gold solution implements the `none_to_none_str` function and applies
-    it across multiple entrypoints without adding any explanatory comments about the
-    bug fix or the work process.
-  category: documentation
 - rule: Errors should never pass silently. Explicit is better than implicit. (Zen
     of Python)
   source:
@@ -125,14 +107,6 @@ rubric:
   evidence: The gold solution fixes the bug where `exclude_none=True` silently dropped
     `None` values during TOML serialization, ensuring they are explicitly converted
     to the string '"None"' instead of failing sil
-  category: architecture
-- rule: Errors should never pass silently. Explicit is better than implicit.
-  source:
-    path: AGENTS.md
-    lines: 21-22
-  evidence: The gold solution removes `exclude_none=True` and explicitly converts
-    `None` to `"None"`, fixing the bug where the serialization process silently dropped
-    `None` values.
   category: architecture
 - rule: Use the string 'None' in TOML to set a field to None.
   source:

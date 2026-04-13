@@ -52,7 +52,7 @@ def test_repo_ruff_check():
     # Install ruff if not available
     subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
     r = subprocess.run(
-        ["python3", "-m", "ruff", "check", "src/prime_rl/configs/trainer.py", "src/prime_rl/trainer/rl/loss.py", "--config=pyproject.toml"],
+        ["ruff", "check", "src/prime_rl/configs/trainer.py", "src/prime_rl/trainer/rl/loss.py", "--config=pyproject.toml"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
@@ -63,7 +63,7 @@ def test_repo_ruff_format():
     # Install ruff if not available
     subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
     r = subprocess.run(
-        ["python3", "-m", "ruff", "format", "--check", "src/prime_rl/configs/trainer.py", "src/prime_rl/trainer/rl/loss.py", "--config=pyproject.toml"],
+        ["ruff", "format", "--check", "src/prime_rl/configs/trainer.py", "src/prime_rl/trainer/rl/loss.py", "--config=pyproject.toml"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
@@ -73,7 +73,7 @@ def test_repo_ruff_check_test_file():
     """Repo's ruff lint check passes on modified test file (pass_to_pass)."""
     subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
     r = subprocess.run(
-        ["python3", "-m", "ruff", "check", "tests/unit/train/rl/test_loss.py", "--config=pyproject.toml"],
+        ["ruff", "check", "tests/unit/train/rl/test_loss.py", "--config=pyproject.toml"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff check failed on test file:\n{r.stdout}\n{r.stderr}"
@@ -83,7 +83,7 @@ def test_repo_ruff_format_test_file():
     """Repo's ruff format check passes on modified test file (pass_to_pass)."""
     subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
     r = subprocess.run(
-        ["python3", "-m", "ruff", "format", "--check", "tests/unit/train/rl/test_loss.py", "--config=pyproject.toml"],
+        ["ruff", "format", "--check", "tests/unit/train/rl/test_loss.py", "--config=pyproject.toml"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed on test file:\n{r.stdout}\n{r.stderr}"
@@ -96,6 +96,26 @@ def test_repo_pyproject_toml_valid():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"pyproject.toml is invalid TOML:\n{r.stderr}"
+
+
+def test_repo_ruff_check_all():
+    """Repo's ruff lint check passes on entire project (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "check", ".", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on entire repo failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format_all():
+    """Repo's ruff format check passes on entire project (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "format", "--check", ".", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on entire repo failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_repo_imports_work():

@@ -52,6 +52,11 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's formatter (oxfmt) check passes on modified files
+- id: test_repo_unit_tests_bundler_controller
+  type: pass_to_pass
+  origin: repo_tests
+  description: BundleController unit tests pass (tests the bundler logic modified
+    to remove duplicate error logging)
 rubric:
 - rule: No `console.*` — use `logger` singleton
   source:
@@ -61,32 +66,25 @@ rubric:
     to log non-esbuild errors, adhering to the rule to avoid `console.error`.
   category: style
 distractors:
-- rule: Add/modify a CLI command -> `packages/wrangler/src/` Commands registered in
-    `src/index.ts`
-  collision_type: architecture_boundary
-  why_distracting: The problem mentions running `wrangler dev` with multiple `-c`
-    config flags. The agent might follow this rule and look into `src/index.ts` to
-    modify how the CLI parses these flags for multi-worker mode, but the actual fix
-    is entirely within the event handling pipeline (`DevEnv.ts` and `BundlerController.ts`).
+- rule: No `console.*` — use `logger` singleton
+  collision_type: rule_conflict
+  why_distracting: The agent might over-apply the logger rule by retaining or adding
+    `logger.error()` calls in `BundlerController.ts` when catching errors, but the
+    PR instruction explicitly requires removing these to prevent double-logging.
   severity: medium
   source:
-    path: AGENTS.md
-    lines: 53-55
-- rule: No `console.*` — use `logger` singleton
+    path: packages/wrangler/AGENTS.md
+    lines: 21-21
+- rule: Output normalization via `normalizeString()` pipeline
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs using the `logger` singleton. If the agent applies
-    this blindly to all errors (e.g., `logger.error(event.cause)`), they will fail
-    the requirement to format esbuild `BuildFailure` errors nicely. They must use
-    the specific `logBuildFailure` function instead of the `logger` singleton for
-    esbuild errors.
-  severity: high
+  why_distracting: The agent might attempt to normalize the error output using `normalizeString()`
+    before logging it in `DevEnv.ts`, but this rule applies to testing environments,
+    not the actual CLI runtime output.
+  severity: low
   source:
     path: packages/wrangler/AGENTS.md
-    lines: 18-18
-hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` providing monorepo-wide
-  context and a package-specific `packages/wrangler/AGENTS.md` providing Wrangler-specific
-  conventions. The Wrangler-specific rule to use the `logger` singleton applies directly
-  to the modified files, but requires careful scoping to avoid missing the specialized
-  `logBuildFailure` function for esbuild errors. The root guide's pointer to `src/index.ts`
-  for CLI commands is a potential distraction since the issue is described in terms
-  of CLI flags but is actually an event handling bug.
+    lines: 41-41
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to `packages/wrangler/AGENTS.md`
+  to find the Wrangler-specific conventions. The agent must apply the `logger` singleton
+  rule from the Wrangler config while carefully balancing it against the PR instruction
+  to remove redundant logging.

@@ -1,8 +1,3 @@
-source:
-  repo: gohugoio/hugo.git
-  pr: 0
-  base_commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
-  merge_commit: ''
 checks:
 - id: svg_alpine_x_bind
   description: 'Fail-to-pass: Alpine.js x-bind directives must not be stripped from
@@ -58,6 +53,18 @@ checks:
   description: 'Pass-to-pass: Repo minifiers package passes race detector tests'
   type: pass_to_pass
   origin: repo_tests
+- id: repo_tests_resources
+  description: 'Pass-to-pass: Repo resources package tests pass'
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_tests_minifier_transformer
+  description: 'Pass-to-pass: Repo minifier transformer tests pass'
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_vet_resources
+  description: 'Pass-to-pass: Repo resources package passes go vet'
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: Solution follows Hugo code style
 - rule: Test cases follow Hugo test conventions
@@ -70,33 +77,53 @@ rubric:
     without adding any inline comments explaining that it is for Alpine.js, trusting
     the field name and context to be self'
   category: style
-distractors:
-- rule: Avoid global state at (almost) all cost.
-  collision_type: architecture_boundary
-  why_distracting: The agent needs to modify `defaultTdewolffConfig`, which is a package-level
-    global variable. An agent strictly following 'Avoid global state at (almost) all
-    cost' might attempt to refactor the minifier configuration to be injected or instantiated
-    per-use, which would be a massive out-of-scope architectural change for a simple
-    bug fix.
-  severity: high
+- rule: 'Assume that the maintainers and readers of the code you write are Go experts:
+    Don''t use comments to explain the obvious.'
   source:
     path: AGENTS.md
-    lines: 6-6
-- rule: assume that a similiar problem has been solved before, look hard for helper
-    functions before creating new ones.
+    lines: 3-4
+  evidence: The gold solution adds the KeepNamespaces field to the SVG minifier configuration
+    without adding any explanatory comments about Alpine.js or the specific issue
+    being fixed.
+  category: documentation
+- rule: Brevity is good. Don't use comments to explain the obvious.
+  source:
+    path: AGENTS.md
+    lines: 2-4,10
+  evidence: 'The gold solution adds `KeepNamespaces: []string{"", "x-bind"}` without
+    adding any explanatory comments about Alpine.js or the issue number, adhering
+    to the brevity rule and avoiding unnecessary comme'
+  category: documentation
+- rule: Don't use comments to explain the obvious. / Brevity is good.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The gold solution adds the `KeepNamespaces` field without adding any explanatory
+    comments about Alpine.js, adhering to the brevity and 'no obvious comments' rules.
+  category: documentation
+distractors:
+- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead
+    of raw `if`/`t.Fatal` checks.
   collision_type: scope_ambiguity
-  why_distracting: The fix requires updating an external dependency in `go.mod` and
-    setting a declarative configuration field on an external struct. There is no procedural
-    logic involved. An agent might waste time searching the codebase for existing
-    SVG manipulation or namespace preservation helper functions instead of just updating
-    the struct.
+  why_distracting: The instruction suggests creating tests to verify the fix, which
+    might lead the agent to write tests using `qt` matchers. However, the gold solution
+    does not require committing any tests, making this rule a distraction from the
+    core task.
   severity: low
   source:
     path: AGENTS.md
-    lines: 7-7
-hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
-  The rules in `AGENTS.md` are general Go best practices and Hugo-specific testing
-  guidelines. The primary tension is between the rule to avoid global state and the
-  existing architecture of the `minifiers` package, which relies on a global default
-  configuration struct.
+    lines: 10-10
+- rule: This is a project with a long history; assume that a similiar problem has
+    been solved before, look hard for helper functions before creating new ones.
+  collision_type: rule_conflict
+  why_distracting: The rule suggests looking for existing helper functions since similar
+    problems might have been solved before. An agent might waste time searching for
+    internal Hugo workarounds for SVG minification instead of following the explicit
+    instruction to update the external `tdewolff/minify` dependency.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 8-9
+hierarchy_analysis: The configuration is essentially a flat single file, as CLAUDE.md
+  simply includes AGENTS.md. There are no hierarchical conflicts.
 version: '2.0'

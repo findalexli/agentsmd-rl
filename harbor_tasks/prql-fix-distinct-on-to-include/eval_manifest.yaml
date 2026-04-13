@@ -89,6 +89,14 @@ rubric:
   evidence: The gold solution adds `test_distinct_on_with_aggregate` as an inline
     test in `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`.
   category: testing
+- rule: Prefer inline snapshots for almost all tests using `insta::assert_snapshot!`.
+  source:
+    path: CLAUDE.md
+    lines: 35-48
+  evidence: The gold solution implements the bug fix test as an inline `#[test]` module
+    at the bottom of `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`,
+    directly following the existing config'
+  category: testing
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -110,25 +118,15 @@ distractors:
 - rule: 'Initialize tests with empty snapshots, then run with `--accept`: `insta::assert_snapshot!(result,
     @"");`'
   collision_type: meta_confusion
-  why_distracting: This is a workflow instruction for the developer to use `--accept`
-    to fill in the snapshot. If an agent literally commits an empty snapshot (`@""`),
-    the test will fail in CI. The agent must actually run the test and include the
-    generated SQL in the committed snapshot.
+  why_distracting: The rule instructs to initialize tests with empty snapshots `(@"")`
+    and run with `--accept`. An agent might literally leave the snapshot empty in
+    the final patch, failing to realize that the final committed code must contain
+    the populated snapshot output.
   severity: high
   source:
     path: CLAUDE.md
     lines: 43-48
-- rule: Prefer inline snapshots for almost all tests
-  collision_type: scope_ambiguity
-  why_distracting: The prompt asks to update CLAUDE.md to document when to use inline
-    vs integration tests. The existing file already has a 'Tests' section saying 'Prefer
-    inline snapshots'. An agent might see this and conclude the requested documentation
-    already exists, failing to add the detailed breakdown of inline vs integration
-    tests.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 39-41
-hierarchy_analysis: Only one config file (`CLAUDE.md`) is present. The main challenge
-  is distinguishing between developer workflow instructions (like using `--accept`
-  for snapshots) and the final code state expected in the PR.
+hierarchy_analysis: The configuration is a flat single file (`CLAUDE.md`), but the
+  task is highly meta-referential. The agent must read `CLAUDE.md` to understand the
+  testing conventions, apply them to fix the bug, and then modify `CLAUDE.md` itself
+  to expand the documentation on those very testing conventions.

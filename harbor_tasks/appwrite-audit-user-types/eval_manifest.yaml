@@ -68,9 +68,17 @@ checks:
   type: pass_to_pass
   description: composer.json passes schema validation with composer validate --strict
   origin: repo_tests
-- id: test_repo_composer_audit
+- id: test_repo_unit_detector
   type: pass_to_pass
-  description: Production dependencies pass security audit with composer audit --no-dev
+  description: Detector unit tests pass (Device/OS detection)
+  origin: repo_tests
+- id: test_repo_unit_event
+  type: pass_to_pass
+  description: Event unit tests pass (Event/Queue system)
+  origin: repo_tests
+- id: test_repo_unit_filter
+  type: pass_to_pass
+  description: Filter unit tests pass (Branch domain filtering)
   origin: repo_tests
 rubric:
 - rule: When updating documents, pass only changed attributes as a sparse Document.
@@ -100,6 +108,7 @@ rubric:
   source:
     path: AGENTS.md
     lines: 18-18
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
   evidence: The gold solution uses a PHP 8 `match` expression in `app/controllers/shared/api.php`
     to map `$apiKey->getType()` to the corresponding `ACTIVITY_TYPE_KEY_*` constant.
   category: style
@@ -107,41 +116,57 @@ rubric:
   source:
     path: src/Appwrite/Platform/AGENTS.md
     lines: 31-35
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
   evidence: The gold solution correctly targets `XList.php` files (e.g., `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Documents/Logs/XList.php`)
     to update the log response builders in the n
   category: naming
-distractors:
-- rule: Inside Http directories, file names can only be Get.php, Update.php, Create.php,
-    Delete.php or XList.php.
-  collision_type: architecture_boundary
-  why_distracting: The agent might notice that `app/controllers/api/messaging.php`
-    and `app/controllers/api/users.php` do not follow the strict CRUD naming convention
-    (Get, Update, Create, Delete, XList) and attempt to refactor these legacy controllers
-    into the new module structure, which is a massive out-of-scope change.
-  severity: high
+- rule: Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`.
   source:
     path: src/Appwrite/Platform/AGENTS.md
     lines: 31-35
-- rule: Each service is its own module, putting related code under one roof.
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to extract the audit logging logic into a dedicated
-    `Audit` or `Log` module under `src/Appwrite/Platform/Modules/` to put 'related
-    code under one roof', instead of simply updating the existing legacy `app/controllers/shared/api.php`
-    and `app/init/constants.php`.
-  severity: medium
+  evidence: The gold solution correctly identifies and modifies `XList.php` files
+    across various modules (e.g., Databases, Teams) to update the log response builders,
+    leveraging the naming convention that list endpoi
+  category: naming
+- rule: List endpoints in Http directories must be named `XList.php` because `List`
+    is a reserved keyword in PHP.
   source:
     path: src/Appwrite/Platform/AGENTS.md
-    lines: 6-7
-hierarchy_analysis: The project has a hybrid architecture with legacy controllers
-  in `app/controllers/` and new modules in `src/Appwrite/Platform/Modules/`. The root
-  `AGENTS.md` mentions both, but `src/Appwrite/Platform/AGENTS.md` strictly enforces
-  the new module structure and naming conventions (`XList.php`, etc.). Agents must
-  understand that rules in `src/Appwrite/Platform/AGENTS.md` apply only to the new
-  module architecture and should not be retroactively applied to legacy files in `app/controllers/`
-  during a feature update.
+    lines: 31-35
+  evidence: The gold solution edits `XList.php` files under `Logs/` directories across
+    various modules (e.g., Databases, Teams) to composer.json passes schema validation
+    with composer validate --strict
+  category: naming
+hierarchy_analysis: The base `AGENTS.md` provides the general module structure, while
+  `src/Appwrite/Platform/AGENTS.md` provides the specific `XList.php` naming convention.
+  The agent must combine the instruction 'Update log response builders' with the `XList.php`
+  convention to successfully locate all the files that need editing.
 version: '2.0'
 source:
   repo: appwrite/appwrite
   pr: 11580
   base_commit: bb078086618f85634763943b9bee5fb8e8453cbd
   merge_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+distractors:
+- rule: Model non-CRUD operations as property updates (e.g., `Update.php`).
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 32-34
+  collision_type: scope_ambiguity
+  why_distracting: The instruction asks to 'Update log response builders'. An agent
+    might misinterpret this as a directive to create a new endpoint for updating logs
+    (e.g., `Logs/Update.php`) based on the rule to model non-CRUD operations as property
+    updates, rather than modifying the existing `XList.php` read endpoints.
+  severity: medium
+- rule: Each service is its own module, and related code should be grouped under one
+    roof.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 6-8
+  collision_type: architecture_boundary
+  why_distracting: The rule states that related code achieving a specific goal should
+    be put under one roof (a module). An agent might try to refactor all log-related
+    endpoints into a single new `Logs` module, rather than updating the existing log
+    endpoints scattered across different modules (Databases, Teams, etc.).
+  severity: medium

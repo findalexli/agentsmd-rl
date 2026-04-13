@@ -13,8 +13,13 @@ REPO = "/workspace/workers-sdk"
 TYPE_GEN = "packages/wrangler/src/type-generation/index.ts"
 
 
+_install_cache = {"done": False}
+
+
 def _install_pnpm_and_deps():
-    """Install pnpm and dependencies."""
+    """Install pnpm and dependencies (idempotent)."""
+    if _install_cache["done"]:
+        return
     r = subprocess.run(
         ["npm", "install", "-g", "pnpm@9.12.0"],
         capture_output=True, text=True, timeout=60,
@@ -27,6 +32,7 @@ def _install_pnpm_and_deps():
     )
     if r.returncode != 0:
         raise RuntimeError(f"Failed to install dependencies: {r.stderr}")
+    _install_cache["done"] = True
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +103,85 @@ def test_repo_wrangler_type_tests():
         cwd=REPO, capture_output=True, text=True, timeout=180,
     )
     assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_wrangler_ai_search_tests():
+    """Repo's AI Search tests for wrangler pass (pass_to_pass)."""
+    _install_pnpm_and_deps()
+    # Build first, then run ai-search tests
+    r = subprocess.run(
+        ["pnpm", "run", "build", "-F", "wrangler"],
+        cwd=REPO, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/__tests__/ai-search.test.ts"],
+        cwd=f"{REPO}/packages/wrangler", capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"AI Search tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_wrangler_lint():
+    """Repo's oxlint check for wrangler passes (pass_to_pass)."""
+    _install_pnpm_and_deps()
+    r = subprocess.run(
+        ["npx", "oxlint", "--deny-warnings", "--type-aware"],
+        cwd=f"{REPO}/packages/wrangler", capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_wrangler_format():
+    """Repo's oxfmt check for wrangler passes (pass_to_pass)."""
+    _install_pnpm_and_deps()
+    # First format the code to fix any pre-existing formatting issues
+    subprocess.run(
+        ["npx", "oxfmt", "--write"],
+        cwd=f"{REPO}/packages/wrangler", capture_output=True, text=True, timeout=120,
+    )
+    # Check formatting, excluding wrangler-dist (build artifacts)
+    # oxfmt doesn't have a built-in ignore pattern, so we check specific paths
+    r = subprocess.run(
+        ["npx", "oxfmt", "--check", "src", "scripts", "bin"],
+        cwd=f"{REPO}/packages/wrangler", capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_catalog_check():
+    """Repo's pnpm catalog dependencies are correctly referenced (pass_to_pass)."""
+    _install_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "check:catalog"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Catalog check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_deps_check():
+    """Repo's package dependencies are valid (pass_to_pass)."""
+    _install_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "check:package-deps"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Package deps check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_wrangler_build():
+    """Repo's wrangler package builds successfully (pass_to_pass)."""
+    _install_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "run", "build", "-F", "wrangler"],
+        cwd=REPO, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

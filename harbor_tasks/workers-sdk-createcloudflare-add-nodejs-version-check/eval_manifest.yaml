@@ -104,33 +104,55 @@ rubric:
     the documentation to clarify that `main` and `exports["."]` still point to `dist/cli.js`,
     preserving it as the bundled CJS entr
   category: architecture
+- rule: esbuild bundles src/cli.ts as CJS → dist/cli.js
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 10-10
+  evidence: The gold solution creates bin/c3.js as a CommonJS script (using require)
+    to load the CJS bundle dist/cli.js, respecting the existing CJS build architecture.
+  category: architecture
+- rule: packages/create-cloudflare/ - Project scaffolding CLI (C3)
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  evidence: The agent names the new bin shim `bin/c3.js`, utilizing the C3 abbreviation
+    established in the root architecture overview.
+  category: naming
 distractors:
-- rule: '`no-console: error` — use project''s logging utilities'
-  collision_type: architecture_boundary
+- rule: 'no-console: error — use project''s logging utilities'
+  collision_type: would_cause_bug
   why_distracting: The agent might try to import the project's logging utilities to
-    print the version error. However, the bin shim must be a standalone script that
-    runs before the main bundle is loaded. Importing internal utilities would likely
-    trigger the very syntax errors on older Node versions that the shim is designed
-    to prevent.
+    print the version error. However, importing those utilities would load the CLI
+    bundle containing Node 20+ syntax, causing the exact syntax error the shim is
+    meant to prevent.
   severity: high
   source:
     path: packages/create-cloudflare/AGENTS.md
-    lines: '21'
+    lines: 16-16
 - rule: No separate bin shim — the built output IS the bin
-  collision_type: rule_conflict
-  why_distracting: The agent might try to inject the version check directly into `src/cli.ts`
-    or the esbuild build script to avoid creating a separate bin shim, adhering to
-    the documented architecture. This contradicts the explicit PR instruction to add
-    a bin shim and would fail to prevent syntax errors during the parsing of the bundled
-    CLI.
+  collision_type: meta_confusion
+  why_distracting: The config explicitly forbids a separate bin shim, which directly
+    conflicts with the PR instruction. The agent must realize the instruction represents
+    an architectural change and override this rule by updating the AGENTS.md file
+    itself.
   severity: high
   source:
     path: packages/create-cloudflare/AGENTS.md
-    lines: 16-17
-hierarchy_analysis: The root AGENTS.md provides general monorepo context, while packages/create-cloudflare/AGENTS.md
-  contains specific architectural rules for the C3 package. The PR instructions explicitly
-  require changing the architecture documented in the package-level AGENTS.md (introducing
-  a bin shim), creating a direct conflict between the existing documentation and the
-  new requirements. The agent must recognize that the instructions override the existing
-  architectural documentation, and must update the documentation to reflect the new
-  state.
+    lines: 13-13
+- rule: 'Single entry: src/cli.ts serves as CLI, library export, and bin target.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to place the version check inside `src/cli.ts`
+    to maintain the single entry point architecture. This would fail because `src/cli.ts`
+    is bundled and its modern syntax would crash older Node versions before the check
+    could execute.
+  severity: high
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 4-4
+hierarchy_analysis: This task features a profound meta-referential conflict. The local
+  `packages/create-cloudflare/AGENTS.md` explicitly documents an architecture (single
+  entry point, no bin shim) that the PR instruction asks to change. The agent must
+  not only ignore the existing architectural constraints but also actively rewrite
+  the `AGENTS.md` file to document the new architecture. Furthermore, the agent must
+  selectively ignore the `no-console` rule because the new bin shim sits outside the
+  main architecture boundary and cannot safely import project utilities.

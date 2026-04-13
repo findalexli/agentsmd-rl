@@ -11,15 +11,15 @@ checks:
   description: ty_python_semantic crate compiles after the refactoring
 - id: cargo_clippy
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: ty_python_semantic crate passes clippy linting
 - id: cargo_test_lib
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: ty_python_semantic library tests pass
 - id: cargo_fmt_check
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo code is properly formatted
 - id: scope_field_removed
   type: fail_to_pass
@@ -77,15 +77,13 @@ distractors:
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   collision_type: scope_ambiguity
-  why_distracting: The prompt explicitly states this is a behavior-preserving refactoring.
-    An agent strictly following the 'must be tested' rule might waste effort trying
-    to write new tests for this internal structural change, when the existing TYPE_CHECKING
-    test suite already provides the necessary coverage.
+  why_distracting: The instruction explicitly states this is a behavior-preserving
+    refactoring of internal state. Existing tests will cover the changes, so trying
+    to write new tests for this internal state change would be wasted effort and violate
+    the refactoring constraint.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 52-52
-hierarchy_analysis: The configuration consists of a single root file (`AGENTS.md`)
-  included via `CLAUDE.md`. There are no hierarchical conflicts, but agents must carefully
-  interpret general rules (like testing requirements) in the context of pure refactoring
-  tasks.
+    lines: 58-58
+hierarchy_analysis: The configuration is a flat, single-file structure (AGENTS.md
+  included by CLAUDE.md) containing general repository guidelines.

@@ -90,30 +90,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: Shell scripts pass bash -n syntax check'
-- id: test_regression_sql_file_valid
+- id: test_repo_no_crlf
   type: pass_to_pass
-  origin: static
-  description: Regression test SQL file exists and contains valid queries
-- id: test_regression_reference_file_valid
+  origin: repo_tests
+  description: 'CI: Source file has no CRLF line endings (ClickHouse style check)'
+- id: test_repo_no_multiple_empty_lines
   type: pass_to_pass
-  origin: static
-  description: Regression test reference file exists and contains expected results
-- id: test_regression_test_paired
+  origin: repo_tests
+  description: 'CI: Source file has no more than 2 consecutive empty lines (ClickHouse style check)'
+- id: test_repo_no_excessive_exclamation
   type: pass_to_pass
-  origin: static
-  description: Regression test SQL and reference files are properly paired
-- id: test_cpp_syntax_valid
+  origin: repo_tests
+  description: 'CI: Source file has no excessive exclamation marks (ClickHouse style check)'
+- id: test_repo_no_builtin_unreachable
   type: pass_to_pass
-  origin: static
-  description: Source code has valid C++ structure (balanced braces, includes, namespace)
-- id: test_source_file_no_trailing_whitespace
+  origin: repo_tests
+  description: 'CI: No __builtin_unreachable() - use UNREACHABLE() instead (ClickHouse style check)'
+- id: test_repo_no_mt19937_random
   type: pass_to_pass
-  origin: static
-  description: Source file has no trailing whitespace (style check via file read)
-- id: test_source_file_ends_with_newline
-  type: pass_to_pass
-  origin: static
-  description: Source file ends with newline (POSIX via file read)
+  origin: repo_tests
+  description: 'CI: No std::mt19937 or std::random_device - use pcg64_fast instead (ClickHouse style check)'
 - id: test_agent_config_memory_safety
   type: pass_to_pass
   origin: agent_config

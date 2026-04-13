@@ -379,43 +379,39 @@ REPO = "/repo"
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_lint():
-    """Engine files must pass ruff linting (E, W, I rules) (pass_to_pass)."""
+    """All areal files must pass ruff linting (E, W, I rules) (pass_to_pass)."""
     import subprocess
     import sys
     import os
 
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ruff==0.14.9"], capture_output=True)
 
-    engine_dir = os.path.join(REPO, "areal/engine")
     r = subprocess.run(
-        ["ruff", "check", "--select=E,W,I", "--ignore=E501", engine_dir],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["ruff", "check", "--select=E,W,I", "--ignore=E501", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Ruff linting failed:
-{r.stdout}
-{r.stderr}"
+    assert r.returncode == 0, f"Ruff linting failed: {r.stdout} {r.stderr}"
+
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format():
-    """Engine files must be formatted according to ruff standards (pass_to_pass)."""
+    """All areal files must be formatted according to ruff standards (pass_to_pass)."""
     import subprocess
     import sys
     import os
 
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ruff==0.14.9"], capture_output=True)
 
-    engine_dir = os.path.join(REPO, "areal/engine")
     r = subprocess.run(
-        ["ruff", "format", "--check", engine_dir],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["ruff", "format", "--check", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Ruff formatting failed:
-{r.stdout}
-{r.stderr}"
+    assert r.returncode == 0, f"Ruff formatting failed: {r.stdout} {r.stderr}"
+
 
 # [repo_tests] pass_to_pass
 def test_repo_yaml_valid():
-    """All YAML workflow files must have valid syntax (pass_to_pass)."""
+    """All YAML files must have valid syntax (pass_to_pass)."""
     import subprocess
     import sys
 
@@ -425,9 +421,8 @@ def test_repo_yaml_valid():
         ["pre-commit", "run", "check-yaml", "--all-files"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    assert r.returncode == 0, f"YAML validation failed:
-{r.stdout}
-{r.stderr}"
+    assert r.returncode == 0, f"YAML validation failed: {r.stdout} {r.stderr}"
+
 
 # [repo_tests] pass_to_pass
 def test_repo_json_valid():
@@ -441,6 +436,64 @@ def test_repo_json_valid():
         ["pre-commit", "run", "check-json", "--all-files"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    assert r.returncode == 0, f"JSON validation failed:
-{r.stdout}
-{r.stderr}"
+    assert r.returncode == 0, f"JSON validation failed: {r.stdout} {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trailing_whitespace():
+    """All tracked files must not have trailing whitespace (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pre-commit"], capture_output=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed: {r.stdout} {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_end_of_file():
+    """All tracked files must have proper end-of-file (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pre-commit"], capture_output=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"End-of-file check failed: {r.stdout} {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_large_files():
+    """Repo must not contain large files (>1000KB) (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pre-commit"], capture_output=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Large files check failed: {r.stdout} {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_private_keys():
+    """Repo must not contain private keys (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pre-commit"], capture_output=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Private key detection failed: {r.stdout} {r.stderr}"

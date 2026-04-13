@@ -69,27 +69,35 @@ rubric:
     and `packages/playwright-core/src/server/download.ts`, adhering to the architectural
     bound
   category: architecture
-distractors:
-- rule: Use `npm run ctest <filter>` for Chromium only library tests during development.
-  collision_type: meta_confusion
-  why_distracting: The agent might try to use `npm run ctest` to reproduce the Edge
-    crash. Since `ctest` runs standard Chromium and not Edge, the crash will not reproduce,
-    potentially confusing the agent into thinking the bug is invalid or already fixed.
-  severity: high
+- rule: 'playwright-core is the package for the Browser automation engine: client,
+    server, dispatchers, protocol'
   source:
     path: CLAUDE.md
-    lines: 46-47
-- rule: 'Decision rule: Does the test need browser/browserType/context -> tests/library/.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a regression test for the context
-    closure bug in `tests/library/`. However, since the crash is specific to Edge,
-    a standard Chromium test won't catch it, and adding an Edge-specific test might
-    be unsupported by the standard test runner configuration, leading to wasted effort.
+    lines: 3-6
+  evidence: The gold solution correctly modifies files within `packages/playwright-core/src/server/`
+    to fix the browser automation engine's handling of downloads.
+  category: architecture
+distractors:
+- rule: Browser engine patches belong in the `browser_patches/` directory.
+  collision_type: architecture_boundary
+  why_distracting: The issue describes an 'Edge browser crash', which might lead an
+    agent to believe a browser engine patch is necessary since `browser_patches/`
+    is explicitly designated for 'Browser engine patches'. However, the fix must be
+    implemented in Playwright's Chromium context management.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 61-68
-hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root. The
-  rules clearly delineate package responsibilities and testing strategies. However,
-  the testing rules assume standard Chromium/Firefox/WebKit environments, which creates
-  ambiguity when dealing with vendor-specific (Edge) bugs.
+    lines: 31-32
+- rule: Tests needing `browser`/`browserType`/`context` should be placed in `tests/library/`.
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on where to add tests
+    for context lifecycle (`tests/library/`). An agent might waste time trying to
+    write an automated test for this Edge-specific crash, which is not required by
+    the gold solution and may be difficult to reliably reproduce in the standard test
+    environment.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 70-76
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the root level. There is no hierarchy or overriding of rules.

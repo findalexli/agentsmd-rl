@@ -369,6 +369,54 @@ def test_repo_typos():
     assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck():
+    """Repo's shell scripts pass shellcheck (pass_to_pass)."""
+    # Install shellcheck
+    subprocess.run(["apt-get", "update", "-qq"], capture_output=True)
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True,
+    )
+    r = subprocess.run(
+        f"find {REPO}/scripts -name '*.sh' -type f | xargs shellcheck --shell bash --severity warning",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Shellcheck failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validate_pyproject():
+    """Repo's pyproject.toml passes validation (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "validate-pyproject[all,store]", "-q"],
+        check=True,
+        capture_output=True,
+    )
+    r = subprocess.run(
+        ["validate-pyproject", f"{REPO}/pyproject.toml"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Pyproject validation failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_transform_readme():
+    """Repo's README transform script works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/scripts/transform_readme.py", "--target", "pypi"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"README transform failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------

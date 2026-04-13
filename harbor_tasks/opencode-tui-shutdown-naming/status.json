@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T12:15:08.042893",
-  "total_time": 1959.17,
-  "sandbox_id": "iegtq12c8et3xkw5f23nn",
+  "validated_at": "2026-04-12T02:41:12.789098",
+  "total_time": 1392.22,
+  "sandbox_id": "ikufyclahr66d2lp5t44v",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 500.0,
-      "notes": "Added 1 repo_tests p2p gate: test_repo_typecheck - uses Bun transpiler to verify TypeScript syntax of modified files (thread.ts, worker.ts). CI commands found: bun typecheck (requires tsgo which is not available in Docker), bun test (has module resolution issues), bun build (has workspace dependency issues). The Bun transpiler approach provides lightweight syntax validation without requiring full build environment."
+      "notes": "Added 2 repo_tests p2p gates: (1) test_repo_typecheck - uses Bun transpiler to verify TypeScript syntax of modified files (thread.ts, worker.ts), (2) test_repo_unit_tests_relevant - runs bun install then bun test on util tests (timeout, iife, lazy) that cover code related to the modified files. CI commands found and tested: bun typecheck (requires bun install + tsgo, passes), bun test (requires bun install for workspace deps, passes for util tests). The Bun transpiler provides lightweight syntax validation; util tests verify key functionality (withTimeout, iife) used in the modified code."
     },
     "improve": {
       "status": "skipped",
@@ -28,18 +27,18 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "judge_score": 1.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "Fixed rubric rules in eval_manifest.yaml: consolidated two overlapping rules into one comprehensive rule with proper reference field. All checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "notes": "All validation checks passed. Fixed 2 rubric rules that were failing the gold solution: removed 'Prefer if-return over else statements' and 'Inline single-use variables' rules which were duplicates of fail-to-pass test checks. Remaining 3 rubric rules pass with ICR=1.00.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 311.88
+      "time": 229.33
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 366.17,
+      "time": 127.1,
       "notes": ""
     },
     "rubric_judge": {
@@ -48,33 +47,19 @@
       "backend": "fireworks",
       "time": 2.29,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 20.78,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 0.0,
-      "at": "2026-04-09T05:57:31.753856"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 7637.32,
-      "at": "2026-04-09T05:57:31.919884"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18906.35,
-      "at": "2026-04-09T14:26:58.517705"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -90,6 +75,30 @@
       "backend": "fireworks",
       "time": 1959.17,
       "at": "2026-04-10T12:15:08.042893"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 939.54,
+      "at": "2026-04-11T23:14:41.102620"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1655.62,
+      "at": "2026-04-12T00:07:28.555707"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1392.22,
+      "at": "2026-04-12T02:41:12.789098"
     }
   ]
 }

@@ -524,66 +524,71 @@ def test_repo_ban_words():
     assert r.returncode == 0, f"Ban-words check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_zig_syntax_valid():
-    """Verify dns.zig has valid Zig syntax (pass_to_pass).
+def test_repo_dns_tests():
+    """Run the repo's DNS tests (pass_to_pass).
 
-    Since we can't compile Zig in this container (no cmake/zig/JSC),
-    we verify the file is valid by checking balanced braces and
-    no obvious syntax errors that would prevent parsing.
-    """
-    raw = DNS_FILE.read_text()
-
-    # Check for balanced braces
-    open_count = raw.count("{")
-    close_count = raw.count("}")
-    assert open_count == close_count, (
-        f"dns.zig has unbalanced braces: {open_count} open, {close_count} close"
-    )
-
-    # Check for balanced parentheses
-    paren_open = raw.count("(")
-    paren_close = raw.count(")")
-    assert paren_open == paren_close, (
-        f"dns.zig has unbalanced parentheses: {paren_open} open, {paren_close} close"
-    )
-
-    # Check for basic structure indicators
-    assert "pub const" in raw or "pub fn" in raw, (
-        "dns.zig missing expected public declarations"
-    )
-
-
-def test_repo_zig_no_hard_tabs():
-    """Verify dns.zig doesn't use hard tabs (pass_to_pass).
-
-    Bun's coding style uses spaces, not tabs. This is a basic style check
-    that can be done without compiling Zig code.
+    The DNS tests validate DNS functionality including lookup, prefetch,
+    and cache behavior. Since the PR modifies DNS cache logic, these
+    tests ensure basic DNS functionality still works.
     """
     r = subprocess.run(
-        ["grep", "-n", "$'\\t'", str(DNS_FILE)],
-        capture_output=True, text=True, timeout=30,
+        ["bun", "test", "test/js/bun/dns"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # grep returns 0 if matches found, 1 if no matches
-    if r.returncode == 0:
-        lines = r.stdout.strip().split("\n")[:5]
-        assert False, f"dns.zig contains hard tabs (use spaces): {lines}"
+    assert r.returncode == 0, f"DNS tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_dns_file_not_empty():
-    """Verify dns.zig is a non-trivial file (pass_to_pass).
+def test_repo_int_from_float():
+    """Run the repo's int_from_float internal test (pass_to_pass).
 
-    Basic check to ensure the file has substantial content and
-    isn't truncated or replaced with a stub.
+    This test validates bun.intFromFloat function handling of various
+    edge cases including extremely large values.
     """
-    stat = DNS_FILE.stat()
-    assert stat.st_size > 1000, f"dns.zig is too small ({stat.st_size} bytes), possibly truncated"
-    
-    # Count lines and functions
-    content = DNS_FILE.read_text()
-    lines = content.split("\n")
-    non_empty = [l for l in lines if l.strip()]
-    assert len(non_empty) > 50, f"dns.zig has only {len(non_empty)} non-empty lines"
-    
-    # Count function definitions
-    fn_count = len(re.findall(r"^\s*(pub\s+)?fn\s+\w+", content, re.MULTILINE))
-    assert fn_count >= 3, f"dns.zig has only {fn_count} functions, expected at least 3"
+    r = subprocess.run(
+        ["bun", "test", "test/internal/int_from_float.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"int_from_float test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_buffer_concat():
+    """Run the repo's buffer concat test (pass_to_pass).
+
+    This test validates Node.js Buffer.concat compatibility including
+    edge cases for large buffers. Serves as a regression check that
+    basic Node.js compatibility still works.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/node/buffer-concat.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"buffer-concat test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_dns_prefetch():
+    """Run the repo's DNS prefetch test (pass_to_pass).
+
+    This test validates DNS prefetch functionality specifically,
+    ensuring the DNS module's prefetch feature works correctly.
+    Since the PR modifies DNS cache behavior, this is a relevant
+    regression check.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/dns/dns-prefetch.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"dns-prefetch test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_package_json_lint():
+    """Run the repo's package.json lint test (pass_to_pass).
+
+    This test validates that package.json files in test directories
+    have exact version dependencies (no ^ or ~). Part of the repo's
+    CI to ensure reproducible test environments.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/package-json-lint.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package-json-lint test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

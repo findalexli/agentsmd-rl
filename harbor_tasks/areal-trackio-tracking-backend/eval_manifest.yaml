@@ -91,24 +91,48 @@ checks:
   description: Modified files pass ruff linter checks
 - id: test_repo_python_syntax
   type: pass_to_pass
-  origin: repo_tests
-  description: Modified files have valid Python syntax
+  origin: static
+  description: Modified files have valid Python syntax (static check)
 - id: test_repo_yaml_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: Repo's YAML configuration files are syntactically valid
+  origin: static
+  description: Repo YAML configuration files are syntactically valid (static check)
 - id: test_repo_json_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: Repo's JSON files are syntactically valid
+  origin: static
+  description: Repo JSON files are syntactically valid (static check)
 - id: test_repo_no_trailing_whitespace
   type: pass_to_pass
-  origin: repo_tests
-  description: Modified files have no trailing whitespace
+  origin: static
+  description: Modified files have no trailing whitespace (static check)
 - id: test_repo_newline_at_eof
   type: pass_to_pass
+  origin: static
+  description: Modified files end with a newline (static check)
+- id: test_repo_py_compile
+  type: pass_to_pass
   origin: repo_tests
-  description: Modified files end with a newline
+  description: Modified Python files compile without errors
+- id: test_repo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is syntactically valid
+- id: test_repo_docs_cli_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/generate_cli_docs.py has valid Python syntax
+- id: test_repo_ast_parse_cli_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/api/cli_args.py has valid AST structure
+- id: test_repo_ast_parse_stats_logger
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/utils/stats_logger.py has valid AST structure
+- id: test_repo_ast_parse_logging
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/utils/logging.py has valid AST structure
 rubric:
 - rule: Follow existing code patterns in the same module (match the style of WandBConfig,
     SwanlabConfig, TensorBoardConfig)
@@ -140,29 +164,44 @@ rubric:
   evidence: 'The gold solution adds `trackio: TrackioConfig = field(...)` to `StatsLoggerConfig`
     rather than using inheritance to extend the configuration.'
   category: architecture
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 29-30
+  evidence: The `TrackioConfig` implements a `__post_init__` method for validation
+    and uses the `@dataclass` decorator, matching the pattern of existing configs
+    like `TensorBoardConfig`.
+  category: style
 distractors:
 - rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
   collision_type: rule_conflict
-  why_distracting: The prompt explicitly instructs the agent to add `TrackioConfig`
-    to the configuration system and points to `areal/api/cli_args.py`. If the agent
-    follows the rule to 'Ask first' before modifying this file, it will halt execution
-    and fail to complete the task autonomously.
+  why_distracting: The instruction explicitly commands the agent to add `TrackioConfig`
+    to the configuration system (which lives in `areal/api/cli_args.py`). If the agent
+    strictly follows the 'Ask first' rule, it will halt the autonomous task unnecessarily.
   severity: high
   source:
     path: AGENTS.md
-    lines: 34-36
-- rule: 'Always do: Add tests for new functionality.'
+    lines: 40-41
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    `print` or `logging.__name__`.'
   collision_type: scope_ambiguity
-  why_distracting: The gold solution does not include any test files. Attempting to
-    add tests for the trackio integration might lead the agent to hallucinate test
-    structures, struggle with mocking the trackio library, or modify files outside
-    the expected scope of this PR.
+  why_distracting: The task requires updating the experiment tracking logging (metrics
+    logging via `trackio.log`), not standard application stdout logging. Applying
+    the `getLogger` rule here would result in incorrect implementation of the metrics
+    logger.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 29-29
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are Level 0 and contain identical,
-  overlapping rules (e.g., 'Ask first before modifying config structures', 'Add tests').
-  They are consistent with each other. The primary tension is between the repository's
-  general defensive rules ('Ask first') and the specific, scoped nature of the user's
-  prompt which requires immediate modification of restricted files.
+    lines: 74-75
+- rule: 'Ask first before: Adding new dependencies.'
+  collision_type: rule_conflict
+  why_distracting: The instruction specifies a 'graceful fallback when the package
+    is not installed', meaning Trackio should be handled via `try...except ImportError`
+    rather than halting to ask about adding a hard dependency.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-42
+hierarchy_analysis: The rules are defined in both `AGENTS.md` and `CLAUDE.md` (Level
+  0). The agent must prioritize the explicit task instructions over the general 'Ask
+  first' constraints in the agent guidelines to successfully complete the PR autonomously.

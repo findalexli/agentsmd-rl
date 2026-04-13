@@ -25,6 +25,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's code formatting passes cargo fmt --check
+- id: test_repo_formatter_fstring_fixtures
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter fstring fixture tests pass
+- id: test_repo_ruff_format_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: Built ruff binary can show format help with target-version option
 - id: fstring_no_multiline_expansion_pre312
   type: fail_to_pass
   origin: pr_diff
@@ -86,18 +94,17 @@ distractors:
 - rule: Look to see if your tests could go in an existing file before adding a new
     file for your tests.
   collision_type: would_cause_bug
-  why_distracting: The agent might try to append the new f-string test case to an
-    existing test file to follow this rule. However, testing this specific fix requires
-    running the formatter against multiple Python target versions (3.11 and 3.12).
-    In Ruff's testing framework, this requires a dedicated `.options.json` file. Adding
-    the test to an existing file would either fail to test the pre-3.12 behavior or
-    incorrectly alter the target version for unrelated tests.
+  why_distracting: The agent might try to append the new f-string test cases to an
+    existing test file to follow this rule. However, because the fix specifically
+    depends on the `target_version` (Python 3.11 vs 3.12), it requires a dedicated
+    `.options.json` file to configure the formatter for this specific fixture. Adding
+    it to an existing file would either fail to test the version-specific behavior
+    or incorrectly apply the target version to other unrelated tests.
   severity: high
   source:
     path: AGENTS.md
-    lines: 64-64
-hierarchy_analysis: 'The configuration hierarchy is flat, with all rules originating
-  from `AGENTS.md` (included via `CLAUDE.md`). The primary tension lies within `AGENTS.md`
-  itself: the rule to reuse existing test files conflicts with the architectural requirement
-  of Ruff''s testing framework, which uses side-by-side `.options.json` files to configure
-  parser/formatter settings per fixture.'
+    lines: 69-69
+hierarchy_analysis: The configuration is essentially a flat single file (`AGENTS.md`
+  which is referenced by `CLAUDE.md`). The agent must balance the general directive
+  to reuse test files against the technical requirements of the testing framework
+  which necessitates a new file for specific formatter options.

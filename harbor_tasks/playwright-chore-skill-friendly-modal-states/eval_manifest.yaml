@@ -9,46 +9,34 @@ checks:
   type: pass_to_pass
   origin: static
   description: help.json must be valid JSON
-- id: test_repo_mcp_commands_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP commands.ts has valid syntax
-- id: test_repo_mcp_program_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP program.ts has valid syntax
-- id: test_repo_mcp_tab_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP tab.ts has valid syntax
-- id: test_repo_mcp_evaluate_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP evaluate.ts has valid syntax
-- id: test_repo_mcp_tool_types_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP tool.ts types file has valid syntax
-- id: test_repo_mcp_config_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP config.ts has valid syntax
-- id: test_repo_mcp_response_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo MCP response.ts has valid syntax
-- id: test_repo_build_js_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo build.js has valid syntax
 - id: test_repo_npm_install
   type: pass_to_pass
   origin: repo_tests
   description: Repo npm install succeeds
-- id: test_repo_mcp_cli_spec_syntax
+- id: test_repo_build
   type: pass_to_pass
   origin: repo_tests
-  description: Repo MCP CLI test spec has valid syntax
+  description: Repo npm run build succeeds
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_eslint_mcp
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint on MCP files passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages consistency check passes
+- id: test_repo_mcp_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo MCP modified files have valid syntax
 - id: commands_renamed_in_help
   type: fail_to_pass
   origin: pr_diff
@@ -88,30 +76,49 @@ rubric:
     path: eslint.config.mjs
     lines: 202-208
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    /**
+     * Copyright (c) Microsoft Corporation.
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * ...
+     */
 - rule: TypeScript files in packages/playwright must not have floating promises -
     all promises must be awaited or handled
   source:
     path: eslint.config.mjs
     lines: 359-364
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    await tab.refLocator({ ref: params.ref, element: params.element || 'element' });
 - rule: 'Code must use 2-space indentation, single quotes (avoidEscape: true), and
     1tbs brace style with allowSingleLine: true'
   source:
     path: eslint.config.mjs
     lines: 76-107, 188-192
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    if (!params.function.includes('=>'))
+      params.function = `() => (${params.function})`;
 - rule: Arrow functions must use 'as-needed' parentheses (omit when single param,
     include when multiple)
   source:
     path: eslint.config.mjs
     lines: '109'
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    // Single param: no parentheses
+    el => el.textContent
+    // Multiple params: parentheses required
+    (a, b) => a + b
 - rule: TypeScript files in packages/ must not use console methods or process.exit/stdout/stderr
     directly.
   source:
     path: eslint.config.mjs
     lines: 336-350
     commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    // Use proper logging mechanisms, not console.log or process.stdout
 config_edits:
 - path: packages/playwright/src/mcp/terminal/SKILL.md
   tier: 1

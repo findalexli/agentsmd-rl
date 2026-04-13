@@ -100,6 +100,28 @@ def test_repo_cargo_fmt_check():
     assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_formatter_fstring_fixtures():
+    """Repo's formatter fstring fixture tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_python_formatter", "--features", "serde", "--", "fstring", "--test-threads=4"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Formatter fstring fixture tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_help():
+    """Built ruff binary can show format help (pass_to_pass)."""
+    _ensure_ruff()
+    r = subprocess.run(
+        [RUFF_BIN, "format", "--help"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Ruff format --help failed:\n{r.stderr[-500:]}"
+    assert "target-version" in r.stdout, "Expected target-version option in help output"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

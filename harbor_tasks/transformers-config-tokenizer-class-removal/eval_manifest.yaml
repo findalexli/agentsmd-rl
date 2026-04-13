@@ -64,6 +64,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo''s check_copies passes - validates # Copied from blocks'
+- id: test_repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_dummies passes - validates dummy model generation
+- id: test_repo_sort_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's sort_auto_mappings passes - validates auto mappings are sorted
+- id: test_repo_custom_init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's custom_init_isort passes - validates __init__ imports are sorted
+- id: test_repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_doc_toc passes - validates documentation TOC
 rubric:
 - rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
   source:
@@ -91,47 +107,45 @@ rubric:
     remove `tokenizer_class` from the expected common kwargs, ensuring the test suite
     remains valid and passes after the API change.
   category: testing
+- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
+  source:
+    path: AGENTS.md
+    lines: 61-63
+  evidence: The gold solution modifies both MT5Config and UMT5Config independently
+    to remove the tokenizer_class attribute, respecting the architectural pattern
+    of avoiding direct inheritance between model-specif
+  category: architecture
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: The agent is operating in an isolated evaluation environment without
-    access to GitHub issues or coordination evidence. Following the fail-closed rule
-    would cause the agent to refuse to generate the patch.
+  why_distracting: The agent is instructed to fail-closed and not proceed to PR-ready
+    output if coordination evidence is missing. In a benchmark setting, it must output
+    the fix regardless.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 49-52
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+    path: AGENTS.md
+    lines: 61-64
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The agent might misclassify the removal of a single attribute (`tokenizer_class`)
-    as a 'tiny edit' or 'low-value busywork' and refuse to implement the fix, failing
-    to recognize it as a necessary API cleanup that fixes a compatibility bug.
+  why_distracting: The agent might consider removing a single attribute as a 'tiny
+    edit' or 'low-value busywork' and refuse to generate the patch.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 34-36
-- rule: '`make style` or `make fix-repo` should be run as the final step before opening
-    a PR.'
-  collision_type: scope_ambiguity
-  why_distracting: Running `make fix-repo` in the transformers repository often touches
-    many files due to unrelated docstring or copy updates that are out of sync in
-    the base branch. This would bloat the PR with unrelated changes.
-  severity: medium
+    path: AGENTS.md
+    lines: 45-47
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end.'
+  collision_type: meta_confusion
+  why_distracting: The guidelines state that pure code-agent PRs are not allowed and
+    require human validation. An agent might refuse to act autonomously based on this
+    policy.
+  severity: high
   source:
-    path: CLAUDE.md
-    lines: 8-8
-- rule: 'Copies and Modular Models: Ideally you should edit the code it''s copying
-    from and propagate the change.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might assume `MT5Config` and `UMT5Config` are copies
-    of `T5Config` and try to edit `T5Config` instead, or run `make fix-repo` expecting
-    it to update the MT5/UMT5 files. However, `tokenizer_class` is explicitly defined
-    in these files without a copy directive.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 58-58
-hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
-  at the root level. The rules are heavily focused on agent behavior, coordination,
-  and repository maintenance tools (`make fix-repo`).
+    path: AGENTS.md
+    lines: 49-57
+hierarchy_analysis: The repository contains identical agent instruction files (AGENTS.md
+  and CLAUDE.md) at the root level. These files define strict contribution policies,
+  including fail-closed behaviors for agents lacking issue coordination. The agent
+  must navigate these meta-instructions and recognize that in a benchmark context,
+  it should proceed with the bug fix despite the lack of explicit coordination evidence.

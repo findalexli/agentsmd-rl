@@ -35,24 +35,103 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 
-def test_repo_flutter_analyze():
-    """Repo's Flutter analyze passes (pass_to_pass).
-    
-    Skipped: Flutter dependencies require SDK versions not available in container.
-    This is an environment limitation, not a code issue.
-    """
-    # Skip this test due to SDK version mismatch in container
-    # The actual code analysis is covered by test_syntax_check
-    pass
+def test_repo_dart_mypy():
+    """Python ai-proxy-service passes mypy type checks (pass_to_pass)."""
+    # Install mypy
+    r = subprocess.run(
+        ["pip", "install", "mypy", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    service_dir = Path(REPO) / "services" / "ai-proxy-service"
+    r = subprocess.run(
+        ["mypy", "src/", "--ignore-missing-imports"],
+        capture_output=True, text=True, timeout=120, cwd=service_dir,
+    )
+    assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 def test_repo_dart_format():
-    """Repo's Dart code is properly formatted (pass_to_pass).
-    
-    Skipped: Format check requires working flutter/dart toolchain.
-    """
-    # Skip this test due to SDK version mismatch in container
-    pass
+    """Repo's Dart code is properly formatted (pass_to_pass)."""
+    # Check that the modified Dart files are properly formatted
+    modified_files = [
+        f"{REPO}/{DETAILS_WIDGET}",
+        f"{REPO}/{HEADER}",
+        f"{REPO}/{COLLAPSIBLE_SECTION}",
+    ]
+
+    r = subprocess.run(
+        ["dart", "format", "--set-exit-if-changed"] + modified_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dart format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_shellcheck():
+    """Shell scripts in repo pass shellcheck linting (pass_to_pass)."""
+    # Install shellcheck
+    r = subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install shellcheck: {r.stderr[-500:]}"
+
+    # Check key shell scripts exist and pass shellcheck
+    scripts = [
+        f"{REPO}/.buildkite/junit_upload.sh",
+        f"{REPO}/integration_test/run_matrix_tests.sh",
+    ]
+
+    for script in scripts:
+        if Path(script).exists():
+            r = subprocess.run(
+                ["shellcheck", "--severity=warning", script],
+                capture_output=True, text=True, timeout=60,
+            )
+            assert r.returncode == 0, f"shellcheck failed for {script}:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_python_lint():
+    """Python ai-proxy-service code passes basic flake8 checks (pass_to_pass)."""
+    service_dir = Path(REPO) / "services" / "ai-proxy-service"
+
+    # Install flake8
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # Run flake8 on the service (only check for syntax errors, ignore style)
+    r = subprocess.run(
+        ["python", "-m", "flake8", "src/", "--select=E9,F63,F7,F82", "--max-line-length=120"],
+        capture_output=True, text=True, timeout=60, cwd=service_dir,
+    )
+    assert r.returncode == 0, f"Python lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_modified_dart_files_syntax():
+    """Modified Dart files have valid syntax (pass_to_pass)."""
+    # List of files modified by the PR
+    modified_files = [
+        "lib/features/journal/ui/widgets/entry_details_widget.dart",
+        "lib/features/journal/ui/widgets/entry_details/header/entry_detail_header.dart",
+        "lib/widgets/misc/collapsible_section.dart",
+    ]
+
+    for path in modified_files:
+        full_path = Path(REPO) / path
+        if full_path.exists():
+            src = full_path.read_text()
+            # Check basic structural validity
+            assert src.count("{") == src.count("}"), f"{path}: unbalanced braces"
+            assert src.count("(") == src.count(")"), f"{path}: unbalanced parentheses"
+            assert src.count("[") == src.count("]"), f"{path}: unbalanced brackets"
+            # Check for common syntax errors
+            assert ";;" not in src, f"{path}: found double semicolons"
 
 
 def test_syntax_check():

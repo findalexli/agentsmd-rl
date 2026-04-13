@@ -27,6 +27,30 @@ WEB_ROUTER = (
     f"{REPO}/src/spa/router/desktopRouter.config.tsx"
 )
 
+# Cache for dependencies check
+_deps_installed = False
+
+
+def _ensure_deps():
+    """Ensure npm dependencies are installed (once per test session)."""
+    global _deps_installed
+    if _deps_installed:
+        return
+    # Install pnpm globally
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Install dependencies
+    subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    _deps_installed = True
+
 
 def _node_extract_keys(file_path: str) -> set[str]:
     """Use Node.js to extract SettingsTabs.XXX keys from a componentMap file."""
@@ -175,3 +199,98 @@ def test_componentmap_desktop_imports_creds():
     assert "import Creds from" in content or "import Creds" in content, (
         "componentMap.desktop.ts must import the Creds component"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI commands that should pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def test_repo_eslint_componentmap_desktop():
+    """Repo ESLint passes on componentMap.desktop.ts (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "eslint", DESKTOP_COMPONENTMAP, "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on componentMap.desktop.ts:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_desktop_router():
+    """Repo ESLint passes on desktopRouter.config.desktop.tsx (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "eslint", DESKTOP_ROUTER, "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on desktopRouter.config.desktop.tsx:\n{r.stderr[-500:]}"
+
+
+def test_repo_stylelint_componentmap_desktop():
+    """Repo Stylelint passes on componentMap.desktop.ts (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "stylelint", DESKTOP_COMPONENTMAP, "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed on componentMap.desktop.ts:\n{r.stderr[-500:]}"
+
+
+def test_repo_stylelint_desktop_router():
+    """Repo Stylelint passes on desktopRouter.config.desktop.tsx (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "stylelint", DESKTOP_ROUTER, "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed on desktopRouter.config.desktop.tsx:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_componentmap_desktop():
+    """Repo Prettier formatting check passes on componentMap.desktop.ts (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "prettier", "--check", DESKTOP_COMPONENTMAP],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on componentMap.desktop.ts:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_desktop_router():
+    """Repo Prettier formatting check passes on desktopRouter.config.desktop.tsx (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "prettier", "--check", DESKTOP_ROUTER],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on desktopRouter.config.desktop.tsx:\n{r.stderr[-500:]}"
+
+
+def test_repo_files_exist():
+    """Required files exist in the repo (pass_to_pass)."""
+    required_files = [
+        f"{REPO}/src/routes/(main)/settings/features/componentMap.ts",
+        f"{REPO}/src/routes/(main)/settings/features/componentMap.desktop.ts",
+        f"{REPO}/src/spa/router/desktopRouter.config.tsx",
+        f"{REPO}/src/spa/router/desktopRouter.config.desktop.tsx",
+    ]
+    for f in required_files:
+        assert Path(f).exists(), f"Required file does not exist: {f}"

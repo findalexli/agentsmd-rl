@@ -53,6 +53,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Go code in tools directory is properly formatted
+- id: test_repo_lint_sorted
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go files have sorted blocks after lint:sorted directives
+- id: test_repo_no_merge_conflicts
+  type: pass_to_pass
+  origin: repo_tests
+  description: No git merge conflict markers in source files
+- id: test_repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in tools/ have valid bash syntax
 rubric:
 - rule: The SKILL.md should follow the same frontmatter format as other Claude skills
     (name, description, argument-hint fields)
@@ -99,6 +111,15 @@ rubric:
   evidence: The generated SKILL.md explicitly instructs the user/agent to run `goimports
     -local <module_path> -w` to fix imports after splitting files, adhering to the
     project's tooling choice.
+  category: tooling
+- rule: Use goimports with the -local parameter to format Go files and sort imports
+    into standard, 3rd party, and internal groups.
+  source:
+    path: CLAUDE.md
+    lines: 38-45
+  evidence: The gold solution's SKILL.md explicitly includes a step to run `goimports
+    -local <module_path> -w` to fix imports after splitting files, reflecting the
+    project's specific tooling requirements for impo
   category: tooling
 config_edits:
 - path: .claude/skills/split-file/SKILL.md
@@ -177,37 +198,25 @@ distractors:
 - rule: Include a CHANGELOG message if users of Grafana Mimir need to hear about what
     you did.
   collision_type: scope_ambiguity
-  why_distracting: The task is to add an internal developer tool (Claude skill) that
-    does not affect end users of Grafana Mimir. Adding a CHANGELOG entry would be
-    inappropriate and pollute the user-facing changelog.
+  why_distracting: The rule requires a CHANGELOG message for user-facing changes.
+    An agent might try to add a changelog entry for the new CLI tool and Claude skill,
+    but these are internal developer tools, not Grafana Mimir features.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: '20'
+    lines: 21-21
 - rule: If you have made any changes to flags or config, run `make reference-help
     doc` and commit the changed files to update the config file documentation.
   collision_type: scope_ambiguity
-  why_distracting: The agent is creating a new CLI tool (`tools/split-file-verify/`)
-    which takes arguments, but this rule applies to the main Grafana Mimir server
-    flags/config. Running `make reference-help doc` for an internal tool's arguments
-    would be incorrect and likely fail or pollute the main docs.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: '21'
-- rule: Have unit and/or integration tests for new functionality or tests that would
-    have caught the bug being fixed.
-  collision_type: meta_confusion
-  why_distracting: While the CLI tool might be testable, the primary deliverable is
-    a Claude Code skill (Markdown file) which cannot be unit tested. An agent might
-    waste time trying to write tests for the SKILL.md or over-engineer tests for a
-    simple AST verification script.
+  why_distracting: The rule asks to run `make reference-help doc` if flags or config
+    are changed. The agent is creating a new CLI tool with a usage message, so it
+    might attempt to run this make target to update documentation. However, this tool
+    is an internal script, not a Mimir binary flag.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: '19'
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  rules are geared towards main application development (Mimir server) rather than
-  internal developer tooling or AI agent skills. Agents must discern that rules regarding
-  CHANGELOGs, flag documentation (`make reference-help doc`), and testing apply to
-  the core product, not to `.claude/skills` or isolated scripts in `tools/`.
+    lines: 22-22
+hierarchy_analysis: 'The configuration is flat, with identical rules in AGENTS.md
+  and CLAUDE.md. The primary challenge is scope resolution: applying general repository
+  rules (like changelogs and doc generation) appropriately to internal developer tooling
+  versus main project code.'

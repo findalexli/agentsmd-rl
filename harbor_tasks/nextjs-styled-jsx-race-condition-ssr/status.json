@@ -3,51 +3,35 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T04:57:14.859441",
-  "total_time": 12838.96,
-  "sandbox_id": "ioropny83xnlcoyldq6w2",
+  "validated_at": "2026-04-12T00:41:45.194164",
+  "total_time": 1371.01,
+  "sandbox_id": "ic6wxuxbzr27edr06tzyq",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1533.6,
-      "notes": ""
-    },
-    "rubric_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 41.49,
+      "time": 40.85,
       "notes": ""
     },
     "improve": {
-      "status": "skipped",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0,
-      "notes": "tests look good"
+      "time": 263.01,
+      "notes": "syntax error or missing file: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nFileNotFoundError: [Errno 2] No such file or directory: '/workspace/task/tests/test_outputs.py'\n"
     },
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "rubric_icr": 0.5,
       "attempts": 1,
-      "notes": "All four validation checks passed: (1) Docker build succeeded, (2) NOP test correctly returned reward=0 (2 tests fail on buggy base - test_styles_collected_after_content_rendering and test_flush_before_style_read), (3) Gold test correctly returned reward=1 (all 10 tests pass after fix), (4) Rubric judge returned ICR=0.5 due to Anthropic API rate limiting (HTTP 429) - this is an infrastructure limitation, not a gold solution issue. The gold fix correctly removes the Promise.all race condition by making style collection happen sequentially after jsxStyleRegistry.flush() and content rendering.",
+      "notes": "Fixed two issues: (1) Copied buggy config.py from /workspace/taskforge/ to environment/taskforge/ (environment had gold version, causing NOP test to incorrectly pass). (2) Fixed test.sh to write reward=0 when tests fail (was using set -e which caused early exit before reward could be written).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 226.8
-    },
-    "rubric_judge": {
-      "status": "fail",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1.42,
-      "notes": "ICR=0.50"
+      "time": 191.58
     }
   },
   "history": [
@@ -56,32 +40,8 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 4858.54,
-      "at": "2026-04-09T23:20:06.819935"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4858.81,
-      "at": "2026-04-09T23:20:06.995103"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 12838.69,
-      "at": "2026-04-10T04:57:14.691223"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 12838.96,
-      "at": "2026-04-10T04:57:14.859441"
+      "time": 1371.01,
+      "at": "2026-04-12T00:41:45.194164"
     }
   ]
 }

@@ -248,22 +248,41 @@ def test_repo_package_json_valid():
 
 # [repo_tests] pass_to_pass - Real CI commands from the repo's CI/CD pipeline
 # These tests use subprocess.run() to execute actual commands that CI runs
+# CI commands found: npm run eslint, npm run tsc, npm run check-deps, npm run lint-packages
 
 
-def test_repo_eslint_cli_client():
-    """Repo's ESLint passes on cli-client directory (pass_to_pass)."""
-    # First need to install dependencies and build
+# Module-level cache for build state
+_build_cache = {"done": False}
+
+
+def _ensure_built():
+    """Run npm ci and build once, cached across tests."""
+    if _build_cache["done"]:
+        return
+
+    # Install dependencies
     r = subprocess.run(
         ["npm", "ci"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
 
+    # Build the project
     r = subprocess.run(
         ["npm", "run", "build"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"npm run build failed:\n{r.stderr[-500:]}"
+
+    _build_cache["done"] = True
+
+
+def test_repo_eslint_cli_client():
+    """Repo's ESLint passes on cli-client directory (pass_to_pass).
+
+    CI command: npm run eslint -- --max-warnings=0 packages/playwright-core/src/tools/cli-client/
+    """
+    _ensure_built()
 
     r = subprocess.run(
         ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright-core/src/tools/cli-client/"],
@@ -273,19 +292,11 @@ def test_repo_eslint_cli_client():
 
 
 def test_repo_typescript_compile():
-    """Repo's TypeScript compiler passes (pass_to_pass)."""
-    # First need to install dependencies and build
-    r = subprocess.run(
-        ["npm", "ci"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    """Repo's TypeScript compiler passes (pass_to_pass).
 
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm run build failed:\n{r.stderr[-500:]}"
+    CI command: npm run tsc
+    """
+    _ensure_built()
 
     r = subprocess.run(
         ["npm", "run", "tsc"],
@@ -295,19 +306,11 @@ def test_repo_typescript_compile():
 
 
 def test_repo_check_deps():
-    """Repo's DEPS.list check passes (pass_to_pass)."""
-    # First need to install dependencies and build
-    r = subprocess.run(
-        ["npm", "ci"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    """Repo's DEPS.list check passes (pass_to_pass).
 
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm run build failed:\n{r.stderr[-500:]}"
+    CI command: npm run check-deps
+    """
+    _ensure_built()
 
     r = subprocess.run(
         ["npm", "run", "check-deps"],
@@ -318,13 +321,11 @@ def test_repo_check_deps():
 
 
 def test_repo_lint_packages():
-    """Repo's workspace package lint passes (pass_to_pass)."""
-    # First need to install dependencies
-    r = subprocess.run(
-        ["npm", "ci"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    """Repo's workspace package lint passes (pass_to_pass).
+
+    CI command: npm run lint-packages
+    """
+    _ensure_built()
 
     r = subprocess.run(
         ["npm", "run", "lint-packages"],

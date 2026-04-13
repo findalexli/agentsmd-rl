@@ -81,39 +81,45 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo''s unit tests pass (mirrors CI: pnpm test:run)'
+- id: test_repo_css_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CSS theme generation works (mirrors CI: pnpm css)'
+- id: test_repo_client_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Client package unit tests pass (mirrors CI: pnpm --filter @gradio/client
+    test)'
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
-    path: AGENTS.md
-    lines: '39'
+    path: js/_website/src/lib/assets/style.css
+    lines: 479-520
   evidence: The gold solution implements dark mode styling by prefixing selectors
     with the `.dark` class (e.g., `.dark table thead th`), which perfectly matches
-    the existing dark mode pattern already present in t
+    the existing dark mode pattern already present in the file
   category: style
+  reference: "table {\n\twidth: 100%;\n\tborder-collapse: collapse;\n\tmargin-top:\
+    \ 1.5rem;\n\tmargin-bottom: 1.5rem;\n\tfont-size: 1rem;\n}\ntable thead th {\n\
+    \tbackground-color: #f3f4f6;\n\tcolor: #111827;\n\tfont-weight: 600;\n\ttext-align:\
+    \ left;\n\tpadding-left: 1rem;\n\tpadding-right: 1rem;\n\tpadding-top: 0.5rem;\n\
+    \tpadding-bottom: 0.5rem;\n\tborder: 1px solid #e5e7eb;\n}\n.dark table thead\
+    \ th {\n\tbackground-color: #374151;\n\tcolor: #f3f4f6;\n\tborder: 1px solid #52525b;\n\
+    }\ntable tbody td {\n\tpadding-left: 1rem;\n\tpadding-right: 1rem;\n\tpadding-top:\
+    \ 0.5rem;\n\tpadding-bottom: 0.5rem;\n\tborder: 1px solid #e5e7eb;\n\tcolor: #374151;\n\
+    \tvertical-align: top;\n}\n.dark table tbody td {\n\tborder: 1px solid #52525b;\n\
+    \tcolor: #d1d5db;\n}\n"
 distractors:
-- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
-  collision_type: architecture_boundary
-  why_distracting: The agent might interpret this rule as a requirement to build a
-    dedicated Svelte component (e.g., `<Table />`) for markdown tables and place it
-    in a new subdirectory under `js/`, rather than simply adding global CSS rules
-    to the existing stylesheet as the issue requires.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: '9'
-- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
+- rule: Frontend code is formatted with prettier. Run bash scripts/format_frontend.sh.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the global frontend formatting script
-    (`bash scripts/format_frontend.sh`) after making its CSS changes. In an agentic
-    context, running global formatters often modifies hundreds of unrelated files
-    that were slightly out of sync, polluting the PR with out-of-scope changes.
+  why_distracting: The rule instructs the agent to run `bash scripts/format_frontend.sh`.
+    Running a global formatting script might reformat unrelated files or the entire
+    CSS file if it wasn't perfectly formatted, leading to a massive diff. The agent
+    should only ensure its own CSS additions are properly formatted.
   severity: medium
   source:
     path: AGENTS.md
-    lines: '38'
-hierarchy_analysis: The repository has a single root-level `AGENTS.md` file that provides
-  general guidelines. Since there are no deeper config files, there are no direct
-  hierarchy conflicts. However, the general architectural guidelines (like creating
-  Svelte components for frontend code) conflict with the specific, localized nature
-  of this bug fix (adding global CSS to a specific stylesheet).
+    lines: 38-41
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level. There are no overlapping or conflicting rules between multiple
+  files.

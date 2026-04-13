@@ -7,8 +7,10 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import ast
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/ruff"
@@ -23,9 +25,6 @@ FIXTURE = Path(f"{REPO}/crates/ruff_linter/resources/test/fixtures/ruff/RUF050.p
 # [pr_diff] fail_to_pass
 def test_fixture_has_multiline_expression():
     """Fixture file includes a multiline arithmetic expression test case."""
-    # Parse the fixture with Python's AST and look for an if-statement whose
-    # test is a BinOp (e.g. id(0) + 0).  The base fixture has BoolOps (and/or)
-    # and bare Calls but no arithmetic BinOps in if-conditions.
     r = subprocess.run(
         ["python3", "-c", """
 import ast, sys
@@ -49,9 +48,6 @@ print("PASS")
 # [pr_diff] fail_to_pass
 def test_fixture_has_multiline_call():
     """Fixture file includes a multiline function call test case."""
-    # Parse the fixture with Python's AST and look for an if-statement whose
-    # test is a bare Call with >=2 integer constant arguments (e.g. foo(1, 2)).
-    # The base fixture only has zero-arg calls like foo() in if-conditions.
     r = subprocess.run(
         ["python3", "-c", """
 import ast, sys
@@ -82,9 +78,6 @@ print("PASS")
 # [pr_diff] fail_to_pass
 def test_replacement_handles_multiline():
     """Replacement logic handles multiline expressions, not just walrus operators."""
-    # On the base commit the ONLY parenthesization check is is_named_expr().
-    # A valid fix must add additional logic for multiline expressions — via
-    # helper functions, parenthesized_range, line break detection, etc.
     r = subprocess.run(
         ["python3", "-c", """
 import sys
@@ -120,12 +113,10 @@ print("PASS: multiline indicators: " + str(found))
 # [static] pass_to_pass
 def test_walrus_still_parenthesized():
     """Walrus operator (named expression) still gets parenthesized."""
-    # AST-only because: Rust project, no cargo toolchain in test container
     source = RUST_FILE.read_text()
     assert "is_named_expr" in source, (
         "Walrus operator handling (is_named_expr) must be preserved"
     )
-    # The format string wrapping in parens must still exist
     assert re.search(r'format!\s*\(\s*"?\(\{', source), (
         "Parenthesization format string must still exist for walrus expressions"
     )
@@ -134,7 +125,6 @@ def test_walrus_still_parenthesized():
 # [static] pass_to_pass
 def test_core_ruf050_logic_intact():
     """Core RUF050 rule logic is preserved (not stubbed out)."""
-    # AST-only because: Rust project, no cargo toolchain in test container
     source = RUST_FILE.read_text()
     required = ["unnecessary_if", "StmtIf", "has_side_effects", "Edit", "Fix"]
     missing = [r for r in required if r not in source]
@@ -147,7 +137,6 @@ def test_core_ruf050_logic_intact():
 # [static] pass_to_pass
 def test_fixture_retains_existing_cases():
     """Fixture file retains existing RUF050 test cases (walrus, basic calls)."""
-    # AST-only because: Rust project, no cargo toolchain in test container
     source = FIXTURE.read_text()
     assert "x := " in source, "Fixture must retain walrus operator test cases"
     assert "foo()" in source, "Fixture must retain basic function call test cases"
@@ -155,13 +144,176 @@ def test_fixture_retains_existing_cases():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands that work in container
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linter():
+    """Ruff linter passes on the repository's Python files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--select=E,W,F,I", "--ignore=E501", f"{REPO}/python"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_formatter():
+    """Ruff formatter check passes on repository Python files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/python"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_linter():
+    """Ruff linter passes on repository scripts (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    scripts = [
+        f"{REPO}/scripts/_utils.py",
+        f"{REPO}/scripts/add_rule.py",
+        f"{REPO}/scripts/add_plugin.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check", "--select=E,W,F,I", "--ignore=E501"] + scripts,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff scripts check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_format():
+    """Ruff formatter check passes on repository scripts (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    scripts = [
+        f"{REPO}/scripts/_utils.py",
+        f"{REPO}/scripts/add_rule.py",
+        f"{REPO}/scripts/add_plugin.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + scripts,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff scripts format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_fixture_ruf050_py_syntax():
+    """RUF050.py fixture file has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(FIXTURE)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in RUF050.py fixture:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_fixture_ruf050_ruf047_syntax():
+    """RUF050_RUF047.py fixture file has valid Python syntax (pass_to_pass)."""
+    fixture = Path(f"{REPO}/crates/ruff_linter/resources/test/fixtures/ruff/RUF050_RUF047.py")
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(fixture)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in RUF050_RUF047.py fixture:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_fixture_ruf050_f401_syntax():
+    """RUF050_F401.py fixture file has valid Python syntax (pass_to_pass)."""
+    fixture = Path(f"{REPO}/crates/ruff_linter/resources/test/fixtures/ruff/RUF050_F401.py")
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(fixture)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in RUF050_F401.py fixture:\n{r.stderr[-500:]}"
+
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruf050_unit_tests():
+    """RUF050 unit tests pass - validates RUF050 rule behavior (pass_to_pass)."""
+    r = subprocess.run(
+        """curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.94 >/dev/null 2>&1
+export PATH=$HOME/.cargo/bin:$PATH\ncd /workspace/ruff
+cargo test -p ruff_linter rules::ruff::tests::rules -- RUF050 2>&1""",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"RUF050 unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert "passed" in r.stdout.lower(), f"Expected tests to pass:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unnecessary_if_integration():
+    """Unnecessary_if integration tests pass - validates fix iterations (pass_to_pass)."""
+    r = subprocess.run(
+        """curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.94 >/dev/null 2>&1
+export PATH=$HOME/.cargo/bin:$PATH\ncd /workspace/ruff
+cargo test -p ruff_linter unnecessary_if 2>&1""",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unnecessary_if integration tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert "passed" in r.stdout.lower(), f"Expected tests to pass:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linter_check():
+    """Ruff_linter crate compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        """curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.94 >/dev/null 2>&1
+export PATH=$HOME/.cargo/bin:$PATH\ncd /workspace/ruff
+cargo check -p ruff_linter 2>&1""",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linter_rustfmt():
+    """Modified Rust file follows rustfmt formatting (pass_to_pass)."""
+    r = subprocess.run(
+        """curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.94 >/dev/null 2>&1
+export PATH=$HOME/.cargo/bin:$PATH\ncd /workspace/ruff
+rustfmt --check crates/ruff_linter/src/rules/ruff/rules/unnecessary_if.rs 2>&1""",
+        shell=True, capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Rustfmt check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_linter_clippy():
+    """Ruff_linter crate passes clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        """curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.94 >/dev/null 2>&1
+export PATH=$HOME/.cargo/bin:$PATH\ncd /workspace/ruff
+cargo clippy -p ruff_linter -- -D warnings 2>&1""",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Clippy check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass — AGENTS.md:79 @ c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
 def test_no_panic_unwrap():
     """Avoid panic!, unreachable!, .unwrap() per AGENTS.md guidelines."""
-    # AST-only because: Rust project, no cargo toolchain in test container
     source = RUST_FILE.read_text()
     violations = []
     for i, line in enumerate(source.splitlines(), 1):
@@ -180,14 +332,12 @@ def test_no_panic_unwrap():
 # [agent_config] pass_to_pass — AGENTS.md:81 @ c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
 def test_no_allow_prefer_expect():
     """Use #[expect()] instead of #[allow()] for Clippy lint suppression."""
-    # AST-only because: Rust project, no cargo toolchain in test container
     source = RUST_FILE.read_text()
     violations = []
     for i, line in enumerate(source.splitlines(), 1):
         stripped = line.strip()
         if stripped.startswith("//"):
             continue
-        # Check for #[allow(clippy:: — these should be #[expect(clippy:: instead
         if re.search(r"#\[allow\(clippy::", stripped):
             violations.append(f"  Line {i}: {stripped[:80]}")
     assert not violations, (
@@ -200,7 +350,6 @@ def test_no_allow_prefer_expect():
 # [agent_config] pass_to_pass — AGENTS.md:76 @ c8214d1c3b3ac051d23c03738ddb3a8e8b8e6a1e
 def test_no_function_local_imports():
     """Rust imports should always go at the top of the file, never locally in functions."""
-    # AST-only because: Rust project, no cargo toolchain in test container
     source = RUST_FILE.read_text()
     in_fn = False
     brace_depth = 0

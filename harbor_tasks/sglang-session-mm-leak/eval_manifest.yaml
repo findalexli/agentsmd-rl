@@ -45,31 +45,44 @@ checks:
   - id: ruff_lint_modified
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ruff linter passes on modified files (F401, F821 checks)"
+    description: "Repo ruff linter passes on modified files (F401, F821 checks)"
 
   - id: black_format_modified
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's black formatter passes on modified files"
+    description: "Repo black formatter passes on modified files"
 
   - id: isort_imports_modified
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's isort import ordering passes on modified files"
+    description: "Repo isort import ordering passes on modified files"
+
+  - id: test_codespell_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo codespell passes on modified files"
+
+  - id: test_no_debug_statements
+    type: pass_to_pass
+    origin: static
+    description: "No debug statements (breakpoint, pdb) in modified files"
 
 rubric:
-  - rule: "Extract reusable operations into methods rather than duplicating inline loops. The gold solution adds a release_features() method to MultimodalInputs and calls it from multiple locations."
+  - rule: "Extract reusable operations into methods rather than duplicating inline loops. The gold solution adds a release_features() method to MultimodalInputs and calls it from scheduler.py and scheduler_output_processor_mixin.py."
     source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "389-394"
+      path: "python/sglang/srt/managers/schedule_batch.py"
+      lines: "369-373"
       commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"
+    reference: "def release_features(self):\n    for item in self.mm_items:\n        item.feature = None"
   - rule: "Follow existing code patterns in the same file. When modifying schedule_batch.py, check neighboring methods and classes for naming conventions, documentation style, and structure."
     source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "296-298"
+      path: "python/sglang/srt/managers/schedule_batch.py"
+      lines: "369-373"
       commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"
+    reference: "def release_features(self):\n    \"\"\"Release feature tensors to free GPU memory.\"\"\""
   - rule: "Add clear docstrings to new public methods explaining their purpose."
     source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "337-347"
+      path: "python/sglang/srt/managers/schedule_batch.py"
+      lines: "369-373"
       commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"
+    reference: "\"\"\"Release feature tensors to free GPU memory.\"\"\""

@@ -20,4 +20,4 @@ WORKDIR /workspace/litellm
 
 RUN mkdir -p /logs/verifier
 
-COPY tests/ /tests/
+

@@ -44,93 +44,65 @@ checks:
     path: AGENTS.md
     lines: '76'
     commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- id: repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo fmt --check passes (repo CI)
 - id: repo_cargo_check_ty_project
   type: pass_to_pass
   origin: repo_tests
   description: cargo check -p ty_project passes (repo CI)
-- id: repo_cargo_check_ty
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo check -p ty passes (repo CI)
-- id: repo_cargo_test_ty_project
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo test -p ty_project passes (repo CI)
 - id: repo_cargo_clippy_ty_project
   type: pass_to_pass
   origin: repo_tests
   description: cargo clippy -p ty_project --all-targets --all-features passes (repo
     CI)
 rubric:
-- rule: Follow existing code style. Check neighboring files for patterns.
-  source:
-    path: AGENTS.md
-    lines: '75'
-    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
-- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements
-    to reduce indentation and improve readability.
-  source:
-    path: AGENTS.md
-    lines: '80'
-    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
-  source:
-    path: AGENTS.md
-    lines: '82'
-    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   source:
     path: AGENTS.md
-    lines: 50-51
-  evidence: The gold solution adds two new tests (`requires_python_old_version_uses_lowest_supported_version`
-    and `requires_python_unsupported_future_version`) to verify the new behavior for
-    unsupported Python ve
+    lines: 56-56
+  reference: The gold solution adds two new tests (`requires_python_old_version_uses_lowest_supported_version`
+    and `requires_python_unsupported_future_version`) to verify the new behavior.
   category: testing
 - rule: Look to see if your tests could go in an existing file before adding a new
     file for your tests.
   source:
     path: AGENTS.md
-    lines: 52-52
-  evidence: The gold solution adds the new tests directly into the existing `crates/ty_project/src/metadata.rs`
+    lines: 57-57
+  reference: The gold solution adds the new tests to the existing `crates/ty_project/src/metadata.rs`
     file rather than creating a new test file.
   category: testing
 - rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
-    Instead, try to encode those constraints in the type system.
   source:
     path: AGENTS.md
-    lines: 57-58
-  evidence: The gold solution avoids panicking on unsupported versions by safely handling
-    the `Option` returned by `find()` using a `let Some(...) = ... else` block and
-    returning a proper `Err(ResolveRequiresPyth
-  category: style
+    lines: 63-63
+  reference: The gold solution handles the `None` case from `PythonVersion::iter().find(...)`
+    by returning a `ResolveRequiresPythonError::NoSupportedVersion` instead of using
+    `.unwrap()` or panicking.
+  category: architecture
 distractors:
-- rule: 'If asked to reproduce changes in the ty ecosystem, use this script to clone
-    the project to some directory and install its dependencies into `.venv`: `uv run
-    scripts/setup_primer_project.py <project-name> <some-temp-dir>`'
-  collision_type: meta_confusion
-  why_distracting: The problem description mentions 'This affects any project whose
-    requires-python doesn't map to a version...', which might trick the agent into
-    thinking it needs to use the ecosystem primer script to reproduce the issue. However,
-    this is a localized parsing bug that is easily reproduced and tested with in-memory
-    files in standard Rust unit tests.
+- rule: Run a single mdtest file. The path to the mdtest file should be relative to
+    the `crates/ty_python_semantic/resources/mdtest` folder
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to write an mdtest for this feature since it's
+    a ty-specific change, but project metadata discovery is tested via standard Rust
+    unit tests in `metadata.rs`.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 35-38
+    lines: 18-26
 - rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem.
-  collision_type: rule_conflict
-  why_distracting: The agent might hesitate to add the ~60 lines of new test code
-    or the custom logic to iterate over `PythonVersion::iter()`, thinking there must
-    be an existing utility for this. However, writing these specific tests and the
-    explicit iteration logic is exactly what is required to fix the bug properly.
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time looking for an existing version clamping
+    utility, but the gold solution implements the clamping logic manually using `PythonVersion::iter().find(...)`.
   severity: low
   source:
     path: AGENTS.md
-    lines: 56-56
-hierarchy_analysis: The configuration hierarchy consists of a single file (`AGENTS.md`)
-  containing all the rules. There are no conflicts between different levels of the
-  hierarchy. The rules provide clear guidance on testing, error handling, and development
-  workflows.
+    lines: 70-70
+hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply pointing
+  to `AGENTS.md`. The rules are general repository guidelines rather than deeply nested
+  or conflicting module-specific rules.

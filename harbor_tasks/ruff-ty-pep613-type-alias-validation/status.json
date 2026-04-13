@@ -3,22 +3,21 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T14:48:01.174083",
-  "total_time": 1190.13,
-  "sandbox_id": "i54vqr2acp4tevvnszv1j",
+  "validated_at": "2026-04-12T03:55:37.536524",
+  "total_time": 5337.78,
+  "sandbox_id": "iyyo1l5w6f4oamar17bi6",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
-      "notes": "Added 4 repo_tests pass_to_pass gates: test_repo_cargo_fmt (cargo fmt --all --check), test_repo_cargo_clippy (cargo clippy -p ty_python_semantic), test_repo_mdtest_literal (cargo test -p ty_python_semantic --test mdtest literal), test_repo_mdtest_pep613 (cargo test -p ty_python_semantic --test mdtest pep613). All tested and pass on base commit."
+      "notes": "Verified 7 repo_tests pass_to_pass gates: test_compiles (cargo check -p ty_python_semantic), test_repo_cargo_fmt (cargo fmt --all --check), test_repo_cargo_clippy (cargo clippy -p ty_python_semantic), test_repo_mdtest_literal (cargo test -p ty_python_semantic --test mdtest literal), test_repo_mdtest_pep613 (cargo test -p ty_python_semantic --test mdtest pep613), test_repo_mdtest_all (cargo test -p ty_python_semantic --test mdtest), test_repo_unit_tests (cargo test -p ty_python_semantic --lib), test_repo_cargo_doc (cargo doc --no-deps -p ty_python_semantic). All 7 pass on base commit. No additional CI tests needed - coverage is comprehensive."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 144.45,
+      "time": 567.06,
       "notes": ""
     },
     "improve": {
@@ -32,11 +31,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "All checks passed. Docker build OK, NOP reward=0, Gold reward=1, rubric ICR=0.5 (rules too strict). Fixed solve.sh patch for typed_dict module.",
+      "attempts": 1,
+      "notes": "All checks passed. Fixed solve.sh to add cargo fmt after applying patch. The mod.rs patch context needed adjustment for typed_dict module line.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.59
+      "time": 3134.43
     },
     "rubric_judge": {
       "status": "pass",
@@ -44,17 +43,19 @@
       "backend": "fireworks",
       "time": 2.51,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 21.19,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 14280.98,
-      "at": "2026-04-09T13:09:53.491934"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -78,6 +79,22 @@
       "backend": "fireworks",
       "time": 1190.13,
       "at": "2026-04-09T14:48:01.174083"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3445.94,
+      "at": "2026-04-12T02:26:30.236924"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5337.78,
+      "at": "2026-04-12T03:55:37.536524"
     }
   ]
 }

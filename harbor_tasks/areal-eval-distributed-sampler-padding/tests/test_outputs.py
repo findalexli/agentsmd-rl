@@ -215,6 +215,21 @@ def test_repo_py_compile():
     assert r.returncode == 0, f"Python compile failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_bandit():
+    """Bandit security checks pass on dataloader.py (pass_to_pass)."""
+    # Install bandit if not already available
+    subprocess.run(
+        ["pip", "install", "bandit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["bandit", str(FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bandit security check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_no_trailing_whitespace():
     """dataloader.py has no trailing whitespace (pass_to_pass)."""

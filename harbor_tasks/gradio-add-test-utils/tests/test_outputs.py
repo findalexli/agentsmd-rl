@@ -93,6 +93,34 @@ def test_repo_client_typescript():
     err_msg = r.stderr[-500:] if r.stderr else ""
     assert r.returncode == 0, f"Client TypeScript check failed: {err_msg}"
 
+
+
+# [repo_tests] pass_to_pass - Repo CI: @gradio/client build check
+def test_repo_client_build():
+    """Repo's @gradio/client package builds successfully (pass_to_pass)."""
+    pnpm = _ensure_deps()
+    r = subprocess.run(
+        [pnpm, "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    err_msg = r.stderr[-500:] if r.stderr else ""
+    assert r.returncode == 0, f"Client build failed:\\n{err_msg}"
+
+
+
+
+
+# [repo_tests] pass_to_pass - Repo CI: @gradio/utils package check
+def test_repo_utils_build():
+    """Repo's @gradio/utils package builds successfully (pass_to_pass)."""
+    pnpm = _ensure_deps()
+    r = subprocess.run(
+        [pnpm, "--filter", "@gradio/utils", "package"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    err_msg = r.stderr[-500:] if r.stderr else ""
+    assert r.returncode == 0, f"Utils package failed:\n{err_msg}"
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

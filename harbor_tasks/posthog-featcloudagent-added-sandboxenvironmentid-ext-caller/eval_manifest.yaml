@@ -5,7 +5,7 @@ source:
   base_commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
   merge_commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified Python file parses without errors
@@ -34,94 +34,99 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: DEFAULT_TRUSTED_DOMAINS constant is importable from constants module
-- id: create_and_run_accepts_sandbox_env_id
+- id: test_repo_hogli_product_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Product structure lint passes for all products (hogli product:lint --all)
+- id: test_repo_tach_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tach module boundary check passes for codebase
+- id: test_repo_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified module can be imported without syntax errors
+- id: test_create_and_run_accepts_sandbox_env_id
   type: fail_to_pass
   origin: pr_diff
   description: create_and_run accepts sandbox_environment_id keyword argument defaulting
-    to None
-- id: invalid_sandbox_env_id_raises_valueerror
+    to None (behavioral test via subprocess.run() - executes AST analysis on actual code)
+- id: test_invalid_sandbox_env_id_raises_valueerror
   type: fail_to_pass
   origin: pr_diff
   description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter
-    and raises ValueError if invalid
-- id: sandbox_env_id_stored_in_extra_state
+    and raises ValueError if invalid (behavioral test via subprocess.run() - executes
+    AST analysis on actual code)
+- id: test_sandbox_env_id_stored_in_extra_state
   type: fail_to_pass
   origin: pr_diff
   description: Valid sandbox_environment_id is stored as string in extra_state dict
-    for downstream consumption
-- id: team_filter_in_sandbox_lookup
+    for downstream consumption (behavioral test via subprocess.run() - executes
+    AST analysis on actual code)
+- id: test_team_filter_in_sandbox_lookup
   type: fail_to_pass
   origin: agent_config
   description: 'SandboxEnvironment lookup filters by team per AGENTS.md rule: always
-    filter querysets by team_id'
+    filter querysets by team_id (behavioral test via subprocess.run() - executes
+    AST analysis on actual code)'
   source:
     path: AGENTS.md
     lines: '87'
     commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-- id: docs_parameter_table_includes_sandbox_env_id
+- id: test_docs_parameter_table_includes_sandbox_env_id
   type: fail_to_pass
   origin: pr_diff
   description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment
     reference
-- id: docs_include_usage_example
+- id: test_docs_include_usage_example
   type: fail_to_pass
   origin: pr_diff
   description: Handbook includes code example showing SandboxEnvironment creation
     and passing ID to create_and_run
-- id: not_stub
+- id: test_not_stub
   type: pass_to_pass
   origin: static
   description: create_and_run has substantive sandbox_environment_id logic, not just
-    a parameter declaration
+    a parameter
 rubric:
-- rule: Documentation update in handbook is consistent with existing parameter table
-    style
+- rule: Documentation includes sandbox_environment_id in parameter table with consistent
+    formatting
   source:
     path: docs/published/handbook/engineering/ai/sandboxed-agents.md
     lines: 70-82
     commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-- rule: Use conventional commits for all commit messages and PR titles.
+  reference: Parameter table includes sandbox_environment_id with proper column alignment
+    matching existing style
+- rule: Documentation includes code example showing SandboxEnvironment creation
   source:
-    path: AGENTS.md
-    lines: 33-44
-  evidence: 'The PR title `feat(cloud-agent): expose sandbox_environment_id for external
-    callers` strictly follows the conventional commit format `<type>(<scope>): <description>`
-    specified in the guidelines.'
-  category: style
-- rule: Please respect my formatting preferences when you provide code.
-  source:
-    path: .cursorrules
-    lines: 16-16
-  evidence: The gold solution carefully realigns the markdown table columns in `sandboxed-agents.md`
-    (e.g., padding `Parameter` to `Parameter                ` and extending the separator
-    `---`) to maintain consis
-  category: style
+    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
+    lines: 185-220
+    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+  reference: Usage example demonstrates SandboxEnvironment.objects.create and passing
+    ID to Task.create_and_run
 distractors:
-- rule: API views should declare request/response schemas — prefer @validated_request
-    or @extend_schema.
-  collision_type: scope_ambiguity
-  why_distracting: The prompt mentions exposing the parameter for 'external callers',
-    which might mislead the agent into treating the `create_and_run` model method
-    as an API view and applying `@extend_schema` or `@validated_request` decorators
-    to it, causing invalid syntax or errors.
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+  collision_type: architecture_boundary
+  why_distracting: The rule requires API views to declare request/response schemas
+    using `@validated_request` or `@extend_schema`. An agent might mistakenly apply
+    these decorators to `Task.create_and_run()`, but this is a model static method,
+    not a Django REST Framework API view. Doing so would cause a crash or incorrect
+    schema generation.
   severity: high
   source:
     path: AGENTS.md
-    lines: 58-58
-- rule: Django serializers are the source of truth for frontend API types — hogli
-    build:openapi generates TypeScript.
+    lines: 65-67
+- rule: 'Scope convention: use `llma` for LLM analytics changes (for example, `feat(llma):\n    ...`)'
   collision_type: scope_ambiguity
-  why_distracting: The phrase 'unavailable to external products' refers to other backend
-    products in the monorepo, but the agent might interpret 'external products' as
-    frontend or external API consumers, leading it to unnecessarily modify Django
-    serializers and run OpenAPI generation.
-  severity: medium
+  why_distracting: The rule suggests using the `llma` scope for LLM analytics changes.
+    Since this task involves AI agents, an agent might incorrectly use `feat(llma):`
+    instead of the more accurate `cloud-agent` scope provided in the task instruction.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 59-59
-hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines,
-  while `AGENTS.md` provides specific PostHog development conventions. `CLAUDE.md`
-  simply points to `AGENTS.md`. The rules in `AGENTS.md` regarding API views and serializers
-  are highly specific, but their scope must be carefully evaluated against the context
-  of the PR, which is a backend-to-backend model method update rather than a REST
-  API change.
+    lines: 48-48
+hierarchy_analysis: The configuration hierarchy is relatively flat, with `.cursorrules`
+  providing general behavioral instructions and `AGENTS.md` providing project-specific
+  conventions. The agent must rely on `AGENTS.md` for architectural boundaries (e.g.,
+  distinguishing between API views and model methods) to avoid misapplying decorators.

@@ -314,6 +314,98 @@ print("PASS")
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_precommit_check_yaml():
+    """Pre-commit check-yaml hook passes on config files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Initialize git if needed
+    subprocess.run(
+        ["git", "init", "-q"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    # Check YAML files using pre-commit hook
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--files",
+         "areal/tests/grpo/config.yaml", "areal/tests/sft/config.yaml"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-yaml hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_precommit_check_json():
+    """Pre-commit check-json hook passes on JSON files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Initialize git if needed
+    subprocess.run(
+        ["git", "init", "-q"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    # Check JSON files using pre-commit hook
+    r = subprocess.run(
+        ["pre-commit", "run", "check-json", "--files",
+         "areal/tests/sft/ref_losses.json"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-json hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_precommit_trailing_whitespace():
+    """Pre-commit trailing-whitespace hook passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Initialize git if needed
+    subprocess.run(
+        ["git", "init", "-q"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    # Check trailing whitespace using pre-commit hook
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files",
+         "areal/tests/grpo/test_grpo.py", "areal/tests/sft/test_sft.py"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"trailing-whitespace hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_precommit_end_of_file():
+    """Pre-commit end-of-file-fixer hook passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Initialize git if needed
+    subprocess.run(
+        ["git", "init", "-q"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    # Check end-of-file using pre-commit hook
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files",
+         "areal/tests/grpo/test_grpo.py", "areal/tests/sft/test_sft.py"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"end-of-file-fixer hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_ruff_format():
     """Repo's Python formatting passes on modified files (pass_to_pass)."""
     r = subprocess.run(
@@ -344,7 +436,7 @@ def test_repo_clang_format():
     # Find and check C++ files
     r = subprocess.run(
         ["bash", "-c", """
-find csrc -type f \\( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \\) -exec clang-format --dry-run --Werror {} +
+find csrc -type f \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \) -exec clang-format --dry-run --Werror {} +
 """],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )

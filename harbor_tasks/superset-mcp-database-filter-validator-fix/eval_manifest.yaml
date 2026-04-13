@@ -66,6 +66,11 @@ checks:
   description: All MCP service Python files should pass Python syntax check
   type: pass_to_pass
   origin: repo_tests
+- id: test_repo_python_unit_tests
+  description: Repo Python unit tests for MCP service pass via pytest with CI flags
+    (matches superset-python-unittest.yml)
+  type: pass_to_pass
+  origin: repo_tests
 - id: test_database_schemas_has_database_filter_class
   description: Database schemas module should contain DatabaseFilter class
   type: pass_to_pass
@@ -87,66 +92,43 @@ checks:
   type: fail_to_pass
   origin: pr_diff
 rubric:
-- rule: All Python files must include the Apache Software Foundation license header
-    at the top.
-  source:
-    path: superset/mcp_service/CLAUDE.md
-    lines: 5-38
-    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
-- rule: Use Python 3.10+ union syntax for type hints (T | None instead of Optional[T]).
-  source:
-    path: superset/mcp_service/CLAUDE.md
-    lines: 258-296
-    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
-- rule: All tool inputs and outputs must use Pydantic models with field descriptions.
-  source:
-    path: superset/mcp_service/CLAUDE.md
-    lines: 221-242
-    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
-- rule: Use field_validator from Pydantic for flexible input parsing (JSON string
-    or object).
-  source:
-    path: superset/mcp_service/CLAUDE.md
-    lines: 298-403
-    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
-- rule: 'Backend Type Safety: Add type hints and ensure proper typing for all new
-    Python code.'
+- rule: Add type hints - All new Python code needs proper typing
   source:
     path: CLAUDE.md
-    lines: 42-44
-  evidence: The gold solution applies patches that add Pydantic `@field_validator`
-    decorators to `ListDatabasesRequest` to parse JSON strings into native Python
-    lists, which enforces backend type safety and prope
-  category: architecture
+    lines: 48-49
+  evidence: The gold solution adds new fields to `DatabaseFilter` and `@field_validator`
+    decorators to `ListDatabasesRequest`, maintaining proper Python type hints as
+    required by the backend standards.
+  category: style
+  verification: llm_judge
 distractors:
-- rule: 'UUID Migration: Use UUIDs in public APIs instead of internal integer IDs.'
+- rule: UUID Migration - External API exposure - Use UUIDs in public APIs instead
+    of internal integer IDs
   collision_type: scope_ambiguity
-  why_distracting: The task requires adding `created_by_fk` and `changed_by_fk` to
-    `DatabaseFilter` to allow querying by user ID. The rule mandates using UUIDs in
-    public APIs instead of internal integer IDs. An agent might try to convert these
-    foreign keys to UUIDs or initiate a UUID migration for these fields, which is
-    out of scope for a simple filter addition and would break the existing 'find my
-    databases' query logic.
+  why_distracting: The instruction requires adding `created_by_fk` and `changed_by_fk`
+    to `DatabaseFilter` for the MCP API. The config mandates using UUIDs in public
+    APIs instead of internal integer IDs. An agent might try to use UUIDs instead
+    of the requested integer foreign keys, which would break the integration with
+    `get_instance_info`.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 47-50
-- rule: ALWAYS run pre-commit run --all-files before pushing commits.
-  collision_type: scope_ambiguity
-  why_distracting: The rule strictly mandates running `pre-commit run --all-files`
-    and fixing all formatting/linting issues. An agent might attempt to fix pre-existing
-    linting or typing errors across the entire repository or in the modified files,
-    bloating the PR with unrelated changes instead of focusing purely on the MCP service
-    fixes.
+    path: AGENTS.md
+    lines: 50-53
+- rule: Code Comments - Avoid time-specific language - Don't use words like 'now',
+    'currently', 'today'
+  collision_type: meta_confusion
+  why_distracting: The instruction explicitly requires fixing timezone issues by using
+    `datetime.now(timezone.utc)`. The config forbids using time-specific language
+    like 'now'. An agent might misinterpret this rule and avoid using `datetime.now()`
+    or write convoluted comments to avoid the word 'now'.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 6-18
-hierarchy_analysis: The repository contains identical `CLAUDE.md` and `AGENTS.md`
-  files at the root level. Both provide the same set of rules regarding backend type
-  safety, UUID migrations, and pre-commit hooks. There are no conflicts between the
-  files, but agents must carefully scope the UUID migration rule to avoid applying
-  it to existing integer foreign keys being exposed in filters.
+    path: AGENTS.md
+    lines: 84-85
+hierarchy_analysis: The config hierarchy is flat, with identical rules in `AGENTS.md`
+  and `CLAUDE.md`. The agent must apply these rules to the Python backend while navigating
+  conflicts between the specific task instructions and the general UUID migration
+  guidelines.
 version: '2.0'
 source:
   repo: apache/superset

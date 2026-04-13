@@ -192,43 +192,36 @@ sys.exit(0)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_syntax():
-    """All modified Python files must parse without syntax errors (pass_to_pass)."""
-    for filename in T5_MODELS:
-        filepath = _get_model_path(filename)
-        src = filepath.read_text()
-        ast.parse(src)
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Install ruff temporarily for this check
+    install_result = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120
+    )
+    if install_result.returncode != 0:
+        raise AssertionError(f"Failed to install ruff: {install_result.stderr}")
+
+    # Run ruff check on all modified T5-family model files
+    files_to_check = [f"{REPO}/{f}" for f in T5_MODELS]
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82"] + files_to_check,
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        raise AssertionError(f"Ruff check failed:\n{r.stdout}\n{r.stderr}")
 
 
 # [repo_tests] pass_to_pass
-def test_repo_imports_resolvable():
-    """Modified files have no unresolvable import dependencies."""
-    repo_src = Path(f"{REPO}/src")
+def test_repo_py_compile():
+    """All modified Python files compile without errors (pass_to_pass)."""
+    import py_compile
     for filename in T5_MODELS:
         filepath = _get_model_path(filename)
-        tree = _parse_file(filepath)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    if alias.name.startswith("transformers"):
-                        parts = alias.name.split(".")
-                        if len(parts) > 1:
-                            rel_path = f"transformers/{'/'.join(parts[1:])}.py"
-                            full_path = repo_src / rel_path
-                            if not full_path.exists():
-                                pkg_path = repo_src / f"transformers/{'/'.join(parts[1:])}"
-                                if not (pkg_path / "__init__.py").exists():
-                                    raise AssertionError(f"{filename}: Cannot resolve import '{alias.name}'")
-            elif isinstance(node, ast.ImportFrom):
-                if node.module and node.module.startswith("transformers"):
-                    parts = node.module.split(".")
-                    if len(parts) > 1:
-                        rel_path = f"transformers/{'/'.join(parts[1:])}.py"
-                        full_path = repo_src / rel_path
-                        if not full_path.exists():
-                            pkg_path = repo_src / f"transformers/{'/'.join(parts[1:])}"
-                            if not (pkg_path / "__init__.py").exists():
-                                raise AssertionError(f"{filename}: Cannot resolve import from '{node.module}'")
+        try:
+            py_compile.compile(str(filepath), doraise=True)
+        except py_compile.PyCompileError as e:
+            raise AssertionError(f"{filename}: Compile error - {e}")
 
 
 # [repo_tests] pass_to_pass
@@ -250,15 +243,147 @@ def test_repo_t5_classes_exist():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_no_undefined_names():
-    """Modified files have no obvious undefined name errors (pass_to_pass)."""
-    import py_compile
+def test_repo_forward_methods_parse():
+    """All T5-family Attention.forward() methods have valid AST structure (pass_to_pass)."""
     for filename in T5_MODELS:
         filepath = _get_model_path(filename)
-        try:
-            py_compile.compile(str(filepath), doraise=True)
-        except py_compile.PyCompileError as e:
-            raise AssertionError(f"{filename}: Compile error - {e}")
+        tree = _parse_file(filepath)
+        forward = _find_attention_forward(tree)
+        if forward is None:
+            raise AssertionError(f"{filename}: Could not find Attention.forward method")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on modified T5-family model files (pass_to_pass)."""
+    # Install ruff temporarily for this check
+    install_result = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120
+    )
+    if install_result.returncode != 0:
+        raise AssertionError(f"Failed to install ruff: {install_result.stderr}")
+
+    # Run ruff format check on all modified T5-family model files
+    files_to_check = [f"{REPO}/{f}" for f in T5_MODELS]
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + files_to_check,
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        raise AssertionError(f"Ruff format check failed:\n{r.stdout}\n{r.stderr}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modeling_structure():
+    """Repo's modeling structure check passes (pass_to_pass)."""
+    # Install dependencies needed for the check
+    install_result = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "--quiet"],
+        capture_output=True, text=True, timeout=300
+    )
+    if install_result.returncode != 0:
+        raise AssertionError(f"Failed to install torch: {install_result.stderr}")
+
+    # Install transformers package
+    install_tf_result = subprocess.run(
+        ["pip", "install", "-e", ".", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if install_tf_result.returncode != 0:
+        raise AssertionError(f"Failed to install transformers: {install_tf_result.stderr}")
+
+    # Run modeling structure check
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        raise AssertionError(f"Modeling structure check failed:\n{r.stdout}\n{r.stderr}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_inits_check():
+    """Repo's init file consistency check passes (pass_to_pass)."""
+    # Install dependencies needed for the check
+    install_result = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "--quiet"],
+        capture_output=True, text=True, timeout=300
+    )
+    if install_result.returncode != 0:
+        raise AssertionError(f"Failed to install torch: {install_result.stderr}")
+
+    # Install transformers package
+    install_tf_result = subprocess.run(
+        ["pip", "install", "-e", ".", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if install_tf_result.returncode != 0:
+        raise AssertionError(f"Failed to install transformers: {install_tf_result.stderr}")
+
+    # Run inits check
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        raise AssertionError(f"Init files check failed:\n{r.stdout}\n{r.stderr}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_docstrings():
+    """Repo's config docstrings check passes (pass_to_pass)."""
+    # Install dependencies needed for the check
+    install_result = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "--quiet"],
+        capture_output=True, text=True, timeout=300
+    )
+    if install_result.returncode != 0:
+        raise AssertionError(f"Failed to install torch: {install_result.stderr}")
+
+    # Install transformers package
+    install_tf_result = subprocess.run(
+        ["pip", "install", "-e", ".", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if install_tf_result.returncode != 0:
+        raise AssertionError(f"Failed to install transformers: {install_tf_result.stderr}")
+
+    # Run config docstrings check
+    r = subprocess.run(
+        ["python", "utils/check_config_docstrings.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        raise AssertionError(f"Config docstrings check failed:\n{r.stdout}\n{r.stderr}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dummies_check():
+    """Repo's dummy files check passes (pass_to_pass)."""
+    # Install dependencies needed for the check
+    install_result = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "--quiet"],
+        capture_output=True, text=True, timeout=300
+    )
+    if install_result.returncode != 0:
+        raise AssertionError(f"Failed to install torch: {install_result.stderr}")
+
+    # Install transformers package
+    install_tf_result = subprocess.run(
+        ["pip", "install", "-e", ".", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if install_tf_result.returncode != 0:
+        raise AssertionError(f"Failed to install transformers: {install_tf_result.stderr}")
+
+    # Run dummies check
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode != 0:
+        raise AssertionError(f"Dummies check failed:\n{r.stdout}\n{r.stderr}")
 
 
 # [agent_config] fail_to_pass — CLAUDE.md:45-55

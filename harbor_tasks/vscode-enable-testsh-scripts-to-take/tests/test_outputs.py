@@ -116,6 +116,88 @@ def test_repo_unit_node_syntax():
     assert r.returncode == 0, f"Syntax error in test/unit/node/index.js:\n{r.stderr}"
 
 
+def test_repo_unit_renderer_syntax():
+    """Repo's test/unit/electron/renderer.js must parse without syntax errors (pass_to_pass)."""
+    renderer_js = Path(REPO) / "test" / "unit" / "electron" / "renderer.js"
+    r = subprocess.run(
+        ["node", "--check", str(renderer_js)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in test/unit/electron/renderer.js:\n{r.stderr}"
+
+
+def test_repo_unit_preload_syntax():
+    """Repo's test/unit/electron/preload.js must parse without syntax errors (pass_to_pass)."""
+    preload_js = Path(REPO) / "test" / "unit" / "electron" / "preload.js"
+    r = subprocess.run(
+        ["node", "--check", str(preload_js)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in test/unit/electron/preload.js:\n{r.stderr}"
+
+
+def test_repo_unit_reporter_syntax():
+    """Repo's test/unit/reporter.js must parse without syntax errors (pass_to_pass)."""
+    reporter_js = Path(REPO) / "test" / "unit" / "reporter.js"
+    r = subprocess.run(
+        ["node", "--check", str(reporter_js)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in test/unit/reporter.js:\n{r.stderr}"
+
+
+def test_repo_test_sh_syntax():
+    """Repo's scripts/test.sh must have valid shell syntax (pass_to_pass)."""
+    test_sh = Path(REPO) / "scripts" / "test.sh"
+    r = subprocess.run(
+        ["bash", "-n", str(test_sh)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Shell syntax error in scripts/test.sh:\n{r.stderr}"
+
+
+def test_repo_package_json_valid():
+    """Repo's package.json must be valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json is not valid JSON:\n{r.stderr}"
+
+
+def test_repo_product_json_valid():
+    """Repo's product.json must be valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('product.json', 'utf8'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"product.json is not valid JSON:\n{r.stderr}"
+
+
+def test_repo_all_shell_scripts_syntax():
+    """All shell scripts in scripts/ folder must have valid syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / "scripts"
+    sh_files = list(scripts_dir.glob("*.sh"))
+    assert sh_files, f"No .sh files found in {scripts_dir}"
+
+    for sh_file in sh_files:
+        r = subprocess.run(
+            ["bash", "-n", str(sh_file)],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Shell syntax error in {sh_file}:\n{r.stderr}"
+
+
+def test_repo_git_sanity():
+    """Git repo must have at least one commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git sanity check failed:\n{r.stderr}"
+    assert r.stdout.strip(), "Git log should return at least one commit"
+
+
 def test_syntax_check():
     """Modified JS file must parse without syntax errors."""
     r = subprocess.run(

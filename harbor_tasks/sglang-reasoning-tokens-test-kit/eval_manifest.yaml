@@ -62,6 +62,51 @@ checks:
     origin: repo_tests
     description: "Repo's CI permissions sort check passes via pre-commit"
 
+  - id: test_repo_precommit_check_symlinks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's symlinks check passes via pre-commit"
+
+  - id: test_repo_precommit_destroyed_symlinks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's destroyed symlinks check passes via pre-commit"
+
+  - id: test_repo_precommit_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's trailing whitespace check passes via pre-commit"
+
+  - id: test_repo_precommit_end_of_file_fixer
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's end-of-file fixer check passes via pre-commit"
+
+  - id: test_repo_precommit_check_added_large_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's large files check passes via pre-commit"
+
+  - id: test_repo_precommit_check_merge_conflict
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's merge conflict check passes via pre-commit"
+
+  - id: test_repo_precommit_check_shebang_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's shebang scripts check passes via pre-commit"
+
+  - id: test_repo_precommit_detect_private_key
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's private key detection passes via pre-commit"
+
+  - id: test_repo_precommit_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's debug statements check passes via pre-commit"
+
   - id: reasoning_tokens_kit_exists
     type: fail_to_pass
     origin: pr_diff
@@ -117,21 +162,4 @@ checks:
     origin: pr_diff
     description: "TestQwen35FP4MTP setUpClass must call init_reasoning_token_verifier"
 
-rubric:
-  - rule: "Always use CustomTestCase — never raw unittest.TestCase. CustomTestCase ensures tearDownClass runs even when setUpClass fails, preventing resource leaks in CI."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "10-12"
-      commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"
-
-  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources (e.g., cls.process) that setUpClass may not have finished allocating."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "13-14"
-      commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"
-
-  - rule: "Test kits and mixins should be placed in python/sglang/test/kits/ directory, following the existing pattern of eval_accuracy_kit.py and other kit files."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "369-396,400-413"
-      commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"
+rubric: []

@@ -125,32 +125,25 @@ config_edits:
 
     playwright-cli click "#footer >> role=button[name=Submit]"'
 distractors:
-- rule: docs/src/ is the API documentation and source of truth for public TypeScript
-    types
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
   collision_type: scope_ambiguity
-  why_distracting: The config states that `docs/src/` is the source of truth for API
-    documentation. An agent might try to update the main Playwright documentation
-    in `docs/src/` to reflect the new CLI locator support, but the prompt specifically
-    requests updating only the CLI's internal `SKILL.md` file.
+  why_distracting: The agent might try to update the main Playwright API documentation
+    in `docs/src/` to reflect the new CLI locator support, but the instruction specifically
+    requests updating the CLI's `SKILL.md` file.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 27-28
-- rule: Test placement decision rules based on required fixtures (tests/page/, tests/library/,
-    tests/mcp/)
+    lines: 38-42
+- rule: 'Decision rule: Does the test need browser/browserType/context → tests/library/.
+    Just needs page + server → tests/page/.'
   collision_type: scope_ambiguity
-  why_distracting: The config provides detailed instructions on where to place tests
-    (e.g., `tests/page/` or `tests/mcp/`). An agent might spend effort writing tests
-    for this CLI feature, but the gold solution does not include any test changes,
-    focusing only on the implementation and `SKILL.md`.
-  severity: medium
+  why_distracting: The agent might spend time writing tests for the new locator syntax
+    in `tests/page/` or `tests/library/`, but the instruction only asks to fix the
+    code and update `SKILL.md`.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 58-63
-hierarchy_analysis: 'The repository uses a single `CLAUDE.md` file at the root level.
-  The config provides architectural boundaries (packages, DEPS) and testing guidelines.
-  The primary challenge for an agent is scoping: the config heavily emphasizes testing
-  and main documentation (`docs/src/`), but this specific PR requires updating an
-  internal CLI skill document (`SKILL.md`) and does not require new tests. The agent
-  must follow the prompt''s explicit instructions over the general testing/documentation
-  guidelines in the config.'
+    lines: 75-85
+hierarchy_analysis: The repository uses a flat single-file config (`CLAUDE.md`) for
+  general guidelines. The task primarily relies on the explicit instructions provided
+  in the prompt rather than deep config rules.

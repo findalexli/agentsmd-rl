@@ -212,15 +212,55 @@ def test_tab_indentation():
 # Repo CI/CD pass_to_pass gates — verify existing tests/lint still pass
 # ---------------------------------------------------------------------------
 
+# Global to track if pnpm is installed (installed on first test that needs it)
+_pnpm_installed = False
+
+
+def _ensure_pnpm():
+    """Ensure pnpm is available, installing if needed. Returns pnpm path."""
+    global _pnpm_installed
+    if _pnpm_installed:
+        return "pnpm"
+
+    pnpm = shutil.which("pnpm")
+    if pnpm:
+        _pnpm_installed = True
+        return "pnpm"
+
+    # Install pnpm via npm
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True, text=True, timeout=120,
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Failed to install pnpm: {r.stderr}")
+
+    _pnpm_installed = True
+    return "pnpm"
+
+
+def _install_deps():
+    """Install dependencies if node_modules doesn't exist."""
+    node_modules = Path(REPO) / "node_modules"
+    if node_modules.exists():
+        return
+
+    pnpm = _ensure_pnpm()
+    r = subprocess.run(
+        [pnpm, "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Failed to install dependencies: {r.stderr[-1000:]}")
+
+
 # [repo_tests] pass_to_pass — repo's Prettier format check
 def test_repo_format_check():
     """Repo's Prettier format check passes (pass_to_pass)."""
-    pnpm = shutil.which("pnpm")
-    if not pnpm:
-        # Skip if pnpm is not available (e.g., minimal Docker environment)
-        return
+    pnpm = _ensure_pnpm()
+    _install_deps()
     r = subprocess.run(
-        ["pnpm", "format:check"],
+        [pnpm, "format:check"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
@@ -229,20 +269,19 @@ def test_repo_format_check():
 # [repo_tests] pass_to_pass — markdown component unit tests
 def test_repo_markdown_unit_tests():
     """Markdown component unit tests pass (pass_to_pass)."""
-    pnpm = shutil.which("pnpm")
-    if not pnpm:
-        # Skip if pnpm is not available (e.g., minimal Docker environment)
-        return
+    pnpm = _ensure_pnpm()
+    _install_deps()
+
     # First build the client dependency
     r = subprocess.run(
-        ["pnpm", "--filter", "@gradio/client", "build"],
+        [pnpm, "--filter", "@gradio/client", "build"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
 
     # Run markdown-specific tests
     r = subprocess.run(
-        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/markdown/Markdown.test.ts"],
+        [pnpm, "vitest", "run", "--config", ".config/vitest.config.ts", "js/markdown/Markdown.test.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Markdown unit tests failed:\n{r.stderr[-500:]}"

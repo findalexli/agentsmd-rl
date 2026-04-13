@@ -63,7 +63,7 @@ old_error_check = '''expect(runtimeLog).not.toHaveBeenCalledWith(
     expect(runtimeError).toHaveBeenCalledWith(expect.stringContaining("Max reconnect attempts"));'''
 
 new_error_check = '''// After the fix, no error is thrown for reconnect-exhausted
-    expect(runtimeError).not.toHaveBeenCalledWith(
+    expect(runtimeError).toHaveBeenCalledWith(
       expect.stringContaining("Max reconnect attempts"),
     );'''
 

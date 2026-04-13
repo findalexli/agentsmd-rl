@@ -225,3 +225,148 @@ def test_repo_openlineage_mypy():
         cwd=f"{REPO}/providers/openlineage",
     )
     assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_facets_syntax():
+    """
+    Pass-to-pass: OpenLineage facets plugin has valid Python syntax (pass_to_pass).
+    """
+    facets_path = f"{REPO}/providers/openlineage/src/airflow/providers/openlineage/plugins/facets.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", facets_path],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Syntax error in facets.py:\n{result.stderr}"
+
+
+def test_repo_openlineage_facets_unit_tests():
+    """
+    Pass-to-pass: OpenLineage facets unit tests pass (pass_to_pass).
+    Tests the facets module that uses DagRunInfo.
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "python", "-m", "pytest", "tests/unit/openlineage/plugins/test_facets.py", "-v", "--tb=short", "-x"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Facets unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_test_file_ruff():
+    """
+    Pass-to-pass: OpenLineage utils test file passes ruff linting (pass_to_pass).
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "ruff", "check", "tests/unit/openlineage/utils/test_utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Ruff check on test file failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_import_check():
+    """
+    Pass-to-pass: OpenLineage utils module imports successfully (pass_to_pass).
+    Verifies no circular imports or missing dependencies.
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "python", "-c", "from airflow.providers.openlineage.utils.utils import DagRunInfo; print('Import successful')"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Import check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_facets_ruff_check():
+    """
+    Pass-to-pass: Repo's ruff linting passes for OpenLineage facets (pass_to_pass).
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "ruff", "check", "src/airflow/providers/openlineage/plugins/facets.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_facets_ruff_format():
+    """
+    Pass-to-pass: Repo's ruff format check passes for OpenLineage facets (pass_to_pass).
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "ruff", "format", "--check", "src/airflow/providers/openlineage/plugins/facets.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_facets_mypy():
+    """
+    Pass-to-pass: OpenLineage facets passes mypy type checking (pass_to_pass).
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "mypy", "src/airflow/providers/openlineage/plugins/facets.py", "--ignore-missing-imports"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_adapter_tests():
+    """
+    Pass-to-pass: OpenLineage adapter unit tests pass (pass_to_pass).
+    Tests the adapter module that is closely related to facets.
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "python", "-m", "pytest", "tests/unit/openlineage/plugins/test_adapter.py", "-v", "--tb=short", "-x"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Adapter unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_listener_tests():
+    """
+    Pass-to-pass: OpenLineage listener unit tests pass (pass_to_pass).
+    Tests the listener module that uses DagRunInfo.
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "python", "-m", "pytest", "tests/unit/openlineage/plugins/test_listener.py", "-v", "--tb=short", "-x"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Listener unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_openlineage_facets_import_check():
+    """
+    Pass-to-pass: OpenLineage facets module imports successfully (pass_to_pass).
+    Verifies no circular imports or missing dependencies in facets module.
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "python", "-c", "from airflow.providers.openlineage.plugins.facets import AirflowDagRunFacet; print('Import successful')"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Facets import check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

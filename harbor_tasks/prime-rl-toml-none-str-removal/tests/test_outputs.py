@@ -430,3 +430,65 @@ def test_repo_python_syntax_all():
             errors.append(f"{py_file.relative_to(REPO)}: {e}")
 
     assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
+
+
+# [repo_tests] pass_to_pass - CI: ruff check
+# CI runs: ruff check --config=pyproject.toml
+# Per .github/workflows/style.yaml and .pre-commit-config.yaml
+def test_repo_ruff_check_modified():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Install ruff if not available (similar to test.sh installing pytest)
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    modified_files = [CONFIG_PY, RL_PY, SFT_PY, INFERENCE_PY]
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check"] + modified_files + ["--config=pyproject.toml"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI: ruff format --check
+# Per .github/workflows/style.yaml and .pre-commit-config.yaml
+def test_repo_ruff_format_modified():
+    """Repo's ruff formatter check passes on modified files (pass_to_pass)."""
+    # Install ruff if not available
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    modified_files = [CONFIG_PY, RL_PY, SFT_PY, INFERENCE_PY]
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check"] + modified_files + ["--config=pyproject.toml"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI: python -m py_compile
+# Lightweight compilation check equivalent to CI syntax validation
+def test_repo_py_compile_modified():
+    """All modified Python files compile successfully (pass_to_pass)."""
+    modified_files = [CONFIG_PY, RL_PY, SFT_PY, INFERENCE_PY]
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile"] + modified_files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stderr}"

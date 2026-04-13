@@ -12,21 +12,22 @@ checks:
 - id: warning_triton_missing_mentions_triton
   type: fail_to_pass
   origin: pr_diff
-  description: pre_quantized + triton missing → warning mentions triton specifically,
+  description: pre_quantized + triton missing -> warning mentions triton specifically,
     not combined
 - id: warning_kernels_missing_mentions_kernels
   type: fail_to_pass
   origin: pr_diff
-  description: pre_quantized + kernels missing → warning mentions kernels specifically,
+  description: pre_quantized + kernels missing -> warning mentions kernels specifically,
     not combined
 - id: error_triton_missing_raises_for_triton
   type: fail_to_pass
   origin: pr_diff
-  description: Not pre_quantized + triton missing → ValueError mentions triton specifically
+  description: Not pre_quantized + triton missing -> ValueError mentions triton specifically
 - id: error_kernels_missing_raises_for_kernels
   type: fail_to_pass
   origin: pr_diff
-  description: Not pre_quantized + kernels missing → ValueError mentions kernels specifically
+  description: Not pre_quantized + kernels missing -> ValueError mentions kernels
+    specifically
 - id: validate_environment_not_stub
   type: pass_to_pass
   origin: static
@@ -52,6 +53,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Key module imports work without errors
+- id: test_repo_mxfp4_config_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's MXFP4 config unit tests pass (pass_to_pass)
+- id: test_repo_mxfp4_quantizer_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's MXFP4 quantizer unit tests pass (pass_to_pass)
+- id: test_repo_mxfp4_integration_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's MXFP4 integration unit tests pass (pass_to_pass)
+- id: test_repo_mxfp4_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified quantizer_mxfp4.py has valid Python syntax (pass_to_pass)
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes ruff format check
+- id: test_repo_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_copies CI script passes
+- id: test_repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_inits CI script passes
+- id: test_repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_doc_toc CI script passes
+- id: test_repo_import_transformers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Transformers imports work without errors
 rubric:
 - rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
     only one or two lines long, and do not need large comments, docstrings or new
@@ -68,36 +105,28 @@ rubric:
     checking and error reporting, rather than a tiny edit or isolated lint cleanup.
   category: architecture
 distractors:
-- rule: Mandatory duplicate-work checks using gh CLI
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent is in a headless evaluation environment and should focus
-    on fixing the code. Attempting to run `gh issue view` or `gh pr list` will fail
-    or waste time, as the agent cannot interact with live GitHub repositories.
+  why_distracting: The prompt does not provide an issue number or coordination evidence.
+    An agent strictly following this rule would refuse to generate the code and instead
+    return a message asking for an approval link, failing the benchmark task.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 30-37
-- rule: Fail-closed behavior for agents without coordination evidence
-  collision_type: meta_confusion
-  why_distracting: In a benchmark setting, there is no coordination evidence or issue
-    thread to link. If the agent strictly follows this rule, it will refuse to generate
-    the patch and fail the evaluation.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 57-60
-- rule: Copies and Modular Models rules for src/transformers/models/
+    path: AGENTS.md
+    lines: 49-52
+- rule: 'Copies and Modular Models: mark classes or functions with `# Copied from
+    ...` to manage code duplication.'
   collision_type: scope_ambiguity
-  why_distracting: The file being edited (`src/transformers/quantizers/quantizer_mxfp4.py`)
-    is a quantizer, not a model-specific file in `src/transformers/models/`. The agent
-    might waste time looking for `# Copied from` statements or trying to apply modular
-    model rules to the quantizer.
+  why_distracting: The prompt instructs the agent to follow the pattern used in `quantizer_higgs.py`.
+    The agent might erroneously add a `# Copied from quantizer_higgs.py` comment to
+    the new code, but this rule explicitly applies only to `src/transformers/models/`,
+    not `src/transformers/quantizers/`.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 62-67
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The rules are
-  heavily focused on repository management, PR coordination, and human-in-the-loop
-  validation, which conflict with the autonomous nature of a coding agent benchmark.
-  The agent must selectively ignore the meta-coordination rules while still respecting
-  any relevant architectural guidelines.
+    path: AGENTS.md
+    lines: 54-58
+hierarchy_analysis: The configuration is flat, with identical rules present in both
+  `AGENTS.md` and `CLAUDE.md` at the root level. The primary challenge is navigating
+  the strict meta-instructions designed to prevent autonomous PR creation without
+  human coordination.

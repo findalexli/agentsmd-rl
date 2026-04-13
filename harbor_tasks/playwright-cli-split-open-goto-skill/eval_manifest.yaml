@@ -8,11 +8,11 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: Modified TypeScript files parse without syntax errors
+  description: Modified TypeScript files have balanced brackets and valid structure
 - id: program_ts_not_stub
   type: pass_to_pass
   origin: static
-  description: program.ts install function has real logic, not stubs
+  description: program.ts install function has real logic (fs.promises, console.log calls)
 - id: test_repo_typescript_syntax_program_ts
   type: pass_to_pass
   origin: repo_tests
@@ -29,6 +29,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: ESLint passes on modified program.ts
+- id: test_repo_eslint_cli_misc
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified cli-misc.spec.ts
+- id: test_repo_tsc_html_reporter
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compiles for html-reporter package
 - id: console_output_emoji_format
   type: fail_to_pass
   origin: pr_diff

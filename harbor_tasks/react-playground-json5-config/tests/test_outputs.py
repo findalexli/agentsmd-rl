@@ -55,6 +55,60 @@ def test_repo_babel_plugin_unit_tests():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
+def test_repo_eslint_plugin_tests():
+    """Repo's eslint-plugin-react-compiler unit tests pass (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["./node_modules/.bin/jest", "--no-coverage"],
+        capture_output=True, text=True, timeout=120,
+        cwd=f"{COMPILER}/packages/eslint-plugin-react-compiler",
+    )
+    assert r.returncode == 0, f"ESLint plugin tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_make_read_only_util_tests():
+    """Repo's make-read-only-util unit tests pass (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["./node_modules/.bin/jest", "--no-coverage"],
+        capture_output=True, text=True, timeout=60,
+        cwd=f"{COMPILER}/packages/make-read-only-util",
+    )
+    assert r.returncode == 0, f"make-read-only-util tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_babel_plugin_typescript_check():
+    """Repo's babel-plugin-react-compiler TypeScript type check passes (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120,
+        cwd=BABEL_PLUGIN,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_react_compiler_runtime_typescript_check():
+    """Repo's react-compiler-runtime TypeScript type check passes (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120,
+        cwd=f"{COMPILER}/packages/react-compiler-runtime",
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_babel_plugin_build():
+    """Repo's babel-plugin-react-compiler builds successfully (pass_to_pass)."""
+    _ensure_compiler_deps()
+    r = subprocess.run(
+        ["yarn", "build"],
+        capture_output=True, text=True, timeout=120, cwd=BABEL_PLUGIN,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

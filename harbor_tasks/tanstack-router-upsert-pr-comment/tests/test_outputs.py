@@ -232,6 +232,21 @@ def test_repo_scripts_node_syntax():
             assert result.returncode == 0, f"Syntax error in {script}: {result.stderr}"
 
 
+def test_repo_all_scripts_node_syntax():
+    """All .mjs files in scripts/ directory have valid Node.js syntax (pass_to_pass)."""
+    import glob
+    script_pattern = f"{REPO}/scripts/**/*.mjs"
+    scripts = glob.glob(script_pattern, recursive=True)
+    for script in scripts:
+        result = subprocess.run(
+            ["node", "--check", script],
+            capture_output=True,
+            text=True,
+            cwd=REPO,
+        )
+        assert result.returncode == 0, f"Syntax error in {script}: {result.stderr}"
+
+
 def test_repo_prettier_formatting():
     """Repo scripts follow Prettier formatting rules (pass_to_pass)."""
     result = subprocess.run(

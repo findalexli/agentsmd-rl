@@ -37,35 +37,41 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Flow typecheck passes
+- id: test_repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's version consistency check passes
+- id: test_repo_flags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's feature flags validation passes
+- id: test_react_flight_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactFlightServer tests pass - related to modified ReactFlightReplyServer module
+- id: test_react_flight
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactFlight tests pass - related to Flight protocol
+- id: test_react_flight_reply_iterable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Iterable reply serialization works - related to decodeReply
+- id: test_react_flight_reply_bigint
+  type: pass_to_pass
+  origin: repo_tests
+  description: BigInt reply serialization works - related to decodeReply
+- id: test_react_flight_reply_date
+  type: pass_to_pass
+  origin: repo_tests
+  description: Date reply serialization works - related to decodeReply
 rubric:
-- rule: Run `yarn extract-errors` when adding new error messages or modifying error
-    codes
-  source:
-    path: .claude/skills/extract-errors/SKILL.md
-    lines: '10'
-    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
-- rule: Use `--silent` flag when running tests to limit output to only failures
-  source:
-    path: .claude/skills/test/SKILL.md
-    lines: '41'
-    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
-- rule: Use `--no-watchman` flag when running tests (common failure in sandboxing)
-  source:
-    path: .claude/skills/test/SKILL.md
-    lines: '42'
-    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
-- rule: Use comments to explain invariants and non-obvious behavior, not narrate code
-  source:
-    path: compiler/CLAUDE.md
-    lines: '252'
-    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
-- rule: 'React: All files outside `/compiler/`'
-  source:
-    path: CLAUDE.md
-    lines: 7-7
-  evidence: The gold solution modifies files in `packages/react-server/` and `packages/react-server-dom-webpack/`,
-    which are outside the `/compiler/` directory, correctly identifying them as part
-    of React core.
+- rule: 'Scope: React Server Actions are part of React core (outside /compiler/), so changes
+    should be in packages/react-server/, not in compiler/'
+  reference: 'Gold solution correctly modifies packages/react-server/src/ReactFlightReplyServer.js
+    and packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js,
+    demonstrating correct scope understanding that this is a React core issue, not
+    React Compiler.'
   category: architecture
 distractors:
 - rule: 'React Compiler: `/compiler/` directory (has its own instructions)'

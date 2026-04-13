@@ -69,13 +69,27 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo change files validation passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build passes
 rubric:
-- rule: Only add non-JSDoc comments when the code is doing something surprising or
-    non-obvious
+- rule: 'TypeScript: Strict mode, ESNext target, NodeNext modules, NodeNext resolution,
+    verbatimModuleSyntax'
   source:
-    path: AGENTS.md
-    lines: '33'
-    commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+    path: skills/supersede-pr/tsconfig.json
+  reference: '{"compilerOptions": {"allowJs": false, "module": "NodeNext", "moduleResolution":
+    "NodeNext", "noEmit": true, "strict": true, "target": "ESNext", "verbatimModuleSyntax":
+    true}, "include": ["scripts/**/*.ts"]}'
+  category: tooling
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: skills/supersede-pr/scripts/close_superseded_pr.ts
+  reference: The script uses `let` for local variables like `let parsed = parseArgs(...)`,
+    `let repo = ...`, and reserves `const` for module-level declarations. No `var`
+    declarations are used.
+  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -234,30 +248,37 @@ config_edits:
     - `scripts/close_superseded_pr.ts`'
   gold_removed: ''
 distractors:
-- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch]/...`'
-  source:
-    path: AGENTS.md
-    lines: 60-61
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to create a changeset for adding these internal
-    skills and scripts, but changesets are for published packages in `packages/`,
-    not internal repo tooling.
-  severity: medium
 - rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
     Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
     Node.js APIs'
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids Node.js APIs in favor of Web standards, but the
+    requested script is a repo tooling script that needs to execute the `gh` CLI (likely
+    via `child_process`). Applying this framework-level rule to a tooling script would
+    make it impossible to build.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 15-16
+    lines: 20-21
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch]`'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires creating a changeset for changes, but this PR
+    only adds repo-level tooling and skills, not package updates. Creating a changeset
+    would be incorrect.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 43-44
+- rule: 'Monorepo: pnpm workspace with packages in `packages/` directory'
   collision_type: architecture_boundary
-  why_distracting: The agent might try to avoid Node.js APIs (like `process.argv`,
-    `child_process`) in the `close_superseded_pr.ts` script, but the instructions
-    explicitly say 'executable natively with modern Node.js' and it's a CLI script,
-    so Node.js APIs are necessary and appropriate here.
-  severity: high
-hierarchy_analysis: The only existing config file is AGENTS.md at the root level.
-  The agent is creating new config files (agents/openai.yaml and SKILL.md files) which
-  will form a new hierarchy for the skills, but for this PR, only the root AGENTS.md
-  applies. The agent must carefully distinguish between rules that apply to the monorepo
-  packages (like changesets and runtime-agnostic philosophy) and rules that apply
-  to internal tooling (like the new Node.js script rule being added).
+  why_distracting: The rule states packages are in the `packages/` directory, which
+    might lead the agent to create the `supersede-pr` skill inside `packages/` instead
+    of the requested root `skills/` directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: 'The task is meta-referential: the agent must modify the root
+  `AGENTS.md` file to add new instructions. It must also avoid applying framework-specific
+  architecture rules (like avoiding Node.js APIs) to the repo tooling scripts it is
+  creating.'

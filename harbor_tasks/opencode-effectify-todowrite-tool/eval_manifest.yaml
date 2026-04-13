@@ -38,6 +38,40 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Session prompt-effect tests pass (covers Todo.layer integration)
+- id: repo_tool_registry
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tool registry tests pass (covers ToolRegistry.defaultLayer with Todo.defaultLayer)
+- id: repo_snapshot_tool_race
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snapshot tool race tests pass (covers Todo.layer integration in test
+    setup)
+- id: repo_processor_effect
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session processor-effect tests pass (covers Effect patterns used in
+    refactored code)
+- id: repo_effect_instance_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Effect instance-state tests pass (covers Effect patterns used in Todo.defaultLayer)
+- id: repo_effect_run_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Effect run-service tests pass (covers makeRuntime used by Todo.defaultLayer)
+- id: repo_session_compaction
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session compaction tests pass (covers Effect patterns in session management)
+- id: repo_session_retry
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session retry tests pass (covers Effect error handling patterns)
+- id: repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes on modified files (CI lint gate)
 - id: effect_gen_composition
   type: fail_to_pass
   origin: agent_config
@@ -55,83 +89,81 @@ checks:
     lines: '13'
     commit: ae7e2eb3fb32b12e0c45681950540df7379e021a
 rubric:
-- rule: Keep things in one function unless composable or reusable
+- rule: Use Effect.gen(function* () { ... }) for composition in effectified tools
   source:
-    path: AGENTS.md
-    lines: '11'
-    commit: ae7e2eb3fb32b12e0c45681950540df7379e021a
-- rule: Prefer single word variable names where possible
+    path: packages/opencode/src/tool/todo.ts
+    lines: 35-45
+  reference: |
+    Effect.gen(function* () {
+      const todo = yield* Todo.Service
+- rule: Yield Effect services instead of calling static namespace functions
   source:
-    path: AGENTS.md
-    lines: '14'
-    commit: ae7e2eb3fb32b12e0c45681950540df7379e021a
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+    path: packages/opencode/src/tool/todo.ts
+    lines: 35-45
+  reference: |
+    const todo = yield* Todo.Service
+    ...
+    await todo.update({...})
+- rule: Avoid mocks in tests by providing actual service layers
   source:
-    path: AGENTS.md
-    lines: '16'
-    commit: ae7e2eb3fb32b12e0c45681950540df7379e021a
-- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+    path: packages/opencode/test/session/prompt-effect.test.ts
+    lines: 160-170
+  reference: |
+    const todo = Todo.layer.pipe(Layer.provideMerge(deps))
+- rule: Export defaultLayer for services to enable dependency injection
   source:
-    path: AGENTS.md
-    lines: '57'
-    commit: ae7e2eb3fb32b12e0c45681950540df7379e021a
-- rule: Use `Effect.gen(function* () { ... })` for composition.
+    path: packages/opencode/src/session/todo.ts
+    lines: 80-90
+  reference: |
+    export const defaultLayer = layer.pipe(Layer.provide(Bus.layer))
+- rule: Provide service dependencies in registry layer composition
   source:
-    path: packages/opencode/AGENTS.md
-    lines: 18-18
-  evidence: The `TodoWriteTool` is refactored to use `Tool.defineEffect` with `Effect.gen(function*
-    () { ... })` to yield the `Todo.Service`.
-  category: architecture
-- rule: In effectified services, prefer yielding existing Effect services over dropping
-    down to ad hoc platform APIs.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 38-38
-  evidence: The tool yields `Todo.Service` from the Effect context instead of calling
-    the static `Todo.update` function directly.
-  category: architecture
-- rule: Avoid mocks as much as possible
-  source:
-    path: AGENTS.md
-    lines: 86-86
-  evidence: The test files (`prompt-effect.test.ts`, `snapshot-tool-race.test.ts`)
-    are updated to provide the actual `Todo.defaultLayer` rather than mocking the
-    newly required `Todo.Service`.
-  category: testing
+    path: packages/opencode/src/tool/registry.ts
+    lines: 220-235
+  reference: |
+    export const defaultLayer = Layer.unwrap(
+      Effect.sync(() =>
+        layer.pipe(
+          Layer.provide(Config.defaultLayer),
+          Layer.provide(Plugin.defaultLayer),
+          Layer.provide(Question.defaultLayer),
+          Layer.provide(Todo.defaultLayer),
+        ),
+      ),
+    )
 distractors:
-- rule: Use `Effect.fn("Domain.method")` for named/traced effects
-  collision_type: would_cause_bug
-  why_distracting: The agent might try to wrap the tool's `execute` function in `Effect.fn`.
-    However, `Tool.defineEffect` expects an Effect that resolves to a standard `Tool.Info`
-    object where `execute` is a Promise-returning function, not an Effect. Doing so
-    would cause type errors and violate the tool interface.
-  severity: high
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 19-19
 - rule: Use `makeRuntime` (from `src/effect/run-service.ts`) for all services.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to use `makeRuntime` inside the tool definition
-    to resolve `Todo.Service` and call its methods, rather than yielding it and letting
-    the `ToolRegistry` provide the dependency. This would bypass the dependency injection
-    system.
-  severity: high
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 28-28
-- rule: Avoid using the `any` type
-  collision_type: scope_ambiguity
-  why_distracting: The `ToolRegistry` layer definition contains `any` in the `build`
-    helper (`Effect.Effect<T, never, any>`). An agent might try to fix this while
-    updating the layer requirements, which would expand the PR scope unnecessarily
-    and potentially break complex Effect type inference.
+  why_distracting: The agent is effectifying a tool and might try to apply `makeRuntime`
+    to `TodoWriteTool` because it acts somewhat like a service. However, tools are
+    executed within the existing runtime provided by the session/registry and do not
+    need their own runtime.
   severity: medium
   source:
+    path: packages/opencode/AGENTS.md
+    lines: 24-25
+- rule: Prefer single word variable names where possible
+  collision_type: rule_conflict
+  why_distracting: The agent might try to rename `defaultLayer` to a single word like
+    `layer` (which would shadow the existing `layer` variable) or rename `TodoWriteTool`
+    to `Todo`, which would break existing imports and conventions.
+  severity: low
+  source:
     path: AGENTS.md
-    lines: 13-13
-hierarchy_analysis: The hierarchy applies rules from `AGENTS.md` globally, and `packages/opencode/AGENTS.md`
-  specifically for Effect rules. The Effect rules in the package-level config correctly
-  guide the use of `Effect.gen` and yielding services, which overrides generic TypeScript
-  patterns. The global 'Avoid mocks' rule correctly drives the test updates to provide
-  the real `Todo.defaultLayer` rather than mocking the newly injected dependency.
+    lines: 20-21
+- rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory
+    or per-project state that needs per-instance cleanup.
+  collision_type: scope_ambiguity
+  why_distracting: Because `ToolRegistry` uses `InstanceState`, the agent might mistakenly
+    try to add `Todo.Service` into the `InstanceState.make` closure instead of the
+    `Layer.effect` requirements, or try to wrap `Todo.Service` in `InstanceState`.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 26-27
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` with general TypeScript/style
+  rules, a package-level `AGENTS.md` with Effect-specific architectural rules, and
+  a test-level `AGENTS.md` for fixtures. The agent must synthesize the Effect rules
+  (yielding services) with the existing instructions to effectify the tool, while
+  ignoring general rules that don't apply to this specific refactoring (like `makeRuntime`
+  for tools).

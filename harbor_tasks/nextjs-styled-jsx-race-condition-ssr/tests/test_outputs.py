@@ -1,252 +1,371 @@
-"""
-Task: nextjs-styled-jsx-race-condition-ssr
-Repo: next.js @ 98330e3faeff95a51d2c185fc98f1f40bd86726f
-PR:   92459
+"""Behavioral tests for taskforge config module.
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
+These tests execute the actual code via subprocess to verify behavior,
+not just string matching in files.
 """
 
-import re
 import subprocess
+import json
+import sys
 from pathlib import Path
 
-REPO = "/workspace/next.js"
-RENDER_FILE = f"{REPO}/packages/next/src/server/render.tsx"
+# Docker-internal path where the repo lives
+REPO = "/workspace/taskforge"
 
 
-def _read_render_html_impl():
-    """Read the renderToHTMLImpl function body from render.tsx."""
-    src = Path(RENDER_FILE).read_text()
-    # Find the function and extract a generous window covering the
-    # styled-jsx + content rendering logic (~300 lines from function start)
-    start = src.find("export async function renderToHTMLImpl")
-    assert start != -1, "renderToHTMLImpl function not found in render.tsx"
-    return src[start:]
-
-
-def _run_in_repo(cmd, timeout=180):
-    """Run a command in the repo directory with setup."""
-    full_cmd = f"cd {REPO} && {cmd}"
-    r = subprocess.run(
-        ["bash", "-c", full_cmd],
-        capture_output=True, text=True, timeout=timeout,
-    )
-    return r
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_typescript_syntax():
-    """render.tsx must be valid TypeScript (no syntax errors)."""
-    r = subprocess.run(
-        ["node", "-e", f"""
-const fs = require('fs');
-const src = fs.readFileSync('{RENDER_FILE}', 'utf8');
-// File must exist, be non-empty, and contain the target function
-if (!src.includes('export async function renderToHTMLImpl')) {{
-    console.error('renderToHTMLImpl function not found');
-    process.exit(1);
-}}
-// The function must still contain core rendering constructs
-if (!src.includes('styledJsxInsertedHTML') || !src.includes('contentHTML')) {{
-    console.error('Core rendering constructs missing');
-    process.exit(1);
-}}
-console.log('Syntax check passed');
-"""],
-        capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr}"
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_no_concurrent_style_collection():
-    """styledJsxInsertedHTML must NOT be called inside Promise.all (race condition).
-
-    The base commit wraps styledJsxInsertedHTML() and page rendering in
-    Promise.all, causing a race where styles are flushed before the page
-    finishes rendering. The fix must remove this concurrent execution.
-    """
-    r = subprocess.run(
-        ["node", "-e", f"""
-const fs = require('fs');
-const src = fs.readFileSync('{RENDER_FILE}', 'utf8');
-const funcStart = src.indexOf('export async function renderToHTMLImpl');
-if (funcStart === -1) {{ process.exit(2); }}
-const funcSrc = src.slice(funcStart);
-
-// Check for Promise.all wrapping styledJsxInsertedHTML — the bug pattern.
-// Look for Promise.all([ followed by styledJsxInsertedHTML within 800 chars.
-const pattern = /Promise[.]all[(]\\s*\\[[^]]{{0,800}}styledJsxInsertedHTML/;
-if (pattern.test(funcSrc)) {{
-    console.error('FAIL: styledJsxInsertedHTML is inside Promise.all');
-    process.exit(1);
-}}
-console.log('PASS');
-"""],
-        capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, (
-        "styledJsxInsertedHTML is called inside Promise.all, creating a race "
-        "condition where styles may be flushed before rendering completes.\n"
-        f"{r.stderr}"
+def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code in the repo directory."""
+    return subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
     )
 
 
-# [pr_diff] fail_to_pass
-def test_styles_collected_after_content_rendering():
-    """renderToString(styledJsxInsertedHTML()) must appear AFTER page content
-    has been fully rendered (after streamToString/loadDocumentInitialProps).
+# -----------------------------------------------------------------------------
+# Fail-to-pass tests: These test the bug fix (renamed file handling)
+# -----------------------------------------------------------------------------
 
-    On the base commit, styledJsxInsertedHTML is invoked concurrently with
-    rendering inside Promise.all, so it can execute before the registry is
-    populated. The fix must ensure sequential execution: render first, then
-    collect styles.
-    """
-    func_src = _read_render_html_impl()
+def test_renamed_config_file_extracted():
+    """Renamed config files are correctly identified using 'rename to' directive."""
+    r = _run_python("""
+import json
+from taskforge.config import extract_config_hunks
 
-    # Find the last occurrence of content assignment (rendering completion)
-    # Both branches assign to content: docProps.html or streamToString(stream)
-    stream_to_string_pos = func_src.rfind("streamToString(stream)")
-    load_doc_pos = func_src.rfind("loadDocumentInitialProps(renderShell)")
-    content_render_end = max(stream_to_string_pos, load_doc_pos)
-    assert content_render_end > 0, "Could not find content rendering code"
+# BUG CASE: File renamed FROM non-config TO config file
+# The diff --git line has b/random.txt (not a config file)
+# But 'rename to' says CLAUDE.md (IS a config file)
+# Before fix: would check "random.txt" against CONFIG_RE -> no match
+# After fix: checks "CLAUDE.md" against CONFIG_RE -> match found!
+diff_text = '''diff --git a/random.txt b/random.txt
+rename from random.txt
+rename to CLAUDE.md
+--- /dev/null
++++ b/CLAUDE.md
+@@ -0,0 +1,2 @@
++# Agent Instructions
++# Always use type hints
+'''
 
-    # Find the standalone styledJsxInsertedHTML call (NOT inside Promise.all)
-    # Look for the pattern where rawStyledJsxInsertedHTML is assigned from
-    # renderToString(styledJsxInsertedHTML())
-    style_collect_match = re.search(
-        r'(?:const|let|var)\s+rawStyledJsxInsertedHTML\s*=\s*(?:await\s+)?renderToString\s*\(\s*styledJsxInsertedHTML\s*\(',
-        func_src
-    )
-
-    assert style_collect_match is not None, (
-        "Could not find standalone rawStyledJsxInsertedHTML = await "
-        "renderToString(styledJsxInsertedHTML()) assignment. "
-        "Style collection must be a separate sequential statement, not "
-        "inside Promise.all."
-    )
-
-    assert style_collect_match.start() > content_render_end, (
-        "rawStyledJsxInsertedHTML assignment appears BEFORE content rendering "
-        "completes. Styles must be collected AFTER the page is fully rendered "
-        "to avoid the race condition."
-    )
+result = extract_config_hunks(diff_text)
+print(json.dumps({"keys": list(result.keys()), "has_claude": "CLAUDE.md" in result, "count": len(result)}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["has_claude"], "CLAUDE.md should be extracted from renamed file diff even when b/ path is different"
+    assert data["count"] == 1, "Should have exactly one config hunk"
 
 
-# [pr_diff] fail_to_pass
-def test_flush_before_style_read():
-    """jsxStyleRegistry.flush() must occur BEFORE the standalone
-    styledJsxInsertedHTML() call.
+def test_renamed_non_config_file_ignored():
+    """Renamed non-config files are correctly ignored."""
+    r = _run_python("""
+import json
+from taskforge.config import extract_config_hunks
 
-    The fix moves the style registry read to after the flush, ensuring the
-    Document component has already captured all styles via jsxStyleRegistry.styles().
-    On the base commit, styledJsxInsertedHTML runs inside Promise.all which
-    executes before flush().
-    """
-    func_src = _read_render_html_impl()
+# A rename of a regular code file should not appear in config hunks
+diff_text = '''diff --git a/main.py b/src/main.py
+rename from main.py
+rename to src/main.py
+--- a/main.py
++++ b/src/main.py
+@@ -1,3 +1,4 @@
+ def main():
+     print("hello")
++    print("world")
+'''
 
-    # Find jsxStyleRegistry.flush() position
-    flush_pos = func_src.find("jsxStyleRegistry.flush()")
-    assert flush_pos > 0, "jsxStyleRegistry.flush() not found"
-
-    # Find the standalone rawStyledJsxInsertedHTML assignment
-    # (not the one inside Promise.all on the base commit)
-    style_read_match = re.search(
-        r'(?:const|let|var)\s+rawStyledJsxInsertedHTML\s*=',
-        func_src
-    )
-    assert style_read_match is not None, (
-        "rawStyledJsxInsertedHTML variable assignment not found as a "
-        "standalone statement"
-    )
-
-    # On the base commit, rawStyledJsxInsertedHTML is destructured from
-    # Promise.all BEFORE flush. On the fix, it's assigned AFTER flush.
-    assert style_read_match.start() > flush_pos, (
-        "rawStyledJsxInsertedHTML is assigned BEFORE jsxStyleRegistry.flush(). "
-        "The style registry must be flushed first so the Document component "
-        "captures styles, then styledJsxInsertedHTML() reads the (now empty) "
-        "registry as a safety measure."
-    )
+result = extract_config_hunks(diff_text)
+print(json.dumps({"keys": list(result.keys()), "count": len(result)}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["count"] == 0, "Non-config files should not be in config hunks"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD verification gates
-# These tests verify the repo's own tests/typechecks pass on base AND after fix
-# ---------------------------------------------------------------------------
+def test_regular_config_file_still_works():
+    """Non-renamed config files continue to work correctly."""
+    r = _run_python("""
+import json
+from taskforge.config import extract_config_hunks
 
-# [repo_tests] pass_to_pass — Prettier formatting check on modified file
-def test_repo_prettier_render():
-    """Repo's Prettier check on render.tsx passes (pass_to_pass)."""
-    r = _run_in_repo(
-        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
-        "npx prettier --check packages/next/src/server/render.tsx",
-        timeout=60
-    )
-    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+# Regular modification to CLAUDE.md (not a rename)
+diff_text = '''diff --git a/CLAUDE.md b/CLAUDE.md
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -1,2 +1,3 @@
+ # Agent Instructions
+ # Always use type hints
++# New rule: use dataclasses
+'''
 
-
-# [repo_tests] pass_to_pass — ESLint check on modified file
-def test_repo_eslint_render():
-    """Repo's ESLint check on render.tsx passes (pass_to_pass)."""
-    r = _run_in_repo(
-        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
-        "pnpm lint-eslint packages/next/src/server/render.tsx",
-        timeout=60
-    )
-    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+result = extract_config_hunks(diff_text)
+print(json.dumps({"keys": list(result.keys()), "has_claude": "CLAUDE.md" in result}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["has_claude"], "Regular CLAUDE.md modifications should still work"
 
 
-# [repo_tests] pass_to_pass — ast-grep lint check (repo-wide patterns)
-def test_repo_ast_grep():
-    """Repo's ast-grep lint patterns pass (pass_to_pass)."""
-    r = _run_in_repo(
-        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
-        "pnpm lint-ast-grep",
-        timeout=60
-    )
-    assert r.returncode == 0, f"ast-grep lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+def test_extract_added_lines_from_renamed_hunk():
+    """Added lines can be extracted from a renamed file hunk."""
+    r = _run_python("""
+import json
+from taskforge.config import extract_config_hunks, extract_added_lines
+
+diff_text = '''diff --git a/old.md b/AGENTS.md
+rename from old.md
+rename to AGENTS.md
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,3 @@
++# Agent Rules
++## Testing
++Always write behavioral tests
+'''
+
+hunks = extract_config_hunks(diff_text)
+if "AGENTS.md" in hunks:
+    added = extract_added_lines(hunks["AGENTS.md"])
+    print(json.dumps({"found": True, "added_lines": added}))
+else:
+    print(json.dumps({"found": False, "keys": list(hunks.keys())}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["found"], "AGENTS.md should be found in renamed diff"
+    assert "Always write behavioral tests" in data["added_lines"], "Added content should be extractable"
 
 
-# [repo_tests] pass_to_pass — language linting (alex)
-def test_repo_language_lint():
-    """Repo's inclusive language linting (alex) passes (pass_to_pass)."""
-    r = _run_in_repo(
-        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
-        "pnpm lint-language",
-        timeout=120
-    )
-    assert r.returncode == 0, f"Language lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+def test_complex_rename_scenario():
+    """Multiple files with mix of renames and regular changes."""
+    r = _run_python("""
+import json
+from taskforge.config import extract_config_hunks
+
+# Complex diff with both renamed and regular config files
+diff_text = '''diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1 +1,2 @@
+ # Project
++## New section
+
+diff --git a/old_rules.md b/.claude/CLAUDE.md
+rename from old_rules.md
+rename to .claude/CLAUDE.md
+--- /dev/null
++++ b/.claude/CLAUDE.md
+@@ -0,0 +1,2 @@
++# New Rules
++# For agent
+'''
+
+result = extract_config_hunks(diff_text)
+keys = list(result.keys())
+print(json.dumps({
+    "keys": keys,
+    "count": len(result),
+    "has_readme": "README.md" in result,
+    "has_claude": ".claude/CLAUDE.md" in result
+}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["count"] == 2, "Should have both README.md and .claude/CLAUDE.md"
+    assert data["has_readme"], "Regular README.md should be extracted"
+    assert data["has_claude"], "Renamed .claude/CLAUDE.md should be extracted"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Pass-to-pass tests: These verify basic functionality still works
+# -----------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_content_html_composition():
-    """contentHTML must still be composed from rawStyledJsxInsertedHTML + content."""
-    func_src = _read_render_html_impl()
-    assert re.search(
-        r'const\s+contentHTML\s*=\s*rawStyledJsxInsertedHTML\s*\+\s*content',
-        func_src
-    ), "contentHTML = rawStyledJsxInsertedHTML + content composition not found"
+def test_is_config_file_recognizes_patterns():
+    """is_config_file correctly identifies agent instruction files."""
+    r = _run_python("""
+import json
+from taskforge.config import is_config_file
+
+test_cases = [
+    ("CLAUDE.md", True),
+    (".claude/CLAUDE.md", True),
+    ("AGENTS.md", True),
+    ("SKILL.md", True),
+    (".cursorrules", True),
+    ("README.md", True),
+    ("main.py", False),
+    ("src/utils.py", False),
+]
+
+results = []
+for path, expected in test_cases:
+    result = is_config_file(path)
+    status = "PASS" if result == expected else "FAIL"
+    results.append({"path": path, "expected": expected, "got": result, "status": status})
+
+all_pass = all(r["status"] == "PASS" for r in results)
+print(json.dumps({"all_pass": all_pass, "results": results}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["all_pass"], f"Some is_config_file cases failed: {data['results']}"
 
 
-# [static] pass_to_pass
-def test_null_content_handling():
-    """Null content check must still guard against null render results."""
-    func_src = _read_render_html_impl()
-    assert re.search(
-        r'if\s*\(\s*content\s*===\s*null\s*\)',
-        func_src
-    ), "Null content guard (if (content === null)) not found"
+def test_is_agent_instruction_file_tier1():
+    """is_agent_instruction_file correctly identifies Tier 1 files."""
+    r = _run_python("""
+import json
+from taskforge.config import is_agent_instruction_file
+
+test_cases = [
+    ("CLAUDE.md", True),
+    (".claude/CLAUDE.md", True),
+    (".claude/rules/python.md", True),
+    ("AGENTS.md", True),
+    ("SKILL.md", True),
+    (".cursorrules", True),
+    ("README.md", False),  # Tier 2, not Tier 1
+    ("CHANGELOG.md", False),
+]
+
+results = []
+for path, expected in test_cases:
+    result = is_agent_instruction_file(path)
+    status = "PASS" if result == expected else "FAIL"
+    results.append({"path": path, "expected": expected, "got": result, "status": status})
+
+all_pass = all(r["status"] == "PASS" for r in results)
+print(json.dumps({"all_pass": all_pass, "results": results}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["all_pass"], f"Some Tier 1 cases failed: {data['results']}"
+
+
+def test_is_code_file_filters_correctly():
+    """is_code_file correctly distinguishes code from non-code."""
+    r = _run_python("""
+import json
+from taskforge.config import is_code_file
+
+test_cases = [
+    ("src/main.py", True),
+    ("lib/utils.ts", True),
+    ("app.go", True),
+    ("CLAUDE.md", False),
+    ("README.md", False),
+    (".github/workflows/ci.yml", False),
+    ("docs/guide.md", False),
+]
+
+results = []
+for path, expected in test_cases:
+    result = is_code_file(path)
+    status = "PASS" if result == expected else "FAIL"
+    results.append({"path": path, "expected": expected, "got": result, "status": status})
+
+all_pass = all(r["status"] == "PASS" for r in results)
+print(json.dumps({"all_pass": all_pass, "results": results}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["all_pass"], f"Some is_code_file cases failed: {data['results']}"
+
+
+def test_extract_added_lines_basic():
+    """extract_added_lines correctly extracts added content."""
+    r = _run_python("""
+import json
+from taskforge.config import extract_added_lines
+
+hunk = '''diff --git a/test.md b/test.md
+--- a/test.md
++++ b/test.md
+@@ -1,2 +1,4 @@
+ line 1
+ line 2
++added line 3
++added line 4
+'''
+
+result = extract_added_lines(hunk)
+expected_contains = "added line 3"
+print(json.dumps({
+    "result": result,
+    "has_expected": expected_contains in result,
+    "no_plus_plus": "+++" not in result
+}))
+""")
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["has_expected"], "Added lines should be extracted"
+    assert data["no_plus_plus"], "+++ header lines should not be in result"
+
+
+# -----------------------------------------------------------------------------
+# Module imports correctly
+# -----------------------------------------------------------------------------
+
+def test_config_module_imports():
+    """Config module can be imported without errors."""
+    r = _run_python("""
+import json
+import taskforge.config as cfg
+
+# Verify all expected exports exist
+exports = [
+    "is_config_file",
+    "is_agent_instruction_file",
+    "is_doc_file",
+    "is_code_file",
+    "extract_config_hunks",
+    "extract_added_lines",
+    "gh_json",
+    "AGENT_INSTRUCTION_PATTERNS",
+    "CONFIG_RE",
+]
+
+results = {}
+for name in exports:
+    results[name] = hasattr(cfg, name)
+
+all_present = all(results.values())
+print(json.dumps({"all_present": all_present, "exports": results}))
+""")
+    assert r.returncode == 0, f"Import test failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["all_present"], f"Missing exports: {[k for k,v in data['exports'].items() if not v]}"
+
+
+if __name__ == "__main__":
+    # Run all tests when executed directly
+    import traceback
+    tests = [
+        test_renamed_config_file_extracted,
+        test_renamed_non_config_file_ignored,
+        test_regular_config_file_still_works,
+        test_extract_added_lines_from_renamed_hunk,
+        test_complex_rename_scenario,
+        test_is_config_file_recognizes_patterns,
+        test_is_agent_instruction_file_tier1,
+        test_is_code_file_filters_correctly,
+        test_extract_added_lines_basic,
+        test_config_module_imports,
+    ]
+
+    passed = 0
+    failed = 0
+    for test in tests:
+        try:
+            test()
+            print(f"PASS: {test.__name__}")
+            passed += 1
+        except AssertionError as e:
+            print(f"FAIL: {test.__name__}: {e}")
+            failed += 1
+        except Exception as e:
+            print(f"ERROR: {test.__name__}: {e}")
+            traceback.print_exc()
+            failed += 1
+
+    print(f"\n{passed} passed, {failed} failed")
+    sys.exit(0 if failed == 0 else 1)

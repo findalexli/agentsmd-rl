@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+from pathlib import Path
 import os
 import posixpath
 import subprocess
@@ -207,6 +208,7 @@ def test_repo_is_in_or_equal_full():
     """
     code = """
 import ast
+from pathlib import Path
 import os
 from pathlib import Path
 
@@ -351,3 +353,125 @@ def test_not_stub():
             assert raises, "safe_join has no raise statements"
             return
     pytest.fail("safe_join function not found")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_abspath():
+    """abspath function works correctly for path resolution (repo CI).
+
+    Tests the abspath function which is used by safe_join for path normalization.
+    Based on test_abspath_no_symlink from test/test_utils.py.
+    """
+    code = """
+import ast
+from pathlib import Path
+import os
+from pathlib import Path
+
+# Read the utils source
+utils_src = Path(\"gradio/utils.py\").read_text()
+utils_tree = ast.parse(utils_src)
+
+# Extract abspath
+abspath_src = None
+for node in ast.walk(utils_tree):
+    if isinstance(node, ast.FunctionDef) and node.name == \"abspath\":
+        abspath_src = ast.get_source_segment(utils_src, node)
+        break
+
+assert abspath_src, \"abspath function not found\"
+
+# Create namespace and execute
+namespace = {\"os\": os, \"Path\": Path}
+exec(compile(ast.parse(abspath_src), \"<abspath>\", \"exec\"), namespace)
+abspath = namespace[\"abspath\"]
+
+# Test: resolved path should not contain .. components
+resolved_path = str(abspath(\"../gradio/gradio/test_data/lion.jpg\"))
+assert \"..\" not in resolved_path, f\"Resolved path still contains ..: {resolved_path}\"
+
+print(\"test_repo_abspath: PASSED\")
+"""
+    r = subprocess.run(
+        ["python", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\\n{r.stderr[-500:]}"
+    assert "PASSED" in r.stdout, f"Expected PASSED in output:\\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_safe_join_edge_cases():
+    """safe_join handles various edge cases correctly (repo CI).
+
+    Tests edge cases for safe_join including empty paths, dots, and special characters.
+    """
+    code = """
+import ast
+from pathlib import Path
+import os
+import posixpath
+from unittest.mock import patch
+
+class InvalidPathError(ValueError):
+    pass
+
+# Read the utils source
+utils_src = Path(\"gradio/utils.py\").read_text()
+utils_tree = ast.parse(utils_src)
+
+# Extract safe_join
+safe_join_src = None
+for node in ast.walk(utils_tree):
+    if isinstance(node, ast.FunctionDef) and node.name == \"safe_join\":
+        safe_join_src = ast.get_source_segment(utils_src, node)
+        break
+
+assert safe_join_src, \"safe_join function not found\"
+
+# Execute with proper namespace
+namespace = {
+    \"os\": os,
+    \"posixpath\": posixpath,
+    \"InvalidPathError\": InvalidPathError,
+    \"DeveloperPath\": str,
+    \"UserProvidedPath\": str,
+}
+exec(compile(ast.parse(safe_join_src), \"<safe_join>\", \"exec\"), namespace)
+safe_join = namespace[\"safe_join\"]
+
+# Test cases
+# 1. Normal relative paths should work
+result = safe_join(\"/tmp/uploads\", \"file.txt\")
+assert \"file.txt\" in result, f\"Normal path failed: {result}\"
+
+# 2. Subdirectory paths should work
+result = safe_join(\"/tmp/uploads\", \"subdir/file.txt\")
+assert \"subdir\" in result and \"file.txt\" in result, f\"Subdir path failed: {result}\"
+
+# 3. Dot in filename should work (not a traversal)
+result = safe_join(\"/tmp/uploads\", \"file.name.txt\")
+assert \"file.name.txt\" in result, f\"Dot filename failed: {result}\"
+
+# 4. Traversal with .. should be rejected
+try:
+    safe_join(\"/tmp/uploads\", \"../etc/passwd\")
+    assert False, \"Traversal path should be rejected\"
+except InvalidPathError:
+    pass
+
+# 5. Simple .. should be rejected
+try:
+    safe_join(\"/tmp/uploads\", \"..\")
+    assert False, \"Simple .. should be rejected\"
+except InvalidPathError:
+    pass
+
+print(\"test_repo_safe_join_edge_cases: PASSED\")
+"""
+    r = subprocess.run(
+        ["python", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test failed:\\n{r.stderr[-500:]}"
+    assert "PASSED" in r.stdout, f"Expected PASSED in output:\\n{r.stdout}"

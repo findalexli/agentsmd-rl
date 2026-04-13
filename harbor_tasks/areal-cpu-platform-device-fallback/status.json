@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T01:51:09.444485",
-  "total_time": 1672.75,
-  "sandbox_id": "iu58qa209t4tde7plgqf8",
+  "validated_at": "2026-04-11T18:13:56.363909",
+  "total_time": 2466.03,
+  "sandbox_id": "iq0269uke16jllfk45wse",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 237.84,
+      "time": 643.86,
       "notes": ""
     },
     "improve": {
@@ -30,10 +29,10 @@
       "gold_reward": 1.0,
       "icr": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed: 1) Docker build successful, 2) NOP test reward=0 (correctly fails on buggy code), 3) Gold test reward=1 (24 tests pass), 4) Rubric judge ICR=1.0. Fixed: Removed incorrect rubric rules checking for config file modifications instead of code patterns.",
+      "notes": "All 4 validation checks passed: 1) Docker build successful, 2) NOP test reward=0 (tests correctly fail on buggy base code), 3) Gold test reward=1 (24 tests pass after fix), 4) Rubric judge ICR=1.0. Fixed: Removed incorrect rubric rule that was checking for AGENTS.md modifications instead of code patterns - the code pattern validation is already handled by pytest tests.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 284.22
+      "time": 123.58
     },
     "rubric_judge": {
       "status": "pass",
@@ -41,17 +40,19 @@
       "backend": "fireworks",
       "time": 0.15,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 28.49,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 74.27,
-      "at": "2026-04-09T14:59:05.739142"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -82,6 +83,14 @@
       "backend": "fireworks",
       "time": 1672.75,
       "at": "2026-04-10T01:51:09.444485"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2466.03,
+      "at": "2026-04-11T18:13:56.363909"
     }
   ]
 }

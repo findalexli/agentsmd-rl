@@ -3,25 +3,24 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T15:31:31.078538",
-  "total_time": 1339.79,
-  "sandbox_id": "ilxoiquty4mosbxzhusil",
+  "validated_at": "2026-04-12T06:07:18.343665",
+  "total_time": 1037.23,
+  "sandbox_id": "iak1rpep1dsregu83cccx",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 124.51,
-      "notes": "Added 2 repo CI/CD pass_to_pass gates:\n\n1. test_repo_ruff_check - Runs ruff check on video_processing_utils.py\n2. test_repo_ruff_format - Runs ruff format --check on video_processing_utils.py\n\nCI commands discovered from repo:\n- Repo uses ruff (configured in pyproject.toml with line-length 119)\n- make check-repo runs: ruff check, ruff format --check, plus many custom Python scripts\n- Custom scripts (check_copies.py, check_modular_conversion.py, etc.) require specific repo state\n\nSelected ruff commands because:\n- They pass on both base commit (with the bug) and after the fix\n- They dont require network access\n- They complete in <60 seconds\n- They are standard CI checks used in the repo\n\nOther CI commands not added:\n- Full make check-repo - too many custom checks that may fail on minimal install\n- pytest tests - many require torch/PIL/extras not installed in base image\n- Modular conversion checks - requires make fix-repo first"
+      "notes": "Verified 4 repo CI/CD pass_to_pass gates in test_outputs.py:\n\n1. test_repo_ruff_check - Runs 'ruff check' on video_processing_utils.py\n2. test_repo_ruff_format - Runs 'ruff format --check' on video_processing_utils.py\n3. test_repo_modeling_structure - Runs 'python utils/check_modeling_structure.py'\n4. test_repo_inits - Runs 'python utils/check_inits.py'\n\nAll 4 repo_tests commands verified working in Docker:\n- ruff check/format: uses pyproject.toml config (line-length 119), passes on base commit\n- check_modeling_structure.py: validates modeling structure, passes on base commit\n- check_inits.py: validates __init__ structure, passes on base commit\n\nCI commands tested but not added (don't work in minimal env):\n- check_types.py: requires 'ty' type checker (not installed)\n- check_docstrings.py: fails due to import error (the bug we're fixing)\n- check_modular_conversion.py: requires libcst module\n- pytest tests: require torch/PIL/extras not in base image\n\nTotal pass_to_pass tests: 9 (4 repo_tests + 3 static + 2 pr_diff)"
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 344.01,
+      "time": 199.36,
       "notes": ""
     },
     "improve": {
@@ -39,7 +38,7 @@
       "notes": "All 4 validation checks passed: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0). Removed rubric rules checking agent doc modifications (irrelevant for code fix).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 252.69
+      "time": 115.04
     },
     "rubric_judge": {
       "status": "pass",
@@ -47,25 +46,19 @@
       "backend": "fireworks",
       "time": 0.15,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 24.7,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15577.13,
-      "at": "2026-04-09T13:31:29.475827"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15577.29,
-      "at": "2026-04-09T13:31:29.594059"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -89,6 +82,22 @@
       "backend": "fireworks",
       "time": 1339.79,
       "at": "2026-04-10T15:31:31.078538"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1164.41,
+      "at": "2026-04-12T04:45:38.771493"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1037.23,
+      "at": "2026-04-12T06:07:18.343665"
     }
   ]
 }

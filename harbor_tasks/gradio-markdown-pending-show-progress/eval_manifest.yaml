@@ -50,40 +50,32 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Markdown component unit tests pass
+distractors:
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is entirely in the frontend Svelte code (`js/markdown/Index.svelte`).
+    Running backend tests is irrelevant to this change and wastes time/compute.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 29-30
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing a bug in the codebase, not creating
+    a PR or modifying the PR template file. Attempting to edit `.github/PULL_REQUEST_TEMPLATE.md`
+    would be out of scope.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 17-20
+hierarchy_analysis: The repository uses a single, flat configuration file (`AGENTS.md`)
+  at the root level. No complex hierarchy traversal or overriding is required.
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: a2bd6e1fb5d19e59ae694ab80c2874288e9982b8
-distractors:
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: architecture_boundary
-  why_distracting: The bug is entirely in the frontend Svelte code (`js/markdown/Index.svelte`).
-    Running backend tests is wasted effort and crosses an architecture boundary.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: '26'
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The agent is tasked with fixing a bug, not interacting with GitHub
-    issues. Trying to create an issue using CLI tools would be a waste of time and
-    out of scope for the coding task.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: '16'
-- rule: 'Format your code before pushing. Frontend: `bash scripts/format_frontend.sh`'
-  collision_type: scope_ambiguity
-  why_distracting: Running a repo-wide formatting script might modify other files
-    or lines not related to the bug, polluting the PR with unrelated changes.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 22-24
-hierarchy_analysis: There is only one config file (`AGENTS.md`) at the root level,
-  so no hierarchy conflicts exist. The rules are general repository guidelines, some
-  of which (like PR creation and issue management) are not applicable to an isolated
-  coding task.
+    lines: 38-41
+  evidence: The gold solution uses the same optional chaining (`?.`) and object access
+    (`gradio.shared.loading_status`) as the existing condition, matching the surrounding
+    code style.
+  category: style

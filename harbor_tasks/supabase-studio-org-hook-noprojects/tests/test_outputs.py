@@ -117,24 +117,32 @@ def test_imports_correct():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD regression tests
+# Pass-to-pass (repo_tests) — CI/CD regression tests (MUST use subprocess.run)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_pnpm_install():
-    """Repo's pnpm install works (pass_to_pass - basic sanity)."""
+def test_repo_typescript_parse():
+    """TypeScript syntax check on the modified file passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
+        [
+            "node",
+            "-e",
+            f"const ts = require('typescript'); const fs = require('fs'); "
+            f"const content = fs.readFileSync('{FILE_PATH}', 'utf8'); "
+            f"const result = ts.createSourceFile('test.tsx', content, ts.ScriptTarget.Latest, true); "
+            f"console.log('TypeScript parsed successfully, statements:', result.statements.length); "
+            f"if (result.statements.length === 0) throw new Error('No statements found - possible parse error');",
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"TypeScript parse check failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_billing_tests():
     """Repo's Billing component tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts && pnpm vitest run tests/components/Billing/"],
+        ["pnpm", "vitest", "run", "tests/components/Billing/"],
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"Billing tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
@@ -144,7 +152,7 @@ def test_repo_billing_tests():
 def test_repo_unit_tests():
     """Repo's unit tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts && pnpm vitest run tests/unit/"],
+        ["pnpm", "vitest", "run", "tests/unit/"],
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
@@ -154,18 +162,57 @@ def test_repo_unit_tests():
 def test_repo_config_tests():
     """Repo's config tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts && pnpm vitest run tests/config/"],
+        ["pnpm", "vitest", "run", "tests/config/"],
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"Config tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_typescript_compiler_version():
-    """TypeScript compiler is available and works (pass_to_pass)."""
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
     r = subprocess.run(
-        ["tsc", "--version"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        ["pnpm", "run", "lint"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
     )
-    assert r.returncode == 0, f"TypeScript not available: {r.stderr}"
-    assert "Version" in r.stdout, f"Unexpected tsc output: {r.stdout}"
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's code formatting passes for modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", FILE_PATH],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_component_tests():
+    """Repo's component tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "tests/components/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Component tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_features_tests():
+    """Repo's feature tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "tests/features/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Feature tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pages_tests():
+    """Repo's pages tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "tests/pages/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Pages tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

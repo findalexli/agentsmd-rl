@@ -1,33 +1,50 @@
-FROM python:3.12-slim
+FROM python:3.10-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
-
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
-    git curl ca-certificates build-essential tmux pkg-config \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Rust toolchain (required — this is a Rust project)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
-ENV PATH="/root/.cargo/bin:${PATH}"
+# Install uv for fast package management (used by gradio)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
-RUN mkdir -p /workspace /logs/verifier
+# Set working directory - this is where the repo lives INSIDE the container
+WORKDIR /workspace/gradio
 
-WORKDIR /workspace
+# Clone the repo at the base commit
+RUN git clone --depth 1 https://github.com/gradio-app/gradio.git /workspace/gradio
 
-RUN git init /workspace/ruff && \
-    cd /workspace/ruff && \
-    git remote add origin https://github.com/astral-sh/ruff.git && \
-    git fetch --depth=1 origin 37f5d61595f88591b91b914aa05550644300ce19 && \
-    git checkout FETCH_HEAD
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-xdist \
+    ruff \
+    mypy \
+    build \
+    hatchling \
+    hatch-requirements-txt \
+    hatch-fancy-pypi-readme
 
-# Pre-build ruff binary + test harness to cache compiled dependencies.
-# After the agent's 1-2 file change, incremental rebuild takes ~30-60s.
-RUN cd /workspace/ruff && cargo build --bin ruff 2>&1 | tail -5
-RUN cd /workspace/ruff && cargo test --package ruff_linter --no-run 2>&1 | tail -5
+# Install gradio and its client in editable mode
+RUN pip install -e /workspace/gradio/client/python && \
+    pip install -e /workspace/gradio
 
-RUN git config --global user.email "agent@test.com" && \
-    git config --global user.name "Test Agent"
+# Install additional test dependencies
+RUN pip install --no-cache-dir \
+    pydantic \
+    fastapi \
+    numpy \
+    pillow \
+    aiohttp \
+    websockets \
+    httpx
 
-WORKDIR /workspace/ruff
+# Set environment variables
+ENV GRADIO_ANALYTICS_ENABLED=False
+ENV PYTHONPATH=/workspace/gradio:$PYTHONPATH
+
+# Default command
+CMD ["bash"]

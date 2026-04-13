@@ -71,21 +71,10 @@ checks:
     origin: pr_diff
     description: "sglang_rollout.py must use safe access (.get) for multimodal_inputs images key"
 
-rubric:
-  - rule: "Use safe dictionary access (.get()) when checking optional multimodal inputs to avoid KeyError."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "30-53"
-      commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"
-
-  - rule: "Handle numpy ndarray values in multimodal inputs by converting to tensor with torch.from_numpy().copy() before moving to device."
-    source:
-      path: ".claude/skills/add-dynamic-filter/SKILL.md"
-      lines: "66-71"
-      commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"
-
-  - rule: "Use torch.no_grad() context when running frozen vision encoders (requires_grad_(False) / eval() models) to avoid unnecessary gradient computation."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "74-80"
-      commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"
+# Note: This task involves code pattern changes, not agent config edits.
+# The required patterns are verified by the AST-based tests:
+#   - test_sglang_safe_multimodal_access checks .get("images") pattern
+#   - test_actor_numpy_handling checks numpy conversion pattern
+#   - test_vision_info_* tests verify the vision processing behavior
+# No rubric rules needed - tests cover all requirements.
+rubric: []

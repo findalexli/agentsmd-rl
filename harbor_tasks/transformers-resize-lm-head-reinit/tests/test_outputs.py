@@ -411,3 +411,81 @@ def test_repo_check_modeling_structure():
         cwd=REPO,
     )
     assert result.returncode == 0, f"Modeling structure check failed:\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_import_complexity
+def test_repo_check_import_complexity():
+    """Repo import complexity check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "import_complexity"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Import complexity check failed:\\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_doctest_list
+def test_repo_check_doctest_list():
+    """Repo doctest list check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "doctest_list"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Doctest list check failed:\\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_auto_mappings
+def test_repo_check_auto_mappings():
+    """Repo auto mappings check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "auto_mappings"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Auto mappings check failed:\\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_init_isort
+def test_repo_check_init_isort():
+    """Repo init isort check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "init_isort"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Init isort check failed:\\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_add_dates
+def test_repo_check_add_dates():
+    """Repo add dates check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "add_dates"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Add dates check failed:\\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_doc_toc
+def test_repo_check_doc_toc():
+    """Repo doc TOC check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "doc_toc"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Doc TOC check failed:\\n{result.stdout[-500:]}"

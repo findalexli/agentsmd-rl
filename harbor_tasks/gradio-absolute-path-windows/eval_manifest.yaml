@@ -54,46 +54,36 @@ checks:
   type: pass_to_pass
   origin: static
   description: safe_join has real logic with security checks
+distractors:
+- rule: Every non-trivial PR should reference an existing GitHub issue. If one doesn't
+    exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use GitHub CLI or API to create an issue,
+    or refuse to proceed without an issue number, which is out of scope for this isolated
+    coding environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might try to edit the PR template file itself or create
+    a dummy PR description file, wasting time on meta-tasks instead of fixing the
+    code.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 21-24
+hierarchy_analysis: The configuration consists of a single, flat file (`AGENTS.md`)
+  at the root level containing generic repository contribution guidelines. There are
+  no overlapping or conflicting rules to resolve.
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: e29e1ccd5874cb98b813ed4f7f72d9fef2935016
-distractors:
-- rule: Tests must pass. PRs are only merged when CI is green. Run backend tests locally
-    with bash scripts/run_backend_tests.sh.
-  collision_type: scope_ambiguity
-  why_distracting: The bug is specific to Windows and Python 3.14. An agent trying
-    to strictly follow the testing rule might waste significant time trying to write
-    a test and run `bash scripts/run_backend_tests.sh`. Since the evaluation environment
-    is likely Linux and a different Python version, reproducing the bug to verify
-    the test would require complex mocking of `os.path.isabs` and `os.name`, which
-    is unnecessary for this simple one-line security fix.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 27-28
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The agent is operating in a headless evaluation environment and
-    cannot create or link GitHub issues. Attempting to use tools or write scripts
-    to interact with the GitHub API to create an issue would be a complete waste of
-    time and lead to task failure.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 16-17
-- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
-  collision_type: meta_confusion
-  why_distracting: The agent might misinterpret this rule as an instruction to modify
-    the `.github/PULL_REQUEST_TEMPLATE.md` file itself to include the fix description
-    and AI disclosure, rather than understanding it applies to the PR creation UI.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 19-22
-hierarchy_analysis: Only a single root-level config file (`AGENTS.md`) is present,
-  so there are no hierarchical conflicts. The primary challenge is filtering out repository
-  contribution guidelines (PRs, issues, CI) from actual coding directives.
+    lines: 36-38
+  evidence: The gold solution adds `or filename.startswith("/")` on a new line with
+    the exact same indentation and `or` prefix as the surrounding conditions, maintaining
+    the existing formatting.
+  category: style
+  verification: llm_judge

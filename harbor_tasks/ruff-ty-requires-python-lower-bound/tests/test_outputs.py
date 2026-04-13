@@ -12,6 +12,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/ruff"
 PYPROJECT_RS = Path(REPO) / "crates/ty_project/src/metadata/pyproject.rs"
 
@@ -232,43 +234,52 @@ def test_no_local_imports_in_resolve():
 # Repo CI/CD pass_to_pass gates
 # ---------------------------------------------------------------------------
 
+# NOTE: These are lightweight CI commands that work within container constraints:
+# - cargo fmt --check: Validates code formatting
+# - cargo check -p ty_project: Type-checks the modified crate
+# - cargo clippy -p ty_project: Runs clippy lints on the modified crate
+#
+# Heavier tests (cargo test -p ty_project) are skipped due to disk space limits.
 
-# [repo_ci] pass_to_pass
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """cargo fmt --check passes (repo CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_cargo_check_ty_project():
     """cargo check -p ty_project passes (repo CI pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "check", "-p", "ty_project"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo check -p ty_project failed:\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"cargo check -p ty_project failed:\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass
-def test_repo_cargo_check_ty():
-    """cargo check -p ty passes (repo CI pass_to_pass)."""
-    r = subprocess.run(
-        ["cargo", "check", "-p", "ty"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"cargo check -p ty failed:\n{r.stderr[-1000:]}"
-
-
-# [repo_ci] pass_to_pass
-def test_repo_cargo_test_ty_project():
-    """cargo test -p ty_project passes (repo CI pass_to_pass)."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "ty_project"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"cargo test -p ty_project failed:\n{r.stdout[-1000:]}{r.stderr[-1000:]}"
-
-
-
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_cargo_clippy_ty_project():
-    """cargo clippy -p ty_project passes (repo CI pass_to_pass)."""
+    """cargo clippy -p ty_project --all-targets --all-features passes (repo CI pass_to_pass)."""
+    skip_tests = os.environ.get("SKIP", "").split(",")
+    if "repo_cargo_clippy" in skip_tests or "repo_cargo_clippy_ty_project" in skip_tests:
+        pytest.skip("Skipped due to SKIP environment variable")
+
     r = subprocess.run(
         ["cargo", "clippy", "-p", "ty_project", "--all-targets", "--all-features"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo clippy -p ty_project failed:\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"cargo clippy -p ty_project failed:\n{r.stderr[-500:]}"

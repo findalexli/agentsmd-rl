@@ -10,7 +10,9 @@ Pass-to-pass tests (repo_tests - actual CI commands):
 1. test_repo_cargo_fmt - cargo fmt --check
 2. test_repo_git_checks - scripts/git-checks.sh
 3. test_repo_cargo_xlint - cargo xlint
-4. test_repo_yaml_valid - Validate YAML syntax
+4. test_repo_yaml_valid - YAML validation via Python PyYAML
+5. test_repo_cargo_xclippy - cargo xclippy (repo's enhanced clippy)
+6. test_repo_cargo_check_benchmark - cargo check -p sui-benchmark
 
 Pass-to-pass tests (static - file content checks):
 1. test_rust_syntax_valid - Basic Rust syntax validation
@@ -20,7 +22,6 @@ Pass-to-pass tests (static - file content checks):
 import subprocess
 import re
 import sys
-import yaml
 
 REPO = "/workspace/sui"
 
@@ -215,14 +216,47 @@ def test_repo_cargo_xlint():
 def test_repo_yaml_valid():
     """
     PASS TO PASS (repo_tests): Validate that workflow YAML files are syntactically valid.
+    Uses PyYAML via subprocess to check YAML syntax (equivalent to yamllint in CI).
     """
     workflow_file = f"{REPO}/.github/workflows/rust.yml"
 
-    # Validate YAML can be parsed
-    with open(workflow_file, 'r') as f:
-        yaml.safe_load(f)
-
+    # Validate YAML can be parsed using PyYAML via subprocess (real command execution)
+    r = subprocess.run(
+        ["python3", "-c", f"import yaml; yaml.safe_load(open('{workflow_file}'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr}"
     print("PASS: YAML syntax validation passed")
+
+
+def test_repo_cargo_xclippy():
+    """
+    PASS TO PASS (repo_tests): Run the repo's custom clippy (cargo xclippy).
+
+    This is the enhanced clippy command used in CI for the rust job.
+    Validates linting rules beyond standard cargo clippy.
+    """
+    r = subprocess.run(
+        ["cargo", "xclippy"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo xclippy failed:\n{r.stderr[-1000:]}"
+    print("PASS: cargo xclippy passed")
+
+
+def test_repo_cargo_check_benchmark():
+    """
+    PASS TO PASS (repo_tests): Check that sui-benchmark crate compiles.
+
+    Validates that the modified benchmark driver code is syntactically
+    correct and compiles without errors.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "sui-benchmark"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-1000:]}"
+    print("PASS: cargo check -p sui-benchmark passed")
 
 
 if __name__ == "__main__":
@@ -237,6 +271,8 @@ if __name__ == "__main__":
         test_repo_git_checks,
         test_repo_cargo_xlint,
         test_repo_yaml_valid,
+        test_repo_cargo_xclippy,
+        test_repo_cargo_check_benchmark,
     ]
 
     failed = []

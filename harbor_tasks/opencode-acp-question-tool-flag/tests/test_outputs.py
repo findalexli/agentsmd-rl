@@ -127,6 +127,25 @@ def test_repo_acp_agent_tests():
     assert r.returncode == 0, f"ACP agent tests failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_acp_event_subscription_tests():
+    """Repo's ACP event subscription tests pass (pass_to_pass)."""
+    env = {**os.environ, "PATH": "/usr/local/bin:" + os.environ.get("PATH", "")}
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120, env=env,
+    )
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    r = subprocess.run(
+        ["bun", "test", "test/acp/event-subscription.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    assert r.returncode == 0, f"ACP event subscription tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -293,3 +312,22 @@ def test_not_stub():
     # registry.ts must have a conditional (not just hardcoded)
     assert "includes(" in registry_content and "||" in registry_content, \
         "registry.ts must have conditional logic for question tool gating"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    env = {**os.environ, "PATH": "/usr/local/bin:" + os.environ.get("PATH", "")}
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120, env=env,
+    )
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    r = subprocess.run(
+        ["bun", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"

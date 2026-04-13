@@ -1,97 +1,101 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 22303
-  base_commit: "6c2a759a04232ef4cb0c845528d75516ddbd9fe2"
-  merge_commit: "117508dcd701cc2217209242407fb75f02f2c326"
-
+  base_commit: 6c2a759a04232ef4cb0c845528d75516ddbd9fe2
+  merge_commit: 117508dcd701cc2217209242407fb75f02f2c326
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified test file must parse without errors"
-
-  - id: test_repo_syntax_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file compiles without syntax errors via py_compile"
-
-  - id: test_repo_test_directory_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All Python files in test/registered/spec/eagle compile"
-
-  - id: test_repo_python_sglang_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Sample of Python files in python/sglang compile"
-
-  - id: test_repo_related_eagle_tests_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Related EAGLE test files compile via py_compile"
-
-  - id: test_repo_test_utils_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Test utilities module compiles via py_compile"
-
-  - id: test_repo_target_file_ast_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file can be parsed for AST analysis"
-
-  - id: imports_use_eagle3
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Imports must use EAGLE3 constants instead of EAGLE"
-
-  - id: class_names_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Class names must be updated from TestEagle* to TestEagle3*"
-
-  - id: speculative_algorithm_eagle3
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Speculative algorithm must be set to EAGLE3"
-
-  - id: new_args_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "New arguments --dtype, --chunked-prefill-size must be added"
-
-  - id: env_override_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN env override must be added"
-
-  - id: test_name_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Test print statement must use TestEagle3LargeBS"
-
-  - id: score_threshold_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Score threshold must be updated from 0.22 to 0.7"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified test file must parse without errors
+- id: test_repo_syntax_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file compiles without syntax errors via py_compile
+- id: test_repo_test_directory_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in test/registered/spec/eagle compile
+- id: test_repo_python_sglang_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sample of Python files in python/sglang compile
+- id: test_repo_related_eagle_tests_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related EAGLE test files compile via py_compile
+- id: test_repo_test_utils_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test utilities module compiles via py_compile
+- id: test_repo_target_file_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file can be parsed for AST analysis
+- id: test_repo_workflow_job_names
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workflow job names are unique across workflows
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes codespell check
+- id: test_repo_eagle_test_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: EAGLE test dependencies can be imported
+- id: test_repo_test_kits_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test kits modules are importable
+- id: imports_use_eagle3
+  type: fail_to_pass
+  origin: pr_diff
+  description: Imports must use EAGLE3 constants instead of EAGLE
+- id: class_names_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Class names must be updated from TestEagle* to TestEagle3*
+- id: speculative_algorithm_eagle3
+  type: fail_to_pass
+  origin: pr_diff
+  description: Speculative algorithm must be set to EAGLE3
+- id: new_args_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: New arguments --dtype, --chunked-prefill-size must be added
+- id: env_override_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN env override must be added
+- id: test_name_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test print statement must use TestEagle3LargeBS
+- id: score_threshold_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Score threshold must be updated from 0.22 to 0.7
 rubric:
-  - rule: "Always use CustomTestCase as the base test class — never raw unittest.TestCase"
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "12"
-      commit: "6c2a759a04232ef4cb0c845528d75516ddbd9fe2"
-
-  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources that setUpClass may not have finished allocating"
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "13"
-      commit: "6c2a759a04232ef4cb0c845528d75516ddbd9fe2"
-
-  - rule: "Place tests in test/registered/<category>/ directory (except JIT kernel tests which live in python/sglang/jit_kernel/tests/)"
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "14"
-      commit: "6c2a759a04232ef4cb0c845528d75516ddbd9fe2"
+- rule: Always use CustomTestCase as the base test class — never raw unittest.TestCase
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '12'
+    commit: 6c2a759a04232ef4cb0c845528d75516ddbd9fe2
+- rule: tearDownClass must be defensive — use hasattr/null checks before accessing
+    resources that setUpClass may not have finished allocating
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '13'
+    commit: 6c2a759a04232ef4cb0c845528d75516ddbd9fe2
+- rule: Place tests in test/registered/<category>/ directory (except JIT kernel tests
+    which live in python/sglang/jit_kernel/tests/)
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '14'
+    commit: 6c2a759a04232ef4cb0c845528d75516ddbd9fe2
+- id: test_repo_black_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes black format check

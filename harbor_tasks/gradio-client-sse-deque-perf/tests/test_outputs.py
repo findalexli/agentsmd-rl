@@ -493,3 +493,58 @@ print("All gradio_client imports OK")
     )
     assert r.returncode == 0, f"Import test failed:\n{r.stderr}\n{r.stdout}"
     assert "All gradio_client imports OK" in r.stdout, f"Expected success message: {r.stdout}"
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compileall():
+    """Repository Python files compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "compileall", "-q",
+         f"{REPO}/client/python/gradio_client/client.py",
+         f"{REPO}/client/python/gradio_client/utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compileall failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_files_compile():
+    """Repository test files compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile",
+         f"{REPO}/client/python/test/test_utils.py",
+         f"{REPO}/client/python/test/test_client.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test files py_compile failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gradio_client_imports_subprocess():
+    """gradio_client package imports work via subprocess (pass_to_pass)."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/gradio/client/python")
+
+# Test that all key modules and functions can be imported
+from gradio_client import Client
+from gradio_client import utils
+from gradio_client.utils import ServerMessage
+from gradio_client.utils import get_pred_from_sse_v1plus
+from gradio_client.utils import stream_sse_v1plus
+
+# Verify basic functionality exists
+assert hasattr(Client, "predict")
+assert hasattr(utils, "encode_url_or_file_to_base64")
+assert hasattr(utils, "decode_base64_to_binary")
+assert hasattr(utils, "is_valid_file")
+assert hasattr(utils, "get_mimetype")
+print("All gradio_client imports successful")
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr}\n{r.stdout}"
+    assert "All gradio_client imports successful" in r.stdout

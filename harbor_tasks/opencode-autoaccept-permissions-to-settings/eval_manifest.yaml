@@ -67,6 +67,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: permission context unit tests pass
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are correctly formatted with prettier
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full unit test suite passes
 rubric:
 - rule: Keep things in one function unless composable or reusable
   source:
@@ -106,39 +114,72 @@ rubric:
   evidence: The gold solution introduces new local variables using single-word names
     such as `dialog`, `toggle`, `input`, and `checked`.
   category: naming
+- rule: 'Helper Functions: Actions (`actions.ts`): `openSettings(page)`, `closeDialog(page,
+    dialog)`'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 46-50
+  evidence: The gold solution imports and uses `openSettings` and `closeDialog` from
+    `../actions` to interact with the settings dialog instead of manually clicking
+    the settings button or writing raw Playwright lo
+  category: testing
+- rule: Use helper functions from `actions.ts` like `openSettings(page)` and `closeDialog(page,
+    dialog)` for dialog interactions.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 48-49
+  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page,
+    dialog)` in both e2e test files instead of manually writing locators to click
+    the settings icon or close button.
+  category: testing
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 62-63
+  evidence: The gold solution uses `const dialog`, `const toggle`, `const input`,
+    and `const checked` in the e2e tests, avoiding `let` reassignments entirely.
+  category: style
+- rule: Use predefined action helpers like `openSettings` and `closeDialog` for interacting
+    with common UI elements in tests.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 42-44
+  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page,
+    dialog)` in both `prompt-shell.spec.ts` and `session-composer-dock.spec.ts` instead
+    of manually writing Playwright locato
+  category: testing
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 21-31
+  evidence: The gold solution introduces new local variables in the tests using short,
+    single-word names like `dialog`, `toggle`, and `input`.
+  category: naming
 distractors:
 - rule: Use `agent-browser` for web automation.
   collision_type: meta_confusion
-  why_distracting: The agent might confuse the instructions for its own tool usage
-    with the Playwright e2e test code it needs to write, attempting to use `agent-browser`
-    commands or concepts in the `.spec.ts` files instead of Playwright's `page.locator()`.
+  why_distracting: The rule instructs the use of `agent-browser` for 'web automation'.
+    An agent might get confused between its own tool usage (using agent-browser to
+    navigate the web during the task) and the objective of writing Playwright e2e
+    tests (which is also web automation), potentially trying to insert agent-browser
+    commands into the test files.
   severity: high
   source:
     path: packages/app/AGENTS.md
-    lines: 15-21
-- rule: Avoid using the `any` type.
-  collision_type: scope_ambiguity
-  why_distracting: 'The existing `setAutoAccept` function in `session-composer-dock.spec.ts`
-    uses `page: any`. If the agent tries to fix this by importing Playwright''s `Page`
-    type, it might violate the rule ''Always import from `../fixtures`, not `@playwright/test`''
-    or waste effort refactoring out-of-scope code.'
+    lines: 16-23
+- rule: Always prefer `createStore` over multiple `createSignal` calls in SolidJS.
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates preferring `createStore` over `createSignal`.
+    An agent moving the toggle state to the settings page might attempt to refactor
+    the permission state management to use `createStore`, but the instructions explicitly
+    state to 'Read the current auto-accept state via the permission context'.
   severity: medium
   source:
-    path: AGENTS.md
-    lines: 10-12
-- rule: Always prefer `createStore` over multiple `createSignal` calls.
-  collision_type: scope_ambiguity
-  why_distracting: When moving the toggle state to `settings-general.tsx`, the agent
-    might see multiple `createSignal` calls and attempt to refactor the entire settings
-    component to use `createStore`, which is out of scope for simply moving a toggle.
-  severity: low
-  source:
     path: packages/app/AGENTS.md
-    lines: 11-12
-hierarchy_analysis: The hierarchy progresses from general TypeScript/project rules
-  (`AGENTS.md`) to app-specific rules (`packages/app/AGENTS.md`) to e2e-specific rules
-  (`packages/app/e2e/AGENTS.md`). The e2e rules provide specific helpers (`openSettings`,
-  `closeDialog`) that should be prioritized over manually writing Playwright locators.
-  The `agent-browser` rule in the app-level config creates a significant meta-confusion
-  risk when writing e2e tests, as it describes the agent's own automation tool rather
-  than the Playwright framework used in the tests.
+    lines: 10-11
+hierarchy_analysis: The agent must navigate a 3-level deep hierarchy. The root `AGENTS.md`
+  provides general TypeScript and naming conventions. The `packages/app/AGENTS.md`
+  provides SolidJS rules and a distracting meta-instruction about web automation.
+  Crucially, the agent must discover `packages/app/e2e/AGENTS.md` to find the specific
+  Playwright action helpers (`openSettings`, `closeDialog`) required to cleanly update
+  the e2e tests without hardcoding DOM interactions.

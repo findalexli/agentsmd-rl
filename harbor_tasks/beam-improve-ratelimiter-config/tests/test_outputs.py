@@ -53,6 +53,100 @@ def _parse_resource_blocks(text: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+def test_repo_terraform_readme_has_variable_table():
+    """README.md contains the expected Terraform variables table section (pass_to_pass, repo_tests)."""
+    # This verifies the README has the structure expected by the PR
+    readme = (TF_DIR / "README.md").read_text()
+
+    # Check for the variables table header
+    assert "| Name |" in readme or "|Variable" in readme or "|variable" in readme.lower(), (
+        "README.md missing variables table header"
+    )
+    # Check for project_id in the table (required variable that should be documented)
+    assert "project_id" in readme, "README.md should document project_id variable"
+    # Check for ratelimit_config_yaml (key required variable)
+    assert "ratelimit_config_yaml" in readme, "README.md should document ratelimit_config_yaml"
+
+
+def test_repo_terraform_readme_has_examples_section():
+    """README.md has the Beam pipeline examples section (pass_to_pass, repo_tests)."""
+    readme = (TF_DIR / "README.md").read_text()
+
+    # Check for examples section structure
+    assert "Example" in readme and "Pipeline" in readme, (
+        "README.md missing Beam pipeline examples section"
+    )
+    # Check for the rate limiter example links
+    assert "rate_limiter" in readme.lower() or "RateLimiter" in readme, (
+        "README.md should reference rate limiter examples"
+    )
+
+
+def test_repo_gke_tf_structure():
+    """gke.tf has the expected GKE cluster resource structure (pass_to_pass, repo_tests)."""
+    content = (TF_DIR / "gke.tf").read_text()
+
+    # Check for the GKE cluster resource
+    assert 'resource "google_container_cluster"' in content, (
+        "gke.tf missing google_container_cluster resource"
+    )
+    # Check for private cluster configuration (key feature)
+    assert "private_cluster_config" in content, (
+        "gke.tf missing private_cluster_config"
+    )
+    # Check for required variables being used (cluster_name, control_plane_cidr, deletion_protection)
+    assert "var.cluster_name" in content, "gke.tf should reference var.cluster_name"
+    assert "var.control_plane_cidr" in content, "gke.tf should reference var.control_plane_cidr"
+    assert "var.deletion_protection" in content, "gke.tf should reference var.deletion_protection"
+
+
+def test_repo_ratelimit_tf_has_k8s_resources():
+    """ratelimit.tf contains the expected Kubernetes resources (pass_to_pass, repo_tests)."""
+    content = (TF_DIR / "ratelimit.tf").read_text()
+
+    # Check for key Kubernetes resources
+    required_resources = [
+        'resource "kubernetes_deployment" "ratelimit"',
+        'resource "kubernetes_deployment" "redis"',
+        'resource "kubernetes_service" "ratelimit"',
+        'resource "kubernetes_service" "redis"',
+        'resource "kubernetes_config_map" "ratelimit_config"',
+        'resource "kubernetes_horizontal_pod_autoscaler_v2"',
+    ]
+    for resource in required_resources:
+        assert resource in content, f"ratelimit.tf missing required resource: {resource}"
+
+
+def test_repo_variables_tf_has_required_vars():
+    """variables.tf defines the expected required variables (pass_to_pass, repo_tests)."""
+    content = (TF_DIR / "variables.tf").read_text()
+
+    # Required variables that must exist
+    required_vars = [
+        "project_id",
+        "vpc_name",
+        "subnet_name",
+        "ratelimit_config_yaml",
+    ]
+    for var in required_vars:
+        pattern = rf'variable\s+"{var}"'
+        assert re.search(pattern, content), f"variables.tf missing required variable: {var}"
+
+
+def test_repo_prerequisites_tf_structure():
+    """prerequisites.tf enables required GCP APIs (pass_to_pass, repo_tests)."""
+    content = (TF_DIR / "prerequisites.tf").read_text()
+
+    # Check for service enablement resources
+    assert 'resource "google_project_service"' in content, (
+        "prerequisites.tf missing google_project_service resources"
+    )
+    # Check for essential APIs
+    essential_apis = ["container", "iam", "compute"]
+    for api in essential_apis:
+        assert api in content, f"prerequisites.tf should enable {api} API"
+
+
 def test_syntax_check():
     """Terraform files have balanced braces (basic structural validation)."""
     for tf_file in ["ratelimit.tf", "variables.tf", "gke.tf"]:
@@ -334,3 +428,4 @@ def test_terraform_fmt_clean_files():
         assert r.returncode == 0, (
             f"Terraform fmt check failed for {tf_file}:\n{r.stderr[-500:]}"
         )
+

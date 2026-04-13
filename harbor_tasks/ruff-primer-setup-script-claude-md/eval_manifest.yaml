@@ -65,20 +65,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: add_rule.py passes syntax validation
+- id: setup_primer_script_valid_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: setup_primer_project.py has valid Python AST
+- id: validate_pyproject_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pyproject.toml passes validate-pyproject
+- id: typos_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: No typos detected in scripts directory
 rubric:
-- rule: Follow existing code style. Check neighboring files for patterns.
+- rule: CLAUDE.md must document the new setup_primer_project.py script with usage
+    instructions.
   source:
     path: CLAUDE.md
     lines: '73'
     commit: bbaa7698227fcf4f7ec001af6aa5110d405ee54f
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
+  reference: '## Reproducing ty ecosystem changes
+
+
+    If asked to reproduce changes in the ty ecosystem, use this script to clone the
+    project to some
+
+    directory and install its dependencies into `.venv`:
+
+
+    ```sh
+
+    uv run scripts/setup_primer_project.py <project-name> <some-temp-dir>
+
+    ```'
+- rule: Follow existing code style. Check neighboring files for patterns.
   source:
     path: CLAUDE.md
-    lines: 87-87
-  evidence: The script includes comments like `# Clone (shallow if no pinned revision,
-    same as primer)` and `# Create venv (matching primer's Venv.make_venv())` which
-    explain the reasoning behind specific impleme
+    lines: '73'
+  evidence: The new section added to CLAUDE.md uses `## ` for the header and ````sh`
+    for the code block, matching the style of existing sections like `## Running Debug
+    Builds`.
   category: documentation
 config_edits:
 - path: CLAUDE.md
@@ -99,29 +125,27 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might waste time writing unit tests (e.g., mocking subprocesses)
-    for a simple developer utility script, which is out of scope for this PR and not
-    done in the gold solution.
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem.
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires creating a new ~100 line Python script
+    to automate a previously manual workflow. An agent strictly following this rule
+    might hesitate to write the full script or waste time searching for non-existent
+    utilities instead of fulfilling the prompt.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 79-79
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
-  collision_type: rule_conflict
-  why_distracting: The prompt explicitly requests the creation of a new automation
-    script because the current process is manual. The agent might hesitate to write
-    the script or waste time searching for a non-existent utility.
-  severity: medium
+    lines: 52-53
+- rule: Avoid falling back to patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+    Instead, try to encode those constraints in the type system.
+  collision_type: architecture_boundary
+  why_distracting: This rule is specific to the Rust codebase (Ruff/ty), but the agent
+    is tasked with writing a Python script. The agent might get confused about the
+    language context or try to apply Rust-specific error handling paradigms in Python.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 83-83
-hierarchy_analysis: The `CLAUDE.md` file contains general guidelines that are heavily
-  skewed towards the main Rust codebase. When working on Python utility scripts in
-  the `scripts/` directory, some of these rules (like strict testing requirements)
-  have ambiguous scope and should be overridden by the specific instructions in the
-  prompt.
+    lines: 54-55
+hierarchy_analysis: 'The config hierarchy is flat (only CLAUDE.md is provided), but
+  the task introduces a unique meta-referential dynamic: the agent must read CLAUDE.md
+  for general guidelines while simultaneously treating it as a target file to be edited.'

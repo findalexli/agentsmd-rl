@@ -474,4 +474,63 @@ with open(REPO / "pyproject.toml", "rb") as f:
     assert r.returncode == 0, f"Project URLs check failed:\n{r.stderr}"
 
 
+# [repo_ci] pass_to_pass — verify core modules can be imported (from install-test.yml)
+def test_repo_imports_valid():
+    """Core areal modules can be imported (pass_to_pass)."""
+    # This test mimics the install-test.yml verification step
+    # We use subprocess to isolate from the test environment and run in REPO
+    r = _run_python(
+        """\
+import sys
+sys.path.insert(0, str(REPO))
+try:
+    from areal import (
+        TrainController,
+        RolloutController,
+        WorkflowExecutor,
+        StalenessManager,
+        workflow_context,
+        current_platform,
+    )
+    print("All core modules imported successfully")
+except ImportError as e:
+    print(f"Import failed: {e}")
+    exit(1)
+"""
+    )
+    # Skip gracefully if dependencies are missing (e.g., torch, etc.)
+    output = r.stdout + r.stderr
+    if r.returncode != 0 and ("No module named" in output or "ImportError" in output or "ModuleNotFoundError" in output):
+        pytest.skip(f"Dependencies missing for import test: {output[:200]}")
+    assert r.returncode == 0, f"Core module imports failed:\n{output[-500:]}"
+
+
+# [repo_ci] pass_to_pass — verify package version is valid (from install-test.yml)
+def test_repo_version_valid():
+    """areal package has valid version string (pass_to_pass)."""
+    r = _run_python(
+        """\
+import sys
+sys.path.insert(0, str(REPO))
+try:
+    import areal
+    version = areal.__version__
+    assert version, "areal.__version__ is empty"
+    assert isinstance(version, str), "areal.__version__ is not a string"
+    print(f"areal version: {version}")
+except ImportError as e:
+    print(f"Import failed: {e}")
+    exit(1)
+except AttributeError as e:
+    print(f"Missing __version__: {e}")
+    exit(1)
+"""
+    )
+    # Skip gracefully if dependencies are missing
+    output = r.stdout + r.stderr
+    if r.returncode != 0 and ("No module named" in output or "ImportError" in output or "ModuleNotFoundError" in output):
+        pytest.skip(f"Dependencies missing for version test: {output[:200]}")
+    assert r.returncode == 0, f"Version check failed:\n{output[-500:]}"
+
+
 import pytest

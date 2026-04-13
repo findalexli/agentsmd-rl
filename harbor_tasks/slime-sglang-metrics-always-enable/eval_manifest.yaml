@@ -100,14 +100,38 @@ checks:
     origin: repo_tests
     description: "Pytest is available and working"
 
-rubric:
-  - rule: "If partial rollout or masking logic is involved, keep loss_mask semantics consistent with existing behavior."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "79"
-      commit: "a9614431b35e9c54b88a42f9d565ef81075172a1"
-  - rule: "Do not introduce blocking-heavy logic in high-frequency rollout paths without batching/concurrency control."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "99"
-      commit: "a9614431b35e9c54b88a42f9d565ef81075172a1"
+  - id: repo_mtp_bridge_mapping
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo MTP bridge mapping unit tests pass"
+
+  - id: repo_sglang_config_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SglangConfig module can be imported and parsed"
+
+  # New CI-based pass_to_pass tests
+  - id: repo_sglang_engine_syntax_and_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Sglang engine module syntax and key structure is valid"
+
+  - id: repo_rollout_syntax_and_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rollout module syntax and key structure is valid"
+
+  - id: repo_wandb_utils_syntax_and_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Wandb utils module syntax and key structure is valid"
+
+  - id: repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo import ordering check with isort passes"
+
+  - id: repo_black_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo code formatting check with black passes"

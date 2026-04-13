@@ -225,6 +225,36 @@ def test_repo_bazel_build_devtools():
     assert r.returncode == 0, f"Bazel DevTools build failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
 
 
+def test_repo_bazel_test_command_tests():
+    """Bazel CommandTests (unit tests) pass (pass_to_pass)."""
+    bazel = _ensure_bazel()
+    assert bazel is not None, "Could not install bazel"
+
+    r = subprocess.run(
+        [bazel, "test", "//dotnet/test/webdriver:CommandTests-firefox"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"CommandTests failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_dotnet_format_style():
+    """Dotnet format style check passes (pass_to_pass)."""
+    bazel = _ensure_bazel()
+    assert bazel is not None, "Could not install bazel"
+
+    r = subprocess.run(
+        [bazel, "run", "//dotnet:format", "--", "style", "--severity", "warn"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dotnet format style check failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
+
+
 # =============================================================================
 # Static pass-to-pass tests - file content validation (generic syntax checks)
 # =============================================================================

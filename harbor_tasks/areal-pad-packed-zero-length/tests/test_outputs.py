@@ -28,13 +28,12 @@ def test_syntax_check():
 # [repo_tests] pass_to_pass — repo's ruff lint check (from .github/workflows/pre-commit.yml)
 def test_ruff_lint():
     """Ruff linter passes on areal/utils/data.py (pass_to_pass)."""
-    r = subprocess.run(
+    subprocess.run(
         ["pip", "install", "ruff==0.14.9", "--quiet"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    # Don't fail on pip warnings, just check ruff works
     r = subprocess.run(
         ["ruff", "check", f"{REPO}/areal/utils/data.py"],
         capture_output=True,
@@ -60,6 +59,50 @@ def test_ruff_format():
         timeout=60,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — repo's ruff lint check on multiple core files
+def test_ruff_lint_core_utils():
+    """Ruff linter passes on core areal/utils files (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Check specific core files that are properly formatted
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/areal/utils/data.py", f"{REPO}/areal/utils/constants.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint on core utils files failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — trailing whitespace check (from .pre-commit-config.yaml)
+def test_no_trailing_whitespace():
+    """No trailing whitespace in areal/utils/data.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["grep", "-n", "[[:space:]]$", f"{REPO}/areal/utils/data.py"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 1, f"Found trailing whitespace:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — newline at EOF check (from .pre-commit-config.yaml)
+def test_newline_at_eof():
+    """areal/utils/data.py ends with a newline (pass_to_pass)."""
+    r = subprocess.run(
+        f'tail -c1 "{REPO}/areal/utils/data.py" | od -An -tx1 | grep -q "0a"',
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, "File does not end with a newline"
 
 
 # ---------------------------------------------------------------------------

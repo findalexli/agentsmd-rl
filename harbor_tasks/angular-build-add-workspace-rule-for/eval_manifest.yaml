@@ -64,37 +64,25 @@ rubric:
   reference: ../../AGENTS.md
 distractors:
 - rule: Use `pnpm bazel test //target` to run tests.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run `pnpm bazel test //target` to verify
-    its changes to the config files, but there are no relevant bazel targets for these
-    configuration and markdown file changes, which would lead to command failures
-    and wasted effort.
-  severity: medium
+  collision_type: meta_confusion
+  why_distracting: The agent is editing its own instruction file. It might read the
+    instruction to run bazel tests and think it needs to execute them to verify its
+    edits, confusing the content of the file it's editing with instructions for its
+    current session.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 5-6
+    lines: 6-7
 - rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to execute `gh` CLI commands to create
-    a pull request for its changes, but the agent's task is only to modify the workspace
-    files, not to manage the PR lifecycle.
+  why_distracting: The agent might read the instruction to use the `gh` CLI to create
+    a PR and attempt to execute it, confusing the text it is supposed to modify with
+    instructions it should follow for the current task.
   severity: high
   source:
     path: AGENTS.md
-    lines: 13-14
-- rule: This is the source code for the Angular framework. This guide outlines standard
-    practices for AI agents working in this repository.
-  collision_type: meta_confusion
-  why_distracting: The agent is tasked with modifying `AGENTS.md` to add YAML frontmatter.
-    It might get confused between following the instructions in the file versus treating
-    the file as a target for modification, leading to hesitation or incorrect edits.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 1-15
-hierarchy_analysis: The only config file is `AGENTS.md` at the root level. The primary
-  challenge is meta-confusion, as the agent must modify the very file that provides
-  its instructions. The agent needs to treat `AGENTS.md` as data to be edited (adding
-  frontmatter) rather than solely as a set of rules to follow, while ignoring the
-  PR creation and testing instructions which are out of scope for this specific configuration
-  task.
+    lines: 14-15
+hierarchy_analysis: The agent must edit the very file (`AGENTS.md`) that provides
+  its instructions. There is no deep hierarchy, but the meta-referential nature of
+  the task requires the agent to distinguish between instructions for the current
+  task and instructions contained within the file it is editing.

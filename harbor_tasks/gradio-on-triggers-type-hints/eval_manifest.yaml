@@ -58,32 +58,45 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's unit tests for events module pass (selected tests from test/test_events.py)
+- id: repo_pytest_render
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for render functionality pass (test/test_blocks.py::TestRender)
+- id: import_gradio
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradio imports successfully without errors (basic smoke test)
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might refuse to make the change or try to bundle other
+    unrelated type hint fixes, misinterpreting this legitimate bug fix as a 'low-value
+    busywork PR' or 'isolated lint cleanup'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 49-51
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use tools to create a GitHub issue or search
+    for an existing one before making the code changes, which is out of scope for
+    the isolated coding task environment.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 18-19
+hierarchy_analysis: The repository uses a single flat `AGENTS.md` file at the root
+  level containing generic contribution guidelines. No complex hierarchy traversal
+  is required.
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: 429a9fad5207fb27648d860a4802ff52a5b38746
-distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
-  collision_type: scope_ambiguity
-  why_distracting: The bug requires a small type hint fix. An agent might misinterpret
-    this as a 'tiny edit' or 'isolated lint cleanup' and refuse to fix it, or try
-    to bundle it with unrelated cleanups to avoid a 'one-off PR'.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 58-61
-- rule: Human accountability - Pure code-agent PRs are not allowed.
-  collision_type: meta_confusion
-  why_distracting: The rule states 'Pure code-agent PRs are not allowed.' An autonomous
-    agent might read this and refuse to generate the code or PR, thinking it violates
-    the repository's contribution policy.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 63-65
-hierarchy_analysis: Only the root `AGENTS.md` config file applies to this backend
-  Python fix. The rules are straightforward, but the agent must carefully distinguish
-  between a legitimate bug fix (even if small, like a type hint fix) and 'low-value
-  busywork' to avoid scope expansion or refusal.
+    lines: 44-46
+  evidence: The gold solution defines the `Trigger` type alias using `Union` and `Callable`
+    and adds a descriptive comment, which is consistent with the surrounding type
+    definitions like `EventListenerCallable` in `gradio/events.py`.
+  category: style
+  verification: llm_judge

@@ -42,107 +42,104 @@ checks:
   type: pass_to_pass
   origin: static
   description: MinimalAudioPlayer.svelte must have substantial implementation
+- id: test_audio_shared_svelte_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Audio shared Svelte components must have valid TypeScript and structure
 - id: test_audio_package_json_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Audio package.json must be valid JSON with required fields (subprocess
-    python3 -c)
+  description: Audio package.json must be valid JSON with required fields
 - id: test_audio_test_file_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Audio component test file must be valid and complete (subprocess python3
-    -c)
+  description: Audio component test file must be valid and complete
 - id: test_audio_svelte_syntax_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Svelte files in js/audio must have valid syntax structure (subprocess
-    python3 -c)
+  description: Svelte files in js/audio must have valid syntax structure
 - id: test_audio_shared_index_exports
   type: pass_to_pass
   origin: repo_tests
-  description: Audio shared/index.ts must exist with valid exports structure (subprocess
-    python3 -c)
+  description: Audio shared/index.ts must exist with valid exports structure
 - id: test_audio_package_structure
   type: pass_to_pass
   origin: repo_tests
-  description: Audio package must have required subdirectories (subprocess python3
-    -c)
+  description: Audio package must have required subdirectories
 - id: test_audio_types_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Audio types.ts must have valid TypeScript type definitions (subprocess
-    python3 -c)
+  description: Audio types.ts must have valid TypeScript type definitions
 - id: test_audio_buffer_util_valid
   type: pass_to_pass
   origin: repo_tests
   description: Audio buffer utility (audioBufferToWav.ts) must have valid structure
-    (subprocess python3 -c)
 - id: test_audio_exports_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Audio package main exports (index.ts) must be valid (subprocess python3
-    -c)
+  description: Audio package main exports (index.ts) must be valid
 - id: test_audio_index_svelte_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Audio Index.svelte main component must have valid structure (subprocess
-    python3 -c)
+  description: Audio Index.svelte main component must have valid structure
 - id: test_audio_recorder_player_exist
   type: pass_to_pass
   origin: repo_tests
   description: Audio recorder and player Svelte files must exist with valid structure
-    (subprocess python3 -c)
 - id: test_audio_recorder_svelte5_runes
   type: pass_to_pass
   origin: repo_tests
-  description: Audio MinimalAudioRecorder uses Svelte 5 runes ($props, $bindable,
-    $state) (subprocess python3 -c)
+  description: Audio MinimalAudioRecorder uses Svelte 5 runes ($props, $bindable)
+    at base commit
 - id: test_audio_player_svelte5_runes
   type: pass_to_pass
   origin: repo_tests
-  description: Audio MinimalAudioPlayer uses Svelte 5 runes ($props, $derived) (subprocess
-    python3 -c)
-rubric:
-- rule: Follow existing code style. Be consistent with the style of the surrounding
-    code.
-  source:
-    path: AGENTS.md
-    lines: '45'
-    commit: 7874d0411c81dcde9c4b08e7e064ca0dbef94e2e
-- rule: Frontend code must be formatted with prettier. Run bash scripts/format_frontend.sh
-    before submitting.
-  source:
-    path: AGENTS.md
-    lines: '44'
-    commit: 7874d0411c81dcde9c4b08e7e064ca0dbef94e2e
-- rule: Frontend code is formatted with `prettier` and should be consistent with the
-    style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: 41-42
-  evidence: The gold solution formats the new `.catch()` block and `if/else` statement
-    in `MinimalAudioRecorder.svelte` using standard Prettier-compatible indentation,
-    consistent with the surrounding frontend cod
-  category: style
+  description: Audio MinimalAudioPlayer uses Svelte 5 runes ($props, $derived)
+- id: test_repo_python_audio_duration
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python audio component duration validator test passes
+- id: test_repo_python_audio_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python audio component core functions test passes
+- id: test_repo_python_audio_default_value
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python audio default value postprocess test passes
+- id: test_repo_python_audio_http_url
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python audio HTTP URL postprocess test passes
 distractors:
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The agent might try to use GitHub CLI or API to create an issue
-    before fixing the bug, which will fail or waste time in the evaluation environment.
+- rule: Every non-trivial PR should reference an existing GitHub issue. If one doesn't
+    exist, create it first.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to use CLI tools or APIs to create a GitHub
+    issue before fixing the code, which is out of scope for the benchmark environment
+    and wastes time.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 21-21
+    lines: 18-18
 - rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
   collision_type: meta_confusion
   why_distracting: The agent might try to edit the `.github/PULL_REQUEST_TEMPLATE.md`
-    file or write a PR description document, rather than just fixing the Svelte components.
-  severity: low
+    file to add its AI disclosure or issue link, misunderstanding that the rule applies
+    to the PR creation process on GitHub, not the repository files.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 23-26
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level
-  providing general guidelines. There are no conflicting child configs, but the agent
-  must filter out meta-instructions (like PR creation and issue management) that do
-  not apply to the immediate code-fixing task.
+    lines: 20-23
+hierarchy_analysis: Only a single root-level AGENTS.md file is present. No complex
+  hierarchy or overrides exist.
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 35-37
+  evidence: The gold solution updates plain `let` declarations to use Svelte 5 `$state()`
+    runes, matching the Svelte 5 migration context of the repository and maintaining
+    consistency with the updated framework style.
+  category: style
+  verification: llm_judge

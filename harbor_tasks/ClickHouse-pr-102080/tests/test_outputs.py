@@ -534,3 +534,145 @@ def test_docker_clean_up_hook_py_syntax():
     )
     assert result.returncode == 0, \
         f"docker_clean_up_hook.py has syntax errors: {result.stderr}"
+
+
+# ====== Enriched P2P Tests - CI/CD Commands ======
+
+
+def test_repo_style_shell_scripts():
+    """Repo's shell style checks pass via check_cpp.sh (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", f"{REPO}/ci/jobs/scripts/check_style/check_cpp.sh"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    # Script may find style issues but should not crash
+    output = result.stdout + result.stderr
+    assert "syntax error" not in output.lower(), \
+        f"check_cpp.sh failed with syntax error: {output[:500]}"
+    assert "unexpected token" not in output.lower(), \
+        f"check_cpp.sh failed with unexpected token: {output[:500]}"
+
+
+def test_repo_various_checks_pipeline():
+    """Repo's various_checks.sh style checks pass (pass_to_pass)."""
+    env = os.environ.copy()
+    env["ROOT_PATH"] = REPO
+
+    result = subprocess.run(
+        ["bash", f"{REPO}/ci/jobs/scripts/check_style/various_checks.sh"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env=env,
+    )
+    # Script may find style issues but should not crash
+    output = result.stdout + result.stderr
+    assert "syntax error" not in output.lower(), \
+        f"various_checks.sh failed with syntax error: {output[:500]}"
+    assert "unexpected token" not in output.lower(), \
+        f"various_checks.sh failed with unexpected token: {output[:500]}"
+
+
+def test_repo_git_ls_files_stat_pipeline():
+    """Git ls-files with stat pipeline works for large file detection (pass_to_pass)."""
+    # Test the core pipeline used by the large file check:
+    # git ls-files -z | xargs -0 stat -c '%s %n'
+    result = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && git ls-files -z | head -z -n 50 | xargs -0 stat -c '%s %n' 2>/dev/null | head -5"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # Should successfully run and produce output
+    assert result.returncode == 0, \
+        f"git ls-files stat pipeline failed: {result.stderr[:500]}"
+    # Should have size and filename output
+    assert len(result.stdout.strip()) > 0, \
+        "git ls-files stat pipeline produced no output"
+
+
+def test_repo_grep_whitelist_pipeline():
+    """Grep with whitelist pattern works for large file filtering (pass_to_pass)."""
+    # Test the grep whitelist pattern used in large file check
+    whitelist_patterns = [
+        "multi_column_bf.gz.parquet",
+        "ghdata_sample.json",
+        "libcatboostmodel.so",
+    ]
+    # Build grep -v pattern like the script does
+    grep_args = ["-e", whitelist_patterns[0]]
+    for pattern in whitelist_patterns[1:]:
+        grep_args.extend(["-e", pattern])
+
+    # Test that grep -v with whitelist works on sample data
+    test_input = "file1.txt\nmulti_column_bf.gz.parquet\nfile2.cpp\nghdata_sample.json\n"
+    result = subprocess.run(
+        ["grep", "-v"] + grep_args,
+        input=test_input,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode in [0, 1], \
+        f"grep whitelist filtering failed: {result.stderr[:500]}"
+    # Verify whitelisted files are filtered out
+    assert "multi_column_bf.gz.parquet" not in result.stdout, \
+        "Whitelist pattern failed to filter multi_column_bf.gz.parquet"
+    assert "ghdata_sample.json" not in result.stdout, \
+        "Whitelist pattern failed to filter ghdata_sample.json"
+    # Verify other files are kept
+    assert "file1.txt" in result.stdout, \
+        "grep whitelist incorrectly filtered non-whitelisted file"
+
+
+def test_repo_docker_image_py():
+    """docker_image.py has valid Python syntax and imports (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/ci/jobs/scripts/docker_image.py"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, \
+        f"docker_image.py has syntax errors: {result.stderr}"
+
+
+def test_repo_log_parser_py():
+    """log_parser.py has valid Python syntax (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/ci/jobs/scripts/log_parser.py"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, \
+        f"log_parser.py has syntax errors: {result.stderr}"
+
+
+def test_repo_clickhouse_version_py():
+    """clickhouse_version.py has valid Python syntax (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/ci/jobs/scripts/clickhouse_version.py"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, \
+        f"clickhouse_version.py has syntax errors: {result.stderr}"
+
+
+def test_repo_clickhouse_proc_py():
+    """clickhouse_proc.py has valid Python syntax (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/ci/jobs/scripts/clickhouse_proc.py"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, \
+        f"clickhouse_proc.py has syntax errors: {result.stderr}"

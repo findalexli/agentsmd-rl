@@ -61,61 +61,69 @@ checks:
 - id: test_repo_cargo_fmt
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's Rust code passes cargo fmt check
+  description: Repo's Rust code passes cargo fmt check (requires Rust toolchain)
 - id: test_repo_cargo_check_napi
   type: pass_to_pass
   origin: repo_tests
-  description: next-napi-bindings crate compiles with cargo check
+  description: next-napi-bindings crate compiles with cargo check (requires Rust toolchain)
 - id: test_repo_cargo_clippy_napi
   type: pass_to_pass
   origin: repo_tests
-  description: next-napi-bindings crate passes cargo clippy
+  description: next-napi-bindings crate passes cargo clippy (requires Rust toolchain)
+- id: test_repo_cargo_pkgid_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings crate is recognized by cargo pkgid
+- id: test_repo_cargo_read_manifest_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings Cargo.toml is valid JSON with expected fields
+- id: test_rust_toolchain_configured
+  type: pass_to_pass
+  origin: static
+  description: Rust toolchain config exists with required components for CI
+- id: test_napi_bindings_crate_structure
+  type: pass_to_pass
+  origin: static
+  description: next-napi-bindings crate has valid structure
+- id: test_workspace_cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Workspace Cargo.toml has valid structure with napi-bindings crate
+- id: test_napi_npm_packages_structure
+  type: pass_to_pass
+  origin: static
+  description: NAPI npm platform packages have valid structure
+- id: test_modified_files_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files endpoint.rs project.rs utils.rs are tracked in git
+- id: test_cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.toml for next-napi-bindings is valid TOML with expected structure
 rubric:
-- rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt
+- rule: Rust code changes follow cargo fmt conventions with ASCII sort order for imports
+  reference: The gold solution adds `use turbo_rcstr::RcStr;` imports in ASCII sort order
+    (uppercase R before lowercase t) in endpoint.rs (between `use tracing` and `use turbo_tasks`)
+    and utils.rs (between `use serde` and `use turbo_tasks`), matching cargo fmt conventions.
   source:
-    path: CLAUDE.md
-    lines: '414'
-    commit: eab7a23533d9009f24694016d2bdbdc1318df52d
+    path: crates/next-napi-bindings/src/next_api/endpoint.rs
+    lines: "23"
+    commit: d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9
 distractors:
 - rule: Start `pnpm --filter=next dev` in a separate terminal session before making
-    edits for fast local development.
+    edits to Next.js source.
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates starting `pnpm --filter=next dev` for fast local
-    development and auto-rebuilding. However, this PR modifies Rust NAPI bindings
-    in `crates/`. The JS dev server watch mode does not automatically hot-reload or
-    recompile Rust crate changes on the fly, which would confuse an agent expecting
-    its Rust modifications to be immediately reflected or checked.
-  severity: high
+  why_distracting: The rule instructs starting the Next.js dev server for iterative
+    development. However, this task involves refactoring Rust NAPI bindings where
+    running the JS dev server is unnecessary and could distract the agent with background
+    process management.
+  severity: low
   source:
-    path: CLAUDE.md
-    lines: 56-65
-- rule: 'For type errors only: Use `pnpm --filter=next types` instead of `pnpm --filter=next
-    build`.'
-  collision_type: scope_ambiguity
-  why_distracting: The rule advises using `pnpm --filter=next types` for type errors.
-    Since the PR involves changing struct field types from `String` to `RcStr`, the
-    agent might run this command to verify its type changes. However, this command
-    only runs TypeScript type checking (`tsc`), not Rust type checking (`cargo check`),
-    wasting time and providing no feedback on the Rust code.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 76-76
-- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests preferring `pnpm --filter=next build` when edits
-    are limited to core Next.js files. The agent might consider `crates/next-napi-bindings`
-    as core files and run this, but Rust changes require `pnpm build-all` or direct
-    `cargo` commands to compile properly, as the filter primarily targets the JS/TS
-    packages.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 78-79
-hierarchy_analysis: The configuration files (`CLAUDE.md` and `AGENTS.md` are identical
-  symlinks) provide global monorepo instructions that are heavily biased towards the
-  TypeScript/JavaScript workflow (`packages/next`). There is a distinct lack of Rust-specific
-  workflow guidance. The agent must recognize the architectural boundary between the
-  JS packages and the Rust `crates/` and implicitly override the JS-centric tooling
-  rules (like `pnpm dev` and `pnpm types`) in favor of standard Rust tooling (`cargo
-  check`/`cargo build`) or the explicitly mentioned `pnpm build-all`.
+    path: AGENTS.md
+    lines: 72-76
+hierarchy_analysis: The config hierarchy consists of a single level with identical
+  symlinked files (`AGENTS.md` and `CLAUDE.md`). The rules are generic monorepo guidelines
+  (build commands, dev server instructions) that do not specifically guide or conflict
+  with the Rust NAPI refactoring task.

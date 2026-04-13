@@ -338,3 +338,89 @@ def test_repo_utils_validate_url():
         env={**os.environ, "PYTHONPATH": REPO},
     )
     assert r.returncode == 0, f"Utils URL validation tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_delete_none():
+    """Repo's utils delete_none tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "hypothesis", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestDeleteNone", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Utils delete_none tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_safe_deepcopy():
+    """Repo's utils safe_deepcopy tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "hypothesis", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestSafeDeepCopy", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Utils safe_deepcopy tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_unhashable_key_dict():
+    """Repo's utils unhashable key dict tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "hypothesis", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestUnhashableKeyDict", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Utils unhashable key dict tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_sanitize_for_csv():
+    """Repo's utils sanitize_for_csv tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "hypothesis", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestSanitizeForCSV", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Utils sanitize_for_csv tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_skills_import():
+    """Repo's skills module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-c", "from gradio.cli.commands.skills import _generate_space_skill; print('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Failed to import skills module: {r.stderr[-500:]}"
+    assert "OK" in r.stdout, "Skills import test did not complete successfully"

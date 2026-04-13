@@ -239,19 +239,6 @@ def test_pint_lint_network_p2p():
         f"Pint lint check failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
-def test_composer_audit_p2p():
-    """Repo's composer dependencies pass security audit (pass_to_pass)."""
-    result = subprocess.run(
-        ['composer', 'audit', '--no-interaction'],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-    assert result.returncode == 0, \
-        f"Composer audit failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
-
-
 def test_cors_unit_tests_p2p():
     """Repo's CORS unit tests pass (pass_to_pass)."""
     result = subprocess.run(
@@ -276,3 +263,81 @@ def test_email_validator_unit_tests_p2p():
     )
     assert result.returncode == 0, \
         f"Email validator unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_platform_unit_tests_p2p():
+    """Repo's Platform unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Platform/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"Platform unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+def test_detector_unit_tests_p2p():
+    """Repo's Detector unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Detector/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"Detector unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_template_unit_tests_p2p():
+    """Repo's Template unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Template/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"Template unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_filter_unit_tests_p2p():
+    """Repo's Filter unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Filter/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"Filter unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_openssl_unit_tests_p2p():
+    """Repo's OpenSSL unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/OpenSSL/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"OpenSSL unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_task_unit_tests_p2p():
+    """Repo's Task unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Task/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"Task unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"

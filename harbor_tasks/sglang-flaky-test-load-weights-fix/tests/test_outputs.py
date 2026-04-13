@@ -162,6 +162,134 @@ def test_repo_yaml_check():
     assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_precommit_ast_check():
+    """Repo's Python AST check passes via pre-commit (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-ast", "--files", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Pre-commit AST check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_debug_statements():
+    """Repo has no debug statements (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Debug statements check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_symlinks():
+    """Repo has no broken symlinks (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-symlinks", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Symlinks check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_trailing_whitespace():
+    """Repo has no trailing whitespace (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_end_of_file_fixer():
+    """Repo has proper end-of-file newlines (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"End-of-file fixer check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_yaml():
+    """Repo's YAML files pass pre-commit check (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"YAML check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_toml():
+    """Repo's TOML files pass pre-commit check (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-toml", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"TOML check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_merge_conflict():
+    """Repo has no merge conflict markers (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-merge-conflict", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Merge conflict check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # -----------------------------------------------------------------------------
@@ -320,3 +448,51 @@ def test_not_stub():
     assert old_pattern not in content, (
         f"The old conditional pattern '{old_pattern}' should be removed"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_added_large_files():
+    """Repo has no large files added (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--files", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Large files check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_detect_private_key():
+    """Repo has no private keys committed (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--files", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Private key detection failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_destroyed_symlinks():
+    """Repo has no destroyed symlinks (pass_to_pass)."""
+    install_r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert install_r.returncode == 0, f"Failed to install pre-commit: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "destroyed-symlinks", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Destroyed symlinks check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

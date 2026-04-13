@@ -43,6 +43,22 @@ checks:
   description: Tests for hugolib package pass
   type: pass_to_pass
   origin: repo_tests
+- id: test_repo_staticcheck
+  description: Repo's Go code passes staticcheck linter
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_mod_verify
+  description: Go module checksums are verified
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_check_sh_modules
+  description: Repo's check.sh passes for modules package
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_check_sh_hugolib
+  description: Repo's check.sh passes for hugolib package
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: 'Go code fix: IsZero() method should be concise and follow brevity principle'
   source:
@@ -64,32 +80,20 @@ rubric:
     is defined inline and unexported, preventing unnecessary package-level exports.
   category: architecture
 distractors:
-- rule: Brevity is good. This applies to code, comments and commit messages. Don't
-    write a novel.
+- rule: Brevity is good. This applies to code, comments... Don't write a novel. Don't
+    use comments to explain the obvious.
   collision_type: scope_ambiguity
-  why_distracting: The gold solution includes a 6-line comment block explaining the
-    Go issue 67363, the `.info` file fallback, and the JSON structure. An agent strictly
-    following 'brevity is good' and 'don't write a novel' might omit this crucial
-    context, making the workaround hard to understand.
+  why_distracting: The gold solution includes a very detailed, multi-line comment
+    explaining the workaround for a Go upstream issue (golang/go#67363) and the structure
+    of the JSON file. An agent strictly following the brevity rule might omit this
+    crucial context, making the workaround seem like magic.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 12-12
-- rule: assume that a similiar problem has been solved before, look hard for helper
-    functions before creating new ones.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might waste time searching for an existing helper function
-    to parse `.info` files or handle the Go module origin bug, but this is a specific
-    edge case that requires inline handling with `afero.ReadFile` and `json.Unmarshal`.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 9-9
-hierarchy_analysis: 'The AGENTS.md file provides general Go conventions. The rules
-  around brevity and avoiding obvious comments conflict with the need to document
-  a complex workaround for an upstream Go bug (issue #67363). The agent must recognize
-  that documenting a hack/workaround is not ''explaining the obvious'' and supersedes
-  the brevity rule.'
+    lines: 2-4, 13-13
+hierarchy_analysis: The config hierarchy is flat, with all rules contained in AGENTS.md
+  (referenced by CLAUDE.md). The agent must balance the general instruction for brevity
+  against the specific need to document a complex workaround for an upstream bug.
 version: '2.0'
 source:
   repo: gohugoio/hugo

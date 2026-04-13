@@ -810,3 +810,81 @@ sys.exit(0)
 
     assert r.returncode == 0, f"Hardcoded 1024 test failed: {r.stdout}{r.stderr}"
     assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Additional CI/CD tests
+# These use actual CI commands from the repository's workflows
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_clang_format_c_file():
+    """Modified C file passes clang-format check (CI/CD from format.yml) (pass_to_pass)."""
+    # Install clang-format-19 if not available and create symlink
+    install_result = subprocess.run(
+        ["bash", "-c",
+         "apt-get update -qq && apt-get install -y -qq clang-format-19 2>/dev/null && " +
+         "ln -sf /usr/bin/clang-format-19 /usr/bin/clang-format"],
+        capture_output=True,
+        timeout=120,
+    )
+    # Even if install partially fails, try the clang-format command
+
+    r = subprocess.run(
+        ["clang-format", "--dry-run", "--Werror", C_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"clang-format check failed for {C_FILE}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_ls_files():
+    """Modified files are tracked in git (CI/CD git ls-files check) (pass_to_pass)."""
+    # Check C file is tracked
+    r = subprocess.run(
+        ["git", "ls-files", "packages/bun-usockets/src/eventing/epoll_kqueue.c"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0 and r.stdout.strip() != "", "C file not tracked in git"
+
+    # Check header file is tracked
+    r = subprocess.run(
+        ["git", "ls-files", "packages/bun-usockets/src/internal/internal.h"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0 and r.stdout.strip() != "", "Header file not tracked in git"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_history_valid():
+    """Repository has valid git history (CI/CD sanity check) (pass_to_pass)."""
+    # Check we can read git log
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-5"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git log failed: {r.stderr}"
+    assert len(r.stdout.strip().split("\n")) >= 5, "Git history appears incomplete"
+
+    # Verify we're at the expected commit
+    r = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git rev-parse failed: {r.stderr}"
+    head_commit = r.stdout.strip()
+    assert head_commit.startswith("3f41407"), f"Unexpected HEAD commit: {head_commit}, expected 3f41407"

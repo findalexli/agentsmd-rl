@@ -68,31 +68,23 @@ rubric:
     correctly identifying it as the location for the `runner-worker` internal worker
     entry.
   category: architecture
-distractors:
-- rule: Change local dev behavior -> `packages/miniflare/src/` and Modify Workers
-    runtime simulation -> `packages/miniflare/src/workers/`
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions 'When running a development server' and 'Workers
-    runtime'. The root AGENTS.md directs local dev behavior and runtime simulation
-    changes to `packages/miniflare/src/`. An agent might try to fix the memory leak
-    in Miniflare instead of the Vite plugin's runner worker.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 50-52
-- rule: Top-level `await` in entry — only possible because ESM-only
-  collision_type: scope_ambiguity
-  why_distracting: The config mentions 'Top-level await in entry'. An agent might
-    try to refactor the async callback execution to use top-level await, but this
-    rule only applies to the plugin entry (`src/index.ts`), not the internal worker
-    scripts which are bundled as neutral-platform outputs.
-  severity: medium
+- rule: Internal worker entries are located in `src/workers/`
   source:
     path: packages/vite-plugin-cloudflare/AGENTS.md
-    lines: 20-21
-hierarchy_analysis: The root `AGENTS.md` provides general guidance for the monorepo,
-  directing local dev and runtime simulation tasks to `miniflare`. However, the issue
-  is specific to the Vite plugin's runner worker. The package-specific `packages/vite-plugin-cloudflare/AGENTS.md`
-  correctly identifies `src/workers/runner-worker` as the location for the runner
-  worker. Agents must prioritize the package-specific architecture over the general
-  monorepo architecture when the issue explicitly mentions the Vite plugin.
+    lines: 7-7
+  evidence: The fix is applied to `src/workers/runner-worker/module-runner.ts`, which
+    aligns with the architectural definition of internal worker entries.
+  category: architecture
+distractors:
+- rule: 'Unit tests: `.spec.ts` in `__tests__/`'
+  collision_type: scope_ambiguity
+  why_distracting: The config specifies where to put unit tests, which might prompt
+    an agent to write a test for the memory leak. However, the gold solution only
+    provides the code fix without adding new tests.
+  severity: low
+  source:
+    path: packages/vite-plugin-cloudflare/AGENTS.md
+    lines: 23-23
+hierarchy_analysis: The hierarchy consists of a root AGENTS.md providing monorepo
+  context, a CLAUDE.md pointer, and a package-specific AGENTS.md. The rules are mostly
+  structural and command-oriented, with no conflicts regarding this specific bug fix.

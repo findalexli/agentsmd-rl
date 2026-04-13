@@ -209,6 +209,16 @@ def test_repo_lint_directive_tags():
     assert r.returncode == 0, f"Lint failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_format_directive_tags():
+    """Repo's oxfmt format check passes on directive-tags.ts (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["pnpm", "exec", "oxfmt", "--check", "src/utils/directive-tags.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 def test_repo_unit_tests_directive_tags():
     """Repo's unit tests for directive-tags pass (pass_to_pass)."""
     _install_deps()
@@ -230,3 +240,33 @@ def test_repo_tsgo_typecheck():
     if "directive-tags.ts" in r.stdout:
         lines = [ln for ln in r.stdout.splitlines() if "directive-tags.ts" in ln]
         assert not lines, f"Type errors in directive-tags.ts:\n{chr(10).join(lines)}"
+
+
+def test_repo_extension_boundary_src():
+    """Extensions must not import from src/ outside src/plugin-sdk (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["pnpm", "run", "lint:extensions:no-src-outside-plugin-sdk"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Extension boundary check failed:\n{r.stdout[-500:]}"
+
+
+def test_repo_extension_boundary_internal():
+    """Extensions must not import from src/plugin-sdk-internal (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["pnpm", "run", "lint:extensions:no-plugin-sdk-internal"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Extension internal boundary check failed:\n{r.stdout[-500:]}"
+
+
+def test_repo_extension_boundary_relative():
+    """Extensions must not use relative imports escaping their package (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["pnpm", "run", "lint:extensions:no-relative-outside-package"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Extension relative boundary check failed:\n{r.stdout[-500:]}"

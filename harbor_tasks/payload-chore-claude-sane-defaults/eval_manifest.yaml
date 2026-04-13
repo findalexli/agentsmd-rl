@@ -67,8 +67,28 @@ checks:
   description: CLAUDE.md documentation file exists
 - id: test_repo_prettier_rc_files
   type: pass_to_pass
+  origin: static
+  description: Prettier config files are valid JSON
+- id: test_repo_prettier_turbo_json
+  type: pass_to_pass
   origin: repo_tests
-  description: Prettier config files are valid
+  description: turbo.json passes prettier formatting check
+- id: test_repo_prettier_prettierrc
+  type: pass_to_pass
+  origin: repo_tests
+  description: .prettierrc.json passes prettier formatting check
+- id: test_repo_prettier_pnpm_workspace
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm-workspace.yaml passes prettier formatting check
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json is valid JSON
+- id: test_repo_turbo_json_valid
+  type: pass_to_pass
+  origin: static
+  description: turbo.json is valid JSON with expected structure
 rubric:
 - rule: Key Directories - packages/ - All publishable packages
   source:
@@ -84,6 +104,31 @@ rubric:
   category: tooling
   evidence: Configures `.claude/settings.json` permissions to explicitly allow `pnpm`
     commands including `pnpm turbo:*`, aligning with the monorepo's build tooling.
+- rule: List publishable packages under `packages/` with a brief description of their
+    purpose.
+  source:
+    path: CLAUDE.md
+    lines: 10-20
+  evidence: The gold solution adds `packages/kv-redis` and `R2` to the `packages/`
+    list in the `Key Directories` section, following the existing bullet point format
+    and description style.
+  category: documentation
+- rule: Document the standard development workflow (install, build core, dev server).
+  source:
+    path: CLAUDE.md
+    lines: 38-52
+  evidence: 'The gold solution creates a Quick Start section that logically sequences
+    the existing documented commands: install dependencies, build core, and start
+    the dev server.'
+  category: documentation
+- rule: Maintain the existing structure and categorization of the Key Directories
+    section when documenting new packages.
+  source:
+    path: CLAUDE.md
+    lines: 14-25
+  evidence: The gold solution adds `packages/kv-redis` and `R2` to the existing `Key
+    Directories` section, matching the established bulleted list format and descriptions.
+  category: documentation
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -160,28 +205,18 @@ config_edits:
 
     - \u0060pnpm test:types\u0060 - Run type tests (tstyche)'
 distractors:
-- rule: pnpm build or pnpm build:core - Build core packages
+- rule: Use bare pnpm commands like `pnpm build` and `pnpm dev` for build and development
+    tasks.
+  collision_type: meta_confusion
+  why_distracting: The existing documentation lists commands like `pnpm build` and
+    `pnpm dev` without the `run` prefix. An agent might copy these exact commands
+    into the new Quick Start section or leave them unmodified, violating the PR instruction
+    to standardize on `pnpm run` to match the new permission allowlist.
+  severity: high
   source:
     path: CLAUDE.md
     lines: 40-43
-  collision_type: meta_confusion
-  why_distracting: The agent might read the existing CLAUDE.md and assume the commands
-    listed (like `pnpm build` or `pnpm dev`) are correct and leave them as is. However,
-    the task explicitly states they are inconsistent with permission rules and must
-    be updated to use the `pnpm run` prefix.
-  severity: high
-- rule: Linting & Formatting - pnpm lint - Run linter acro...
-  source:
-    path: CLAUDE.md
-    lines: 84-85
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to use the global `pnpm lint` command inside
-    the `.claude/hooks/post-edit.sh` script. This would be too slow and broad for
-    a post-edit hook, which should instead use targeted commands like `npx prettier`
-    or `npx eslint` on the specific file passed via stdin.
-  severity: medium
-hierarchy_analysis: This task is unique because the agent must both read `CLAUDE.md`
-  to understand the project structure and simultaneously recognize that `CLAUDE.md`
-  contains flawed instructions that need to be corrected. The agent must apply the
-  instructions from the prompt to override the existing conventions in the root config
-  file.
+hierarchy_analysis: The agent must edit the root `CLAUDE.md` file, which acts as its
+  own instruction manual. The PR instructions explicitly override the existing conventions
+  in `CLAUDE.md` (e.g., changing bare `pnpm` commands to `pnpm run`). The agent must
+  apply these overrides while maintaining the rest of the file's structure.

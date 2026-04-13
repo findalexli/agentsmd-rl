@@ -247,7 +247,7 @@ def _extract_test_block(content: str, test_name_pattern: str) -> str:
         char = remaining[i]
 
         # Handle escape sequences
-        if char == '\\' and i + 1 < len(remaining):
+        if char == '\\\\' and i + 1 < len(remaining):
             i += 2
             continue
 
@@ -351,142 +351,20 @@ def test_not_stub():
 
 
 # -----------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD regression checks
-# These verify the repo's own CI checks pass on both base and gold commits
+# Pass-to-pass (repo_tests) — CI/CD commands from repo's actual CI pipeline
+# These tests run actual CI commands from the Bun repository's CI configuration
+# (.github/workflows/format.yml and lint.yml)
 # -----------------------------------------------------------------------------
 
-def test_repo_typescript_syntax_webview_chrome():
-    """Repo CI: webview-chrome.test.ts has valid TypeScript syntax (pass_to_pass)."""
-    content = _read_file("test/js/bun/webview/webview-chrome.test.ts")
+# Docker-internal path where the repo is cloned inside the container
+REPO_INTERNAL = "/workspace/bun"
 
-    # Use subprocess to execute Python AST parsing on a simulated structure
-    # This validates that the content can be parsed as structured code
-
-    # Check balanced braces
-    open_braces = content.count('{')
-    close_braces = content.count('}')
-    # Allow for small imbalance due to template strings or intentional formatting
-    assert abs(open_braces - close_braces) <= 5, \
-        f'webview-chrome.test.ts has unbalanced braces: {open_braces} open, {close_braces} close'
-
-    # Check balanced parentheses
-    open_parens = content.count('(')
-    close_parens = content.count(')')
-    assert abs(open_parens - close_parens) <= 5, \
-        f'webview-chrome.test.ts has unbalanced parentheses: {open_parens} open, {close_parens} close'
-
-    # Check for basic TypeScript structure - should have imports and test declarations
-    assert 'import ' in content, 'webview-chrome.test.ts missing import statements'
-    assert 'it(' in content or 'test(' in content or 'describe(' in content, \
-        'webview-chrome.test.ts missing test declarations'
-
-    # Verify syntax by trying to extract all function calls
-    try:
-        # Count test/it calls to ensure file has actual tests
-        test_calls = len(re.findall(r'\b(?:it|test)\s*\(', content))
-        assert test_calls >= 3, f'webview-chrome.test.ts has only {test_calls} test calls, expected at least 3'
-    except Exception as e:
-        assert False, f'Failed to parse webview-chrome.test.ts: {e}'
-
-
-def test_repo_typescript_syntax_webview():
-    """Repo CI: webview.test.ts has valid TypeScript syntax (pass_to_pass)."""
-    content = _read_file("test/js/bun/webview/webview.test.ts")
-
-    # Check balanced braces
-    open_braces = content.count('{')
-    close_braces = content.count('}')
-    assert open_braces == close_braces, \
-        f'webview.test.ts has unbalanced braces: {open_braces} open, {close_braces} close'
-
-    # Check balanced parentheses (allow 1 for potential trailing content)
-    open_parens = content.count('(')
-    close_parens = content.count(')')
-    assert abs(open_parens - close_parens) <= 1, \
-        f'webview.test.ts has unbalanced parentheses: {open_parens} open, {close_parens} close'
-
-    # Check for basic TypeScript structure
-    assert 'import ' in content, 'webview.test.ts missing import statements'
-    assert 'it(' in content or 'test(' in content or 'itRendering(' in content, \
-        'webview.test.ts missing test declarations'
-
-    # Verify syntax by counting function calls
-    try:
-        test_calls = len(re.findall(r'\b(?:it|test|itRendering)\s*\(', content))
-        assert test_calls >= 10, f'webview.test.ts has only {test_calls} test calls, expected at least 10'
-    except Exception as e:
-        assert False, f'Failed to parse webview.test.ts: {e}'
-
-
-def test_repo_imports_valid():
-    """Repo CI: webview test files have valid imports (pass_to_pass)."""
-    webview_content = _read_file("test/js/bun/webview/webview.test.ts")
-
-    # Check basic harness import exists
-    import_match = re.search(r'import\s*\{[^}]+\}\s*from\s*["\']harness["\']', webview_content)
-    assert import_match is not None, 'Could not find harness import line in webview.test.ts'
-
-    import_line = import_match.group(0)
-    assert 'isMacOS' in import_line, 'isMacOS not imported from harness'
-    assert 'isCI' in import_line, 'isCI not imported from harness'
-
-    # Verify the import line is syntactically valid using regex
-    # Valid pattern: import { ... } from 'harness' or "harness"
-    valid_import_pattern = r'import\s+\{[^}]+\}\s+from\s+["\']harness["\']'
-    assert re.search(valid_import_pattern, webview_content), \
-        'Invalid import statement format for harness imports'
-
-
-def test_repo_webview_chrome_syntax_exec():
-    """Execute Node.js syntax check on webview-chrome.test.ts."""
-    # Run actual Node.js process to check file syntax
-    result = subprocess.run(
-        ["node", "--check", f"{REPO}/test/js/bun/webview/webview-chrome.test.ts"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-
-    # Node may fail due to TypeScript-specific syntax, but we check for obvious syntax errors
-    # If Node returns a syntax error that's not TypeScript-related, we fail
-    if result.returncode != 0:
-        # Check if error is just TypeScript-related (expected since Node doesn't natively support TS)
-        # or a real syntax error like unbalanced braces
-        stderr = result.stderr.lower()
-        if "unexpected token" in stderr and "<" in stderr:
-            # This is likely TypeScript syntax, not a JS syntax error - acceptable
-            pass
-        elif "syntax error" in stderr or "unexpected" in stderr:
-            # Real syntax error
-            assert False, f"Syntax error in webview-chrome.test.ts: {result.stderr[:500]}"
-
-
-def test_repo_webview_syntax_exec():
-    """Execute Node.js syntax check on webview.test.ts."""
-    # Run actual Node.js process to check file syntax
-    result = subprocess.run(
-        ["node", "--check", f"{REPO}/test/js/bun/webview/webview.test.ts"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-
-    # Node may fail due to TypeScript-specific syntax, but we check for obvious syntax errors
-    if result.returncode != 0:
-        stderr = result.stderr.lower()
-        if "unexpected token" in stderr and "<" in stderr:
-            # This is likely TypeScript syntax, not a JS syntax error - acceptable
-            pass
-        elif "syntax error" in stderr or "unexpected" in stderr:
-            # Real syntax error
-            assert False, f"Syntax error in webview.test.ts: {result.stderr[:500]}"
-
-
-# -----------------------------------------------------------------------------
-# New Pass-to-pass (repo_tests) — CI/CD commands from repo's actual CI pipeline
-# -----------------------------------------------------------------------------
 
 def test_repo_prettier_webview_chrome():
     """Repo CI: webview-chrome.test.ts passes prettier format check (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "prettier", "--check", f"{REPO}/test/js/bun/webview/webview-chrome.test.ts"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["npx", "prettier", "--check", f"{REPO_INTERNAL}/test/js/bun/webview/webview-chrome.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_INTERNAL,
     )
     assert r.returncode == 0, f"Prettier check failed for webview-chrome.test.ts:\n{r.stderr[-500:]}"
 
@@ -494,8 +372,8 @@ def test_repo_prettier_webview_chrome():
 def test_repo_prettier_webview():
     """Repo CI: webview.test.ts passes prettier format check (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "prettier", "--check", f"{REPO}/test/js/bun/webview/webview.test.ts"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["npx", "prettier", "--check", f"{REPO_INTERNAL}/test/js/bun/webview/webview.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_INTERNAL,
     )
     assert r.returncode == 0, f"Prettier check failed for webview.test.ts:\n{r.stderr[-500:]}"
 
@@ -503,8 +381,8 @@ def test_repo_prettier_webview():
 def test_repo_js_syntax_webview_chrome():
     """Repo CI: webview-chrome.test.ts has valid Node.js syntax (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "--check", f"{REPO}/test/js/bun/webview/webview-chrome.test.ts"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        ["node", "--check", f"{REPO_INTERNAL}/test/js/bun/webview/webview-chrome.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_INTERNAL,
     )
     assert r.returncode == 0, f"Syntax check failed for webview-chrome.test.ts:\n{r.stderr[-500:]}"
 
@@ -512,10 +390,48 @@ def test_repo_js_syntax_webview_chrome():
 def test_repo_js_syntax_webview():
     """Repo CI: webview.test.ts has valid Node.js syntax (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "--check", f"{REPO}/test/js/bun/webview/webview.test.ts"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        ["node", "--check", f"{REPO_INTERNAL}/test/js/bun/webview/webview.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_INTERNAL,
     )
     assert r.returncode == 0, f"Syntax check failed for webview.test.ts:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsconfig_valid():
+    """Repo CI: tsconfig.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('/workspace/bun/tsconfig.json'))"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"tsconfig.json is not valid JSON:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_all():
+    """Repo CI: All modified webview test files pass prettier --check (pass_to_pass)."""
+    # Check both webview test files with a single command
+    r = subprocess.run(
+        ["npx", "prettier", "--check",
+         f"{REPO_INTERNAL}/test/js/bun/webview/webview.test.ts",
+         f"{REPO_INTERNAL}/test/js/bun/webview/webview-chrome.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_INTERNAL,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_node_syntax_all():
+    """Repo CI: Both webview test files pass Node.js syntax validation (pass_to_pass)."""
+    # Check webview.test.ts
+    r1 = subprocess.run(
+        ["node", "--check", f"{REPO_INTERNAL}/test/js/bun/webview/webview.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_INTERNAL,
+    )
+    assert r1.returncode == 0, f"Syntax check failed for webview.test.ts:\n{r1.stderr[-500:]}"
+
+    # Check webview-chrome.test.ts
+    r2 = subprocess.run(
+        ["node", "--check", f"{REPO_INTERNAL}/test/js/bun/webview/webview-chrome.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_INTERNAL,
+    )
+    assert r2.returncode == 0, f"Syntax check failed for webview-chrome.test.ts:\n{r2.stderr[-500:]}"
 
 
 def test_repo_imports_valid():
@@ -532,4 +448,16 @@ def test_repo_imports_valid():
 
     # Verify the import line is syntactically valid
     valid_import_pattern = r'import\s+\{[^}]+\}\s+from\s*[\"\']harness[\"\']'
-    assert re.search(valid_import_pattern, webview_content), 'Invalid import statement format for harness imports' 
+    assert re.search(valid_import_pattern, webview_content), 'Invalid import statement format for harness imports'
+
+
+def test_repo_oxlint_js():
+    """Repo CI: webview-chrome.test.ts passes oxlint (pass_to_pass)."""
+    # Run oxlint on webview-chrome.test.ts only (has no lint errors at base commit)
+    # Note: webview.test.ts has a pre-existing no-invalid-remove-event-listener issue at base
+    r = subprocess.run(
+        ["npx", "oxlint", "--config=oxlint.json", "--format=github",
+         f"{REPO_INTERNAL}/test/js/bun/webview/webview-chrome.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_INTERNAL,
+    )
+    assert r.returncode == 0, f"oxlint check failed:\n{r.stderr[-500:]}"

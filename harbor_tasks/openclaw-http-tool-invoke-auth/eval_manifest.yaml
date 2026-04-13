@@ -25,6 +25,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's TypeScript type check (pnpm tsgo) passes
+- id: test_repo_method_scopes_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's method-scopes unit tests pass
+- id: test_repo_http_auth_helpers_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's http-auth-helpers unit tests pass
+- id: test_repo_tools_invoke_http_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tools-invoke-http unit tests pass (tests the modified handler)
+- id: test_repo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's full CI check (typecheck + lint + architecture checks) passes
 - id: test_deny_list_blocks_execution_tools
   type: fail_to_pass
   origin: pr_diff
@@ -105,41 +121,64 @@ checks:
     path: CLAUDE.md
     lines: '152'
     commit: ae703ab0e7528ae215b6dd8e20dfa9b64f05a11e
-rubric:
-- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
-    as the public surface, but core code can import other core modules directly.'
-  source:
-    path: CLAUDE.md
-    lines: 16-16
-  evidence: The gold solution modifies core files (`src/gateway/tools-invoke-http.ts`)
-    and correctly imports other core modules (`../agents/tool-policy-pipeline.js`,
-    `../security/dangerous-tools.js`) using relati
-  category: architecture
 distractors:
 - rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
-    owner explicitly asked for the change.
-  collision_type: meta_confusion
-  why_distracting: The task explicitly requires fixing a security vulnerability in
-    `src/security/dangerous-tools.ts` and `src/gateway/tools-invoke-http.ts`. An agent
-    might refuse to edit these files or halt to ask for permission, citing the rule
-    against editing security-focused paths without explicit owner permission.
+    owner explicitly asked for the change or is already reviewing it with you.
+  collision_type: rule_conflict
+  why_distracting: The bug report explicitly asks to fix security gaps in `src/security/dangerous-tools.ts`
+    and `src/gateway/tools-invoke-http.ts`. An agent might refuse to edit these files
+    citing the security-focused CODEOWNERS rule, failing the task.
   severity: high
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 5-5
-- rule: 'Messaging channels: always consider all built-in + extension channels when
-    refactoring shared logic.'
+- rule: 'Import boundaries: extension production code should treat openclaw/plugin-sdk/*
+    as the public surface. Do not import core src/** directly.'
   collision_type: scope_ambiguity
-  why_distracting: The bug report specifically targets the HTTP tool invocation surface
-    (`src/gateway/tools-invoke-http.ts`). An agent might overcomplicate the PR by
-    trying to audit or refactor all other messaging channels (Telegram, Discord, etc.)
-    to ensure they also block these tools, even though the prompt notes that other
-    surfaces already handle tool filtering correctly.
+  why_distracting: An agent might mistakenly apply the extension-only import boundary
+    rule to `src/gateway/tools-invoke-http.ts` and try to avoid importing `applyOwnerOnlyToolPolicy`
+    from `src/agents/tool-policy-pipeline.js`, leading to duplicated code or incorrect
+    imports.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 18-21
-hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
-  at the root level. The rules are globally applicable. The primary conflict arises
-  from the strict security CODEOWNERS rule, which contradicts the explicit user instruction
-  to fix a security bug in restricted paths.
+    path: AGENTS.md
+    lines: 16-16
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md contain identical rules.
+  The agent must distinguish between core code (src/) and extension code to correctly
+  apply import boundaries, and must weigh the security CODEOWNERS restriction against
+  the explicit bug report instructions.
+rubric:
+- rule: Core code in src/gateway/ must use direct relative imports (../) to import
+    from other core modules, not the plugin-sdk.
+  reference: 'src/gateway/tools-invoke-http.ts imports: ../agents/tool-policy-pipeline.js,
+    ../security/dangerous-tools.js, ./http-auth-helpers.js, ./method-scopes.js'
+- rule: Security-sensitive tools (exec, spawn, shell, fs_write, fs_delete, fs_move,
+    apply_patch, nodes) must be added to DEFAULT_GATEWAY_HTTP_TOOL_DENY.
+  reference: 'src/security/dangerous-tools.ts: Added exec, spawn, shell, fs_write,
+    fs_delete, fs_move, apply_patch, nodes to deny list'
+- rule: HTTP tool invoke handler must check operator scopes before allowing tool execution.
+  reference: 'src/gateway/tools-invoke-http.ts: Added resolveGatewayRequestedOperatorScopes(req)
+    and authorizeOperatorScopesForMethod("agent", requestedScopes) check returning
+    403 on failure'
+- rule: HTTP tool invoke handler must apply owner-only tool policy before gateway
+    deny filtering.
+  reference: 'src/gateway/tools-invoke-http.ts: Added applyOwnerOnlyToolPolicy(subagentFiltered,
+    false) before gatewayDenySet filtering'
+- rule: Core code can import other core code directly, as the import boundary rule
+    restricting `src/**` imports only applies to extension production code.
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The gold solution imports `applyOwnerOnlyToolPolicy` from `../agents/tool-policy-pipeline.js`
+    and `authorizeOperatorScopesForMethod` from `./method-scopes.js`, correctly using
+    relative paths within co
+  category: architecture
+- rule: 'Import boundaries: extension production code should treat openclaw/plugin-sdk/*
+    as the public surface. Do not import core src/** directly.'
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: The gold solution imports `applyOwnerOnlyToolPolicy` from `../agents/tool-policy-pipeline.js`
+    inside `src/gateway/tools-invoke-http.ts`, correctly recognizing that core code
+    is exempt from the extensi
+  category: architecture

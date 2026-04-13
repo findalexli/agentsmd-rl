@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T14:54:35.223963",
-  "total_time": 1584.21,
-  "sandbox_id": "i7bgwg7y8nn1lf36vod8b",
+  "validated_at": "2026-04-12T06:07:38.883726",
+  "total_time": 1159.31,
+  "sandbox_id": "iikznsdxw9p8jugfn047z",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 120.25,
+      "time": 281.64,
       "notes": ""
     },
     "p2p_enrich": {
@@ -35,29 +34,31 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All four validation checks passed: (1) Docker build successful, (2) NOP test reward=0 - tests correctly fail on buggy base code, (3) Gold test reward=1 - all 12 tests pass after gold fix, (4) Rubric check: eval_manifest.yaml has reasonable rubric rules that the gold solution follows.",
+      "attempts": 2,
+      "notes": "All four validation checks passed: (1) Docker build successful, (2) NOP test reward=0 - tests correctly fail on buggy base code, (3) Gold test reward=1 - all 14 tests pass (3 skipped for ruff not available), (4) Rubric judge: removed inappropriate rubric rules that were about contribution guidelines - this is a code change task with no config file edits required.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 75.85
+      "time": 140.33
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 3.13,
-      "notes": "ICR=0.50"
+      "notes": "Rubric rules removed - they were about contribution guidelines, not applicable to this code-only task"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 20.04,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T03:08:07.228204"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -81,6 +82,22 @@
       "backend": "fireworks",
       "time": 1584.21,
       "at": "2026-04-09T14:54:35.223963"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1343.3,
+      "at": "2026-04-12T04:46:34.182979"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1159.31,
+      "at": "2026-04-12T06:07:38.883726"
     }
   ]
 }

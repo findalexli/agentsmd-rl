@@ -13,14 +13,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Python linting passes on fetch-download-metadata.py
-- id: test_repo_pyright
+- id: test_repo_ty
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Python type checking passes on fetch-download-metadata.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code is formatted correctly
 - id: test_repo_python_import
   type: pass_to_pass
   origin: repo_tests
   description: fetch-download-metadata.py can be imported as a module
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pyproject.toml is valid
+- id: test_repo_help_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Script --help runs without errors
 - id: freethreaded_suffix_stripped
   type: fail_to_pass
   origin: pr_diff
@@ -96,5 +108,5 @@ hierarchy_analysis: The repository has a single `CLAUDE.md` configuration file a
   the root. The primary challenge is that the rules are heavily tailored towards a
   Rust codebase (mentioning `cargo`, `clippy`, `panic!`, `if let`), but the bug and
   gold solution are entirely within a Python tooling script. This creates a significant
-  scope ambiguity where the agent must recognize that most of the repository-level
-  rules do not apply to this specific file.
+  scope ambiguity where the agent must recognize that commands and tests that don't
+  apply to this specific file.

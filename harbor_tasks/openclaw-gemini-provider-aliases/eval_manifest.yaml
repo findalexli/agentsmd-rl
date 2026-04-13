@@ -190,32 +190,30 @@ rubric:
     and `cloneFirstTemplateModel` exclusively from `openclaw/plugin-sdk/*` rather
     than reaching into core `src/` dir
   category: architecture
-distractors:
-- rule: For docs, UI copy, and picker lists, order services/providers alphabetically
-    unless the section is explicitly describing runtime behavior.
-  collision_type: would_cause_bug
-  why_distracting: The agent might attempt to sort the constants or the if/else prefix
-    matching branches alphabetically (`gemini-3.1-flash` before `gemini-3.1-flash-lite`).
-    Doing so would reintroduce the exact bug being fixed, as prefix matching requires
-    the longer, more specific string to be checked first.
-  severity: high
+- rule: Tests must be colocated with their source files using the `*.test.ts` extension.
   source:
-    path: CLAUDE.md
-    lines: 25-25
-- rule: 'Source code: `src/` (CLI wiring in `src/cli`, commands in `src/commands`,
-    web provider in `src/provider-web.ts`, infra in `src/infra`, media pipeline in
-    `src/media`).'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to move the modified files or the new test
-    file into a `src/` directory (e.g., `extensions/google/src/`), misunderstanding
-    that the `src/` rule applies to the core repository structure, whereas this plugin's
-    files are currently flat under `extensions/google/`.
+    path: AGENTS.md
+    lines: '10'
+  evidence: Creates `extensions/google/provider-models.test.ts` in the same directory
+    as the implementation file.
+  category: testing
+- rule: Extension code must only import from `openclaw/plugin-sdk/*` or local barrels,
+    never directly from core `src/**`.
+  source:
+    path: AGENTS.md
+    lines: '16'
+  evidence: Imports types and helpers from `openclaw/plugin-sdk/plugin-entry` and
+    `openclaw/plugin-sdk/provider-model-shared` instead of reaching into core `src/`.
+  category: architecture
+distractors:
+- rule: 'Source code: `src/` (CLI wiring in `src/cli`, commands in `src/commands`...)'
+  collision_type: architecture_boundary
+  why_distracting: 'The agent might interpret the rule that ''Source code: src/''
+    means all code or tests should be moved to the `src/` directory, conflicting with
+    the fact that this is an extension which must remain in `extensions/google/`.'
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 9-9
-hierarchy_analysis: 'The configuration hierarchy consists of `CLAUDE.md` and `AGENTS.md`,
-  which contain identical rules. The primary challenge is correctly scoping the rules:
-  distinguishing between core repository conventions (like the `src/` directory structure)
-  and extension-specific conventions (like `openclaw/plugin-sdk/*` import boundaries
-  and flat directory structures).'
+    path: AGENTS.md
+    lines: 7-7
+hierarchy_analysis: The configuration is flat, with identical rules in AGENTS.md and
+  CLAUDE.md at the repository root. No complex hierarchy traversal is required.

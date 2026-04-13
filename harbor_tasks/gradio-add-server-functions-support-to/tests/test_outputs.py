@@ -81,6 +81,70 @@ def test_repo_component_props_tests():
     assert r.returncode == 0, f"Component props tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff lint check on modified files passes (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/gradio/components/html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check on modified files passes (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/gradio/components/html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_explorer_tests():
+    """Repo's FileExplorer component tests pass (pass_to_pass) - tests server_fns functionality."""
+    subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/client/python", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", f"{REPO}/test/components/test_file_explorer.py", "-v"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"FileExplorer component tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_image_editor_tests():
+    """Repo's ImageEditor component tests pass (pass_to_pass) - tests server_fns functionality."""
+    subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/client/python", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", f"{REPO}/test/components/test_image_editor.py", "-v"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ImageEditor component tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

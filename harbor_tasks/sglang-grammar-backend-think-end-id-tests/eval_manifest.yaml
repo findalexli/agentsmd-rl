@@ -68,9 +68,29 @@ checks:
     origin: repo_tests
     description: "Production file passes black formatting check"
 
+  - id: test_repo_isort_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file passes isort import sorting check"
+
+  - id: test_repo_isort_prod_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Production file passes isort import sorting check"
+
+  - id: test_repo_codespell_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file passes codespell spell check"
+
+  - id: test_repo_codespell_prod_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Production file passes codespell spell check"
+
 rubric:
   - rule: "Prefer mock over real server — when testing logic that doesn't need a server / engine launch, use unittest.mock.patch / MagicMock and place tests in test/registered/unit/."
     source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "16"
+      path: "test/registered/unit/constrained/test_base_grammar_backend.py"
+      lines: "1-50"
       commit: 5dd2c243eb52dfd04f27b998e2595fe0c66437b1

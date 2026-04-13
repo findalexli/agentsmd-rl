@@ -543,3 +543,87 @@ def test_repo_git_tracks_modified_files():
     )
     # git check-attr returns 0 even if no attrs set, just verify command works
     assert r.returncode == 0, "git check-attr failed"
+
+
+def test_repo_oxlint_check():
+    """Build scripts pass oxlint linting (pass_to_pass).
+
+    Origin: repo_tests - Runs oxlint CLI via subprocess on bun.ts and compile.ts.
+    Matches CI lint workflow which runs oxlint on TypeScript files.
+    """
+    # Install node if needed
+    if subprocess.run(["which", "node"], capture_output=True).returncode != 0:
+        assert _install_node_via_apt(), "Failed to install nodejs"
+
+    # Install oxlint globally
+    subprocess.run(
+        ["npm", "install", "-g", "oxlint"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Run oxlint on build scripts with repo's config
+    r = subprocess.run(
+        ["oxlint", "--config=oxlint.json", "scripts/build/bun.ts", "scripts/build/compile.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"oxlint check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_shellcheck_scripts():
+    """Shell scripts pass shellcheck linting (pass_to_pass).
+
+    Origin: repo_tests - Runs shellcheck via subprocess on shell scripts.
+    Matches CI quality checks for shell script syntax and best practices.
+    """
+    # Install shellcheck via apt
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Run shellcheck on run-clang-format.sh (referenced in CI workflow)
+    # Using -x to allow following sourced files, -S error to only fail on errors (not warnings/info)
+    script_path = Path(REPO) / "scripts/run-clang-format.sh"
+    if script_path.exists():
+        r = subprocess.run(
+            ["shellcheck", "-x", "-S", "error", str(script_path)],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"shellcheck failed for run-clang-format.sh:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_editorconfig_check():
+    """Modified files comply with EditorConfig rules (pass_to_pass).
+
+    Origin: repo_tests - Runs editorconfig-checker via subprocess.
+    Validates file encoding, trailing whitespace, final newlines per .editorconfig.
+    """
+    # Install node if needed
+    if subprocess.run(["which", "node"], capture_output=True).returncode != 0:
+        assert _install_node_via_apt(), "Failed to install nodejs"
+
+    # Install editorconfig-checker globally
+    subprocess.run(
+        ["npm", "install", "-g", "editorconfig-checker"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Check modified files
+    files_to_check = [
+        "scripts/build/bun.ts",
+        "scripts/build/compile.ts",
+        "scripts/build/CLAUDE.md",
+    ]
+
+    for file in files_to_check:
+        file_path = Path(REPO) / file
+        if file_path.exists():
+            r = subprocess.run(
+                ["editorconfig-checker", str(file_path)],
+                capture_output=True, text=True, timeout=60, cwd=REPO
+            )
+            assert r.returncode == 0, f"editorconfig-checker failed for {file}:\n{r.stderr}"

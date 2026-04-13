@@ -58,44 +58,50 @@ checks:
   origin: static
   description: Modified TypeScript file exists and has expected structure
 rubric:
-- rule: 'Code changes should follow repository style: use proper imports (http.client.HTTPConnection),
-    float defaults for timeouts (15.0), triple-quoted docstrings with explanation,
-    async/await in TypeScript, and JSDoc comments.'
+- rule: 'Python code changes should follow repository style: use proper imports (http.client.HTTPConnection),
+    float defaults for timeouts (15.0), and triple-quoted docstrings with explanation.'
+  source:
+    path: gradio/node_server.py
   reference: 'gradio/node_server.py: adds ''from http.client import HTTPConnection''
-    with other imports, uses timeout=15.0 default, adds proper docstring. js/tootils/src/app-launcher.ts:
-    adds http import, async waitForServerReady function with JSDoc explaining the
-    fix.'
+    with other imports, uses timeout=15.0 default, adds proper docstring explaining
+    why TCP-only check is insufficient.'
+  category: style
+- rule: 'TypeScript code changes should follow repository style: use async/await,
+    JSDoc comments, and http module imports.'
+  source:
+    path: js/tootils/src/app-launcher.ts
+  reference: 'js/tootils/src/app-launcher.ts: adds http import, async waitForServerReady
+    function with JSDoc explaining the polling fix.'
+  category: style
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: 37-39
-  evidence: The Python solution uses the built-in `http.client.HTTPConnection` rather
-    than introducing a new dependency like `requests` or `httpx`, maintaining the
-    lightweight, standard-library-only approach of t
+    lines: '48'
+  evidence: 'The gold solution uses standard library HTTP clients (`http.client` in
+    Python, `http` in TS) and matches the existing polling loop styles (e.g., `time.sleep`
+    in Python, `Promise` with `setTimeout` in '
   category: style
 distractors:
-- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
+- rule: Use when creating or editing Gradio apps, components, event listeners, layouts,
+    or chatbots.
   collision_type: architecture_boundary
-  why_distracting: The rule states that `js/` contains frontend code. An agent might
-    assume `js/tootils/src/app-launcher.ts` runs in the browser and attempt to use
-    browser APIs like `fetch()` for the HTTP request. However, this is a Node.js test
-    launcher script, so it must use Node's `http` module.
-  severity: high
+  why_distracting: The agent might try to use the gradio skill to modify a Gradio
+    app or component to fix the flaky tests, but the fix actually belongs in the core
+    server readiness check logic.
+  severity: low
+  source:
+    path: .agents/skills/gradio
+    lines: 1-2
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to complete the task or generate code, misinterpreting
+    the rule against 'pure code-agent PRs' as a prohibition against writing the fix
+    autonomously.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 9-11
-- rule: Be consistent with the style of the surrounding code.
-  collision_type: would_cause_bug
-  why_distracting: An agent might try to make the Python and TypeScript HTTP checks
-    consistent by using the same endpoint (`/`) for both. However, using `HEAD /`
-    in the TS launcher triggers SSR rendering which can block Gradio's own startup
-    health check. The TS code must use `/gradio_api/info` instead.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 37-39
-hierarchy_analysis: The AGENTS.md file provides high-level repository structure and
-  PR guidelines. The primary conflict arises from the repository structure definitions,
-  which oversimplify the `js/` directory as purely frontend code, ignoring the Node.js
-  tooling and test infrastructure contained within it.
+    lines: 62-63
+hierarchy_analysis: The config hierarchy is flat, consisting of a single AGENTS.md
+  file and a skill description. There are no complex overrides or deep traversals
+  required.

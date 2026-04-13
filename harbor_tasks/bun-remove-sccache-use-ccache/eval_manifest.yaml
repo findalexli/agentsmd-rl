@@ -66,6 +66,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - CMake modules can be parsed by cmake without syntax errors
+- id: test_generate_perf_trace_events_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - generate-perf-trace-events.sh passes bash syntax check
+- id: test_lldb_inline_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - lldb-inline.sh passes bash syntax check
+- id: test_update_sqlite_amalgamation_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - update-sqlite-amalgamation.sh passes bash syntax check
 rubric:
 - rule: Follow existing code style - check neighboring files for patterns
   source:
@@ -136,28 +148,18 @@ config_edits:
     [`aws` CLI](https://aws.amazon.com/cli/) and invoke [`aws configure` to provide
     your AWS security info](htt'
 distractors:
-- rule: If no valid issue number is provided, find the best existing file to modify
-    instead, such as; ... test/cli/ - CLI command tests
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to find a test directory like test/cli/ or
-    test/integration/ to write tests for the build system changes. However, the JS
-    test suite is for the Bun runtime, not for CMake or bash bootstrap scripts.
+  why_distracting: The agent might attempt to write a JS/TS regression test for this
+    issue using the Jest-compatible test runner, but this PR is purely about build
+    system configuration (CMake, bash scripts) which cannot be tested this way.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 23-32
-- rule: For multi-file tests, prefer tempDir and Bun.spawn.
-  collision_type: would_cause_bug
-  why_distracting: The agent might attempt to use Bun.spawn to run scripts/bootstrap.sh
-    or cmake in a test to verify the changes. Running build/bootstrap scripts within
-    the JS test suite is inappropriate, could modify the host environment, and would
-    likely cause CI timeouts or failures.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 34-38
-hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) are identical and focus
-  entirely on testing and building the Bun runtime. Since this PR is strictly about
-  modifying the build system (CMake, bootstrap scripts) and documentation, the testing
-  guidelines in the config files are largely inapplicable and could distract the agent
-  into writing unnecessary or inappropriate JS tests for build scripts.
+    path: AGENTS.md
+    lines: 25-26
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md provide instructions
+  for building and testing Bun using its JS test runner. However, this task is entirely
+  focused on the build system (CMake, bash scripts) and documentation. The config
+  files are largely irrelevant, though the agent must avoid the distraction of trying
+  to write JS tests for a CMake change.

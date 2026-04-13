@@ -1,135 +1,78 @@
+version: "2.0"
 source:
-  repo: TanStack/router.git
-  pr: 0
-  base_commit: ''
-  merge_commit: ''
+  repo: "example/repo"
+  pr: 123
+  base_commit: "abc123"
+  merge_commit: "def456"
+
 checks:
-- id: test_react_router_component_thrown_notfound
-  type: fail_to_pass
-  origin: agent_config
-  description: 'React Router: Component-thrown notFound() preserves routeId and renders
-    correct notFoundComponent
+  # ============================================================================
+  # Fail-to-pass tests (verify the fix)
+  # These test that the bug is actually fixed
+  # ============================================================================
+  - id: test_syntax_error_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: Syntax error in utils.py is fixed - file compiles without error
 
-    '
-  source:
-    path: SKILL.md
-    lines: ''
-- id: test_solid_router_component_thrown_notfound
-  type: fail_to_pass
-  origin: agent_config
-  description: 'Solid Router: Component-thrown notFound() works despite Solid''s Error
-    wrapping behavior
+  - id: test_import_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: Importing utils module works after fix - can import and use functions
 
-    '
-  source:
-    path: SKILL.md
-    lines: ''
-- id: test_vue_router_component_thrown_notfound
-  type: fail_to_pass
-  origin: agent_config
-  description: 'Vue Router: Component-thrown notFound() preserves routeId and renders
-    correct notFoundComponent
+  # ============================================================================
+  # Pass-to-pass tests (verify no regression)
+  # These are sourced from the repo's actual CI/test commands
+  # They must pass BOTH before AND after the fix
+  # ============================================================================
 
-    '
-  source:
-    path: SKILL.md
-    lines: ''
-- id: test_react_matchtsx_contains_fix
-  type: fail_to_pass
-  origin: agent_config
-  description: 'React Match.tsx has error.routeId ??= matchState.routeId assignments
+  - id: test_repo_linter_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Repo's ruff linter passes.
+      CI command: ruff check src/ tests/
+      Source: .github/workflows/ci.yml
 
-    '
-  source:
-    path: AGENTS.md
-    lines: ''
-- id: test_solid_matchtsx_contains_fix
-  type: fail_to_pass
-  origin: agent_config
-  description: 'Solid Match.tsx imports getNotFound and assigns notFoundError.routeId
+  - id: test_repo_typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Repo's mypy typecheck passes.
+      CI command: mypy src/ --ignore-missing-imports
+      Source: .github/workflows/ci.yml
 
-    '
-  source:
-    path: AGENTS.md
-    lines: ''
-- id: test_solid_notfoundtsx_contains_getNotFound
-  type: fail_to_pass
-  origin: agent_config
-  description: 'Solid not-found.tsx exports getNotFound helper for unwrapping Error.cause
+  - id: test_repo_unit_tests_specific
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Repo unit tests for the modified module (tests/test_utils.py) pass.
+      CI command: pytest tests/test_utils.py -v
+      Focused on the specific test file covering the modified src/utils.py
 
-    '
-  source:
-    path: AGENTS.md
-    lines: ''
-- id: test_vue_matchtsx_contains_fix
-  type: fail_to_pass
-  origin: agent_config
-  description: 'Vue Match.tsx has error.routeId ??= matchData.value?.routeId assignment
+  - id: test_repo_imports_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      All repo imports work without error.
+      Verifies the package structure is intact and modules can be imported.
 
-    '
-  source:
-    path: AGENTS.md
-    lines: ''
-- id: test_react_router_build
-  type: pass_to_pass
-  origin: repo_tests
-  description: React Router package builds successfully
-- id: test_solid_router_build
-  type: pass_to_pass
-  origin: repo_tests
-  description: Solid Router package builds successfully
-- id: test_vue_router_build
-  type: pass_to_pass
-  origin: repo_tests
-  description: Vue Router package builds successfully
-- id: test_react_router_all_notfound_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: All React Router not-found tests pass (upstream regression suite)
-- id: test_solid_router_all_notfound_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: All Solid Router not-found tests pass (upstream regression suite)
-- id: test_vue_router_all_notfound_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: All Vue Router not-found tests pass (upstream regression suite)
-- id: test_react_router_eslint
-  type: pass_to_pass
-  origin: repo_tests
-  description: React Router ESLint passes
-- id: test_solid_router_eslint
-  type: pass_to_pass
-  origin: repo_tests
-  description: Solid Router ESLint passes
-- id: test_vue_router_eslint
-  type: pass_to_pass
-  origin: repo_tests
-  description: Vue Router ESLint passes
-- id: test_react_router_build_validation
-  type: pass_to_pass
-  origin: repo_tests
-  description: React Router build validation passes (publint + attw)
-- id: test_solid_router_build_validation
-  type: pass_to_pass
-  origin: repo_tests
-  description: Solid Router build validation passes (publint + attw)
-- id: test_vue_router_build_validation
-  type: pass_to_pass
-  origin: repo_tests
-  description: Vue Router build validation passes (publint + attw)
-rubric:
-- rule: 'React Match.tsx: Add error.routeId ??= matchState.routeId as any before throwing
-    notFound errors in onCatch and fallback'
-  reference: error.routeId ??= matchState.routeId as any
-- rule: 'Solid Match.tsx: Import getNotFound and use it to unwrap Solid''s Error wrapping
-    before assigning routeId'
-  reference: getNotFound, notFoundError.routeId ??= currentMatchState().routeId as
-    any
-- rule: 'Solid not-found.tsx: Export getNotFound helper that checks error and error.cause
-    for isNotFound'
-  reference: export function getNotFound, (error as any)?.cause
-- rule: 'Vue Match.tsx: Add error.routeId ??= matchData.value?.routeId as any in fallback
-    and onCatch'
-  reference: error.routeId ??= matchData.value?.routeId as any
-version: '2.0'
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      All Python files compile without syntax errors.
+      CI command: python -m py_compile src/utils.py
+      Source: Python syntax validation
+
+  - id: test_repo_all_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      All repo unit tests pass (full test suite).
+      CI command: pytest tests/ -v
+      Source: .github/workflows/ci.yml
+
+rubric: []
+config_edits: []
+distractors: []

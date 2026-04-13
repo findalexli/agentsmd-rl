@@ -153,7 +153,7 @@ def test_agents_md_documents_new_helpers():
         "AGENTS.md should document slugFromUrl helper"
 
     assert "`waitSlug(page, skip?)`" in content or "waitSlug(page, skip?)" in content or \
-           "`waitSlug(page,`" in content, \
+           "`waitSlug(page," in content, \
         "AGENTS.md should document waitSlug helper with skip parameter"
 
     # Check it describes what they do
@@ -210,6 +210,75 @@ def test_repo_e2e_typecheck_all():
         if "error TS" in line and "TS2304" not in line and "TS2580" not in line and "TS7016" not in line
     )
     assert not stderr_filtered, f"TypeScript errors in e2e package:\n{r.stderr[-800:]}"
+
+
+def test_repo_prettier_check():
+    """Repo's Prettier formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "prettier", "--check",
+         "packages/app/e2e/actions.ts",
+         "packages/app/e2e/projects/projects-switch.spec.ts",
+         "packages/app/e2e/projects/workspace-new-session.spec.ts",
+         "packages/app/e2e/projects/workspaces.spec.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_biome_lint():
+    """Repo's Biome lint check passes on e2e actions.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "@biomejs/biome", "lint", "packages/app/e2e/actions.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Biome returns 0 for warnings, non-zero for errors
+    assert r.returncode == 0, f"Biome lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsc_spec_files():
+    """TypeScript syntax check on modified spec files (pass_to_pass)."""
+    for spec_file in [PROJECTS_SWITCH_FILE, WORKSPACE_NEW_SESSION_FILE, WORKSPACES_FILE]:
+        r = subprocess.run(
+            ["bun", "x", "tsc", "--noEmit", str(spec_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        # Filter out missing type errors, only fail on syntax errors (TS1xxx)
+        syntax_errors = [line for line in r.stderr.splitlines() if "error TS1" in line]
+        assert not syntax_errors, f"TypeScript syntax errors in {spec_file.name}:\n{r.stderr[-500:]}"
+
+
+def test_repo_biome_lint_specs():
+    """Repo's Biome lint check passes on modified spec files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "@biomejs/biome", "lint",
+         "packages/app/e2e/projects/projects-switch.spec.ts",
+         "packages/app/e2e/projects/workspace-new-session.spec.ts",
+         "packages/app/e2e/projects/workspaces.spec.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Biome returns 0 for warnings, non-zero for errors
+    assert r.returncode == 0, f"Biome lint failed on spec files:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_agents_md():
+    """Repo's Prettier formatting check passes on AGENTS.md (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "prettier", "--check", "packages/app/e2e/AGENTS.md"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on AGENTS.md:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_specs():
+    """Repo's Prettier formatting check passes on all modified spec files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "prettier", "--check",
+         "packages/app/e2e/projects/projects-switch.spec.ts",
+         "packages/app/e2e/projects/workspace-new-session.spec.ts",
+         "packages/app/e2e/projects/workspaces.spec.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on spec files:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

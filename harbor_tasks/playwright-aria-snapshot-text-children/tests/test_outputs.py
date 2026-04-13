@@ -223,3 +223,10 @@ def test_repo_test_types():
     """Repo's type generation and checking passes (pass_to_pass)."""
     r = _run_npm_command("npm run test-types", timeout=NPM_TIMEOUT)
     assert r.returncode == 0, f"Test types failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_doclint_js():
+    """Repo's documentation JS code snippet linting passes (pass_to_pass)."""
+    r = _run_npm_command("node utils/doclint/linting-code-snippets/cli.js --js-only", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"Doclint JS snippets failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"

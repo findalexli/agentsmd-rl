@@ -50,37 +50,31 @@ checks:
 - id: test_repo_flow
   type: pass_to_pass
   origin: repo_tests
-  description: Repo Flow typecheck passes on shared package (pass_to_pass)
+  description: Repo Flow typecheck passes with dom-node renderer (pass_to_pass)
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
   description: Repo ESLint checks pass (pass_to_pass)
+- id: test_shared_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shared package tests pass - ensures related shared utilities work
+- id: test_react_symbols
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactSymbols tests pass - verifies REACT_ELEMENT_TYPE symbols work
+- id: test_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: License check passes - verifies no PATENTS references introduced
 rubric:
-- rule: When running tests, use --silent flag to limit output to only failures and
-    --no-watchman to avoid sandboxing issues.
-  source:
-    path: .claude/skills/test/SKILL.md
-    lines: 39-42
-    commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
-- rule: 'Run Flow type checking with a specific renderer (default: dom-node) using
-    ''yarn flow dom-node'' to catch type errors before committing.'
-  source:
-    path: .claude/skills/flow/SKILL.md
-    lines: 20-23
-    commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
-- rule: Before committing, run 'yarn prettier' to fix formatting and 'yarn linc' to
-    check for remaining lint issues that would fail CI.
-  source:
-    path: .claude/skills/fix/SKILL.md
-    lines: 8-11
-    commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
 - rule: React core files are located outside the `/compiler/` directory
   source:
     path: CLAUDE.md
     lines: 7-7
-  evidence: The gold solution modifies `packages/shared/ReactPerformanceTrackProperties.js`
-    and `packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js`, which
-    are outside the `/compiler/` director
+  evidence: The gold solution modifies `packages/shared/ReactPerformanceTrackProperties.js`,
+    which is outside the `/compiler/` directory (React Compiler is a separate package
+    under `/compiler/` while React core is in packages like `shared/` and `react-reconciler/`)
   category: architecture
 distractors:
 - rule: 'React Compiler: `/compiler/` directory (has its own instructions)'

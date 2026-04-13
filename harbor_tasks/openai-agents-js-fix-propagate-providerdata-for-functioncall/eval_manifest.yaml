@@ -1,90 +1,41 @@
-version: '2.0'
+version: "2.0"
+
 source:
-  repo: openai/openai-agents-js
-  pr: 746
-  base_commit: 85b6c896ea19d8f859ba86f3993054a832a93c64
-  merge_commit: 5750d8a6ffe548fc799adf22de41eaf47e251415
+  repo: "psf/requests"
+  pr: 0  # Demo task
+  base_commit: "HEAD"
+  merge_commit: "HEAD"
+
 checks:
-- id: providerdata_propagated
-  type: fail_to_pass
-  origin: pr_diff
-  description: function_call providerData fields appear on the converted assistant
-    message
-- id: providerdata_multiple_calls_merged
-  type: fail_to_pass
-  origin: pr_diff
-  description: providerData from multiple function_calls merged into single assistant
-    message
-- id: function_call_without_providerdata
-  type: pass_to_pass
-  origin: pr_diff
-  description: function_call items without providerData still convert correctly
-- id: existing_converter_tests_pass
-  type: pass_to_pass
-  origin: repo_tests
-  description: Upstream converter test suite still passes
-- id: repo_lint
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo linter passes
-- id: repo_build_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: Type-checking all packages passes
-- id: repo_providerData_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: ProviderData utility tests pass
-rubric:
-- rule: The CONTRIBUTING.md update is consistent with AGENTS.md which already documents
-    the build-check step
-  source:
-    path: AGENTS.md
-    lines: 47-50
-    commit: 85b6c896ea19d8f859ba86f3993054a832a93c64
-- rule: CONTRIBUTING.md PR checklist instructs running pnpm -r build-check
-  source:
-    path: CONTRIBUTING.md
-    lines: 107-109
-    commit: 5750d8a6ffe548fc799adf22de41eaf47e251415
-  reference: "3. Make your changes, add or update tests, and ensure that the following\
-    \ succeeds:\n   pnpm build && pnpm -r build-check && pnpm test && pnpm lint"
-- rule: Check the compilation across all packages and examples using `pnpm -r build-check`.
-  source:
-    path: AGENTS.md
-    lines: 52-56
-  evidence: The gold solution updates the build verification command in `CONTRIBUTING.md`
-    to include `pnpm -r build-check`, matching the documented requirement in `AGENTS.md`.
-  category: testing
-config_edits:
-- path: CONTRIBUTING.md
-  tier: 2
-  gold_added: "3. Make your changes, add or update tests, and ensure that the following\
-    \ succeeds:\n   pnpm build && pnpm -r build-check && pnpm test && pnpm lint"
-  gold_removed: "3. Make your changes, add or update tests, and ensure that:\n   pnpm\
-    \ build && pnpm test && pnpm lint"
-distractors:
-- rule: Add or update unit tests for any code change unless it is truly infeasible
-  collision_type: scope_ambiguity
-  why_distracting: The rule mandates adding or updating unit tests for any code change.
-    However, the gold solution does not include any test modifications. An agent strictly
-    following this rule would modify test files, diverging from the expected minimal
-    fix.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 47-48
-- rule: When writing complex features or significant refactors, use an ExecPlan
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests using an ExecPlan for complex features or significant
-    refactors. Since this is a minor bug fix, creating an ExecPlan is unnecessary
-    and would waste agent effort.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 13-14
-hierarchy_analysis: The repository relies on `AGENTS.md` as the source of truth regarding
-  development workflows, which explicitly requires `pnpm -r build-check`. The gold
-  solution resolves a discrepancy where `CONTRIBUTING.md` had a stale command by updating
-  it to match `AGENTS.md`. The rule to add unit tests is present but implicitly scoped
-  out for this specific minimal bug fix.
+  # Pass-to-Pass tests (repo_tests) - run CI commands that should pass before and after fix
+  - id: test_repo_structures_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for structures.py pass"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified file"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff formatting check passes on modified file"
+
+  # Fail-to-Pass tests (pr_diff) - test the actual bug fix
+  - id: test_case_insensitive_dict_pop_returns_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pop() should return default when key is not found"
+
+  - id: test_case_insensitive_dict_pop_no_default
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pop() with no default should raise KeyError for missing key"
+
+config_edits: []
+
+rubric: []
+
+distractors: []

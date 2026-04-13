@@ -62,7 +62,25 @@ checks:
     path: AGENTS.md
     lines: '15'
     commit: b92c2128ddeb679c23954c2bf6825e4d6659d501
-rubric: []
+rubric:
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 6-7
+  evidence: The gold solution modifies the logic to use `is_vllm` instead of `use_token_client`
+    without adding any comments explaining the change or referencing the old code.
+  category: style
+  verification: llm_judge
+- rule: 'Zen of Python: Explicit is better than implicit.'
+  source:
+    path: AGENTS.md
+    lines: 18-38
+  evidence: The gold solution explicitly defines `is_vllm = config.teacher_rollout_model
+    is None` rather than implicitly relying on `use_token_client` to determine if
+    the backend is vLLM.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: You are responsible for maintaining the skills folder. When a workflow fails
     and you fix it... you must update the skills to make implicit knowledge explicit.

@@ -17,6 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff format check passes on xlnet module
+- id: test_repo_ruff_check_modeling_xlnet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on the modified modeling_xlnet.py file
+- id: test_repo_ruff_format_modeling_xlnet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on the modified modeling_xlnet.py file
+- id: test_repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's custom init isort check passes
 - id: test_repo_xlnet_ast_parses
   type: pass_to_pass
   origin: repo_tests
@@ -67,6 +79,8 @@ rubric:
     path: .github/copilot-instructions.md
     lines: '15'
     commit: be6cf0848668852e3267d297211eb7e983e6c786
+  reference: Gold solution adds device=None parameter to relative_positional_encoding
+    signature and removes redundant .to() call - minimal 10-line diff
 - rule: Do not edit a Copied from block, as it will be reverted by make fix-repo.
     Edit the code it is copying from and propagate the change, or break the link if
     needed.
@@ -74,47 +88,35 @@ rubric:
     path: CLAUDE.md
     lines: '65'
     commit: be6cf0848668852e3267d297211eb7e983e6c786
+  reference: Gold solution does not edit any "Copied from" blocks - XLNet modeling
+    file has no such blocks
 - rule: When a modular file is present, generated files should not be edited directly.
     Instead, edit the modular file.
   source:
     path: CLAUDE.md
     lines: '66'
     commit: be6cf0848668852e3267d297211eb7e983e6c786
+  reference: Gold solution correctly edits XLNet modeling file directly - XLNet has
+    no modular file, it is a direct implementation
 distractors:
-- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
-    `modular` files can inherit from other models. `make fix-repo` will copy code
-    to generate standalone `modeling` and other files from the `modular` file.
-  collision_type: architecture_boundary
-  why_distracting: The agent might search for or attempt to edit `modular_xlnet.py`,
-    or try to convert the model to the new modular format, instead of directly fixing
-    the bug in `modeling_xlnet.py`.
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent is in an evaluation environment where it must output
+    the fix, but this rule instructs it to fail-closed and refuse to output PR-ready
+    code since it cannot verify coordination.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 63-65
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
+    path: AGENTS.md
+    lines: 68-71
+- rule: Do not edit a `# Copied from` block... Ideally you should edit the code it's
+    copying from... or add a file named `modular_<name>.py`
   collision_type: scope_ambiguity
-  why_distracting: The agent might refuse to make the change, misclassifying the addition
-    of a `device=None` argument and removing a `.to()` call as a 'tiny edit' or 'low-value
-    busywork', missing that it fixes a major performance bottleneck (CPU-to-GPU transfer
-    on every forward pass).
+  why_distracting: The agent might mistakenly assume it needs to search for a modular_xlnet.py
+    file or a `# Copied from` source to edit instead of directly modifying modeling_xlnet.py.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 36-38
-- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
-    Ideally you should edit the code it's copying from and propagate the change...
-  collision_type: meta_confusion
-  why_distracting: The agent might overly scrutinize the file for `# Copied from`
-    comments or hesitate to modify `modeling_xlnet.py` directly if it mistakenly believes
-    the file is auto-generated or copied from elsewhere, complicating a straightforward
-    patch.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 60-62
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical content at the root
-  level. The rules focus heavily on PR coordination, avoiding trivial edits, and managing
-  model file duplication (modular vs copied). There are no conflicting rules between
-  the files since they are duplicates.
+    path: AGENTS.md
+    lines: 73-78
+hierarchy_analysis: The repository contains identical AGENTS.md and CLAUDE.md files
+  at the root level. The primary challenge is navigating the strict agent-specific
+  contribution policies that demand coordination evidence before writing code.

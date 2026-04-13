@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T02:01:36.849004",
-  "total_time": 2300.2,
-  "sandbox_id": "iu8ejll95zr7hv2kicoim",
+  "validated_at": "2026-04-11T18:32:54.402220",
+  "total_time": 1272.72,
+  "sandbox_id": "ie2rm4fcnt81ktn0s8wch",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 200.96,
-      "notes": "CI commands discovered: ruff check, ruff format --check. Added 2 new p2p tests: test_repo_ruff_lint, test_repo_ruff_format. Dockerfile updated to include ruff, pytest, pytest-json-ctrf. All 11 p2p tests pass on base commit."
+      "notes": "CI commands discovered: ruff check, ruff format --check, python -m py_compile, python AST parsing. Added 2 new p2p repo_tests: test_repo_import_engines (verifies engine files are AST-parseable via subprocess), test_repo_engine_ast_structure (verifies FSDPEngine/MegatronEngine/ArchonEngine classes exist in AST via subprocess). Total p2p tests: 15 (all pass on base commit). Dockerfile unchanged - no modifications needed."
     },
     "improve": {
       "status": "skipped",
@@ -29,16 +28,16 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed. Fixed eval_manifest.yaml rubric by adding gold reference content that already exists in AGENTS.md.",
+      "notes": "All 4 validation checks passed. Docker build successful, NOP test reward=0, Gold test reward=1, Rubric judge ICR=1.00.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 111.28
+      "time": 75.18
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 235.2,
+      "time": 442.59,
       "notes": ""
     },
     "rubric_judge": {
@@ -47,25 +46,19 @@
       "backend": "fireworks",
       "time": 1.21,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 172.06,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 120,
-      "at": "2026-04-10T03:22:00"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 299.02,
-      "at": "2026-04-09T20:23:27.734832"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +82,22 @@
       "backend": "fireworks",
       "time": 2300.2,
       "at": "2026-04-10T02:01:36.849004"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1213.14,
+      "at": "2026-04-11T18:20:44.269652"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1272.72,
+      "at": "2026-04-11T18:32:54.402220"
     }
   ]
 }

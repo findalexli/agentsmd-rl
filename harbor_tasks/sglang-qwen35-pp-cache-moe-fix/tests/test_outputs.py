@@ -337,7 +337,97 @@ print("PASS")
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — CI/CD gates
+
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates (ADDITIONS)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI lint check with ruff for modified files
+def test_repo_ruff_check_modified():
+    """Modified files must pass ruff linter checks (pass_to_pass)."""
+    files = [
+        "python/sglang/srt/mem_cache/memory_pool.py",
+        "python/sglang/srt/model_executor/model_runner_kv_cache_mixin.py",
+        "python/sglang/srt/models/qwen3_5.py",
+        "python/sglang/srt/models/qwen3_vl.py",
+        "python/sglang/srt/disaggregation/decode.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff check on all modified files
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821"] + [f"{REPO}/{f}" for f in files],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — CI format check with black for modified files
+def test_repo_black_check_modified():
+    """Modified files must pass black format checks (pass_to_pass)."""
+    files = [
+        "python/sglang/srt/mem_cache/memory_pool.py",
+        "python/sglang/srt/model_executor/model_runner_kv_cache_mixin.py",
+        "python/sglang/srt/models/qwen3_5.py",
+        "python/sglang/srt/models/qwen3_vl.py",
+        "python/sglang/srt/disaggregation/decode.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run black --check on all modified files
+    r = subprocess.run(
+        ["black", "--check"] + [f"{REPO}/{f}" for f in files],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr}\n{r.stdout}"
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI import sort check with isort for modified files
+def test_repo_isort_check_modified():
+    """Modified files must pass isort import sort checks (pass_to_pass)."""
+    files = [
+        "python/sglang/srt/mem_cache/memory_pool.py",
+        "python/sglang/srt/model_executor/model_runner_kv_cache_mixin.py",
+        "python/sglang/srt/models/qwen3_5.py",
+        "python/sglang/srt/models/qwen3_vl.py",
+        "python/sglang/srt/disaggregation/decode.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run isort check on all modified files
+    r = subprocess.run(
+        ["isort", "--check"] + [f"{REPO}/{f}" for f in files],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — CI spell check with codespell for modified files
+def test_repo_codespell_check_modified():
+    """Modified files must pass codespell spell checks (pass_to_pass)."""
+    files = [
+        "python/sglang/srt/mem_cache/memory_pool.py",
+        "python/sglang/srt/model_executor/model_runner_kv_cache_mixin.py",
+        "python/sglang/srt/models/qwen3_5.py",
+        "python/sglang/srt/models/qwen3_vl.py",
+        "python/sglang/srt/disaggregation/decode.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run codespell check on all modified files
+    r = subprocess.run(
+        ["codespell"] + [f"{REPO}/{f}" for f in files],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stderr}\n{r.stdout}"
 
 # [repo_tests] pass_to_pass — CI syntax check for modified files
 def test_repo_py_compile_modified_files():

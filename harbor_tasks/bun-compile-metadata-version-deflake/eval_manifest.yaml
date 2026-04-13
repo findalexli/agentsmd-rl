@@ -12,11 +12,12 @@ checks:
 - id: repo_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Repo oxlint check passes on test file (npx oxlint@0.16.0)
+  description: Repo oxlint check passes on test file (npx oxlint@0.16.0 --config=oxlint.json)
 - id: repo_typescript_syntax
   type: pass_to_pass
-  origin: repo_tests
-  description: TypeScript test file has valid syntax (Node.js-based)
+  origin: static
+  description: TypeScript test file has valid syntax and structure (Node.js file content
+    analysis)
 - id: repo_prettier
   type: pass_to_pass
   origin: repo_tests
@@ -99,68 +100,63 @@ checks:
     lines: '100'
     commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
 rubric:
-- rule: Use describe.each() or test.each() for parameterized tests rather than loops
+- rule: Replace sequential for-loops over test data with test.each() or describe.each()
+    for parameterized tests to enable concurrent execution
   source:
     path: test/AGENTS.md
     lines: '4488'
     commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
-- rule: Prefer concurrent tests over sequential tests when tests spawn processes or
-    write files
+  reference: "The gold solution replaces:\n  for (const version of invalidVersions)\
+    \ { await using proc = Bun.spawn(...); }\nwith:\n  test.each([...])(\"name\",\
+    \ async ({ version }) => { await using proc = Bun.spawn(...); })\nThis removes\
+    \ the flaky sequential loop pattern and enables concurrent test execution.\n"
+- rule: Prefer concurrent tests over sequential tests when spawning processes.
   source:
     path: test/AGENTS.md
-    lines: '4266'
-    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
-- rule: 'Prefer concurrent tests over sequential tests: When multiple tests in the
-    same file spawn processes or write files, make them concurrent'
-  source:
-    path: test/CLAUDE.md
-    lines: 18-19
+    lines: 18-20
   evidence: The gold solution replaces a sequential `for` loop with `test.each`, which
-    allows the individual test cases to run concurrently under the parent `describe.concurrent`
-    block.
+    allows the tests to run concurrently because the parent `describe` block is already
+    marked with `.concurrent`.
   category: testing
-- rule: Generally, `await using` or `using` is a good idea to ensure proper resource
-    cleanup.
+- rule: When spawning Bun processes, use bunExe and bunEnv from harness.
   source:
-    path: test/CLAUDE.md
-    lines: 80-81
-  evidence: The gold solution maintains the use of `using dir = tempDir(...)` and
-    `await using proc = Bun.spawn(...)` inside the new `test.each` block to ensure
-    proper resource cleanup for each concurrent test.
-  category: style
+    path: test/AGENTS.md
+    lines: 24-25
+  evidence: The gold solution continues to use `bunExe()` and `bunEnv` from the harness
+    when calling `Bun.spawn` for the individual test cases.
+  category: testing
+- rule: 'CRITICAL: Do not set a timeout on tests.'
+  source:
+    path: test/AGENTS.md
+    lines: 102-103
+  evidence: The gold solution fixes the timeout issue by splitting the test cases
+    to utilize individual timeout budgets, rather than adding a custom timeout parameter
+    to the test function.
+  category: testing
 distractors:
 - rule: test/bundler/ - Bundler and transpiler tests. Use itBundled helper.
-  collision_type: would_cause_bug
-  why_distracting: The file is in `test/bundler/`, so the agent might try to rewrite
-    the test using the `itBundled` helper. However, this test specifically tests the
-    `--compile` flag to build a Windows executable, which requires spawning a process
-    via `Bun.spawn`. `itBundled` is for JS bundling tests and cannot test executable
-    compilation.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 35-35
-- rule: For single-file tests, prefer `-e` over `tempDir`.
-  collision_type: would_cause_bug
-  why_distracting: The test creates a single `app.js` file, so the agent might try
-    to use `-e` instead of `tempDir`. However, `bun build --compile` requires an actual
-    file path on disk to compile into an executable, so `-e` would not work.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 44-44
-- rule: When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to extract the inline `app.js` into a separate
-    `*-fixture.ts` file because the test spawns a Bun process. This is unnecessary
-    refactoring that distracts from the core issue of fixing the flaky test timeout.
-  severity: medium
+  why_distracting: The rule states to use the `itBundled` helper for tests in `test/bundler/`.
+    Since this file is in `test/bundler/`, an agent might try to refactor the test
+    to use `itBundled`. However, this test is specifically for the `--compile` CLI
+    flag (which generates an executable), so `Bun.spawn` is required and `itBundled`
+    is inappropriate.
+  severity: high
   source:
-    path: test/CLAUDE.md
-    lines: 77-78
-hierarchy_analysis: The hierarchy consists of root `CLAUDE.md`/`AGENTS.md` and `test/CLAUDE.md`/`test/AGENTS.md`.
-  The test-specific configs provide more detailed guidance on testing style, such
-  as preferring concurrent tests and specific rules for spawning processes. The root
-  config suggests using `itBundled` for `test/bundler/`, but this conflicts with the
-  specific needs of testing `--compile` which requires `Bun.spawn` as detailed in
-  the test-specific config.
+    path: AGENTS.md
+    lines: 46-47
+- rule: When a test file spawns a Bun process, we like for that file to end in *-fixture.ts.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests that files spawned by Bun in tests should end
+    in `*-fixture.ts`. The test creates an inline `app.js` file using `tempDir`. An
+    agent might unnecessarily rename this to `app-fixture.ts` or extract it, adding
+    noise to the PR.
+  severity: low
+  source:
+    path: test/AGENTS.md
+    lines: 82-83
+hierarchy_analysis: The config hierarchy is moderate, with `AGENTS.md` at the root
+  and `test/AGENTS.md` providing specific testing overrides. The root config suggests
+  using `itBundled` for the bundler directory, but the agent must recognize that this
+  specific test's nature (CLI compilation) overrides that general directory-based
+  rule.

@@ -172,6 +172,114 @@ def test_repo_precommit_sort_ci_permissions():
     assert r.returncode == 0, f"sort-ci-permissions failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
+def test_repo_precommit_check_symlinks():
+    """Repo's symlinks check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-symlinks")
+    assert r.returncode == 0, f"check-symlinks failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_destroyed_symlinks():
+    """Repo's destroyed symlinks check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("destroyed-symlinks")
+    assert r.returncode == 0, f"destroyed-symlinks failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_trailing_whitespace():
+    """Repo's trailing whitespace check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("trailing-whitespace")
+    assert r.returncode == 0, f"trailing-whitespace failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_end_of_file_fixer():
+    """Repo's end-of-file fixer check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("end-of-file-fixer")
+    assert r.returncode == 0, f"end-of-file-fixer failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_check_added_large_files():
+    """Repo's check for added large files passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-added-large-files")
+    assert r.returncode == 0, f"check-added-large-files failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_check_merge_conflict():
+    """Repo's merge conflict check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-merge-conflict")
+    assert r.returncode == 0, f"check-merge-conflict failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_check_shebang_scripts():
+    """Repo's shebang scripts executable check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("check-shebang-scripts-are-executable")
+    assert r.returncode == 0, f"check-shebang-scripts-are-executable failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_detect_private_key():
+    """Repo's private key detection check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("detect-private-key")
+    assert r.returncode == 0, f"detect-private-key failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_precommit_debug_statements():
+    """Repo's debug statements check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = _run_precommit_hook("debug-statements")
+    assert r.returncode == 0, f"debug-statements failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core structural tests
 # ---------------------------------------------------------------------------

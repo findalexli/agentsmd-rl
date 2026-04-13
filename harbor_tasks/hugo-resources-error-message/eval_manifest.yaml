@@ -9,12 +9,16 @@ rubric:
     path: AGENTS.md
     lines: '8'
     commit: 44dc3847f4c91e86b1afa2350d42559bdecbaca9
+  reference: The getImageOps function uses only local variables (img, ok, instructions,
+    msg) and does not introduce any new global state.
 - rule: Look for existing helper functions before creating new ones. Assume similar
     problems have been solved before.
   source:
     path: AGENTS.md
     lines: '9'
     commit: 44dc3847f4c91e86b1afa2350d42559bdecbaca9
+  reference: The solution modifies the existing getImageOps method rather than creating
+    new helper functions.
 - rule: Use short variable names when the context is clear.
   source:
     path: AGENTS.md
@@ -22,6 +26,7 @@ rubric:
   evidence: The gold solution uses short, idiomatic variable names like `img`, `ok`,
     and `msg` in the `getImageOps` function.
   category: naming
+  reference: Short variable names used - img, ok, msg in the getImageOps function.
 - rule: Don't use comments to explain the obvious.
   source:
     path: AGENTS.md
@@ -29,33 +34,126 @@ rubric:
   evidence: The gold solution implements the type assertion and error formatting logic
     without adding any explanatory comments.
   category: style
-distractors:
-- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead
-    of raw `if`/`t.Fatal` checks.
-  collision_type: scope_ambiguity
-  why_distracting: The prompt explicitly mentions a test file (`resources/resources_integration_test.go`)
-    to verify the changes. An agent might read this rule and decide to refactor the
-    existing test to use `qt` matchers. However, the gold solution only modifies the
-    implementation file to make the existing test pass; modifying the test file is
-    out of scope.
-  severity: medium
+  reference: No explanatory comments added - the code is self-documenting.
+- rule: 'Assume that the maintainers and readers of the code you write are Go experts:
+    Don''t use comments to explain the obvious.'
   source:
     path: AGENTS.md
-    lines: '9'
-- rule: assume that a similiar problem has been solved before, look hard for helper
-    functions before creating new ones.
-  collision_type: meta_confusion
-  why_distracting: An agent might overthink the error handling and waste time searching
-    for a Hugo-specific error formatting or panic helper function for resource errors.
-    The gold solution simply uses standard `fmt.Sprintf` and `panic`.
+    lines: 3-4
+  evidence: The gold solution adds no comments to explain the type assertion or the
+    `fmt.Sprintf` formatting, assuming the reader understands standard Go idioms.
+  category: documentation
+distractors:
+- rule: This is a project with a long history; assume that a similiar problem has
+    been solved before, look hard for helper functions before creating new ones.
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly asks to use `fmt.Sprintf` to format
+    the error message. The agent might waste time looking for a pre-existing error
+    formatting helper or custom panic wrapper in the codebase due to this rule.
   severity: low
   source:
     path: AGENTS.md
-    lines: '8'
-hierarchy_analysis: The configuration is flat, with rules defined in `AGENTS.md` and
-  included via `CLAUDE.md`. The rules emphasize brevity, assuming Go expertise, and
-  specific testing conventions. The main conflict arises from the testing instructions
-  in the prompt versus the testing rules in the config, where the agent must realize
-  that no test modifications are actually required despite the prompt pointing out
-  the test file.
+    lines: '11'
+- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead
+    of raw `if`/`t.Fatal` checks.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction points the agent to `resources/resources_integration_test.go`
+    to verify the fix. The agent might be tempted to refactor the test to use `qt`
+    matchers while looking at it, expanding the scope unnecessarily.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '12'
+hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply including
+  `AGENTS.md`. The rules are general Go guidelines that apply uniformly.
 version: '2.0'
+checks:
+- id: test_svg_width_error_message
+  type: fail_to_pass
+  origin: agent_config
+  description: SVG Width method gives improved error message with resource name, media
+    type, and hints
+- id: test_no_old_error_message
+  type: fail_to_pass
+  origin: agent_config
+  description: Old error messages are no longer present in code
+- id: test_error_message_format
+  type: fail_to_pass
+  origin: agent_config
+  description: Error message format uses fmt.Sprintf with correct format string
+- id: test_gofmt_resources
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo resources directory passes gofmt formatting check
+- id: test_gofmt_transform_go
+  type: pass_to_pass
+  origin: repo_tests
+  description: transform.go specifically passes gofmt formatting check
+- id: test_transform_go_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: transform.go has valid Go syntax according to gofmt
+- id: test_go_vet_resources_images
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go vet passes on resources/images subdirectory
+- id: test_go_build_all_possible
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go build of resources package passes or fails only due to version compatibility
+- id: test_go_vet_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go vet passes on entire project (or fails only due to Go version)
+- id: test_go_build_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full project build passes or fails only due to version compatibility
+- id: test_repo_go_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go module list check passes - module structure is valid
+- id: test_repo_check_gofmt_script
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository passes official check_gofmt.sh script from repo CI
+- id: test_repo_go_env
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go environment is properly configured
+- id: test_repo_go_mod_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go module dependencies are valid
+- id: test_repo_transform_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo transform tests pass
+- id: test_repo_resources_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo resources package tests pass
+- id: test_transform_compiles
+  type: pass_to_pass
+  origin: agent_config
+  description: transform.go has balanced braces and valid syntax indicators
+- id: test_fmt_import_present
+  type: pass_to_pass
+  origin: agent_config
+  description: fmt package is imported for fmt.Sprintf (already present before fix)
+- id: test_repo_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Essential repo files exist and are readable
+- id: test_repo_test_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Test files exist for the resources package
+- id: test_go_mod_valid
+  type: pass_to_pass
+  origin: static
+  description: go.mod is valid and readable
+- id: test_resources_package_declaration
+  type: pass_to_pass
+  origin: static
+  description: All resources package Go files have correct package declarations

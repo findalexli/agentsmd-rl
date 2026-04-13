@@ -330,3 +330,27 @@ def test_repo_check_doc_toc():
         timeout=60,
     )
     assert r.returncode == 0, f"check_doc_toc.py failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_doctest_list():
+    """Repo's check_doctest_list.py utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_doctest_list.py failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_pipeline_typing():
+    """Repo's check_pipeline_typing.py utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_pipeline_typing.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_pipeline_typing.py failed:\n{r.stderr[-500:]}"

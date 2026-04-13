@@ -90,6 +90,41 @@ def test_repo_package_scripts_defined():
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass) — repo_tests: actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_email_service_tests():
+    """Repo's email service tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/server/services/email/", "--silent=passed-only"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Email service tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_passes():
+    """Repo ESLint check on TypeScript files passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint:ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_resend_sdk_importable_via_node():
+    """The resend npm package must be importable via Node.js (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "const { Resend } = require('resend'); console.log(typeof Resend === 'function' ? 'OK' : 'FAIL');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to import resend: {r.stderr}"
+    assert "OK" in r.stdout, "Resend must be a callable constructor"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -198,3 +233,23 @@ def test_agents_md_has_project_description():
     assert "LobeHub" in content, "Project description must mention LobeHub"
     assert "AI Agent Workspace" in content, \
         "Project description must describe the project as AI Agent Workspace"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_email_index_tests():
+    """Repo's email index.test.ts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/server/services/email/index.test.ts", "--silent=passed-only"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Email index tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_email_impls_tests():
+    """Repo's email impls/index.test.ts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/server/services/email/impls/index.test.ts", "--silent=passed-only"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Email impls tests failed:\n{r.stderr[-500:]}"

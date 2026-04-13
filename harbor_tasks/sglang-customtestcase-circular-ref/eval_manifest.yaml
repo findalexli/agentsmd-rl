@@ -37,6 +37,31 @@ checks:
     origin: repo_tests
     description: "Repo CI: black --check passes (code formatting)"
 
+  - id: test_repo_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: codespell passes (spell checking)"
+
+  - id: test_repo_precommit_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: pre-commit check-ast hook passes"
+
+  - id: test_repo_precommit_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: pre-commit trailing-whitespace hook passes"
+
+  - id: test_repo_precommit_eof
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: pre-commit end-of-file-fixer hook passes"
+
+  - id: test_repo_precommit_debug
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: pre-commit debug-statements hook passes"
+
   - id: dill_no_recursive_ref_warning
     type: fail_to_pass
     origin: pr_diff
@@ -72,14 +97,4 @@ checks:
     origin: static
     description: "__init_subclass__ has meaningful logic, not gutted to pass/return"
 
-rubric:
-  - rule: "Always use CustomTestCase — never raw unittest.TestCase. It ensures tearDownClass runs even when setUpClass fails, preventing resource leaks in CI."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "18"
-      commit: "afb32d76224e39d1226273d4a4a7fc568bd36b8c"
-  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources (e.g. cls.process) that setUpClass may not have finished allocating."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "19"
-      commit: "afb32d76224e39d1226273d4a4a7fc568bd36b8c"
+rubric: []

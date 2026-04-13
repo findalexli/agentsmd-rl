@@ -52,30 +52,31 @@ def test_no_bare_putdirect_in_tojson():
     Must use an index-safe variant like putDirectMayBeIndex, putDirectIndex,
     putByIndex, put, or defineOwnProperty."""
     r = _run_py(
-        'import re, sys\n'
-        'from pathlib import Path\n'
-        'text = Path("' + str(FILE) + '").read_text()\n'
-        'm = re.search(r"CookieMap::toJSON\\b[^{]*\\{", text)\n'
-        'if not m:\n'
-        '    print("FAIL:toJSON_not_found")\n'
-        '    sys.exit(0)\n'
-        'start = m.end()\n'
-        'depth = 1\n'
-        'i = start\n'
-        'while i < len(text) and depth > 0:\n'
-        '    if text[i] == "{": depth += 1\n'
-        '    elif text[i] == "}": depth -= 1\n'
-        '    i += 1\n'
-        'body = text[start:i-1]\n'
-        'bare = re.findall(r"->putDirect\\s*\\(", body)\n'
-        'if bare:\n'
-        '    print(f"FAIL:bare_putdirect:{len(bare)}")\n'
-        '    sys.exit(0)\n'
-        'safe = re.findall(r"->(?:putDirectMayBeIndex|putDirectIndex|putByIndex|put|defineOwnProperty)\\s*\\(", body)\n'
-        'if not safe:\n'
-        '    print("FAIL:no_safe_variant")\n'
-        '    sys.exit(0)\n'
-        'print("PASS")\n'
+        """import re, sys
+from pathlib import Path
+text = Path(""" + repr(str(FILE)) + """).read_text()
+m = re.search(r"CookieMap::toJSON\\b[^{]*\\{", text)
+if not m:
+    print("FAIL:toJSON_not_found")
+    sys.exit(0)
+start = m.end()
+depth = 1
+i = start
+while i < len(text) and depth > 0:
+    if text[i] == "{": depth += 1
+    elif text[i] == "}": depth -= 1
+    i += 1
+body = text[start:i-1]
+bare = re.findall(r"->putDirect\\s*\\(", body)
+if bare:
+    print(f"FAIL:bare_putdirect:{len(bare)}")
+    sys.exit(0)
+safe = re.findall(r"->(?:putDirectMayBeIndex|putDirectIndex|putByIndex|put|defineOwnProperty)\\s*\\(", body)
+if not safe:
+    print("FAIL:no_safe_variant")
+    sys.exit(0)
+print("PASS")
+"""
     )
     assert r.returncode == 0, f"Script error: {r.stderr}"
     assert "PASS" in r.stdout, f"Unsafe putDirect in toJSON: {r.stdout.strip()}"
@@ -86,37 +87,38 @@ def test_all_insertion_paths_safe():
     """Both modified-cookie and original-cookie loops must use index-safe
     property insertion. Accepts: two safe calls, or one call in a merged loop."""
     r = _run_py(
-        'import re, sys\n'
-        'from pathlib import Path\n'
-        'text = Path("' + str(FILE) + '").read_text()\n'
-        'm = re.search(r"CookieMap::toJSON\\b[^{]*\\{", text)\n'
-        'if not m:\n'
-        '    print("FAIL:toJSON_not_found")\n'
-        '    sys.exit(0)\n'
-        'start = m.end()\n'
-        'depth = 1\n'
-        'i = start\n'
-        'while i < len(text) and depth > 0:\n'
-        '    if text[i] == "{": depth += 1\n'
-        '    elif text[i] == "}": depth -= 1\n'
-        '    i += 1\n'
-        'body = text[start:i-1]\n'
-        'all_puts = re.findall(r"->(putDirect\\w*|putByIndex|put|defineOwnProperty)\\s*\\(", body)\n'
-        'unsafe = [p for p in all_puts if p == "putDirect"]\n'
-        'safe = [p for p in all_puts if p in ("putDirectMayBeIndex", "putDirectIndex", "putByIndex", "put", "defineOwnProperty")]\n'
-        'if unsafe:\n'
-        '    print(f"FAIL:unsafe_calls:{unsafe}")\n'
-        '    sys.exit(0)\n'
-        'if len(safe) >= 2:\n'
-        '    print("PASS")\n'
-        '    sys.exit(0)\n'
-        'if len(safe) == 1:\n'
-        '    if re.search(r"\\bfor\\s*\\(|\\bwhile\\s*\\(", body):\n'
-        '        print("PASS")\n'
-        '        sys.exit(0)\n'
-        '    print("FAIL:single_safe_no_loop")\n'
-        '    sys.exit(0)\n'
-        'print("FAIL:no_insertion_calls")\n'
+        """import re, sys
+from pathlib import Path
+text = Path(""" + repr(str(FILE)) + """).read_text()
+m = re.search(r"CookieMap::toJSON\\b[^{]*\\{", text)
+if not m:
+    print("FAIL:toJSON_not_found")
+    sys.exit(0)
+start = m.end()
+depth = 1
+i = start
+while i < len(text) and depth > 0:
+    if text[i] == "{": depth += 1
+    elif text[i] == "}": depth -= 1
+    i += 1
+body = text[start:i-1]
+all_puts = re.findall(r"->(putDirect\\w*|putByIndex|put|defineOwnProperty)\\s*\\(", body)
+unsafe = [p for p in all_puts if p == "putDirect"]
+safe = [p for p in all_puts if p in ("putDirectMayBeIndex", "putDirectIndex", "putByIndex", "put", "defineOwnProperty")]
+if unsafe:
+    print(f"FAIL:unsafe_calls:{unsafe}")
+    sys.exit(0)
+if len(safe) >= 2:
+    print("PASS")
+    sys.exit(0)
+if len(safe) == 1:
+    if re.search(r"\\bfor\\s*\\(|\\bwhile\\s*\\(", body):
+        print("PASS")
+        sys.exit(0)
+    print("FAIL:single_safe_no_loop")
+    sys.exit(0)
+print("FAIL:no_insertion_calls")
+"""
     )
     assert r.returncode == 0, f"Script error: {r.stderr}"
     assert "PASS" in r.stdout, f"Not all insertion paths safe: {r.stdout.strip()}"
@@ -128,29 +130,30 @@ def test_dedup_avoids_hasproperty():
     on numeric keys). Accept: HashSet tracking, restructured iteration, or
     any approach that avoids hasProperty on the result object."""
     r = _run_py(
-        'import re, sys\n'
-        'from pathlib import Path\n'
-        'text = Path("' + str(FILE) + '").read_text()\n'
-        'm = re.search(r"CookieMap::toJSON\\b[^{]*\\{", text)\n'
-        'if not m:\n'
-        '    print("FAIL:toJSON_not_found")\n'
-        '    sys.exit(0)\n'
-        'start = m.end()\n'
-        'depth = 1\n'
-        'i = start\n'
-        'while i < len(text) and depth > 0:\n'
-        '    if text[i] == "{": depth += 1\n'
-        '    elif text[i] == "}": depth -= 1\n'
-        '    i += 1\n'
-        'body = text[start:i-1]\n'
-        'has_prop = re.findall(r"->hasProperty\\s*\\(", body)\n'
-        'if not has_prop:\n'
-        '    print("PASS")\n'
-        '    sys.exit(0)\n'
-        'if re.search(r"HashSet|std::set|std::unordered_set|WTF::HashSet|std::unordered_map", body):\n'
-        '    print("PASS")\n'
-        '    sys.exit(0)\n'
-        'print("FAIL:hasproperty_without_tracking")\n'
+        """import re, sys
+from pathlib import Path
+text = Path(""" + repr(str(FILE)) + """).read_text()
+m = re.search(r"CookieMap::toJSON\\b[^{]*\\{", text)
+if not m:
+    print("FAIL:toJSON_not_found")
+    sys.exit(0)
+start = m.end()
+depth = 1
+i = start
+while i < len(text) and depth > 0:
+    if text[i] == "{": depth += 1
+    elif text[i] == "}": depth -= 1
+    i += 1
+body = text[start:i-1]
+has_prop = re.findall(r"->hasProperty\\s*\\(", body)
+if not has_prop:
+    print("PASS")
+    sys.exit(0)
+if re.search(r"HashSet|std::set|std::unordered_set|WTF::HashSet|std::unordered_map", body):
+    print("PASS")
+    sys.exit(0)
+print("FAIL:hasproperty_without_tracking")
+"""
     )
     assert r.returncode == 0, f"Script error: {r.stderr}"
     assert "PASS" in r.stdout, (
@@ -365,3 +368,141 @@ def test_cookiemap_tracked_in_git():
 def test_cookiemap_file_exists():
     """CookieMap.cpp file must exist at the expected path (pass_to_pass)."""
     assert FILE.exists(), f"CookieMap.cpp not found at {FILE}"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo file tracking validation
+# Verifies CookieMap.cpp is actually tracked by git and not just an untracked file
+def test_git_cookiemap_in_index():
+    """CookieMap.cpp must be in git index (not just untracked file).
+    Git-based CI check to verify file is part of the repository (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "ls-files", "--error-unmatch", "src/bun.js/bindings/CookieMap.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"CookieMap.cpp not tracked in git index: {repr(r.stderr)}"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI whitespace validation
+# Uses git to detect whitespace errors in the file
+def test_git_cookiemap_whitespace():
+    """CookieMap.cpp must have no whitespace errors (trailing whitespace, etc.).
+    Git-based CI check for code quality (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "diff-index", "--check", "--cached", "HEAD", "--", "src/bun.js/bindings/CookieMap.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Whitespace errors found in CookieMap.cpp: {repr(r.stderr)}"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo git history validation
+# Verifies CookieMap.cpp has git history (not a newly created file without commits)
+def test_cookiemap_has_history():
+    """CookieMap.cpp must have git history (at least one commit touching it).
+    Git-based CI validation for file history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "log", "--oneline", "--follow", "-1", "--", "src/bun.js/bindings/CookieMap.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Git log failed for CookieMap.cpp: {repr(r.stderr)}"
+    # Verify we got actual commit output
+    output = r.stdout.strip()
+    assert len(output) > 0, "No git history found for CookieMap.cpp"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - git blame validation
+# Verifies the toJSON method has existed in the file history
+def test_cookiemap_tojson_has_history():
+    """CookieMap::toJSON method must have implementation history.
+    Git-based CI validation to ensure method exists in codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "grep", "-n", "toJSON", "src/bun.js/bindings/CookieMap.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"toJSON not found in CookieMap.cpp via git grep: {repr(r.stderr)}"
+    # Verify we found the toJSON method definition
+    assert "toJSON" in r.stdout, "toJSON method not found in CookieMap.cpp"
+
+
+# ---------------------------------------------------------------------------
+# Additional Pass-to-pass (repo_tests) — CI/CD checks from repository
+# Added during p2p enrichment
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - package.json validation (package.json linting in CI)
+def test_package_json_valid():
+    """package.json must be valid JSON (pass_to_pass)."""
+    import json
+    pkg_path = Path(REPO) / "package.json"
+    try:
+        with open(pkg_path) as f:
+            json.load(f)
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"package.json is not valid JSON: {e}")
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - verifies C++ header guards and includes
+def test_cookiemap_header_exists():
+    """CookieMap.h header file must exist and have proper guards (pass_to_pass)."""
+    header_path = Path(REPO) / "src" / "bun.js" / "bindings" / "CookieMap.h"
+    assert header_path.exists(), "CookieMap.h not found"
+    content = header_path.read_text()
+    has_guard = "#pragma once" in content or ("#ifndef" in content and "#define" in content)
+    assert has_guard, "CookieMap.h missing header guard or #pragma once"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - verifies C++ source file syntax/encoding
+def test_cookiemap_valid_utf8():
+    """CookieMap.cpp must be valid UTF-8 (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "open('" + str(FILE) + "', encoding='utf-8').read(); print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"CookieMap.cpp is not valid UTF-8: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - git attributes validation
+def test_git_attributes_valid():
+    """Repository must have valid .gitattributes file (pass_to_pass)."""
+    attrs_path = Path(REPO) / ".gitattributes"
+    if not attrs_path.exists():
+        pytest.skip(".gitattributes not found")
+    # Check it is parseable
+    r = subprocess.run(
+        ["git", "-C", REPO, "check-attr", "-a", "src/bun.js/bindings/CookieMap.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    # git check-attr returns 0 even if no attributes, only fails on parse error
+    assert r.returncode == 0, f"Git attributes check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - checks that required CI scripts exist
+def test_ci_scripts_exist():
+    """CI scripts referenced by workflows must exist (pass_to_pass)."""
+    scripts = [
+        "scripts/run-clang-format.sh",
+    ]
+    for script in scripts:
+        script_path = Path(REPO) / script
+        assert script_path.exists(), f"CI script {script} not found"

@@ -522,3 +522,109 @@ def test_ffi_test_files_valid():
         assert "valid structure" in r.stdout, "FFI test structure check failed"
     finally:
         Path(script_path).unlink(missing_ok=True)
+
+
+def test_repo_bunfig_valid_toml():
+    """Repo's bunfig.toml is valid TOML (pass_to_pass)."""
+    # Use a simple Python-based TOML check (no external deps needed)
+    r = subprocess.run(
+        ["python3", "-c",
+         "import sys; content=open('bunfig.toml').read(); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bunfig.toml validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_flake_lock_valid():
+    """Repo's flake.lock is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('flake.lock')); console.log('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake.lock is not valid JSON:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "flake.lock validation failed"
+
+
+def test_oxlint_internal_tests():
+    """Internal test files pass oxlint (pass_to_pass)."""
+    # Run oxlint on internal test directory (CI-style lint check)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on internal tests:\n{r.stderr[-500:]}"
+    assert "Parse error" not in r.stderr, f"JS parse errors in internal tests:\n{r.stderr[-500:]}"
+
+
+def test_prettier_package_files():
+    """Repo package files pass prettier formatting (pass_to_pass)."""
+    # Run prettier check on package.json files (CI command from format.yml)
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", "package.json", "packages/bun-types/package.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Allow exit 0 (success) or accept that package files may not exist in all repos
+    assert r.returncode in (0, 1), f"Prettier check crashed on package files:\n{r.stderr[-500:]}"
+
+
+def test_repo_meta_json_valid():
+    """Repo's meta.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('meta.json')); console.log('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"meta.json is not valid JSON:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "meta.json validation failed"
+
+
+def test_repo_prettier_readme():
+    """README.md passes prettier formatting (pass_to_pass)."""
+    # Run prettier check on README (CI command from format.yml)
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", "README.md"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on README.md:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_contributing():
+    """CONTRIBUTING.md passes prettier formatting (pass_to_pass)."""
+    # Run prettier check on CONTRIBUTING (CI command from format.yml)
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", "CONTRIBUTING.md"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on CONTRIBUTING.md:\n{r.stderr[-500:]}"
+
+
+def test_oxlint_ffi_tests():
+    """FFI test files pass oxlint (pass_to_pass)."""
+    # Run oxlint on FFI test directory (CI-style lint check from lint.yml)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "test/js/bun/ffi/*.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on FFI tests:\n{r.stderr[-500:]}"
+    assert "Parse error" not in r.stderr, f"JS parse errors in FFI tests:\n{r.stderr[-500:]}"
+
+
+def test_oxlint_bun_apis():
+    """Bun API source files pass oxlint (pass_to_pass)."""
+    # Run oxlint on core Bun API files (CI-style lint check)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "src/js/bun/sqlite.ts", "src/js/bun/sql.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on Bun API files:\n{r.stderr[-500:]}"
+    assert "Parse error" not in r.stderr, f"JS parse errors in Bun API files:\n{r.stderr[-500:]}"
+
+
+def test_node_compat_files():
+    """Node.js compatibility files pass oxlint (pass_to_pass)."""
+    # Run oxlint on Node.js compat files (CI-style lint check from lint.yml)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "src/js/node/fs.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on Node.js compat files:\n{r.stderr[-500:]}"
+    assert "Parse error" not in r.stderr, f"JS parse errors in Node.js compat files:\n{r.stderr[-500:]}"

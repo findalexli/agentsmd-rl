@@ -295,3 +295,60 @@ def test_repo_node_modules_json5_available():
     )
     assert r.returncode == 0, f"json5 not available: {r.stderr}"
     assert "1" in r.stdout, "json5 should parse and return correct value"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsconfig_json_valid():
+    """Repo's playground tsconfig.json is valid JSON (pass_to_pass)."""
+    tsconfig_path = f"{REPO}/compiler/apps/playground/tsconfig.json"
+    r = subprocess.run(
+        ["node", "-e", f"JSON.parse(require('fs').readFileSync('{tsconfig_path}')); console.log('VALID_JSON');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsconfig.json is not valid JSON:\n{r.stderr}"
+    assert "VALID_JSON" in r.stdout, "tsconfig.json should be valid JSON"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslintrc_json_valid():
+    """Repo's playground .eslintrc.json is valid JSON (pass_to_pass)."""
+    eslintrc_path = f"{REPO}/compiler/apps/playground/.eslintrc.json"
+    r = subprocess.run(
+        ["node", "-e", f"JSON.parse(require('fs').readFileSync('{eslintrc_path}')); console.log('VALID_JSON');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f".eslintrc.json is not valid JSON:\n{r.stderr}"
+    assert "VALID_JSON" in r.stdout, ".eslintrc.json should be valid JSON"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yarn_install_frozen_lockfile():
+    """Repo's playground yarn install --frozen-lockfile passes (pass_to_pass)."""
+    # This mimics the CI step that validates lockfile integrity
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/compiler/apps/playground",
+    )
+    assert r.returncode == 0, f"yarn install --frozen-lockfile failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_page_spec_ts_syntax():
+    """Repo's page.spec.ts e2e test file has valid syntax (pass_to_pass)."""
+    page_spec_path = f"{REPO}/compiler/apps/playground/__tests__/e2e/page.spec.ts"
+    r = subprocess.run(
+        ["node", "--check", page_spec_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"page.spec.ts has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check_page_spec():
+    """Repo's page.spec.ts passes prettier formatting check (pass_to_pass)."""
+    page_spec_path = f"{REPO}/compiler/apps/playground/__tests__/e2e/page.spec.ts"
+    r = subprocess.run(
+        ["npx", "prettier", "--check", page_spec_path],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"page.spec.ts fails prettier check:\n{r.stderr}{r.stdout}"

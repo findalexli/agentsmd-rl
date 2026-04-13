@@ -44,8 +44,60 @@ checks:
   description: Modified TypeScript files pass Prettier formatting check
 - id: repo_imports_check
   type: pass_to_pass
+  origin: static
+  description: Import statements in modified files have balanced braces (static check)
+- id: repo_prettier_list_different
+  type: pass_to_pass
   origin: repo_tests
-  description: Import statements in modified files are syntactically valid
+  description: Modified files pass Prettier --list-different formatting check
+- id: repo_json_parse_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json files parse correctly as JSON via Node.js JSON.parse
+- id: repo_turbo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo turbo.json is valid JSON used by the build system
+- id: repo_pnpm_workspace_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pnpm-workspace.yaml is valid for monorepo builds
+- id: repo_root_package_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo root package.json is valid JSON defining workspace scripts
+- id: repo_prettier_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo prettier.config.js has valid JavaScript syntax
+- id: repo_trigger_sdk_tsconfig_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: SDK tsconfig files are valid JSON for tsc --noEmit
+- id: repo_sdk_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: SDK TypeScript files have valid Node.js 22 syntax
+- id: repo_docs_triggering_mdx_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation triggering.mdx is readable for CI processing
+- id: repo_cursor_rules_writing_mdc_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cursor rules writing-tasks.mdc is readable for CI validation
+- id: repo_changeset_markdown_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changeset markdown files are readable via Node.js
+- id: repo_v3_catalog_tsconfig_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: V3 catalog tsconfig is valid JSON for monorepo builds
+- id: repo_trigger_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: V3 catalog trigger.config.ts has valid Node.js syntax
 - id: triggerandpoll_function_removed
   type: fail_to_pass
   origin: pr_diff
@@ -81,6 +133,21 @@ rubric:
     path: AGENTS.md
     lines: 1-10
     commit: 21c2c136beec90c28ec46c895561f5b3c258ec06
+- rule: Repository layout defines `packages/*` for published packages and `references/*`
+    for example projects.
+  source:
+    path: AGENTS.md
+    lines: 6-12
+  evidence: The gold solution correctly modifies files across the monorepo workspaces
+    described in the layout, including `packages/trigger-sdk` and `references/v3-catalog`.
+  category: architecture
+- rule: Formatting is enforced using Prettier.
+  source:
+    path: AGENTS.md
+    lines: 44-45
+  evidence: The gold solution explicitly runs `prettier --write` on the modified TypeScript
+    files (`shared.ts`, `tasks.ts`, `sdkUsage.ts`) after making the deletions.
+  category: tooling
 config_edits:
 - path: .changeset/slow-games-drum.md
   tier: 2
@@ -98,19 +165,30 @@ config_edits:
   gold_added: ''
   gold_removed: ''
 distractors:
-- rule: 'Unit tests use vitest. Run all tests: pnpm run test'
+- rule: Unit tests use vitest. Run tests for a specific workspace or prefer running
+    a single test file from within its directory.
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on how to run and locate
+    unit tests. An agent might assume it needs to find and delete test files for `triggerAndPoll`,
+    or run the test suite to verify its removal. However, the task instructions strictly
+    scope the removal to the implementation, exports, references, and docs, with no
+    test files involved.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 34-36
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the entire test suite or look for
-    tests specifically testing `triggerAndPoll` to remove them. While removing tests
-    for removed code is generally good practice, the instructions and gold solution
-    do not require test modifications, and running the full test suite in this monorepo
-    would waste significant time.
+    lines: 33-41
+- rule: Do not commit directly to the main branch. All changes should be made in a
+    separate branch and go through a pull request.
+  collision_type: meta_confusion
+  why_distracting: The config instructs not to to commit directly to main and to use
+    a separate branch/PR. An agent might try to execute git commands (`git checkout
+    -b`, `git commit`) to fulfill this rule, which falls outside the scope of standard
+    file-editing benchmarks and could cause the evaluation script to fail.
   severity: low
-hierarchy_analysis: The only config file provided is AGENTS.md at the root level.
-  It provides a high-level overview of the monorepo structure (apps, packages, docs,
-  references) which helps the agent understand where to look for the files mentioned
-  in the prompt, but it does not contain specific coding guidelines that directly
-  impact how the removal should be performed.
+  source:
+    path: AGENTS.md
+    lines: 46-47
+hierarchy_analysis: The config hierarchy is flat, consisting only of a root-level
+  `AGENTS.md` file. The agent must apply the global Prettier formatting rule while
+  navigating across multiple workspaces (SDK, docs, references) and meta-instruction
+  files.

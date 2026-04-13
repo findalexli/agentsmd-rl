@@ -100,7 +100,7 @@ if (!threadCode.includes("tui.heapsnapshot")) {
 }
 const hasRpcCall = threadCode.includes('client.call("snapshot"') ||
     threadCode.includes("client.call('snapshot'") ||
-    /client\.call\s*\(\s*["'`]snapshot["'`]/.test(threadCode);
+    /client[.]call[^S]*(["'`]snapshot["'`])/.test(threadCode);
 if (!hasRpcCall) {
     console.error("FAIL: onSnapshot must call RPC snapshot method via client.call");
     process.exit(1);
@@ -121,13 +121,13 @@ if (!appCode.includes("onSnapshot")) {
     process.exit(1);
 }
 const hasOptionalOnSnapshot = appCode.includes("onSnapshot?:") ||
-    /onSnapshot\s*\?\:\s*\(\s*\)\s*=>\s*Promise/.test(appCode);
+    /onSnapshot[?][^S]*:[^S]*\\([^)]*\\)[^S]*=>[^S]*Promise/.test(appCode);
 if (!hasOptionalOnSnapshot) {
     console.error("FAIL: onSnapshot must be optional in tui input type");
     process.exit(1);
 }
 const passesOnSnapshot = appCode.includes("onSnapshot={input.onSnapshot}") ||
-    /onSnapshot\s*=\s*\{\s*input\.onSnapshot\s*\}/.test(appCode);
+    /onSnapshot[^S]*=[^S]*{[^}]*input.onSnapshot[^}]*}/.test(appCode);
 if (!passesOnSnapshot) {
     console.error("FAIL: onSnapshot must be passed from input to App component");
     process.exit(1);
@@ -196,13 +196,13 @@ def test_repo_typecheck():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_tui_thread_tests():
-    """TUI thread tests pass (pass_to_pass) — covers modified thread.ts."""
+def test_repo_tui_tests():
+    """TUI CLI tests pass (pass_to_pass) — covers modified thread.ts and related TUI functionality."""
     r = subprocess.run(
-        ["bun", "test", "test/cli/tui/thread.test.ts"],
+        ["bun", "test", "test/cli/tui/"],
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
     )
-    assert r.returncode == 0, f"TUI thread tests failed"
+    assert r.returncode == 0, f"TUI CLI tests failed"
 
 
 # [repo_tests] pass_to_pass

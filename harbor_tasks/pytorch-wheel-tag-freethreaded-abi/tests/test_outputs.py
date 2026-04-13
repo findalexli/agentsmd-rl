@@ -414,6 +414,17 @@ def test_repo_shell_scripts_syntax():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_check_binary_symbols_compiles():
+    """check_binary_symbols.py must compile without errors (pass_to_pass)."""
+    binary_symbols_path = "/workspace/.ci/pytorch/smoke_test/check_binary_symbols.py"
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", binary_symbols_path],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"check_binary_symbols.py failed to compile:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_check_gomp_compiles():
     """check_gomp.py must compile without errors (pass_to_pass)."""
     gomp_path = "/workspace/.ci/pytorch/smoke_test/check_gomp.py"
@@ -444,3 +455,83 @@ def test_repo_check_wheel_tags_imports():
     )
     assert r.returncode == 0, f"check_wheel_tags.py import failed:\n{r.stderr}"
     assert "OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_smoke_test_py_compiles():
+    """smoke_test.py must compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "/workspace/.ci/pytorch/smoke_test/smoke_test.py"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"smoke_test.py failed to compile:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_max_autotune_py_compiles():
+    """max_autotune.py must compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "/workspace/.ci/pytorch/smoke_test/max_autotune.py"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"max_autotune.py failed to compile:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_common_sh_syntax():
+    """common.sh must have valid shell syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "/workspace/.ci/pytorch/common.sh"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"common.sh has shell syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_common_build_sh_syntax():
+    """common-build.sh must have valid shell syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "/workspace/.ci/pytorch/common-build.sh"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"common-build.sh has shell syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_binary_populate_env_sh_syntax():
+    """binary_populate_env.sh must have valid shell syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "/workspace/.ci/pytorch/binary_populate_env.sh"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"binary_populate_env.sh has shell syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_binary_sh_syntax():
+    """check_binary.sh must have valid shell syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "/workspace/.ci/pytorch/check_binary.sh"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"check_binary.sh has shell syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_sh_syntax():
+    """build.sh must have valid shell syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "/workspace/.ci/pytorch/build.sh"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"build.sh has shell syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_run_tests_sh_syntax():
+    """run_tests.sh must have valid shell syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "/workspace/.ci/pytorch/run_tests.sh"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"run_tests.sh has shell syntax errors:\n{r.stderr}"

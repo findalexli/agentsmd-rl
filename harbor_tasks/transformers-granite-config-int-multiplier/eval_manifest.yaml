@@ -130,34 +130,23 @@ distractors:
 - rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
     do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: In an isolated evaluation environment, the agent cannot search
-    GitHub for coordination evidence. Following this rule strictly would cause the
-    agent to refuse to generate the patch.
+  why_distracting: The rule mandates failing closed and refusing to output PR-ready
+    code if coordination evidence is missing, which would cause the agent to refuse
+    the benchmark task.
   severity: high
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 49-52
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+- rule: 'Copies and Modular Models: Do not edit a `# Copied from` block, edit the
+    source and propagate using `make fix-repo`.'
   collision_type: scope_ambiguity
-  why_distracting: The fix only changes a few type hints (adding `| int`), which looks
-    like a tiny edit. The agent might refuse to fix it, but it's actually a critical
-    bug fix for model loading, not just a lint cleanup.
+  why_distracting: The rule suggests relying on `make fix-repo` to propagate changes
+    to copied files, which might lead the agent to only edit one file instead of all
+    three as explicitly requested in the instructions.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 35-37
-- rule: Copies are kept in sync by `make fix-repo`. Ideally you should edit the code
-    it's copying from and propagate the change.
-  collision_type: would_cause_bug
-  why_distracting: The agent might assume the Moe configs are copied from the base
-    Granite config and only edit the base one, expecting `make fix-repo` to propagate
-    the changes. However, the hint explicitly says to apply the fix consistently across
-    all three, and they have different fields (e.g., `| None` in Moe configs), meaning
-    they aren't exact copies for these lines.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 56-58
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The rules focus
-  heavily on repository contribution policies and managing code duplication across
-  models.
+    path: AGENTS.md
+    lines: 54-59
+hierarchy_analysis: The configuration consists of flat, identical boilerplate files
+  (AGENTS.md and CLAUDE.md) at the repository root. There is no deep hierarchy or
+  overriding behavior between directories.

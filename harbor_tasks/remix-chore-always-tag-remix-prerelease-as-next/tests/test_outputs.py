@@ -54,6 +54,37 @@ def test_repo_lint():
     assert r.returncode == 0, f"Lint failed: {r.stderr[-500:] or r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Prettier formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed: {r.stderr[-500:] or r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed: {r.stderr[-500:] or r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_changes_preview():
+    """Repo's changes:preview passes (pass_to_pass). Previews release changes."""
+    # changes:preview shows which packages will be released and what the CHANGELOG will look like
+    r = subprocess.run(
+        ["node", "./scripts/changes-preview.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"changes:preview failed: {r.stderr[-500:] or r.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files parse without syntax errors."""

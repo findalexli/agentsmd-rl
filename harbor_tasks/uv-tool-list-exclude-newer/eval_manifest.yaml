@@ -46,24 +46,29 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: uv-cli tests compile successfully
+- id: test_repo_cargo_check_uv_settings
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-settings crate compiles successfully with cargo check
+- id: test_repo_cargo_check_uv_tool
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-tool crate compiles successfully with cargo check
+- id: test_repo_cargo_test_uv_integration_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv integration tests compile successfully including tool_list tests
+- id: test_repo_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting check passes with cargo fmt --all --check
+- id: test_repo_clippy_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy linting passes for uv crate with no warnings
 rubric:
-- rule: ALWAYS attempt to add a test case for changed behavior
-  source:
-    path: CLAUDE.md
-    lines: '2'
-    commit: 2cf99b91ec336f3884c400634e61ec6d1bd77e5a
-- rule: PREFER integration tests, e.g., at `it/...` over unit tests
-  source:
-    path: CLAUDE.md
-    lines: '3'
-    commit: 2cf99b91ec336f3884c400634e61ec6d1bd77e5a
-- rule: ALWAYS read and copy the style of similar tests when adding new cases
-  source:
-    path: CLAUDE.md
-    lines: '15'
-    commit: 2cf99b91ec336f3884c400634e61ec6d1bd77e5a
 - rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
-    `requires_python` instead of `rp`
+    `requires_python` instead of `rp'
   source:
     path: CLAUDE.md
     lines: 17-18
@@ -76,25 +81,19 @@ rubric:
     at the top level (`use uv_settings::{Combine, ResolverInstallerOptions};`) rather
     than being used as a fully qualified name in
   category: style
-- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
-  source:
-    path: CLAUDE.md
-    lines: 16-17
-  evidence: The gold solution uses full, descriptive variable names like `exclude_newer`
-    and `filesystem` in `crates/uv/src/commands/tool/list.rs` and `crates/uv-cli/src/lib.rs`
-    rather than shortening them to `en
-  category: naming
 distractors:
-- rule: ALWAYS attempt to add a test case for changed behavior
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests
   collision_type: scope_ambiguity
-  why_distracting: Testing `--exclude-newer` requires setting up a mock package registry
-    with specific upload timestamps. This is highly complex and out of scope for simply
-    wiring up an existing flag to a new subcommand. An agent attempting to fulfill
-    this rule would likely waste significant time or produce broken tests.
+  why_distracting: The gold solution does not add tests. Testing `--exclude-newer`
+    requires setting up a mock package registry with specific upload dates, which
+    is highly complex and out of scope for this specific PR's wiring task. An agent
+    strictly following this rule would waste significant time trying to write integration
+    tests.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 2-2
-hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root level,
-  so there are no hierarchical conflicts. The rules are generally applicable, but
-  the testing mandate conflicts with the practical scope of this specific PR.
+    lines: 2-3
+- rule: PREFER [`TypeName`] references when writing Rust doc comments
+  collision_type: rule_conflict
+  why_distracting: The agent might try to use `[

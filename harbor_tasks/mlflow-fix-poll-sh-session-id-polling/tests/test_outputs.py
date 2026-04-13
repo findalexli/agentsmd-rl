@@ -104,6 +104,79 @@ def test_repo_git_tracked_copilot_files():
     assert ".claude/skills/copilot/SKILL.md" in tracked, "SKILL.md not tracked by git"
 
 
+def test_repo_shellcheck_poll_sh():
+    """poll.sh must pass shellcheck linting (pass_to_pass)."""
+    # Install shellcheck if not present (CI environments often lack it)
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True,
+        timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["shellcheck", ".claude/skills/copilot/poll.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"shellcheck failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_mlflow_typo_copilot_files():
+    """Copilot skill files must pass MLflow typo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "dev/mlflow-typo.sh", ".claude/skills/copilot/poll.sh", ".claude/skills/copilot/SKILL.md"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"MLflow typo check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_poll_sh_permissions():
+    """poll.sh must be executable (pass_to_pass)."""
+    r = subprocess.run(
+        ["test", "-x", ".claude/skills/copilot/poll.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, "poll.sh is not executable"
+
+
+def test_repo_no_trailing_whitespace():
+    """Copilot skill files must not have trailing whitespace (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", 'grep -n " $" .claude/skills/copilot/poll.sh .claude/skills/copilot/SKILL.md || true'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    # grep returns 0 if matches found, 1 if no matches, 2 if error
+    # We want no matches (exit code 1 with our || true, it's always 0 but output will be empty if no matches)
+    assert r.stdout.strip() == "", f"Trailing whitespace found:\n{r.stdout}"
+
+
+def test_repo_no_tabs():
+    """Copilot skill files must not contain tabs (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", 'grep -n "$\\t" .claude/skills/copilot/poll.sh .claude/skills/copilot/SKILL.md || true'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert r.stdout.strip() == "", f"Tab characters found:\n{r.stdout}"
+
+
 # [static] pass_to_pass - FILE CONTENT CHECKS (not actual CI commands)
 def test_copilot_skill_files_exist():
     """Copilot skill files must exist (poll.sh and SKILL.md)."""
@@ -181,7 +254,7 @@ def test_skill_md_has_required_fields():
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # -----------------------------------------------------------------------------
 
 
@@ -207,7 +280,7 @@ def test_poll_no_timeline_api():
         session_id="sess-xyz-789", repo="owner/repo", pr="42"
     )
     assert r.returncode == 0, (
-        f"poll.sh failed — may still be using timeline API:\n{r.stderr}"
+        f"poll.sh failed - may still be using timeline API:\n{r.stderr}"
     )
     assert "timeline" not in calls.lower(), (
         f"poll.sh still calls timeline API:\n{calls}"
@@ -215,7 +288,7 @@ def test_poll_no_timeline_api():
 
 
 # -----------------------------------------------------------------------------
-# Config/doc update tests (pr_diff) — SKILL.md changes
+# Config/doc update tests (pr_diff) - SKILL.md changes
 # -----------------------------------------------------------------------------
 
 

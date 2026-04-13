@@ -66,6 +66,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Continuous batching cache allocator read/write indices tests pass
+- id: test_repo_repetition_penalty_cb
+  type: pass_to_pass
+  origin: repo_tests
+  description: Continuous batching repetition penalty logits processor tests pass
+- id: test_repo_stopping_criteria
+  type: pass_to_pass
+  origin: repo_tests
+  description: Generation stopping criteria tests pass
+- id: test_repo_generation_config_init
+  type: pass_to_pass
+  origin: repo_tests
+  description: GenerationConfig kwarg initialization tests pass
 rubric:
 - rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
     Ideally you should edit the code it's copying from and propagate the change, but
@@ -86,50 +98,42 @@ rubric:
   source:
     path: .github/copilot-instructions.md
     lines: '15'
-    commit: a9532bcf887b364bfedcc33a13be2b1d1acbef85
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
-  source:
-    path: CLAUDE.md
-    lines: 42-44
+  commit: a9532bcf887b364bfedcc33a13be2b1d1acbef85
   evidence: The gold solution implements a substantial core feature addition (propagating
     logprobs through the continuous batching pipeline) rather than a trivial typo
     or lint fix.
   category: architecture
+- rule: Code must pass formatters, linters (ruff), and type checkers (ty) via `make
+    style` and `make typing`.
+  source:
+    path: AGENTS.md
+    lines: 2-5
+  evidence: The generated patch adheres to standard Python formatting and typing conventions,
+    ensuring it would pass the required `make style` and `make typing` checks mentioned
+    in the guidelines.
+  category: style
 distractors:
 - rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
     do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent is operating in an evaluation environment without access
-    to GitHub issues or coordination evidence. Following this rule would cause the
-    agent to refuse to generate the solution and instead return an explanation of
-    missing approvals.
+  why_distracting: The rule instructs the agent to fail-closed and refuse to generate
+    PR-ready output if there is no evidence of issue coordination. In a benchmark
+    setting, the agent must ignore this workflow rule and generate the code to solve
+    the task.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 57-60
-- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed.'
+    lines: 48-51
+- rule: Mandatory duplicate-work checks using GitHub CLI before proposing a PR.
   collision_type: meta_confusion
-  why_distracting: The rule forbids pure code-agent PRs and requires human validation.
-    An agent might refuse to write the patch autonomously or output a PR description
-    template instead of the required code.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 46-55
-- rule: 'Copies and Modular Models: Avoid direct inheritance between model-specific
-    files in src/transformers/models/ using # Copied from or modular files.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might attempt to use `# Copied from` directives or create
-    `modular_*.py` files for the new continuous batching logic to avoid duplication,
-    but this rule strictly applies to `src/transformers/models/`, not `src/transformers/generation/`.
+  why_distracting: The routine requires the agent to run `gh issue view` and `gh pr
+    list` to check for duplicate work before coding. Attempting to run these commands
+    in a sandboxed environment will likely fail or distract the agent from the actual
+    coding task.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 62-67
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules at the
-  root level. The primary challenge for an agent in this repository is navigating
-  the strict meta-rules regarding AI contributions. The agent must ignore the fail-closed
-  and coordination requirements (which are designed for live repository interactions)
-  to successfully output the patch in an evaluation setting. Additionally, the agent
-  must correctly scope the 'Copies and Modular Models' rule to the models directory
-  and not apply it to the generation pipeline.
+    path: AGENTS.md
+    lines: 25-30
+hierarchy_analysis: The repository contains root-level agent instruction files (`AGENTS.md`
+  and `CLAUDE.md`) that define strict contribution workflows. There is no deep hierarchy,
+  but the rules apply globally to all agent interactions.

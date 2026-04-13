@@ -45,6 +45,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's child_process unref survives spec test passes
+- id: child_process_fork_conditions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process fork conditions spec test passes
+- id: child_process_node_cli_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process node CLI args spec test passes
 rubric:
 - rule: Node.js compatibility code is in ext/node/polyfills/. When reviewing these
     files, check behavior against Node.js docs, not just Deno conventions.
@@ -58,31 +66,24 @@ rubric:
     lines: '39'
     commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
 distractors:
-- rule: 'tests/unit/ - Unit tests
-
-    tests/specs/ - Integration tests (spec tests)'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to add tests for this Node.js polyfill bug
-    in `tests/unit/` or `tests/specs/`. However, Node.js compatibility tests in Deno
-    typically have their own specific structure (like a dedicated node_compat folder
-    or running standard Node tests), so attempting to add standard Deno unit tests
-    for this would lead to confusion and out-of-scope changes.
+- rule: Before committing, make sure `tools/format.js` is run to format your code
+  collision_type: rule_conflict
+  why_distracting: Running a repository-wide or file-wide formatter might introduce
+    unrelated formatting changes, violating the 'Keep your changes minimal' rule and
+    causing a bloated PR.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 50-51
-- rule: 'Execute your development build:
-
-    ./target/debug/deno eval ''console.log("Hello from dev build")'''
-  collision_type: meta_confusion
-  why_distracting: The bug is specific to Windows `cmd.exe` escaping. If the agent
-    tries to verify the fix locally using the provided development build commands
-    on a Linux/Unix environment, the Windows-specific code path in `escapeShellArg`
-    won't be exercised, leading to confusion about whether the fix works.
+    lines: 23-24
+- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
+    --js` and fix any lint errors before committing
+  collision_type: rule_conflict
+  why_distracting: Fixing pre-existing lint errors in the file would constitute drive-by
+    changes, conflicting with the instruction to keep changes minimal.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 70-72
-hierarchy_analysis: The repository has a single CLAUDE.md file at the root level providing
-  general guidelines for Deno development. No deeper config files exist to override
-  these rules.
+    lines: 25-26
+hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`) containing
+  general repository guidelines. There is an inherent tension between the rules to
+  run formatters/linters and the rule to keep changes minimal.

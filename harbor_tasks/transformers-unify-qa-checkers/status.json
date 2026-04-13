@@ -1,30 +1,30 @@
 {
   "schema_version": 2,
   "verdict": "pass",
-  "nop_reward": 0,
-  "gold_reward": 1,
-  "validated_at": "2026-04-10T13:20:56.803001",
-  "total_time": 1456.71,
-  "sandbox_id": "irexdh6r7l7str794nk5k",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-12T06:20:58.601741",
+  "total_time": 1897.95,
+  "sandbox_id": "ifoacnaeannxq84x7hoap",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "validate": {
       "status": "pass",
-      "nop_reward": 0,
-      "gold_reward": 1,
-      "attempts": 1,
-      "notes": "Fixed Docker build (changed --depth=100 to full clone for old commit), fixed solve.sh argparse bug (nargs='+' to nargs='*' to allow --list without checkers), fixed dependency_versions_table.py typo (tomliw -> tomli). Tests modified to skip pass-to-pass import test when dependencies are missing.",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh (nargs=\"+\" to nargs=\"*\" for --list support), fixed Dockerfile (added typing_extensions, huggingface_hub, safetensors), updated tests (added skip logic for import test when optional deps missing). All 4 validation checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 272.95
+      "time": 221.84
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 367.92,
+      "time": 194.89,
       "notes": ""
     },
     "p2p_enrich": {
@@ -32,7 +32,7 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 171.64,
-      "notes": ""
+      "notes": "Enriched with 5 additional pass-to-pass gates using actual CI commands from .circleci/config.yml and Makefile."
     },
     "improve": {
       "status": "skipped",
@@ -47,17 +47,19 @@
       "backend": "fireworks",
       "time": 2.34,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 18.54,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T04:23:58.588531"
-    },
     {
       "verdict": "pass",
       "nop": 0,
@@ -81,6 +83,22 @@
       "backend": "fireworks",
       "time": 1456.71,
       "at": "2026-04-10T13:20:56.803001"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2148.47,
+      "at": "2026-04-12T05:00:21.969832"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1897.95,
+      "at": "2026-04-12T06:20:58.601741"
     }
   ]
 }

@@ -35,36 +35,67 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git repository is in valid state with proper base commit
-rubric:
-- rule: Comments should accurately explain the MSan limitation with struct padding
-- rule: When writing text such as documentation, comments, or commit messages, write
-    names of functions and methods as `f` instead of `f()`
+- id: test_repo_submodules_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git submodules configuration is valid
+- id: test_repo_cmake_lists_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CMakeLists.txt files are valid and parseable
+- id: test_repo_clang_syntax_fiber_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Fiber.h and FiberStack.cpp have valid C++ syntax
+- id: test_repo_no_bom_in_modified_files
+  type: pass_to_pass
+  origin: static
+  description: PR-modified files have no UTF-8 BOM
+- id: test_repo_no_windows_newlines_in_cpp
+  type: pass_to_pass
+  origin: static
+  description: C++ files use Unix newlines (LF) not Windows (CRLF)
+- id: test_repo_pr_files_not_executable
+  type: pass_to_pass
+  origin: static
+  description: Source files are not executable
+- id: test_repo_boost_cmake_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Boost CMakeLists.txt has valid syntax and required definitions
+distractors:
+- rule: New documentation files must also include a frontmatter block at the top (before
+    the first heading) with description, sidebar_label, etc.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction asks to create a 'new test file documenting the
+    MSan limitation'. An agent might fixate on the word 'documenting' and attempt
+    to apply the documentation rules (adding a frontmatter block with slug, title,
+    etc.) to the C++ test file, which would cause compilation errors.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 9-9
-  evidence: In `src/Common/tests/gtest_dragonbox_msan.cpp`, the comment refers to
-    `FiberStack::allocate` and `__msan_unpoison` without parentheses, following the
-    mathematical purity convention.
-  category: style
-distractors:
-- rule: 'Wrap literal names from ClickHouse SQL language, classes and functions, or
-    literal excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+    lines: 7-7
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions... inside inline
+    code blocks.
   collision_type: scope_ambiguity
-  why_distracting: The rule explicitly mentions 'comments', which might lead an agent
-    to use markdown backticks around `FiberStack::allocate` and `__msan_unpoison`
-    in the C++ comments. However, the gold solution demonstrates that standard C++
-    comments in this codebase do not use markdown backticks for class/function names.
-  severity: medium
+  why_distracting: The rule requires wrapping class and function names in inline
+    code blocks (backticks) in comments. However, the gold solution does not use
+    backticks for `FiberStack::allocate` or `__msan_unpoison` in the C++ comments,
+    likely because standard C++ `///` comments in this file don't use markdown
+    formatting.
+  severity: low
   source:
     path: AGENTS.md
     lines: 5-5
-hierarchy_analysis: The AGENTS.md file provides general guidelines for the repository.
-  The rule regarding function parentheses is correctly applied to C++ comments, but
-  the rule regarding markdown backticks in comments is too broad and does not apply
-  to standard C++ source file comments, creating a scope ambiguity.
+hierarchy_analysis: The configuration consists of a single flat file (`AGENTS.md`)
+  at the root level. There are no hierarchical conflicts, but the agent must carefully
+  distinguish between rules intended for Markdown documentation and rules intended
+  for C++ source code comments.
 version: '2.0'
 source:
   repo: ClickHouse/ClickHouse
   pr: 102158
   base_commit: 97e4a1a630071d7b2ec74b2639d0d6727f8034c9
   merge_commit: 231542d8cbfd94a8a73cd0a8f436a7227847d3a3
+rubric: []

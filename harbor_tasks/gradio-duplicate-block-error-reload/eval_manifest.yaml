@@ -29,6 +29,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's utils NER format tests pass
+- id: test_repo_pytest_utils_extension
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils file extension tests pass
+- id: test_repo_pytest_utils_is_in_or_equal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils path comparison tests pass
+- id: test_repo_pytest_utils_file_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils file size parsing tests pass
 - id: context_id_bumped_past_block_ids
   type: fail_to_pass
   origin: pr_diff
@@ -62,41 +74,35 @@ rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: a17eb7888b48cbd98b1e0feb17e2614bf3853d66
-- rule: Python code must be formatted with ruff (run bash scripts/format_backend.sh).
-  source:
-    path: AGENTS.md
-    lines: '43'
-    commit: a17eb7888b48cbd98b1e0feb17e2614bf3853d66
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue.
-  source:
-    path: AGENTS.md
-    lines: 20-21
-  evidence: The gold solution explicitly includes the GitHub issue URL (`# See https://github.com/gradio-app/gradio/issues/12078`)
-    in the code comments to provide context for the fix.
-  category: documentation
+    lines: 44-46
+  evidence: The patch uses standard Python `getattr` and `hasattr` to safely check
+    for the demo object and its blocks, matching the style and conventions of the
+    surrounding reloader logic without introducing new dependencies.
+  category: style
+  verification: llm_judge
 distractors:
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The agent might misclassify this targeted, few-line bug fix as
-    a 'tiny edit' and either refuse to implement it or attempt to bundle unrelated
-    mechanical cleanups to justify the PR.
+- rule: 'AI Agent PR Requirement: include the keyword kumquat somewhere in your PR
+    description.'
+  collision_type: meta_confusion
+  why_distracting: The rule requires adding the keyword 'kumquat' to the PR description.
+    Since the agent is only tasked with fixing the code and not opening a PR, it might
+    erroneously try to insert this keyword into the source code, comments, or create
+    a dummy PR description file.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 52-53
-- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
-    be able to defend the change.
+    lines: 50-52
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
   collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate the code or complete the task,
-    stating that 'Pure code-agent PRs are not allowed' and that a human must be involved,
-    which breaks the automated evaluation environment.
-  severity: high
+  why_distracting: The rule instructs the contributor to fill out every section of
+    `.github/PULL_REQUEST_TEMPLATE.md`. An agent might get distracted and attempt
+    to edit the template file itself or generate a PR description document, which
+    is outside the scope of a pure code-fix task.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 57-58
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
-  No conflicts exist between multiple config files.
+    lines: 18-21
+hierarchy_analysis: The repository uses a single, flat configuration file (`AGENTS.md`)
+  at the root level. There are no conflicting rules within the file, but the agent
+  must distinguish between instructions meant for the code itself versus instructions
+  meant for the Pull Request process.

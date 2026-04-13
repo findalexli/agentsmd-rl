@@ -110,25 +110,27 @@ rubric:
     than a mechanical cleanup or typo fix.
   category: architecture
 distractors:
-- rule: Fail-closed behavior for agents
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent is tasked with generating a patch for a specific bug
-    in an evaluation setting. If it strictly follows the fail-closed policy requiring
-    coordination evidence, it will refuse to generate the patch and fail the evaluation.
+  why_distracting: The task prompt does not provide coordination evidence (issue links,
+    approval). Following this rule would cause the agent to refuse to generate the
+    patch, failing the benchmark task.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 57-60
-- rule: Copies and Modular Models
-  collision_type: architecture_boundary
-  why_distracting: The agent might mistakenly assume `configuration_utils.py` is subject
-    to the `# Copied from` synchronization mechanism and search for copies to update,
-    but this rule only applies to model-specific files in `src/transformers/models/`.
-  severity: medium
+    path: AGENTS.md
+    lines: 64-68
+- rule: 'Avoid direct inheritance between model-specific files in src/transformers/models/
+    by using # Copied from or modular_<name>.py files.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule applies to model-specific files in `src/transformers/models/`,
+    but the agent might mistakenly apply it to `configuration_utils.py` and look for
+    `# Copied from` blocks or try to create a modular file.
+  severity: low
   source:
-    path: CLAUDE.md
-    lines: 62-67
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  agent must navigate meta-instructions that forbid generating PR-ready output without
-  coordination evidence, which conflicts with the evaluation environment's goal of
-  producing a patch.
+    path: AGENTS.md
+    lines: 70-76
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md are identical and sit
+  at the root level. They contain meta-instructions for agent behavior (coordination,
+  fail-closed) that conflict with the standard benchmark evaluation paradigm where
+  the agent must output code regardless of missing issue links.

@@ -152,7 +152,7 @@ console.log(JSON.stringify({ count: arr.length, versions }));
 # CI/CD-derived (pass_to_pass) — repo_tests
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — oxlint check
+# [repo_tests] pass_to_pass — oxlint CI check (runs actual CI command)
 def test_repo_lint():
     """Repo's oxlint check passes on test file (pass_to_pass)."""
     r = subprocess.run(
@@ -162,9 +162,9 @@ def test_repo_lint():
     assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — TypeScript syntax validation via Node.js
+# [static] pass_to_pass — TypeScript syntax validation via Node.js (file content analysis, not CI command)
 def test_repo_typescript_syntax():
-    """TypeScript test file has valid syntax (pass_to_pass)."""
+    """TypeScript test file has valid syntax and structure (pass_to_pass)."""
     r = _run_node("""\
 import { readFileSync } from 'fs';
 
@@ -202,7 +202,7 @@ try {
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass — Prettier formatting check
+# [repo_tests] pass_to_pass — Prettier formatting CI check (runs actual CI command)
 def test_repo_prettier():
     """Repo's Prettier formatting check passes on test file (pass_to_pass)."""
     r = subprocess.run(
@@ -212,7 +212,7 @@ def test_repo_prettier():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — EditorConfig compliance check
+# [repo_tests] pass_to_pass — EditorConfig compliance CI check (runs actual CI command)
 def test_repo_editorconfig():
     """Repo's EditorConfig check passes on test file (pass_to_pass)."""
     r = subprocess.run(

@@ -54,6 +54,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Modified file passes ruff formatting check (CI: make style)'
+- id: ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Modified file passes ruff linting check (CI: make style)'
 - id: check_inits
   type: pass_to_pass
   origin: repo_tests
@@ -66,63 +70,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified module can be imported without errors
-rubric:
-- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
-    only one or two lines long, and do not need large comments, docstrings or new
-    functions in this case. Aim to minimize the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
-- rule: 'Do not edit a # Copied from block, as it will be reverted by make fix-repo.
-    Ideally you should edit the code it''s copying from and propagate the change,
-    but you can break the # Copied from link if needed.'
-  source:
-    path: CLAUDE.md
-    lines: '66'
-    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
-- rule: When a modular file is present, generated files should not be edited, as changes
-    will be overwritten by make fix-repo! Instead, edit the modular file.
-  source:
-    path: CLAUDE.md
-    lines: '67'
-    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
-  source:
-    path: CLAUDE.md
-    lines: 37-39
-  evidence: The gold solution implements a complex optimization to avoid redundant
-    parsing of large tokenizer files, saving ~0.4 seconds per load. This addresses
-    a significant performance bottleneck, aligning wit
-  category: architecture
+- id: transformers_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Transformers package can be imported without errors
+- id: tokenizers_lib_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizers library is available and functional
 distractors:
-- rule: 'Avoid direct inheritance between model-specific files in src/transformers/models/
-    and use # Copied from.'
-  collision_type: scope_ambiguity
-  why_distracting: The rule restricts direct inheritance and mandates the use of `#
-    Copied from` for files in `src/transformers/models/`. The agent might incorrectly
-    apply this to `src/transformers/tokenization_utils_tokenizers.py`, which is a
-    core utility file outside the `models/` directory, potentially avoiding standard
-    class structures or searching for `# Copied from` directives that don't exist
-    here.
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The repository's agent policy strictly forbids proceeding to PR-ready
+    output without coordination evidence or issue approval. An agent might refuse
+    to generate the bug fix because the user prompt does not provide an issue link
+    or proof of coordination.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 58-62
-- rule: 'Many tests are marked as ''slow'' and skipped by default in the CI. To run
-    them, use: RUN_SLOW=1 pytest ...'
+    path: AGENTS.md
+    lines: 48-52
+- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
+    open PRs and issue ownership using gh CLI.'
   collision_type: meta_confusion
-  why_distracting: Because the bug is explicitly about a performance issue (0.4s per
-    load), an agent might try to write a performance test and mark it as slow, or
-    attempt to run all slow tests to verify the performance improvement. Running all
-    slow tests locally would waste a massive amount of time and compute during the
-    agent's run.
+  why_distracting: The policy mandates running `gh issue view` and `gh pr list` before
+    proposing a PR. An agent might waste time trying to execute these CLI commands
+    in the sandbox environment instead of focusing on the code fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 6-6
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical rules. The rules
-  primarily focus on repository-wide contribution policies, CI checks, and model-specific
-  architectural patterns (like `# Copied from`). Since the target file is a core utility
-  outside the `models/` directory, the model-specific rules do not apply, requiring
-  the agent to correctly scope the guidelines.
+    path: AGENTS.md
+    lines: 25-31
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. These files define strict contribution policies for AI
+  agents, including mandatory coordination and fail-closed behaviors. There are no
+  code-level style rules that apply to the specific file being edited (`src/transformers/tokenization_utils_tokenizers.py`),
+  meaning the primary challenge is navigating the meta-instructions.

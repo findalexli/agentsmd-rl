@@ -59,6 +59,30 @@ checks:
   origin: static
   description: 'asRef preserves existing ref-based behavior (ref patterns return {
     ref: value })'
+- id: repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency checks pass for playwright-core (node utils/check_deps.js)
+- id: repo_check_deps_tools
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency checks pass for tools directory (node utils/check_deps.js)
+- id: repo_check_deps_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency checks pass for cli directory (node utils/check_deps.js)
+- id: repo_modified_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified files exist and contain valid code
+- id: repo_eslint_tools
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified tool files (npm run eslint)
+- id: repo_eslint_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified CLI files (npm run eslint)
 - id: repo_lint_packages
   type: pass_to_pass
   origin: repo_tests
@@ -72,77 +96,28 @@ checks:
   origin: repo_tests
   description: Repo builds successfully (npm run build)
 rubric:
-- rule: SKILL.md update is consistent with the style of existing documentation sections
+- rule: SKILL.md is updated with selector targeting documentation
   source:
     path: packages/playwright-core/src/skill/SKILL.md
     lines: 1-10
     commit: 8bb752159dcd7bdf914a9b6d310c15dda84d0682
-config_edits:
-- path: packages/playwright-core/src/skill/SKILL.md
-  tier: 1
-  gold_added: '## Targeting elements
+  reference: '## Targeting elements
 
 
-    By default, use refs from the snapshot to interact with page elements.
-
-
-    ```bash
-
-    # get snapshot with refs
-
-    playwright-cli snapshot
-
-
-    # interact using a ref
-
-    playwright-cli click e15
-
-    ```
-
-
-    You can also use css or role selectors, for example when explicitly asked for
-    it.
-
-
-    ```bash
-
-    # css selector
-
-    playwright-cli click "#main > button.submit"
-
-
-    # role selector
-
-    playwright-cli click "role=button[name=Submit]"
-
-
-    # chaining css and role selectors
-
-    playwright-cli click "#footer >> role=button[name=Submit]"
-
-    ```'
-  gold_removed: ''
+    By default, use refs from the snapshot...'
+config_edits: []
 distractors:
-- rule: '`docs/src/` API documentation — source of truth for public TypeScript types'
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to document the new selector support in `docs/src/api/`
-    because the rule states it is the source of truth for API documentation. However,
-    MCP tools and the daemon CLI are internal/agent-facing, and the prompt explicitly
-    requests updating `SKILL.md` instead.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 33-34
-- rule: 'Test Directories and Fixtures: `tests/mcp/` for MCP tools via `client.callTool()`'
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to write tests for the new MCP tool selector
-    functionality in `tests/mcp/`. While generally good practice, the gold solution
-    does not include test changes, making this out of scope for the specific PR requirements.
+  why_distracting: The config states that `docs/src/` is the source of truth for API
+    documentation. An agent might mistakenly try to document the new CLI/MCP selector
+    feature in the public API docs, but this is an internal tool feature and the instruction
+    explicitly requests updating the agent's own `SKILL.md` file.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: '76'
-hierarchy_analysis: The `CLAUDE.md` file provides general repository guidelines, including
-  strict rules about where documentation and tests belong. However, the prompt's specific
-  instruction to update `SKILL.md` overrides the general documentation rule for this
-  specific agent-facing feature.
+    lines: 34-35
+hierarchy_analysis: The configuration consists of a single root CLAUDE.md file. The
+  primary challenge is not hierarchy resolution, but rather distinguishing between
+  public documentation rules in the config and the explicit instruction to update
+  the agent's internal skill documentation.

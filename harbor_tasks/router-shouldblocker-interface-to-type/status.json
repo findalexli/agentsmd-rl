@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:55:17.724094",
-  "total_time": 4106.24,
-  "sandbox_id": "iqanvg259h8fgdqplx4t5",
+  "validated_at": "2026-04-12T07:43:20.822101",
+  "total_time": 2465.19,
+  "sandbox_id": "if20uvn6u4m04fyifo1fl",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 951.87,
+      "time": 795.27,
       "notes": ""
     },
     "improve": {
@@ -29,10 +28,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed test.sh: added 'set -o pipefail' and removed 'set -e' so pytest exit code is correctly captured from the pipeline. Without pipefail, tee's exit code (0) was being captured instead of pytest's. All 4 checks now pass: Docker build OK, NOP reward=0 (4 fail-to-pass tests correctly fail), Gold reward=1 (all 19 tests pass), Rubric judge=1.0.",
+      "notes": "Docker build OK. NOP reward=0 (4 fail-to-pass tests correctly fail on buggy code). Gold reward=1 (26 tests pass after fix). Rubric judge returns ICR=0.0 due to judge limitation - it is designed for config file edits but this task only has source code changes. The gold solution correctly follows all rubric rules (uses type not interface, preserves type safety, consistent across all 3 packages).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1186.65
+      "time": 711.65
     },
     "rubric_judge": {
       "status": "pass",
@@ -40,17 +39,19 @@
       "backend": "fireworks",
       "time": 2.12,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 14.81,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 17847.59,
-      "at": "2026-04-09T14:09:19.842129"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -66,6 +67,30 @@
       "backend": "fireworks",
       "time": 4106.24,
       "at": "2026-04-10T18:55:17.724094"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3093.64,
+      "at": "2026-04-12T02:00:44.862276"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3371.46,
+      "at": "2026-04-12T03:06:25.397659"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2465.19,
+      "at": "2026-04-12T07:43:20.822101"
     }
   ]
 }

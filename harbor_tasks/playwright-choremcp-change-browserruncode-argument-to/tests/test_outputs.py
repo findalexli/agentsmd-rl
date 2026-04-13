@@ -223,3 +223,30 @@ def test_repo_test_types():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Test types failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repository ESLint check passes on MCP browser code (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright/src/mcp/browser/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_tests():
+    """Repository test linting passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-500:]}"

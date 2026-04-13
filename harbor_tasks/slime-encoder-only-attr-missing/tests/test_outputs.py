@@ -286,4 +286,143 @@ def test_repo_package_imports():
         timeout=30,
         cwd=REPO,
     )
+
+
     assert r.returncode == 0, f"Package import failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+def _ensure_precommit():
+    """Install pre-commit if not already available."""
+    try:
+        import precommit  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "pre-commit", "-q"],
+            capture_output=True,
+            timeout=60,
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_yaml():
+    """Repo's YAML files are valid (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "check-yaml", "--all-files"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-yaml failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_added_large_files():
+    """Repo has no unexpectedly large files (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "check-added-large-files", "--all-files"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-added-large-files failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_detect_private_key():
+    """Repo has no private keys committed (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"detect-private-key failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_isort():
+    """Repo's isort import ordering passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "isort", "--all-files"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort pre-commit failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_autoflake():
+    """Repo's autoflake unused import check passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "autoflake", "--all-files"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"autoflake pre-commit failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_black():
+    """Repo's black formatting passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "black", "--all-files"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"black pre-commit failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def _ensure_pytest_deps():
+    """Install pytest and dependencies if not already available."""
+    try:
+        import pytest  # noqa: F401
+        import yaml  # noqa: F401
+        import omegaconf  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "pytest", "pyyaml", "omegaconf", "-q"],
+            capture_output=True,
+            timeout=60,
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sglang_config_update_weights_explicit():
+    """SglangConfig correctly parses explicit update_weights values (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/utils/test_sglang_config.py::TestSglangConfigUpdateWeights::test_update_weights_explicit_false", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SglangConfig explicit weights test failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sglang_config_multi_model_gpus():
+    """SglangConfig correctly sums GPUs across multiple models (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/utils/test_sglang_config.py::TestSglangConfigUpdateWeights::test_multi_model_total_gpus", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SglangConfig multi-model GPUs test failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

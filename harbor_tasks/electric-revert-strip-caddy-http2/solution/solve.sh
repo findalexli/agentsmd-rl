@@ -516,4 +516,9 @@ index f3f0e84cad..e5b1ee64fc 100644
 
 PATCH
 
+# Add and commit the changes so they appear in git diff
+cd /workspace/electric
+git add -A
+git commit -m "Apply gold fix" --quiet 2>/dev/null || true
+
 echo "Patch applied successfully."

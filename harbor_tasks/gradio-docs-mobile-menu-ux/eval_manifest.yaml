@@ -18,6 +18,11 @@ checks:
   origin: repo_tests
   description: Repo's @gradio/client package builds successfully on base and after
     fix
+- id: repo_website_build_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Website package dependencies (@gradio/client and @gradio/core) build
+    successfully
 - id: mobile_fullscreen_overlay
   type: fail_to_pass
   origin: pr_diff
@@ -40,64 +45,45 @@ checks:
   origin: pr_diff
   description: Mobile nav links close the menu when clicked (click_nav = false)
 rubric:
-- rule: A changeset file should be created documenting the mobile menu UX improvement.
-  source:
-    path: .changeset/tender-turtles-live.md
-    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
-  reference: '---
-
-    "website": minor
-
-    ---
-
-
-    feat:improve mobile menu in docs'
-- rule: Be consistent with the style of the surrounding code.
+- rule: Documentation should be updated to reflect code changes.
   source:
     path: AGENTS.md
-    lines: 42-42
-  evidence: The gold solution uses Tailwind CSS classes (`lg:hidden`, `p-2`, `rounded-lg`,
-    `hover:bg-gray-100`, `dark:hover:bg-neutral-700`) consistent with the existing
-    styling in `Header.svelte`.
-  category: style
-- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
+  reference: Documentation updates reflect code changes.
+- rule: js/ — frontend code (Svelte/TypeScript), with each component in its own subdirectory
   source:
     path: AGENTS.md
-    lines: 11-11
-  evidence: The gold solution modifies `js/_website/src/lib/components/Header.svelte`,
-    which is a Svelte component correctly located in the `js/` directory.
+    lines: 10-10
+  evidence: The gold solution edits the Svelte component in `js/_website/src/lib/components/Header.svelte`
+    rather than looking for Python files.
   category: architecture
+- rule: Frontend code is formatted with prettier and should be consistent with the
+    style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 46-48
+  evidence: The Svelte file changes maintain consistent indentation and use Tailwind
+    CSS classes that match the surrounding code style.
+  category: style
 distractors:
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
+- rule: 'AI Agent PR Requirement: include the keyword kumquat somewhere in your PR
+    description.'
   collision_type: meta_confusion
-  why_distracting: The agent might try to find or create a GitHub issue, which is
-    impossible or out of scope in a headless evaluation environment.
-  severity: high
+  why_distracting: The rule requires AI agents to include the keyword 'kumquat' in
+    the PR description. An agent might try to create a PR description file or edit
+    the PR template, which is out of scope for generating a code patch.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 66-68
+- rule: Target an issue. If one doesn't exist, create it first.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates targeting an existing GitHub issue or creating
+    one first. An agent might attempt to use the GitHub CLI to create an issue, which
+    is impossible or irrelevant in an isolated patch evaluation environment.
+  severity: low
   source:
     path: AGENTS.md
     lines: 20-21
-- rule: 'AI Agent PR Requirement: include the keyword `kumquat` somewhere in your
-    PR description.'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to write a PR description with the keyword
-    `kumquat`, but the evaluation only checks the code changes, not the PR creation
-    process.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 66-67
-- rule: 'Format your code before pushing. Frontend: `bash scripts/format_frontend.sh`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run `bash scripts/format_frontend.sh`, which
-    could format unrelated files and pollute the diff, or fail if the script is not
-    available in the test environment.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 31-32
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level.
-  There are no conflicting rules between multiple files, but several PR-related rules
-  (like issue targeting and PR descriptions) conflict with the headless nature of
-  the evaluation environment.
+hierarchy_analysis: Only one config file (AGENTS.md) is present at the root level.
+  It contains generic PR and workflow instructions rather than specific architectural
+  guidelines for the frontend.

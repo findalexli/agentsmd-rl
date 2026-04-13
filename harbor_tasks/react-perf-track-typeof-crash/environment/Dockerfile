@@ -27,15 +27,15 @@ RUN git clone --depth 1 https://github.com/facebook/react.git && \
 WORKDIR /workspace/react
 RUN yarn install
 
+# Configure git first (needed before commit)
+RUN git config --global user.email "agent@example.com" && \
+    git config --global user.name "Agent"
+
 # Sanitize: remove .git and re-init for clean state
 RUN rm -rf .git && \
     git init && \
     git add -A && \
     git commit -m "snapshot at base commit"
-
-# Configure git
-RUN git config --global user.email "agent@example.com" && \
-    git config --global user.name "Agent"
 
 # Set up Python environment
 RUN python3 -m pip install pyyaml --break-system-packages

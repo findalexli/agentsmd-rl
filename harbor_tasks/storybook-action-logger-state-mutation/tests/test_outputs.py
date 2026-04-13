@@ -140,7 +140,7 @@ def test_repo_format():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Yarn install failed:\n{r.stderr[-500:]}"
-    # Run format check
+    # Run format check on the modified file
     r = subprocess.run(
         ["yarn", "exec", "oxfmt", "--check", TARGET_FILE],
         capture_output=True,
@@ -149,6 +149,52 @@ def test_repo_format():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compile():
+    """Repo's core package compiles successfully (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["yarn", "install", "--immutable"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Yarn install failed:\n{r.stderr[-500:]}"
+    # Run compile for core package
+    r = subprocess.run(
+        ["yarn", "nx", "compile", "core"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compile failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_actions_tests():
+    """Repo's unit tests for actions module pass (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["yarn", "install", "--immutable"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Yarn install failed:\n{r.stderr[-500:]}"
+    # Run unit tests for addArgsHelpers (related to actions module)
+    r = subprocess.run(
+        ["yarn", "test", "code/core/src/actions/addArgsHelpers.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Actions tests failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

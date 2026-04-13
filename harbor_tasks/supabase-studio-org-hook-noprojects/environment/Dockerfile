@@ -22,3 +22,9 @@ RUN npm install -g typescript
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier
+
+# Install pnpm globally for repo_tests
+RUN npm install -g pnpm
+
+# Pre-install dependencies for faster test execution
+RUN cd /workspace/supabase && pnpm install --ignore-scripts

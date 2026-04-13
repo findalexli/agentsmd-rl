@@ -53,46 +53,47 @@ checks:
     path: CLAUDE.md
     lines: '7'
     commit: 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
+distractors:
+- rule: PREFER patterns like `if let` to handle fallibility
+  collision_type: rule_conflict
+  why_distracting: The agent might try to replace the `.unwrap()` with an `if let
+    Some(script) = downloaded_script` that returns an error if `None`. This violates
+    the explicit PR instruction that 'The type system should enforce... no `.unwrap()`'
+    by making the state machine implicit rather than fixing the underlying enum variants.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write an integration test for `uv run
+    https://...`, which would require setting up a mock HTTP server or making flaky
+    network requests in the test suite, expanding the scope significantly beyond the
+    type-system refactor requested.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-3
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md` at the root.
+  No complex hierarchy traversal is required, but the agent must weigh the general
+  guidelines against the specific architectural constraints provided in the PR description.
 rubric:
 - rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
     rule ignores
   source:
     path: CLAUDE.md
     lines: 8-8
-  evidence: The gold solution removes the `.unwrap()` on the downloaded script by
-    refactoring `RunCommand` to hold the `NamedTempFile` directly, making the unwrap
-    unnecessary and impossible.
-  category: style
+  evidence: The gold solution removes the `.unwrap()` by refactoring `RunCommand::PythonRemote`
+    to hold the `NamedTempFile` directly, ensuring the file is always present when
+    `as_command` is called.
+  category: architecture
+  verification: llm_judge
 - rule: PREFER top-level imports over local imports or fully qualified names
   source:
     path: CLAUDE.md
-    lines: 15-15
-  evidence: The gold solution adds imports like `use uv_cli::{ExternalCommand, GlobalArgs};`
-    and `use uv_scripts::{Pep723Error, Pep723Item, Pep723Metadata, Pep723Script};`
-    at the top of `crates/uv/src/commands/pr
+    lines: 16-16
+  evidence: The gold solution adds new imports like `Pep723Error` and `EnvironmentOptions`
+    to the top-level `use` statements rather than using local imports or fully qualified
+    names where they are used.
   category: style
-distractors:
-- rule: PREFER patterns like `if let` to handle fallibility
-  collision_type: architecture_boundary
-  why_distracting: An agent might try to replace the `.unwrap()` with an `if let Some(...)`
-    check and return an error. However, the architectural problem is that the type
-    system doesn't guarantee the download has happened. The correct fix is to refactor
-    `RunCommand` and introduce `ParsedRunCommand` to enforce this at the type level,
-    rather than just patching the symptom with `if let`.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 9-9
-- rule: ALWAYS attempt to add a test case for changed behavior
-  collision_type: scope_ambiguity
-  why_distracting: Testing a remote script execution (`uv run https://...`) requires
-    setting up a mock HTTP server or network requests in the test suite. The core
-    fix is a structural type-system change that makes the panic impossible by design.
-    Trying to add a test for this specific panic would distract the agent into complex
-    network mocking.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 3-3
-hierarchy_analysis: Only a single root-level `CLAUDE.md` file is present, so there
-  are no hierarchical conflicts. All rules apply globally to the edited files.
+  verification: llm_judge

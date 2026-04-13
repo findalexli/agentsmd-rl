@@ -1,21 +1,14 @@
-FROM node:22-slim
+FROM python:3.11-slim
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/taskforge
 
-# Shallow-clone at exact commit to keep image size manageable
-RUN git init /workspace/next.js && \
-    cd /workspace/next.js && \
-    git remote add origin https://github.com/vercel/next.js.git && \
-    git fetch --depth=1 origin 98330e3faeff95a51d2c185fc98f1f40bd86726f && \
-    git checkout FETCH_HEAD
+# Install dependencies
+RUN pip install --no-cache-dir pydantic pyyaml
 
-# Configure git
-RUN cd /workspace/next.js && \
-    git config user.name "Agent" && \
-    git config user.email "agent@test.com"
+# Copy the taskforge package
+COPY taskforge/ ./taskforge/
 
-RUN mkdir -p /logs/verifier
+# Set Python path
+ENV PYTHONPATH=/workspace/taskforge:$PYTHONPATH
 
-WORKDIR /workspace/next.js
+WORKDIR /workspace/taskforge

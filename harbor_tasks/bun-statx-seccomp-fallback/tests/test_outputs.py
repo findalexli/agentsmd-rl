@@ -234,10 +234,6 @@ def test_ban_words_passes():
     assert r.returncode == 0, f"ban-words test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests via C analysis
-# ---------------------------------------------------------------------------
-
 def test_statx_handles_eperm():
     """statxImpl must fall back on EPERM (seccomp-blocked statx).
     Before the fix, only ENOSYS and EOPNOTSUPP triggered fallback.
@@ -553,7 +549,6 @@ int main(int argc, char **argv) {
 # Pass-to-pass (pr_diff) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-
 def test_statx_fallback_helper_exists():
     """statxFallback function must exist as a separate helper with correct
     delegation to stat/lstat/fstat based on flags."""
@@ -673,3 +668,28 @@ def test_error_handling_pattern():
         "statxFallback must use .result => pattern per bun.sys conventions"
     assert ".err =>" in fallback_body, \
         "statxFallback must use .err => pattern per bun.sys conventions"
+
+
+def test_zig_fmt_src_directory():
+    """Zig fmt check on key src/ files passes (pass_to_pass).
+    CI gate from format.yml workflow - checks formatting on core Zig files.
+    Uses same Zig version as CI for compatibility.
+    """
+    shell_script = """#!/bin/bash
+set -e
+apt-get update -qq && apt-get install -y -qq unzip curl ca-certificates 2>/dev/null
+ZIG_TEMP=$(mktemp -d)
+curl -sL -o "$ZIG_TEMP/zig.zip" "https://github.com/oven-sh/zig/releases/download/autobuild-e0b7c318f318196c5f81fdf3423816a7b5bb3112/bootstrap-x86_64-linux-musl.zip" 2>/dev/null
+unzip -q -d "$ZIG_TEMP" "$ZIG_TEMP/zig.zip"
+export PATH="$ZIG_TEMP/bootstrap-x86_64-linux-musl:$PATH"
+cd /workspace/bun
+# Check formatting on key files (avoiding files with version-specific syntax)
+zig fmt --check src/sys.zig src/bun.zig src/cli.zig 2>&1
+rm -rf "$ZIG_TEMP"
+"""
+    r = subprocess.run(
+        ["bash", "-c", shell_script],
+        capture_output=True, text=True, timeout=120,
+    )
+    error_msg = r.stderr[-500:] if r.stderr else r.stdout[-500:]
+    assert r.returncode == 0, f"zig fmt check failed on src files: {error_msg}"

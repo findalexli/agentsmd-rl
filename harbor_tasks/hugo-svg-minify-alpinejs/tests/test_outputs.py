@@ -365,3 +365,42 @@ def test_repo_race_minifiers():
     )
 
     assert result.returncode == 0, f"Race detector test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_tests_resources():
+    """Repo's resources package tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "test", "-count=1", "./resources/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    assert result.returncode == 0, f"resources tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_tests_minifier_transformer():
+    """Repo's minifier transformer tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "test", "-count=1", "./resources/resource_transformers/minifier/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, f"minifier transformer tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_vet_resources():
+    """Repo's resources package passes go vet (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "vet", "./resources/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+
+    assert result.returncode == 0, f"go vet failed:\n{result.stderr}"

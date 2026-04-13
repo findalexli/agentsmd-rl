@@ -3,40 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T15:04:50.043369",
-  "total_time": 418.59,
-  "sandbox_id": "i1b5twre46y0ym92vkefe",
+  "validated_at": "2026-04-12T03:47:05.787241",
+  "total_time": 2234.95,
+  "sandbox_id": "ipbbt34dh1menpy2ky6wb",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "completed",
-      "completed_at": "2026-04-09T19:36:34.476601",
-      "ci_commands_found": [
-        "ruff check --select=F401,F821 (from .pre-commit-config.yaml)",
-        "black --check (from .pre-commit-config.yaml)",
-        "codespell --config .codespellrc (from .pre-commit-config.yaml)",
-        "isort --check-only (from .pre-commit-config.yaml)",
-        "pre-commit run check-ast (from .pre-commit-config.yaml)"
-      ],
-      "ci_commands_added_as_p2p": [
-        "test_repo_isort - import ordering check via isort"
-      ],
-      "ci_commands_skipped": [
-        "mypy - has pre-existing errors in base commit",
-        "lychee - requires network for link checking",
-        "clang-format - only applies to C++/CUDA files",
-        "pytest - no specific tests for the target file found",
-        "pre-commit full run - requires network to fetch hooks"
-      ],
-      "notes": "Added isort as p2p gate. Existing ruff/black/codespell tests already present."
-    },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 148.42,
+      "time": 306.58,
       "notes": ""
     },
     "improve": {
@@ -51,10 +28,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All checks passed. Docker build succeeded. NOP test correctly fails on buggy code (7 fail-to-pass tests failing). Gold test passes all 14 tests after solve.sh patch applied. Rubric judge defaulted to 0.5 due to no API key available (acceptable in this environment).",
+      "notes": "All checks passed. Docker build succeeded. NOP test correctly fails on buggy code (7 fail-to-pass tests failing). Gold test passes all 19 tests after solve.sh patch applied. Rubric section cleared for code-only task (no agent config files to modify).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.8
+      "time": 232.54
     },
     "rubric_judge": {
       "status": "pass",
@@ -62,25 +39,19 @@
       "backend": "fireworks",
       "time": 1.37,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.18,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 12438.03,
-      "at": "2026-04-09T12:39:10.572954"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1214.38,
-      "at": "2026-04-09T14:48:25.525631"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -104,6 +75,22 @@
       "backend": "fireworks",
       "time": 418.59,
       "at": "2026-04-09T15:04:50.043369"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2214.36,
+      "at": "2026-04-12T02:32:35.079611"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2234.95,
+      "at": "2026-04-12T03:47:05.787241"
     }
   ]
 }

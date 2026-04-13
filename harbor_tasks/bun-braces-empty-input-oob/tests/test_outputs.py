@@ -10,9 +10,13 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import re
 import subprocess
 from pathlib import Path
+import os
 
 REPO = "/workspace/bun"
 TARGET = Path(REPO) / "src" / "shell" / "braces.zig"
+
+# Track if we've done setup for repo tests
+_setup_done = {"bun": False, "zig": False}
 
 
 def _src():
@@ -36,6 +40,73 @@ def _added_lines(diff):
         for line in diff.split("\n")
         if line.startswith("+") and not line.startswith("+++")
     ]
+
+
+def _ensure_bun():
+    """Ensure bun is installed and available."""
+    if _setup_done["bun"]:
+        return os.environ.get("PATH", "")
+
+    # Check if bun is already available
+    r = subprocess.run(["which", "bun"], capture_output=True, text=True)
+    if r.returncode == 0:
+        _setup_done["bun"] = True
+        return os.environ.get("PATH", "")
+
+    # Install dependencies
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "unzip", "curl"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # Install bun
+    subprocess.run(
+        "curl -fsSL https://bun.sh/install | bash",
+        shell=True, capture_output=True, text=True, timeout=120,
+    )
+
+    # Set up PATH
+    new_path = "/root/.bun/bin:" + os.environ.get("PATH", "")
+    os.environ["PATH"] = new_path
+    _setup_done["bun"] = True
+    return new_path
+
+
+def _ensure_zig():
+    """Ensure zig is installed and available."""
+    if _setup_done["zig"]:
+        return
+
+    # Check if zig is already available
+    r = subprocess.run(["which", "zig"], capture_output=True, text=True)
+    if r.returncode == 0:
+        _setup_done["zig"] = True
+        return
+
+    # Install dependencies
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "unzip", "wget"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # Install zig
+    subprocess.run(
+        "mkdir -p /tmp/zig && wget -q -O /tmp/zig/zig.zip https://github.com/oven-sh/zig/releases/download/autobuild-e0b7c318f318196c5f81fdf3423816a7b5bb3112/bootstrap-x86_64-linux-musl.zip && unzip -q -d /tmp/zig /tmp/zig/zig.zip",
+        shell=True, capture_output=True, text=True, timeout=120,
+    )
+
+    # Set up PATH
+    new_path = "/tmp/zig/bootstrap-x86_64-linux-musl:" + os.environ.get("PATH", "")
+    os.environ["PATH"] = new_path
+    _setup_done["zig"] = True
 
 
 # ---------------------------------------------------------------------------
@@ -321,6 +392,45 @@ def test_repo_prettier_shell_tests():
     assert r.returncode == 0, f"prettier check failed on shell tests:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Repo banned words test
+def test_repo_ban_words():
+    """Repo banned words check passes (pass_to_pass).
+
+    From .github/workflows/format.yml:
+      - bun ./test/internal/ban-words.test.ts
+    """
+    _ensure_bun()
+
+    # Run bun install if needed
+    if not Path(REPO).joinpath("node_modules").exists():
+        subprocess.run(
+            ["bun", "install"],
+            capture_output=True, text=True, timeout=180, cwd=REPO,
+        )
+
+    r = subprocess.run(
+        ["bun", "test", "test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Zig fmt check on modified file
+def test_repo_zig_fmt_braces():
+    """Zig fmt check passes on braces.zig (pass_to_pass).
+
+    From .github/workflows/format.yml:
+      - zig fmt src (checks formatting on all Zig files)
+    """
+    _ensure_zig()
+
+    r = subprocess.run(
+        ["zig", "fmt", "--check", "src/shell/braces.zig"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"zig fmt check failed on braces.zig:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
 # [static] pass_to_pass — Banned words check for Zig files
 def test_repo_banned_words_zig():
     """Modified Zig files do not contain banned words (pass_to_pass).
@@ -454,7 +564,80 @@ def test_no_catch_outofmemory_pattern():
 # [repo_tests] pass_to_pass — TypeScript typecheck
 def test_repo_typecheck():
     """TypeScript typecheck passes (pass_to_pass)."""
+    _ensure_bun()
+
+    # Run bun install if needed
+    if not Path(REPO).joinpath("node_modules").exists():
+        subprocess.run(
+            ["bun", "install"],
+            capture_output=True, text=True, timeout=180, cwd=REPO,
+        )
+
     r = subprocess.run(
-        ["npx", "-p", "typescript", "tsc", "--noEmit"], capture_output=True, text=True, timeout=600, cwd=REPO,
+        ["npx", "tsc", "--noEmit"], capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Additional shell test lint checks
+def test_repo_oxlint_shell_assignments():
+    """Repo's oxlint passes on shell/assignments-in-pipeline.test.ts (pass_to_pass).
+
+    From .github/workflows/lint.yml: bun lint (oxlint on test files)
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "test/js/bun/shell/assignments-in-pipeline.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert "0 errors" in r.stdout, f"oxlint found errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Shell default test lint
+def test_repo_oxlint_shell_default():
+    """Repo's oxlint passes on shell/bunshell-default.test.ts (pass_to_pass).
+
+    From .github/workflows/lint.yml: bun lint (oxlint on test files)
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "test/js/bun/shell/bunshell-default.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert "0 errors" in r.stdout, f"oxlint found errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Prettier format check on brace.test.ts
+def test_repo_prettier_brace_test():
+    """Repo's brace.test.ts is properly formatted (pass_to_pass).
+
+    From .github/workflows/format.yml: bun run prettier
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "test/js/bun/shell/brace.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [static] pass_to_pass — Shell source files structure
+def test_shell_source_structure():
+    """Shell source directory contains expected Zig files (pass_to_pass).
+
+    Verifies the src/shell/ directory has the expected structure at base commit.
+    """
+    shell_dir = Path(REPO) / "src" / "shell"
+    expected_files = [
+        "braces.zig",
+        "shell.zig",
+        "interpreter.zig",
+    ]
+    for fname in expected_files:
+        assert (shell_dir / fname).exists(), f"Missing expected file: {fname}"

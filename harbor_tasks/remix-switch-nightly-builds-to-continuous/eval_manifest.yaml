@@ -25,6 +25,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo change file validation passes
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build passes
 - id: nightly_workflow_removed
   type: fail_to_pass
   origin: pr_diff
@@ -127,6 +131,22 @@ rubric:
     which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
     script to build and commit the build and required `package.json` changes to the
     `preview` branch on '
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: scripts/setup-installable-branch.ts
+  evidence: When modifying `scripts/setup-installable-branch.ts` to require the branch
+    name as a positional argument, the code is written without semicolons and uses
+    single quotes, adhering to the project's Prettier configuration.
+  category: style
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: scripts/setup-installable-branch.ts
+  evidence: When adding or modifying local variables in `scripts/setup-installable-branch.ts`
+    to handle the new positional argument logic, the gold solution uses `let` instead
+    of `const` for local scope.
+  category: style
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -185,14 +205,15 @@ distractors:
 - rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
     files.'
   collision_type: scope_ambiguity
-  why_distracting: The PR modifies root-level configuration, workflows, scripts, and
-    documentation, not package source code. Adding a changeset for a non-package change
-    is unnecessary and out of scope.
-  severity: medium
+  why_distracting: The agent might attempt to create a changeset file in `packages/*/.changes/`
+    because it is making a significant change to the build process. However, this
+    PR only modifies root-level CI workflows, scripts, and documentation, not the
+    actual packages, making a changeset file out of scope.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 38-39
-hierarchy_analysis: The AGENTS.md file provides general guidelines for the monorepo,
-  but its rules regarding changesets are scoped to package modifications. Since this
-  PR only touches root-level workflows, scripts, and documentation, the changeset
-  rule does not apply.
+    lines: 40-41
+hierarchy_analysis: The configuration is a flat single file (`AGENTS.md`). The agent
+  must apply the style rules to the TypeScript script modifications while correctly
+  scoping the changeset rule to realize it does not apply to root-level infrastructure
+  changes.

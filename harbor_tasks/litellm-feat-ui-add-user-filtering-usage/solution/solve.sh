@@ -352,7 +352,19 @@ index 5b0352feb98..d24bdd340f7 100644
      "incremental": true,
      "plugins": [
        {
-
+diff --git a/ui/litellm-dashboard/src/components/UsagePage/components/UsagePageView.test.tsx b/ui/litellm-dashboard/src/components/UsagePage/components/UsagePageView.test.tsx
+index existing..new 100644
+--- a/ui/litellm-dashboard/src/components/UsagePage/components/UsagePageView.test.tsx
++++ b/ui/litellm-dashboard/src/components/UsagePage/components/UsagePageView.test.tsx
+@@ -713,7 +713,7 @@ describe("UsagePage", () => {
+       // Admin should see the user selector select element with the placeholder attribute
+       const userSelects = screen.getAllByRole("combobox");
+       const userSelect = userSelects.find(
+-        (el) => el.getAttribute("placeholder") === "All Users (Global View)",
++        (el) => el.getAttribute("placeholder") === "Select user to filter...",
+       );
+       expect(userSelect).toBeDefined();
+     });
 GOLD_PATCH_END
 
 echo "Patch applied successfully."

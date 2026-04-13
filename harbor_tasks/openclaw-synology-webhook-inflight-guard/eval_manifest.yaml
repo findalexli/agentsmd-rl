@@ -206,34 +206,29 @@ rubric:
     file.
   category: testing
 distractors:
-- rule: Keep plugin-only deps in the extension `package.json`; do not add them to
-    the root `package.json` unless core uses them.
+- rule: Do not import core internals from `src/**`, `src/channels/**`, `src/plugin-sdk-internal/**`,
+    or another extension's `src/**`.
   collision_type: architecture_boundary
-  why_distracting: An agent might read the rule about keeping plugin-only deps in
-    the extension's package.json and decide to install a third-party concurrency library
-    (like `p-limit` or `bottleneck`) to handle the rate limiting, rather than using
-    the existing shared `openclaw/plugin-sdk/webhook-ingress` utilities mentioned
-    in the hints.
+  why_distracting: The task hint explicitly tells the agent to look at how limiters
+    are used by other webhook handlers. The agent will likely look at core channels
+    in `src/channels/*` and might be tempted to import helper functions or constants
+    from those core directories, which violates the strict extension boundary.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 14-15
-- rule: Treat files like `src/**`, `onboard.ts`, and other local helpers as private
-    unless you intentionally promote them through `api.ts` and, if needed, a matching
-    `src/plugin-sdk/<id>.ts` facade.
+    path: extensions/AGENTS.md
+    lines: 21-22
+- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
+    listed owner explicitly asked for the change.
   collision_type: scope_ambiguity
-  why_distracting: An agent might try to export the newly created in-flight limiter
-    or the modified test helpers through `api.ts` or create a facade in `src/plugin-sdk/`,
-    overcomplicating the PR. The limiter only needs to be used internally within the
-    webhook handler.
+  why_distracting: The task involves fixing a pre-auth concurrency limit (a DoS/security
+    issue) in a webhook handler. An agent might overly cautiously refuse to edit the
+    webhook handler, thinking it's a restricted security surface covered by CODEOWNERS.
   severity: medium
   source:
-    path: extensions/CLAUDE.md
-    lines: 28-30
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md`/`AGENTS.md` and
-  extension-level `extensions/CLAUDE.md`/`extensions/AGENTS.md`. The extension-level
-  files reinforce the root-level architectural boundaries, specifically detailing
-  how bundled plugins should interact with the `openclaw/plugin-sdk/*` surface. The
-  rules are consistent and additive, with the extension-level docs providing more
-  specific guidance on what constitutes a public contract versus private extension
-  internals.
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The repository defines a global architecture in the root `AGENTS.md`
+  and enforces a strict plugin boundary in `extensions/AGENTS.md`. The agent must
+  navigate this hierarchy to understand that while it can look at core channels for
+  inspiration (as hinted), it must strictly adhere to the `openclaw/plugin-sdk/*`
+  boundary for imports.

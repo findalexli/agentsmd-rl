@@ -1,71 +1,57 @@
-checks:
-- id: test_sqlalchemy_text_imported
-  type: fail_to_pass
-  description: Verify that `text` is imported from sqlalchemy
-  origin: pr_diff
-- id: test_pg_advisory_lock_call_present
-  type: fail_to_pass
-  description: Verify that pg_advisory_lock is called with correct lock ID
-  origin: pr_diff
-- id: test_advisory_lock_in_run_migrations_online
-  type: fail_to_pass
-  description: Verify the lock is acquired inside run_migrations_online() function
-  origin: pr_diff
-- id: test_lock_before_begin_transaction
-  type: pass_to_pass
-  description: Verify the lock is acquired BEFORE begin_transaction()
-  origin: pr_diff
-- id: test_text_function_used_for_lock
-  type: pass_to_pass
-  description: Verify text() wrapper is used for raw SQL lock query
-  origin: pr_diff
-- id: test_lock_acquired_via_connection_execute
-  type: pass_to_pass
-  description: Verify the lock is acquired using connection.execute()
-  origin: pr_diff
-- id: test_file_is_valid_python
-  type: pass_to_pass
-  description: Verify the modified file is valid Python syntax
-  origin: pr_diff
-- id: test_pre_commit_hooks_pass
-  type: pass_to_pass
-  description: Verify file passes Python compilation (pre-commit quality gate)
-  origin: agent_config
-  source:
-    path: AGENTS.md
-- id: test_repo_python_syntax
-  type: pass_to_pass
-  description: Repo CI - Python syntax check passes on migrations/env.py
-  origin: repo_tests
-- id: test_repo_ruff_lint
-  type: pass_to_pass
-  description: Repo CI - Ruff linting passes on migrations/env.py
-  origin: repo_tests
-- id: test_repo_alembic_ini_exists
-  type: pass_to_pass
-  description: Repo CI - Alembic configuration file exists
-  origin: repo_tests
-rubric: []
-distractors:
-- rule: If you've made changes to the backend, you should run `pre-commit run --config
-    ./dev_config/python/.pre-commit-config.yaml`
-  collision_type: scope_ambiguity
-  why_distracting: The rule specifies running a specific pre-commit config for backend
-    changes, but explicitly defines the backend as being located in the `openhands`
-    directory. The agent is tasked with editing `enterprise/migrations/env.py`, which
-    is outside `openhands`, causing ambiguity about whether to run this pre-commit
-    hook or if it even applies to the enterprise directory.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 17-18
-hierarchy_analysis: The AGENTS.md file provides general repository guidelines, but
-  its strict definition of the backend (`openhands` directory) creates ambiguity when
-  working in the `enterprise` directory, as agents may be unsure which linting or
-  testing rules apply.
 version: '2.0'
 source:
-  repo: All-Hands-AI/OpenHands
-  pr: 13608
-  base_commit: 3268c299459b690337c89f858671329fd99f9b48
-  merge_commit: 98c61e1ee47f7a8fc48c25e3e21e71470a8b7475
+  repo: gradio-app/gradio
+  pr: 13204
+  base_commit: a35a24149fd5ef56d3faa3e1475b1f3cc6416cf6
+  merge_commit: 9953db94e406477df96f98adf3e47246181ceef9
+checks:
+- id: test_filename_with_special_chars
+  type: fail_to_pass
+  origin: pr_diff
+  description: Special characters are preserved in filenames after the fix
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linter (ruff check) passes on modified code
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code (ruff format --check) passes on modified code
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for utils module pass
+- id: test_repo_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified module can be imported successfully
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 44-46
+  evidence: The patch maintains standard Python formatting, uses type hints, and keeps
+    the docstring format consistent with the surrounding code.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Write comprehensive, behaviour-driven unit tests for Gradio frontend Svelte
+    components using Vitest browser mode, Playwright, and the @self/tootils test utilities.
+  source:
+    path: .claude/skills/frontend-unit-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write frontend Svelte tests for the
+    filename sanitization logic, but the change is strictly in the Python client backend.
+  severity: medium
+- rule: Use Gradio core patterns like Interface, Blocks, and ChatInterface for building
+    interactive web UIs.
+  source:
+    path: .claude/skills/gradio/SKILL.md
+    lines: 20-38
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to implement the sanitization using Gradio
+    UI components or modify the UI layer, but this is a core utility function in the
+    client library.
+  severity: low
+config_edits: []

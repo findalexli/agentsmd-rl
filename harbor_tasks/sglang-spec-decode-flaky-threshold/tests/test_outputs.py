@@ -338,6 +338,120 @@ def test_repo_ci_permissions_sorted():
     assert r.returncode == 0, f"CI permissions sorted check failed:\n{r.stdout}\n{r.stderr}"
 
 
+
+
+# [repo_tests] pass_to_pass — Merge conflict check
+def test_repo_merge_conflict():
+    """Source files must not contain merge conflict markers (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-merge-conflict", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"Merge conflict check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Private key detection
+def test_repo_private_key():
+    """Source files must not contain private keys (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"Private key detection failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TOML validation
+def test_repo_toml_valid():
+    """TOML files must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-toml", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Trailing whitespace check
+def test_repo_trailing_whitespace():
+    """Source files must not have trailing whitespace (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Shebang executable check
+def test_repo_shebang_executable():
+    """Scripts with shebangs must be executable (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-shebang-scripts-are-executable", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"Shebang executable check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass — YAML files valid check
+def test_repo_yaml_valid_all():
+    """All YAML files must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Debug statements check
+def test_repo_debug_statements():
+    """Source files must not contain debug statements (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"Debug statements check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — End of file fixer check
+def test_repo_end_of_file():
+    """Files must end with exactly one newline (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"End of file check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------

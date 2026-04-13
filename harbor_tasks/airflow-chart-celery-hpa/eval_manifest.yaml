@@ -48,7 +48,7 @@ checks:
   origin: pr_diff
   description: HPA should not be created when KEDA is enabled
 - id: test_old_hpa_schema_has_deprecation_note
-  type: pass_to_pass
+  type: fail_to_pass
   origin: pr_diff
   description: Old workers.hpa schema should have deprecation notice in description
 - id: test_repo_helm_hpa_tests
@@ -72,53 +72,45 @@ checks:
   origin: repo_tests
   description: Repo's Helm chart passes linting
 rubric:
-- rule: Follow existing Helm template patterns for conditional rendering
+- rule: Document Helm chart configuration patterns including safe dict access for backward compatibility
   source:
-    path: CLAUDE.md:Helm chart structure in chart/
-- rule: Add tests for new behavior covering success, failure, and edge cases
+    path: AGENTS.md
+  reference: |
+    The gold solution adds documentation for Helm chart changes including safe dict access
+    pattern ((.Values.workers.celery).hpa).enabled and backward compatibility for renamed config paths
+- rule: Update JSON schema and YAML values with deprecation notices for renamed configuration paths
   source:
-    path: CLAUDE.md:Testing Standards
-- rule: Use @pytest.mark.parametrize for multiple similar inputs
-  source:
-    path: CLAUDE.md:Testing Standards
-- rule: Update JSON schema descriptions to reflect deprecation status
-  source:
-    path: CLAUDE.md:Coding Standards
-- rule: 'Run specific Helm test type: `breeze testing helm-tests --use-xdist --test-type
-    <type>`'
-  source:
-    path: CLAUDE.md
-    lines: 24-24
-  evidence: The PR modifies tests in `helm-tests/tests/helm_tests/airflow_core/` and
-    `helm-tests/tests/helm_tests/other/`, which correspond to the `airflow_core` and
-    `other` test types mentioned in the specific H
-  category: testing
+    path: AGENTS.md
+  reference: |
+    The gold solution updates values.schema.json and values.yaml to add workers.celery.hpa
+    section with deprecation notices for the old workers.hpa path
 distractors:
-- rule: 'Run a test file: `uv run --project <PROJECT> pytest path/to/test.py -xvs`'
+- rule: 'Run a single test: uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
+    -xvs'
   collision_type: rule_conflict
-  why_distracting: The agent might try to run Helm tests using `uv run --project helm-tests
-    pytest ...` because it looks like a standard Python project, but Helm tests require
-    the dedicated `breeze testing helm-tests` command to properly render the charts
-    and set up the environment.
+  why_distracting: The agent might try to run the modified helm tests using the general
+    `uv run --project <PROJECT> pytest ...` command. However, Helm tests require a
+    specific environment to render templates, which is only provided by the `breeze
+    testing helm-tests` command.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 15-15
-- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze:
-    `breeze run pytest <tests> -xvs`'
-  collision_type: rule_conflict
-  why_distracting: The agent might try to run `breeze run pytest <tests> -xvs` for
-    the Helm tests, but Helm tests should be run with `breeze testing helm-tests`
-    to ensure the Helm chart is properly built and available to the tests.
+    path: AGENTS.md
+    lines: 16-18
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use breeze.
+  collision_type: meta_confusion
+  why_distracting: The rule strictly forbids running python directly on the host.
+    However, the gold solution uses `python3` directly on the host to automate patching
+    the YAML and JSON files. An agent might over-constrain itself and avoid using
+    python scripts for text manipulation, or unnecessarily spin up breeze just to
+    run a simple refactoring script.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 18-18
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical. The main conflict
-  is between general Python test commands (`uv run pytest`) and specific Helm test
-  commands (`breeze testing helm-tests`). The agent must recognize that files in `helm-tests/`
-  require the specialized Helm testing commands rather than the generic Python testing
-  commands.'
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no deep hierarchy to traverse, and the rules apply
+  globally to the repository.
 version: '2.0'
 source:
   repo: apache/airflow

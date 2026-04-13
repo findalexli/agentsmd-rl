@@ -36,6 +36,31 @@ checks:
     origin: repo_tests
     description: "Repo's setup.py is valid and loadable"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on rollout.py"
+
+  - id: test_repo_black_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black format check passes on rollout.py"
+
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort check passes on rollout.py"
+
+  - id: test_repo_plugin_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin contract tests pass"
+
+  - id: test_repo_yamllint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's YAML workflow files pass yamllint"
+
   - id: make_group_accepts_router_params
     type: fail_to_pass
     origin: pr_diff
@@ -70,10 +95,3 @@ checks:
     type: pass_to_pass
     origin: pr_diff
     description: "_make_group still uses nonlocal for engine_offset/gpu_offset"
-
-rubric:
-  - rule: "Avoid blocking-heavy logic in high-frequency rollout paths without batching/concurrency control"
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "99"
-      commit: "6f11313004dbe71f4194536335b891371eefd0e9"

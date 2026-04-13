@@ -21,14 +21,19 @@ REPO = "/workspace/mlflow"
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_bash_syntax_poll():
-    """poll.sh passes bash syntax check (pass_to_pass)."""
-    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
-    r = subprocess.run(
-        ["bash", "-n", str(poll_sh)],
-        capture_output=True, text=True, timeout=10,
-    )
-    assert r.returncode == 0, f"bash -n failed: {r.stderr}"
+def test_repo_bash_syntax_claude_scripts():
+    """Existing .claude shell scripts pass bash syntax check (pass_to_pass)."""
+    scripts = [
+        Path(REPO) / ".claude" / "hooks" / "enforce-uv.sh",
+        Path(REPO) / ".claude" / "statusline.sh",
+    ]
+    for script in scripts:
+        if script.exists():
+            r = subprocess.run(
+                ["bash", "-n", str(script)],
+                capture_output=True, text=True, timeout=10,
+            )
+            assert r.returncode == 0, f"bash -n failed for {script}: {r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -73,25 +78,70 @@ def test_repo_skill_has_allowed_tools():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_poll_is_executable():
-    """poll.sh has executable permissions (pass_to_pass)."""
-    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
-    r = subprocess.run(
-        ["test", "-x", str(poll_sh)],
-        capture_output=True, text=True, timeout=10,
-    )
-    assert r.returncode == 0, "poll.sh is not executable"
+def test_repo_python_syntax_hooks():
+    """.claude hooks Python files have valid syntax (pass_to_pass)."""
+    hooks_dir = Path(REPO) / ".claude" / "hooks"
+    py_files = ["lint.py", "validate_pr_body.py"]
+    for f in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(hooks_dir / f)],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Python syntax error in {f}: {r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_poll_fails_without_args():
-    """poll.sh exits non-zero when called without arguments (pass_to_pass)."""
-    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
+def test_repo_json_valid_settings():
+    """.claude/settings.json is valid JSON (pass_to_pass)."""
+    settings_json = Path(REPO) / ".claude" / "settings.json"
     r = subprocess.run(
-        ["bash", str(poll_sh)],
+        ["python3", "-c",
+         f"import json; f=open('{settings_json}'); json.load(f); print('JSON valid')"],
         capture_output=True, text=True, timeout=10,
     )
-    assert r.returncode != 0, "poll.sh should fail without arguments"
+    assert r.returncode == 0, f"JSON validation failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_hooks_are_executable():
+    """.claude shell hooks are executable (pass_to_pass)."""
+    enforce_uv = Path(REPO) / ".claude" / "hooks" / "enforce-uv.sh"
+    r = subprocess.run(
+        ["test", "-x", str(enforce_uv)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, "enforce-uv.sh must be executable"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_statusline_is_executable():
+    """.claude/statusline.sh is executable (pass_to_pass)."""
+    statusline = Path(REPO) / ".claude" / "statusline.sh"
+    r = subprocess.run(
+        ["test", "-x", str(statusline)],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, "statusline.sh must be executable"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_claude_structure_valid():
+    """.claude directory structure is valid (pass_to_pass)."""
+    required_paths = [
+        ".claude/settings.json",
+        ".claude/statusline.sh",
+        ".claude/hooks/enforce-uv.sh",
+        ".claude/hooks/lint.py",
+        ".claude/hooks/validate_pr_body.py",
+        ".claude/skills/copilot/SKILL.md",
+    ]
+    for p in required_paths:
+        full_path = Path(REPO) / p
+        r = subprocess.run(
+            ["test", "-f", str(full_path)],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Required file missing: {p}"
 
 
 # ---------------------------------------------------------------------------

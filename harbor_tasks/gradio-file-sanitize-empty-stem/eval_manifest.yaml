@@ -62,52 +62,55 @@ checks:
   origin: static
   description: Modified function has real logic, not just pass/return
 rubric:
-- rule: Be consistent with the style of the surrounding code
+- rule: Code changes follow the style of the surrounding code in utils.py (4-space
+    indentation, matching comment style, clean logic)
   source:
-    path: AGENTS.md
-    lines: '41'
-    commit: f1cd0644d2608b493db07cd204c0831a111f9fb2
-- rule: Be consistent with the style of the surrounding code.
+    path: client/python/gradio_client/utils.py
+  reference: "# If the stem was stripped entirely but an extension exists, use a\n\
+    # fallback name so that the extension is not mistaken for a dotfile\n# stem (e.g.\
+    \ \"#.txt\" → \".txt\" → Path(\".txt\").suffix == \"\").\nif not name and ext:\n\
+    \    name = \"file\"\n"
+  category: style
+- rule: Python code is formatted with ruff and passes lint checks
   source:
-    path: AGENTS.md
-    lines: '45'
-  evidence: 'The gold solution uses a simple, idiomatic Python conditional (`if not
-    name and ext: name = "file"`) that perfectly matches the surrounding procedural
-    style of `strip_invalid_filename_characters` with'
+    path: client/python/gradio_client/utils.py
+  reference: 'Code passes ruff format and ruff check
+
+    '
+  category: style
+- rule: Be consistent with the style of the surrounding code in utils.py.
+  source:
+    path: client/python/gradio_client/utils.py
+  reference: "The patch uses standard Python `if not name and ext:` and `name = \"file\"`"
   category: style
 distractors:
-- rule: 'Repository Structure: `gradio/components/` — all Gradio components'
-  collision_type: architecture_boundary
-  why_distracting: The bug manifests in the `gr.File` component, so an agent might
-    try to fix the validation logic in `gradio/components/` or `gradio/utils.py`.
-    However, the root cause is the sanitization logic in `client/python/gradio_client/utils.py`
-    which strips the stem entirely. Fixing it in the component would be a workaround
-    that leaves the underlying sanitization bug intact.
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to complete the task, claiming it cannot
+    submit a PR without a human contributor.
   severity: high
   source:
     path: AGENTS.md
-    lines: 7-8
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+    lines: 61-63
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
   collision_type: scope_ambiguity
-  why_distracting: Running the entire backend test suite (`scripts/run_backend_tests.sh`)
-    for a localized fix in `gradio_client` might take a very long time or fail due
-    to unrelated flaky tests, causing the agent to waste time debugging unrelated
-    issues instead of focusing on the specific unit tests for `gradio_client`.
+  why_distracting: The agent might try to write a PR description file or edit `AGENTS.md`
+    to include `kumquat`, but the task is just to fix the bug in the code.
   severity: medium
   source:
     path: AGENTS.md
-    lines: '35'
-- rule: 'Format your code before pushing. Backend: `bash scripts/format_backend.sh`'
-  collision_type: scope_ambiguity
-  why_distracting: Running a repository-wide formatting script (`bash scripts/format_backend.sh`)
-    might format unrelated files if the repository's formatting is slightly out of
-    sync with the tool, creating a noisy PR. The agent should only format the files
-    it changed.
-  severity: low
+    lines: 66-68
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to create an issue using GitHub CLI or write
+    an issue file before writing the code.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 31-32
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level,
-  so there are no direct conflicts between multiple config files. The primary challenge
-  is correctly interpreting the repository structure rules to locate the root cause
-  in the client library rather than the backend components.
+    lines: 22-23
+hierarchy_analysis: The repository has a single flat configuration file (`AGENTS.md`)
+  at the root level. It contains general PR and agent rules rather than specific architectural
+  guidance for the code itself.

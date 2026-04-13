@@ -114,6 +114,22 @@ def test_repo_black():
     assert r.returncode == 0, f"black check failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass -- Repo CI: isort import ordering check on modified files
+def test_repo_isort():
+    """Repo CI: isort import ordering check passes on modified files."""
+    # Install isort if needed
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "isort", "--quiet"], capture_output=True, timeout=120)
+    # Run isort check on modified files with black profile (per pyproject.toml)
+    r = subprocess.run(
+        [sys.executable, "-m", "isort", "--check", "--profile=black", "slime_plugins/mbridge/glm4moe_lite.py", "slime/backends/megatron_utils/model_provider.py"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr}"
+
+
 # [repo_tests] pass_to_pass -- Repo CI: MTP bridge mapping tests pass
 def test_repo_mtp_bridge_mapping():
     """Repo CI: MTP bridge mapping unit tests pass.

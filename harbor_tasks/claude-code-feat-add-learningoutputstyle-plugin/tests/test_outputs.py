@@ -138,10 +138,15 @@ def test_session_start_has_shebang():
     assert content.startswith("#!/bin/bash"), "Script should start with bash shebang"
 
 
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI-style validation
+# ---------------------------------------------------------------------------
+
 def test_repo_all_plugin_json_valid():
     """All plugin.json files in the repo are valid JSON (pass_to_pass)."""
+    cmd = """for f in /workspace/claude-code/plugins/*/.claude-plugin/plugin.json; do python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$f" || exit 1; done"""
     r = subprocess.run(
-        ["bash", "-c", "for f in /workspace/claude-code/plugins/*/.claude-plugin/plugin.json; do python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \"$f\" || exit 1; done"],
+        ["bash", "-c", cmd],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Plugin JSON validation failed:\n{r.stderr[-500:]}"
@@ -149,8 +154,9 @@ def test_repo_all_plugin_json_valid():
 
 def test_repo_all_hooks_json_valid():
     """All hooks.json files in the repo are valid JSON (pass_to_pass)."""
+    cmd = """for f in /workspace/claude-code/plugins/*/hooks/hooks.json; do python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$f" || exit 1; done"""
     r = subprocess.run(
-        ["bash", "-c", "for f in /workspace/claude-code/plugins/*/hooks/hooks.json; do python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \"$f\" || exit 1; done"],
+        ["bash", "-c", cmd],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Hooks JSON validation failed:\n{r.stderr[-500:]}"
@@ -158,8 +164,9 @@ def test_repo_all_hooks_json_valid():
 
 def test_repo_shellcheck_passes():
     """All shell scripts in plugins pass shellcheck (pass_to_pass)."""
+    cmd = "apt-get update -qq && apt-get install -y -qq shellcheck >/dev/null 2>&1 && find /workspace/claude-code/plugins -name '*.sh' -type f -exec shellcheck {} +"
     r = subprocess.run(
-        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq shellcheck >/dev/null 2>&1 && find /workspace/claude-code/plugins -name '*.sh' -type f -exec shellcheck {} +"],
+        ["bash", "-c", cmd],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Shellcheck failed:\n{r.stderr[-500:]}"
@@ -167,8 +174,94 @@ def test_repo_shellcheck_passes():
 
 def test_repo_explanatory_hook_runs():
     """Existing explanatory plugin session-start hook executes successfully (pass_to_pass)."""
+    cmd = "apt-get update -qq && apt-get install -y -qq jq >/dev/null 2>&1 && export CLAUDE_PLUGIN_ROOT=/workspace/claude-code/plugins/explanatory-output-style && timeout 30 /workspace/claude-code/plugins/explanatory-output-style/hooks-handlers/session-start.sh >/dev/null 2>&1"
     r = subprocess.run(
-        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq jq >/dev/null 2>&1 && export CLAUDE_PLUGIN_ROOT=/workspace/claude-code/plugins/explanatory-output-style && timeout 30 /workspace/claude-code/plugins/explanatory-output-style/hooks-handlers/session-start.sh >/dev/null 2>&1"],
+        ["bash", "-c", cmd],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Explanatory hook failed to run:\n{r.stderr[-500:]}"
+
+
+def test_repo_python_syntax_valid():
+    """All Python files in the repo have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "find /workspace/claude-code -name '*.py' -type f -exec python3 -m py_compile {} +"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_security_hook_imports():
+    """Security guidance hook can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import importlib.util; "
+         "spec = importlib.util.spec_from_file_location('hook', '/workspace/claude-code/plugins/security-guidance/hooks/security_reminder_hook.py'); "
+         "module = importlib.util.module_from_spec(spec); "
+         "spec.loader.exec_module(module)"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Security hook import failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_all_plugins_have_valid_name():
+    """All plugins have plugin.json with required 'name' field (pass_to_pass)."""
+    cmd = """for f in /workspace/claude-code/plugins/*/.claude-plugin/plugin.json; do if ! python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d.get("name"), "missing name"' "$f" 2>/dev/null; then echo "Invalid plugin.json: $f"; exit 1; fi; done"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin missing name field:\n{r.stderr[-500:]}"
+
+
+def test_repo_all_hooks_json_have_hooks_field():
+    """All hooks.json files have required 'hooks' wrapper field (pass_to_pass)."""
+    cmd = """for f in /workspace/claude-code/plugins/*/hooks/hooks.json; do if ! python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert "hooks" in d, "missing hooks field"' "$f" 2>/dev/null; then echo "Invalid hooks.json (no hooks field): $f"; exit 1; fi; done"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"hooks.json missing hooks field:\n{r.stderr[-500:]}"
+
+
+def test_repo_all_shell_scripts_executable():
+    """All shell scripts in plugins hooks-handlers are executable (pass_to_pass)."""
+    cmd = """for f in /workspace/claude-code/plugins/*/hooks-handlers/*.sh; do if [ -f "$f" ] && [ ! -x "$f" ]; then echo "Not executable: $f"; exit 1; fi; done"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell script not executable:\n{r.stderr[-500:]}"
+
+
+def test_repo_all_plugins_have_claude_plugin_dir():
+    """All plugins have .claude-plugin directory with plugin.json (pass_to_pass)."""
+    cmd = """for d in /workspace/claude-code/plugins/*/; do if [ ! -d "${d}.claude-plugin" ]; then echo "Missing .claude-plugin dir: $d"; exit 1; fi; done"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin missing .claude-plugin dir:\n{r.stderr[-500:]}"
+
+
+def test_repo_all_plugin_json_required_fields():
+    """All plugin.json files have required fields: name, version, description, author.name (pass_to_pass)."""
+    cmd = """for f in /workspace/claude-code/plugins/*/.claude-plugin/plugin.json; do python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d.get("name"), "missing name"; assert d.get("version"), "missing version"; assert d.get("description"), "missing description"; assert d.get("author",{}).get("name"), "missing author name"' "$f" 2>/dev/null || { echo "Invalid plugin.json (missing required fields): $f"; exit 1; }; done"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin manifest missing required fields:\n{r.stderr[-500:]}"
+
+
+def test_repo_security_hook_runs():
+    """Security guidance hook can run without errors when given valid input (pass_to_pass)."""
+    # The hook may exit 0 (no warning) or 2 (warning triggered) - both are valid
+    r = subprocess.run(
+        ["bash", "-c",
+         "echo '{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"test.py\", \"new_string\": \"print(1)\"}, \"session_id\": \"test\"}' | "
+         "ENABLE_SECURITY_REMINDER=1 timeout 10 python3 /workspace/claude-code/plugins/security-guidance/hooks/security_reminder_hook.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # Exit code 0 = no warning needed, 2 = warning shown (both valid for hook)
+    assert r.returncode in [0, 2], f"Security hook failed with exit {r.returncode}:\n{r.stderr[-500:]}"

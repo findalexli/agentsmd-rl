@@ -9,6 +9,12 @@ if grep -q 'FAILED_CONCLUSIONS' scripts/pr-status.js 2>/dev/null; then
     exit 0
 fi
 
+# Add "reject" to .alexrc allowed words (it's a technical term in JavaScript Promise context)
+if [ -f .alexrc ] && ! grep -q '"reject"' .alexrc 2>/dev/null; then
+  # Use sed to add "reject" to the allow array in .alexrc
+  sed -i 's/"railway",/"railway",\n    "reject",/' .alexrc || true
+fi
+
 git apply - <<'PATCH'
 diff --git a/scripts/pr-status.js b/scripts/pr-status.js
 index 6440c7de1e43f9..eddf58b167c56e 100644

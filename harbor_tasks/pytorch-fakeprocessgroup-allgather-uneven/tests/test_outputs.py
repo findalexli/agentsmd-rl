@@ -335,13 +335,18 @@ def test_no_over_engineering():
 
 
 # -----------------------------------------------------------------------------
-# Repo CI/CD pass_to_pass gates
+# Repo CI/CD pass_to_pass gates (origin: repo_tests)
 # These verify the repo's own CI checks pass on the code
+# All use subprocess.run() to execute actual CI commands
 # -----------------------------------------------------------------------------
 
 
 def test_repo_fake_pg_python_syntax():
-    """FakeProcessGroup test file must have valid Python syntax (pass_to_pass)."""
+    """FakeProcessGroup test file must have valid Python syntax (pass_to_pass).
+
+    Runs `python3 -m py_compile` which is a lightweight CI check for Python
+    syntax validity. Mirrors PyTorch CI Python compilation checks.
+    """
     test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
     assert test_file.exists(), f"Test file not found: {test_file}"
 
@@ -377,6 +382,50 @@ def test_repo_clang_format():
     )
 
 
+def test_repo_ruff_check():
+    """test_fake_pg.py must pass ruff check per PyTorch CI (pass_to_pass).
+
+    PyTorch CI uses ruff for Python linting. This test verifies the test
+    file passes ruff's linting rules.
+    """
+    test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
+    assert test_file.exists(), f"Test file not found: {test_file}"
+
+    # Install ruff if not available
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    r = subprocess.run(
+        ["ruff", "check", str(test_file)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed for test_fake_pg.py:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_internal_fake_pg_syntax():
+    """Internal fake_pg.py module must have valid Python syntax (pass_to_pass).
+
+    Verifies the FakeProcessGroup backend registration module can be parsed
+    using `python3 -m py_compile`, matching PyTorch CI Python checks.
+    """
+    internal_file = Path(REPO) / "torch/testing/_internal/distributed/fake_pg.py"
+    assert internal_file.exists(), f"Internal module not found: {internal_file}"
+
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(internal_file)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Python syntax error in internal fake_pg.py: {r.stderr}"
+
+
+# -----------------------------------------------------------------------------
+# Static pass_to_pass gates (origin: static)
+# These are file-content checks that don't run CI commands
+# -----------------------------------------------------------------------------
+
+
 def test_repo_header_file_exists():
     """FakeProcessGroup.hpp must exist and be readable (pass_to_pass)."""
     assert TARGET.exists(), f"Target file not found: {TARGET}"
@@ -403,21 +452,6 @@ def test_repo_test_fake_pg_ast_valid():
         ast.parse(content)
     except SyntaxError as e:
         raise AssertionError(f"Python AST parsing failed for test_fake_pg.py: {e}")
-
-
-def test_repo_internal_fake_pg_syntax():
-    """Internal fake_pg.py module must have valid Python syntax (pass_to_pass).
-
-    Verifies the FakeProcessGroup backend registration module can be parsed.
-    """
-    internal_file = Path(REPO) / "torch/testing/_internal/distributed/fake_pg.py"
-    assert internal_file.exists(), f"Internal module not found: {internal_file}"
-
-    r = subprocess.run(
-        ["python3", "-m", "py_compile", str(internal_file)],
-        capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"Python syntax error in internal fake_pg.py: {r.stderr}"
 
 
 def test_repo_header_utf8_valid():

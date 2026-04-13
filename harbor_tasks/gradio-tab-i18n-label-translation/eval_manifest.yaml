@@ -52,16 +52,26 @@ checks:
     origin: pr_diff
     description: "Non-tabitem children of tabs node are skipped without error"
 
-
+  # Repo CI checks (from tests-js.yml workflow)
   - id: test_repo_format_check
     type: pass_to_pass
     origin: repo_tests
-    description: Repo's Prettier format check passes
+    description: "Repo's Prettier format check passes"
 
   - id: test_repo_core_tests
     type: pass_to_pass
     origin: repo_tests
-    description: Repo's js/core unit tests pass
+    description: "Repo's js/core unit tests pass"
+
+  - id: test_repo_full_test_run
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's full test suite passes (pnpm test:run)"
+
+  - id: test_repo_client_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's @gradio/client tests pass"
 
 rubric:
   - rule: "Use tabs for indentation (Prettier config). Check that the code follows the repo's formatting conventions."
@@ -75,4 +85,3 @@ rubric:
       path: "js/core/src/init.svelte.ts"
       lines: "719"
       commit: "d720b25b575fb9817311212e1c0afa82abf27468"
-

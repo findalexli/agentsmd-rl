@@ -82,6 +82,26 @@ def test_repo_ast_parse():
     assert r.returncode == 0, f"AST parse failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """CI workflow YAML files are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import yaml; [yaml.safe_load(open(f)) for f in ['.github/workflows/pre-commit.yml', '.github/workflows/install-test.yml']]"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_valid():
+    """pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

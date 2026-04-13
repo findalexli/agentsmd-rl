@@ -1,26 +1,43 @@
-FROM oven/bun:1.2-slim
+FROM python:3.11-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=C.UTF-8
+# Install git and pytest
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/* && \
+    pip install pytest
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential python3 python3-pip tmux procps && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/myrepo
 
-# Copy local repo copy (commit already at 570038ac3c4ae02378e5de38793d3014587a33e1)
-COPY repo /workspace/opencode
-RUN cd /workspace/opencode && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+# Create a simple Python module with a bug and a CLAUDE.md
+RUN mkdir -p /workspace/myrepo/src && \
+    cat > /workspace/myrepo/src/calculator.py << 'EOF'
+def add(a, b):
+    """Add two numbers - but has a bug: it subtracts instead."""
+    return a - b  # BUG: should be a + b
 
-WORKDIR /workspace/opencode
+def multiply(a, b):
+    """Multiply two numbers."""
+    return a * b
+EOF
 
-# Pre-install dependencies (this takes time, do it during build)
-RUN bun install --frozen-lockfile 2>&1 || bun install 2>&1 || true
+# Create CLAUDE.md documenting the module
+RUN cat > /workspace/myrepo/CLAUDE.md << 'EOF'
+# Calculator Module
 
-# Install minimal Python deps needed by test_outputs.py
-RUN pip3 install --no-cache-dir --break-system-packages pytest pytest-json-ctrf 2>/dev/null || pip3 install --no-cache-dir pytest pytest-json-ctrf
+This module provides basic arithmetic operations.
 
-# Verifier output directory (Harbor bind-mounts this)
-RUN mkdir -p /logs/verifier
+## Known Issues
+
+- The add() function has a bug: it subtracts instead of adding
+EOF
+
+# Mark the directory as safe for git
+RUN git config --global --add safe.directory /workspace/myrepo && \
+    git config --global user.email "test@test.com" && \
+    git config --global user.name "Test User"
+
+# Initialize a git repo at base commit
+RUN cd /workspace/myrepo && \
+    git init && \
+    git add . && \
+    git commit -m "Initial commit with bug"
+
+WORKDIR /workspace/myrepo

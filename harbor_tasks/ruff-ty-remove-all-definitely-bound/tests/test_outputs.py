@@ -122,3 +122,53 @@ def test_ty_python_semantic_infer():
         cwd=REPO, capture_output=True, text=True, timeout=600,
     )
     assert r.returncode == 0, f"infer tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_ty_python_semantic_mdtest():
+    """ty_python_semantic markdown tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"mdtest failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_ty_lib():
+    """ty crate lib tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty", "--lib"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"ty lib tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_ty_project_check():
+    """ty_project crate compiles cleanly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_project"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ty_project check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_ty_ide_check():
+    """ty_ide crate compiles cleanly (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_ide"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ty_ide check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_ty_packages():
+    """All ty-related packages have no clippy warnings (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty", "-p", "ty_project", "-p", "ty_ide", "-p", "ty_python_semantic", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"clippy on ty packages failed:\n{r.stderr[-500:]}"

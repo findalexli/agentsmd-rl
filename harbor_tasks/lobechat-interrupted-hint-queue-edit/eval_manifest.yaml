@@ -72,6 +72,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo file structure matches expected layout
+- id: test_repo_unit_test_operation_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: useOperationState hook unit tests pass
+- id: test_repo_unit_test_operation_actions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Operation actions unit tests pass
+- id: test_repo_unit_test_streaming_executor
+  type: pass_to_pass
+  origin: repo_tests
+  description: Streaming executor unit tests pass
+- id: test_repo_typescript_compile_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compiles hooks directory without errors
+- id: test_repo_vitest_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Vitest configuration is valid and loads
+- id: test_repo_eslint_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint configuration is valid and loads
+- id: test_repo_unit_test_selectors
+  type: pass_to_pass
+  origin: repo_tests
+  description: messageStateSelectors unit tests pass
+- id: test_repo_vitest_run_cancel_functionality
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cancel functionality tests in streamingExecutor pass
 rubric:
 - rule: 'New i18n keys follow the flat key naming convention: {feature}.{context}.{action|status}'
   source:
@@ -112,6 +144,58 @@ rubric:
     which defines the `MessageOperationState` interface, maintaining it as an interface
     rather than refactoring to a type when add
   category: style
+- rule: i18n keys should be added to src/locales/default/namespace.ts
+  source:
+    path: AGENTS.md
+    lines: 64-67
+  evidence: The gold solution adds the new translation keys for the interrupted hint
+    and queue edit button to src/locales/default/chat.ts.
+  category: architecture
+- rule: Business components by domain go in src/features/
+  source:
+    path: CLAUDE.md
+    lines: 41-44
+  evidence: The gold solution places the new InterruptedHint component inside src/features/Conversation/Messages/Assistant/components/,
+    adhering to the domain-based feature structure.
+  category: architecture
+- rule: All AI development skills are available in .agents/skills/ directory
+  source:
+    path: AGENTS.md
+    lines: 78-80
+  evidence: The gold solution updates the .agents/skills/electron-testing/SKILL.md
+    file and adds the record-electron-demo.sh script to the same directory.
+  category: documentation
+- rule: Add i18n keys to `src/locales/default/namespace.ts` and translate `locales/zh-CN/namespace.json`
+    for preview.
+  source:
+    path: AGENTS.md
+    lines: 68-71
+  evidence: The gold solution adds new translation keys to `src/locales/default/chat.ts`
+    and `locales/zh-CN/chat.json`.
+  category: tooling
+- rule: Place business components and domain-specific UI in `src/features/`, keeping
+    `src/routes/` thin.
+  source:
+    path: CLAUDE.md
+    lines: 45-48
+  evidence: The gold solution places the `InterruptedHint` component in `src/features/Conversation/Messages/Assistant/components/`
+    rather than in `src/routes/`.
+  category: architecture
+- rule: 'Keys: Add to `src/locales/default/namespace.ts` and do not run `pnpm i18n`'
+  source:
+    path: AGENTS.md
+    lines: 63-66
+  evidence: The gold solution adds the new i18n keys for the interrupted hint to `src/locales/default/chat.ts`
+    and manually updates the preview locales without running the automated i18n script.
+  category: tooling
+- rule: '`src/features/` holds business components by domain'
+  source:
+    path: CLAUDE.md
+    lines: 41-43
+  evidence: The gold solution places the new `InterruptedHint.tsx` component inside
+    `src/features/Conversation/Messages/Assistant/components/`, adhering to the domain-based
+    feature structure.
+  category: architecture
 config_edits:
 - path: .agents/skills/electron-testing/SKILL.md
   tier: 1
@@ -146,18 +230,27 @@ config_edits:
     \ with crop instead (see Screen Recording section)"
   gold_removed: ''
 distractors:
-- rule: 'Dev: Translate `locales/zh-CN/namespace.json` locale file only for preview.
-    DON''T run `pnpm i18n`, let CI auto handle it.'
+- rule: DON'T run `pnpm i18n`, let CI auto handle it
   collision_type: rule_conflict
-  why_distracting: The rule explicitly tells the developer to only translate the `zh-CN`
-    file for preview and let CI handle the rest. An agent following this rule would
-    skip updating `locales/en-US/chat.json`, but the gold solution updates both `zh-CN`
-    and `en-US` files.
+  why_distracting: The agent needs to add translations for the new 'Interrupted' hint.
+    It might be tempted to run `pnpm i18n` to automatically generate the locale files
+    across all languages, but the instructions explicitly forbid this to let CI handle
+    it.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 65-66
+- rule: Never run `bun run test` - this runs all tests and takes ~10 minutes
+  collision_type: would_cause_bug
+  why_distracting: The agent modifies a test file (`streamingExecutor.test.ts`) and
+    might want to run the test suite to verify its changes. Running `bun run test`
+    is a standard reflex but is explicitly forbidden here as it takes ~10 minutes.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 59-61
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` both provide consistent architectural
-  guidance on the `src/features/` vs `src/routes/` split. `AGENTS.md` provides more
-  specific guidance on i18n, which conflicts slightly with the gold solution''s behavior
-  of updating the `en-US` locale file directly.'
+    lines: 56-57
+hierarchy_analysis: The configuration is relatively flat but duplicated across `AGENTS.md`
+  and `CLAUDE.md`. Both files provide consistent guidance on SPA routes and features.
+  The primary complexity comes from the meta-referential nature of the task, where
+  the agent must edit its own skill documentation (`.agents/skills/electron-testing/SKILL.md`)
+  while simultaneously implementing the feature in the main codebase.

@@ -20,5 +20,8 @@ WORKDIR /workspace/playwright
 # Install project deps (needed for TypeScript compilation check)
 RUN npm install 2>&1 | tail -5 || true
 
+# Generate the injected files needed for dependency checks
+RUN node utils/generate_injected.js 2>&1 || true
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

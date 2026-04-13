@@ -270,3 +270,49 @@ def test_tanstack_build():
     """
     r = _run_node(script, timeout=30)
     assert r.returncode == 0, f"Build config check failed:\n{r.stderr}"
+
+
+# --- New repo_tests pass-to-pass gates (CI/CD enrichment) ---
+
+
+def test_typescript_client_typecheck():
+    """TypeScript client package typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm 2>/dev/null && pnpm install --ignore-scripts 2>/dev/null "
+         "&& cd packages/typescript-client && pnpm run typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"typescript-client typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_typescript_client_build():
+    """TypeScript client package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm 2>/dev/null && pnpm install --ignore-scripts 2>/dev/null "
+         "&& cd packages/typescript-client && pnpm run build"],
+        capture_output=True, text=True, timeout=600, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"typescript-client build failed:\n{r.stderr[-500:]}"
+
+
+def test_typescript_client_stylecheck():
+    """TypeScript client package passes linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm 2>/dev/null && pnpm install --ignore-scripts 2>/dev/null "
+         "&& cd packages/typescript-client && pnpm run stylecheck"],
+        capture_output=True, text=True, timeout=600, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"typescript-client stylecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lockfile_valid():
+    """pnpm-lock.yaml is valid and installable (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm 2>/dev/null && pnpm install --ignore-scripts 2>/dev/null"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"

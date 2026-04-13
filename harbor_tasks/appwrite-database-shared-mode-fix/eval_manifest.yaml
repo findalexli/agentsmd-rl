@@ -97,34 +97,6 @@ checks:
   type: pass_to_pass
   description: Repo's Create.php passes PHPStan analysis
   origin: repo_tests
-- id: repo_composer_validate
-  type: pass_to_pass
-  description: Repo's composer.json is valid
-  origin: repo_tests
-- id: repo_lint_request_php
-  type: pass_to_pass
-  description: Repo's request.php passes Pint linting
-  origin: repo_tests
-- id: repo_lint_worker_message_php
-  type: pass_to_pass
-  description: Repo's worker message.php passes Pint linting
-  origin: repo_tests
-- id: repo_lint_create_php
-  type: pass_to_pass
-  description: Repo's Create.php passes Pint linting
-  origin: repo_tests
-- id: repo_phpstan_request_php
-  type: pass_to_pass
-  description: Repo's request.php passes PHPStan analysis
-  origin: repo_tests
-- id: repo_phpstan_worker_message_php
-  type: pass_to_pass
-  description: Repo's worker message.php passes PHPStan analysis
-  origin: repo_tests
-- id: repo_phpstan_create_php
-  type: pass_to_pass
-  description: Repo's Create.php passes PHPStan analysis
-  origin: repo_tests
 rubric:
 - rule: File names in Http directories must only be Get.php, Update.php, Create.php,
     Delete.php or XList.php.
@@ -144,33 +116,74 @@ rubric:
     fixes to `app/init/resources/request.php` and `app/init/worker/message.php`, respecting
     the project layout where bootstrap a
   category: architecture
-distractors:
-- rule: Stack includes MongoDB (default), MariaDB, MySQL, PostgreSQL.
-  collision_type: would_cause_bug
-  why_distracting: The explicit mention of multiple database engines (MongoDB, MariaDB,
-    MySQL, PostgreSQL) might lead the agent to implement engine-specific type checking
-    for the tenant ID (e.g., keeping `(int)` for SQL and removing it only for MongoDB).
-    This would overcomplicate the fix and potentially cause bugs, as the raw sequence
-    should be passed universally.
-  severity: high
+- rule: 'Stack: PHP 8.3+'
   source:
     path: AGENTS.md
-    lines: 16-17
-- rule: Action pattern (HTTP endpoints) uses `inject()` for dependencies in the constructor.
+    lines: 23-24
+  evidence: The gold solution uses the PHP 8.0+ `match` expression (`$dbTypeSharedTables
+    = match ($databaseType) { ... }`) to handle the different database types, adhering
+    to the modern PHP version specified.
+  category: style
+- rule: app/init/ -- configs, constants, locales, models, registers, resources
+  source:
+    path: AGENTS.md
+    lines: 32-33
+  evidence: The gold solution modifies `app/init/resources/request.php` and `app/init/worker/message.php`
+    to fix the shared-mode database configuration, correctly keeping global resource
+    initialization in the `ap
+  category: architecture
+- rule: app/init/ -- bootstrap (registers services, resources, listeners)
+  source:
+    path: AGENTS.md
+    lines: 28-30
+  evidence: The gold solution modifies `app/init/resources/request.php` and `app/init/worker/message.php`
+    in place, respecting their architectural role as global bootstrap/resource files
+    rather than attempting to
+  category: architecture
+- rule: app/init/ contains bootstrap code including registers and resources, while
+    src/Appwrite/Platform/Modules/ contains feature modules.
+  source:
+    path: AGENTS.md
+    lines: 30-38
+  evidence: 'The gold solution correctly modifies the existing resource initialization
+    script `app/init/resources/request.php` and worker script `app/init/worker/message.php`
+    to fix the database connection logic, '
+  category: architecture
+- rule: Inside Http directories for services, file names can only be Get.php, Update.php,
+    Create.php, Delete.php or XList.php.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 31-36
+  evidence: The gold solution modifies the existing `src/Appwrite/Platform/Modules/Databases/Http/Databases/Create.php`
+    file to fix the DSN construction without renaming it or creating new files with
+    non-standard
+  category: naming
+distractors:
+- rule: Generally-speaking, each service is its own module... The goal is to always
+    put related code that achieves a specific goal under one roof.
   collision_type: architecture_boundary
-  why_distracting: The Action pattern example heavily emphasizes injecting dependencies
-    like `dbForProject` in the constructor. An agent might try to solve the separate
-    pool validation in `Create.php` by modifying the `__construct()` method to inject
-    new pool dependencies, rather than filtering the existing `$pools` collection
-    inline within the action method.
+  why_distracting: The agent might interpret 'always put related code that achieves
+    a specific goal under one roof' as an instruction to refactor the database connection
+    and pool logic out of the global `app/init/resources/request.php` and `app/init/worker/message.php`
+    files and move it into the `Databases` module. This would break the application's
+    initialization phase, as `app/init` is required for global bootstrapping before
+    modules are loaded.
+  severity: high
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 6-7
+- rule: For non-CRUD operations, model the endpoint as a property update.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that fixing 'Shared-Mode Database Configuration'
+    is a non-CRUD operation and attempt to create a new endpoint (e.g., `Databases/Http/SharedMode/Update.php`)
+    to handle the configuration, rather than fixing the bug in the existing `Create.php`
+    endpoint and initialization scripts.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 48-65
-hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` defining the overall
-  architecture, stack, and project layout, and a module-specific `src/Appwrite/Platform/AGENTS.md`
-  defining strict naming conventions for HTTP endpoints. The module-specific rules
-  reinforce the root rules without conflict. The primary challenge is avoiding over-engineering
-  the database engine differences and adhering to the existing dependency injection
-  flow without modifying the Action constructors unnecessarily.
+    lines: 55-58
+hierarchy_analysis: The configuration hierarchy is moderate, with a base `AGENTS.md`
+  defining the overall stack and project layout, and a module-specific `src/Appwrite/Platform/AGENTS.md`
+  defining strict rules for module structure and HTTP endpoint naming. The rules are
+  complementary rather than conflicting.
 version: '2.0'

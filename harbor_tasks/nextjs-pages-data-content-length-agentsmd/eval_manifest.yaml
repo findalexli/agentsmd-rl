@@ -47,7 +47,23 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo unit tests pass
-rubric: []
+rubric:
+- rule: Update the `pnpm new-test` command syntax to properly forward arguments to
+    the underlying script.
+  source:
+    path: AGENTS.md
+    lines: 148-158
+  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Generate
+    tests non-interactively' section to use `-- --args` instead of `--args`.
+  category: documentation
+- rule: Ensure all instances of `pnpm new-test` in the documentation correctly use
+    `-- --args`.
+  source:
+    path: AGENTS.md
+    lines: 400-405
+  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Test
+    Gotchas' section for the quick smoke testing tip.
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -55,28 +71,27 @@ config_edits:
   gold_removed: pnpm new-test --args
 distractors:
 - rule: Generating tests using `pnpm new-test` is mandatory.
+  collision_type: rule_conflict
+  why_distracting: The config explicitly states that generating tests is mandatory,
+    which might lead the agent to waste time scaffolding a new test for the regression.
+    However, the gold solution only fixes the code and updates the documentation without
+    adding a test.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 148-149
-  collision_type: scope_ambiguity
-  why_distracting: Because the agent is explicitly instructed to edit `AGENTS.md`
-    around line 148, it will read the rule stating that generating tests is 'mandatory'.
-    It might then waste significant effort trying to write an integration test for
-    the Content-Length regression, even though the prompt does not request one and
-    the gold solution does not include one.
-  severity: medium
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
-    dev` in a separate terminal session before making edits
-  source:
-    path: CLAUDE.md
-    lines: 80-85
+    lines: 148-148
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits'
   collision_type: meta_confusion
-  why_distracting: The agent might try to start a background dev server before making
-    the simple string replacement in the code, wasting time and potentially hanging
-    the environment if not handled correctly.
-  severity: low
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical (symlinked). The unique
-  aspect of this PR is that the agent is asked to edit `AGENTS.md` itself. This creates
-  a meta-situation where the agent is modifying its own instructions. The agent must
-  follow the user''s prompt to update the file without getting distracted by the rules
-  within the file.'
+  why_distracting: The config instructs the agent to start a background dev server
+    before making edits and to explicitly state why if skipped. This behavioral rule
+    is irrelevant for the benchmark environment and might cause the agent to hang
+    or output unnecessary explanations.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 105-108
+hierarchy_analysis: The configuration is flat, consisting of a single AGENTS.md file
+  (and its symlink CLAUDE.md). The primary challenge is not navigating a deep hierarchy,
+  but rather the meta-referential nature of the task, where the agent must edit the
+  very file that provides its instructions.

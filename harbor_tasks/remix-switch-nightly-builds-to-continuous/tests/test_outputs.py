@@ -306,6 +306,25 @@ def test_repo_changes_validate():
     assert r.returncode == 0, f"Changes validation failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_build():
+    """Repo's build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.26.0"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------

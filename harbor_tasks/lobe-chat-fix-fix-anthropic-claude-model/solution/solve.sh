@@ -4,7 +4,7 @@ set -euo pipefail
 cd /workspace/lobe-chat
 
 # Idempotent: skip if already applied
-if grep -q '64_000' packages/model-runtime/src/core/anthropicCompatibleFactory/resolveMaxTokens.ts 2>/dev/null; then
+if grep -q '4096 : 64_000' packages/model-runtime/src/core/anthropicCompatibleFactory/resolveMaxTokens.ts 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi

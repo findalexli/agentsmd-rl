@@ -67,25 +67,21 @@ def test_multibyte_hex_escape_error_handling():
     """
     Test that the compiler properly reports an error for multi-byte UTF-8
     characters in hex escape sequences instead of panicking.
-
-    The fix handles cases like `b"\\xAñ"` where 'ñ' is a multi-byte UTF-8
-    character that would cause the hex decoder to fail with OddLength or
-    InvalidStringLength errors.
     """
-    # This is the test case from the PR - ñ is a multi-byte UTF-8 char
-    move_code = '''module 0x42::m {
+    # This is the test case from the PR - n-tilde is a multi-byte UTF-8 char
+    move_code = """module 0x42::m {
     fun f(): vector<u8> {
-        b"\\xAñ"
+        b"\\xA\xc3\xb1"
     }
 }
-'''
+"""
 
     returncode, stdout, stderr = run_move_check(move_code)
 
     # Should NOT panic - should produce a proper error message
     combined_output = stdout + stderr
 
-    # Should NOT contain unreachable panic message (this is the bug we're testing for)
+    # Should NOT contain unreachable panic message (this is the bug we are testing for)
     assert "ICE unexpected error parsing hex byte string value" not in combined_output, \
         f"Compiler panicked with unreachable!() instead of proper error handling:\n{combined_output}"
 
@@ -103,12 +99,12 @@ def test_valid_hex_escape_still_works():
     """
     Test that valid hex escape sequences still work correctly.
     """
-    move_code = '''module 0x42::m {
+    move_code = """module 0x42::m {
     fun f(): vector<u8> {
         b"\\xAB\\xCD"
     }
 }
-'''
+"""
 
     returncode, stdout, stderr = run_move_check(move_code)
     combined_output = stdout + stderr
@@ -124,12 +120,12 @@ def test_single_invalid_hex_character():
     """
     Test error handling for a single invalid hex character.
     """
-    move_code = '''module 0x42::m {
+    move_code = """module 0x42::m {
     fun f(): vector<u8> {
         b"\\xAG"
     }
 }
-'''
+"""
 
     returncode, stdout, stderr = run_move_check(move_code)
     combined_output = stdout + stderr
@@ -150,12 +146,12 @@ def test_various_multibyte_chars():
     Test with various multi-byte UTF-8 characters in hex escapes.
     """
     # Test with emoji (4 bytes in UTF-8)
-    move_code = '''module 0x42::m {
+    move_code = """module 0x42::m {
     fun f(): vector<u8> {
-        b"\\xA😀"
+        b"\\xA\xf0\x9f\x98\x80"
     }
 }
-'''
+"""
 
     returncode, stdout, stderr = run_move_check(move_code)
     combined_output = stdout + stderr
@@ -175,18 +171,18 @@ def test_hex_escape_at_end():
     """
     Test hex escape at end of string (edge case).
     """
-    move_code = '''module 0x42::m {
+    move_code = """module 0x42::m {
     fun f(): vector<u8> {
         b"\\xA"
     }
 }
-'''
+"""
 
     returncode, stdout, stderr = run_move_check(move_code)
     combined_output = stdout + stderr
 
     # Should handle this gracefully (either error or accept)
-    # The key is it shouldn't panic
+    # The key is it should not panic
     assert "thread 'main' panicked" not in combined_output, \
         f"Compiler panicked on incomplete hex escape:\n{combined_output}"
 
@@ -243,6 +239,33 @@ def test_move_compiler_formatting():
     assert result.returncode == 0, \
         f"Formatting check failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
+
+def test_move_compiler_clippy():
+    """
+    Move compiler clippy lints pass (pass_to_pass).
+    CI command from .github/workflows/external.yml.
+    """
+    move_repo = f"{REPO}/external-crates/move"
+    r = subprocess.run(
+        ["cargo", "move-clippy", "-D", "warnings"],
+        capture_output=True, text=True, timeout=600, cwd=move_repo,
+    )
+    assert r.returncode == 0, f"Move clippy failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_move_compiler_unit_tests_p2p():
+    """
+    Move compiler unit tests pass at base commit (pass_to_pass).
+    Runs the library tests for move-compiler.
+    """
+    move_repo = f"{REPO}/external-crates/move"
+    r = subprocess.run(
+        ["cargo", "test", "-p", "move-compiler", "--lib", "--quiet"],
+        capture_output=True, text=True, timeout=600, cwd=move_repo,
+    )
+    assert r.returncode == 0, f"Move compiler unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 def test_repo_xlint():
     """Repo's custom linter passes (pass_to_pass)."""
     r = subprocess.run(
@@ -250,9 +273,21 @@ def test_repo_xlint():
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
+
 def test_repo_git_checks():
     """Repo's git checks pass (pass_to_pass)."""
     r = subprocess.run(
         ["./scripts/git-checks.sh"], capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Git checks failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+
+def test_move_compiler_cargo_check():
+    """Move compiler compiles without errors (cargo check pass_to_pass)."""
+    move_repo = f"{REPO}/external-crates/move"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "move-compiler"],
+        capture_output=True, text=True, timeout=300, cwd=move_repo,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

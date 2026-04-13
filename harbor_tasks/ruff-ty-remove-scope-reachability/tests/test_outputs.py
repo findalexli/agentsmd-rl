@@ -129,3 +129,23 @@ def test_cargo_check_workspace():
         cwd=REPO, capture_output=True, text=True, timeout=600,
     )
     assert r.returncode == 0, f"Workspace check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_corpus():
+    """Corpus integration tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "corpus"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Corpus tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """Code formatting follows rustfmt standards (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"

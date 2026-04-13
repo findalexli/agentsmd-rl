@@ -11,6 +11,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 import textwrap
 import re
+import os
 from pathlib import Path
 
 REPO = "/workspace/bun"
@@ -48,6 +49,24 @@ def _install_node():
         "| tar -xJ -C /usr/local --strip-components=1",
         shell=True, capture_output=True, timeout=120,
     )
+
+
+def _install_bun():
+    """Ensure Bun is available (needed for repo tests). Returns the bun bin path."""
+    r = subprocess.run(["which", "bun"], capture_output=True)
+    if r.returncode == 0:
+        return "/root/.bun/bin"
+    # Install unzip if not available (needed for Bun install)
+    subprocess.run(
+        "apt-get update -qq && apt-get install -y -qq unzip > /dev/null 2>&1",
+        shell=True, capture_output=True, timeout=60,
+    )
+    # Install Bun
+    subprocess.run(
+        "curl -fsSL https://bun.sh/install | bash",
+        shell=True, capture_output=True, timeout=120,
+    )
+    return "/root/.bun/bin"
 
 
 def _run_node_test(script: str) -> subprocess.CompletedProcess:
@@ -262,8 +281,8 @@ def test_no_bare_call_apply_in_ondata():
     lines = [l for l in body.split("\n") if not l.strip().startswith("//")]
     clean = "\n".join(lines)
     # .call( or .apply( NOT preceded by $
-    bare_call = re.search(r'(?<!\$)\.call\(', clean)
-    bare_apply = re.search(r'(?<!\$)\.apply\(', clean)
+    bare_call = re.search(r'(?<!$)\.call\(', clean)
+    bare_apply = re.search(r'(?<!$)\.apply\(', clean)
     assert not bare_call, f"Found bare .call() in ondata (use .$call): {bare_call.group()}"
     assert not bare_apply, f"Found bare .apply() in ondata (use .$apply): {bare_apply.group()}"
 
@@ -280,8 +299,21 @@ def test_no_console_log_in_ondata():
 
 
 # ---------------------------------------------------------------------------
-# Repo CI checks (pass_to_pass) — verified to work without bun build
+# Repo CI checks (pass_to_pass) — discovered from .github/workflows/lint.yml
+# These verify the repo's actual CI passes on both base and after gold fix
 # ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Bun stream tests for the modified module (from CI)
+def test_repo_bun_stream_tests():
+    """Repo's Bun stream tests pass (pass_to_pass). Tests the modified readable.ts module."""
+    bun_bin = _install_bun()
+    env = {**os.environ, "PATH": f"{bun_bin}:{os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["bun", "test", "test/js/node/stream/node-stream.test.js"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Bun stream tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
 
 # [repo_tests] pass_to_pass — validates TypeScript syntax without typecheck
 def test_target_file_syntax_valid():
@@ -336,11 +368,6 @@ def test_claude_md_conventions():
     assert "function ondata" in content, "function ondata not found"
 
 
-# ---------------------------------------------------------------------------
-# Repo CI checks (pass_to_pass) — discovered from .github/workflows/lint.yml
-# These verify the repo's actual CI passes on both base and after gold fix
-# ---------------------------------------------------------------------------
-
 # [repo_tests] pass_to_pass — prettier formatting check (from CI)
 def test_repo_prettier_target():
     """Target file passes prettier format check (pass_to_pass)."""
@@ -363,3 +390,13 @@ def test_repo_oxlint_target():
     )
     assert r.returncode == 0, f"Oxlint check failed:\n{r.stdout}\n{r.stderr}"
 
+
+# [repo_tests] pass_to_pass — streams directory oxlint check (from CI)
+def test_repo_oxlint_streams_dir():
+    """Streams directory passes oxlint (pass_to_pass)."""
+    _install_node()
+    r = subprocess.run(
+        ["npx", "-y", "oxlint@0.15.0", f"--config={REPO}/oxlint.json", f"{REPO}/src/js/internal/streams/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Oxlint check failed:\n{r.stdout}\n{r.stderr}"

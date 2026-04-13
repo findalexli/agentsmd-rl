@@ -209,3 +209,27 @@ def test_cargo_deny_check():
     if any(msg in stderr_lower for msg in ["could not find", "not installed", "no such command"]):
         return  # Skip if cargo-deny is not available
     assert r.returncode == 0, f"cargo deny check failed:\n{r.stderr[-500:]}"
+
+
+def test_cargo_toml_no_trailing_whitespace():
+    """
+    Cargo.toml has no trailing whitespace (pass_to_pass).
+    Style check for the modified Cargo.toml file.
+    """
+    r = subprocess.run(
+        ["grep", "-n", "[[:space:]]$", CARGO_TOML_FILE],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode != 0, f"Found trailing whitespace in Cargo.toml:\n{r.stdout}"
+
+
+def test_get_checkpoint_rs_no_trailing_whitespace():
+    """
+    get_checkpoint.rs has no trailing whitespace (pass_to_pass).
+    Style check for the modified get_checkpoint.rs file.
+    """
+    r = subprocess.run(
+        ["grep", "-n", "[[:space:]]$", GET_CHECKPOINT_FILE],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode != 0, f"Found trailing whitespace in get_checkpoint.rs:\n{r.stdout}"

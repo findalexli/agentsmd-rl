@@ -276,3 +276,117 @@ def test_repo_dockerfile_rocm_syntax():
                     found_next = True
                     break
             assert found_next, f"Line {i} has continuation but no following content"
+
+
+def test_repo_shellcheck():
+    """Repo's shell scripts pass shellcheck linting (pass_to_pass)."""
+    # Install shellcheck
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install shellcheck: {r.stderr[-500:]}"
+    # Run shellcheck on repo's shell scripts using the pre-commit script
+    r = subprocess.run(
+        ["bash", "tools/pre_commit/shellcheck.sh"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shellcheck failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_actionlint():
+    """Repo's GitHub Actions workflows pass actionlint (pass_to_pass)."""
+    # Install actionlint
+    subprocess.run(
+        ["pip", "install", "-q", "actionlint-py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Run actionlint on GitHub workflow files (find them first to handle glob)
+    import glob
+    workflow_dir = Path(REPO) / ".github" / "workflows"
+    workflow_files = list(workflow_dir.glob("*.yml"))
+    if workflow_files:
+        r = subprocess.run(
+            ["actionlint"] + [str(f) for f in workflow_files],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Actionlint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_dockerfile_graph():
+    """Repo's Dockerfile dependency graph is up to date (pass_to_pass)."""
+    # Run the update-dockerfile-graph script which validates graph consistency
+    r = subprocess.run(
+        ["bash", "tools/pre_commit/update-dockerfile-graph.sh"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dockerfile graph check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_spdx_headers():
+    """Repo's Python files have SPDX license headers (pass_to_pass)."""
+    # Install regex dependency if not available
+    subprocess.run(
+        ["pip", "install", "-q", "regex"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_spdx_header.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_init_lazy_imports():
+    """Repo's root __init__.py uses lazy imports correctly (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_init_lazy_imports.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lazy imports check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_forbidden_imports():
+    """Repo's Python files don't have forbidden imports (pass_to_pass)."""
+    # Install regex dependency if not available
+    subprocess.run(
+        ["pip", "install", "-q", "regex"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_forbidden_imports.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stderr[-500:]}"

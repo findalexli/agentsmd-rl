@@ -38,6 +38,30 @@ checks:
   type: fail_to_pass
   origin: static
   description: is_explicit has match/matches! with >=4 variant refs, not a stub
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python files pass ruff format check
+- id: repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml passes validation
+- id: repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts pass shellcheck
+- id: allows_installation_has_debug_logging
+  type: pass_to_pass
+  origin: static
+  description: allows_installation retains debug! logging statements
+- id: python_source_impl_methods_complete
+  type: fail_to_pass
+  origin: static
+  description: PythonSource impl block has is_explicit method
+- id: is_explicit_has_doc_comment
+  type: fail_to_pass
+  origin: static
+  description: is_explicit method has documentation comments
 - id: no_panic_unwrap_in_is_explicit
   type: fail_to_pass
   origin: agent_config
@@ -80,31 +104,33 @@ rubric:
 - rule: uv-python crate has no typos
 - rule: discovery.rs has no typos
 - rule: Repo Python files pass ruff via uvx (authentic CI)
-- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
   source:
     path: CLAUDE.md
-    lines: 16-18
-  evidence: The gold solution uses descriptive, unshortened names like `is_explicit`
-    for the new method, avoiding abbreviations.
-  category: naming
+    lines: 8-8
+  evidence: The gold solution implements the refactoring safely without using any
+    of the forbidden macros (panic!, unreachable!, unwrap()) or unsafe code.
+  category: style
 distractors:
 - rule: ALWAYS attempt to add a test case for changed behavior
   collision_type: scope_ambiguity
-  why_distracting: This PR is a pure refactoring that moves an inline match statement
-    into a method on the enum. The behavior of the program does not change, so attempting
-    to add a test case would be out of scope and a waste of effort.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 2-2
-- rule: PREFER integration tests, e.g., at `it/...` over unit tests
-  collision_type: architecture_boundary
-  why_distracting: If an agent incorrectly decides to add tests for this new `is_explicit`
-    method, it might try to write an integration test. However, `is_explicit` is a
-    `pub(crate)` internal method, making it unsuitable for integration testing.
+  why_distracting: The PR is a pure refactoring of existing logic (moving an inline
+    match to a method) without changing any behavior. Attempting to add a test case
+    would be a waste of effort and might lead to hallucinated tests.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 3-3
-hierarchy_analysis: The configuration consists of a single root-level `CLAUDE.md`
-  file. No hierarchical conflicts exist.
+- rule: PREFER integration tests, e.g., at `it/...` over unit tests
+  collision_type: scope_ambiguity
+  why_distracting: Similar to the test case rule, this instructs the agent to prefer
+    integration tests. Since no behavior is changed, trying to write integration tests
+    for this internal refactoring is unnecessary and distracting.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 4-4
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the root level. There are no hierarchical overrides or complex rule interactions
+  to navigate.

@@ -68,38 +68,38 @@ rubric:
     lines: 1-300
     commit: 32310ea30010c92c101d7e93c535c6bd17057dcf
 - rule: When writing text such as documentation, comments, or commit messages, wrap
-    literal names from ClickHouse SQL language, classes and functions... inside inline
-    code blocks
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks.
   source:
     path: AGENTS.md
     lines: 5-5
-  evidence: The added C++ comment wraps the SQL keywords `DROP` and `TRUNCATE` in
-    backticks.
+  evidence: The comment added in `src/Interpreters/InterpreterDropQuery.cpp` wraps
+    the SQL keywords `DROP` and `TRUNCATE` in backticks, following the rule to wrap
+    literal names from ClickHouse SQL language in inl
   category: documentation
 distractors:
-- rule: write names of functions and methods as `f` instead of `f()`
-  collision_type: would_cause_bug
-  why_distracting: The agent needs to call the `isRefreshable()` method in C++ code.
-    If it misapplies this documentation rule to the actual code implementation, it
-    will omit the parentheses and cause a compilation error.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 9-9
-- rule: When mentioning logical errors, say 'exception' instead of 'crash'
-  collision_type: scope_ambiguity
-  why_distracting: The issue describes a server becoming unresponsive due to resource
-    exhaustion (background pool threads consumed by orphaned views), not a logical
-    error or crash. Forcing the word 'exception' into the explanation would be factually
-    incorrect.
+- rule: When adding headers to documentation files under `docs/`, every header must
+    include an explicit anchor in the form `{#kebab-case-anchor}`.
+  collision_type: architecture_boundary
+  why_distracting: The rule specifies how to format headers in `docs/` files. An agent
+    might mistakenly believe it needs to document this bug fix in the official documentation,
+    expanding the scope unnecessarily for an internal bug fix.
   severity: medium
   source:
     path: AGENTS.md
+    lines: 7-7
+- rule: When mentioning logical errors, say 'exception' instead of 'crash'.
+  collision_type: scope_ambiguity
+  why_distracting: The rule asks to use 'exception' instead of 'crash' for logical
+    errors. The agent might try to force the word 'exception' into the comment, but
+    the bug causes resource exhaustion ('overwhelming the server'), not a logical
+    error or crash.
+  severity: low
+  source:
+    path: AGENTS.md
     lines: 11-11
-hierarchy_analysis: The AGENTS.md file provides general documentation and coding guidelines.
-  The rules about formatting text (backticks, function names, exception terminology)
-  apply to comments and documentation, but agents must be careful not to apply text-formatting
-  rules (like omitting parentheses on function calls) to actual C++ code.
+hierarchy_analysis: The configuration is flat, consisting only of `AGENTS.md` at the
+  root level. No complex hierarchy traversal is required.
 version: '2.0'
 source:
   repo: ClickHouse/ClickHouse

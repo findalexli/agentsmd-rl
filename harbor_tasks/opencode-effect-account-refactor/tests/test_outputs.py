@@ -63,6 +63,100 @@ def _run_account_tests():
     return result
 
 
+def _run_auth_tests():
+    """Run auth tests in the repo."""
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/auth/auth.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
+def _run_storage_tests():
+    """Run storage tests in the repo."""
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/storage/"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
+def _run_bun_tests():
+    """Run bun test file in the repo."""
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/bun.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
+def _run_acp_tests():
+    """Run ACP (Agent Client Protocol) tests in the repo."""
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/acp/agent-interface.test.ts", "test/acp/event-subscription.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
+def _run_scheduler_tests():
+    """Run scheduler tests in the repo."""
+    # Set git identity first (required by tests that use git)
+    subprocess.run(
+        ["git", "config", "--global", "user.email", "test@test.com"],
+        cwd=PKG,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "--global", "user.name", "Test"],
+        cwd=PKG,
+        capture_output=True,
+    )
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/scheduler.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    return result
+
+
+def _run_config_tests():
+    """Run config tests in the repo."""
+    # Set git identity first (required by tests that use git)
+    subprocess.run(
+        ["git", "config", "--global", "user.email", "test@test.com"],
+        cwd=PKG,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "--global", "user.name", "Test"],
+        cwd=PKG,
+        capture_output=True,
+    )
+    result = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/config/config.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -96,6 +190,48 @@ def test_repo_account_tests():
     """Account tests pass on base commit (pass_to_pass)."""
     r = _run_account_tests()
     assert r.returncode == 0, f"Account tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - auth tests
+def test_repo_auth_tests():
+    """Auth tests pass on base commit (pass_to_pass)."""
+    r = _run_auth_tests()
+    assert r.returncode == 0, f"Auth tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - storage tests
+def test_repo_storage_tests():
+    """Storage tests pass on base commit (pass_to_pass)."""
+    r = _run_storage_tests()
+    assert r.returncode == 0, f"Storage tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - bun tests
+def test_repo_bun_tests():
+    """Bun tests pass on base commit (pass_to_pass)."""
+    r = _run_bun_tests()
+    assert r.returncode == 0, f"Bun tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - ACP tests (Agent Client Protocol)
+def test_repo_acp_tests():
+    """ACP (Agent Client Protocol) tests pass on base commit (pass_to_pass)."""
+    r = _run_acp_tests()
+    assert r.returncode == 0, f"ACP tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - scheduler tests
+def test_repo_scheduler_tests():
+    """Scheduler tests pass on base commit (pass_to_pass)."""
+    r = _run_scheduler_tests()
+    assert r.returncode == 0, f"Scheduler tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - config tests
+def test_repo_config_tests():
+    """Config tests pass on base commit (pass_to_pass)."""
+    r = _run_config_tests()
+    assert r.returncode == 0, f"Config tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

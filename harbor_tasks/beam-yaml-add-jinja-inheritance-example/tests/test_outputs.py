@@ -47,6 +47,97 @@ def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # -----------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_input_data_functions():
+    """input_data.py functions return valid JSON and data structures (pass_to_pass)."""
+    test_code = """
+import sys
+import types
+import json
+
+# Create a complete mock structure
+class MockModule(types.ModuleType):
+    def __getattr__(self, name):
+        return MockModule(name)
+
+# Mock out the entire apache_beam package tree
+for mod_path in ['apache_beam', 'apache_beam.io', 'apache_beam.io.gcp', 'apache_beam.io.gcp.pubsub',
+                 'apache_beam.yaml', 'apache_beam.yaml.examples', 'apache_beam.yaml.examples.testing']:
+    sys.modules[mod_path] = MockModule(mod_path)
+
+# Add PubsubMessage mock
+class MockPubsubMessage:
+    def __init__(self, data, attributes):
+        self.data = data
+        self.attributes = attributes
+sys.modules['apache_beam.io.gcp.pubsub'].PubsubMessage = MockPubsubMessage
+
+# Read and exec the input_data.py file directly
+with open('/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/input_data.py') as f:
+    source = f.read()
+
+# Execute in a controlled namespace
+namespace = {}
+exec(source, namespace)
+
+# Test word_count_jinja_parameter_data returns valid JSON
+result = namespace['word_count_jinja_parameter_data']()
+params = json.loads(result)
+assert 'readFromTextTransform' in params, 'Missing readFromTextTransform'
+assert 'combineTransform' in params, 'Missing combineTransform'
+assert 'mapToFieldsSplitConfig' in params, 'Missing mapToFieldsSplitConfig'
+print('word_count_jinja_parameter_data: OK')
+
+# Test word_count_jinja_template_data returns valid paths
+result = namespace['word_count_jinja_template_data']('test_wordCountInclude_yaml')
+assert len(result) > 0, 'Empty template list for include'
+assert all('.yaml' in p for p in result), 'All paths should be .yaml files'
+print('word_count_jinja_template_data(include): OK')
+
+result = namespace['word_count_jinja_template_data']('test_wordCountImport_yaml')
+assert len(result) > 0, 'Empty template list for import'
+assert 'wordCountMacros.yaml' in result[0], 'Should reference wordCountMacros.yaml'
+print('word_count_jinja_template_data(import): OK')
+
+# Test text_data returns expected content
+result = namespace['text_data']()
+assert 'KING LEAR' in result, 'Missing KING LEAR'
+assert len(result.split('\\n')) >= 3, 'Should have multiple lines'
+print('text_data: OK')
+
+print('All input_data.py function tests passed!')
+"""
+    r = _run_python(test_code, timeout=60)
+    assert r.returncode == 0, f"input_data.py function check failed:\n{r.stderr}"
+    assert "All input_data.py function tests passed!" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yamllint_jinja_include():
+    """Jinja include YAML submodule files are processable by yamllint (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "yamllint"],
+        capture_output=True, timeout=60,
+    )
+    yaml_files = [
+        "sdks/python/apache_beam/yaml/examples/transforms/jinja/include/submodules/readFromTextTransform.yaml",
+        "sdks/python/apache_beam/yaml/examples/transforms/jinja/include/submodules/mapToFieldsSplitConfig.yaml",
+        "sdks/python/apache_beam/yaml/examples/transforms/jinja/include/submodules/explodeTransform.yaml",
+        "sdks/python/apache_beam/yaml/examples/transforms/jinja/include/submodules/combineTransform.yaml",
+        "sdks/python/apache_beam/yaml/examples/transforms/jinja/include/submodules/writeToTextTransform.yaml",
+        "sdks/python/apache_beam/yaml/examples/transforms/jinja/include/submodules/mapToFieldsCountConfig.yaml",
+    ]
+    for yaml_file in yaml_files:
+        r = subprocess.run(
+            ["yamllint", "-c", ".yamllint.yml", yaml_file],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        # These are Jinja template fragments which will have syntax issues due to
+        # template syntax ({{ }}, {%- %}) - this is expected. We just verify
+        # yamllint runs without crashing (stderr should be empty unless yamllint itself fails)
+        assert r.stderr == "", f"yamllint crashed on {yaml_file}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_yamllint_non_jinja():
     """Non-Jinja YAML files pass yamllint (pass_to_pass)."""
     r = subprocess.run(

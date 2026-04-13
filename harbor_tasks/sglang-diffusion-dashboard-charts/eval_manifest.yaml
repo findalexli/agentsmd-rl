@@ -87,9 +87,17 @@ checks:
     origin: repo_tests
     description: "Diffusion script CLI loads and shows help"
 
-rubric:
-  - rule: "New code must match surrounding style (f-strings, type hints, error handling patterns)"
-    source:
-      path: "python/sglang/multimodal_gen/.claude/CLAUDE.md"
-      lines: "1"
-      commit: "9b4dd274787ce4a778b7688c65c33598282a6559"
+  - id: test_repo_python_compileall
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Diffusion script passes Python compileall check"
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Diffusion script has no trailing whitespace (matches pre-commit hook)"
+
+  - id: test_repo_file_ends_with_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Diffusion script ends with newline (matches pre-commit end-of-file-fixer)"

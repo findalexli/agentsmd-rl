@@ -436,3 +436,39 @@ def test_eslint_check():
         timeout=120,
     )
     assert r.returncode == 0, f"eslint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_cargo_move_clippy():
+    """cargo move-clippy passes for external-crates/move (pass_to_pass).
+
+    Verifies no clippy warnings or errors across all move crates.
+    This is the specialized clippy command used in the external.yml CI workflow.
+    """
+    # Run from external-crates/move where the move-clippy alias is defined
+    r = subprocess.run(
+        ["cargo", "move-clippy"],
+        cwd=REPO_ROOT / "external-crates" / "move",
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"cargo move-clippy failed:\n{r.stderr[-500:]}"
+
+
+def test_move_analyzer_ide_testsuite():
+    """move-analyzer IDE testsuite passes (pass_to_pass).
+
+    Runs the full IDE testsuite for move-analyzer (33 tests covering
+    completion, inlay hints, symbolication, go-to-def, etc.).
+    """
+    r = subprocess.run(
+        ["cargo", "test", "-p", "move-analyzer", "--test", "ide_testsuite"],
+        cwd=REPO_ROOT / "external-crates" / "move",
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"IDE testsuite failed:\n{r.stderr[-500:]}"
+    # Verify tests actually ran and passed
+    assert "test result: ok" in r.stdout, "Tests did not complete successfully"
+    assert "passed" in r.stdout, "No tests passed"

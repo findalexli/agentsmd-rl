@@ -50,21 +50,40 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo build succeeds
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency checks pass
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo channel generation passes
+- id: test_repo_generate_injected
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo injected script generation passes
 rubric:
 - rule: SKILL.md update is consistent with the style of existing documentation
   source:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-10
     commit: b6f860d846146f072f5a804017d89f2deb737b39
-- rule: '`playwright-core` is the package for the browser automation engine, client,
-    server, dispatchers, and protocol.'
+- rule: CLI commands in SKILL.md should follow the format `playwright-cli <command>
+    <args>`
   source:
-    path: CLAUDE.md
-    lines: 3-7
-  evidence: The gold solution correctly modifies the MCP tool handlers within `packages/playwright-core/src/tools/backend/`,
-    aligning with the architectural definition that `playwright-core` houses the browser
-    au
-  category: architecture
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 33-40
+  evidence: The gold solution adds `playwright-cli fill e5 "user@example.com"  --submit`
+    which matches the existing command format and style in SKILL.md.
+  category: documentation
+- rule: Update the project's skill documentation to reflect the `--submit` flag behavior
+    for the fill command so users understand when Enter is pressed after filling.
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 38-39
+  evidence: The gold solution adds a comment explaining the `--submit` flag and an
+    example command `playwright-cli fill e5 "user@example.com"  --submit`.
+  category: documentation
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
@@ -73,29 +92,17 @@ config_edits:
     playwright-cli fill e5 "user@example.com"  --submit'
   gold_removed: playwright-cli fill e5 "user@example.com"
 distractors:
-- rule: Test Commands for MCP tools are `npm run ctest-mcp <filter>` and tests are
-    located in `tests/mcp/`.
+- rule: 'Test Commands: `npm run ctest-mcp <filter>` Chromium only MCP tools (`tests/mcp/`)'
   collision_type: scope_ambiguity
-  why_distracting: The agent might read the test commands for MCP tools and attempt
-    to write new tests in `tests/mcp/` to verify the removal of `waitForCompletion`.
-    However, the instructions only ask to fix the code and update the skill documentation,
-    making test creation an out-of-scope waste of effort.
+  why_distracting: The config file explicitly lists test commands and directories
+    for MCP tools (`tests/mcp/`). An agent might assume that modifying MCP tool behavior
+    requires adding or updating tests in this directory, expanding the scope beyond
+    the requested refactor.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 58-63
-- rule: 'Decision rule: Tests needing `page` + `server` go to `tests/page/`, and tests
-    needing `browser`/`context` go to `tests/library/`.'
-  collision_type: architecture_boundary
-  why_distracting: Because the modified tools interact with `page` and `locator` objects,
-    the agent might mistakenly try to add tests in `tests/page/` or `tests/library/`
-    based on the decision rule. This crosses an architectural boundary since MCP tools
-    have their own dedicated test directory (`tests/mcp/`).
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 74-82
-hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
-  The guidance is straightforward, but the extensive documentation on testing could
-  distract an agent into writing tests when the prompt only requires implementation
-  fixes and documentation updates.
+    lines: 55-56
+hierarchy_analysis: The hierarchy is flat, consisting only of the root `CLAUDE.md`
+  file. The task explicitly directs the agent to edit a specific documentation/skill
+  file (`SKILL.md`), which acts as the target of the task rather than a source of
+  rules.

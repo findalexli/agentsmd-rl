@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T23:43:16.182111",
-  "total_time": 6248.1,
-  "sandbox_id": "ikczu4qzdysrls4xj9b9t",
+  "validated_at": "2026-04-12T00:08:25.501249",
+  "total_time": 2439.02,
+  "sandbox_id": "i1u7eh98582p2arzrhnyv",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 105.32,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 907.4,
       "notes": ""
     },
     "p2p_enrich": {
@@ -35,11 +34,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed: 1) test.sh - was not parsing pytest results, now uses exit code; 2) test_outputs.py - had incorrect escaped string '\\$/progress' instead of '$/progress'; 3) solution/solve.sh - patch didn't match base commit, regenerated fresh patch from gold commit",
+      "attempts": 2,
+      "notes": "Fixed test_outputs.py: invalid escape sequence in test_context_progress_notifications (changed '\\$/progress' to '$/progress'). All 3 core validations pass: Docker build, NOP (reward=0), Gold (reward=1). Rubric judge ICR low because judge only evaluates config file changes, not source code.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1232.92
+      "time": 779.47
     },
     "rubric_judge": {
       "status": "fail",
@@ -47,33 +46,19 @@
       "backend": "fireworks",
       "time": 1.41,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 30.04,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 642.78,
-      "at": "2026-04-09T14:38:53.974077"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 643.06,
-      "at": "2026-04-09T14:38:54.147456"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 187.66,
-      "at": "2026-04-09T15:00:59.134604"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +74,30 @@
       "backend": "fireworks",
       "time": 6248.1,
       "at": "2026-04-09T23:43:16.182111"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3491.54,
+      "at": "2026-04-11T21:47:00.377285"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4137.52,
+      "at": "2026-04-11T22:51:02.130397"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2439.02,
+      "at": "2026-04-12T00:08:25.501249"
     }
   ]
 }

@@ -60,6 +60,22 @@ checks:
     origin: static
     description: "Modified files end with single newline (pre-commit check)"
 
+
+  - id: test_repo_check_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CI workflow YAML files are valid"
+
+  - id: test_repo_check_toml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pyproject.toml is valid TOML"
+
+  - id: test_repo_check_debug_statements
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have no debug statements (breakpoint, pdb)"
+
   # ---------------------------------------------------------------------------
   # Fail-to-pass gates (origin: pr_diff) — core behavioral tests
   # ---------------------------------------------------------------------------
@@ -87,14 +103,16 @@ checks:
     description: "Modified __getitem__ methods have real caching logic, not just return statements"
 
 rubric:
-  - rule: "Use comments to explain invariants and rationale, not narrate code. Comments should describe WHY something is done, not WHAT the code does."
+  - rule: "Comments in __getitem__ explain invariants and rationale (WHY), not narrate code (WHAT)."
     source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "30"
-      commit: "ef2d4013d77cf1267e032d7a7a745dc3a6f74880"
+      path: "python/sglang/srt/managers/io_struct.py"
+      lines: "604-605"
+      commit: "494bb86169669f8dece646873b7c33904d8ddf6e"
+    reference: "# Cache sub-objects so that repeated obj[i] calls return the same instance.\n# This avoids subtle bugs where different call sites get divergent objects."
 
-  - rule: "Follow existing code patterns when modifying dataclass __getitem__ methods. Use instance caching with _sub_obj_cache dictionary to ensure repeated obj[i] calls return the same instance."
+  - rule: "Dataclass __getitem__ methods use _sub_obj_cache for identity caching."
     source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "24-25"
-      commit: "ef2d4013d77cf1267e032d7a7a745dc3a6f74880"
+      path: "python/sglang/srt/managers/io_struct.py"
+      lines: "606-609"
+      commit: "494bb86169669f8dece646873b7c33904d8ddf6e"
+    reference: "cache = self.__dict__.setdefault('_sub_obj_cache', {})\nif i in cache:\n    return cache[i]"

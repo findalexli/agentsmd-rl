@@ -51,7 +51,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: Repo eslint fixtures exist with valid JSON config
-# New repo_tests using actual subprocess commands
 - id: repo_git_status
   type: pass_to_pass
   origin: repo_tests
@@ -76,6 +75,66 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: ESLint plugin index.ts passes basic grep syntax check
+- id: repo_ci_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI license check passes - no unexpected PATENTS references
+- id: repo_git_base_commit_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo contains the expected base commit in git history
+- id: repo_eslint_plugin_configs_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin configs object has valid structure with expected keys
+- id: repo_eslint_plugin_meta_name
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin meta object has name field
+- id: repo_eslint_plugin_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin TypeScript files have valid syntax (balanced braces check)
+- id: repo_eslint_plugin_has_export_default
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin index.ts exports a default plugin object
+- id: repo_eslint_plugin_rules_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin rules directory contains expected rule files
+- id: repo_eslint_fixtures_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint fixtures have expected structure with valid configs
+- id: repo_eslint_plugin_compiler_rules_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin shared directory contains ReactCompiler rules
+- id: repo_react_versions_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactVersions.js contains expected package versions
+- id: repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git tracks expected files in eslint-plugin-react-hooks src
+- id: repo_root_package_json_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root package.json has expected CI scripts
+- id: repo_scripts_ci_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI scripts directory has expected files
+- id: repo_eslint_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root eslintrc.js exists and has valid structure
+- id: repo_babel_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Babel config files exist and have valid structure
 rubric:
 - rule: CHANGELOG.md contains v7.0.0 entry explaining config changes
   source:
@@ -97,9 +156,9 @@ config_edits:
   tier: 2
   gold_added: '## 7.0.0
 
-This release slims down presets to just 2 configurations.'
+    This release slims down presets to just 2 configurations.'
   gold_removed: ''
 - path: packages/eslint-plugin-react-hooks/README.md
   tier: 2
-  gold_added: '(see solve.sh patch)'
-  gold_removed: '(see solve.sh patch for removed content)'
+  gold_added: (see solve.sh patch)
+  gold_removed: (see solve.sh patch for removed content)

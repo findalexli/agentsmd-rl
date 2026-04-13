@@ -44,40 +44,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: ty_python_semantic type inference tests pass
+- id: ty_python_semantic_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic markdown tests pass
+- id: ty_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty crate lib tests pass
+- id: ty_project_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_project crate compiles cleanly
+- id: ty_ide_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_ide crate compiles cleanly
+- id: cargo_clippy_ty_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: All ty-related packages have no clippy warnings
 rubric:
-- rule: But if a lint is complaining about unused/dead code, it's usually best to
-    just delete the unused code.
-  source:
-    path: AGENTS.md
-    lines: '81'
-    commit: 55f667ba3924e8f44b1f4acdabfb0b5c0cfffe12
 - rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
+    missing an existing method or mechanism.
   source:
     path: AGENTS.md
-    lines: '78'
-    commit: 55f667ba3924e8f44b1f4acdabfb0b5c0cfffe12
-- rule: cargo clippy --workspace --all-targets --all-features -- -D warnings
-  source:
-    path: AGENTS.md
-    lines: 35-37
-  evidence: 'The gold solution removes the `mut` keyword from `fallback_place` and
-    chains the `.map_type()` call directly. Leaving `mut` when the variable is no
-    longer mutated would cause an ''unused mut'' warning, '
-  category: tooling
+    lines: 64-65
+  evidence: The gold solution strictly deletes the dead code and its usages without
+    introducing any new logic, mechanisms, or workarounds.
+  category: architecture
 distractors:
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   collision_type: scope_ambiguity
-  why_distracting: The PR is explicitly about removing dead code (`all_definitely_bound`)
-    that has no observable behavior. An agent might try to write tests to verify the
-    removal, but since there is no behavior change, adding tests is impossible or
-    wasted effort.
-  severity: medium
+  why_distracting: The task explicitly states the attribute 'no longer influences
+    any observable behavior' and is 'dead code'. The absolute rule demanding tests
+    for all changes would lead an agent to waste time trying to write tests for an
+    unobservable internal state removal.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 72-72
-hierarchy_analysis: The AGENTS.md file provides general guidelines for the repository.
-  The rules are straightforward, but the testing requirement conflicts with the nature
-  of a pure dead-code removal task.
+    lines: 58-59
+hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
+  simply includes AGENTS.md. The rules are generic repository guidelines.

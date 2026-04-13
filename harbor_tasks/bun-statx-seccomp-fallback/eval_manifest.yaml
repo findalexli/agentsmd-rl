@@ -62,6 +62,16 @@ checks:
   ci_source:
     workflow: .github/workflows/format.yml
     command: bun ./test/internal/ban-words.test.ts
+    note: Skips if bun not available - requires bun runtime
+
+- id: test_zig_fmt_src_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig fmt check on key src/ files passes (from format.yml CI)
+  ci_source:
+    workflow: .github/workflows/format.yml
+    command: zig fmt --check src/sys.zig src/bun.zig src/cli.zig
+    note: Lightweight check of core Zig files only (excludes vendor/due to version mismatch)
 - id: statx_handles_eperm
   type: fail_to_pass
   origin: pr_diff
@@ -130,48 +140,51 @@ rubric:
     commit: 159a285841539c8f166509116c12b11e15b47fdf
   reference: return switch (fallback) { .result => |s| .{ .result = PosixStat.init(&s)
     }, .err => |e| .{ .err = e } }
-- rule: 'All `bun.sys` functions return `Maybe(T)` — a tagged union of `.result: T`
-    or `.err: bun.sys.Error`.'
+- rule: All bun.sys functions return Maybe(T) — a tagged union of .result or .err.
   source:
     path: src/CLAUDE.md
     lines: 32-38
-  evidence: The extracted `statxFallback` function returns `Maybe(PosixStat)` and
-    explicitly constructs its return values using the tagged union variants `.{ .result
-    = PosixStat.init(&s) }` and `.{ .err = e }`.
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  evidence: The statxFallback and statxImpl functions return Maybe(PosixStat) and
+    explicitly construct return values using .result and .err tagged union variants.
   category: architecture
-- rule: Key functions in `bun.sys` take `bun.FileDescriptor`, not `std.posix.fd_t`.
+- rule: Key functions in bun.sys take bun.FileDescriptor, not raw file descriptors.
   source:
     path: src/CLAUDE.md
     lines: 40-41
-  evidence: 'The `statxFallback` function takes `fd: bun.FileDescriptor` as its first
-    argument rather than a raw OS file descriptor type.'
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  evidence: The statxFallback and statxImpl functions take bun.FileDescriptor as their
+    first argument rather than a raw OS file descriptor type.
+  category: naming
+- rule: 'All return Maybe(T) — a tagged union of .result: T or .err: bun.sys.Error'
+  source:
+    path: src/CLAUDE.md
+    lines: 34-40
+  evidence: The statxFallback function returns Maybe(PosixStat) and uses a switch
+    statement to explicitly handle .result and .err cases from the fallback functions.
+  category: architecture
+- rule: Key functions (all take bun.FileDescriptor, not std.posix.fd_t)
+  source:
+    path: src/CLAUDE.md
+    lines: 42-42
+  evidence: 'The statxFallback function signature takes `fd: bun.FileDescriptor` rather
+    than std.posix.fd_t.'
   category: naming
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`. Using `std.fs`, `std.posix`, or
-    `std.os` directly is wrong in this codebase.
+- rule: Always use bun.* APIs instead of std.* (e.g., use bun.sys.* equivalents for
+    stat/mkdir/etc)
   collision_type: architecture_boundary
-  why_distracting: '`src/sys.zig` is the lowest-level system call wrapper in Bun (the
-    implementation of `bun.sys`). It must interact with OS-level constants like `linux.AT.SYMLINK_NOFOLLOW`
-    and raw syscalls. Applying the ''never use std.posix/os'' rule here prevents implementing
-    the actual system calls.'
+  why_distracting: The rule instructs developers to use `bun.sys.*` equivalents instead
+    of standard posix functions. However, the agent is editing `src/sys.zig`, which
+    is the implementation of `bun.sys`. Calling `bun.sys.stat` here would be a circular
+    reference; the agent must call the local `stat`, `lstat`, and `fstat` functions
+    directly.
   severity: high
   source:
     path: src/CLAUDE.md
-    lines: 16-18
-- rule: Instead of `std.posix.stat` Use `bun.sys.*` equivalents.
-  collision_type: scope_ambiguity
-  why_distracting: Since the modification is inside `src/sys.zig` itself, the agent
-    needs to call the local `stat`, `lstat`, and `fstat` functions directly. Trying
-    to use `bun.sys.stat` would be redundant or circular, as this file *is* the `bun.sys`
-    namespace.
-  severity: medium
-  source:
-    path: src/CLAUDE.md
-    lines: 26-27
-hierarchy_analysis: The rules in `src/CLAUDE.md` are designed for consumers of the
-  `bun.sys` API, instructing them to use the high-level wrappers instead of standard
-  library OS functions. However, because this PR modifies `src/sys.zig` (the implementation
-  of those wrappers), the agent is operating below the abstraction boundary that the
-  rules enforce. The agent must selectively ignore the prohibition on OS-level APIs
-  while still adhering to the internal conventions of `src/sys.zig` (like returning
-  `Maybe(T)` and using `bun.FileDescriptor`).
+    lines: 18-28
+hierarchy_analysis: The agent must navigate from the root CLAUDE.md to the src/CLAUDE.md
+  file to find Zig-specific conventions. It must then selectively apply these conventions,
+  adopting the type signatures (Maybe, bun.FileDescriptor) while ignoring the namespace
+  prefixing (bun.sys.*) because it is operating inside the module that defines that
+  namespace.

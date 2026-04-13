@@ -8,19 +8,21 @@ checks:
 - id: swr_module_loads
   type: pass_to_pass
   origin: static
-  description: SWR module can be loaded and exports all expected hooks
+  description: SWR module can be loaded and exports all expected hooks (useClientDataSWR,
+    useOnlyFetchOnceSWR, useActionSWR)
 - id: repo_swr_unit_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's unit tests for SWR module pass
+  description: npx vitest run src/libs/swr/ - runs localStorageProvider.test.ts (16
+    tests)
 - id: repo_swr_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ESLint passes on SWR module
+  description: npx eslint src/libs/swr/index.ts - verifies code style
 - id: repo_swr_prettier
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's Prettier check passes on SWR module
+  description: npx prettier --check src/libs/swr/index.ts - verifies formatting
 - id: use_action_swr_uses_fallback_data
   type: fail_to_pass
   origin: pr_diff
@@ -44,6 +46,9 @@ rubric:
     path: .cursor/rules/cursor-rules.mdc
     lines: 1-5
     commit: 959c210e869803545d451c3019e178966188ef17
+  evidence: The gold solution creates .cursor/rules/linear.mdc with frontmatter containing
+    ---, alwaysApply true, and --- at the top of the file.
+  category: conventions
 - rule: Reference external rule files using the '@.cursor/rules/filename.mdc' syntax
   source:
     path: CLAUDE.md
@@ -56,9 +61,43 @@ rubric:
   source:
     path: AGENTS.md
     lines: 14-15
-  evidence: The gold solution uses SWR's `useSWR` hook with `fallbackData` to fix
-    the auto-fetch bug, adhering to the project's specified state management stack.
+  evidence: The gold solution implements useActionSWR using SWR's useSWR hook with
+    fallbackData and revalidateOnMount set to false to prevent auto-fetching, matching
+    the project's SWR-based state management approach.
   category: architecture
+- rule: Use `@.cursor/rules/filename.mdc` syntax to reference external rule files.
+  source:
+    path: CLAUDE.md
+    lines: 10-14
+  evidence: The gold solution replaces the inline Linear rules with `Read @.cursor/rules/linear.mdc`,
+    perfectly matching the existing syntax used in CLAUDE.md for referencing external
+    rules (e.g., `read @.cursor/
+  category: documentation
+- rule: All project rules are saved under the `.cursor/rules/` directory.
+  source:
+    path: AGENTS.md
+    lines: 65-66
+  evidence: The gold solution creates `.cursor/rules/linear.mdc` as a new file in
+    the `.cursor/rules/` directory, following the established convention where all
+    rule files like `cursor-rules.mdc`, `react.mdc`, etc. are stored.
+  category: architecture
+- rule: Linear Issue Management rules and MCP tool usage instructions.
+  source:
+    path: CLAUDE.md
+    lines: 62-92
+  evidence: The agent extracts the exact Linear issue management instructions from
+    CLAUDE.md into the new `.mdc` file, preserving the content of the rules while
+    changing their location.
+  category: documentation
+- rule: Use the `@.cursor/rules/filename.mdc` syntax to reference external rule files
+    in markdown documentation.
+  source:
+    path: CLAUDE.md
+    lines: 10-32
+  evidence: The gold solution replaces the inline Linear rules with `Read @.cursor/rules/linear.mdc
+    when working with Linear issues.`, matching the `@.cursor/rules/...` reference
+    syntax used elsewhere in the file
+  category: documentation
 config_edits:
 - path: .cursor/rules/linear.mdc
   tier: 1
@@ -257,28 +296,28 @@ config_edits:
     - Complete Issue A -> Create PR -> Update A status to "In Review" -> Add A comment
     -> Complete Issue B -> ...'
 distractors:
-- rule: Follow [Linear rules in CLAUDE.md](CLAUDE.md#linear-issue-management-ignore-if-not-installed-linear-mcp)
-    when working with Linear issues.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to update the hardcoded link to CLAUDE.md's
-    Linear section to point to the new .mdc file, expanding the scope of the PR unnecessarily
-    since the gold solution leaves AGENTS.md untouched.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 61-63
-- rule: Retrieve issue details before starting work using mcp__linear-server__get_issue...
-    MUST add completion comment
+- rule: Retrieve issue details before starting work using mcp__linear-server__get_issue
   collision_type: meta_confusion
-  why_distracting: The agent might interpret these instructions as active commands
-    to execute for the current task (e.g., calling mcp__linear-server__get_issue or
-    adding completion comments) rather than just text content that needs to be extracted
-    to a new file.
+  why_distracting: The agent is instructed to extract the Linear issue management
+    rules. Because the text itself contains commands like `mcp__linear-server__get_issue`,
+    the agent might get confused and attempt to actually invoke these MCP tools to
+    find an issue for the current task, rather than just treating the text as string
+    content to be moved.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 66-93
-hierarchy_analysis: The configuration relies on CLAUDE.md and AGENTS.md at the root
-  level. CLAUDE.md acts as the primary entry point for rules, delegating to specific
-  .mdc files. The extraction of Linear rules into a separate .mdc file aligns perfectly
-  with this delegation pattern.
+    lines: 55-60
+- rule: 'i18n Keys: Add to src/locales/default/namespace.ts'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt asks the agent to translate non-English comments in
+    the SWR module. The agent might mistakenly apply the project's i18n rules and
+    attempt to extract these code comments into `src/locales/default/namespace.ts`,
+    which is meant for UI text, not inline code comments.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 50-52
+hierarchy_analysis: The agent must read `CLAUDE.md` to locate the inline rules, extract
+  them to a new file in the `.cursor/rules/` directory (as established by the pattern
+  in `AGENTS.md` and `CLAUDE.md`), and update `CLAUDE.md` to reference the new file
+  using the project's specific `@.cursor/rules/...` syntax.

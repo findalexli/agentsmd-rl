@@ -298,6 +298,24 @@ def test_repo_cargo_clippy_uv_cli():
     assert r.returncode == 0, f"cargo clippy -p uv-cli failed:\n{r.stderr}"
 
 
+def test_repo_cargo_fmt():
+    """All Rust code passes formatting checks (pass_to_pass)."""
+    # Install rustfmt if not already installed
+    subprocess.run(
+        ["rustup", "component", "add", "rustfmt"],
+        capture_output=True,
+        cwd=str(REPO),
+    )
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo fmt --all --check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------

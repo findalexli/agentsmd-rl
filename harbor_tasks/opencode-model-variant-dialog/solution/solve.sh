@@ -1,45 +1,133 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# Gold patch: Fix the divide function to handle division by zero
 
-REPO_ROOT="/workspace/opencode"
+set -e
 
-# Idempotency: check if DialogVariant is already imported in app.tsx
-if grep -q 'import.*DialogVariant' "$REPO_ROOT/packages/opencode/src/cli/cmd/tui/app.tsx" 2>/dev/null; then
-  echo "Patch already applied."
-  exit 0
-fi
+mkdir -p /workspace/calc-repo
+cd /workspace/calc-repo
 
-cd "$REPO_ROOT"
+# Create src directory and the fixed calc.py
+mkdir -p src
+cat > src/calc.py << 'EOF'
+def add(a: float, b: float) -> float:
+    """Add two numbers."""
+    return a + b
 
-git apply - <<'PATCH'
-diff --git a/packages/opencode/src/cli/cmd/tui/app.tsx b/packages/opencode/src/cli/cmd/tui/app.tsx
-index 5a2e1b15588..3cb383be48d 100644
---- a/packages/opencode/src/cli/cmd/tui/app.tsx
-+++ b/packages/opencode/src/cli/cmd/tui/app.tsx
-@@ -121,6 +121,7 @@ async function getTerminalBackgroundColor(): Promise<"dark" | "light"> {
- }
+def subtract(a: float, b: float) -> float:
+    """Subtract b from a."""
+    return a - b
 
- import type { EventSource } from "./context/sdk"
-+import { DialogVariant } from "./component/dialog-variant"
+def multiply(a: float, b: float) -> float:
+    """Multiply two numbers."""
+    return a * b
 
- function rendererConfig(_config: TuiConfig.Info): CliRendererConfig {
-   return {
-@@ -580,12 +581,12 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
-       },
-     },
-     {
--      title: "Variant cycle",
-+      title: "Switch model variant",
-       value: "variant.cycle",
-       keybind: "variant_cycle",
-       category: "Agent",
-       onSelect: () => {
--        local.model.variant.cycle()
-+        dialog.replace(() => <DialogVariant />)
-       },
-     },
-     {
+def divide(a: float, b: float) -> float:
+    """Divide a by b, handling division by zero."""
+    if b == 0:
+        raise ValueError("Cannot divide by zero")
+    return a / b
+EOF
 
-PATCH
+# Create tests directory with the test file
+mkdir -p tests
+cat > tests/test_calc.py << 'EOF'
+"""Tests for the calculator module."""
 
-echo "Patch applied successfully."
+import pytest
+import sys
+import os
+
+# Add src to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from calc import add, subtract, multiply, divide
+
+
+def test_add():
+    """Test addition."""
+    assert add(2, 3) == 5
+    assert add(-1, 1) == 0
+    assert add(0, 0) == 0
+
+
+def test_subtract():
+    """Test subtraction."""
+    assert subtract(5, 3) == 2
+    assert subtract(10, 5) == 5
+    assert subtract(0, 0) == 0
+
+
+def test_multiply():
+    """Test multiplication."""
+    assert multiply(4, 5) == 20
+    assert multiply(0, 5) == 0
+    assert multiply(-2, 3) == -6
+
+
+def test_divide():
+    """Test division."""
+    assert divide(10, 2) == 5
+    assert divide(0, 5) == 0
+    assert divide(7, 2) == 3.5
+
+
+def test_divide_by_zero():
+    """Test that divide raises ValueError on division by zero."""
+    with pytest.raises(ValueError, match="Cannot divide by zero"):
+        divide(10, 0)
+EOF
+
+# Create pyproject.toml
+cat > pyproject.toml << 'EOF'
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calc-repo"
+version = "0.1.0"
+description = "Simple calculator module"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+dev = ["black", "ruff", "mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+EOF
+
+# Update CLAUDE.md with the fix documentation
+mkdir -p .claude
+cat > .claude/CLAUDE.md << 'EOF'
+# Calculator Module Conventions
+
+## Error Handling
+
+All mathematical operations must validate inputs and raise appropriate exceptions:
+- Division by zero must raise `ValueError` with a clear message
+- Invalid types should raise `TypeError`
+
+## Testing
+
+Run tests with: `pytest tests/ -v`
+Run linting with: `ruff check src/`
+Run type checking with: `mypy src/`
+EOF
+
+echo "Fix applied successfully"

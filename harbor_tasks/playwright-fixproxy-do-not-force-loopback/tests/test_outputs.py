@@ -178,7 +178,7 @@ def test_repo_eslint_chromium():
         ["npm", "run", "eslint", "--", "--max-warnings=0", CHROMIUM_TS],
         timeout=120,
     )
-    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_typescript_transpile():
@@ -209,7 +209,7 @@ console.log('TypeScript transpile OK');
         ["node", "-e", script],
         timeout=60,
     )
-    assert r.returncode == 0, f"TypeScript transpile failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"TypeScript transpile failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_generate_channels():
@@ -224,7 +224,7 @@ def test_repo_generate_channels():
         ["node", "utils/generate_channels.js"],
         timeout=60,
     )
-    assert r.returncode == 0, f"generate_channels failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_lint_packages():
@@ -239,7 +239,58 @@ def test_repo_lint_packages():
         ["npm", "run", "lint-packages"],
         timeout=60,
     )
-    assert r.returncode == 0, f"lint-packages failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_node_syntax_chromium():
+    """Node.js can parse chromium.ts without syntax errors (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright-core/src/server/chromium/chromium.ts', 'utf8');
+// Quick syntax validation: ensure braces and parentheses are balanced
+let depth = 0;
+for (const ch of src) {
+  if (ch === '{' || ch === '(' || ch === '[') depth++;
+  if (ch === '}' || ch === ')' || ch === ']') depth--;
+  if (depth < 0) {
+    console.error('Unbalanced braces/parens');
+    process.exit(1);
+  }
+}
+console.log('Syntax OK');
+"""
+    r = _run_in_repo(
+        ["node", "-e", script],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Node syntax check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_chromium_ts_exists():
+    """The chromium.ts source file exists and is readable (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const path = 'packages/playwright-core/src/server/chromium/chromium.ts';
+if (!fs.existsSync(path)) {
+  console.error('File not found: ' + path);
+  process.exit(1);
+}
+const stats = fs.statSync(path);
+if (stats.size === 0) {
+  console.error('File is empty: ' + path);
+  process.exit(1);
+}
+if (stats.size < 1000) {
+  console.error('File too small: ' + stats.size + ' bytes');
+  process.exit(1);
+}
+console.log('File exists and has content: ' + stats.size + ' bytes');
+"""
+    r = _run_in_repo(
+        ["node", "-e", script],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"File check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -108,6 +108,14 @@ checks:
     path: AGENTS.md
     lines: '173'
     commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- id: repo_ruff_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's import sorting follows ruff isort rules
+- id: repo_nbstripout
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jupyter notebooks have stripped outputs
 rubric:
 - rule: Composition over inheritance — keep hierarchies <= 2 levels; prefer delegation.
   source:
@@ -140,33 +148,39 @@ rubric:
     lines: 47-47
   evidence: The gold solution includes a comprehensive docstring for the new `RouterGateLinear`
     class that uses the same Sphinx/reST cross-reference syntax (`:func:`, `:class:`)
-    and `Args:` block format as the ex
+    and `Args:` block format as the existing code patterns.
   category: style
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels
+  source:
+    path: AGENTS.md
+    lines: '62'
+  evidence: The gold solution creates RouterGateLinear inheriting directly from nn.Linear,
+    keeping the hierarchy shallow (<= 2 levels) while satisfying the checkpoint compatibility
+    requirement.
+  category: architecture
 distractors:
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
-  collision_type: would_cause_bug
-  why_distracting: The rule advocates for composition over inheritance. If an agent
-    applies this by creating a new `nn.Module` that contains an `nn.Linear` as an
-    attribute (composition) instead of subclassing `nn.Linear` (inheritance), the
-    state dict key for the weights would change (e.g., from `gate.weight` to `gate.linear.weight`),
-    violating the explicit requirement to preserve checkpoint compatibility.
+  collision_type: rule_conflict
+  why_distracting: The rule says 'prefer delegation'. If the agent follows this by
+    creating a wrapper class that delegates to an internal nn.Linear instance (e.g.,
+    self.linear = nn.Linear(...)), the state dict keys will change from gate.weight
+    to gate.linear.weight, breaking the checkpoint compatibility explicitly requested
+    in the prompt.
   severity: high
   source:
     path: AGENTS.md
-    lines: 57-57
-- rule: Add tests for new functionality
+    lines: '62'
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a test for the DTensor hook firing.
-    However, testing DTensor hooks requires a distributed multi-GPU setup, and the
-    prompt only asks to fix the bug in the router file. Attempting to add tests would
-    likely lead to hallucinated test files or complex distributed test setups that
-    are out of scope for this specific fix.
+  why_distracting: The rule says 'Add tests for new functionality.' The agent might
+    try to write a test for the DTensor hook fix. However, testing DTensor hooks requires
+    distributed setup, and the config notes 'Integration tests require multi-node
+    hardware'. Attempting to write a test would likely fail or waste time, as this
+    is a bug fix, not new functionality.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 48-48
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are Level 0 files and share many
-  rules. The conflict arises between the general architectural guideline in `AGENTS.md`
-  ('Composition over inheritance') and the specific PR requirement to maintain state
-  dict compatibility. The PR requirement must override the general guideline to prevent
-  a bug.
+    path: AGENTS.md
+    lines: '31'
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md are at the root level and contain
+  overlapping rules. The agent must synthesize guidance from both while prioritizing
+  the specific constraints in the prompt over general rules like 'prefer delegation'.

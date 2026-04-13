@@ -82,60 +82,53 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: git checks script passes (whitespace/filename validation)
+- id: test_cargo_metadata_resolves
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo metadata resolves (workspace dependency graph is consistent)
+- id: test_sui_execution_generate_lib_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Execution layer generate-lib works (repo CI check)
+- id: test_cargo_check_sui_execution_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check --lib on sui-execution passes (integration check)
+- id: test_cargo_test_lib_protocol_config_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo test --lib on sui-protocol-config passes (library tests only)
+- id: test_cargo_test_lib_move_natives_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo test --lib on sui-move-natives-latest passes (library tests only)
+- id: test_targets_latest_execution_layer
+  type: pass_to_pass
+  origin: pr_diff
+  description: Changes target sui-execution/latest/ not older versions (v0, v1, v2)
 rubric:
-- rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
-    business logic, or subtle assumptions - not narrate what the code does.
+- rule: Run Rust unittests with SUI_SKIP_SIMTESTS=1 cargo nextest run to skip simulation
+    tests as they may cause false negatives.
   source:
     path: CLAUDE.md
-    lines: 116-131
-    commit: a6d32d34bb8e01047eca44e9e62001639090b9a7
-- rule: New protocol config fields must use Option<T> type and be initialized with
-    Some(value) in the version block.
-  source:
-    path: .claude/skills/protocol-config/SKILL.md
-    lines: 99-104
-    commit: a6d32d34bb8e01047eca44e9e62001639090b9a7
-- rule: sui-execution/ contains the Move execution layer with versions (v0, v1, v2
-    and latest)
-  source:
-    path: CLAUDE.md
-    lines: 61-61
-  evidence: The gold solution modifies files in `sui-execution/latest/sui-move-natives/`,
-    correctly targeting the `latest` version of the Move execution layer rather than
-    older versions (v0, v1, v2).
-  category: architecture
+    lines: 35-36
+  evidence: The agent is expected to verify that all existing tests pass after updating
+    the protocol config and snapshots, utilizing the recommended test command.
+  category: testing
+  verification: llm_judge
 distractors:
-- rule: cargo xclippy does not recognize -p option
-  collision_type: meta_confusion
-  why_distracting: The agent might try to lint its specific changes using `cargo xclippy
-    -p sui-protocol-config` or `-p sui-move-natives` to save time, which will fail
-    because the custom xclippy command does not support the -p option.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 48-50
 - rule: All new files must start with the following license in comments at the top
     of the file
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add the Apache-2.0 license header to the
-    snapshot files (.snap and .snap.json) that it modifies or regenerates, but these
-    are auto-generated data files, not source code.
+  why_distracting: The rule requires adding a license header to all new files. The
+    agent might mistakenly add this header to auto-generated snapshot files (.snap)
+    if it ends up creating new ones or regenerating them, which would break the snapshot
+    format.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 18-21
-- rule: skip simulation tests as they may cause false negatives with cargo nextest
-  collision_type: would_cause_bug
-  why_distracting: The agent might try to run tests using just `cargo nextest run`
-    without the `SUI_SKIP_SIMTESTS=1` environment variable, which could cause false
-    negatives or failures in simulation tests.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 33-34
-hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` which establish
-  global defaults. The root `CLAUDE.md` explicitly defers to crate-specific `CLAUDE.md`
-  files, though none are provided in this context. The agent must navigate the global
-  testing and linting commands, being careful with custom tools like `cargo xclippy`
-  and `cargo simtest`.
+    lines: 20-23
+hierarchy_analysis: The hierarchy is flat, consisting only of root-level generic instructions
+  in CLAUDE.md and AGENTS.md. There are no crate-specific overrides provided in the
+  context.
 version: '2.0'

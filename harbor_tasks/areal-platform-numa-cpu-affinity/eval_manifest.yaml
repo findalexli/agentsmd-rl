@@ -111,66 +111,60 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's modified files must be formatted correctly
+- id: test_repo_import_engines
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified engine files must be importable as modules (AST-parseable)
+- id: test_repo_engine_ast_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Engine files must have valid AST with expected class definitions
 rubric:
-- rule: 'Prefer composition over inheritance: Avoid deep class hierarchies'
+- rule: 'Documentation updates: PR correctly does NOT modify AGENTS.md (code-only
+    change)'
   source:
     path: AGENTS.md
-    lines: '81'
     commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
-  reference: '- **Composition over inheritance** -- keep hierarchies \<= 2 levels;
-    prefer delegation.'
-- rule: Logging calls in new code should use PascalCase logger names; per-rank log
-    messages should follow the format [Component Rank N]
-  source:
-    path: AGENTS.md
-    lines: 90-91
-    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
-  reference: '**Logging**: `areal.utils.logging.getLogger(name)` with **PascalCase**
-    names -- never
-
-    `print` or `logging.__name__`. Per-rank format: `[{Component} Rank {N}]`. Register
-    new
-
-    loggers with color in `areal/utils/logging.py`.'
+  reference: "(no changes to AGENTS.md - this is a code-only change that follows existing\n\
+    \    conventions)"
+  category: style
 - rule: Follow existing code patterns in the same module.
   source:
     path: AGENTS.md
-    lines: '23'
-  evidence: The gold solution implements `set_numa_affinity` as a `@classmethod` in
-    both `Platform` and `CudaPlatform`, mirroring the existing `set_device` pattern
-    in the same module.
-  category: architecture
-- rule: 'Logging: ... never print'
+    lines: '34'
+  evidence: The `set_numa_affinity` method is implemented as a `@classmethod` in `CudaPlatform`,
+    matching the existing pattern of other methods in the class.
+  category: style
+- rule: 'Logging: ... never `print`'
   source:
     path: AGENTS.md
-    lines: 54-55
-  evidence: The gold solution uses `logger.info` and `logger.warning` to report NVML
-    initialization success and errors, strictly avoiding the use of `print`.
-  category: style
+    lines: 62-64
+  evidence: The gold solution uses `logger.info` and `logger.warning` to report the
+    affinity status and errors, strictly avoiding the use of `print`.
+  category: tooling
 distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to write unit tests for `set_numa_affinity`.
-    However, testing NVML and NUMA topology requires specific multi-socket hardware
-    or complex mocking of `pynvml` and `os.sched_getaffinity`, which is out of scope
-    for this PR. The gold solution relies on defensive runtime checks instead.
+  why_distracting: The rule requires adding tests for new functionality, but testing
+    NUMA affinity and NVML requires specific multi-GPU hardware. Writing unit tests
+    would require extensive mocking of `pynvml` and `os.sched_getaffinity`, which
+    is not requested and likely to be brittle.
   severity: medium
   source:
     path: AGENTS.md
-    lines: '24'
+    lines: '35'
 - rule: 'Ask first before: Adding new dependencies.'
   collision_type: rule_conflict
-  why_distracting: The instructions specify using `pynvml` (the `nvidia-ml-py` package).
-    The agent might halt to ask permission to add this dependency or attempt to modify
-    `pyproject.toml` / `uv.lock`. However, the gold solution handles it via a defensive
-    `try...except ImportError` block without modifying project dependencies.
+  why_distracting: The rule says to ask first before adding new dependencies, but
+    the PR instructions explicitly mandate using the `pynvml` package. Asking for
+    permission would unnecessarily block the agent.
   severity: high
   source:
     path: AGENTS.md
-    lines: 29-32
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical core rules,
-  but `AGENTS.md` is specifically tailored for AI agents. The primary conflict arises
-  between the task instruction to use `pynvml` and the repository rule to 'Ask first
-  before adding new dependencies'. A successful agent must resolve this by implementing
-  a defensive import (`try...except ImportError`) rather than modifying dependency
-  files or halting for clarification.
+    lines: '38'
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are flat, level 0 config files
+  that contain overlapping rules (e.g., 'Add tests for new functionality', 'Ask first
+  before adding new dependencies'). The agent must prioritize the explicit PR instructions
+  over the general 'Ask first' rule for dependencies, and recognize that hardware-specific
+  features like NVML/NUMA affinity are practically exempt from the general unit testing
+  mandate.

@@ -274,11 +274,61 @@ def test_repo_claude_md_exists():
     assert claude_md.exists(), "CLAUDE.md must exist"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass - file read check
 def test_repo_prettier_rc_files():
-    """Prettier config files are valid (pass_to_pass)."""
+    """Prettier config files are valid JSON (pass_to_pass)."""
     prettierrc = Path(REPO) / ".prettierrc.json"
     assert prettierrc.exists(), ".prettierrc.json must exist"
     # Validate JSON
     data = json.loads(prettierrc.read_text())
     assert isinstance(data, dict), ".prettierrc.json must be valid JSON"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_turbo_json():
+    """turbo.json passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/turbo.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for turbo.json:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_prettierrc():
+    """.prettierrc.json passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/.prettierrc.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for .prettierrc.json:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_pnpm_workspace():
+    """pnpm-workspace.yaml passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/pnpm-workspace.yaml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for pnpm-workspace.yaml:\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass - file read check
+def test_repo_package_json_valid():
+    """package.json is valid JSON (pass_to_pass)."""
+    package_json = Path(REPO) / "package.json"
+    assert package_json.exists(), "package.json must exist"
+    data = json.loads(package_json.read_text())
+    assert isinstance(data, dict), "package.json must be an object"
+    assert "name" in data, "package.json must have name field"
+
+
+# [static] pass_to_pass - file read check
+def test_repo_turbo_json_valid():
+    """turbo.json is valid JSON with expected structure (pass_to_pass)."""
+    turbo_json = Path(REPO) / "turbo.json"
+    assert turbo_json.exists(), "turbo.json must exist"
+    data = json.loads(turbo_json.read_text())
+    assert isinstance(data, dict), "turbo.json must be an object"
+    assert "tasks" in data or "pipeline" in data, "turbo.json must have tasks or pipeline"

@@ -35,6 +35,10 @@ checks:
   origin: repo_tests
   description: Workers-editor-shared package builds successfully (prerequisite for
     playground)
+- id: test_repo_vite_plugin_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Vite-plugin package builds successfully (dependency of workers-playground)
 - id: style_provider_cjs_alias
   type: fail_to_pass
   origin: pr_diff
@@ -58,47 +62,17 @@ checks:
     path: AGENTS.md
     lines: 100,161
     commit: 49d063396f4c87bc7323be84fbd961b010a09460
-rubric:
-- rule: Tabs (not spaces), double quotes, semicolons, trailing commas (es5)
-  source:
-    path: AGENTS.md
-    lines: '104'
-    commit: 49d063396f4c87bc7323be84fbd961b010a09460
-- rule: Changeset descriptions can either use conventional commit prefixes or start
-    with a capital letter
-  source:
-    path: AGENTS.md
-    lines: '165'
-    commit: 49d063396f4c87bc7323be84fbd961b010a09460
+rubric: []
 distractors:
-- rule: '`packages/vite-plugin-cloudflare/` - Vite plugin for Cloudflare Workers'
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions Vite 8 and a bundler problem. The agent might
-    assume the fix belongs in the Vite plugin for Cloudflare Workers (`packages/vite-plugin-cloudflare/`),
-    but the fix is actually just a configuration change in the playground's own `vite.config.ts`.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: '41'
-- rule: Change local dev behavior -> `packages/miniflare/src/`
+- rule: Change local dev behavior -> packages/miniflare/src/
   collision_type: scope_ambiguity
-  why_distracting: The issue mentions a runtime crash in the Workers Playground. The
-    agent might think this is a local dev simulator issue and try to modify Miniflare,
-    but it's a bundler issue in the playground's Vite config.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: '71'
-- rule: Add a test fixture -> `fixtures/`
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to add a test fixture for this Vite 8 crash,
-    but it's a playground app build config issue, so adding a fixture might be overkill
-    or out of scope.
+  why_distracting: The issue mentions a runtime crash in the Workers Playground application.
+    An agent might misinterpret this as a local dev behavior issue or runtime simulation
+    issue and look into `miniflare` instead of the explicitly mentioned `vite.config.ts`.
   severity: low
   source:
     path: AGENTS.md
-    lines: '73'
-hierarchy_analysis: The config files provide a high-level overview of the monorepo
-  architecture. However, they do not explicitly mention the `workers-playground` package.
-  This omission, combined with the mention of `vite-plugin-cloudflare`, creates a
-  strong distractor for an agent trying to fix a Vite-related issue.
+    lines: 48-49
+hierarchy_analysis: The config hierarchy consists of a generic AGENTS.md file and
+  a CLAUDE.md file that simply points to it. There are no deep overrides or specific
+  rules applicable to the Vite configuration or the Workers Playground package.

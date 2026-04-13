@@ -58,6 +58,34 @@ checks:
   type: pass_to_pass
   origin: static
   description: program.ts still handles open, close, and delete-data commands
+- id: test_modified_typescript_files_have_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: test_modified_typescript_files_have_balanced_parentheses
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced parentheses
+- id: test_skill_documentation_files_exist
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md and session-management.md exist and are non-empty
+- id: test_command_ts_has_category_type
+  type: pass_to_pass
+  origin: static
+  description: command.ts defines Category type
+- id: test_commands_ts_has_declare_command
+  type: pass_to_pass
+  origin: static
+  description: commands.ts uses declareCommand
+- id: test_program_ts_has_switch_structure
+  type: pass_to_pass
+  origin: static
+  description: program.ts has command dispatch switch
+- id: test_help_generator_has_categories
+  type: pass_to_pass
+  origin: static
+  description: helpGenerator.ts defines categories
 - id: test_repo_npm_run_build
   type: pass_to_pass
   origin: repo_tests
@@ -66,42 +94,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo CI check: npm run eslint passes on terminal files'
-- id: test_repo_npm_run_test_mcp_cli_help
+- id: test_repo_npm_run_check_deps
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI check: MCP cli-help tests pass'
-- id: test_modified_typescript_files_have_balanced_braces
+  description: 'Repo CI check: npm run check-deps passes'
+- id: test_repo_npm_run_lint_packages
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI check: Modified TypeScript files have balanced braces'
-- id: test_modified_typescript_files_have_balanced_parentheses
+  description: 'Repo CI check: npm run lint-packages passes'
+- id: test_repo_npx_eslint_modified_files
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI check: Modified TypeScript files have balanced parentheses'
-- id: test_terminal_files_are_valid_typescript
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI check: Terminal TypeScript files have valid structure'
-- id: test_skill_documentation_files_exist
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI check: SKILL.md and session-management.md exist and are non-empty'
-- id: test_command_ts_has_category_type
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI check: command.ts defines Category type'
-- id: test_commands_ts_has_declare_command
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI check: commands.ts uses declareCommand'
-- id: test_program_ts_has_switch_structure
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI check: program.ts has command dispatch switch'
-- id: test_help_generator_has_categories
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI check: helpGenerator.ts defines categories'
+  description: 'Repo CI check: npx eslint passes on modified terminal files'
 rubric:
 - rule: Documentation updates are consistent with the style of existing SKILL.md content
   source:
@@ -113,8 +117,18 @@ rubric:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 28-29
     commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
-- rule: User-facing messages say Browser instead of Session, [open]/[closed] instead
-    of [running]/[stopped]
+- rule: User-facing messages say Browser instead of Session in program.ts stop() and related methods
+  source:
+    path: packages/playwright/src/mcp/terminal/program.ts
+    lines: 90-400
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+  reference: "console.log(`Browser '${this.name}' is not open.`); console.log(`Browser '${this.name}' closed.`);"
+- rule: Status markers use [open]/[closed] instead of [running]/[stopped]
+  source:
+    path: packages/playwright/src/mcp/terminal/program.ts
+    lines: 740-760
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+  reference: "const statusMarker = canConnect ? '[open]' : '[closed]';`"
 config_edits:
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1

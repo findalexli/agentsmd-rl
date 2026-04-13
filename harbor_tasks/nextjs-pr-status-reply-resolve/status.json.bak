@@ -1,26 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T12:05:38.374610",
-  "total_time": 2218.94,
-  "sandbox_id": "ival19a4zt1d7epjwrzw8",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T14:51:25.017001",
+  "total_time": 443.21,
+  "sandbox_id": "iwcll0hbpizz3rgzxu7ts",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 210.04,
-      "notes": ""
-    },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 242.83,
+      "time": 283.16,
       "notes": ""
     },
     "improve": {
@@ -31,9 +25,14 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_reply_to_thread_uses_rest_api to check for addPullRequestReviewThreadReply(input: pattern instead of just bare string. All 4 checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 483.25
+      "time": 163.78
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -59,6 +58,23 @@
       "time": 0.85,
       "notes": "",
       "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.44,
+      "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 32.2,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -93,6 +109,14 @@
       "backend": "fireworks",
       "time": 2218.94,
       "at": "2026-04-10T12:05:38.374610"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 443.21,
+      "at": "2026-04-10T14:51:25.017001"
     }
   ]
 }

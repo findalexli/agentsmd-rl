@@ -68,20 +68,6 @@ checks:
     description: "Repo CI: isort import order check passes on modified mbridge files"
 
 rubric:
-  - rule: "Follow existing import style: organize imports as STDLIB, THIRDPARTY, FIRSTPARTY (slime/slime_plugins) sections per pyproject.toml isort config."
-    source:
-      path: "pyproject.toml"
-      lines: "9-19"
-      commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
-
-  - rule: "When adding __init__ to a class that inherits from a bridge class, always call super().__init__ to preserve parent initialization."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "54-67"
-      commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
-
-  - rule: "Use defensive attribute access with getattr defaults for optional config fields (e.g., getattr(config, 'field', None) or {})."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "96-99"
-      commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
+  - rule: "Python code in slime_plugins/mbridge/ must be formatted with black (line-length: 119)"
+  - rule: "Python code in slime_plugins/mbridge/ must pass ruff linting (E,F,B,UP rules; ignore E402,E501)"
+  - rule: "Python code in slime_plugins/mbridge/ must have imports sorted with isort (profile: black)"

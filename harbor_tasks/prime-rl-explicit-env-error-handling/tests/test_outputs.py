@@ -515,3 +515,125 @@ def test_repo_import_syntax_check():
             cwd=REPO,
         )
         assert r.returncode == 0, f"Syntax error in {file_path}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_orchestrator_unit_tests_pass():
+    """All orchestrator unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "pytest",
+            "tests/unit/orchestrator/",
+            "--ignore=tests/unit/orchestrator/test_buffer.py",
+            "--ignore=tests/unit/orchestrator/test_vf.py",
+            "-v",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"Orchestrator unit tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_train_runs_unit_tests_pass():
+    """Train runs unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tests/unit/train/test_runs.py", "-v"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"Train runs tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_train_world_unit_tests_pass():
+    """Train world unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tests/unit/train/test_world.py", "-v"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"Train world tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+
+# [repo_tests] pass_to_pass - Additional CI checks from repo
+def test_repo_batch_unit_tests_pass():
+    """Batch preparation unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tests/unit/orchestrator/test_batch.py", "-v"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"Batch tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_all_orchestrator_tests_pass():
+    """All working orchestrator unit tests pass - batch and trajectory (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "pytest",
+            "tests/unit/orchestrator/test_batch.py",
+            "tests/unit/orchestrator/test_trajectories.py",
+            "-v",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"Orchestrator tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pytest_version():
+    """Pytest is available and working (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "--version"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, \
+        f"Pytest version check failed:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_work():
+    """Core orchestrator modules can be imported (pass_to_pass)."""
+    code = """
+import sys
+sys.path.insert(0, '/workspace/prime-rl')
+
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
+
+# Test imports
+from prime_rl.orchestrator.trajectories import interleave_rollout, branch_rollout, TrainingSample
+from prime_rl.trainer.batch import prepare_batch
+
+print("PASS: All core imports work")
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import test failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"

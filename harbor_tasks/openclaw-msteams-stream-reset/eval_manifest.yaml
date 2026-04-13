@@ -99,41 +99,94 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git repository is in valid state (CI git sanity check)
+- id: test_repo_build_docs_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Docs list generation script works (CI build-docs-list.mjs)
+- id: test_repo_build_stamp
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build stamp generation script works (CI build-stamp.mjs)
+- id: test_repo_streaming_message_typescript_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: streaming-message.ts (TeamsHttpStream dependency) is valid TypeScript
+- id: test_repo_reply_dispatcher_typescript_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: reply-dispatcher.ts (consumer of stream controller) is valid TypeScript
+- id: test_repo_reply_dispatcher_test_typescript_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: reply-dispatcher.test.ts is valid TypeScript
+- id: test_repo_msteams_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: msteams extension package.json is valid JSON
+- id: test_repo_msteams_index_typescript_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: msteams extension index.ts is valid TypeScript
+# New CI-based pass-to-pass checks (enrichment)
+- id: test_repo_oxlint_msteams
+  type: pass_to_pass
+  origin: repo_tests
+  description: Oxlint passes on msteams extension files (CI lint check)
+- id: test_repo_oxfmt_msteams_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Oxfmt format check passes on target file (CI format check)
+- id: test_repo_docs_link_audit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Docs link audit passes (CI docs validation)
+- id: test_repo_no_conflict_markers_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: No conflict markers in repo using official CI script
 rubric:
 - rule: 'Language: TypeScript (ESM). Prefer strict typing; avoid `any`.'
   source:
     path: CLAUDE.md
     lines: '102'
     commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  reference: 'TypeScript code: let pendingFinalize: Promise<void> | undefined;'
 - rule: Add brief code comments for tricky or non-obvious logic.
   source:
     path: CLAUDE.md
     lines: '114'
     commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  reference: Comments explaining stream finalization and fallback delivery logic
 - rule: 'Written English: use American spelling and grammar in code, comments, docs,
     and UI strings.'
   source:
     path: CLAUDE.md
     lines: '118'
     commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  reference: 'American English: "finalize" (not "finalise"), standard spelling in
+    comments'
 - rule: 'Dynamic import guardrail: do not mix `await import(''x'')` and static `import
     ... from ''x''` for the same module in production code paths.'
   source:
     path: CLAUDE.md
     lines: '106'
     commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  reference: No dynamic imports used; only existing static imports
 - rule: Never share class behavior via prototype mutation. Use explicit inheritance/composition
     or helper composition so TypeScript can typecheck.
   source:
     path: CLAUDE.md
     lines: '111'
     commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  reference: Uses standard closure pattern with exported factory function, no prototype
+    mutation
 - rule: Keep files concise; extract helpers instead of 'V2' copies. Aim to keep files
     under ~700 LOC.
   source:
     path: CLAUDE.md
     lines: 115-116
     commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  reference: File remains ~80 LOC after changes, well under 700 LOC limit
 - rule: 'Plugins: live under `extensions/*` (workspace packages).'
   source:
     path: CLAUDE.md
@@ -141,33 +194,38 @@ rubric:
   evidence: The gold solution modifies the Teams-specific stream controller in `extensions/msteams/src/reply-stream-controller.ts`
     without attempting to move it to the core `src/` directory, respecting the plugin
   category: architecture
+  reference: 'File location: extensions/msteams/src/reply-stream-controller.ts'
+- rule: 'Nomenclature: use ''plugin'' / ''plugins'' in docs, UI, changelogs, and contributor
+    guidance. `extensions/*` remains the internal directory/package path to avoid
+    repo-wide churn from a rename.'
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The gold solution modifies the file in its existing location (`extensions/msteams/src/reply-stream-controller.ts`)
+    without attempting to rename the directory to `plugins/msteams`.
+  category: naming
+  reference: Kept extensions/msteams directory name unchanged
+- rule: 'Nomenclature: use "plugin" / "plugins" in docs, UI, changelogs, and contributor
+    guidance. `extensions/*` remains the internal directory/package path to avoid
+    repo-wide churn from a rename.'
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The gold solution modifies the file at its existing `extensions/msteams/...`
+    path without attempting to rename the directory to `plugins/msteams`.
+  category: naming
+  reference: 'File location: extensions/msteams/src/reply-stream-controller.ts'
 distractors:
 - rule: 'Messaging channels: always consider all built-in + extension channels when
-    refactoring shared logic'
+    refactoring shared logic (routing, allowlists, pairing, command gating, onboarding,
+    docs).'
   collision_type: scope_ambiguity
-  why_distracting: The agent might interpret the fix for stream token handling as
-    'shared logic' and attempt to apply the same `streamReceivedTokens` reset or `isFinalized`
-    guard to all other messaging channels (Telegram, Discord, Slack, etc.), expanding
-    the PR scope unnecessarily since this payload suppression is specific to MS Teams
-    fallback delivery.
+  why_distracting: The agent might try to apply this fix to all other channels (Telegram,
+    Discord, Slack, etc.) or attempt to refactor the stream controller into shared
+    logic, but this bug is specific to MS Teams payload preparation.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 20-24
-- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
-    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
-    core `src/**` directly.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to import a shared stream utility or state
-    manager from core `src/` or `src/plugin-sdk-internal/` to handle the stream finalization
-    state, violating the strict import boundaries for extensions.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 18-19
-hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
-  at the root level. The primary tension in this PR is between fixing a channel-specific
-  bug in an extension (`extensions/msteams`) and the general guidance to consider
-  all channels when refactoring shared logic. The agent must recognize that this is
-  a Teams-specific payload preparation issue, not a shared stream controller refactor,
-  and thus should strictly confine changes to the `msteams` extension.
+    path: AGENTS.md
+    lines: 18-22
+hierarchy_analysis: The configuration is flat, with identical rules present in both
+  `AGENTS.md` and `CLAUDE.md` at the root level.

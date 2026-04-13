@@ -3,12 +3,11 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T12:25:39.354340",
-  "total_time": 1742.73,
-  "sandbox_id": "iqlxxx66ezg9120mbvmfe",
+  "validated_at": "2026-04-12T05:03:44.388603",
+  "total_time": 2025.11,
+  "sandbox_id": "ieqcyrwxpsq4i1mahgw9n",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "validate": {
       "status": "pass",
@@ -16,16 +15,16 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly fails (reward=0) - 5 fail-to-pass tests failed as expected on base commit. Gold test passes (reward=1) - all 10 tests pass after applying solve.sh. Rubric judge passes with ICR=1.0 - gold solution follows documentation style consistent with existing session commands.",
+      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly fails (reward=0) - 5 fail-to-pass tests failed as expected on base commit. Gold test passes (reward=1) - all 12 tests pass after applying solve.sh. Rubric judge passes with ICR=1.0 - gold solution follows documentation style consistent with existing session commands.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 182.99
+      "time": 309.82
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 224.76,
+      "time": 255.21,
       "notes": ""
     },
     "p2p_enrich": {
@@ -33,7 +32,7 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 133.26,
-      "notes": ""
+      "notes": "CI Commands Tested and New P2P Tests Added:\n\n1. VERIFIED WORKING (7 p2p tests pass on base commit):\n   - test_commands_file_valid: static brace-matching check on commands.ts\n   - test_repo_lint_packages: npm run lint-packages (exit 0)\n   - test_repo_build: npm run build (exit 0)\n   - test_repo_commands_syntax: node --check packages/playwright/src/mcp/terminal/commands.ts (exit 0)\n   - test_repo_program_syntax: node --check packages/playwright/src/mcp/terminal/program.ts (exit 0)\n   - test_repo_cli_session_spec_syntax: node --check tests/mcp/cli-session.spec.ts (exit 0)\n   - test_repo_check_deps: npm run check-deps (exit 0, passes despite warnings)\n\n2. TESTED BUT NOT SUITABLE:\n   - npm run eslint: Crashes with OOM error\n   - npx tsc --noEmit: Has pre-existing type errors at base commit\n   - npm run doc: Requires build first\n   - npm run lint-tests: Requires build first\n   - npm test: Requires browser dependencies and takes too long\n\n3. VERIFICATION:\n   - Docker build: SUCCESS\n   - 7 p2p tests: ALL PASS on base commit\n   - 5 f2p tests: ALL FAIL on base commit (expected)\n   - All 12 tests: PASS after gold patch (reward=1)"
     },
     "improve": {
       "status": "skipped",
@@ -48,17 +47,19 @@
       "backend": "fireworks",
       "time": 2.24,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.16,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T06:08:18.499379"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -74,6 +75,30 @@
       "backend": "fireworks",
       "time": 1742.73,
       "at": "2026-04-10T12:25:39.354340"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2285.06,
+      "at": "2026-04-12T00:26:58.328398"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1931.02,
+      "at": "2026-04-12T01:22:53.356506"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2025.11,
+      "at": "2026-04-12T05:03:44.388603"
     }
   ]
 }

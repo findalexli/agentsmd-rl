@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T01:52:20.372285",
-  "total_time": 1743.68,
-  "sandbox_id": "i86dkuyhnlr41t736ajbs",
+  "validated_at": "2026-04-11T18:17:25.293310",
+  "total_time": 2101.49,
+  "sandbox_id": "i251agbdg62ifhvaoc3wf",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "human",
       "backend": "manual",
       "time": 300.0,
-      "notes": "Added 4 repo CI/CD pass_to_pass tests: test_repo_ruff_lint, test_repo_ruff_format, test_repo_precommit_trailing_whitespace, test_repo_precommit_end_of_file. Tests verify: 1) Ruff lint passes on data_proxy/app.py, 2) Ruff format check passes, 3) No trailing whitespace, 4) Exactly one newline at EOF. All p2p tests verified passing on both base commit and after gold patch."
+      "notes": "Enriched pass_to_pass tests with 6 repo_tests (subprocess-based CI checks): test_repo_ruff_lint (ruff check app.py), test_repo_ruff_format (ruff format --check), test_repo_py_compile (python3 -m py_compile all 9 data_proxy files), test_repo_check_yaml_valid (yaml.safe_load on .github/workflows/*.yml). Plus 6 static checks. All 14 p2p tests verified passing on base commit."
     },
     "improve": {
       "status": "skipped",
@@ -32,13 +31,13 @@
       "notes": "All 4 validation checks passed: 1) Docker build succeeded, 2) NOP test reward=0 (7 fail-to-pass tests correctly fail), 3) Gold test reward=1 (16/16 tests pass), 4) Rubric rules verified manually - composition over inheritance (flat function), follows existing patterns (error handling, response types), async non-blocking. Judge automation failed due to API auth (401) but solution manually verified.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 451.72
+      "time": 224.59
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 85.79,
+      "time": 309.51,
       "notes": ""
     },
     "rubric_judge": {
@@ -47,17 +46,19 @@
       "backend": "fireworks",
       "time": 1.25,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 24.52,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 259.82,
-      "at": "2026-04-09T20:22:48.447089"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +90,14 @@
       "backend": "fireworks",
       "time": 1743.68,
       "at": "2026-04-10T01:52:20.372285"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2101.49,
+      "at": "2026-04-11T18:17:25.293310"
     }
   ]
 }

@@ -161,6 +161,106 @@ bun test test/cli/tui/keybind-plugin.test.ts
     assert r.returncode == 0, f"CLI keybind-plugin tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass - Session compaction tests
+def test_repo_session_compaction_tests():
+    """Session compaction unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun test test/session/compaction.test.ts
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Session compaction tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - TUI transcript tests
+def test_repo_tui_transcript_tests():
+    """TUI transcript unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun test test/cli/tui/transcript.test.ts
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"TUI transcript tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - TUI theme-store tests
+def test_repo_tui_theme_store_tests():
+    """TUI theme-store unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun test test/cli/tui/theme-store.test.ts
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"TUI theme-store tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Server session-select tests
+def test_repo_server_session_select_tests():
+    """Server session-select unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun test test/server/session-select.test.ts
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Server session-select tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Server global-session-list tests
+def test_repo_server_global_session_list_tests():
+    """Server global-session-list unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+export PATH=/root/.bun/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq unzip
+curl -fsSL https://bun.sh/install | bash
+export PATH=/root/.bun/bin:$PATH
+cd /workspace/opencode
+bun install
+cd packages/opencode
+bun test test/server/global-session-list.test.ts
+"""],
+        capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Server global-session-list tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_files_exist_and_not_truncated():
     """Modified files must exist and have meaningful content."""

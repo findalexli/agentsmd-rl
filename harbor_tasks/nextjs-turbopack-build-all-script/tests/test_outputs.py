@@ -29,6 +29,37 @@ def _read_json(path: str) -> dict:
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Modified JSON files pass Prettier formatting check (pass_to_pass)."""
+    # Check formatting of package.json files (JSON files don't need node_modules)
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "package.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json failed prettier check:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_swc_prettier_check():
+    """packages/next-swc/package.json passes Prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "packages/next-swc/package.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"packages/next-swc/package.json failed prettier check:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_turbo_json_prettier_check():
+    """Root turbo.json passes Prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "turbo.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"turbo.json failed prettier check:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_package_json_valid():
     """Root package.json is valid JSON (pass_to_pass)."""
     r = subprocess.run(
@@ -77,6 +108,133 @@ def test_repo_agents_md_exists():
         capture_output=True, text=True, timeout=60,
     )
     assert r.returncode == 0, f"AGENTS.md not readable:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - turbo.json or turbo.jsonc must exist with expected structure
+# For base commit: turbo.json exists and has tasks.build
+# For gold patch: turbo.jsonc exists (with comments) and has build-native-auto task
+# Note: Node's require() can't parse JSONC (JSON with comments), so we check file existence
+# The actual content validation is done in test_turbo_jsonc_task_renamed for the gold case
+def test_repo_turbo_json_valid():
+    """packages/next-swc/turbo.json (original) or turbo.jsonc (after patch) exists with valid structure."""
+    # Check which file exists (base commit has turbo.json, gold patch renames to turbo.jsonc)
+    turbo_path = f"{REPO}/packages/next-swc/turbo.json"
+    jsonc_path = f"{REPO}/packages/next-swc/turbo.jsonc"
+
+    # Try turbo.json first (base commit)
+    r = subprocess.run(
+        ["test", "-r", turbo_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    if r.returncode == 0:
+        # Base commit - turbo.json exists, verify it has expected tasks
+        r = subprocess.run(
+            ["node", "-e",
+             f"const turbo=require('{REPO}/packages/next-swc/turbo.json'); " +
+             "if (!turbo.tasks || !turbo.tasks.build) { console.error('Missing build task'); process.exit(1); } " +
+             "if (!turbo.tasks['rust-check']) { console.error('Missing rust-check task'); process.exit(1); } " +
+             "console.log('OK');"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"turbo.json validation failed:\n{r.stderr[-500:]}"
+    else:
+        # Gold patch applied - check turbo.jsonc exists (JSONC with comments can't be parsed by require)
+        r = subprocess.run(
+            ["test", "-r", jsonc_path],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"Neither turbo.json nor turbo.jsonc exists"
+        # For JSONC, we can't use Node require() due to comments - content validated in test_turbo_jsonc_task_renamed
+
+
+# [repo_tests] pass_to_pass
+def test_repo_root_scripts_valid():
+    """Root package.json has expected CI scripts: build, lint, test-unit (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "const pkg=require('./package.json'); " +
+         "const required=['build', 'lint', 'test-unit', 'test-types']; " +
+         "const missing=required.filter(s=>!pkg.scripts[s]); " +
+         "if (missing.length>0) { console.error('Missing scripts:', missing); process.exit(1); } " +
+         "console.log('OK');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Root package.json scripts validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_agents_md_readable():
+    """AGENTS.md is readable via Node.js fs (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "const fs=require('fs'); " +
+         "fs.accessSync('AGENTS.md', fs.constants.R_OK); " +
+         "console.log('OK');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AGENTS.md not readable:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_swc_package_scripts_valid():
+    """packages/next-swc/package.json has expected build scripts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "const pkg=require('./packages/next-swc/package.json'); " +
+         "if (!pkg.scripts) { console.error('No scripts'); process.exit(1); } " +
+         "// Base commit has 'build' script, gold patch renames it to 'build-native-auto'\n" +
+         "const hasBuild = pkg.scripts['build'] || pkg.scripts['build-native-auto']; " +
+         "if (!hasBuild) { console.error('Missing build or build-native-auto script'); process.exit(1); } " +
+         "const required=['clean', 'build-native']; " +
+         "const missing=required.filter(s=>!pkg.scripts[s]); " +
+         "if (missing.length>0) { console.error('Missing scripts:', missing); process.exit(1); } " +
+         "console.log('OK');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"next-swc package.json scripts validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_turbo_json_tasks_exist():
+    """packages/next-swc/turbo.json or turbo.jsonc has expected tasks including build and rust-check (pass_to_pass)."""
+    # Check which file exists (base commit has turbo.json, gold patch renames to turbo.jsonc)
+    turbo_path = f"{REPO}/packages/next-swc/turbo.json"
+    jsonc_path = f"{REPO}/packages/next-swc/turbo.jsonc"
+
+    r_json = subprocess.run(
+        ["test", "-r", turbo_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    if r_json.returncode == 0:
+        # Base commit - turbo.json exists
+        r = subprocess.run(
+            ["node", "-e",
+             "const turbo=require('./packages/next-swc/turbo.json'); " +
+             "if (!turbo.tasks) { console.error('No tasks'); process.exit(1); } " +
+             "if (!turbo.tasks.build && !turbo.tasks['build-native-auto']) { " +
+             "  console.error('Missing build or build-native-auto task'); process.exit(1); } " +
+             "if (!turbo.tasks['rust-check']) { console.error('Missing rust-check'); process.exit(1); } " +
+             "console.log('OK');"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+    else:
+        # Gold patch - turbo.jsonc exists (JSONC with comments can't be parsed by require)
+        # Just verify the file exists - content validated in test_turbo_jsonc_task_renamed
+        r = subprocess.run(
+            ["test", "-r", jsonc_path],
+            capture_output=True, text=True, timeout=60,
+        )
+        if r.returncode != 0:
+            r = subprocess.run(
+                ["node", "-e", "console.error('Neither turbo.json nor turbo.jsonc exists'); process.exit(1);"],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+        else:
+            r = subprocess.run(
+                ["node", "-e", "console.log('OK');"],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+    assert r.returncode == 0, f"turbo.json/turbo.jsonc tasks validation failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

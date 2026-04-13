@@ -62,6 +62,42 @@ def test_snap_prettier_check():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
+def test_babel_plugin_lint():
+    """babel-plugin-react-compiler lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_babel_plugin_jest():
+    """babel-plugin-react-compiler Jest tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
+        capture_output=True, text=True, timeout=300, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Jest tests failed:\n{r.stderr[-500:]}"
+
+
+def test_eslint_plugin_build():
+    """eslint-plugin-react-compiler builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "eslint-plugin-react-compiler", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"ESLint plugin build failed:\n{r.stderr[-500:]}"
+
+
+def test_eslint_plugin_test():
+    """eslint-plugin-react-compiler tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "eslint-plugin-react-compiler", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"ESLint plugin tests failed:\n{r.stderr[-500:]}"
+
+
 def test_typescript_files_parseable():
     """Modified TypeScript files have balanced braces (basic structural validity)."""
     files = [

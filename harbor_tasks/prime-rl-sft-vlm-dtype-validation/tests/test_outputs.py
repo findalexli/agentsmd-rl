@@ -325,3 +325,27 @@ def test_no_unnecessary_try_except_in_validator():
                         return
 
     # If validator doesn't exist, test_trainerconfig_validator_not_stub catches it
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_configs():
+    """Repo's unit config tests pass (pass_to_pass)."""
+    # Install minimal deps needed for the config tests
+    subprocess.run(
+        ["pip", "install", "-q", "wandb", "tyro", "tomli-w", "loguru", "tomli"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Install procps for pkill (used in test fixtures)
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "procps"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/unit/test_configs.py", "-v", "--tb=short", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit config tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"

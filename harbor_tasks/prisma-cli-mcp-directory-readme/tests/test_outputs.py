@@ -282,3 +282,195 @@ def test_repo_prettier_all():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — Additional Repo CI/CD checks (enrichment)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_lint_staged_files():
+    """Repo lint-staged files check passes on modified CLI files (pass_to_pass)."""
+    # Enable corepack first to get pnpm
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.14.4", "--activate"], check=True, cwd=REPO)
+    # Install dependencies first
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
+
+    # Check that the files we care about pass lint-staged checks
+    # This mimics what the pre-commit hook does
+    # Check MCP.ts at either location (base or fix)
+    mcp_path = os.path.join(REPO, "packages/cli/src/mcp/MCP.ts")
+    if not os.path.exists(mcp_path):
+        mcp_path = os.path.join(REPO, "packages/cli/src/MCP.ts")
+    r = subprocess.run(
+        ["pnpm", "exec", "eslint", "packages/cli/src/bin.ts", mcp_path],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check on key files failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_package_json_valid():
+    """Repo package.json files are valid JSON (pass_to_pass)."""
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+// Check root package.json
+JSON.parse(readFileSync('package.json', 'utf8'));
+
+// Check CLI package.json
+JSON.parse(readFileSync('packages/cli/package.json', 'utf8'));
+
+console.log('OK: All package.json files are valid');
+""")
+    assert r.returncode == 0, f"package.json validation failed: {r.stderr}"
+
+
+def test_repo_old_mcp_location_exists():
+    """MCP.ts exists at either location and exports Mcp class (pass_to_pass)."""
+    r = _run_node("""
+import { existsSync, readFileSync } from 'fs';
+
+// Check either location (base commit has it at old location, fix has it at new location)
+let mcpPath = 'packages/cli/src/MCP.ts';
+if (!existsSync(mcpPath)) {
+    mcpPath = 'packages/cli/src/mcp/MCP.ts';
+}
+if (!existsSync(mcpPath)) {
+    console.error('MCP.ts not found at either location');
+    process.exit(1);
+}
+
+const content = readFileSync(mcpPath, 'utf8');
+if (!content.includes('export class Mcp')) {
+    console.error('MCP.ts does not export class Mcp');
+    process.exit(1);
+}
+
+console.log('OK: MCP.ts exists at ' + mcpPath + ' with Mcp export');
+""")
+    assert r.returncode == 0, f"MCP.ts location check failed: {r.stderr}"
+
+
+def test_repo_prettier_modified_files():
+    """Repo prettier check passes on modified CLI files (pass_to_pass)."""
+    # Enable corepack first to get pnpm
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.14.4", "--activate"], check=True, cwd=REPO)
+    # Install dependencies first
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
+
+    # Check specific modified files for prettier formatting
+    # Check MCP.ts at either location (base or fix)
+    mcp_path = os.path.join(REPO, "packages/cli/src/mcp/MCP.ts")
+    if not os.path.exists(mcp_path):
+        mcp_path = os.path.join(REPO, "packages/cli/src/MCP.ts")
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "packages/cli/src/bin.ts", mcp_path],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check on modified files failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — Additional Repo CI/CD checks (enrichment)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_cli_package_scripts_work():
+    """CLI package scripts are valid and package.json is well-formed (pass_to_pass)."""
+    r = _run_node("""
+import { readFileSync, existsSync } from 'fs';
+
+// Check CLI package.json exists and has required scripts
+const pkgPath = 'packages/cli/package.json';
+if (!existsSync(pkgPath)) {
+    console.error('CLI package.json not found');
+    process.exit(1);
+}
+
+const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+
+// Verify required scripts exist
+const requiredScripts = ['build', 'prisma', 'tsc'];
+const scripts = pkg.scripts || {};
+for (const script of requiredScripts) {
+    if (!scripts[script]) {
+        console.error(`Missing required script: ${script}`);
+        process.exit(1);
+    }
+}
+
+// Verify package has proper bin configuration
+if (!pkg.bin || !pkg.bin.prisma) {
+    console.error('Missing bin.prisma configuration');
+    process.exit(1);
+}
+
+console.log('OK: CLI package.json is valid with all required scripts and bin config');
+""")
+    assert r.returncode == 0, f"CLI package validation failed: {r.stderr}"
+
+
+def test_repo_modified_files_no_syntax_errors():
+    """Modified files have no TypeScript syntax errors that would break parsing (pass_to_pass)."""
+    r = _run_node("""
+import { readFileSync, existsSync } from 'fs';
+
+// Find MCP.ts at either location
+let mcpPath = 'packages/cli/src/MCP.ts';
+if (!existsSync(mcpPath)) {
+    mcpPath = 'packages/cli/src/mcp/MCP.ts';
+}
+
+// Check MCP.ts exists and has basic structure
+if (!existsSync(mcpPath)) {
+    console.error('MCP.ts not found');
+    process.exit(1);
+}
+
+const mcpContent = readFileSync(mcpPath, 'utf8');
+
+// Check for balanced braces (basic syntax sanity check)
+let braceCount = 0;
+let inString = false;
+let stringChar = '';
+for (let i = 0; i < mcpContent.length; i++) {
+    const char = mcpContent[i];
+    const prevChar = i > 0 ? mcpContent[i - 1] : '';
+
+    if (inString) {
+        if (char === stringChar && prevChar !== '\\\\') {
+            inString = false;
+        }
+    } else {
+        if (char === '"' || char === "'" || char === '`') {
+            inString = true;
+            stringChar = char;
+        } else if (char === '{') {
+            braceCount++;
+        } else if (char === '}') {
+            braceCount--;
+            if (braceCount < 0) {
+                console.error('Unbalanced braces in MCP.ts');
+                process.exit(1);
+            }
+        }
+    }
+}
+
+if (braceCount !== 0) {
+    console.error(`Unbalanced braces in MCP.ts: ${braceCount} remaining`);
+    process.exit(1);
+}
+
+// Check bin.ts exists and has valid structure
+const binContent = readFileSync('packages/cli/src/bin.ts', 'utf8');
+if (!binContent.includes('import')) {
+    console.error('bin.ts appears to be missing imports');
+    process.exit(1);
+}
+
+console.log('OK: Modified files have valid syntax structure');
+""")
+    assert r.returncode == 0, f"Syntax validation failed: {r.stderr}"

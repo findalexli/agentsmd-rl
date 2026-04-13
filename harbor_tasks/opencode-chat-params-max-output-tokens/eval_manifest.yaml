@@ -61,35 +61,38 @@ rubric:
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
     path: AGENTS.md
-    lines: 64-73
-  evidence: The gold solution accesses `params.maxOutputTokens` directly using dot
-    notation when passing it to the provider payload, rather than destructuring `maxOutputTokens`
-    from `params`.
-  category: style
 distractors:
 - rule: Use single word names by default for new locals, params, and helper functions.
-  collision_type: would_cause_bug
+    Multi-word names are allowed only when a single word would be unclear or ambiguous.
+  collision_type: rule_conflict
   why_distracting: The agent might try to rename `maxOutputTokens` to a single word
-    like `tokens` or `limit` to satisfy the strict single-word naming rule. However,
-    `maxOutputTokens` is an existing property name in the provider API and the `chat.params`
-    hook output. Changing it would break the API contract and cause bugs.
+    like `tokens` or `limit` to satisfy the strict naming rule, but this would break
+    the API contract as `maxOutputTokens` is a standard parameter name expected by
+    the LLM provider.
   severity: high
   source:
     path: AGENTS.md
-    lines: 34-45
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
-  collision_type: scope_ambiguity
-  why_distracting: 'The agent might avoid adding the explicit type `maxOutputTokens:
-    number | undefined` to the `Hooks` interface in `packages/plugin/src/index.ts`,
-    thinking it should be inferred. But since it''s an exported interface defining
-    a plugin hook contract, explicit typing is required.'
+    lines: 26-34
+- rule: Use Effect.gen(function* () { ... }) for composition.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to rewrite the `LLM` streaming logic to
+    use `Effect.gen` since it's modifying a file in `packages/opencode`, but this
+    is an existing Promise-based function and a full Effect migration is out of scope.
   severity: medium
   source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-15
+- rule: Avoid using the `any` type
+  collision_type: scope_ambiguity
+  why_distracting: 'The `chat.params` hook output type includes `options: Record<string,
+    any>`. The agent might try to replace `any` with `unknown` or a specific type,
+    which is out of scope and could break plugin compatibility.'
+  severity: low
+  source:
     path: AGENTS.md
-    lines: 20-21
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript styling rules
-  (naming, destructuring, variables). The `packages/opencode/AGENTS.md` provides Effect
-  and Drizzle specific rules which are not applicable here since the modified code
-  does not use Effect or Drizzle. The agent must carefully apply the root styling
-  rules without breaking existing API contracts (like `maxOutputTokens`).
+    lines: 11-12
+hierarchy_analysis: The root `AGENTS.md` provides general style and naming rules,
+  while `packages/opencode/AGENTS.md` introduces Effect-specific architectural rules.
+  The agent must apply the root style rules (like const/ternary) while ignoring the
+  distracting Effect rules in the package-level config, as the target file is not
+  yet migrated to Effect.

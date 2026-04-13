@@ -14,10 +14,22 @@ checks:
   origin: repo_tests
   description: Repo CI check - changes:validate passes, validates change files and
     prerelease.json format
+- id: test_changes_preview
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - changes:preview passes, previews release changes
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI check - ESLint passes on modified scripts (changes.ts, publish.ts)
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - Prettier format check passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - TypeScript typecheck passes
 - id: prerelease_json_uses_channel
   type: fail_to_pass
   origin: pr_diff
@@ -68,76 +80,53 @@ rubric:
   evidence: The modified JSON block in CONTRIBUTING.md maintains 2-space indentation,
     adhering to the 'spaces not tabs' formatting rule.
   category: style
+- rule: 'Monorepo: pnpm workspace with packages in `packages/` directory'
+  source:
+    path: AGENTS.md
+    lines: 14-14
+  evidence: The agent correctly targets `packages/remix/.changes/prerelease.json`
+    for the config file update, respecting the monorepo structure defined in the architecture
+    section.
+  category: architecture
+- rule: Maintain the existing documentation structure and constraints for the remix
+    package's prerelease mode.
+  source:
+    path: AGENTS.md
+    lines: 49-54
+  evidence: 'The gold solution carefully updates the terminology from ''tag'' to ''channel''
+    in the documentation while preserving the surrounding markdown structure, including
+    the bolding and the specific constraint '
+  category: documentation
+- rule: 'Monorepo: pnpm workspace with packages in packages/ directory'
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution correctly targets the `packages/remix/.changes/prerelease.json`
+    file, respecting the monorepo structure where packages are located in the `packages/`
+    directory.
+  category: architecture
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: "- **Prerelease mode**: An optional `.changes/prerelease.json` file\
-    \ denotes that the package is in prerelease mode. The `channel` field (e.g. `\"\
-    alpha\"`, `\"beta\"`, `\"rc\"`) determines the version suffix, while the npm dist-tag\
-    \ is always `\"next\"`. **This is only supported for the `remix` package.**\n\
-    \    - **Transitioning between prerelease channels** (e.g. `alpha` → `beta`):\
-    \ Update `prerelease.json` channel and add a change file. Version resets to new\
-    \ channel (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The bump type is for changelog\
-    \ categorization only—by convention, use `patch`."
-  gold_removed: "- **Prelease mode**: An optional `.changes/prerelease.json` file\
-    \ denotes that the package is in prerelease mode and what the npm dist-tag is.\
-    \ **This is only supported for the `remix` package.**\n    - **Transitioning between\
-    \ prerelease tags** (e.g. `alpha` → `beta`): Update `prerelease.json` tag and\
-    \ add a change file. Version resets to new tag (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`).\
-    \ The bump type is for changelog categorization only—by convention, use `patch`."
+  gold_added: "- **Prerelease mode**: An optional `.changes/prerelease.json` file denotes that the package is in prerelease mode. The `channel` field (e.g. alpha, beta, rc) determines the version suffix, while the npm dist-tag is always next. **This is only supported for the `remix` package.** - **Transitioning between prerelease channels** (e.g. alpha -> beta): Update `prerelease.json` channel and add a change file. Version resets to new channel (e.g. 3.0.0-alpha.7 -> 3.0.0-beta.0). The bump type is for changelog categorization only—by convention, use `patch`."
+  gold_removed: "- **Prelease mode**: An optional `.changes/prerelease.json` file denotes that the package is in prerelease mode and what the npm dist-tag is. **This is only supported for the `remix` package.** - **Transitioning between prerelease tags** (e.g. alpha -> beta): Update `prerelease.json` tag and add a change file. Version resets to new tag (e.g. 3.0.0-alpha.7 -> 3.0.0-beta.0). The bump type is for changelog categorization only—by convention, use `patch`."
 - path: CONTRIBUTING.md
   tier: 2
-  gold_added: '"channel": "alpha"
-
-    The `channel` field determines the version suffix (e.g. `alpha`, `beta`, `rc`),
-    while prereleases are always published to npm with the `next` tag. This is only
-    supported for `remix` because it''s the only package that needs to publish prereleases
-    alongside an existing stable version on npm. All other packages in this monorepo
-    are new and publish directly as `latest`.
-
-    #### Transitioning between `remix` prerelease channels
-
-    To transition between channels (e.g. `alpha` → `beta`):
-
-    1. Update `.changes/prerelease.json` to the new channel
-
-    Version resets to the new channel (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The
-    bump type is for changelog categorization only—by convention, use `patch`.'
-  gold_removed: '"tag": "alpha"
-
-    This is only supported for `remix` because it''s the only package that needs to
-    publish prereleases alongside an existing stable version on npm. All other packages
-    in this monorepo are new and publish directly as `latest`.
-
-    #### Transitioning between `remix` prerelease tags
-
-    To transition between tags (e.g. `alpha` → `beta`):
-
-    1. Update `.changes/prerelease.json` to the new tag
-
-    Version resets to the new tag (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The bump
-    type is for changelog categorization only—by convention, use `patch`.'
+  gold_added: '"channel": "alpha" The `channel` field determines the version suffix (e.g. alpha, beta, rc), while prereleases are always published to npm with the `next` tag. This is only supported for `remix` because it is the only package that needs to publish prereleases alongside an existing stable version on npm. All other packages in this monorepo are new and publish directly as `latest`. Transitioning between channels (e.g. alpha -> beta): Update `.changes/prerelease.json` to the new channel. Version resets to the new channel (e.g. 3.0.0-alpha.7 -> 3.0.0-beta.0). The bump type is for changelog categorization only—by convention, use `patch`.'
+  gold_removed: '"tag": "alpha" This is only supported for `remix` because it is the only package that needs to publish prereleases alongside an existing stable version on npm. All other packages in this monorepo are new and publish directly as `latest`. Transitioning between tags (e.g. alpha -> beta): Update `.changes/prerelease.json` to the new tag. Version resets to the new tag (e.g. 3.0.0-alpha.7 -> 3.0.0-beta.0). The bump type is for changelog categorization only—by convention, use `patch`.'
 distractors:
-- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
-    not tabs)'
-  collision_type: would_cause_bug
-  why_distracting: The formatting rule specifies 'single quotes', but the agent must
-    edit prerelease.json and a JSON code block in CONTRIBUTING.md. JSON strictly requires
-    double quotes, so applying this rule would create invalid JSON.
+- rule: 'Prelease mode: An optional `.changes/prerelease.json` file denotes that the
+    package is in prerelease mode and what the npm dist-tag is.'
+  collision_type: meta_confusion
+  why_distracting: The config file explicitly states the old behavior (that prerelease.json
+    denotes what the npm dist-tag is). The agent must recognize that it needs to modify
+    this very rule to reflect the new behavior (dist-tag is always 'next'), rather
+    than treating the config file as an immutable source of truth.
   severity: high
   source:
     path: AGENTS.md
-    lines: 28-28
+    lines: 51-52
 - rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
     files.'
-  collision_type: meta_confusion
-  why_distracting: The rule requires creating a change file for changes. However,
-    this PR modifies the monorepo's internal release scripts and documentation, not
-    the actual package source code that would require a changelog entry for users.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 45-45
-hierarchy_analysis: AGENTS.md is the root config file. The rules generally apply to
-  TypeScript source code, but agents might over-apply them to JSON files (causing
-  syntax errors) or meta-level repository changes (causing unnecessary change files).
+  collision_type: scope_ambiguity
+  why_distracting: The

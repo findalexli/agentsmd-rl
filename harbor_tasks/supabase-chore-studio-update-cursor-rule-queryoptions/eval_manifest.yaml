@@ -52,6 +52,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Studio ESLint passes
+- id: test_repo_lint_ratchet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio ESLint ratchet check passes
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes
 rubric:
 - rule: Config update is consistent with the style and structure of existing cursor
     rules in .cursor/rules/studio/
@@ -76,15 +84,15 @@ config_edits:
     \ using `queryOptions` from `@tanstack/react-query`.\n- Gate with `enabled` so\
     \ the query doesn't run until required variables exist (and platform-only queries\
     \ should include `IS_PLATFORM` from `lib/constants`).\n- When migrating away from\
-    \ exporting `useQuery`, move all options into the `xQueryOptions` as default values.\n\
-    - No extra options should be added as params, if the user wants to overwrite the\
+    \ exporting `useQuery`, move all options into the `xQueryOptions` as default values.\
+    \n- No extra options should be added as params, if the user wants to overwrite the\
     \ options, they can do by destructuring the query options. For example, `{ ...xQueryOptions(vars),\
     \ enabled: true }`.\nimport { queryOptions } from '@tanstack/react-query'\n\n\
     import { xKeys } from './keys'\nimport { get, handleError } from '@/data/fetchers'\n\
     import { IS_PLATFORM } from '@/lib/constants'\nimport { ResponseError } from '@/types'\n\
     \nasync function getX({ projectRef }: XVariables, signal?: AbortSignal) {\nexport\
-    \ const xQueryOptions = ({ projectRef }: XVariables) => {\n  return queryOptions({\n\
-    \    enabled: IS_PLATFORM && typeof projectRef !== 'undefined',\n}\n```\n\n##\
+    \ const xQueryOptions = ({ projectRef }: XVariables) => {\n  return queryOptions({\
+    \n    enabled: IS_PLATFORM && typeof projectRef !== 'undefined',\n}\n```\n\n##\
     \ Using query options in components\n\nUse `useQuery` directly with the query\
     \ options:\n\n```ts\nimport { useQuery } from '@tanstack/react-query'\n\nimport\
     \ { xQueryOptions } from '@/data/x/x-query'\n\n// In component:\nconst { data,\
@@ -94,8 +102,8 @@ config_edits:
     \ the query options:\n\n```ts\nimport { useQueryClient } from '@tanstack/react-query'\n\
     \nimport { xQueryOptions } from '@/data/x/x-query'\n\n// In component:\nconst\
     \ queryClient = useQueryClient()\n\nconst handleClick = useCallback(\n  async\
-    \ (id: number) => {\n    const data = await queryClient.fetchQuery(\n      xQueryOptions({\n\
-    \        id,\n        projectRef,\n        connectionString: project?.connectionString,\n\
+    \ (id: number) => {\n    const data = await queryClient.fetchQuery(\n      xQueryOptions({\
+    \n        id,\n        projectRef,\n        connectionString: project?.connectionString,\n\
     \      })\n    )\n    // use data...\n  },\n  [project?.connectionString, projectRef,\
     \ queryClient]\n)\n  - defaults to a `toast.error(...)` when `onError` isn't provided\n\
     import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query'\n\
@@ -107,8 +115,8 @@ config_edits:
     \ a `getX(variables, signal?)` function that:\n  - calls `handleError(error)`\
     \ and returns `data`\n- Wrap it in `useXQuery()` using `useQuery`, `UseCustomQueryOptions`,\
     \ and a domain key helper.\n- Gate with `enabled` so the query doesn't run until\
-    \ required variables exist (and platform-only queries should include `IS_PLATFORM`).\n\
-    export async function getX({ projectRef }: XVariables, signal?: AbortSignal) {\
+    \ required variables exist (and platform-only queries should include `IS_PLATFORM`).\
+    \nexport async function getX({ projectRef }: XVariables, signal?: AbortSignal) {\
     \nexport const useXQuery = <TData = XData>(\n  { projectRef }: XVariables,\n  {\
     \ enabled = true, ...options }: UseCustomQueryOptions<XData, XError, TData> =\
     \ {}\n) =>\n  useQuery<XData, XError, TData>({\n    enabled: IS_PLATFORM && enabled\

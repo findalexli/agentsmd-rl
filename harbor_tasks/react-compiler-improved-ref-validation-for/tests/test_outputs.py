@@ -329,3 +329,47 @@ def test_claude_md_formatting_section():
     assert "yarn prettier-all" in content, (
         "CLAUDE.md should document 'yarn prettier-all' formatting command"
     )
+
+
+def test_repo_compiler_typecheck():
+    """TypeScript type check for babel-plugin-react-compiler passes (pass_to_pass)."""
+    cmd = "cd /workspace/react/compiler && yarn install 2>&1 | tail -3 && yarn workspace babel-plugin-react-compiler tsc --noEmit 2>&1"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    err_msg = r.stderr[-1000:] if r.stderr else r.stdout[-1000:]
+    assert r.returncode == 0, "TypeScript type check failed: " + err_msg
+
+
+def test_repo_compiler_unit_parseconfig():
+    """Repo's parseConfigPragma unit test passes (pass_to_pass)."""
+    cmd = "cd /workspace/react/compiler && yarn install 2>&1 | tail -3 && timeout 120 yarn workspace babel-plugin-react-compiler jest --testPathPattern='parseConfigPragma-test' 2>&1"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    err_msg = r.stderr[-1000:] if r.stderr else r.stdout[-1000:]
+    assert r.returncode == 0, "parseConfigPragma test failed: " + err_msg
+
+
+def test_repo_compiler_unit_logger():
+    """Repo's Logger unit test passes (pass_to_pass)."""
+    cmd = "cd /workspace/react/compiler && yarn install 2>&1 | tail -3 && timeout 120 yarn workspace babel-plugin-react-compiler jest --testPathPattern='Logger-test' 2>&1"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    err_msg = r.stderr[-1000:] if r.stderr else r.stdout[-1000:]
+    assert r.returncode == 0, "Logger test failed: " + err_msg
+
+
+def test_repo_eslint_plugin_jest():
+    """Repo's Jest tests for eslint-plugin-react-compiler pass (pass_to_pass)."""
+    cmd = "cd /workspace/react/compiler && yarn install 2>&1 | tail -3 && timeout 120 yarn workspace eslint-plugin-react-compiler test 2>&1"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    err_msg = r.stderr[-1000:] if r.stderr else r.stdout[-1000:]
+    assert r.returncode == 0, "eslint-plugin tests failed: " + err_msg

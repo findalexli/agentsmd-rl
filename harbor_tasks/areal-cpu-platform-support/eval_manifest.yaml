@@ -72,6 +72,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff formatting check passes on modified files (repo CI check)
+- id: test_repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files must not have trailing whitespace (pre-commit style
+    CI check)
+- id: test_repo_end_of_file_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files must end with a newline (pre-commit style CI check)
+- id: test_repo_import_order
+  type: pass_to_pass
+  origin: repo_tests
+  description: Import order follows project standards (ruff isort rules)
 rubric:
 - rule: Code changes should follow existing patterns in modified modules
   source:
@@ -83,45 +96,45 @@ rubric:
     path: areal/infra/platforms/cpu.py
     lines: memory_allocated, memory_reserved, mem_get_info, empty_cache
     commit: 6208006db64ac29aded7be33963e86503ba9e28e
-- rule: Follow existing code patterns in the same module.
+- rule: Follow existing code patterns in the same module
   source:
-    path: AGENTS.md
-    lines: 30-30
-  evidence: The gold solution implements `memory_allocated`, `memory_reserved`, `mem_get_info`,
-    and `empty_cache` in `CpuPlatform` to match the implicit interface expected by
-    the engines, returning safe default v
+    path: areal/infra/platforms/cpu.py
+    lines: memory_allocated, memory_reserved, mem_get_info, empty_cache
   category: architecture
-- rule: No guessing cluster configs or rebuilding CUDA/driver stacks.
+- rule: No guessing cluster configs or rebuilding CUDA/driver stacks
   source:
-    path: AGENTS.md
-    lines: 22-22
-  evidence: The gold solution explicitly checks `current_platform.device_type == "cpu"`
-    to dynamically assign `torch.device("cpu")` instead of blindly using `LOCAL_RANK`
-    which assumes a GPU cluster config.
+    path: areal/engine/fsdp_engine.py
+    lines: device_type == "cpu"
   category: architecture
 distractors:
 - rule: 'Ask first before: Changing launcher or scheduler logic.'
   collision_type: rule_conflict
-  why_distracting: The instructions explicitly state that the local scheduler has
-    an invalid environment variable key issue that needs fixing. If the agent stops
-    to ask permission before modifying `areal/infra/scheduler/local.py`, it fails
-    to complete the requested fix autonomously.
+  why_distracting: The user explicitly instructs the agent to fix the local scheduler
+    (`areal/infra/scheduler/local.py`). If the agent follows the rule to 'Ask first'
+    using the question tool, it will block the autonomous resolution of the issue.
   severity: high
   source:
     path: AGENTS.md
-    lines: 35-39
+    lines: 38-41
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The PR is a bug fix for CPU compatibility, not 'new functionality'.
-    The gold solution provides an example YAML to demonstrate it works, but no new
-    unit tests. An agent might waste time writing mock tests for `CpuPlatform` memory
-    methods, which is out of scope.
+  why_distracting: The agent might interpret the addition of CPU platform methods
+    and engine device selection logic as 'new functionality' and attempt to write
+    tests. The gold solution treats this as a bug fix and does not include tests.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 31-31
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical rules regarding
-  testing, code patterns, and asking before modifying schedulers. AGENTS.md acts as
-  the primary operational guide. The conflict arises because the prompt explicitly
-  asks to fix a bug in the scheduler, overriding the 'Ask first' rule in the agent
-  instructions.
+    lines: 33-33
+- rule: Designed for distributed GPU clusters; assume containerized execution
+  collision_type: architecture_boundary
+  why_distracting: The task explicitly requires adding CPU-only support. An agent
+    might read this constraint and refuse to implement CPU support, or try to force
+    GPU-related logic.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 41-41
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
+  overlapping rules (e.g., 'Add tests for new functionality', 'Ask first before...').
+  The agent must prioritize the explicit user instruction over the 'Ask first' rule
+  in the config files.

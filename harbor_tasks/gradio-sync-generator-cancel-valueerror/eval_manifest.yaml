@@ -54,46 +54,40 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: gradio/utils.py has valid Python syntax via py_compile
+- id: test_repo_gradio_module_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio module Python files have valid syntax via py_compile
 rubric:
-- rule: Python code must be formatted with ruff. Follow the project's linting standards.
-  source:
-    path: AGENTS.md
-    lines: 45-46
-    commit: a09c0e891709e007e4f265fc48f466175f5a2a22
-- rule: Be consistent with the style of the surrounding code. Follow existing patterns
-    for indentation, naming, and structure.
-  source:
-    path: AGENTS.md
-    lines: '47'
-    commit: a09c0e891709e007e4f265fc48f466175f5a2a22
+- Code changes must pass the repository's linting checks (ruff check).
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: 46-48
-  evidence: The gold solution moves the retry logic (using `time.monotonic()`, `asyncio.sleep()`,
-    and checking for 'already executing' in the `ValueError`) directly into `SyncToAsyncIterator.aclose()`,
-    maintainin
+    lines: 35-37
+  evidence: The retry logic added to `SyncToAsyncIterator.aclose()` mirrors the exact
+    `time.monotonic()` and `asyncio.sleep()` pattern that was previously used in `safe_aclose_iterator()`,
+    maintaining consistency
   category: style
 distractors:
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits... Mechanical
-    cleanups are acceptable only when bundled into a clear, systematic scope'
+- rule: Do not open one-off PRs for tiny edits... Mechanical cleanups are acceptable
+    only when bundled into a clear, systematic scope
   collision_type: scope_ambiguity
-  why_distracting: The agent might avoid simplifying `safe_aclose_iterator()` after
-    moving its logic, mistakenly believing that removing the now-redundant code constitutes
-    a 'tiny edit' or 'mechanical cleanup' that violates the policy against low-value
-    busywork.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 58-60
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the full backend test suite (`bash
-    scripts/run_backend_tests.sh`) which could take a long time or fail on unrelated
-    flaky tests, distracting it from the localized fix in `gradio/utils.py`.
+  why_distracting: The agent might interpret this small, targeted bug fix as a 'tiny
+    edit' and attempt to bundle unrelated mechanical cleanups to justify the PR, violating
+    the single-responsibility principle for bug fixes.
   severity: low
   source:
     path: AGENTS.md
-    lines: 28-29
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
-  so there are no hierarchical conflicts. The rules apply globally to the repository.
+    lines: 46-48
+- rule: 'Format your code before pushing. Backend: `bash scripts/format_backend.sh`'
+  collision_type: scope_ambiguity
+  why_distracting: Running the global formatting script (`bash scripts/format_backend.sh`)
+    might format unrelated files or lines if the repository is not perfectly formatted,
+    polluting the bug fix PR with out-of-scope formatting changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 21-23
+hierarchy_analysis: The configuration consists of a single `AGENTS.md` file at the
+  root level. There are no conflicts between files, and the rules apply globally to
+  the repository.

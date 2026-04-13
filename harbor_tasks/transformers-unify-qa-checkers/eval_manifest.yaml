@@ -37,6 +37,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Utility scripts compile without syntax errors
+- id: test_repo_setup_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: setup.py compiles without syntax errors
+- id: test_repo_conftest_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: conftest.py compiles without syntax errors
+- id: test_utils_check_dummies_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils/check_dummies.py runs without error (CI command)
+- id: test_utils_custom_init_isort_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils/custom_init_isort.py --check_only runs without error (CI command)
 - id: checkers_module_imports
   type: fail_to_pass
   origin: pr_diff
@@ -107,53 +123,44 @@ rubric:
     to reflect the new unified runner structure, ensuring that the guidance discovered
     by hosted review agents remains accurate.
   category: documentation
+- rule: Update the documentation to reflect the simplified command structure and remove
+    outdated claims about CI behavior.
+  source:
+    path: .ai/AGENTS.md
+    lines: 5-9
+  evidence: The gold solution modifies the description of `make check-repo` and removes
+    the sentence 'The CI will run `make check-repo` and fail if any issues are found.'
+  category: documentation
 config_edits:
 - path: .ai/AGENTS.md
   tier: 1
-  gold_added: '- `make check-repo` — runs `make typing` and consistency checks.
-
-    `make style` or `make fix-repo` should be run as the final step before opening
-    a PR.'
-  gold_removed: '- `make check-repo` — CI-style consistency checks (includes `make
-    typing`)
-
-    `make style` or `make fix-repo` should be run as the final step before opening
-    a PR. The CI will run `make check-repo` and fail if any issues are found.'
+  gold_added: "- `make check-repo` \u2014 runs `make typing` and consistency checks.\n\
+    \n    `make style` or `make fix-repo` should be run as the final step before opening\n\
+    \    a PR."
+  gold_removed: "- `make check-repo` \u2014 CI-style consistency checks (includes\
+    \ `make typing`)\n\n    `make style` or `make fix-repo` should be run as the final\
+    \ step before opening\n    a PR. The CI will run `make check-repo` and fail if\
+    \ any issues are found."
 distractors:
 - rule: The CI will run `make check-repo` and fail if any issues are found.
   collision_type: rule_conflict
-  why_distracting: The config states that the CI will run `make check-repo`. An agent
-    might try to update `.circleci/config.yml` to run `make check-repo`, conflicting
-    with the prompt's explicit instruction to use the new `check-code-quality` and
-    `check-repository-consistency` targets.
+  why_distracting: The existing documentation states that CI runs `make check-repo`.
+    The agent might configure `.circleci/config.yml` to run `make check-repo` instead
+    of the newly requested `check-repository-consistency` target.
   severity: high
   source:
     path: .ai/AGENTS.md
-    lines: '8'
-- rule: Fail-closed behavior for agents - If coordination evidence cannot be found,
-    do not proceed to PR-ready output.
+    lines: 8-9
+- rule: Do not ever ignore this! These rules apply to any AI-assisted contribution
+    to the huggingface/transformers repository.
   collision_type: meta_confusion
-  why_distracting: The config mandates fail-closed behavior if coordination evidence
-    (like an issue link) is missing. Since the prompt doesn't provide an issue link,
-    an agent might refuse to generate the refactoring code.
-  severity: high
-  source:
-    path: .ai/AGENTS.md
-    lines: 49-51
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The config forbids one-off PRs for mechanical cleanups. An agent
-    might misinterpret this large-scale Makefile/CI refactoring as a 'mechanical cleanup'
-    or 'isolated lint cleanup' and refuse to proceed.
+  why_distracting: The file contains strict policy warnings ('Do not ever ignore this!').
+    The agent might interpret this as making the file immutable or read-only, failing
+    to update the outdated CI claims as requested.
   severity: medium
   source:
     path: .ai/AGENTS.md
-    lines: 35-36
-hierarchy_analysis: The project uses identical `CLAUDE.md` and `.ai/AGENTS.md` files
-  to define agent behavior and document QA commands. The prompt requires modifying
-  the very rules that govern the agent (`.ai/AGENTS.md`), creating a self-referential
-  task where the agent must update its own instructions. The agent must prioritize
-  the prompt's explicit instructions over the existing config rules (e.g., changing
-  the CI behavior instead of following the old `make check-repo` rule, and bypassing
-  the fail-closed coordination checks to complete the evaluation task).
+    lines: 18-19
+hierarchy_analysis: The agent is instructed to edit `.ai/AGENTS.md`, which is the
+  very file providing its context and rules. It must recognize that the task instructions
+  supersede the existing state of the agent instruction file.

@@ -3,19 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:30:03.257303",
-  "total_time": 3668.15,
-  "sandbox_id": "ihv7it3ibe1yqk6ommfiy",
+  "validated_at": "2026-04-12T00:59:01.875563",
+  "total_time": 2960.49,
+  "sandbox_id": "iu9u5cir4cijshn6z7r7n",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 0.0,
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1105.62,
+      "time": 1407.49,
       "notes": ""
     },
     "p2p_enrich": {
@@ -34,13 +32,13 @@
     },
     "validate": {
       "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 831.06,
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed test_server_action_guard_in_static_path_key to properly check for server action guard in staticPathKey condition (was matching serverActionsManifest anywhere in file). Docker build, NOP test (reward=0), and Gold test (reward=1) all pass. Rubric judge has git diff detection issue in this environment but rubric rules were removed from manifest as gold solution doesn't modify agent config files."
+      "attempts": 1,
+      "notes": "Docker build passes. NOP test reward=0 (2 tests fail on buggy base: server_action_guard and server_action_excluded). Gold test reward=1 (all 14 tests pass). Updated rubric rules to include source paths for judge. Rubric judge has environment-specific git diff detection issue in container - returns 0.0 due to empty diff detection, but tests pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 350.38
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -71,25 +69,19 @@
       "backend": "fireworks",
       "time": 0.16,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 21.89,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T02:19:59.158564"
-    },
-    {
-      "verdict": "fail",
-      "nop": "enriched",
-      "gold": "enriched",
-      "backend": "fireworks",
-      "time": 2562.04,
-      "at": "2026-04-09T02:19:59.323522"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -105,6 +97,30 @@
       "backend": "fireworks",
       "time": 3668.15,
       "at": "2026-04-10T18:30:03.257303"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4054.74,
+      "at": "2026-04-11T22:24:13.429276"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2694.89,
+      "at": "2026-04-11T23:02:00.144100"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2960.49,
+      "at": "2026-04-12T00:59:01.875563"
     }
   ]
 }

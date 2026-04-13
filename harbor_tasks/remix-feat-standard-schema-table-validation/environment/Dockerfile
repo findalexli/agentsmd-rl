@@ -20,6 +20,12 @@ RUN git clone --filter=blob:none --single-branch https://github.com/remix-run/re
 
 WORKDIR /workspace/remix
 
+# Skip playwright install in postinstall (CI=true makes test -n "$CI" pass)
+ENV CI=true
+
+# Create .npmrc to handle workspace symlinks properly
+RUN echo "shamefully-hoist=true" > .npmrc
+
 # Install only data-table and data-schema deps (monorepo is large)
 RUN pnpm install --filter @remix-run/data-table...
 

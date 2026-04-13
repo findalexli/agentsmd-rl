@@ -111,6 +111,28 @@ def test_t5_test_file_compiles():
     assert r.returncode == 0, f"T5 test file compilation failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_inits():
+    """Repo's check_inits.py passes - validates model inits are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"check_inits.py failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_dummies():
+    """Repo's check_dummies.py passes - validates dummy objects are properly defined (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"check_dummies.py failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

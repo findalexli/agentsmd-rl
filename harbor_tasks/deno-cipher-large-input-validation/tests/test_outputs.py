@@ -830,3 +830,302 @@ def test_cipher_git_log_history():
     assert len(lines) > 0, (
         f"cipher.ts has no git history (should have at least one commit)"
     )
+
+
+# [repo_tests] pass_to_pass — CI check: verify file size with wc
+# Found in Deno CI: basic file integrity checks before build
+def test_cipher_ts_line_count_via_wc():
+    """Verify cipher.ts line count using wc -l (CI-style check)."""
+    r = subprocess.run(
+        ["wc", "-l", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"wc command failed: {r.stderr}"
+
+    # Parse line count (format: "NNN /path/to/file")
+    line_count = int(r.stdout.strip().split()[0])
+
+    # cipher.ts should be between 500-1000 lines at base commit
+    assert 500 < line_count < 1000, (
+        f"cipher.ts has {line_count} lines, expected 500-1000"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: git cat-file for blob validation
+# Found in Deno CI: git object validation before compilation
+def test_cipher_ts_git_catfile():
+    """Verify cipher.ts blob via git cat-file (CI-style check)."""
+    r = subprocess.run(
+        ["git", "cat-file", "-t", "HEAD:ext/node/polyfills/internal/crypto/cipher.ts"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git cat-file failed: {r.stderr}"
+
+    # Verify it's a blob object
+    assert r.stdout.strip() == "blob", (
+        f"cipher.ts is not a valid git blob: {r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: file structure validation
+# Found in Deno CI: tests directory structure for node crypto polyfills
+def test_unit_node_crypto_dir_structure():
+    """Verify unit_node crypto test directory structure (CI check)."""
+    crypto_test_dir = f"{REPO}/tests/unit_node/crypto"
+
+    r = subprocess.run(
+        ["ls", "-la", crypto_test_dir],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ls command failed: {r.stderr}"
+
+    # Verify expected test files exist
+    expected_tests = ["crypto_cipher_test.ts", "crypto_cipher_gcm_test.ts"]
+    for test_file in expected_tests:
+        assert test_file in r.stdout, (
+            f"Missing expected test file: {test_file}"
+        )
+
+
+# [repo_tests] pass_to_pass — CI check: verify no executable bits on source files
+# Found in Deno CI: file permission checks
+def test_cipher_ts_not_executable():
+    """Verify cipher.ts does not have executable bit set (CI check)."""
+    r = subprocess.run(
+        ["test", "-x", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    # Should fail (return non-zero) since .ts files shouldn't be executable
+    assert r.returncode != 0, (
+        "cipher.ts should not have executable permissions"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: file type detection via stat
+# Found in Deno CI: basic file system validation
+def test_cipher_ts_is_regular_file():
+    """Verify cipher.ts is a regular file via test -f (CI check)."""
+    r = subprocess.run(
+        ["test", "-f", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"cipher.ts is not a regular file: {r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: verify parent directory exists and is directory
+# Found in Deno CI: directory structure validation
+def test_crypto_parent_dir_is_directory():
+    """Verify crypto polyfill parent is directory (CI check)."""
+    parent_dir = f"{REPO}/ext/node/polyfills/internal/crypto"
+
+    r = subprocess.run(
+        ["test", "-d", parent_dir],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"crypto directory does not exist: {r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: read first few lines for header validation
+# Found in Deno CI: copyright header check
+def test_cipher_ts_first_line_copyright():
+    """Verify cipher.ts starts with copyright header via head (CI check)."""
+    r = subprocess.run(
+        ["head", "-1", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"head command failed: {r.stderr}"
+
+    # First line should be copyright comment
+    assert "Copyright" in r.stdout, (
+        f"cipher.ts missing copyright header: {r.stdout[:100]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: tail for file ending validation
+# Found in Deno CI: file completeness check (no truncation)
+def test_cipher_ts_ends_with_newline():
+    """Verify cipher.ts ends with newline via tail (CI check)."""
+    r = subprocess.run(
+        ["tail", "-c", "10", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"tail command failed: {r.stderr}"
+
+    # File should end with newline (last char before EOF should be \n)
+    assert r.stdout.endswith("\n"), (
+        "cipher.ts should end with newline character"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: verify cipher.ts can be read completely
+# Found in Deno CI: read full file to verify no corruption
+def test_cipher_ts_full_read():
+    """Verify cipher.ts can be read completely via cat (CI check)."""
+    r = subprocess.run(
+        ["cat", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"cat command failed: {r.stderr}"
+
+    # Verify we got non-empty content with expected structure
+    assert "Cipheriv" in r.stdout, "cipher.ts missing Cipheriv class"
+    assert "Decipheriv" in r.stdout, "cipher.ts missing Decipheriv class"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — ENRICHED CI/CD health checks (added during P2P enrichment)
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI check: file metadata validation via stat
+# Found in Deno CI: file integrity and permission checks
+def test_cipher_ts_file_stat():
+    """Verify cipher.ts file metadata via stat command (CI check)."""
+    r = subprocess.run(
+        ["stat", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"stat command failed: {r.stderr}"
+
+    # Verify it's a regular file (not directory, symlink, etc.)
+    assert "regular file" in r.stdout, (
+        f"cipher.ts should be a regular file, got:\n{r.stdout[:500]}"
+    )
+
+    # Verify file has expected permissions (readable, writable)
+    assert "0644" in r.stdout or "-rw-r--r--" in r.stdout, (
+        f"cipher.ts should have 0644 permissions, got:\n{r.stdout[:500]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: file integrity via md5sum
+# Found in Deno CI: checksum validation for cache verification
+def test_cipher_ts_md5sum():
+    """Verify cipher.ts produces valid md5 checksum (CI check)."""
+    r = subprocess.run(
+        ["md5sum", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"md5sum command failed: {r.stderr}"
+
+    # Parse output: "<hash>  <filename>"
+    parts = r.stdout.strip().split()
+    assert len(parts) >= 2, f"Unexpected md5sum output format: {r.stdout}"
+
+    hash_value = parts[0]
+    # MD5 hash should be 32 hex characters
+    assert len(hash_value) == 32, f"Invalid MD5 hash length: {len(hash_value)}"
+    assert all(c in "0123456789abcdef" for c in hash_value), (
+        f"MD5 hash contains non-hex characters: {hash_value}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: crypto directory structure via git ls-tree
+# Found in Deno CI: verify directory contents match expected structure
+def test_crypto_dir_git_ls_tree():
+    """Verify crypto directory has expected files via git ls-tree (CI check)."""
+    crypto_dir = "ext/node/polyfills/internal/crypto"
+    r = subprocess.run(
+        ["git", "ls-tree", "-r", "HEAD", crypto_dir],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git ls-tree failed: {r.stderr}"
+
+    # Verify expected files exist in the directory (checking full paths)
+    expected_files = [
+        "ext/node/polyfills/internal/crypto/cipher.ts",
+        "ext/node/polyfills/internal/crypto/hash.ts",
+        "ext/node/polyfills/internal/crypto/keys.ts",
+        "ext/node/polyfills/internal/crypto/util.ts"
+    ]
+    for filepath in expected_files:
+        assert filepath in r.stdout, (
+            f"Expected file {filepath} not found in git tree:\n{r.stdout[:1000]}"
+        )
+
+
+# [repo_tests] pass_to_pass — CI check: file word count validation
+# Found in Deno CI: basic file metrics for detecting anomalies
+def test_cipher_ts_word_count():
+    """Verify cipher.ts word count is reasonable via wc -w (CI check)."""
+    r = subprocess.run(
+        ["wc", "-w", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"wc -w command failed: {r.stderr}"
+
+    # Parse word count
+    word_count = int(r.stdout.strip().split()[0])
+
+    # cipher.ts should have between 1500-5000 words (sanity check)
+    assert 1500 < word_count < 5000, (
+        f"cipher.ts word count {word_count} is outside expected range (1500-5000)"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: file byte count validation
+# Found in Deno CI: file size verification against expected baseline
+def test_cipher_ts_byte_count():
+    """Verify cipher.ts byte count is reasonable via wc -c (CI check)."""
+    r = subprocess.run(
+        ["wc", "-c", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"wc -c command failed: {r.stderr}"
+
+    # Parse byte count
+    byte_count = int(r.stdout.strip().split()[0])
+
+    # cipher.ts should be between 15KB-25KB (sanity check based on actual size ~18KB)
+    assert 15000 < byte_count < 25000, (
+        f"cipher.ts byte count {byte_count} is outside expected range (15000-25000)"
+    )
+
+
+# [repo_tests] pass_to_pass — CI check: verify file is tracked and not ignored
+def test_cipher_ts_git_check_ignore():
+    """Verify cipher.ts is not gitignored via git check-ignore (CI check)."""
+    r = subprocess.run(
+        ["git", "check-ignore", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    # git check-ignore returns 0 if file IS ignored, 1 if not ignored
+    assert r.returncode == 1, (
+        f"cipher.ts should not be gitignored, but git check-ignore returned {r.returncode}"
+    )

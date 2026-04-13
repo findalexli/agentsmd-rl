@@ -467,3 +467,61 @@ def test_repo_gateway_tests():
     assert r.returncode == 0, (
         f"Gateway tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
     )
+
+
+# [repo_tests] pass_to_pass — ingress owner guard (relevant to PR security fix)
+def test_repo_ingress_owner_guard():
+    """Repo's ingress owner guard must pass (pass_to_pass).
+
+    Validates that agent ingress owner context is properly configured.
+    This check is relevant to the senderIsOwner security fix.
+    """
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "run", "lint:agent:ingress-owner"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Ingress owner guard failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — openai-http image budget tests
+def test_repo_openai_http_image_budget():
+    """Repo's openai-http image budget tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/gateway/openai-http.image-budget.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Image budget tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — openai-http message channel tests
+def test_repo_openai_http_message_channel():
+    """Repo's openai-http message channel tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/gateway/openai-http.message-channel.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Message channel tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    )

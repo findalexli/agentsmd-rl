@@ -89,68 +89,41 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: ColQwen2 missing keys test passes (test_correct_missing_keys)
-rubric:
-- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
-  source:
-    path: CLAUDE.md
-    lines: '64'
-    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
-- rule: When a modular file is present, generated files should not be edited, as changes
-    will be overwritten by make fix-repo. Instead, edit the modular file.
-  source:
-    path: CLAUDE.md
-    lines: 67-68
-    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
-- rule: PRs should be as brief as possible. Bugfix PRs can often be only one or two
-    lines long. Aim to minimize the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
-- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
-    `modular` files can inherit from other models. `make fix-repo` will copy code
-    to generate standalone `modeling` and other files.
-  source:
-    path: CLAUDE.md
-    lines: '61'
-  evidence: The gold solution modifies `src/transformers/models/colqwen2/modular_colqwen2.py`
-    in addition to `modeling_colqwen2.py`, adhering to the repository's modular model
-    design where the modular file is the
-  category: architecture
 distractors:
-- rule: If work maps to an existing issue, coordinate on that issue before opening
-    a PR. Do not open a PR for someone else's issue unless there is explicit approval...
-    If approval is missing or ambiguous, stop and ask for clarification instead of
-    drafting a PR.
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
   collision_type: meta_confusion
-  why_distracting: The agent is in an isolated evaluation environment and must produce
-    a solution. Refusing to write code because it cannot verify issue coordination
-    or approval will cause it to fail the task.
+  why_distracting: The agent is running in a headless evaluation environment without
+    GitHub access. If it strictly follows the instruction to fail-closed when coordination
+    evidence is missing, it will refuse to solve the task and output an explanation
+    instead of the required code fix.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 25-28
-- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
-    be able to defend the change end-to-end... Do not raise PRs without human validation.'
-  collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate the patch, citing the policy
-    that pure code-agent PRs are not allowed and require human validation.
-  severity: high
+    path: AGENTS.md
+    lines: 56-59
+- rule: Ideally you should edit the code it's copying from and propagate the change,
+    but you can break the `# Copied from` link if needed.
+  collision_type: architecture_boundary
+  why_distracting: The agent might see `# Copied from` comments in `modeling_colqwen2.py`
+    and decide to break the link to make the necessary changes directly, rather than
+    correctly identifying that `colqwen2` uses the newer `modular_colqwen2.py` system
+    which requires editing the modular file instead.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 64-66
+hierarchy_analysis: The configuration is flat, with identical rules provided in both
+  `AGENTS.md` and `CLAUDE.md` at the repository root. The agent must prioritize the
+  architectural instructions regarding modular files over the meta-instructions regarding
+  PR coordination.
+rubric:
+- rule: Use modular_<name>.py files for models that inherit from others, and use make
+    fix-repo to generate the standalone modeling files.
   source:
     path: CLAUDE.md
-    lines: 45-53
-- rule: '`make fix-repo`: auto-fixes copies, modular conversions... `make style` or
-    `make fix-repo` should be run as the final step before opening a PR.'
-  collision_type: would_cause_bug
-  why_distracting: If the agent edits `modeling_colqwen2.py` directly and then follows
-    the instruction to run `make fix-repo` as the final step, `make fix-repo` will
-    overwrite `modeling_colqwen2.py` with the contents generated from the unmodified
-    `modular_colqwen2.py`, erasing the agent's fix.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 4-8
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical in content and provide
-  repository-wide guidelines. The agent should follow the architectural guidelines
-  (modular models) but ignore the meta-level contribution policies (coordination,
-  human validation) since it is operating in an automated evaluation environment.'
+    lines: 64-68
+  evidence: The gold solution edits `modular_colqwen2.py` alongside `modeling_colqwen2.py`,
+    following the repository's modular model generation system rather than just editing
+    the generated modeling file.
+  category: architecture
+  verification: llm_judge

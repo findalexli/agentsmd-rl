@@ -44,22 +44,42 @@ checks:
   type: pass_to_pass
   origin: static
   description: T5Attention.forward has real logic, not just pass/return
-- id: test_repo_syntax
+- id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: All modified Python files must parse without syntax errors
-- id: test_repo_imports_resolvable
+  description: Repo's ruff linter passes on modified T5-family model files
+- id: test_repo_py_compile
   type: pass_to_pass
   origin: repo_tests
-  description: Modified files have no unresolvable import dependencies
+  description: All modified Python files compile without errors (py_compile check)
 - id: test_repo_t5_classes_exist
   type: pass_to_pass
   origin: repo_tests
   description: T5-family model files contain required Attention classes
-- id: test_repo_no_undefined_names
+- id: test_repo_forward_methods_parse
   type: pass_to_pass
   origin: repo_tests
-  description: Modified files have no obvious undefined name errors (py_compile check)
+  description: All T5-family Attention.forward() methods have valid AST structure
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified T5-family model files
+- id: test_repo_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modeling structure check passes
+- id: test_repo_inits_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file consistency check passes
+- id: test_repo_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config docstrings check passes
+- id: test_repo_dummies_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy files check passes
 rubric:
 - rule: When fixing code that is copied across model files, ensure all copies are
     updated or the copy link is properly broken.
@@ -75,29 +95,36 @@ rubric:
     for the initial fix, which is the canonical source that other T5-family models
     copy their attention imp
   category: architecture
+- rule: Avoid direct inheritance between model-specific files in `src/transformers/models/`.
+  source:
+    path: AGENTS.md
+    lines: 61-62
+  evidence: The gold solution patches `modeling_t5.py` and `modeling_mt5.py` independently
+    rather than refactoring them to use direct inheritance to share the fixed attention
+    logic.
+  category: architecture
+- rule: Run `make fix-repo` to auto-fix copies and propagate changes before opening
+    a PR
+  source:
+    path: AGENTS.md
+    lines: 4-8
+  evidence: The gold solution includes identical changes across multiple T5-family
+    model files, which is the expected outcome of running `make fix-repo` to auto-fix
+    copies after modifying the source.
+  category: tooling
 distractors:
 - rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
   collision_type: rule_conflict
-  why_distracting: The rule explicitly forbids editing `# Copied from` blocks, stating
-    they will be reverted by `make fix-repo`. However, the prompt explicitly instructs
-    the agent to 'apply the same changes to other T5-family models that have copied
-    code'. An agent strictly following the config might refuse to edit the copied
-    files manually, leading to an incomplete patch.
+  why_distracting: The user instruction explicitly tells the agent to 'apply the same
+    changes to other T5-family models that have copied code'. An agent might interpret
+    this as a directive to manually edit those files, which directly violates the repository
+    rule against manually editing `# Copied from` blocks.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: '64'
-- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
-  collision_type: meta_confusion
-  why_distracting: The rule instructs the agent to 'fail-closed' and refuse to proceed
-    to PR-ready output if coordination evidence (like issue approval) is missing.
-    In a headless evaluation environment, following this rule causes the agent to
-    refuse the task entirely instead of generating the requested code fix.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 55-58
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical rules. The primary
-  conflict arises between the repository's strict agent contribution policies (which
-  demand human coordination and forbid direct edits to copied blocks) and the evaluation
-  prompt's explicit instructions to generate the fix and apply it to copied files.
+    path: AGENTS.md
+    lines: 61-65
+hierarchy_analysis: The configuration files (`AGENTS.md` and `CLAUDE.md`) contain
+  identical rules at the root level. The primary conflict is between the user's prompt
+  (which implies manual edits to copied files) and the repository's config (which mandates
+  using `make fix-repo` to sync copies). The agent must prioritize the repository's
+  structural integrity rules over a literal interpretation of the user's instruction.

@@ -103,6 +103,60 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files do not contain Git merge conflict markers
+- id: test_repo_git_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has no uncommitted changes at base commit
+- id: test_repo_files_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified C++ files are valid and can be read via filesystem
+- id: test_repo_cpp_weakptr_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ compiler can compile weak_ptr pattern used in BroadcastChannel
+    fix
+- id: test_repo_cpp_thread_patterns_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ compiler can compile thread safety patterns used in EventListenerMap
+    fix
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log shows repository has expected commit history
+- id: test_repo_cpp_includes_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ files have valid include paths that exist in repo
+- id: test_repo_file_encoding
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ files use valid UTF-8 encoding via file command
+- id: test_repo_git_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git attributes configuration is present and applies to source files
+- id: test_repo_config_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository ban-limits.json and package.json are valid JSON
+- id: test_repo_shell_scripts_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in repository are syntactically valid via bash -n
+- id: test_repo_cpp_preprocessor
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ preprocessor can process basic syntax patterns
+- id: test_repo_git_fsck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository passes basic integrity check via git fsck
+- id: test_repo_claude_md_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md documentation file exists and is readable
 rubric:
 - rule: Update CLAUDE.md with a note about WebCore fixes applied.
   source:
@@ -111,50 +165,26 @@ rubric:
     commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
   reference: '- WebCore fixes applied: MessagePortChannel memory leak, JSAbortController
     signal reason, BroadcastChannel use-after-free, EventListenerMap thread affinity.'
-- rule: C++ is used for JavaScriptCore integration and WebKit engine components
-  source:
-    path: CLAUDE.md
-    lines: 1-2
-  evidence: The gold solution modifies C++ files in `src/bun.js/bindings/webcore/`
-    using WebKit/JSC C++ types (`ThreadSafeWeakPtr`, `JSC::Visitor`, `Locker`) to
-    fix WebCore memory safety bugs, adhering to the arc
-  category: architecture
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`
+- rule: Always use bun.* APIs instead of std.*
   collision_type: architecture_boundary
-  why_distracting: The agent is working on C++ files where C++ `std::` or WebKit's
-    `WTF::` namespaces are appropriate. The rule strictly forbids `std.*` in favor
-    of `bun.*`, but this applies only to Zig code. Applying this to C++ would cause
-    compilation errors or lead the agent to attempt rewriting C++ logic in Zig.
+  why_distracting: The rule mandates using Bun's Zig APIs (bun.sys, bun.base64) instead
+    of std.*, but the agent is editing C++ files that use the WebKit Template Framework
+    (WTF) and standard C++ libraries.
   severity: high
   source:
-    path: src/CLAUDE.md
-    lines: 14-16
-- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
-    in the test output.
-  collision_type: rule_conflict
-  why_distracting: The PR fixes memory safety bugs (use-after-free, memory leaks)
-    which typically manifest as crashes. An agent might try to write a test to reproduce
-    the crash, but this rule forbids checking for panics, potentially confusing the
-    agent on how to test the C++ memory fixes.
+    path: src/AGENTS.md
+    lines: 15-25
+- rule: Place tests for specific numbered GitHub Issues in test/regression/issue/${issueNumber}.test.ts
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions 'confirmed upstream WebKit bug', which might
+    lead the agent to try and write a regression test in test/regression/issue/ using
+    the WebKit bug number, but the gold solution focuses purely on the C++ fixes.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 73-74
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    test/regression/issue/${issueNumber}.test.ts
-  collision_type: scope_ambiguity
-  why_distracting: The prompt mentions these are 'confirmed upstream WebKit bugs'.
-    An agent might try to use the WebKit bug number to create a regression test file,
-    violating the rule that it must be a real Bun GitHub issue number.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 23-24
-hierarchy_analysis: The config hierarchy defines a clear split between Zig (the primary
-  language) and C++ (used for JSC/WebKit integration). The root `CLAUDE.md` establishes
-  this architecture, while `src/CLAUDE.md` provides deep, specific guidance for Zig
-  system calls and standard library replacements. Because this PR is entirely within
-  the C++ WebCore bindings, the Zig-specific rules in `src/CLAUDE.md` act as distractors.
-  The testing rules in the root config also create friction, as they are geared towards
-  JS/TS testing of Bun features rather than C++ memory safety backports from WebKit.
+    path: AGENTS.md
+    lines: 26-28
+hierarchy_analysis: The config hierarchy provides rules for Zig and JS/TS testing,
+  but the task is entirely within the C++ WebCore bindings. The agent must recognize
+  that the Zig-specific rules in `src/AGENTS.md` do not apply to `.cpp` files, crossing
+  an architecture boundary.

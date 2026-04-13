@@ -282,3 +282,52 @@ def test_no_unused_inspect_import():
             and "import" not in line
         )
         assert usages > 0, "inspect is imported but never used — remove the import"
+
+
+# ---------------------------------------------------------------------------
+# Additional pass-to-pass (repo_tests) — repository CI consistency checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — check_inits utility
+def test_repo_check_inits():
+    """Repo CI: utils/check_inits.py must pass (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", f"{REPO}/utils/check_inits.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"check_inits failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass — sort_auto_mappings utility
+def test_repo_sort_auto_mappings():
+    """Repo CI: utils/sort_auto_mappings.py must pass (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", f"{REPO}/utils/sort_auto_mappings.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"sort_auto_mappings failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass — custom_init_isort utility
+def test_repo_init_isort():
+    """Repo CI: utils/custom_init_isort.py --check_only must pass (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", f"{REPO}/utils/custom_init_isort.py", "--check_only"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"custom_init_isort check failed:\n{result.stdout}\n{result.stderr}"

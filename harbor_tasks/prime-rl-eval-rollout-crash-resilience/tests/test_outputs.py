@@ -127,37 +127,6 @@ def _import_eval_utils():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_ruff_lint():
-    """Ruff lint check passes on orchestrator module (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "-q", "ruff"],
-        capture_output=True, text=True, timeout=60,
-    )
-    # Install may return 0 even with warnings; continue regardless
-
-    r = subprocess.run(
-        ["ruff", "check", "--config=/workspace/pyproject.toml", "/workspace/src/prime_rl/orchestrator/"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_ruff_format():
-    """Ruff format check passes on orchestrator module (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "-q", "ruff"],
-        capture_output=True, text=True, timeout=60,
-    )
-
-    r = subprocess.run(
-        ["ruff", "format", "--check", "--config=/workspace/pyproject.toml", "/workspace/src/prime_rl/orchestrator/"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
 def test_repo_ruff_lint_full():
     """Ruff lint check passes on full src directory (pass_to_pass)."""
     r = subprocess.run(
@@ -197,6 +166,51 @@ def test_repo_py_compile_modified():
     assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_orchestrator_unit_tests():
+    """Orchestrator unit test files compile without errors (pass_to_pass).
+
+    Validates that all unit tests for the orchestrator module are valid Python,
+    ensuring CI can run them. Covers: test_advantage.py, test_batch.py,
+    test_buffer.py, test_scheduler.py, test_trajectories.py, test_filters.py.
+    """
+    test_files = [
+        "tests/unit/orchestrator/test_advantage.py",
+        "tests/unit/orchestrator/test_batch.py",
+        "tests/unit/orchestrator/test_buffer.py",
+        "tests/unit/orchestrator/test_scheduler.py",
+        "tests/unit/orchestrator/test_trajectories.py",
+        "tests/unit/orchestrator/test_filters.py",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "py_compile"] + test_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile on orchestrator unit tests failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_ipython_debug():
+    """No IPython debugger (IPython.embed) calls in modified files (pass_to_pass)."""
+    for name in ["eval_utils.py", "vf_utils.py"]:
+        path = Path(f"{REPO}/src/prime_rl/orchestrator/{name}")
+        source = path.read_text()
+        assert "IPython.embed" not in source, f"{name}: contains IPython.embed() call"
+        assert "import IPython" not in source, f"{name}: imports IPython"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_print_debug():
+    """No print() debug statements in modified files (pass_to_pass)."""
+    for name in ["eval_utils.py", "vf_utils.py"]:
+        path = Path(f"{REPO}/src/prime_rl/orchestrator/{name}")
+        source = path.read_text()
+        # Allow print in specific contexts (e.g., already present)
+        # Just check for obvious debug patterns like print("DEBUG or print("TODO
+        assert 'print("debug"' not in source.lower(), f"{name}: contains debug print"
+        assert "print('debug" not in source.lower(), f"{name}: contains debug print"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -208,6 +222,39 @@ def test_syntax_check():
     for name in ["eval_utils.py", "vf_utils.py"]:
         path = Path(f"{REPO}/src/prime_rl/orchestrator/{name}")
         compile(path.read_text(), str(path), "exec")
+
+
+# [static] pass_to_pass
+def test_function_signature_generate():
+    """generate() function signature is preserved (AST structural check)."""
+    source = Path(f"{REPO}/src/prime_rl/orchestrator/vf_utils.py").read_text()
+    tree = ast.parse(source)
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "generate":
+            # Check it has the expected parameters
+            args = node.args
+            arg_names = {a.arg for a in args.args + args.kwonlyargs}
+            required = {"env", "model_name", "examples", "rollouts_per_example", "sampling_args"}
+            assert required.issubset(arg_names), f"generate() missing required args: {required - arg_names}"
+            return
+    raise AssertionError("generate() function not found in vf_utils.py")
+
+
+# [static] pass_to_pass
+def test_function_signature_evaluate_env():
+    """evaluate_env() function signature is preserved (AST structural check)."""
+    source = Path(f"{REPO}/src/prime_rl/orchestrator/eval_utils.py").read_text()
+    tree = ast.parse(source)
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "evaluate_env":
+            args = node.args
+            arg_names = {a.arg for a in args.args + args.kwonlyargs}
+            required = {"env", "env_name", "model_name", "sampling_args", "num_examples"}
+            assert required.issubset(arg_names), f"evaluate_env() missing required args: {required - arg_names}"
+            return
+    raise AssertionError("evaluate_env() function not found in eval_utils.py")
 
 
 # ---------------------------------------------------------------------------
@@ -369,6 +416,71 @@ def test_compute_eval_ckpt_step():
     assert f(ckpt_step=0, prev_ckpt_step=-1, last_eval_step=-1, interval=25, eval_base_model=True) == 0
     assert f(ckpt_step=25, prev_ckpt_step=25, last_eval_step=0, interval=25) is None
     assert f(ckpt_step=76, prev_ckpt_step=24, last_eval_step=0, interval=25) == 75
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_test_eval_scheduling():
+    """Unit tests for eval_scheduling from repo CI pass (pass_to_pass).
+
+    This test runs the same assertions as tests/unit/orchestrator/test_eval_scheduling.py
+    with mocked dependencies to avoid needing the full dependency stack (verifiers, etc.).
+    """
+    # Setup mocks like test_compute_eval_ckpt_step does
+    _setup_verifier_mocks()
+    _setup_prime_rl_mocks()
+
+    SRC = "/workspace/src"
+    sys.modules["prime_rl.configs"] = _make_pkg("prime_rl.configs", f"{SRC}/prime_rl/configs")
+    sys.modules["prime_rl.configs.orchestrator"] = MagicMock()
+    sys.modules["prime_rl.utils.monitor"] = MagicMock()
+    sys.modules["prime_rl.utils.utils"] = MagicMock()
+    sys.modules["prime_rl.orchestrator"] = _make_pkg("prime_rl.orchestrator", f"{SRC}/prime_rl/orchestrator")
+    sys.modules["prime_rl.orchestrator.vf_utils"] = MagicMock()
+
+    if "/workspace/src" not in sys.path:
+        sys.path.insert(0, "/workspace/src")
+
+    eu = importlib.import_module("prime_rl.orchestrator.eval_utils")
+    f = eu.compute_eval_ckpt_step
+
+    # Test cases from tests/unit/orchestrator/test_eval_scheduling.py
+    # test_exact_hit
+    assert f(ckpt_step=25, prev_ckpt_step=24, last_eval_step=0, interval=25) == 25
+    # test_jump_over_interval
+    assert f(ckpt_step=26, prev_ckpt_step=24, last_eval_step=0, interval=25) == 25
+    # test_no_interval_crossed
+    assert f(ckpt_step=23, prev_ckpt_step=22, last_eval_step=0, interval=25) is None
+    # test_base_model_eval_at_step_0
+    assert f(ckpt_step=0, prev_ckpt_step=-1, last_eval_step=-1, interval=25, eval_base_model=True) == 0
+    # test_base_model_eval_disabled
+    assert f(ckpt_step=0, prev_ckpt_step=-1, last_eval_step=-1, interval=25, eval_base_model=False) is None
+    # test_no_double_eval
+    assert f(ckpt_step=25, prev_ckpt_step=24, last_eval_step=25, interval=25) is None
+    # test_no_change_in_ckpt_step
+    assert f(ckpt_step=25, prev_ckpt_step=25, last_eval_step=0, interval=25) is None
+    # test_multiple_intervals_crossed
+    assert f(ckpt_step=76, prev_ckpt_step=24, last_eval_step=0, interval=25) == 75
+    # test_second_interval
+    assert f(ckpt_step=50, prev_ckpt_step=49, last_eval_step=25, interval=25) == 50
+    # test_jump_across_second_interval
+    assert f(ckpt_step=51, prev_ckpt_step=48, last_eval_step=25, interval=25) == 50
+    # test_production_scenario_step25_skipped
+    assert f(ckpt_step=26, prev_ckpt_step=24, last_eval_step=0, interval=25) == 25
+    # test_production_scenario_step50_exact
+    assert f(ckpt_step=50, prev_ckpt_step=49, last_eval_step=26, interval=25) == 50
+    # test_simulate_full_run
+    ckpt_steps = [0, 0, 3, 5, 10, 15, 20, 24, 26, 30, 35, 40, 48, 51, 60, 70, 74, 76]
+    interval = 25
+    last_eval_step = -1
+    prev_ckpt_step = -1
+    eval_triggered_at = []
+    for ckpt_step in ckpt_steps:
+        result = f(ckpt_step, prev_ckpt_step, last_eval_step, interval)
+        if result is not None:
+            eval_triggered_at.append(result)
+            last_eval_step = ckpt_step
+        prev_ckpt_step = ckpt_step
+    assert eval_triggered_at == [0, 25, 50, 75]
 
 
 # ---------------------------------------------------------------------------

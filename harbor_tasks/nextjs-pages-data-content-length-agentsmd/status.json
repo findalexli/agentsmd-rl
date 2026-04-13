@@ -3,23 +3,21 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T12:35:46.017567",
-  "total_time": 4067.64,
-  "sandbox_id": "i1kr6ib61ttgkufdjlt9n",
+  "validated_at": "2026-04-12T01:03:39.630708",
+  "total_time": 4043.29,
+  "sandbox_id": "ipkqyowc3c71gor6d9zt4",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 0.0,
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
-      "notes": "Added 4 new pass_to_pass tests with origin: repo_tests: test_repo_lint_ast_grep (pnpm lint-ast-grep), test_repo_lint_handler (pnpm lint-eslint on pages-handler.ts), test_repo_typescript (pnpm typescript after build), test_repo_unit_tests (pnpm test-unit after build). Also kept 2 existing p2p tests: test_string_render_result_enables_headers (origin: pr_diff), test_handler_not_stub (origin: static). All 6 p2p tests pass on base commit. The 4 f2p tests fail on base (expected) and will pass after fix is applied."
+      "notes": "CI commands tested in Docker and confirmed working: pnpm lint-ast-grep (ast-grep linting), pnpm lint-eslint on pages-handler.ts (ESLint), pnpm typescript (TypeScript typecheck, requires build), pnpm test-unit (Jest unit tests, requires build). All 4 repo_tests pass on base commit. The eval_manifest.yaml already has all 4 tests declared with origin: repo_tests. No additional CI tests needed - the 4 existing repo_tests cover the standard CI pipeline (lint, typecheck, unit tests)."
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2037.38,
+      "time": 1534.21,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -61,11 +59,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All 4 validation checks passed",
+      "attempts": 2,
+      "notes": "Fixed postponed-state.test.ts environment issue. All 4 checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 493.24
+      "time": 1644.31
     },
     "rubric_judge": {
       "status": "pass",
@@ -73,6 +71,16 @@
       "backend": "fireworks",
       "time": 0.15,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 37.27,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -83,6 +91,30 @@
       "backend": "fireworks",
       "time": 4067.64,
       "at": "2026-04-10T12:35:46.017567"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2913.81,
+      "at": "2026-04-11T22:00:08.886620"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2815.95,
+      "at": "2026-04-11T22:52:29.265036"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4043.29,
+      "at": "2026-04-12T01:03:39.630708"
     }
   ]
 }

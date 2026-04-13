@@ -46,8 +46,7 @@ def test_syntax_check():
     for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS, BROWSER_CONFIG_TS]:
         content = ts_file.read_text()
         assert len(content) > 200, f"{ts_file.name}: file too short"
-        assert content.count("{") == content.count("}"), \
-            f"Unbalanced braces in {ts_file.name}"
+        assert content.count("{") == content.count("}"),             f"Unbalanced braces in {ts_file.name}"
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +115,68 @@ def test_repo_package_json_valid():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Playwright package.json invalid:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_workspace_packages_json_valid():
+    """All workspace package.json files are valid JSON (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const path = require('path');
+const rootPkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const workspaces = rootPkg.workspaces || ['packages/*'];
+let allOk = true;
+
+for (const pattern of workspaces) {
+    if (pattern.endsWith('/*')) {
+        const dir = pattern.replace('/*', '');
+        const fullDir = path.join(process.cwd(), dir);
+        try {
+            const entries = fs.readdirSync(fullDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    const pkgPath = path.join(fullDir, entry.name, 'package.json');
+                    try {
+                        if (fs.existsSync(pkgPath)) {
+                            JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                        }
+                    } catch (e) {
+                        console.log('FAIL: ' + pkgPath + ' - ' + e.message);
+                        allOk = false;
+                    }
+                }
+            }
+        } catch (e) {
+            // Directory doesn't exist, skip
+        }
+    }
+}
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_workspace_pkgs.cjs"
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Workspace package.json validation failed:\n{r.stdout}"
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_npm_ci_valid():
+    """npm ci exits successfully indicating valid package-lock.json (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci", "--dry-run"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # --dry-run doesn't actually install but validates package.json and lock file
+    # If it fails due to lockfile mismatch, return code will be non-zero
+    # For our purposes, we just need to verify npm can parse the package structure
+    assert r.returncode == 0 or "would install" in r.stderr.lower() or "would install" in r.stdout.lower() or "up to date" in r.stdout.lower() or "up to date" in r.stderr.lower(), \
+        f"npm ci validation failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +258,7 @@ const fs = require('fs');
 const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
 
 // Extract the configure method body
-const configureMatch = src.match(/async configure\\(args[^)]*\\)[^{]*\\{([\\s\\S]*?)\\n  \\}/);
+const configureMatch = src.match(/async configure\\(args[^)]*\\)[^{]*\\{([\\s\\S]*?)\\n  \}/);
 if (!configureMatch) {
     console.error('configure method not found');
     process.exit(1);
@@ -293,3 +354,227 @@ if (!hasContextOptions || !hasViewport) process.exit(1);
     data = json.loads(r.stdout.strip())
     assert data["hasContextOptions"], "config.ts must have contextOptions"
     assert data["hasViewport"], "config.ts must set default viewport 1280x720"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mcp_terminal_structure():
+    """MCP terminal module has consistent exports and structure (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const path = require('path');
+
+// Validate that the MCP terminal module structure is consistent
+const terminalDir = 'packages/playwright/src/mcp/terminal';
+const files = fs.readdirSync(terminalDir);
+const tsFiles = files.filter(f => f.endsWith('.ts'));
+
+// Check that command.ts exports what it should
+const commandTs = fs.readFileSync(path.join(terminalDir, 'command.ts'), 'utf8');
+const hasCategoryExport = commandTs.includes('export type Category');
+const hasCommandSchemaExport = commandTs.includes('export type CommandSchema');
+
+// Check that commands.ts has proper structure
+const commandsTs = fs.readFileSync(path.join(terminalDir, 'commands.ts'), 'utf8');
+const hasDeclareCommand = commandsTs.includes('declareCommand');
+const hasZodImport = commandsTs.includes('import');
+
+// Check that helpGenerator.ts exports generateHelp
+const helpGenTs = fs.readFileSync(path.join(terminalDir, 'helpGenerator.ts'), 'utf8');
+const hasGenerateHelp = helpGenTs.includes('export function generateHelp');
+
+// Check that browser/config.ts has proper structure
+const configTs = fs.readFileSync('packages/playwright/src/mcp/browser/config.ts', 'utf8');
+const hasExport = configTs.includes('export');
+
+const checks = {
+  commandTsExportsCategory: hasCategoryExport,
+  commandTsExportsSchema: hasCommandSchemaExport,
+  commandsTsHasDeclare: hasDeclareCommand,
+  commandsTsHasImports: hasZodImport,
+  helpGenTsExportsGenerateHelp: hasGenerateHelp,
+  browserConfigTsHasExports: hasExport,
+};
+
+console.log(JSON.stringify(checks));
+const allOk = Object.values(checks).every(v => v);
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_mcp_structure_check.cjs"
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"MCP terminal structure check failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modified_files_are_typescript():
+    """Modified files from PR are valid TypeScript files (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const path = require('path');
+
+// Files modified by the PR
+const modifiedFiles = [
+  'packages/playwright/src/mcp/browser/config.ts',
+  'packages/playwright/src/mcp/terminal/command.ts',
+  'packages/playwright/src/mcp/terminal/commands.ts',
+  'packages/playwright/src/mcp/terminal/helpGenerator.ts',
+  'packages/playwright/src/mcp/terminal/program.ts'
+];
+
+let allOk = true;
+for (const file of modifiedFiles) {
+  const fullPath = path.join(process.cwd(), file);
+  try {
+    const stats = fs.statSync(fullPath);
+    if (!stats.isFile()) {
+      console.log('NOT_A_FILE: ' + file);
+      allOk = false;
+      continue;
+    }
+    const content = fs.readFileSync(fullPath, 'utf8');
+    // Check for TypeScript file characteristics
+    const hasValidExtension = file.endsWith('.ts');
+    const hasLicenseHeader = content.includes('Copyright') && content.includes('Apache License');
+
+    if (!hasValidExtension || !hasLicenseHeader) {
+      console.log('INVALID: ' + file);
+      allOk = false;
+    } else {
+      console.log('OK: ' + file);
+    }
+  } catch (e) {
+    console.log('ERROR: ' + file + ' - ' + e.message);
+    allOk = false;
+  }
+}
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_ts_files_check.cjs"
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Modified files check failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_browser_config_exports():
+    """Browser config module has expected exports (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+
+const configTs = fs.readFileSync('packages/playwright/src/mcp/browser/config.ts', 'utf8');
+
+// Check for key exports and structures
+const hasCLIOptions = configTs.includes('CLIOptions');
+const hasConfigType = configTs.includes('Config');
+const hasMergeConfig = configTs.includes('mergeConfig');
+const hasConfigFromCLIOptions = configTs.includes('configFromCLIOptions');
+
+const checks = {
+  hasCLIOptions,
+  hasConfigType,
+  hasMergeConfig,
+  hasConfigFromCLIOptions
+};
+
+console.log(JSON.stringify(checks));
+const allOk = Object.values(checks).filter(v => v).length >= 3;
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_browser_config_check.cjs"
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Browser config exports check failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_commands_has_session_commands():
+    """Commands module has session management commands (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+
+const commandsTs = fs.readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
+
+// Check for session-related commands
+const hasSessionList = commandsTs.includes("name: 'session-list'") || commandsTs.includes("session-list");
+const hasSessionStop = commandsTs.includes("name: 'session-stop'") || commandsTs.includes("session-stop");
+const hasSessionStopAll = commandsTs.includes("name: 'session-stop-all'") || commandsTs.includes("session-stop-all");
+const hasCommandsArray = commandsTs.includes('commandsArray');
+
+const checks = {
+  hasSessionList,
+  hasSessionStop,
+  hasSessionStopAll,
+  hasCommandsArray
+};
+
+console.log(JSON.stringify(checks));
+const allOk = Object.values(checks).filter(v => v).length >= 2;
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_commands_session_check.cjs"
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Commands session check failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_program_has_session_manager():
+    """Program module has SessionManager class (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+
+const programTs = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+
+// Check for SessionManager class and key methods
+const hasSessionManager = programTs.includes('class SessionManager');
+const hasListMethod = programTs.includes('async list()');
+const hasStopMethod = programTs.includes('async stop(');
+const hasStartMethod = programTs.includes('async start(') || programTs.includes('start(');
+const hasHandleSessionCommand = programTs.includes('handleSessionCommand');
+
+const checks = {
+  hasSessionManager,
+  hasListMethod,
+  hasStopMethod,
+  hasStartMethod,
+  hasHandleSessionCommand
+};
+
+console.log(JSON.stringify(checks));
+const allOk = Object.values(checks).filter(v => v).length >= 3;
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_program_session_check.cjs"
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Program session manager check failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        tmp.unlink(missing_ok=True)

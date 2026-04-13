@@ -91,21 +91,66 @@ checks:
     origin: repo_tests
     description: "Python syntax validation passes for all modified files"
 
+  # Additional P2P Enrichment - CI/CD checks from the repo
+  - id: orchestrator_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All orchestrator unit tests pass (batch + trajectory tests, excluding torch-dependent)"
+
+  - id: train_runs_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Train runs unit tests pass"
+
+  - id: train_world_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Train world unit tests pass"
+
+
+  # Additional P2P Enrichment - CI/CD checks found during exploration
+  - id: test_repo_batch_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Batch preparation unit tests pass (CI test)"
+
+  - id: test_repo_all_orchestrator_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All working orchestrator unit tests pass - batch and trajectory tests (CI test)"
+
+  - id: test_repo_pytest_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pytest is available and working (CI tooling check)"
+
+  - id: test_repo_imports_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core orchestrator modules can be imported (CI smoke test)"
 rubric:
   - rule: "When handling errors in trajectory processing, zero out the completion_mask to prevent logprob computation issues"
     source:
-      path: "docs/trajectories.md"
-      lines: "17-20"
+      path: "src/prime_rl/orchestrator/trajectories.py"
+      lines: "190-200"
       commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+    reference: |
+      When state has an error, the completion_mask should be set to all False:
+      ```python
+      has_error = state["error"] is not None
+      if has_error:
+          completion_mask = [False] * len(tokens["completion_mask"])
+      ```
 
-  - rule: "Follow existing code style and match patterns in neighboring files. Use type annotations with Union syntax (X | Y) for return types that can be None"
+  - rule: "Use type annotations with Union syntax (X | Y) for return types that can be None"
     source:
-      path: "pyproject.toml"
-      lines: "92-97"
+      path: "src/prime_rl/orchestrator/trajectories.py"
+      lines: "175-180"
       commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+    reference: |
+      Return type should use modern Union syntax:
+      ```python
+      def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:
+      def branch_rollout(state: vf.State) -> list[TrainingSample] | None:
+      ```
 
-  - rule: "When adding or modifying configuration files (like configs/math_python/), update CHANGELOG.md to document the changes"
-    source:
-      path: ".cursor/BUGBOT.md"
-      lines: "3-11"
-      commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"

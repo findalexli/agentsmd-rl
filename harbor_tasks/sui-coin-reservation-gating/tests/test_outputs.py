@@ -113,3 +113,33 @@ def test_git_checks():
         timeout=60
     )
     assert result.returncode == 0, f"git-checks.sh failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_cargo_fmt():
+    """Verify code formatting passes (pass_to_pass).
+
+    This runs cargo fmt check which is part of CI linting.
+    """
+    result = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, f"cargo fmt check failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_cargo_clippy_package():
+    """Verify clippy passes on sui-json-rpc package (pass_to_pass).
+
+    This runs clippy on the modified package with warnings as errors.
+    """
+    result = subprocess.run(
+        ["cargo", "clippy", "--package", "sui-json-rpc", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+    assert result.returncode == 0, f"cargo clippy failed:\n{result.stderr[-1000:]}"

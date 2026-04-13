@@ -213,6 +213,32 @@ def test_repo_composer_audit():
         f"composer audit failed:\n{result.stderr}"
 
 
+def test_repo_php_lint():
+    """Repo's PHP code passes Pint linting (pass_to_pass)."""
+    # Install dependencies first (stateless container), then run lint
+    result = subprocess.run(
+        ["bash", "-c", "composer install --ignore-platform-reqs -q 2>/dev/null && vendor/bin/pint --test --config pint.json"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"PHP lint (pint) failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_phpstan_analyze():
+    """Repo's PHP code passes PHPStan static analysis (pass_to_pass)."""
+    # Install dependencies first (stateless container), then run phpstan
+    result = subprocess.run(
+        ["bash", "-c", "composer install --ignore-platform-reqs -q 2>/dev/null && vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=512M --no-progress"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"PHPStan analysis failed:\n{result.stderr[-500:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))

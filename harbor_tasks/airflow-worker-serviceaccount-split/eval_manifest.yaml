@@ -59,15 +59,15 @@ checks:
   description: Helm chart must render templates successfully
 - id: test_values_yaml_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: values.yaml must be valid YAML
 - id: test_schema_json_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: values.schema.json must be valid JSON
 - id: test_helpers_yaml_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: _helpers.yaml must exist and have required helpers
 - id: test_repo_helm_lint_with_kubernetes_executor
   type: pass_to_pass
@@ -94,6 +94,14 @@ checks:
   origin: repo_tests
   description: Helm template works with deprecated workers.serviceAccount (backward
     compat)
+- id: test_repo_values_schema_validation
+  type: pass_to_pass
+  origin: static
+  description: values.yaml validates against schema (CI quality check)
+- id: test_repo_helm_lint_strict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm lint with strict mode (CI quality check)
 - id: test_helm_render_with_kubernetes_executor_and_sa
   type: pass_to_pass
   origin: pr_diff
@@ -120,40 +128,17 @@ rubric:
   source:
     path: PR description
 distractors:
-- rule: 'Run a single test: uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
-    -xvs'
+- rule: 'Run a single test: `uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
+    -xvs`'
   collision_type: rule_conflict
-  why_distracting: The config provides general `uv run pytest` commands for running
-    tests, which an agent might try to use for the Helm tests. However, Helm tests
-    require the specific `breeze testing helm-tests` command to properly render templates
-    and execute.
+  why_distracting: The agent might attempt to run the modified Helm tests using `uv
+    run pytest` as suggested for standard Python tests, but Helm tests require the
+    specific `breeze testing helm-tests` command to function correctly.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 16-18
-- rule: 'Lint with ruff only: prek run ruff --from-ref <target_branch>'
-  collision_type: scope_ambiguity
-  why_distracting: The config instructs to lint and format with `ruff` only. Since
-    this PR exclusively modifies YAML, JSON, and RST files for Helm charts, running
-    Ruff will do nothing and might confuse the agent into thinking its syntax is fully
-    validated.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 32-33
-- rule: SQLite is the default backend. Use --backend postgres or --backend mysql for
-    integration tests that need those databases.
-  collision_type: scope_ambiguity
-  why_distracting: The config mentions setting `--backend postgres` or `--backend
-    mysql` for integration tests. Helm tests render templates and do not connect to
-    a database backend, so attempting to configure these backends for the Helm tests
-    would be a wasted effort.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 38-38
-hierarchy_analysis: The configuration files CLAUDE.md and AGENTS.md are identical
-  and provide general Python/Airflow testing instructions alongside specific Helm
-  testing commands. The primary conflict arises from the general `uv run pytest` commands
-  overlapping with the specialized `breeze testing helm-tests` commands.
+    path: AGENTS.md
+    lines: 17-19
+hierarchy_analysis: The configuration is provided in both `AGENTS.md` and `CLAUDE.md`
+  which contain identical instructions. The agent must navigate the testing commands
+  to select the specific Helm testing commands over the general Python testing commands.
 version: '2.0'

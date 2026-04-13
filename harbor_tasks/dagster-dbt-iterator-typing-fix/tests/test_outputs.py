@@ -88,6 +88,86 @@ def test_iterator_py_compile():
     assert r.returncode == 0, f"py_compile failed on dbt_event_iterator.py:\n{r.stderr}"
 
 
+def test_ruff_format_check_component():
+    """Ruff format check passes on component.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.15.0", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(COMPONENT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Ruff format check failed on component.py:\n{r.stdout}\n{r.stderr}"
+
+
+def test_ruff_format_check_iterator():
+    """Ruff format check passes on dbt_event_iterator.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.15.0", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(ITERATOR_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Ruff format check failed on dbt_event_iterator.py:\n{r.stdout}\n{r.stderr}"
+
+
+def test_validate_pyproject():
+    """dagster-dbt pyproject.toml is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "validate-pyproject", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install validate-pyproject: {r.stderr}"
+
+    pyproject = DBT_PROJECT_DIR / "pyproject.toml"
+    r = subprocess.run(
+        ["validate-pyproject", str(pyproject)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_check_manifest():
+    """dagster-dbt package manifest is complete (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "check-manifest", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install check-manifest: {r.stderr}"
+
+    r = subprocess.run(
+        ["check-manifest", str(DBT_PROJECT_DIR)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"check-manifest failed for dagster-dbt:\n{r.stdout}\n{r.stderr}"
+
+
 # =============================================================================
 # PASS_TO_PASS TESTS - Static checks (origin: static)
 # These verify static properties of the code

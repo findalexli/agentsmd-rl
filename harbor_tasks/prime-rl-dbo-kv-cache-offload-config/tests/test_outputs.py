@@ -356,6 +356,84 @@ def test_pytest_unit_configs():
             os.rename(conftest_bak, conftest)
 
 
+# [repo_tests] pass_to_pass
+def test_ruff_check_combined():
+    """Repo's ruff linting passes on configs and entrypoints (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    # Ensure ruff is installed
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--config", f"{REPO}/pyproject.toml", f"{REPO}/src/prime_rl/configs/", f"{REPO}/src/prime_rl/entrypoints/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format_combined():
+    """Repo's ruff format check passes on configs and entrypoints (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    # Ensure ruff is installed
+    subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", "--config", f"{REPO}/pyproject.toml", f"{REPO}/src/prime_rl/configs/", f"{REPO}/src/prime_rl/entrypoints/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_load_configs():
+    """All repo TOML config files can be loaded by their config classes (pass_to_pass)."""
+    import subprocess
+    import sys
+    import os
+
+    # Install test dependencies
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pytest", "tomli_w", "psutil", "setproctitle", "tomli", "-q"],
+        check=True, capture_output=True
+    )
+
+    # Temporarily rename conftest.py to avoid pkill requirement
+    conftest = f"{REPO}/tests/conftest.py"
+    conftest_bak = f"{REPO}/tests/conftest.py.bak"
+
+    try:
+        if os.path.exists(conftest):
+            os.rename(conftest, conftest_bak)
+
+        r = subprocess.run(
+            [
+                sys.executable, "-m", "pytest",
+                "tests/unit/test_configs.py::test_load_configs",
+                "-v",
+                "--tb=short",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Pytest test_load_configs failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        # Restore conftest.py
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression
 # ---------------------------------------------------------------------------

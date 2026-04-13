@@ -83,32 +83,44 @@ rubric:
     `crates/ty_python_semantic/src/types/display.rs` rather than creating a new test
     file.
   category: testing
+- rule: All changes must be tested. Look to see if your tests could go in an existing
+    file before adding a new file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 48-49
+  evidence: Adds a new `assert_snapshot!` test case to the existing `mod tests` block
+    in `crates/ty_python_semantic/src/types/display.rs` rather than creating a new
+    test file.
+  category: testing
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: 54-55
+  evidence: The fix simply swaps the order of the `if parameter.is_positional_only()`
+    and `if !star_added && parameter.is_keyword_only()` blocks instead of rewriting
+    the parameter formatting logic.
+  category: architecture
 distractors:
 - rule: Run a single mdtest file. The path to the mdtest file should be relative to
     the `crates/ty_python_semantic/resources/mdtest` folder
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to write an `mdtest` (integration test)
-    to verify the type display behavior. However, the type display logic is already
-    thoroughly unit-tested directly in `display.rs`. Adding an `mdtest` would cross
-    the established testing architecture boundary for this specific component.
+  why_distracting: The agent might try to create a new markdown test file in `resources/mdtest`
+    to test the type display, but the appropriate place for `display_signature` tests
+    is the inline `mod tests` using `insta` snapshots.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 18-21
-- rule: Reproducing and minimizing ty ecosystem changes... use this script to clone
-    the project to some directory and install its dependencies
+    lines: 19-21
+- rule: If asked to reproduce changes in the ty ecosystem, use this script to clone
+    the project to some directory and install its dependencies into `.venv`
   collision_type: scope_ambiguity
-  why_distracting: The agent might think it needs to set up a primer project to reproduce
-    the issue using `scripts/setup_primer_project.py`. This would waste significant
-    time and effort on ecosystem testing for a simple string formatting bug that is
-    easily reproducible via a standard unit test.
+  why_distracting: The agent might try to set up a primer project to test the fix,
+    which is unnecessary and wastes time for a simple unit-testable bug in type display.
   severity: low
   source:
     path: AGENTS.md
-    lines: 43-53
-hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
-  `AGENTS.md`. The rules in `AGENTS.md` provide a mix of high-level development guidelines
-  and specific commands for testing. The primary challenge for the agent is distinguishing
-  between the different testing methodologies (unit tests vs. mdtests vs. ecosystem
-  primer projects) and selecting the appropriate one (unit tests) for this specific
-  string formatting bug.
+    lines: 49-52
+hierarchy_analysis: The configuration is essentially a flat single file (`AGENTS.md`
+  included by `CLAUDE.md`). The agent must navigate the testing instructions to determine
+  the correct location and format for the new test.

@@ -353,3 +353,69 @@ def test_registered_dir_isort():
             errors.append(f"{filepath}: {r.stderr[-200:]}")
 
     assert len(errors) == 0, f"isort errors found:\n" + "\n".join(errors[:5])
+
+
+def test_workflow_job_names_unique():
+    """Workflow job names are unique across workflows (pass_to_pass)."""
+    # Install pyyaml if needed
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Run the CI check script
+    r = subprocess.run(
+        [sys.executable, f"{REPO}/scripts/ci/check_workflow_job_names.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workflow job names check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_pre_commit_hooks():
+    """All pre-commit hooks pass on the codebase (pass_to_pass)."""
+    # Install pre-commit
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    # Run pre-commit hooks (skip no-commit-to-branch as we're not on a branch)
+    r = subprocess.run(
+        ["pre-commit", "run", "--all-files", "--show-diff-on-failure"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+        env={**os.environ, "SKIP": "no-commit-to-branch"},
+    )
+    assert r.returncode == 0, f"Pre-commit hooks failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_ci_permissions_json_valid():
+    """CI_PERMISSIONS.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c",
+         f"import json; json.load(open('{REPO}/.github/CI_PERMISSIONS.json')); print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"CI_PERMISSIONS.json validation failed:\n{r.stderr[-500:]}"
+
+
+def test_all_ci_scripts_syntax():
+    """All CI scripts in scripts/ci/ have valid Python syntax (pass_to_pass)."""
+    ci_scripts = glob.glob(os.path.join(REPO, "scripts/ci/**/*.py"), recursive=True)
+    errors = []
+    for filepath in ci_scripts:
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", filepath],
+            capture_output=True,
+            timeout=30,
+        )
+        if r.returncode != 0:
+            errors.append(f"{filepath}: {r.stderr.decode()}")
+    assert len(errors) == 0, f"Syntax errors in CI scripts:\n" + "\n".join(errors[:10])

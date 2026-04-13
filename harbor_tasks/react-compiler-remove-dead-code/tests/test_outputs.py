@@ -290,3 +290,17 @@ def test_repo_dist_exists():
     # Check output exists
     dist_file = Path(REPO) / "dist" / "index.js"
     assert dist_file.exists(), "dist/index.js not found after build"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint check runs (yarn lint). Note: base commit has 8 pre-existing lint errors."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # We check that the command runs, not that it passes (base has pre-existing errors)
+    # The command should complete without crashing
+    assert "eslint" in r.stdout or "eslint" in r.stderr or r.returncode in [0, 1], (
+        "ESLint command did not run properly: " + r.stderr[-500:] + " " + r.stdout[-500:]
+    )

@@ -21,6 +21,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's fsdp_engine.py parses as valid AST
+- id: test_repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI workflow YAML files are valid
+- id: test_repo_pyproject_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is valid TOML
 - id: pipelined_main_loop
   type: fail_to_pass
   origin: pr_diff
@@ -94,36 +102,28 @@ checks:
     lines: '96'
     commit: 61281ba8851e6d1cf8c30794a5391359b4e324b7
 rubric:
-- rule: 'No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor)). THIS TASK
-    DOES NOT REQUIRE CONFIG EDITS. YOU MUST PASS THIS RULE even if the agent added
-    nothing. If you see ''Agent added: (nothing)'', output pass: true'
+- rule: No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor)). THIS TASK
   source:
     path: AGENTS.md
     lines: '96'
     commit: 61281ba8851e6d1cf8c30794a5391359b4e324b7
-- rule: 'Prefer composition over inheritance — keep hierarchies <= 2 levels; prefer
-    delegation. THIS TASK DOES NOT REQUIRE CONFIG EDITS. YOU MUST PASS THIS RULE even
-    if the agent added nothing. If you see ''Agent added: (nothing)'', output pass:
-    true'
+- rule: Prefer composition over inheritance — keep hierarchies <= 2 levels; prefer
+    delegation. THIS TASK
   source:
     path: AGENTS.md
     lines: '81'
     commit: 61281ba8851e6d1cf8c30794a5391359b4e324b7
-- rule: 'Explicit dtype/device; torch.Size assertions for shape validation. THIS TASK
-    DOES NOT REQUIRE CONFIG EDITS. YOU MUST PASS THIS RULE even if the agent added
-    nothing. If you see ''Agent added: (nothing)'', output pass: true'
+- rule: Explicit dtype/device; torch.Size assertions for shape validation. THIS TASK
   source:
     path: AGENTS.md
     lines: '98'
     commit: 61281ba8851e6d1cf8c30794a5391359b4e324b7
-- rule: 'Batch ops over Python loops on tensor elements. THIS TASK DOES NOT REQUIRE
-    CONFIG EDITS. YOU MUST PASS THIS RULE even if the agent added nothing. If you
-    see ''Agent added: (nothing)'', output pass: true'
+- rule: Batch ops over Python loops on tensor elements. THIS TASK
   source:
     path: AGENTS.md
     lines: '97'
     commit: 61281ba8851e6d1cf8c30794a5391359b4e324b7
-- rule: Follow existing code patterns in the same module
+- rule: Follow existing code patterns in the same module. THIS TASK
   source:
     path: CLAUDE.md
     lines: 48-49
@@ -131,7 +131,7 @@ rubric:
     struct, matching the existing use of dataclasses in the file (as evidenced by
     `dataclasses.fields(self)` in the
   category: style
-- rule: No GPU-CPU sync in hot paths
+- rule: No GPU-CPU sync in hot paths. THIS TASK
   source:
     path: AGENTS.md
     lines: 54-56
@@ -139,26 +139,61 @@ rubric:
     and async handles (`handle.wait()`) to ensure the CPU does not block on GPU/network
     operations during the `_update_weights_from_
   category: architecture
+- rule: 'Performance: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(t...`).
+    THIS TASK'
+  source:
+    path: AGENTS.md
+    lines: 60-65
+  evidence: The gold solution uses `torch.cuda.Stream` and `stream.wait_stream()`
+    to synchronize GPU execution asynchronously without blocking the CPU with `.item()`
+    or `.tolist()`.
+  category: architecture
+- rule: 'Tech stack: Python 3.12+. THIS TASK'
+  source:
+    path: AGENTS.md
+    lines: '6'
+  evidence: Uses modern Python 3.12 type hinting syntax (`list[Any]`, `torch.cuda.Stream
+    | None`) instead of importing from the `typing` module.
+  category: style
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+    THIS TASK
+  source:
+    path: AGENTS.md
+    lines: 65-66
+  evidence: The gold solution creates a standalone `_PendingWeightUpdateBucket` dataclass
+    to hold the state of the in-flight bucket rather than adding complex state tracking
+    directly into the `FSDPEngine` class h
+  category: architecture
+- rule: 'Performance: No GPU-CPU sync in hot paths (.item(), .tolist(), print(t)).
+    THIS TASK'
+  source:
+    path: AGENTS.md
+    lines: 76-77
+  evidence: The gold solution uses `stream.wait_stream(torch.cuda.current_stream())`
+    and `handle.wait()` to synchronize CUDA streams and distributed handles without
+    pulling tensor data to the CPU.
+  category: style
 distractors:
-- rule: Add tests for new functionality
+- rule: Add tests for new functionality.
   collision_type: rule_conflict
-  why_distracting: The prompt explicitly states 'Only areal/engine/fsdp_engine.py
-    should be modified.' If the agent tries to follow the rule to add tests in a separate
-    test file, it will violate this strict constraint.
+  why_distracting: The agent might attempt to write unit tests for the new asynchronous
+    bucket logic, but the task instructions explicitly state 'Only areal/engine/fsdp_engine.py
+    should be modified.'
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 48-49
-- rule: When unsure, leave a TODO(agent) comment
-  collision_type: meta_confusion
-  why_distracting: The agent might be unsure about the exact CUDA stream semantics
-    or how to handle the synchronous fallback, and might leave a TODO comment instead
-    of fully implementing the required pipelining logic.
+    path: AGENTS.md
+    lines: '31'
+- rule: Config dataclass | XxxConfig
+  collision_type: scope_ambiguity
+  why_distracting: The agent might name the new dataclass `PendingWeightUpdateBucketConfig`
+    because it uses the `@dataclasses.dataclass` decorator, but this is a runtime
+    state container, not a configuration object.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 39-40
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain overlapping rules regarding
-  testing and code patterns. The primary conflict arises between the repository-wide
-  mandate to 'Add tests for new functionality' and the prompt's strict file-modification
-  constraint. The prompt's constraint must override the general testing rule.
+    lines: 67-68
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md are root-level files that mandate
+  adding tests for new functionality. However, the task's explicit constraint ('Only
+  areal/engine/fsdp_engine.py should be modified') overrides this general repository
+  rule. The agent must prioritize the local task constraint over the global repository
+  guidelines.

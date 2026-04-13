@@ -143,6 +143,74 @@ def test_repo_ruff_format():
 
 
 
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pre_commit_trailing_whitespace():
+    """Repo trailing-whitespace pre-commit hook passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=120)
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", SERVER, RTENSOR],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed: {r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pre_commit_end_of_file():
+    """Repo end-of-file-fixer pre-commit hook passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=120)
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files", SERVER, RTENSOR],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"End-of-file check failed: {r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_serialization_tests():
+    """Repo serialization module tests pass (primitives, tensors, numpy) (pass_to_pass)."""
+    _run_python("""import torch
+import numpy as np
+from areal.infra.rpc.serialization import serialize_value, deserialize_value
+
+# Test primitives and collections
+payload = {"str": "hello", "int": 42, "float": 3.14, "bool": True, "none": None, "list": [1, 2, 3], "nested": {"a": 1, "b": [2, 3]}}
+serialized = serialize_value(payload)
+result = deserialize_value(serialized)
+assert result == payload, f"Primitives failed: {result}"
+
+# Test tensors
+t = torch.tensor([1.0, 2.0, 3.0])
+serialized = serialize_value(t)
+result = deserialize_value(serialized)
+assert torch.allclose(t, result), f"Tensor mismatch: {result}"
+
+# Test bfloat16
+t_bf16 = torch.tensor([1.0, 2.0], dtype=torch.bfloat16)
+serialized = serialize_value(t_bf16)
+result = deserialize_value(serialized)
+assert torch.allclose(t_bf16.float(), result.float()), f"BFloat16 mismatch: {result}"
+
+# Test numpy arrays
+arr = np.array([1, 2, 3], dtype=np.int32)
+serialized = serialize_value(arr)
+result = deserialize_value(serialized)
+np.testing.assert_array_equal(arr, result)
+
+# Test empty list
+t_empty = torch.tensor([])
+serialized = serialize_value(t_empty)
+result = deserialize_value(serialized)
+assert torch.allclose(t_empty, result), f"Empty tensor mismatch: {result}"
+
+print("All serialization tests passed!")""")
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — server: /data/batch endpoint
 # ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ pip install pytest --quiet --break-system-packages || pip install pytest --quiet
 
 # Run tests and capture output
 cd /workspace
-pytest tests/test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log
+python3 -B -m pytest tests/test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log
 
 # Write binary reward based on test results
 exit_code=${PIPESTATUS[0]}

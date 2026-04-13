@@ -40,6 +40,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: CLI buildImage.ts has valid JS/TS structure
+- id: test_repo_ts_import_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files have valid ESM import/export structure
+- id: test_repo_webapp_code_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: Webapp route has expected code patterns for env handling
+- id: test_repo_package_json_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Package.json files have required CI scripts and ESM config
 
 rubric:
 - rule: CONTRIBUTING.md build instructions are clear and follow the style of surrounding
@@ -48,11 +60,12 @@ rubric:
     path: CONTRIBUTING.md
     lines: 68-76
     commit: ad4daa3301f63354745cdcb8e911950d9fa5a93f
-- rule: Code comments explaining the localhost normalization are clear and helpful
+- rule: apps/supervisor/README.md step 4 refers to a test project (not reference project)
   source:
-    path: .cursor/rules/webapp.mdc
-    lines: 1-10
-    commit: ad4daa3301f63354745cdcb8e911950d9fa5a93f
+    path: apps/supervisor/README.md
+    lines: 39-42
+    commit: a69621bdcc948ab9855554a6e4b36fbf1d690779
+  reference: "4. Build CLI, then deploy a test project"
 - rule: CONTRIBUTING.md build step includes CLI and SDK packages
   source:
     path: CONTRIBUTING.md

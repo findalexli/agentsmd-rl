@@ -333,22 +333,18 @@ def test_no_print_in_function():
 # ---------------------------------------------------------------------------
 
 
+def _install_ruff():
+    """Install ruff if not already available."""
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True, text=True, timeout=60
+    )
+
+
 # [repo_tests] pass_to_pass — ruff critical syntax errors on actor.py
 def test_repo_ruff_syntax():
     """Repo's Python syntax and critical errors check passes (ruff --select=E9,F63,F7,F82)."""
-    # First try to install ruff
-    subprocess.run(
-        ["pip", "install", "ruff", "--quiet"],
-        capture_output=True, text=True, timeout=60
-    )
-    # Try via python module
-    r = subprocess.run(
-        ["python3", "-m", "ruff", "check", "--select=E9,F63,F7,F82", TARGET],
-        capture_output=True, text=True, timeout=60, cwd=REPO
-    )
-    if r.returncode == 0:
-        return
-    # Fallback: try ruff directly
+    _install_ruff()
     r = subprocess.run(
         ["ruff", "check", "--select=E9,F63,F7,F82", TARGET],
         capture_output=True, text=True, timeout=60, cwd=REPO
@@ -359,19 +355,7 @@ def test_repo_ruff_syntax():
 # [repo_tests] pass_to_pass — ruff format check on actor.py
 def test_repo_ruff_format():
     """actor.py passes ruff format check (pass_to_pass)."""
-    # First try to install ruff
-    subprocess.run(
-        ["pip", "install", "ruff==0.14.9", "--quiet"],
-        capture_output=True, text=True, timeout=60
-    )
-    # Try via python module
-    r = subprocess.run(
-        ["python3", "-m", "ruff", "format", "--check", TARGET],
-        capture_output=True, text=True, timeout=60, cwd=REPO
-    )
-    if r.returncode == 0:
-        return
-    # Fallback: try ruff directly
+    _install_ruff()
     r = subprocess.run(
         ["ruff", "format", "--check", TARGET],
         capture_output=True, text=True, timeout=60, cwd=REPO
@@ -392,39 +376,82 @@ def test_repo_py_compile():
 # [repo_tests] pass_to_pass — ruff critical errors on full areal module
 def test_repo_ruff_critical_areal():
     """Repo's areal module has no critical syntax errors (ruff E9,F63,F7,F82) (pass_to_pass)."""
-    # First try to install ruff
-    subprocess.run(
-        ["pip", "install", "ruff==0.14.9", "--quiet"],
-        capture_output=True, text=True, timeout=60
-    )
-    # Run ruff on full areal module for critical errors only
+    _install_ruff()
     r = subprocess.run(
-        ["python3", "-m", "ruff", "check", "--select=E9,F63,F7,F82", f"{REPO}/areal/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO
-    )
-    if r.returncode == 0:
-        return
-    # Fallback: try ruff directly
-    r = subprocess.run(
-        ["ruff", "check", "--select=E9,F63,F7,F82", f"{REPO}/areal/"],
+        ["ruff", "check", "--select=E9,F63,F7,F82", "areal/"],
         capture_output=True, text=True, timeout=120, cwd=REPO
     )
     assert r.returncode == 0, f"Ruff critical check failed on areal/:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — py_compile for critical PPO files
-def test_repo_all_py_syntax():
-    """Critical PPO Python files compile without syntax errors (pass_to_pass)."""
-    import py_compile
-    import os
-    # Test critical files related to the PR changes
-    critical_files = [
-        f"{REPO}/areal/trainer/ppo/actor.py",
-        f"{REPO}/areal/trainer/ppo/stats.py",
+# [repo_tests] pass_to_pass — ruff critical errors on tests directory
+def test_repo_ruff_critical_tests():
+    """Repo's test files have no critical syntax errors (ruff E9,F63,F7,F82) (pass_to_pass)."""
+    _install_ruff()
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", "tests/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff critical check failed on tests/:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check on PPO module
+def test_repo_ruff_format_ppo():
+    """PPO module passes ruff format check (pass_to_pass)."""
+    _install_ruff()
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/trainer/ppo/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff format check failed on PPO module:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — py_compile for PPO module files
+def test_repo_py_compile_ppo():
+    """All PPO Python files compile without syntax errors (pass_to_pass)."""
+    ppo_files = [
+        "areal/trainer/ppo/__init__.py",
+        "areal/trainer/ppo/actor.py",
+        "areal/trainer/ppo/critic.py",
+        "areal/trainer/ppo/stats.py",
     ]
-    for path in critical_files:
-        if os.path.exists(path):
-            try:
-                py_compile.compile(path, doraise=True)
-            except Exception as e:
-                raise AssertionError(f"Syntax error in {path}: {e}")
+    for path in ppo_files:
+        full_path = f"{REPO}/{path}"
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", full_path],
+            capture_output=True, text=True, timeout=30, cwd=REPO
+        )
+        assert r.returncode == 0, f"py_compile failed for {path}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — AST parsing validation for actor.py
+def test_repo_actor_ast_parse():
+    """actor.py parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{TARGET}').read()); print('AST OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert r.returncode == 0, f"AST parsing failed:\n{r.stderr[-500:]}"
+    assert "AST OK" in r.stdout, "AST parsing did not complete successfully"
+
+
+# [repo_tests] pass_to_pass — ruff format check on constants.py
+def test_repo_ruff_format_constants():
+    """Constants module (contains PROX_APPROX enums used by patch) passes ruff format check."""
+    _install_ruff()
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/areal/utils/constants.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff format check failed on constants.py:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — AST parsing validation for constants.py
+def test_repo_constants_ast_parse():
+    """constants.py (PROX_APPROX enums) parses as valid Python AST."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{REPO}/areal/utils/constants.py').read()); print('AST OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert r.returncode == 0, f"AST parsing failed for constants.py:\n{r.stderr[-500:]}"
+    assert "AST OK" in r.stdout, "AST parsing did not complete successfully"

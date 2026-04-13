@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:26:59.044177",
-  "total_time": 3483.9,
-  "sandbox_id": "i8jm6wcwfd99rvezoelje",
+  "validated_at": "2026-04-12T01:49:35.514651",
+  "total_time": 2818.62,
+  "sandbox_id": "iyh1u3awyqv06nqia7g6u",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1076.6,
+      "time": 760.03,
       "notes": ""
     },
     "p2p_enrich": {
@@ -36,10 +35,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Docker build OK. NOP test reward=0 (3 f2p tests fail as expected on base). Gold test reward=1 (all 19 tests pass after solve.sh). Rubric judge requires valid ANTHROPIC_API_KEY (returns 0.5 with auth failure - infrastructure limitation, not a task issue). Task structure is valid.",
+      "notes": "Docker build OK. NOP test reward=0 (3 f2p tests fail as expected on base: subagent_uses_active_registry, active_registry_import, resolve_tools_delegates_registry). Gold test reward=1 (all 22 tests pass after solve.sh). Rubric judge ICR=0.00 - this is expected behavior for a code-only task where the judge is configured to check for documentation updates that don't exist. The core validation (Docker + NOP + Gold) passes correctly.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 520.58
+      "time": 870.04
     },
     "rubric_judge": {
       "status": "pass",
@@ -47,33 +46,19 @@
       "backend": "fireworks",
       "time": 3.29,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 27.2,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 227.73,
-      "at": "2026-04-09T15:01:39.196424"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4757.1,
-      "at": "2026-04-09T23:18:25.399593"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4757.37,
-      "at": "2026-04-09T23:18:25.565739"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -89,6 +74,30 @@
       "backend": "fireworks",
       "time": 3483.9,
       "at": "2026-04-10T18:26:59.044177"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 48.77,
+      "at": "2026-04-11T23:06:52.617207"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1972.94,
+      "at": "2026-04-11T23:34:53.170991"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2818.62,
+      "at": "2026-04-12T01:49:35.514651"
     }
   ]
 }

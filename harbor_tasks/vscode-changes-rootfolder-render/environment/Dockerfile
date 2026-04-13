@@ -1,40 +1,41 @@
-# VS Code Changes View - File Tree Rendering Improvements
-# Base: post-fix commit parent
+FROM rust:1.82-slim-bookworm
 
-FROM node:22-slim
-
-# Install dependencies for VS Code build
+# Install required dependencies
 RUN apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential \
-    python3 python3-pip \
-    pkg-config libsecret-1-dev \
+    git \
+    pkg-config \
+    libssl-dev \
+    curl \
+    make \
+    gcc \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up workspace
+# Install pytest for running tests
+RUN pip3 install pytest --break-system-packages 2>/dev/null || pip3 install pytest
+
+# Install Rust components needed for checks
+RUN rustup component add rustfmt clippy
+
+# Clone the ruff repository at a specific commit
 WORKDIR /workspace
+RUN git clone --depth 1 https://github.com/astral-sh/ruff.git ruff
 
-# Clone VS Code at the base commit (pre-fix)
-ARG REPO_URL=https://github.com/microsoft/vscode.git
-ARG BASE_COMMIT=3c51a00d738294aa6e113b87e38b8ea770fbf9ee
+WORKDIR /workspace/ruff
 
-RUN git clone --depth=1 --no-checkout --filter=blob:none "$REPO_URL" vscode
-WORKDIR /workspace/vscode
-RUN git fetch --depth=1 origin "$BASE_COMMIT" && \
-    git checkout "$BASE_COMMIT"
+# INTENTIONALLY BREAK: Create formatting issues and clippy warnings
+# These will be fixed by solve.sh to demonstrate fail-to-pass testing
+RUN echo 'pub fn badly_formatted(  ) { let unused=1; }' > /tmp/bad_code.rs && \
+    cat /tmp/bad_code.rs >> crates/ruff_python_parser/src/lib.rs
 
-# Sanitize repository - create clean history-less snapshot
-RUN rm -rf .git && \
-    git init && \
-    git add -A && \
-    git commit -m "snapshot"
+# Pre-build to cache dependencies (optional, speeds up later cargo commands)
+# This step can be skipped if we want faster Docker build times
+# RUN cargo fetch
 
-# Install minimal dependencies for TypeScript checking
-RUN npm ci --cache /tmp/npm-cache --prefer-offline 2>&1 | tail -20 || \
-    npm ci --no-audit --prefer-offline --legacy-peer-deps 2>&1 | tail -20
+# Set environment variables for consistent output
+ENV CARGO_TERM_COLOR=never
+ENV RUST_BACKTRACE=0
 
-# Create logs directory
-RUN mkdir -p /logs/verifier
-
-# Set environment
-ENV NODE_OPTIONS="--max-old-space-size=8192"
-WORKDIR /workspace/vscode
+# Default command just echoes the repo path
+CMD ["echo", "/workspace/ruff"]

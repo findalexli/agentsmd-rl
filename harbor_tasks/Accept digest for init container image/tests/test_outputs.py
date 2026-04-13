@@ -275,6 +275,13 @@ def test_python_schema_classes_exist():
     Test that the required Python schema classes exist and are importable.
     F2P: This test should FAIL before the fix and PASS after.
     """
+    # Install pydantic if not available
+    r = subprocess.run(
+        ["pip", "install", "pydantic", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Failed to install pydantic: {r.stderr[-500:]}"
+
     # Add the schema path to import
     import sys
     schema_path = f"{REPO_ROOT}/helm/dagster/schema"
@@ -458,7 +465,179 @@ def test_repo_helm_lint():
             shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
 
     r = subprocess.run(
-        ["helm", "lint", "."],
-        capture_output=True, text=True, timeout=30, cwd=HELM_CHART_PATH
+        ["helm", "lint", ".", "--strict"],
+        capture_output=True, text=True, timeout=60, cwd=HELM_CHART_PATH
     )
-    assert r.returncode == 0, f"Helm lint failed:\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Helm lint on user-deployments chart failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_helm_lint_main_chart():
+    """
+    Run helm lint on the main dagster chart with subcharts.
+    P2P: This verifies the main Helm chart and all subcharts pass linting.
+    Origin: CI workflow - helm lint helm/dagster --with-subcharts --strict
+    """
+    import shutil
+
+    MAIN_CHART_PATH = f"{REPO_ROOT}/helm/dagster"
+
+    # If REPO_ROOT doesn't exist or doesn't have the chart, copy from /dagster-src mount
+    if not os.path.exists(MAIN_CHART_PATH):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
+    r = subprocess.run(
+        ["helm", "lint", ".", "--with-subcharts", "--strict"],
+        capture_output=True, text=True, timeout=60, cwd=MAIN_CHART_PATH
+    )
+    assert r.returncode == 0, f"Helm lint on main chart failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_schema_all_tests():
+    """
+    Run the repo's full schema test suite (dagit, daemon, celery queues).
+    P2P: These tests verify the Dagster Helm chart schema and templates work correctly.
+    Origin: helm/dagster/schema/schema_tests/*.py (161 tests total)
+    """
+    import shutil
+
+    # If REPO_ROOT doesn't exist or doesn't have the files, copy from /dagster-src mount
+    if not os.path.exists(f"{REPO_ROOT}/helm/dagster/schema/schema_tests"):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
+    # Install required dependencies
+    r = subprocess.run(
+        ["pip", "install", "-e", f"{REPO_ROOT}/helm/dagster/schema", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT
+    )
+    assert r.returncode == 0, f"Failed to install schema package: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pip", "install", "-e", f"{REPO_ROOT}/python_modules/libraries/dagster-k8s", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT
+    )
+    assert r.returncode == 0, f"Failed to install dagster-k8s: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pip", "install", "kubernetes", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_ROOT
+    )
+    assert r.returncode == 0, f"Failed to install kubernetes: {r.stderr[-500:]}"
+
+    # Run the repo's schema tests (excluding tests that need extra deps)
+    schema_path = f"{REPO_ROOT}/helm/dagster/schema"
+    test_files = [
+        "schema_tests/test_user_deployments.py",
+        "schema_tests/test_dagit.py",
+        "schema_tests/test_dagster_daemon.py",
+        "schema_tests/test_celery_queues.py",
+    ]
+    r = subprocess.run(
+        ["pytest"] + test_files + ["-v", "--tb=short"],
+        capture_output=True, text=True, timeout=600, cwd=schema_path
+    )
+    assert r.returncode == 0, f"Repo schema tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_schema_dagit():
+    """
+    Run the repo's dagit schema tests.
+    P2P: These tests verify the Dagster webserver Helm chart configuration.
+    Origin: helm/dagster/schema/schema_tests/test_dagit.py (~40 tests)
+    """
+    import shutil
+
+    # If REPO_ROOT doesn't exist or doesn't have the files, copy from /dagster-src mount
+    if not os.path.exists(f"{REPO_ROOT}/helm/dagster/schema/schema_tests"):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
+    # Install required dependencies
+    for pkg in [f"{REPO_ROOT}/helm/dagster/schema", f"{REPO_ROOT}/python_modules/libraries/dagster-k8s", "kubernetes"]:
+        r = subprocess.run(
+            ["pip", "install", "-e", pkg, "-q"] if pkg.startswith("/") else ["pip", "install", pkg, "-q"],
+            capture_output=True, text=True, timeout=120, cwd=REPO_ROOT
+        )
+        assert r.returncode == 0, f"Failed to install {pkg}: {r.stderr[-500:]}"
+
+    # Run dagit tests
+    schema_path = f"{REPO_ROOT}/helm/dagster/schema"
+    r = subprocess.run(
+        ["pytest", "schema_tests/test_dagit.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=schema_path
+    )
+    assert r.returncode == 0, f"Dagit schema tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_schema_daemon():
+    """
+    Run the repo's dagster-daemon schema tests.
+    P2P: These tests verify the Dagster daemon Helm chart configuration.
+    Origin: helm/dagster/schema/schema_tests/test_dagster_daemon.py (~30 tests)
+    """
+    import shutil
+
+    # If REPO_ROOT doesn't exist or doesn't have the files, copy from /dagster-src mount
+    if not os.path.exists(f"{REPO_ROOT}/helm/dagster/schema/schema_tests"):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
+    # Install required dependencies
+    for pkg in [f"{REPO_ROOT}/helm/dagster/schema", f"{REPO_ROOT}/python_modules/libraries/dagster-k8s", "kubernetes"]:
+        r = subprocess.run(
+            ["pip", "install", "-e", pkg, "-q"] if pkg.startswith("/") else ["pip", "install", pkg, "-q"],
+            capture_output=True, text=True, timeout=120, cwd=REPO_ROOT
+        )
+        assert r.returncode == 0, f"Failed to install {pkg}: {r.stderr[-500:]}"
+
+    # Run daemon tests
+    schema_path = f"{REPO_ROOT}/helm/dagster/schema"
+    r = subprocess.run(
+        ["pytest", "schema_tests/test_dagster_daemon.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=schema_path
+    )
+    assert r.returncode == 0, f"Daemon schema tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff():
+    """
+    Run ruff linter on the Helm schema code.
+    P2P: This verifies the Python code passes linting checks.
+    Origin: Makefile - make ruff / make check_ruff
+    """
+    import shutil
+
+    # If REPO_ROOT doesn't exist or doesn't have the files, copy from /dagster-src mount
+    if not os.path.exists(f"{REPO_ROOT}/helm/dagster/schema"):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
+    # Install ruff with the required version from pyproject.toml
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.11.5", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    # Run ruff check on the Helm schema code
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO_ROOT}/helm/dagster/schema/"],
+        capture_output=True, text=True, timeout=120
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

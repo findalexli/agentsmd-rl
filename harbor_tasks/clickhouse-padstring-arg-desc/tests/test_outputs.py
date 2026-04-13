@@ -41,7 +41,9 @@ def test_padstring_syntax_valid():
         if result.returncode != 0:
             pytest.skip("No clang compiler available for syntax check")
 
-    compiler = "clang++-15" if subprocess.run(["which", "clang++-15"], capture_output=True).returncode == 0 else "clang++"
+    compiler = "clang++-15" if subprocess.run(
+        ["which", "clang++-15"], capture_output=True
+    ).returncode == 0 else "clang++"
 
     # Run syntax-only check on the source file
     # We need to include the paths to ClickHouse headers for a valid check
@@ -429,3 +431,166 @@ def test_repo_clang_format_style():
     # may have existing style variations
     # This test serves as a check that the file can be parsed by clang-format
     assert "error:" not in r.stderr.lower(), f"clang-format found errors:\n{r.stderr}"
+
+
+def test_repo_no_executable_bit():
+    """Source file does not have executable bit set (pass_to_pass).
+
+    Verifies that C++ source files have the correct file mode (100644).
+    From ClickHouse CI: various_checks.sh - files should not be executable.
+    """
+    r = subprocess.run(
+        ["git", "ls-files", "-s", str(PADSTRING_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO)
+    )
+
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+
+    # Parse output: mode hash stage path
+    # Should be: 100644 <hash> 0\tpath
+    parts = r.stdout.strip().split()
+    if len(parts) >= 1:
+        file_mode = parts[0]
+        # Check that mode is 100644 (regular file) or 120000 (symlink)
+        assert file_mode in ["100644", "120000"], \
+            f"File has incorrect mode {file_mode}, should be 100644 (regular) or 120000 (symlink)"
+
+
+def test_repo_no_bom():
+    """Source file has no UTF-8/UTF-16 BOM (pass_to_pass).
+
+    Verifies that C++ source files don't have byte order marks.
+    From ClickHouse CI: various_checks.sh - files should not have BOM.
+    """
+    # Use grep to check for UTF-8 BOM bytes
+    bom_bytes = b'\xef\xbb\xbf'
+    content = PADSTRING_FILE.read_bytes()
+    assert not content.startswith(bom_bytes), "UTF-8 BOM found at start of file"
+
+
+def test_repo_no_duplicate_includes():
+    """Source file has no duplicate #include directives (pass_to_pass).
+
+    Verifies that C++ source files don't have duplicate includes.
+    From ClickHouse CI: check_style.py - duplicate includes check.
+    """
+    # Read the file content
+    content = PADSTRING_FILE.read_text()
+    lines = content.split('\n')
+
+    includes = []
+    for line in lines:
+        if line.strip().startswith('#include '):
+            includes.append(line.strip())
+
+    # Check for duplicates
+    seen = set()
+    duplicates = []
+    for inc in includes:
+        if inc in seen:
+            duplicates.append(inc)
+        seen.add(inc)
+
+    assert len(duplicates) == 0, \
+        f"Found duplicate #include directives: {duplicates}"
+
+
+def test_repo_git_whitespace_check():
+    """Git whitespace check passes (pass_to_pass).
+
+    Runs git diff --check to verify no whitespace errors.
+    From ClickHouse CI standards.
+    """
+    r = subprocess.run(
+        ["git", "diff", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO)
+    )
+
+    # git diff --check returns 0 if no whitespace errors
+    assert r.returncode == 0, \
+        f"Git whitespace check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_clang_format_check():
+    """C++ file follows project clang-format style (pass_to_pass).
+
+    Uses clang-format --dry-run to verify the file follows
+    the project's .clang-format style rules.
+    From ClickHouse CI: check_cpp.sh
+    """
+    # Check if clang-format is available
+    r = subprocess.run(["which", "clang-format-15"], capture_output=True)
+    if r.returncode != 0:
+        r = subprocess.run(["which", "clang-format"], capture_output=True)
+        if r.returncode != 0:
+            pytest.skip("clang-format not available")
+            return
+
+    clang_format = "clang-format-15" if subprocess.run(
+        ["which", "clang-format-15"], capture_output=True
+    ).returncode == 0 else "clang-format"
+
+    # Run clang-format in dry-run mode to check for style issues
+    r = subprocess.run(
+        [clang_format, "--dry-run", "--Werror", str(PADSTRING_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO)
+    )
+
+    assert r.returncode == 0, \
+        f"clang-format found style issues:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_yamllint_check():
+    """YAML workflow files pass yamllint validation (pass_to_pass).
+
+    Runs yamllint on .github/workflows to verify YAML syntax.
+    From ClickHouse CI: check_style.py
+    """
+    # Try to install yamllint if not available
+    r = subprocess.run(["which", "yamllint"], capture_output=True)
+    if r.returncode != 0:
+        # Try to install
+        r = subprocess.run(
+            ["pip3", "install", "yamllint", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        # Check again
+        r = subprocess.run(["which", "yamllint"], capture_output=True)
+        if r.returncode != 0:
+            pytest.skip("yamllint not available and could not be installed")
+            return
+
+    # Run yamllint on workflow files with project config
+    yamllint_config = REPO / ".yamllint"
+    workflow_dir = REPO / ".github" / "workflows"
+
+    if not workflow_dir.exists():
+        pytest.skip("Workflow directory not found")
+        return
+
+    cmd = ["yamllint"]
+    if yamllint_config.exists():
+        cmd.extend(["--config-file", str(yamllint_config)])
+    cmd.append(str(workflow_dir))
+
+    r = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO)
+    )
+
+    assert r.returncode == 0, \
+        f"yamllint found YAML issues:\n{r.stdout}\n{r.stderr}"

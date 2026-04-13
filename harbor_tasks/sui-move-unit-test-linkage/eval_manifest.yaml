@@ -47,65 +47,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: move-unit-test library tests pass
+- id: test_move_unit_test_deps_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: move-unit-test deps test passes (cross-package testing)
 rubric:
-- rule: Follow existing code style for license headers. New files must start with
-    SPDX-License-Identifier comment.
-  source:
-    path: CLAUDE.md
-    lines: 16-20
-    commit: 8810914bd8a82363390cbd30eb12188b34592c87
-- rule: Use comments to explain the WHY (non-obvious algorithms, reasoning, assumptions),
-    not the WHAT (what code does).
-  source:
-    path: CLAUDE.md
-    lines: 116-130
-    commit: 8810914bd8a82363390cbd30eb12188b34592c87
-- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or other linting suppressions
-    - fix underlying issues instead.'
-  source:
-    path: CLAUDE.md
-    lines: 111-114
-    commit: 8810914bd8a82363390cbd30eb12188b34592c87
-- rule: For faster iteration, use -p to select only the most relevant packages for
-    testing.
-  source:
-    path: CLAUDE.md
-    lines: 41-41
-  evidence: The verification instructions specifically use `cargo check -p move-unit-test`
-    to target only the modified package rather than checking the entire workspace.
-  category: tooling
+- rule: The solution properly imports linkage_context from move_vm_runtime::shared
+    and uses StoredPackage::from_module_for_testing_with_linkage with proper linkage
+    context
+  reference: 'PR #26139: adds linkage_context import, creates identity linkage table,
+    and uses from_module_for_testing_with_linkage'
 distractors:
-- rule: 'Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives:
-    `cargo simtest -p sui-e2e-tests`'
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
   collision_type: scope_ambiguity
   why_distracting: The agent might try to run `cargo simtest -p sui-e2e-tests` to
-    verify its changes, but this PR modifies an external Move VM crate (`move-unit-test`),
-    making Sui e2e tests out of scope and a massive waste of time.
+    verify its changes, but this is irrelevant for a unit test runner fix in the Move
+    compiler and would waste time.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 32-33
-- rule: 'Run Rust unittests. skip simulation tests as they may cause false negatives
-    with `cargo nextest`: `SUI_SKIP_SIMTESTS=1 cargo nextest run`'
+    lines: 30-31
+- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
+    with `cargo nextest`
   collision_type: scope_ambiguity
-  why_distracting: The agent might run the global test command `SUI_SKIP_SIMTESTS=1
-    cargo nextest run` which runs tests for the entire massive workspace, leading
-    to timeouts or unrelated failures, instead of scoping to the specific `-p move-unit-test`
-    package.
+  why_distracting: Running `SUI_SKIP_SIMTESTS=1 cargo nextest run` without package
+    filters will run tests for the entire massive workspace, likely causing timeouts.
+    The agent must realize it should only test the `move-unit-test` package.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 35-36
-hierarchy_analysis: The repository has a root `CLAUDE.md` and `AGENTS.md`. The `AGENTS.md`
-  defers to `CLAUDE.md`. The root `CLAUDE.md` provides general guidance for the Sui
-  repository, including testing commands. However, the modified file is in `external-crates/move/`,
-  which is an upstream dependency. The global testing commands in `CLAUDE.md` (like
-  `cargo simtest -p sui-e2e-tests`) are heavily Sui-focused and can distract an agent
-  working on the generic Move VM unit test runner. The agent must rely on the `-p`
-  scoping rule to avoid running irrelevant, long-running workspace tests.
+    lines: 33-34
+hierarchy_analysis: The configuration consists of flat, root-level files (`CLAUDE.md`
+  and `AGENTS.md`) containing generic repository guidelines. There are no crate-specific
+  overrides provided in the context.
 version: '2.0'
 source:
   repo: MystenLabs/sui
-  pr: 0
+  pr: 26139
   base_commit: 8810914bd8a82363390cbd30eb12188b34592c87
   merge_commit: 5d6853d6a2e9978f1f11157c0f16ee2a584f5000

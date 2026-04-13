@@ -583,3 +583,55 @@ def test_repo_ruff_format():
         timeout=60,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_engines():
+    """Modified engine files must be importable as modules (pass_to_pass).
+
+    This tests that the engine modules can be parsed and their top-level
+    imports are valid. Full engine functionality tests require distributed
+    setup (GPU, WORLD_SIZE, etc.) which is not available in this environment.
+    """
+    engine_files = [
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    for rel_path in engine_files:
+        path = Path(REPO) / rel_path
+        r = subprocess.run(
+            [sys.executable, "-c", f"import ast; ast.parse(open('{path}').read()); print('OK')"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"Failed to parse {rel_path}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_engine_ast_structure():
+    """Engine files must have valid AST with expected class definitions (pass_to_pass)."""
+    engines = [
+        ("areal/engine/fsdp_engine.py", ["FSDPEngine"]),
+        ("areal/engine/megatron_engine.py", ["MegatronEngine"]),
+        ("areal/experimental/engine/archon_engine.py", ["ArchonEngine"]),
+    ]
+    for rel_path, expected_classes in engines:
+        path = Path(REPO) / rel_path
+        r = subprocess.run(
+            [sys.executable, "-c", f"""
+import ast
+with open('{path}') as f:
+    tree = ast.parse(f.read())
+classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+for cls in {expected_classes}:
+    if cls not in classes:
+        raise AssertionError(f"Expected class {{cls}} not found in {rel_path}")
+print("OK")
+"""],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"AST structure check failed for {rel_path}:\n{r.stderr}"

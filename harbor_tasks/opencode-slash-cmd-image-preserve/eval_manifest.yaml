@@ -85,6 +85,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's unit tests for prompt-input module pass
+- id: test_repo_attachments_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's attachments tests pass (image handling)
+- id: test_repo_build_request_parts_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build-request-parts tests pass (attachment handling)
+- id: test_repo_command_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's command context tests pass (slash command functionality)
+- id: test_repo_utils_prompt_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils/prompt tests pass (prompt restoration)
+- id: test_repo_editor_dom_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's editor-dom tests pass (text editing operations)
+- id: test_repo_history_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's history tests pass (prompt history navigation)
+- id: test_repo_submit_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's submit tests pass (prompt submission handling)
+- id: test_repo_placeholder_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's placeholder tests pass (prompt placeholder behavior)
+- id: test_repo_command_keybind_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's command-keybind tests pass (command keybinding parsing)
 rubric:
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
@@ -127,28 +163,28 @@ rubric:
   evidence: The gold solution declares the new variable as `const images = imageAttachments()`
     rather than using `let`.
   category: style
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 23-38
+  evidence: The gold solution introduces the variable `images` to store the attachments,
+    strictly adhering to the single-word naming convention rather than using a multi-word
+    name like `currentImages` or `imagePa
+  category: naming
 distractors:
 - rule: Reduce total variable count by inlining when a value is only used once.
   collision_type: scope_ambiguity
-  why_distracting: The agent might inline `imageAttachments()` into the `prompt.set()`
-    calls. While the value is only executed once per logical path, it appears twice
-    in the code. Inlining it would duplicate the function call in the source code,
-    whereas the gold solution cleanly extracts it to a variable.
+  why_distracting: An agent might interpret 'used once' as 'used once per execution
+    path' and attempt to inline `imageAttachments()` directly into both `prompt.set()`
+    calls. This would duplicate the function call in the source code, whereas the
+    gold solution correctly extracts it to a shared `const images` variable before
+    the branch.
   severity: low
   source:
     path: AGENTS.md
-    lines: 44-45
-- rule: Always prefer `createStore` over multiple `createSignal` calls
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to refactor the prompt state management to
-    use `createStore` instead of the existing `prompt.set` API, which would be a massive
-    overcomplication for a simple bug fix and violate the existing architecture.
-  severity: medium
-  source:
-    path: packages/app/AGENTS.md
-    lines: 13-15
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/style guidelines
-  (naming, const over let, inlining), while `packages/app/AGENTS.md` provides SolidJS-specific
-  guidelines. The agent must apply the naming and variable declaration rules from
-  the root config while ignoring the SolidJS refactoring rule from the app config,
-  as the prompt state architecture is already established.
+    lines: 44-56
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` with general style
+  rules and a package-specific `packages/app/AGENTS.md` with SolidJS and local dev
+  instructions. The rules do not directly conflict, but the agent must apply the root
+  style rules (naming, const usage) to the SolidJS component modification.

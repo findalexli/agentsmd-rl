@@ -302,3 +302,62 @@ def test_repo_cache_allocator():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Cache allocator tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI: repetition penalty for continuous batching
+def test_repo_repetition_penalty_cb():
+    """Continuous batching repetition penalty logits processor tests pass (repo CI pass_to_pass)."""
+    # Install required packages
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest", "parameterized"], check=False)
+    r = subprocess.run(
+        [
+            "python", "-m", "unittest",
+            "tests.generation.test_logits_process.LogitsProcessorTest.test_repetition_penalty_continuous_batching",
+            "-v",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Repetition penalty CB test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI: stopping criteria tests
+def test_repo_stopping_criteria():
+    """Generation stopping criteria tests pass (repo CI pass_to_pass)."""
+    # Install required packages
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest", "parameterized"], check=False)
+    r = subprocess.run(
+        [
+            "python", "-m", "unittest",
+            "tests.generation.test_stopping_criteria.StoppingCriteriaTestCase.test_max_length_criteria",
+            "tests.generation.test_stopping_criteria.StoppingCriteriaTestCase.test_list_criteria",
+            "tests.generation.test_stopping_criteria.StoppingCriteriaTestCase.test_eos_token_criteria",
+            "-v",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stopping criteria tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI: generation config kwarg init
+def test_repo_generation_config_init():
+    """GenerationConfig kwarg initialization tests pass (repo CI pass_to_pass)."""
+    # Install required packages
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest", "parameterized"], check=False)
+    r = subprocess.run(
+        [
+            "python", "-m", "unittest",
+            "tests.generation.test_configuration_utils.GenerationConfigTest.test_kwarg_init",
+            "-v",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"GenerationConfig init test failed:\n{r.stderr[-500:]}"

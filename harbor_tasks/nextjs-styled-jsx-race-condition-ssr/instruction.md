@@ -1,15 +1,37 @@
-# Fix styled-jsx styles dropped during Pages Router SSR
+# Fix extract_config_hunks to handle renamed files in diff
 
-## Problem
+The `extract_config_hunks` function in `taskforge/config.py` does not correctly handle diffs that contain renamed files. When a file is renamed (e.g., `diff --git a/old.md b/new.md`), the current implementation may:
 
-In the Pages Router SSR path, dynamic styled-jsx styles (those with interpolated expressions that compute class names at runtime via DJB2 hashing) are silently dropped from the rendered HTML. This causes a flash of unstyled content (FOUC) on first load.
+1. Incorrectly extract the old filename instead of the new one
+2. Miss config file hunks when the rename causes path confusion
 
-The issue is particularly visible in production deployments where components use dynamic styled-jsx with interpolated props (e.g., `color: ${color}`), since those styles only exist in the registry after rendering completes. The numeric `jsx-*` class names are present in the HTML elements, but the corresponding `<style>` tags are missing from the SSR output.
+Update the `extract_config_hunks` function to correctly handle renamed files in git diffs. The function should:
+- Use the NEW filename (b/ path) consistently for tracking hunks
+- Correctly identify config files even when renamed
+- Preserve all existing functionality for non-renamed files
 
-## Expected Behavior
+## Example
 
-All dynamic styled-jsx styles should be present as inline `<style>` tags in the SSR output. When a page uses multiple nested components with dynamic styled-jsx, every component's styles should appear in the rendered HTML.
+For a diff like:
+```diff
+diff --git a/old_name.md b/new_name.md
+rename from old_name.md
+rename to new_name.md
+--- /dev/null
++++ b/new_name.md
+@@ -0,0 +1 @@
++# New content
+```
 
-## Files to Look At
+The function should return `{"new_name.md": "<full_hunk_text>"}` (assuming new_name.md matches config patterns).
 
-- `packages/next/src/server/render.tsx` — the server-side rendering implementation for the Pages Router. The `renderToHTMLImpl` function orchestrates page rendering and style collection. Look at how `styledJsxInsertedHTML()` interacts with the page render lifecycle — the timing of when the style registry is read relative to when the page finishes rendering is critical.
+## Files to modify
+
+- `taskforge/config.py`: Fix the `extract_config_hunks` function
+
+## Testing
+
+Create behavioral tests that:
+1. Test the function with real diffs containing renamed files
+2. Test that the function correctly identifies config files after rename
+3. Ensure existing non-rename functionality still works

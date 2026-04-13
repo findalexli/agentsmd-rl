@@ -323,3 +323,81 @@ def test_repo_typecheck():
         cwd=REPO,
     )
     assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_brace_tests():
+    """Repo's Bun shell brace expansion tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/brace.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell brace tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_exec_tests():
+    """Repo's Bun shell exec tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/exec.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell exec tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_file_io_tests():
+    """Repo's Bun shell file I/O redirection tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/file-io.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell file I/O tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_env_positionals_tests():
+    """Repo's Bun shell environment positionals tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/env.positionals.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell env positionals tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_assignments_pipeline_tests():
+    """Repo's Bun shell assignments in pipeline tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/assignments-in-pipeline.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell assignments pipeline tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_lazy_tests():
+    """Repo's Bun shell lazy evaluation tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/lazy.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell lazy tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"

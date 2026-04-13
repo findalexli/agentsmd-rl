@@ -72,6 +72,20 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: glob-sources script from CI passes - runs bun scripts/glob-sources.mjs
+- id: repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Package.json dependencies must be exact versions - runs bun test test/package-json-lint.test.ts
+- id: repo_bun_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun CLI tests pass - runs bun test test/cli/bun.test.ts (NO_COLOR,
+    revision, getcompletes)
+- id: repo_typecheck_root
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root project TypeScript typecheck passes - runs tsc --noEmit on root
+    project (test/ has intentional errors)
 - id: zig_file_balanced_braces
   type: pass_to_pass
   origin: static
@@ -111,6 +125,15 @@ checks:
   origin: static
   description: JSGlobalObject.zig error functions do not use std.debug patterns per
     ban-words
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: JavaScript linting passes - runs bun lint (oxlint)
+- id: repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes - verifies JS/TS files are formatted
+
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
@@ -132,41 +155,37 @@ rubric:
     to bring in external dependencies or error '
   category: style
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`.
-  collision_type: scope_ambiguity
-  why_distracting: The existing code in `createErrorInstance` uses `std.Io.Writer.Allocating.initCapacity`.
-    An agent might see this and attempt to refactor it to a `bun.*` API to comply
-    with the rule, which is out of scope for this bug fix and could introduce regressions.
-  severity: medium
-  source:
-    path: src/CLAUDE.md
-    lines: 15-26
-- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
     in the test output.
-  collision_type: would_cause_bug
-  why_distracting: Because the bug describes a crash (assertion failure), an agent
-    writing a regression test might naturally try to assert that the process output
-    does not contain 'panic' or 'crash'. The rule explicitly forbids this because
-    such tests silently pass in CI.
+  collision_type: rule_conflict
+  why_distracting: The bug causes an assertion failure (crash). The agent might try
+    to add a test using the reproduction script to ensure it doesn't crash, but the
+    rule explicitly forbids writing tests that check for no 'panic' or 'uncaught exception'.
+    The gold solution correctly avoids adding a test.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 69-70
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    `test/regression/issue/${issueNumber}.test.ts`. Ensure the issue number is REAL
-    and not a placeholder!
-  collision_type: meta_confusion
-  why_distracting: The bug description does not provide a GitHub issue number. An
-    agent might try to create a placeholder issue file (e.g., `test/regression/issue/9999.test.ts`)
-    despite the rule explicitly forbidding placeholders, rather than using the fallback
-    directories.
+    path: AGENTS.md
+    lines: 65-66
+- rule: Always use bun.* APIs instead of std.*
+  collision_type: scope_ambiguity
+  why_distracting: The existing code in the modified functions uses `std.Io.Writer`.
+    The agent might try to refactor this to use `bun.*` APIs to comply with the rule,
+    unnecessarily expanding the scope of the PR and potentially breaking the formatting
+    logic.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 23-24
-hierarchy_analysis: The config hierarchy consists of identical root and level 1 files
-  (`CLAUDE.md` and `AGENTS.md`). The root files focus heavily on testing conventions
-  and build commands, while the `src/` level files focus on Zig-specific coding standards
-  and the `bun.sys` API. There are no direct conflicts between the levels, but the
-  strict testing rules in the root config create significant distractors for an agent
-  trying to write a test for a crash without an issue number.
+    path: src/AGENTS.md
+    lines: 14-15
+- rule: Ensure the issue number is REAL and not a placeholder!
+  collision_type: rule_conflict
+  why_distracting: If the agent attempts to add a test for the bug, it might place
+    it in the regression directory with a fake issue number since no issue number
+    is provided in the prompt, violating the rule against placeholders.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 26-27
+hierarchy_analysis: The hierarchy consists of root-level testing/build rules and src-level
+  Zig conventions. The agent must apply the Zig conventions to the source code but
+  recognize that the testing rules make it difficult or forbidden to test this specific
+  crash, thus correctly choosing to omit a test.

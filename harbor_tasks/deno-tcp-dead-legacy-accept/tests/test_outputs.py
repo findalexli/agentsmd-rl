@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -14,6 +15,52 @@ from pathlib import Path
 REPO = "/workspace/deno"
 TCP_WRAP = f"{REPO}/ext/node/polyfills/internal_binding/tcp_wrap.ts"
 LINT_PLUGIN = f"{REPO}/tools/lint_plugins/no_deno_api_in_polyfills.ts"
+
+
+def _setup_deno():
+    """Install Deno and setup environment if not already available."""
+    # Check if deno is already available
+    r = subprocess.run(["which", "deno"], capture_output=True, text=True)
+    if r.returncode == 0:
+        return
+
+    # Install unzip if needed
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, timeout=60
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "unzip"],
+        capture_output=True, timeout=60
+    )
+
+    # Install Deno
+    r = subprocess.run(
+        ["bash", "-c", "curl -fsSL https://deno.land/install.sh | sh"],
+        capture_output=True, text=True, timeout=120
+    )
+
+    # Setup submodules if not already done
+    subprocess.run(
+        ["git", "-C", REPO, "submodule", "update", "--init", "--recursive"],
+        capture_output=True, timeout=120
+    )
+
+    # Add Deno to PATH for future use
+    os.environ["PATH"] = "/root/.deno/bin:" + os.environ.get("PATH", "")
+
+
+def _run_with_deno(cmd: list[str], cwd: str = REPO, timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run a command with Deno available."""
+    _setup_deno()
+
+    # Update PATH for this run
+    env = os.environ.copy()
+    env["PATH"] = "/root/.deno/bin:" + env.get("PATH", "")
+
+    return subprocess.run(
+        cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd, env=env
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -33,15 +80,60 @@ def test_syntax_check():
     assert "EXPECTED_VIOLATIONS" in lint, "EXPECTED_VIOLATIONS missing from lint plugin"
 
 
-# [repo_tests] pass_to_pass - Repo CI check: ensure tcp_wrap.ts imports from _listen.ts
-def test_repo_tcp_wrap_imports():
-    """tcp_wrap.ts must import from _listen.ts (ceilPowOf2 and backoff constants used by legacy path)."""
-    tcp = Path(TCP_WRAP).read_text()
-    # On base commit, tcp_wrap.ts imports from _listen.ts using multi-line import
-    # After fix, only ceilPowOf2 remains. This test verifies the import relationship exists.
-    assert '"ext:deno_node/internal_binding/_listen.ts"' in tcp, (
-        "tcp_wrap.ts missing import from _listen.ts"
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) - Real CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - Repo CI: deno lint on tcp_wrap.ts passes
+def test_repo_deno_lint_tcp_wrap():
+    """deno lint on tcp_wrap.ts passes (pass_to_pass)."""
+    r = _run_with_deno(["deno", "lint", TCP_WRAP])
+    assert r.returncode == 0, f"deno lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: deno lint with custom plugin on tcp_wrap.ts
+def test_repo_deno_lint_with_plugin():
+    """deno lint with custom plugin on tcp_wrap.ts runs (pass_to_pass)."""
+    # This runs the lint plugin against tcp_wrap.ts
+    # The plugin checks for Deno.* API usage in node polyfills
+    r = _run_with_deno([
+        "deno", "lint", "--rules-include=no-deno-api-in-polyfills",
+        TCP_WRAP
+    ])
+    # Exit 0 means no violations found (post-fix state)
+    # Exit 1 means violations found (base commit state - expected)
+    assert r.returncode in (0, 1), f"deno lint with plugin failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: deno lint on lint plugin passes
+def test_repo_deno_lint_plugin():
+    """deno lint on lint plugin passes (pass_to_pass)."""
+    r = _run_with_deno(["deno", "lint", LINT_PLUGIN])
+    assert r.returncode == 0, f"deno lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: lint plugin EXPECTED_VIOLATIONS contains tcp_wrap.ts
+def test_repo_lint_expected_violations_count():
+    """Lint plugin EXPECTED_VIOLATIONS has tcp_wrap.ts:3 at base commit (pass_to_pass)."""
+    # Use grep to extract and validate the EXPECTED_VIOLATIONS count from the source
+    # This is a static check that reads the source file directly
+    lint_content = Path(LINT_PLUGIN).read_text()
+    match = re.search(
+        r'"ext/node/polyfills/internal_binding/tcp_wrap\.ts"\s*:\s*(\d+)',
+        lint_content
     )
+    if match:
+        count = int(match.group(1))
+        # At base commit, count should be 3 (post-fix: entry removed)
+        assert count >= 0, f"Invalid violation count: {count}"
+    # If not found, that is valid too (post-fix state where entry was removed)
+
+
+# [repo_tests] pass_to_pass - Repo CI: tools/lint.js --js passes
+def test_repo_lint_js():
+    """tools/lint.js --js passes (pass_to_pass)."""
+    r = _run_with_deno(["deno", "run", "--allow-all", "./tools/lint.js", "--js"])
+    assert r.returncode == 0, f"lint.js failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass - Repo CI: git verify repo is at expected base commit

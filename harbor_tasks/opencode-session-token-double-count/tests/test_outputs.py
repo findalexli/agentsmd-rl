@@ -428,3 +428,13 @@ def test_repo_session_system_tests():
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
     )
     assert r.returncode == 0, f"Session system tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compaction_tests():
+    """Repo session compaction tests (getUsage) pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/session/compaction.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Session compaction tests failed:\n{r.stderr[-500:]}"

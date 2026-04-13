@@ -76,36 +76,13 @@ distractors:
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   collision_type: scope_ambiguity
-  why_distracting: The gold solution does not manually add or modify any test files.
-    In Ruff, tests are typically snapshot-based and updated automatically via `INSTA_UPDATE=always
-    cargo nextest run`. An agent trying to manually write new test functions or files
-    would waste effort and likely violate the snapshot testing paradigm.
+  why_distracting: The agent might try to manually write new test functions or files
+    to verify the preview behavior. However, Ruff uses snapshot tests (`insta`) which
+    are updated automatically via the test command provided in the instructions, so
+    manually writing new test code is unnecessary and distracting.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 59-59
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
-  collision_type: rule_conflict
-  why_distracting: The gold solution adds a new utility `is_collapsible_if_fix_safe_enabled`
-    in `preview.rs` because it's a new preview flag. An agent might try to reuse an
-    existing preview flag (like `is_warning_severity_enabled`) to avoid writing new
-    code, which would incorrectly couple unrelated preview features.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 66-66
-- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
-    the `ty` GitHub label.
-  collision_type: scope_ambiguity
-  why_distracting: The agent is working on `ruff` (`crates/ruff_linter`), not `ty`.
-    Applying `ty`-specific rules to `ruff` code would be incorrect and confusing.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 54-55
-hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
-  since `CLAUDE.md` only includes `AGENTS.md`. There are no hierarchical conflicts,
-  but the agent must carefully distinguish between rules that apply to the entire
-  repository versus those specific to the `ty` ecosystem.
+    lines: 51-51
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  There are no conflicting rules between files.

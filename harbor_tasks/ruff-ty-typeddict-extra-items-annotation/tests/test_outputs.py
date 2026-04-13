@@ -60,6 +60,24 @@ def test_cargo_check():
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr.decode()[-3000:]}"
 
 
+# [repo_tests] pass_to_pass — ty binary smoke test
+def test_ty_check_smoke():
+    """ty binary can check a simple Python file without crashing (pass_to_pass)."""
+    ty = _build_ty()
+    fd, path = tempfile.mkstemp(suffix=".py", dir=REPO)
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write("x: int = 1\n")
+        r = subprocess.run(
+            [ty, "check", path],
+            cwd=REPO, capture_output=True, timeout=120,
+        )
+        # ty check should succeed on valid code (exit code 0)
+        assert r.returncode == 0, f"ty check failed:\n{r.stderr.decode()[-1000:]}"
+    finally:
+        os.unlink(path)
+
+
 # [repo_tests] pass_to_pass — repo's CI unit tests for ty_python_semantic (subset for speed)
 def test_ty_python_semantic_unit_tests():
     """ty_python_semantic unit tests pass (pass_to_pass)."""

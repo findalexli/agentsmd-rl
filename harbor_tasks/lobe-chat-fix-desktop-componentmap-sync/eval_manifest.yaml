@@ -47,6 +47,34 @@ checks:
   type: pass_to_pass
   origin: static
   description: componentMap.desktop.ts must import the Creds component
+- id: test_repo_eslint_componentmap_desktop
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes on componentMap.desktop.ts
+- id: test_repo_eslint_desktop_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes on desktopRouter.config.desktop.tsx
+- id: test_repo_stylelint_componentmap_desktop
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Stylelint passes on componentMap.desktop.ts
+- id: test_repo_stylelint_desktop_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Stylelint passes on desktopRouter.config.desktop.tsx
+- id: test_repo_prettier_componentmap_desktop
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on componentMap.desktop.ts
+- id: test_repo_prettier_desktop_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on desktopRouter.config.desktop.tsx
+- id: test_repo_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Required files exist in the repo
 rubric:
 - rule: Config documentation updates should be consistent with the style of existing
     skill documentation in the repo
@@ -57,37 +85,49 @@ rubric:
 - rule: SPA-related code is grouped under `src/spa/` (entries + router) and `src/routes/`
     (page segments).
   source:
-    path: CLAUDE.md
-    lines: 33-35
+    path: .agents/skills/spa-routes/SKILL.md
   evidence: The gold solution correctly modifies the router configuration in `src/spa/router/desktopRouter.config.desktop.tsx`
-    and the page segment mapping in `src/routes/(main)/settings/features/componentMap.des
+    and the page segment mapping in `src/routes/(main)/settings/features/componentMap.desktop.ts`
+    following the SPA structure documented in spa-routes skill.
   category: architecture
+- rule: Update the relevant agent skill documentation to clearly describe the desktop
+    file sync requirement.
+  source:
+    path: .agents/skills/react/SKILL.md
+  evidence: The gold solution updates `.agents/skills/code-review/SKILL.md`, `.agents/skills/react/SKILL.md`,
+    and `.agents/skills/spa-routes/SKILL.md` to explicitly document the `.desktop.ts(x)`
+    file sync requirement.
+  category: documentation
+- rule: All AI development skills are available in `.agents/skills/` directory and
+    auto-loaded by Claude Code when relevant. ALWAYS read `.agents/skills/code-review/SKILL.md`
+    first.
+  source:
+    path: .agents/skills/code-review/SKILL.md
+  evidence: The gold solution updates `.agents/skills/code-review/SKILL.md` and `.agents/skills/react/SKILL.md`
+    to include explicit rules about keeping `.desktop` files in sync, directly modifying
+    the agent's own instruction files. This follows the convention documented in AGENTS.md
+    that agents should read code-review/SKILL.md first during PR reviews.
+  category: documentation
+- rule: When reviewing PRs or code diffs, ALWAYS read `.agents/skills/code-review/SKILL.md`
+    first.
+  source:
+    path: .agents/skills/code-review/SKILL.md
+  evidence: The gold solution specifically targets `.agents/skills/code-review/SKILL.md`
+    to add the SPA/routing sync check, leveraging the convention that agents read
+    code-review/SKILL.md first during PR reviews to ensure the new rule is visible.
+  category: documentation
 distractors:
 - rule: Do not add new `features/` folders inside `src/routes/`.
-  collision_type: architecture_boundary
-  why_distracting: The file `src/routes/(main)/settings/features/componentMap.desktop.ts`
-    is located in a `features/` folder inside `src/routes/`. An agent strictly following
-    this rule might attempt to move this file and its web counterpart to `src/features/`,
-    causing a massive out-of-scope refactor that breaks the application.
+  collision_type: scope_ambiguity
+  why_distracting: The file to edit is `src/routes/(main)/settings/features/componentMap.desktop.ts`.
+    An agent might see this path violates the rule against having `features/` inside
+    `src/routes/` and attempt to refactor/move the directory to comply, which is out
+    of scope and would break imports.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 46-47
-- rule: 'When adding or changing SPA routes: 1. In `src/routes/`, add only the route
-    segment files (layout + page) that delegate to features.'
-  collision_type: scope_ambiguity
-  why_distracting: The task asks to fix a missing `/onboarding` route in the desktop
-    app. An agent might interpret this rule as a directive to create new route segment
-    files (e.g., `src/routes/onboarding/index.tsx`), but the web route already exists
-    and only the desktop router configuration (`desktopRouter.config.desktop.tsx`)
-    needs to be synced.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 43-44
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` both define the architectural boundary
-  between `src/spa/`, `src/routes/`, and `src/features/`. The existing codebase has
-  a `features/` directory inside `src/routes/(main)/settings/`, which violates the
-  strict rule ''Do not add new features/ folders inside src/routes/''. Agents must
-  recognize that fixing the immediate bug (syncing `.desktop` files) takes precedence
-  over enforcing architectural purity on existing legacy structures.'
+    lines: 47-49
+hierarchy_analysis: The agent must understand the relationship between the root config
+  files (`AGENTS.md`, `CLAUDE.md`) and the dynamically loaded skill files in `.agents/skills/`.
+  The task requires modifying the leaf nodes (skill files) to enforce a new rule globally,
+  demonstrating an understanding of how the agent's own instruction hierarchy works.

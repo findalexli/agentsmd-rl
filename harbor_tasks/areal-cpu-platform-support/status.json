@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T01:49:18.583188",
-  "total_time": 1561.88,
-  "sandbox_id": "ijasg2s0fkfan9iwy7u9y",
+  "validated_at": "2026-04-11T18:17:29.264057",
+  "total_time": 2137.2,
+  "sandbox_id": "ikxpj15gmlaessbxu6oyj",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 114.48,
-      "notes": ""
+      "notes": "Enriched pass_to_pass tests with 3 additional repo CI checks: test_repo_trailing_whitespace (grep for trailing whitespace), test_repo_end_of_file_newline (tail -c 1 check), test_repo_import_order (ruff --select I). Updated test_repo_example_configs_valid to install PyYAML and run as a proper subprocess test. CI commands found: ruff==0.14.9 lint/format, py_compile for syntax validation, YAML validation with PyYAML, grep/tail for file hygiene checks. Total p2p tests: 11 (was 8), f2p tests: 7 unchanged."
     },
     "improve": {
       "status": "skipped",
@@ -32,13 +31,13 @@
       "notes": "All validations passed. Docker build succeeded. NOP test correctly failed with reward=0 (7 fail-to-pass tests failed on base code). Gold test passed with reward=1 (all 12 tests pass after solve.sh applied). Rubric judge returned 0.0 due to lack of git commit in gold container (tooling artifact, not a real failure).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 102.21
+      "time": 325.3
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 307.11,
+      "time": 240.44,
       "notes": ""
     },
     "rubric_judge": {
@@ -47,17 +46,19 @@
       "backend": "fireworks",
       "time": 1.31,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 27.34,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 497.06,
-      "at": "2026-04-09T20:26:45.764987"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -80,7 +81,7 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 1561.62,
-      "at": "2026-04-10T01:49:18.416814"
+      "at": "2026-04-09T22:04:09.168827"
     },
     {
       "verdict": "pass",
@@ -89,6 +90,14 @@
       "backend": "fireworks",
       "time": 1561.88,
       "at": "2026-04-10T01:49:18.583188"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2137.2,
+      "at": "2026-04-11T18:17:29.264057"
     }
   ]
 }

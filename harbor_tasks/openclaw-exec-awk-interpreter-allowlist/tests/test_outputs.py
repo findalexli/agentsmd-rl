@@ -90,7 +90,7 @@ def test_detect_awk_inline_positional():
     hit2 = _detect_inline(["mawk", "BEGIN { print 1 }"])
     assert hit2 is not None, "mawk positional program should be detected"
 
-    hit3 = _detect_inline(["nawk", '{gsub(/old/,\"new\"); print}', "file.txt"])
+    hit3 = _detect_inline(["nawk", '{gsub(/old/,\\"new\\"); print}', "file.txt"])
     assert hit3 is not None, "nawk positional program should be detected"
 
 
@@ -280,3 +280,12 @@ def test_repo_unit_tests_security_audit():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Security audit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_no_conflict_markers():
+    """Repo has no git conflict markers (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-no-conflict-markers.mjs"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"

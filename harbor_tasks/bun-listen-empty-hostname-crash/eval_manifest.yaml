@@ -53,6 +53,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Bun is available and functional in the repo
+- id: test_repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json lint passes (exact versions check)
 - id: test_no_hardcoded_ports
   type: pass_to_pass
   origin: agent_config
@@ -95,30 +99,52 @@ rubric:
   evidence: The test asserts that a specific error is thrown (`expect(...).toThrow('Expected
     a non-empty "hostname"')`) rather than checking process output for panics.
   category: testing
+- rule: 'Always use `port: 0` to get a random port. Never use hardcoded port numbers.'
+  source:
+    path: test/AGENTS.md
+    lines: 16-17
+  evidence: 'The gold solution explicitly passes `port: 0` in the `Bun.listen` and
+    `Bun.connect` calls within the new tests.'
+  category: testing
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead.
+  source:
+    path: AGENTS.md
+    lines: 27-29
+  evidence: The test is added to the existing `test/js/bun/net/socket.test.ts` file
+    rather than creating a new regression test file, as no issue number was provided.
+  category: testing
+- rule: 'Always use `port: 0`. Do not hardcode ports.'
+  source:
+    path: AGENTS.md
+    lines: 82-82
+  evidence: 'The test calls `Bun.listen({ hostname: hostname as any, port: 0, socket
+    })`, explicitly using `port: 0` instead of a hardcoded port.'
+  category: testing
 distractors:
-- rule: Prefer concurrent tests over sequential tests
+- rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
   collision_type: scope_ambiguity
-  why_distracting: The test only performs synchronous validation checks that throw
-    immediately. It does not spawn processes or write files, so concurrency is not
-    needed and the gold solution uses standard `it()` instead of `it.concurrent()`.
+  why_distracting: The bug report mentions a 'panic/crash', which might lead an agent
+    to think it needs to spawn a separate process using `Bun.spawn` to catch the crash.
+    However, the fix changes the crash to a synchronous JS exception, so a simple
+    `expect().toThrow()` in the same process is correct. Spawning a process would
+    overcomplicate the test and violate the rule against checking output for panics.
   severity: medium
   source:
-    path: test/CLAUDE.md
-    lines: 18-20
-- rule: For single-file tests, prefer `-e` over `tempDir`... When spawning processes,
-    tests should expect(stdout).toBe(...)
-  collision_type: meta_confusion
-  why_distracting: Because the original bug was a panic/crash, an agent might think
-    it needs to spawn a separate process using `Bun.spawn` to test the crash behavior.
-    However, the fix converts the panic into a standard JS `TypeError` which can be
-    caught synchronously with `expect().toThrow()`. Spawning a process is unnecessary
-    and inefficient.
-  severity: high
+    path: test/AGENTS.md
+    lines: 40-58
+- rule: 'Prefer concurrent tests over sequential tests: When multiple tests in the
+    same file spawn processes or write files, make them concurrent'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use `it.concurrent` for the new tests. However,
+    the rule specifically applies when tests 'spawn processes or write files'. Since
+    these tests only check synchronous validation logic, concurrency is unnecessary.
+  severity: low
   source:
-    path: CLAUDE.md
-    lines: 44-45
-hierarchy_analysis: 'The hierarchy includes root-level CLAUDE.md and AGENTS.md, as
-  well as test-specific and src-specific config files. The test-specific config reinforces
-  the root config''s rule about using `port: 0`. The src-specific config focuses on
-  Zig system calls, which is not highly relevant here since the fix only involves
-  throwing a JS error via `global.throwInvalidArguments`.'
+    path: test/AGENTS.md
+    lines: 21-22
+hierarchy_analysis: 'The repository uses a moderate hierarchy with `AGENTS.md` and
+  `CLAUDE.md` files at the root and within `src/` and `test/` directories. The rules
+  are consistent across levels, with the root providing general testing guidelines
+  (like `port: 0` and avoiding panic checks) and the `test/` level providing more
+  specific process-spawning guidelines.'

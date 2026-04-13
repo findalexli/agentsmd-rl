@@ -307,6 +307,36 @@ def test_modular_structure():
 # Pass-to-pass (repo_tests) — CI/CD derived tests
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass — Repo CI: Python syntax validation via py_compile command
+def test_repo_py_compile_modeling():
+    """Python syntax validation on modeling_nemotron_h.py using py_compile (pass_to_pass).
+
+    The transformers CI validates Python syntax before running tests. This test
+    runs the actual py_compile module as a subprocess command to verify the
+    modeling file has valid Python syntax.
+    """
+    r = subprocess.run(
+        ["python", "-m", "py_compile", MODELING],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"py_compile failed for modeling_nemotron_h.py:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: Python syntax validation via py_compile command
+def test_repo_py_compile_modular():
+    """Python syntax validation on modular_nemotron_h.py using py_compile (pass_to_pass).
+
+    The transformers CI validates Python syntax before running tests. This test
+    runs the actual py_compile module as a subprocess command to verify the
+    modular file has valid Python syntax.
+    """
+    r = subprocess.run(
+        ["python", "-m", "py_compile", MODULAR],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"py_compile failed for modular_nemotron_h.py:\n{r.stderr}"
+
+
 # [repo_tests] pass_to_pass — Repo CI: make style enforces import sorting
 def test_repo_nemotron_h_import_sort():
     """Ruff import sorting check on modified files (pass_to_pass).
@@ -321,23 +351,19 @@ def test_repo_nemotron_h_import_sort():
     assert r.returncode == 0, f"Import sort errors:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass — Repo CI: validate Python syntax
+# [repo_tests] pass_to_pass — Repo CI: validate Python syntax via subprocess
 def test_repo_nemotron_h_py_syntax():
     """Python syntax validation using py_compile on modified files (pass_to_pass).
 
-    Basic Python syntax validation that doesn't require importing the modules.
+    Basic Python syntax validation that runs py_compile as a subprocess command.
     This catches syntax errors that would break the CI before any tests run.
     """
-    import py_compile
-    import tempfile
-
     for path in [MODELING, MODULAR]:
-        # Use py_compile to check syntax without importing
-        with tempfile.NamedTemporaryFile(suffix=".pyc", delete=True) as tmp:
-            try:
-                py_compile.compile(path, cfile=tmp.name, doraise=True)
-            except py_compile.PyCompileError as e:
-                raise AssertionError(f"Syntax error in {path}: {e}")
+        r = subprocess.run(
+            ["python", "-m", "py_compile", path],
+            cwd=REPO, capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Syntax error in {path}:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass — Repo CI: check modeling file naming conventions

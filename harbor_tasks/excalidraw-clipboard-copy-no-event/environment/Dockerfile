@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 # Clone the repository at base commit (shallow clone for speed)
-ARG BASE_COMMIT
+ARG BASE_COMMIT=d29fd62e417b8cb73d1d5dc3e207735046401491
 RUN git clone --filter=blob:none --no-checkout https://github.com/excalidraw/excalidraw.git excalidraw && \
     cd excalidraw && \
     git sparse-checkout init && \

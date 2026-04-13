@@ -77,54 +77,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repository dummy objects check passes (utils/checkers.py dummies)
-rubric:
-- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
-    only one or two lines long, and do not need large comments, docstrings or new
-    functions in this case. Aim to minimize the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
-- rule: Do not add helper methods or abstractions just to satisfy the type checker
-    (especially for only 1-2 occurrences).
-  source:
-    path: .ai/skills/add-or-fix-type-checking/SKILL.md
-    lines: 196-197
-    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
-- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
-    style checks'
-  source:
-    path: CLAUDE.md
-    lines: 2-2
-  evidence: The gold solution inserts `is_flash_attn_greater_or_equal_2_10` in strict
-    alphabetical order in `src/transformers/utils/__init__.py` (between `is_flash_attn_greater_or_equal`
-    and `is_flute_available`)
-  category: style
+- id: test_repo_config_docstrings_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository config docstrings check passes (check_config_docstrings.py)
+- id: test_repo_config_attributes_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository config attributes check passes (check_config_attributes.py)
+rubric: []
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
   collision_type: meta_confusion
-  why_distracting: The rule instructs the agent to fail-closed and refuse to generate
-    PR-ready output if coordination evidence (like issue approval) is missing. In
-    a benchmark or evaluation setting, the agent must output the fix regardless of
-    missing GitHub context, otherwise it will fail the evaluation.
+  why_distracting: The repository has a strict 'fail-closed' policy for AI agents.
+    An agent might refuse to generate the patch and instead output a message asking
+    for an issue link or coordination evidence, failing the benchmark task.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 56-59
-- rule: 'Copies and Modular Models: manage code duplication in `src/transformers/models/`
-    using `# Copied from` or `modular_<name>.py`.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might attempt to manage code duplication using `# Copied
-    from` comments or modular files, but this rule specifically applies to `src/transformers/models/`.
-    The bug being fixed is in `src/transformers/utils/`, which is outside this architectural
-    boundary.
+    path: AGENTS.md
+    lines: 53-56
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify this small backward-compatibility fix
+    (adding a 5-line helper function) as a 'tiny edit' and refuse to implement it
+    based on the repository's policy against low-value busywork.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 61-66
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  rules are heavily focused on contribution policies and repository management rather
-  than specific coding conventions. The agent must distinguish between meta-instructions
-  meant for real-world PR submission (which should be ignored in an evaluation context)
-  and architectural rules (which only apply to specific directories like `models/`).
+    path: AGENTS.md
+    lines: 38-40
+hierarchy_analysis: The repository contains identical root-level agent instruction
+  files (`AGENTS.md` and `CLAUDE.md`). These files contain strict meta-instructions
+  dictating how AI agents should behave, specifically instructing them to refuse work
+  if certain human-coordination criteria are not met. The agent must navigate these
+  constraints to fulfill the user's direct coding request.

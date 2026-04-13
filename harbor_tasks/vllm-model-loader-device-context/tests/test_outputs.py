@@ -162,6 +162,56 @@ def test_repo_typos():
     assert r.returncode == 0, f"Typos check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+
+# [repo_tests] pass_to_pass — actionlint on workflow files
+def test_repo_actionlint():
+    """Repo's GitHub workflow files pass actionlint validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "actionlint-py", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    workflow_dir = Path(REPO) / ".github" / "workflows"
+    for workflow_file in workflow_dir.glob("*.yml"):
+        r = subprocess.run(
+            ["actionlint", str(workflow_file)],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"actionlint failed for {workflow_file}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — check forbidden imports in target file
+def test_repo_forbidden_imports():
+    """Repo's forbidden imports check passes on base_loader.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    script_path = Path(REPO) / "tools" / "pre_commit" / "check_forbidden_imports.py"
+    r = subprocess.run(
+        ["python", str(script_path), TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — check boolean context manager patterns
+def test_repo_boolean_context_manager():
+    """Repo's boolean context manager check passes on base_loader.py (pass_to_pass).
+
+    This is relevant to the PR which fixes context manager nesting in load_model().
+    """
+    r = subprocess.run(
+        ["pip", "install", "regex", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    script_path = Path(REPO) / "tools" / "pre_commit" / "check_boolean_context_manager.py"
+    r = subprocess.run(
+        ["python", str(script_path), TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

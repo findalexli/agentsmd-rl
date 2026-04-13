@@ -530,3 +530,54 @@ def test_repo_typos():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Typos check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_header():
+    """Repo's SPDX header check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_spdx_header.py", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_forbidden_imports():
+    """Repo's forbidden imports check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_forbidden_imports.py", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_torch_cuda():
+    """Repo's torch.cuda check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_torch_cuda.py", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"torch.cuda check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

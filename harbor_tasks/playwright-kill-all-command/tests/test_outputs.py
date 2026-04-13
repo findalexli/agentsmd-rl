@@ -141,7 +141,7 @@ def test_repo_lint_packages():
         ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"lint-packages failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_build():
@@ -157,7 +157,7 @@ def test_repo_build():
         ["npm", "run", "build"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"build failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"build failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_commands_syntax():
@@ -176,3 +176,28 @@ def test_repo_program_syntax():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"program.ts syntax error: {r.stderr}"
+
+
+def test_repo_cli_session_spec_syntax():
+    """cli-session.spec.ts has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "tests/mcp/cli-session.spec.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cli-session.spec.ts syntax error: {r.stderr}"
+
+
+def test_repo_check_deps():
+    """Repo's dependency checks pass (npm run check-deps) (pass_to_pass)."""
+    # First install dependencies (needed in fresh containers)
+    install = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert install.returncode == 0, f"npm install failed: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed:\n{r.stderr[-500:]}"

@@ -1,22 +1,15 @@
-FROM node:22-slim
+FROM python:3.11-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=C.UTF-8
+WORKDIR /workspace/requests
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux python3 python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+# Install git and make
+RUN apt-get update && apt-get install -y git make && rm -rf /var/lib/apt/lists/*
 
-# Clone repo at base commit (use --depth=20 for recent history)
-RUN git clone --depth=20 --filter=blob:none https://github.com/payloadcms/payload.git /workspace/payload && \
-    cd /workspace/payload && \
-    git fetch --depth=20 origin fdea8d8457fafe59be4b877a52a00990a735fd38 && \
-    git checkout fdea8d8457fafe59be4b877a52a00990a735fd38 && \
-    git config user.email "agent@test" && \
-    git config user.name "Agent"
+# Copy the repo content (will be mounted at runtime, but we need the structure)
+RUN mkdir -p /workspace/requests
 
-WORKDIR /workspace/payload
+# Install dependencies including those needed by requests
+RUN pip install pytest pytest-httpbin httpbin pytest-cov pytest-mock trustme ruff urllib3 charset-normalizer idna certifi
 
-# Verifier output directory (Harbor bind-mounts this)
-RUN mkdir -p /logs/verifier
+# Set up working directory
+WORKDIR /workspace/requests

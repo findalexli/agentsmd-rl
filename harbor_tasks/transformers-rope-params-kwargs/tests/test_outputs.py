@@ -301,3 +301,27 @@ def test_repo_check_config_docstrings():
         timeout=120,
     )
     assert r.returncode == 0, f"check_config_docstrings failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: check_inits.py
+def test_repo_check_inits():
+    """Repo's check_inits script validates __init__ structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/utils/check_inits.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"check_inits failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: check_copies.py
+def test_repo_check_copies():
+    """Repo's check_copies script validates # Copied from consistency (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/utils/check_copies.py"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, f"check_copies failed:\n{r.stderr[-500:]}"

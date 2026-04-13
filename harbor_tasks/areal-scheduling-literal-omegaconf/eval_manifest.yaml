@@ -84,60 +84,32 @@ checks:
   origin: repo_tests
   description: Repo's unit tests for datapack and train_controller pass
 rubric:
-- rule: Follow existing code patterns in the same module. Match style, naming, and
-    structure of surrounding code.
-  source:
-    path: AGENTS.md
-    lines: 51-53
-    commit: 6860e70
-- rule: 'Field ordering in config dataclasses: required -> common optional -> rare
-    optional -> internal (_ prefix).'
-  source:
-    path: AGENTS.md
-    lines: 156-160
-    commit: 6860e70
-- rule: Prefer __post_init__ validation for config dataclasses. Validation should
-    raise ValueError with a clear, actionable error message.
-  source:
-    path: AGENTS.md
-    lines: 157-158
-    commit: 6860e70
-- rule: Follow existing code patterns in the same module
-  source:
-    path: CLAUDE.md
-    lines: 46-47
-  evidence: The gold solution uses `__post_init__` to validate the string value, following
-    the existing pattern for enum-like fields in `cli_args.py` instead of relying
-    on type annotations.
-  category: style
+- rule: For code-only bug fixes that do not affect developer workflows or coding
+    standards, no documentation file modifications are required. The gold solution
+    for this task modifies only areal/api/cli_args.py and does not change AGENTS.md,
+    CLAUDE.md, or any other documentation files.
+  category: code_only_fix
 distractors:
-- rule: 'Ask First: Modifying config structures in `areal/api/cli_args.py`'
+- rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
   collision_type: meta_confusion
-  why_distracting: The prompt explicitly asks to fix the `SchedulingSpec` dataclass
-    in `areal/api/cli_args.py`. Following the 'Ask First' rule would cause the agent
-    to halt and ask for permission instead of completing the task.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 50-51
-- rule: 'Typing & imports: explicit type hints'
-  collision_type: would_cause_bug
-  why_distracting: The agent might try to use `Enum` or retain `Literal` to satisfy
-    'explicit type hints', but the pinned version of omegaconf crashes on these annotations.
-    Downgrading to `str` is necessary to fix the bug.
+  why_distracting: The config explicitly forbids modifying config structures in `areal/api/cli_args.py`
+    without asking first. However, the user instruction explicitly requests a bug
+    fix in this exact file. An agent might refuse to edit the file, use a question
+    tool, or leave a TODO comment instead of completing the task.
   severity: high
   source:
     path: AGENTS.md
-    lines: 57-58
-- rule: 'Always Do: Add tests for new functionality'
+    lines: 31-32
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: This is a bug fix for an existing feature, not 'new functionality'.
-    Trying to add tests might lead to unnecessary modifications or test suite complications.
+  why_distracting: The config requires adding tests for new functionality. Since this
+    is a bug fix for an existing field rather than new functionality, attempting to
+    write new tests would be out of scope and is not present in the gold solution.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 46-48
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain similar rules regarding
-  modifying `cli_args.py` and adding tests. The agent must recognize that the specific
-  instructions in the issue description override the general 'Ask First' constraint
-  in the config files.
+    path: AGENTS.md
+    lines: 27-28
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
+  identical constraints regarding `cli_args.py`. The primary conflict is between the
+  repository's strict 'Ask first' policy for modifying config structures and the user's
+  explicit instruction to fix a bug in that exact file.

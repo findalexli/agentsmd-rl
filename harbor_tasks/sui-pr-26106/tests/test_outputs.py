@@ -211,3 +211,12 @@ def test_build_system_packages_check():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Build system packages check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_git_checks():
+    """Repo's git checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "scripts/git-checks.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git checks failed:\n{r.stderr[-500:]}"

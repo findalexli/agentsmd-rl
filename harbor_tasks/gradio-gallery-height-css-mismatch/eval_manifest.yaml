@@ -53,16 +53,23 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Gallery component unit tests pass (pnpm vitest run Gallery.test.ts)
-rubric:
-- rule: Be consistent with the style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: '45'
-    commit: 611d40b529b6c97e41e09ae0a60804ad71a9bf58
+- id: repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Client library builds successfully (pnpm --filter @gradio/client build)
+- id: repo_gallery_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gallery component builds successfully (pnpm --filter @gradio/gallery build)
+- id: repo_css_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: CSS generation from theme works (pnpm css)
+rubric: []
 distractors:
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+- rule: Run backend tests locally with Running the backend unit tests....
   collision_type: scope_ambiguity
-  why_distracting: The bug is purely in the frontend Svelte/TypeScript code (`js/gallery/`).
+  why_distracting: The bug is purely in the frontend Svelte/TypeScript code ().
     Running backend tests for a CSS and Svelte prop forwarding issue is a waste of
     time and resources.
   severity: medium
@@ -78,6 +85,6 @@ distractors:
   source:
     path: AGENTS.md
     lines: 16-17
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+hierarchy_analysis: Only one config file () is present at the root level.
   It provides general repository structure and PR rules. The rules are mostly high-level
   and apply to the entire repository.

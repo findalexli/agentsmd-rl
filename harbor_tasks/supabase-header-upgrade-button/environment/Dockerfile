@@ -9,6 +9,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm globally
+RUN npm install -g pnpm
+
 # Clone repo at base commit (shallow fetch of specific commit for speed)
 RUN git init /workspace/supabase && \
     cd /workspace/supabase && \
@@ -20,6 +23,9 @@ RUN git init /workspace/supabase && \
     git config user.name "Agent"
 
 WORKDIR /workspace/supabase
+
+# Install dependencies for studio and common packages (needed for repo tests)
+RUN pnpm install --frozen-lockfile --prefer-offline || pnpm install --prefer-offline
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

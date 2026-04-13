@@ -13,10 +13,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo TypeScript typecheck passes
-- id: test_repo_tui_thread_tests
+- id: test_repo_tui_tests
   type: pass_to_pass
   origin: repo_tests
-  description: TUI thread tests pass — covers modified thread.ts
+  description: TUI CLI tests pass — covers modified thread.ts and related TUI functionality
 - id: test_repo_tui_prompt_part_tests
   type: pass_to_pass
   origin: repo_tests
@@ -64,8 +64,8 @@ checks:
   description: .opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc
     sections
 - id: not_stub
-  type: pass_to_pass
-  origin: static
+  type: fail_to_pass
+  origin: pr_diff
   description: RPC snapshot method has real implementation, not just a stub
 rubric:
 - rule: Config update follows the structure and style of existing .opencode command
@@ -90,6 +90,21 @@ rubric:
     the snapshot file paths are named `tui` and `server` instead of multi-word names
     like `tuiSnapshotPath` or `serverPath`.
   category: naming
+- rule: Prefer single word variable names where possible. Use single word names by
+    default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 18-32
+  evidence: The gold solution uses single-word variable names like `tui`, `server`,
+    `result`, and `files` instead of multi-word names like `tuiSnapshotPath` or `snapshotFiles`.
+  category: naming
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: 74-82
+  evidence: In `thread.ts` and `worker.ts`, the gold solution uses `const` for all
+    new variables (`tui`, `server`, `result`, `files`).
+  category: style
 config_edits:
 - path: .opencode/command/changelog.md
   tier: 2
@@ -132,27 +147,27 @@ config_edits:
     readability. make sure all PR references are preserved'
 distractors:
 - rule: Use Effect.gen(function* () { ... }) for composition.
-  collision_type: architecture_boundary
-  why_distracting: The TUI worker and thread use standard Promises and async/await
-    for RPC, not the Effect framework. Trying to use `Effect.gen` or `Effect.fn` here
-    would cross an architecture boundary and break the existing RPC mechanism.
+  collision_type: scope_ambiguity
+  why_distracting: The TUI RPC worker and thread use standard async/await and Promises.
+    Trying to effectify the new `snapshot` method using `Effect.gen` would break the
+    existing RPC interface or require unnecessary refactoring.
   severity: high
   source:
     path: packages/opencode/AGENTS.md
-    lines: 14-21
-- rule: Use Bun APIs when possible, like Bun.file()
-  collision_type: would_cause_bug
-  why_distracting: The agent might try to use Bun APIs to write the heap snapshot,
-    but `writeHeapSnapshot` is a specific `node:v8` function that handles the serialization
-    internally. Trying to use `Bun.write` or similar would not work for capturing
-    a V8 heap snapshot.
-  severity: high
+    lines: 14-15
+- rule: Prefer FileSystem.FileSystem instead of raw fs/promises for effectful file
+    I/O.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use Effect's FileSystem to handle the file
+    writing, but `writeHeapSnapshot` from `node:v8` is a native API that writes directly
+    to disk and only accepts a string path. Wrapping it in FileSystem is unnecessary
+    and architecturally incorrect.
+  severity: medium
   source:
-    path: AGENTS.md
-    lines: 15-15
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines,
-  while `packages/opencode/AGENTS.md` introduces Effect-specific rules. The TUI subsystem
-  being modified predates or does not use the Effect framework, so the Effect rules
-  in the package-level config act as a distractor. The agent must recognize the architectural
-  boundary of the TUI and stick to standard async/await and React patterns, while
-  still applying the root-level naming and style rules.
+    path: packages/opencode/AGENTS.md
+    lines: 38-39
+hierarchy_analysis: The project has a root `AGENTS.md` and a package-specific `packages/opencode/AGENTS.md`.
+  The package-specific config introduces strict Effect rules. The agent must realize
+  that despite being in the `opencode` package, the specific TUI RPC code being edited
+  uses standard Promises, so the Effect rules should be ignored for this specific
+  scope.

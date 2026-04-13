@@ -347,24 +347,24 @@ def test_no_unnecessary_try_except():
 
 # [repo_tests] pass_to_pass — CI: ruff check from .github/workflows/style.yaml
 def test_repo_ruff_check():
-    """Repo's ruff linting passes (pass_to_pass)."""
+    """Repo's ruff linting passes on src/prime_rl/ (pass_to_pass)."""
     # Ensure ruff is installed (CI dependency)
     subprocess.run(["pip", "install", "-q", "ruff>=0.13.0"], check=True, capture_output=True)
     r = subprocess.run(
-        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/model.py"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass — CI: ruff format from .github/workflows/style.yaml
 def test_repo_ruff_format():
-    """Repo's ruff format check passes (pass_to_pass)."""
+    """Repo's ruff format check passes on src/prime_rl/ (pass_to_pass)."""
     # Ensure ruff is installed (CI dependency)
     subprocess.run(["pip", "install", "-q", "ruff>=0.13.0"], check=True, capture_output=True)
     r = subprocess.run(
-        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/trainer/model.py"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
@@ -377,3 +377,16 @@ def test_repo_model_py_compiles():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Python compilation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Python syntax check for all trainer files
+def test_repo_trainer_py_compiles():
+    """All Python files in trainer directory compile without syntax errors (pass_to_pass)."""
+    import glob
+    trainer_files = glob.glob(f"{REPO}/src/prime_rl/trainer/*.py")
+    for file_path in trainer_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", file_path],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Python compilation failed for {file_path}:\n{r.stderr}"

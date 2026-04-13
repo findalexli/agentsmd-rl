@@ -55,6 +55,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: deno_bench_util passes clippy lints
+- id: repo_cargo_tree
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo dependency tree resolves correctly for deno_bench_util
 - id: repo_cargo_lock_valid
   type: pass_to_pass
   origin: repo_tests
@@ -83,6 +87,22 @@ rubric:
     CLI's tsc backend abstraction and typescript-go integration) into `cli/tsc/README.md`,
     aligning with the rule that high-level i
   category: architecture
+- rule: High level integration and CLI implementation belong in the `cli/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 14-22
+  evidence: The gold solution moves the TypeScript compiler documentation (`tsgo.md`)
+    into the `cli/tsc/` directory, aligning with the rule that high-level integration
+    and CLI implementation live in the `cli/` di
+  category: architecture
+- rule: The lint script is executed via `./tools/lint.js`.
+  source:
+    path: CLAUDE.md
+    lines: 64-65
+  evidence: The gold solution updates `tools/lint.js` in place (and the instructions
+    specify adding `tools` to the allowed top-level directories list), respecting
+    the documented command path for the linter.
+  category: tooling
 config_edits:
 - path: cli/tsc/README.md
   tier: 2
@@ -115,38 +135,18 @@ config_edits:
     \ for deno's custom libs (`deno.window`, `deno.worker`, etc)"
   gold_removed: ''
 distractors:
-- rule: Integration tests (`cli/tests/`) - Additional integration tests
+- rule: Tools are in `cli/tools/<tool>`.
   collision_type: scope_ambiguity
-  why_distracting: The rule mentions `cli/tests/` for integration tests. An agent
-    might try to move `bench_util` to `cli/tests/bench_util/` instead of the requested
-    `tests/bench_util/` at the repository root.
+  why_distracting: The PR's main objective is to declutter the repository root by
+    removing top-level entries. The config states 'Tools are in cli/tools/<tool>'.
+    An agent might over-eagerly attempt to move the top-level `tools/` directory into
+    `cli/tools/` to further declutter the root, but the instructions explicitly require
+    updating `tools/lint.js` and adding `tools` to the allowed top-level list.
   severity: high
   source:
     path: CLAUDE.md
-    lines: '103'
-- rule: Unit tests - Inline with source code in each module
-  collision_type: architecture_boundary
-  why_distracting: The rule states that unit tests should be inline with source code.
-    An agent might misinterpret this to mean that test utilities like `bench_util`
-    should be broken up and inlined into the modules that benchmark them, rather than
-    moved as a standalone directory to `tests/bench_util/`.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: '102'
-- rule: The name of the test comes from the directory the `__test__.jsonc` appears
-    in.
-  collision_type: scope_ambiguity
-  why_distracting: The rule states that the name of the test comes from the directory
-    the `__test__.jsonc` appears in. An agent might think that moving `bench_util`
-    into `tests/` requires adding a `__test__.jsonc` file to make it a valid test
-    directory, which would be incorrect for a utility crate.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: '113'
-hierarchy_analysis: The `CLAUDE.md` file provides high-level architectural guidelines
-  and testing conventions. The instructions explicitly override some of the general
-  testing directory structures by specifying exact paths (e.g., `tests/bench_util/`).
-  Agents must prioritize the explicit PR instructions over the general test organization
-  rules in `CLAUDE.md` to avoid placing files in the wrong test directories.
+    lines: 17-18
+hierarchy_analysis: The configuration is a single flat file (`CLAUDE.md`). The primary
+  challenge is distinguishing between general architectural descriptions (e.g., 'Tools
+  are in cli/tools') and explicit operational paths (e.g., './tools/lint.js') when
+  the PR's goal is to reorganize top-level directories.

@@ -44,71 +44,39 @@ checks:
   origin: repo_tests
   description: Repo plugins:build (TypeScript compilation) passes
 rubric:
-- category: code_quality
-  source:
-    path: 'CLAUDE.md: Frontend Modernization - NO `any` types'
-  rule: No `any` types used - proper TypeScript typing
-- category: code_quality
-  source:
-    path: 'CLAUDE.md: Frontend Modernization - Use @superset-ui/core'
-  rule: Uses @ant-design/icons for icon components
-- category: code_quality
-  source:
-    path: 'CLAUDE.md: TypeScript Frontend - Functional components with hooks'
-  rule: Follows functional component patterns with hooks
 - category: correctness
   source:
-    path: 'CLAUDE.md: Code Standards'
-  rule: No references to react-icons remain in code
+    path: instruction.md
+  rule: Replace react-icons with @ant-design/icons in table plugins
+  reference: The solution correctly replaces FaSort/FaSortUp/FaSortDown from react-icons
+    with ColumnHeightOutlined/CaretUpOutlined/CaretDownOutlined from @ant-design/icons
 - category: correctness
   source:
-    path: 'PR #39184: Replace react-icons with antd icons'
-  rule: Correct icon mapping (FaSort → ColumnHeightOutlined, FaSortUp → CaretUpOutlined,
-    FaSortDown → CaretDownOutlined)
-- category: code_quality
+    path: instruction.md
+  rule: Remove react-icons dependency from package.json files
+  reference: The solution removes react-icons from both plugin-chart-table and plugin-chart-pivot-table
+    package.json files
+- category: correctness
   source:
-    path: 'AGENTS.md: Code Standards'
-  rule: Follows existing TypeScript formatting and style conventions
-- category: code_quality
-  source:
-    path: 'CLAUDE.md: Code Standards'
-  rule: Uses destructured imports from @ant-design/icons package
-- rule: Avoid custom css and styles - Follow antd best practices and avoid styling
-    and custom CSS whenever possible
-  source:
-    path: CLAUDE.md
-    lines: 30-31
-  evidence: The gold solution replaces the icons directly without adding any custom
-    CSS or inline styles to adjust their appearance, relying on the default styling
-    of the Ant Design icons.
-  category: style
+    path: instruction.md
+  rule: Maintain existing component structure and functionality
+  reference: The solution keeps the same component structure, only changing the icon
+    imports and usage without adding custom CSS or changing component patterns
 distractors:
 - rule: Use @superset-ui/core - Don't import Ant Design directly, prefer Ant Design
     component wrappers from @superset-ui/core/components
   collision_type: rule_conflict
-  why_distracting: The prompt explicitly requires importing from `@ant-design/icons`.
-    The rule forbids importing Ant Design directly, which might lead the agent to
-    search for non-existent icon wrappers in `@superset-ui/core` or fail to complete
-    the task.
+  why_distracting: The PR instruction explicitly requires importing icons from `@ant-design/icons`.
+    The config rule forbids importing Ant Design directly and mandates using `@superset-ui/core`.
+    An agent might incorrectly try to import icons from `@superset-ui/core` or build
+    wrappers, failing to follow the explicit PR instruction.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 28-29
-- rule: Functional components with hooks
-  collision_type: scope_ambiguity
-  why_distracting: '`TableRenderers.tsx` is an existing class component. Refactoring
-    it to a functional component to satisfy this rule would be a massive scope creep
-    and violate the instruction ''Keep the same functionality - only the icon components
-    should change''.'
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 72-73
-hierarchy_analysis: The configuration files CLAUDE.md and AGENTS.md are identical
-  and provide general guidelines for the Superset repository. The primary conflict
-  arises between the general rule to avoid direct Ant Design imports and the specific
-  PR instruction to use `@ant-design/icons`. The PR-specific instruction must override
-  the general repository guideline.
+    path: AGENTS.md
+    lines: 29-30
+hierarchy_analysis: The configuration is flat, consisting of identical AGENTS.md and
+  CLAUDE.md files at the root level. The primary challenge is resolving the conflict
+  between the explicit PR instructions and the general repository guidelines.
 version: '2.0'
 source:
   repo: apache/superset.git

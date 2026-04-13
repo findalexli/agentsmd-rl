@@ -153,3 +153,61 @@ def test_repo_format_biome():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Biome format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsc():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_popconfirm_unit():
+    """Repo's Popconfirm unit tests pass (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # First generate version file
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/index.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm unit tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_popconfirm_a11y():
+    """Repo's Popconfirm accessibility tests pass (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # First generate version file
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/a11y.test.ts", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm a11y tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_popconfirm_demo():
+    """Repo's Popconfirm demo tests pass (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # First generate version file
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/demo.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm demo tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_popconfirm_type():
+    """Repo's Popconfirm TypeScript type tests pass (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # First generate version file
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/type.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm type tests failed:\n{r.stderr[-1000:]}"

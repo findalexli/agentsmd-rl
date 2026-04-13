@@ -56,48 +56,31 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Prettier formatting check for render-result.ts passes
-rubric:
-- rule: Update errors.json with the new edge-runtime error codes.
-  source:
-    path: packages/next/errors.json
-  reference: '+"1148": "webToReadable cannot be used in the edge runtime",
-
-    +"1149": "Node.js Readable cannot be teed in the edge runtime",
-
-    +"1150": "Node.js Readable cannot be converted to a web stream in the edge runtime"'
-- rule: Source code is in `packages/next/src/`.
-  source:
-    path: CLAUDE.md
-    lines: 30-31
-  evidence: The gold solution correctly modifies source files in `packages/next/src/`
-    (e.g., `packages/next/src/server/app-render/app-render-prerender-utils.ts`) rather
-    than attempting to modify the compiled outp
-  category: architecture
-distractors:
-- rule: Before editing or creating files in any subdirectory... read all README.md
-    files in the directory path
-  collision_type: scope_ambiguity
-  why_distracting: The agent might waste time and context window searching for and
-    reading `README.md` files in `packages/next/src/server/` and its subdirectories,
-    which are not relevant to fixing the edge runtime dead code elimination issue.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 52-58
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
-    dev` in a separate terminal session before making edits
-  collision_type: meta_confusion
-  why_distracting: The issue is about edge runtime deployment failing due to webpack
-    dead code elimination not removing `node:stream` imports. Running `pnpm --filter=next
-    dev` (dev server) might not reproduce the production build edge runtime constraints,
-    leading the agent to incorrectly assume the issue is fixed or not reproducible.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 78-84
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinks providing
-  global repository guidelines. The agent must balance the general instruction to
-  use `next dev` for fast iteration against the specific nature of this bug, which
-  is a deployment/build issue involving webpack dead code elimination for the edge
-  runtime. The agent should recognize this as an exception to the ''fast local development''
-  rule.'
+- id: test_repo_errors_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: errors.json is valid JSON and contains error codes
+- id: test_repo_node_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js version meets minimum requirement >= 20.9.0
+- id: test_repo_stream_utils_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: node-web-streams-helper.ts has valid TypeScript syntax
+- id: test_repo_prerender_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: app-render-prerender-utils.ts has valid TypeScript syntax
+- id: test_repo_render_result_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: render-result.ts has valid TypeScript syntax
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next/package.json is valid JSON
+- id: test_repo_import_paths_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key import paths in modified files use valid patterns

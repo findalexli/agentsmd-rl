@@ -92,6 +92,15 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo test-planner.executor-fallback tests pass
+
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo format check passes (oxfmt --check)
+- id: test_repo_check_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo conflict marker check passes (check-no-conflict-markers)
 rubric:
 - rule: Keep files concise; extract helpers instead of 'V2' copies.
   source:
@@ -138,28 +147,24 @@ rubric:
 distractors:
 - rule: 'Tests: colocated `*.test.ts`.'
   collision_type: scope_ambiguity
-  why_distracting: 'The rule states ''Tests: colocated *.test.ts'', which applies
-    to the main source code in `src/`. However, the verification instructions show
-    that tests for scripts are located in `test/scripts/` (e.g., `test/scripts/test-planner.test.ts`).
-    An agent might try to move these tests to `scripts/test-planner/` or create new
-    colocated tests, which would violate the established pattern for scripts.'
+  why_distracting: The rule mandates colocated tests (`*.test.ts`), but the verification
+    command shows that tests for scripts are located in `test/scripts/`. An agent
+    might try to colocate a new test in `scripts/test-planner/`, violating the actual
+    pattern for the scripts directory.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: '10'
-- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
-    plus local `api.ts` / `runtime-api.ts` barrels as the public surface.'
+    path: AGENTS.md
+    lines: 10-10
+- rule: 'Source code: `src/`'
   collision_type: scope_ambiguity
-  why_distracting: The rule enforces strict import boundaries for 'extension production
-    code'. An agent might mistakenly apply these plugin/extension import rules to
-    the CI scripts in `scripts/test-planner/`, leading to confusion about how to import
-    shared utilities or whether the scripts are allowed to import from certain paths.
+  why_distracting: The rule states that source code lives in `src/`. An agent might
+    mistakenly believe that `scripts/test-planner/` should be moved to `src/infra`
+    or `src/cli` to comply with the project structure guidelines.
   severity: low
   source:
-    path: CLAUDE.md
-    lines: '16'
-hierarchy_analysis: The configuration files (`CLAUDE.md` and `AGENTS.md`) are identical
-  and primarily focus on the main application architecture (`src/`), plugins, and
-  channels. They lack specific guidance for the `scripts/` directory. This creates
-  scope ambiguity where rules intended for `src/` (like colocated tests) might be
-  incorrectly applied to CI scripts.
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: The config files (AGENTS.md and CLAUDE.md) are identical flat
+  files at the repository root. They primarily define architecture boundaries for
+  plugins and the `src/` directory, offering no specific guidance for the `scripts/`
+  directory.

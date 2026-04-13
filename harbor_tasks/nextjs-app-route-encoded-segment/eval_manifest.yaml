@@ -100,32 +100,41 @@ rubric:
   evidence: The patch correctly targets the source file `packages/next/src/shared/lib/router/routes/app.ts`
     instead of modifying the compiled output in `packages/next/dist/`.
   category: architecture
-distractors:
-- rule: Before editing or creating files in any subdirectory, read all README.md files
-    in the directory path from the repo root up to and including the target file's
-    directory.
-  collision_type: scope_ambiguity
-  why_distracting: The bug is a specific logic error in URL decoding within the router.
-    Forcing the agent to read all READMEs up the directory tree wastes time and context
-    window, as the fix requires understanding the local code logic in `app.ts`, not
-    high-level directory documentation.
-  severity: medium
+- rule: Source code is in packages/next/src/.
   source:
-    path: CLAUDE.md
-    lines: 41-48
-- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
-  collision_type: rule_conflict
-  why_distracting: The agent might run `pnpm --filter=next build` (~60s) to test its
-    changes because the edits are limited to core Next.js files, conflicting with
-    the instruction to use fast local development (`testheadless` or `dev`) for the
-    inner loop.
+    path: AGENTS.md
+    lines: 28-28
+  evidence: The patch correctly targets the source file in `packages/next/src/shared/lib/router/routes/app.ts`
+    rather than attempting to modify the compiled output in `dist/`.
+  category: architecture
+- rule: Source code for the main Next.js framework is located in packages/next/src/.
+  source:
+    path: AGENTS.md
+    lines: 25-26
+  evidence: The gold solution modifies a file within the packages/next/src/ directory,
+    adhering to the defined source code location.
+  category: architecture
+distractors:
+- rule: Start pnpm --filter=next dev in a separate terminal session before making
+    edits.
+  collision_type: meta_confusion
+  why_distracting: The instruction to start a background dev server (pnpm --filter=next
+    dev) is intended for human interactive development. An agent attempting to start
+    a long-running background process might hang the evaluation environment or waste
+    execution time.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 93-94
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinks. The rules
-  within the file have some internal tension, specifically between ''prefer `pnpm
-  --filter=next build` when edits are limited to core Next.js files'' and ''default
-  to watch mode + skip-isolate for the inner loop (not full builds)''. The agent must
-  correctly identify that it is in the ''inner loop'' of iterative development and
-  choose the faster test commands over the full build commands.'
+    path: AGENTS.md
+    lines: 62-66
+- rule: Always run a full bootstrap build after switching branches using pnpm build-all.
+  collision_type: scope_ambiguity
+  why_distracting: Running a full bootstrap build (pnpm build-all) is unnecessary
+    for a localized router bug fix and would consume significant time and resources
+    during agent evaluation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 85-89
+hierarchy_analysis: The config hierarchy consists of identical AGENTS.md and CLAUDE.md
+  files at the root level. They provide generic repository onboarding instructions
+  rather than specific coding conventions.

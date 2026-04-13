@@ -26,6 +26,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: CI workflow files are valid YAML (using yaml.safe_load)
+- id: test_repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell script syntax check for CI scripts using bash -n
+- id: test_repo_playwright_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Playwright package.json is valid JSON using python json.load
+- id: test_repo_verify_new_snapshots_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell script syntax check for verify-new-snapshots.sh using bash -n
+- id: test_repo_count_snapshot_changes_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell script syntax check for count-snapshot-changes.sh using bash -n
+- id: test_repo_trigger_vercel_preview_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell script syntax check for trigger-vercel-preview.sh using bash -n
+- id: test_repo_optimize_test_durations_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check for optimize_test_durations.py using py_compile
 - id: verification_script_validates_args
   type: fail_to_pass
   origin: pr_diff
@@ -67,15 +91,23 @@ checks:
   origin: static
   description: Verification script has real logic, not a stub
 rubric:
-- rule: Please respect all code comments, they're usually there for a reason. Remove
-    them ONLY if they're completely irrelevant after a code change.
+- rule: Use @filename syntax to reference consolidated instruction files
   source:
-    path: .cursorrules
-    lines: 16-17
-  category: style
-  evidence: 'The gold solution preserves the critical instruction ''**Keep looping
-    until all tests pass.**'' by moving it from the Instructions section to the Rules
-    section, rather than deleting it when refactoring '
+    path: .agents/skills/playwright-test/SKILL.md
+    lines: 1-10
+  evidence: The gold solution adds 'Read @playwright/README.md' to SKILL.md, using
+    the exact '@filename' reference pattern to point to consolidated instructions.
+  category: documentation
+  reference: Read @playwright/README.md for best practices, gotchas, and how to run
+    tests.
+- rule: Agent-specific behavioral instructions should remain in the agent skill file.
+  source:
+    path: .agents/skills/playwright-test/SKILL.md
+    lines: 29-30
+  evidence: The gold solution preserves the agent-specific behavioral instruction
+    ('Keep looping until all tests pass') in SKILL.md, recognizing that this is an
+    operational directive for the LLM, while moving the
+  category: documentation
 config_edits:
 - path: .agents/skills/playwright-test/SKILL.md
   tier: 1
@@ -141,17 +173,28 @@ config_edits:
     If you write a selector that is too loose and matches multiple elements, Playwright
     will output all the matches. With a better selector for each:'
 distractors:
+- rule: 'All tests: pytest. Single frontend test: pnpm --filter=@posthog/frontend
+    jest <test_file>'
+  collision_type: scope_ambiguity
+  why_distracting: The config specifies pytest for backend and jest for frontend tests.
+    An agent might try to use these test runners or their patterns in the CI script,
+    but this task specifically requires Playwright for E2E tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-19
 - rule: 'If flox is available: ALWAYS use `flox activate -- bash -c "<command>"` pattern'
+  collision_type: would_cause_bug
+  why_distracting: The rule mandates using `flox activate` for terminal commands.
+    However, the agent is writing a CI script (.github/scripts/verify-playwright-new-tests-and-snapshots.sh)
+    which runs in GitHub Actions where the environment is already provisioned. Adding
+    flox activate here could break the CI pipeline.
+  severity: high
   source:
     path: .cursorrules
-    lines: 19-20
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to use flox inside the new GitHub Actions CI
-    script (`.github/scripts/verify-playwright-new-tests-and-snapshots.sh`). However,
-    CI scripts run in a specific runner environment where dependencies are provisioned
-    differently, and wrapping CI commands in flox could break the workflow.
-  severity: high
-hierarchy_analysis: The config hierarchy is relatively flat for this specific task.
-  `.cursorrules` provides general instructions (like flox usage) which conflict with
-  the architecture boundary of a CI script. `AGENTS.md` provides high-level PostHog
-  guidelines, but most are irrelevant to CI bash scripts and markdown documentation.
+    lines: 19-21
+hierarchy_analysis: The task requires the agent to understand the semantic difference
+  between agent-facing instructions (.agents/skills/playwright-test/SKILL.md) and
+  human-facing documentation (playwright/README.md). It must edit its own skill file,
+  which acts as a local configuration, while ignoring global test runner rules in
+  AGENTS.md that don't apply to the E2E testing scope.

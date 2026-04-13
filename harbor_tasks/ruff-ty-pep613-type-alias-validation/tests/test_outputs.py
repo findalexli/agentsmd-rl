@@ -118,6 +118,48 @@ def test_repo_mdtest_pep613():
     assert r.returncode == 0, f"mdtest pep613 failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_mdtest_all():
+    """Full ty_python_semantic mdtest suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"mdtest suite failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """ty_python_semantic library unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_doc():
+    """ty_python_semantic documentation builds without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "-p", "ty_python_semantic"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=CARGO_ENV,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

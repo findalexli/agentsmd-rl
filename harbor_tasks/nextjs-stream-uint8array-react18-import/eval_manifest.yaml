@@ -1,115 +1,43 @@
-version: '2.0'
+version: "2.0"
 source:
-  repo: vercel/next.js
-  pr: 92263
-  base_commit: 9cb2048439b8b95b6e6460d17d94d9cb1823fbef
-  merge_commit: ff7cd1bf2340ea56369c39d1aa74f1e273a7d233
+  repo: "owner/repo"
+  pr: 1234
+  base_commit: "abc123"
+  merge_commit: "def456"
+
 checks:
-- id: stream_ops_no_uint8array_export
-  type: fail_to_pass
-  origin: pr_diff
-  description: stream-ops.ts must NOT re-export streamToUint8Array (it pulls in react-dom)
-- id: serialized_errors_imports_from_helper
-  type: fail_to_pass
-  origin: pr_diff
-  description: serialized-errors.ts must import streamToUint8Array from node-web-streams-helper,
-    not stream-ops
-- id: helper_has_anystream_signature
-  type: fail_to_pass
-  origin: pr_diff
-  description: node-web-streams-helper.ts must export streamToUint8Array accepting
-    AnyStream
-- id: stream_ops_node_no_uint8array_function
-  type: fail_to_pass
-  origin: pr_diff
-  description: stream-ops.node.ts must NOT define streamToUint8Array (moved to helper)
-- id: stream_ops_web_no_uint8array_function
-  type: fail_to_pass
-  origin: pr_diff
-  description: stream-ops.web.ts must NOT define or import streamToUint8Array
-- id: helper_still_exports_stream_to_buffer
-  type: pass_to_pass
-  origin: static
-  description: node-web-streams-helper.ts must still export streamToBuffer
-- id: not_stub
-  type: pass_to_pass
-  origin: static
-  description: streamToUint8Array in node-web-streams-helper.ts has real logic
-- id: dce_safe_require_in_helper
-  type: fail_to_pass
-  origin: agent_config
-  description: node-web-streams-helper.ts must use DCE-safe if/else branching for
-    require('node:stream')
-  source:
-    path: AGENTS.md
-    lines: '396'
-    commit: 9cb2048439b8b95b6e6460d17d94d9cb1823fbef
-- id: test_repo_eslint
-  type: pass_to_pass
-  origin: repo_tests
-  description: ESLint passes on modified files
-- id: test_repo_prettier
-  type: pass_to_pass
-  origin: repo_tests
-  description: Prettier formatting passes on modified files
-- id: test_repo_typescript
-  type: pass_to_pass
-  origin: repo_tests
-  description: TypeScript type check passes for packages/next
-- id: test_repo_error_codes
-  type: pass_to_pass
-  origin: repo_tests
-  description: Error codes check passes
-- id: test_repo_lint_language
-  type: pass_to_pass
-  origin: repo_tests
-  description: Language lint (alex) passes on documentation
-rubric:
-- rule: Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw
-    patterns).
-  source:
-    path: AGENTS.md
-    lines: '396'
-    commit: 9cb2048439b8b95b6e6460d17d94d9cb1823fbef
-- rule: Platform-specific code (node vs web) can use a single .ts switcher module
-    that conditionally require()s either .node.ts or .web.ts. Keep the branch as if/else
-    so DefinePlugin can dead-code-eliminate the unused require().
-  source:
-    path: .agents/skills/dce-edge/SKILL.md
-    lines: '42'
-    commit: 9cb2048439b8b95b6e6460d17d94d9cb1823fbef
-- rule: Source code is in packages/next/src/. Compiled output goes to packages/next/dist/
-    (mirrors src/ structure).
-  source:
-    path: CLAUDE.md
-    lines: 23-29
-  evidence: The patch correctly targets files in `packages/next/src/server/` (e.g.,
-    `packages/next/src/server/app-render/stream-ops.node.ts`) rather than modifying
-    the compiled output in `dist/`.
-  category: architecture
-distractors:
-- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
-    dev` in a separate terminal session before making edits
-  collision_type: meta_confusion
-  why_distracting: The issue is a build failure specific to React 18. Running the
-    dev server with the default workspace setup will not reproduce the error, potentially
-    leading the agent to think the issue is invalid or already fixed.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 68-70
-- rule: For iterative development, default to watch mode + skip-isolate for the inner
-    loop (not full builds)
-  collision_type: meta_confusion
-  why_distracting: The problem explicitly states that `next build` fails. Defaulting
-    to watch mode and avoiding full builds would prevent the agent from verifying
-    that the build actually succeeds after the fix.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 65-66
-hierarchy_analysis: CLAUDE.md and AGENTS.md are identical symlinks providing general
-  Next.js monorepo workflow instructions. The primary conflict arises between the
-  general guidance to use fast dev/watch modes and the specific nature of this issue,
-  which is a production build failure (`next build`) dependent on a specific React
-  version (React 18).
+  # Fail-to-pass: the actual bug fix
+  - id: test_normalize_whitespace_tabs
+    type: fail_to_pass
+    origin: pr_diff
+    description: "normalize_whitespace handles tabs correctly"
+
+  - id: test_normalize_whitespace_newlines
+    type: fail_to_pass
+    origin: pr_diff
+    description: "normalize_whitespace handles newlines correctly"
+
+  # Pass-to-pass: tests that should work both before and after
+  - id: test_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Module imports work (smoke test)"
+
+  - id: test_to_title_case_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "to_title_case function works correctly"
+
+  - id: test_normalize_whitespace_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "normalize_whitespace handles simple spaces"
+
+# Config edits (if any config files are modified)
+config_edits: []
+
+# Rubric rules for LLM judge
+rubric: []
+
+# Distractor rules (potential pitfalls)
+distractors: []

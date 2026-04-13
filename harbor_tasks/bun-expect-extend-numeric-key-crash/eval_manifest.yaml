@@ -101,51 +101,43 @@ checks:
   origin: repo_tests
   description: C++ files follow basic style conventions (no trailing whitespace, no
     tabs) via Python subprocess
-rubric:
-- rule: Decl literals in Zig are recommended.
-  source:
-    path: src/CLAUDE.md
-    lines: '6'
-    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
-- rule: Follow existing code style — check neighboring files for patterns.
-  source:
-    path: CLAUDE.md
-    lines: '228'
-    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
-- rule: Prefer Bun APIs over `std`
-  source:
-    path: src/CLAUDE.md
-    lines: 15-17
-  evidence: The gold solution uses the existing JSC method `putMayBeIndex` rather
-    than importing `std.fmt` to stringify the numeric index, adhering to the principle
-    of avoiding direct `std` usage when built-in or
-  category: style
+- id: test_repo_zig_syntax_treesitter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code has valid syntax according to tree-sitter parser (mirrors
+    zig build check CI step) via Python subprocess
+- id: test_repo_expect_extend_test_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect-extend.test.js has valid structure with required patterns (expect.extend,
+    _toBeDivisibleBy, tests) via Python subprocess
+- id: test_repo_expect_zig_putmaybeindex_ready
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect.zig has all 3 targets (expect_proto, expect_constructor, expect_static_proto)
+    in extend() ready for putMayBeIndex fix via Python subprocess
+rubric: []
 distractors:
-- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
-    in the test output.
-  collision_type: would_cause_bug
-  why_distracting: The bug describes a crash/assertion failure. An agent might naturally
-    try to write a test that captures stdout/stderr and asserts it doesn't contain
-    'panic' or 'crash', which explicitly violates this rule because such tests don't
-    work reliably in Bun's CI.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 68-68
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    `test/regression/issue/${issueNumber}.test.ts`. Ensure the issue number is REAL
-    and not a placeholder!
-  collision_type: rule_conflict
-  why_distracting: The prompt describes a bug but does not provide a GitHub issue
-    number. If the agent tries to create a regression test in `test/regression/issue/`,
-    it might use a placeholder issue number, which explicitly violates the rule against
-    using placeholders.
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to convert the numeric index to a string using
+    `std.fmt` or `bun.strings` to bypass the `put` assertion, rather than using the
+    correct JSC method `putMayBeIndex`.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 26-26
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` and `AGENTS.md`
-  (which are identical and focus on testing/building) and `src/CLAUDE.md` and `src/AGENTS.md`
-  (which focus on Zig conventions). The rules are complementary. The root-level testing
-  rules create significant distractors because the agent might try to write a test
-  for a crash without an issue number, running afoul of multiple strict testing constraints.
+    path: src/AGENTS.md
+    lines: 18-32
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug explicitly mentions a crash/assertion failure. If the agent
+    decides to write a regression test, it might naturally try to assert that the
+    process doesn't crash or panic, which directly violates this rule.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 78-80
+hierarchy_analysis: The config hierarchy provides general Zig and testing guidelines,
+  but the fix requires specific knowledge of Bun's JSC wrapper (`putMayBeIndex`).
+  The config files do not provide guidance on JSC property assignment, making them
+  largely orthogonal to the core problem.

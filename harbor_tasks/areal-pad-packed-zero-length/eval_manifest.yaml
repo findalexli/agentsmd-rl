@@ -17,6 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff format check passes on areal/utils/data.py
+- id: ruff_lint_core_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on core areal/utils files (data.py, constants.py)
+- id: no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in areal/utils/data.py (from pre-commit hooks)
+- id: newline_at_eof
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/utils/data.py ends with a newline (from pre-commit hooks)
 - id: no_extra_cu_seqlens_when_no_padding
   type: fail_to_pass
   origin: pr_diff
@@ -83,36 +95,16 @@ rubric:
     path: AGENTS.md
     lines: '98'
     commit: c961323ec4d989a52c78e5b42fc32f665367949f
-- rule: Follow existing code patterns in the same module
-  source:
-    path: CLAUDE.md
-    lines: 46-47
-  evidence: The early return block `elif pad_length == 0:` returns the exact 4-tuple
-    `(data, pad_length, old_cu_seqlens, align_to_length)` formatted across multiple
-    lines, matching the function's return signature
-  category: style
 distractors:
-- rule: Add tests for new functionality
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a new unit test for this specific
-    zero-padding edge case, which would require complex setup of packed tensor dictionaries
-    and mock downstream consumers, expanding the scope beyond the simple bug fix.
+  why_distracting: The agent might try to write a test in `tests/` for this specific
+    padding behavior, but the gold solution only patches the bug in `areal/utils/data.py`
+    as it is a bug fix, not new functionality.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 48-48
-- rule: Run tests (First check GPU availability (many tests require GPU))
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run the test suite to verify the fix, but
-    many tests require GPU availability. If the environment lacks a GPU, the agent
-    might get stuck debugging test environment failures instead of focusing on the
-    logic fix.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 25-27
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide consistent guidance at
-  the root level. The rules are identical across both files for the relevant constraints
-  (e.g., 'Follow existing code patterns', 'Add tests for new functionality'). There
-  are no conflicts between the config files themselves, but the instruction to add
-  tests conflicts with the minimal scope of the gold solution.
+    path: AGENTS.md
+    lines: 33-33
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md contain similar rules. The agent
+  must recognize that fixing a bug does not necessarily trigger the 'Add tests for
+  new functionality' rule.

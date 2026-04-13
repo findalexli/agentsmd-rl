@@ -239,3 +239,70 @@ def test_rpc_visitor_json_tests():
         timeout=300,
     )
     assert result.returncode == 0, f"rpc_visitor tests failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
+
+
+def test_json_address():
+    """
+    Pass-to-pass: RPC visitor address serialization test passes (pass_to_pass).
+    Verifies that Sui address values are properly serialized in RPC outputs.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "sui-types", "--lib", "json_address", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"json_address test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_json_uid():
+    """
+    Pass-to-pass: RPC visitor UID serialization test passes (pass_to_pass).
+    Verifies that Sui UID values are properly serialized in RPC outputs.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "sui-types", "--lib", "json_uid", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"json_uid test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_cargo_xlint():
+    """
+    Pass-to-pass: Repo passes cargo xlint license checks (pass_to_pass).
+    Verifies that all files have proper license headers and no disallowed content.
+    """
+    # Clean target directory to free disk space before building x package
+    # This prevents 'No space left on device' errors after previous tests
+    import shutil
+    target_dir = os.path.join(REPO, "target")
+    if os.path.exists(target_dir):
+        shutil.rmtree(target_dir)
+
+    result = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"cargo xlint failed:\n{result.stderr[-500:]}"
+
+
+def test_git_checks():
+    """
+    Pass-to-pass: Repo passes git checks for code quality (pass_to_pass).
+    Verifies no whitespace errors, bad filenames, or submodules in the repo.
+    """
+    result = subprocess.run(
+        ["scripts/git-checks.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"git-checks.sh failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"

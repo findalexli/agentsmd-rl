@@ -228,6 +228,142 @@ def test_repo_file_exists():
     assert r.returncode == 0, f"server_args.py does not exist at {TARGET_FILE}"
 
 
+def test_repo_precommit_check_ast():
+    """Repo's server_args.py passes pre-commit check-ast hook (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-ast", "--files", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-ast failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_precommit_debug_statements():
+    """Repo's server_args.py has no debug statements (pre-commit) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit debug-statements failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_precommit_trailing_whitespace():
+    """Repo's server_args.py has no trailing whitespace (pre-commit) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit trailing-whitespace failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_precommit_end_of_file():
+    """Repo's server_args.py ends with newline (pre-commit) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit end-of-file-fixer failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_yaml():
+    """Repo's pre-commit YAML check passes on workflow files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--files", ".github/workflows/lint.yml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-yaml failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_toml():
+    """Repo's pyproject.toml passes pre-commit TOML check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-toml", "--files", "python/pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-toml failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_test_ast_valid():
+    """Repo's unit test file for server_args parses as valid AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; ast.parse(open('test/registered/unit/server_args/test_server_args.py').read()); print('AST OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit test AST parse failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_test_py_compile():
+    """Repo's unit test file for server_args.py compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "test/registered/unit/server_args/test_server_args.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit test py_compile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_check():
+    """Repo's server_args.py passes ruff linter (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_black_format():
+    """Repo's server_args.py passes black format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_isort_check():
+    """Repo's server_args.py passes isort import sorting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check-only", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """_is_mistral_native_format has real logic, not just pass/return."""

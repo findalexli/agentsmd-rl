@@ -22,7 +22,7 @@ CARGO_TOML = Path(f"{REPO}/crates/uv-keyring/Cargo.toml")
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_uv_keyring_cargo_check():
     """uv-keyring crate compiles with cargo check (pass_to_pass)."""
     r = subprocess.run(
@@ -32,7 +32,7 @@ def test_uv_keyring_cargo_check():
     assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_uv_keyring_cargo_clippy():
     """uv-keyring crate passes clippy linting (pass_to_pass)."""
     r = subprocess.run(
@@ -42,7 +42,7 @@ def test_uv_keyring_cargo_clippy():
     assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_cargo_fmt_check():
     """Workspace code is formatted correctly (pass_to_pass)."""
     r = subprocess.run(
@@ -54,7 +54,28 @@ def test_cargo_fmt_check():
 
 # [static] pass_to_pass
 def test_cargo_toml_valid():
-    """Cargo.toml must remain valid TOML."""
+    """Workspace Cargo.toml must remain valid TOML."""
+    workspace_cargo_toml = Path(f"{REPO}/Cargo.toml")
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "import tomllib, sys; "
+            "tomllib.load(open(sys.argv[1], 'rb'))",
+            str(workspace_cargo_toml),
+        ],
+        capture_output=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, (
+        f"Workspace Cargo.toml is not valid TOML:\n{r.stderr.decode()}"
+    )
+
+
+
+
+# [repo_tests] pass_to_pass
+def test_uv_keyring_cargo_toml_valid():
+    """uv-keyring Cargo.toml must remain valid TOML (pass_to_pass)."""
     r = subprocess.run(
         [
             "python3", "-c",
@@ -66,8 +87,47 @@ def test_cargo_toml_valid():
         timeout=10,
     )
     assert r.returncode == 0, (
-        f"Cargo.toml is not valid TOML:\n{r.stderr.decode()}"
+        f"uv-keyring Cargo.toml is not valid TOML:\n{r.stderr.decode()}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_lock_valid():
+    """Cargo.lock must remain valid TOML (pass_to_pass)."""
+    lock_path = Path(f"{REPO}/Cargo.lock")
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "import tomllib, sys; "
+            "tomllib.load(open(sys.argv[1], 'rb'))",
+            str(lock_path),
+        ],
+        capture_output=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, (
+        f"Cargo.lock is not valid TOML:\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_uv_keyring_mock_tests():
+    """uv-keyring mock tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "uv-keyring", "--lib", "mock", "--features", "native-auth"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mock tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_locked():
+    """Cargo check --locked passes (verifies Cargo.lock is up to date) (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--locked", "-p", "uv-keyring"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check --locked failed:\n{r.stderr[-500:]}"
 
 
 # [static] pass_to_pass

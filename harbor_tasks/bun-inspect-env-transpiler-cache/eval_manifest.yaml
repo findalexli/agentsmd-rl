@@ -61,27 +61,27 @@ checks:
     commit: 047cedb2b3b05fb89b7081ab753d77a2f4df0135
 - id: claude_md_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: CLAUDE.md coding standards file must exist
 - id: core_source_files_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Core source files VirtualMachine.zig and Arguments.zig must exist
 - id: git_repo_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Git repository must be valid and have expected base commit
 - id: configure_debugger_function_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: configureDebugger function must exist in VirtualMachine.zig
 - id: inspect_flags_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: --inspect, --inspect-wait, --inspect-brk flags must exist in Arguments.zig
 - id: no_obvious_banned_patterns
   type: pass_to_pass
-  origin: repo_tests
+  origin: pr_diff
   description: Added code must not contain obviously banned patterns
 - id: banned_words
   type: pass_to_pass
@@ -156,36 +156,20 @@ rubric:
     `@import("bun").jsc` inside the `configureDebug
   category: style
 distractors:
-- rule: Tests use Bun's Jest-compatible test runner with proper test fixtures... For
-    multi-file tests, prefer tempDir and Bun.spawn.
+- rule: Writing Tests and Test Organization (expecting tests for bugs)
   collision_type: scope_ambiguity
-  why_distracting: The instructions heavily emphasize writing tests using `Bun.spawn`
-    and `tempDir`. An agent might try to write a test that spawns Bun with `BUN_INSPECT`
-    and a >50KB file to verify breakpoint line numbers. However, verifying debugger
-    breakpoints requires implementing a WebSocket client that speaks the WebKit Inspector
-    Protocol to attach, set breakpoints, and read back the resolved locations. This
-    is highly complex, likely to be flaky, and the gold solution correctly skips adding
-    a test for this specific debugger behavior.
+  why_distracting: The config strongly encourages writing tests for bugs using `Bun.spawn`
+    and snapshot testing. However, testing debugger breakpoint line number resolution
+    requires implementing a Chrome DevTools Protocol (CDP) client to connect to the
+    inspector WebSocket, set breakpoints, and verify their resolved locations. Attempting
+    to write a standard test for this would lead to wasted effort and likely a broken
+    or flaky test.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 45-85
-- rule: Always use `bun.*` APIs instead of `std.*`
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions the bug occurs when using the `BUN_INSPECT`
-    environment variable. The agent might see the rule to use `bun.*` APIs over `std.*`
-    and attempt to use Bun's environment variable utilities to explicitly check for
-    `BUN_INSPECT` inside `VirtualMachine.zig`. However, `VirtualMachine` already tracks
-    this state via `this.isInspectorEnabled()`, which abstracts whether the debugger
-    was enabled via CLI or env var. Directly checking the environment variable here
-    would violate the architecture boundary and duplicate logic.
-  severity: high
-  source:
-    path: src/CLAUDE.md
-    lines: 15-26
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` focusing on building
-  and testing, and `src/CLAUDE.md` focusing on Zig conventions. The testing guidelines
-  in the root config strongly encourage writing tests for new features or bug fixes,
-  which conflicts with the practical reality that testing the debugger protocol is
-  too complex for this PR. The agent must recognize the scope boundary and prioritize
-  the Zig fix over the testing guidelines.
+    path: AGENTS.md
+    lines: 26-88
+hierarchy_analysis: The hierarchy is moderate (root `AGENTS.md` and `src/AGENTS.md`).
+  The root config focuses on testing and building, while the `src/` config focuses
+  on Zig conventions. The agent must apply the Zig conventions while recognizing that
+  the testing guidelines from the root config are out of scope for this specific,
+  highly complex inspector bug.

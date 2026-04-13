@@ -193,3 +193,21 @@ def test_repo_cargo_check_sui_move():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"cargo check -p sui-move failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_xlint():
+    """Repo passes cargo xlint license check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo xlint failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_cargo_clippy_sui_framework():
+    """Repo's sui-framework crate passes cargo clippy (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "sui-framework"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy -p sui-framework failed:\n{r.stderr[-500:]}"

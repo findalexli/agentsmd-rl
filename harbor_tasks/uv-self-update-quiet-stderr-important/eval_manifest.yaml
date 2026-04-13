@@ -132,18 +132,12 @@ distractors:
 - rule: ALWAYS attempt to add a test case for changed behavior
   collision_type: scope_ambiguity
   why_distracting: The rule demands adding a test case for changed behavior. However,
-    testing `uv self update` is notoriously difficult because it involves network
-    requests, GitHub API rate limits, and binary replacement. The prompt hints at
-    needing a version-filtering utility for snapshot tests, which is a complex undertaking.
-    The gold solution intentionally omits tests to focus on the core fix. An agent
-    strictly following this rule will likely waste significant time trying to mock
-    the updater or write flaky integration tests.
+    testing `uv self update` requires complex mocking of network connectivity, GitHub
+    API rate limits, and binary replacement. The gold solution omits tests entirely
+    to avoid this massive scope creep.
   severity: high
   source:
     path: CLAUDE.md
     lines: 2-3
-hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root level,
-  so there are no hierarchical conflicts between multiple config files. The primary
-  tension lies between the general directive to 'ALWAYS attempt to add a test case'
-  and the practical difficulty of testing the self-update mechanism, which the gold
-  solution bypasses.
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the repository root. There is no complex hierarchy or overriding required.

@@ -61,6 +61,35 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: CMake files must have no obvious syntax errors
+- id: test_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json must be valid JSON
+- id: test_shell_scripts_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts must have valid bash syntax
+# Enriched pass-to-pass tests using real CI commands
+- id: test_git_repo_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository must be valid and at expected base commit
+- id: test_contributing_md_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: CONTRIBUTING.md must have valid markdown syntax with balanced code blocks
+- id: test_contributing_mdx_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/project/contributing.mdx must have valid MDX syntax
+- id: test_cmake_structure_setup_webkit
+  type: pass_to_pass
+  origin: repo_tests
+  description: SetupWebKit.cmake must have required structure and patterns
+- id: test_cmake_structure_build_bun
+  type: pass_to_pass
+  origin: repo_tests
+  description: BuildBun.cmake must have required structure and patterns
 rubric:
 - rule: Follow existing code style — check neighboring files for patterns
   source:
@@ -110,27 +139,26 @@ config_edits:
 distractors:
 - rule: 'Build Bun: `bun bd` - Creates a debug build at `./build/debug/bun-debug`'
   collision_type: scope_ambiguity
-  why_distracting: The config states that building Bun uses `bun bd` and outputs to
-    `./build/debug/bun-debug`. However, this PR specifically updates the workflow
-    for local WebKit builds, which uses `bun run build:local` and outputs to `./build/debug-local`.
-    An agent might incorrectly change the documentation to use `bun bd` or the standard
-    debug path.
+  why_distracting: The config states that the standard way to build Bun is `bun bd`
+    which outputs to `./build/debug`. The agent might try to unify `build:local` with
+    `bun bd` or modify `AGENTS.md` to reflect the new local JSC build process, but
+    the instructions specifically scope the documentation changes to `CONTRIBUTING.md`
+    and `docs/project/contributing.mdx`.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 8-9
-- rule: Write tests using Bun's Jest-compatible test runner, preferring tempDir and
-    Bun.spawn for multi-file/process tests.
+    path: AGENTS.md
+    lines: 6-8
+- rule: 'Test Organization: Place tests in specific directories based on the feature
+    or issue.'
   collision_type: scope_ambiguity
-  why_distracting: The config provides extensive instructions for writing tests using
-    Bun.spawn and tempDir. An agent might attempt to write an integration test that
-    spawns `bun run build:local` to verify the build process. This would be inappropriate
-    as compiling WebKit in a standard test suite would be prohibitively slow and complex.
-  severity: medium
+  why_distracting: The config provides detailed instructions on how to write and organize
+    tests. The agent might assume it needs to write a test for the new build process,
+    but build system changes (CMake) typically don't have JS tests in this repo.
+  severity: low
   source:
-    path: CLAUDE.md
-    lines: 44-48
-hierarchy_analysis: CLAUDE.md and AGENTS.md are identical and provide general build
-  and test instructions. However, their build instructions (`bun bd`) apply to the
-  standard development workflow, not the specialized local WebKit build workflow (`build:local`)
-  being modified in this PR.
+    path: AGENTS.md
+    lines: 20-22
+hierarchy_analysis: The config files provide general repository instructions (`bun
+  bd`), but the PR is specifically about modifying the build system for a specialized
+  local JSC build (`build:local`). The agent must recognize that the general build
+  instructions do not apply to this specific CMake target and documentation update.

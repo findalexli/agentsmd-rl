@@ -30,10 +30,10 @@ def _bun_check(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — compilation checks
+# Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass — router.ts created by PR
 def test_router_exports_middleware():
     """router.ts must exist and export WorkspaceRouterMiddleware as a function."""
     r = _bun_check(f"""
@@ -45,10 +45,6 @@ def test_router_exports_middleware():
     """)
     assert r.returncode == 0, f"router.ts not importable or bad export:\n{r.stderr}"
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_instance_provide_in_router():

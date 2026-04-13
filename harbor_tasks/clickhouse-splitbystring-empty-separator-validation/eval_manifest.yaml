@@ -79,20 +79,19 @@ checks:
   origin: repo_tests
   description: C++ syntax check using clang-15 -fsyntax-only
 distractors:
-- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+- rule: When writing text such as documentation, comments, or commit messages, wrap
     literal names from ClickHouse SQL language, classes and functions, or literal
-    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+    excerpts from log messages inside inline code blocks
   collision_type: scope_ambiguity
-  why_distracting: The agent might interpret C++ exception messages as 'text' and
-    attempt to use Markdown backticks for the tokenizer name (e.g., `splitByString`)
-    instead of the standard single quotes used in ClickHouse exception messages.
+  why_distracting: The agent might interpret the C++ exception message as 'text' and
+    attempt to use markdown backticks around the tokenizer name instead of the single
+    quotes specified in the instruction and used in the surrounding code.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 7-7
-hierarchy_analysis: The AGENTS.md file contains general workflow and documentation
-  guidelines. There are no C++ specific coding standards in the config hierarchy that
-  apply to this PR.
+    lines: 5-5
+hierarchy_analysis: The single AGENTS.md file contains general repository guidelines
+  that are mostly irrelevant to this specific C++ code change.
 version: '2.0'
 source:
   repo: ClickHouse/ClickHouse

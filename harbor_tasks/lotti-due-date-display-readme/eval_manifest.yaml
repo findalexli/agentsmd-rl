@@ -25,6 +25,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's analysis_options.yaml is valid YAML
+- id: repo_flake8_manifest_tool
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python linting passes for manifest_tool (flake8)
+- id: repo_pytest_manifest_tool
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's manifest_tool Python tests pass (229 tests)
+- id: repo_dart_syntax_core_files
+  type: pass_to_pass
+  origin: static
+  description: Core modified Dart files have valid syntax
+- id: repo_metainfo_xml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Flatpak metainfo.xml is valid XML
+- id: repo_flathub_source_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Flatpak source YAML is valid
+- id: repo_manifest_tool_validation_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Manifest tool validation tests pass (9 Flathub compliance tests)
 - id: task_card_hides_due_date_for_completed
   type: fail_to_pass
   origin: pr_diff
@@ -57,10 +81,12 @@ rubric:
     commit: 48f5da393b2006f134fc55a77fbe8983135e0fb8
   reference: '## Blog Series: Meet Lotti
 
+
     The beginning of a [**multi-part blog series with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti)
     exploring everything Lotti can do is now live! From task management to AI-powered
     insights — learn how to take control of your productivity while keeping your data
     private.
+
 
     Start reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti)
     | [**Project Background**](docs/BACKGROUND.md)'
@@ -77,13 +103,23 @@ rubric:
     \ colors)\n- Updated README and Flatpak metainfo to reference the launched \"\
     Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior\
     \ based on task status"
+- rule: The README.md blog section must be updated with the Meet Lotti link
+  reference: 'The README.md file should contain:
+
+    - A heading "## Blog Series: Meet Lotti"
+
+    - A link to https://matthiasnehlsen.substack.com/p/meet-lotti
+
+    - The text "multi-part blog series with video walkthroughs"
+
+    - The old "Coming Soon: Deep Dive Series" heading should be removed'
 - rule: Update docs and localization as needed
   source:
     path: AGENTS.md
-    lines: 33-34
-  evidence: 'The gold solution updates `README.md` and `flatpak/com.matthiasn.lotti.metainfo.xml`
-    to reflect the live status of the ''Meet Lotti'' blog series, aligning with the
-    requirement to keep documentation up '
+    lines: 31-32
+  evidence: The gold solution updates README.md and flatpak/com.matthiasn.lotti.metainfo.xml
+    to reflect the launched status of the blog series, adhering to the guideline to
+    keep documentation updated.
   category: documentation
 config_edits:
 - path: CHANGELOG.md
@@ -100,44 +136,36 @@ config_edits:
   tier: 2
   gold_added: '## Blog Series: Meet Lotti
 
+
     The beginning of a [**multi-part blog series with video walkthroughs**](https://matthiasnehlsen.substack.com/p/meet-lotti)
     exploring everything Lotti can do is now live! From task management to AI-powered
     insights — learn how to take control of your productivity while keeping your data
     private.
 
+
     Start reading: [**Meet Lotti**](https://matthiasnehlsen.substack.com/p/meet-lotti)
     | [**Project Background**](docs/BACKGROUND.md)'
   gold_removed: '## Coming Soon: Deep Dive Series
 
+
     Coming in **December 2025**: a **10-part blog series with video walkthroughs**
     exploring everything Lotti can do. From task management to AI-powered insights
     — learn how to take control of your productivity while keeping your data private.
+
 
     Read more on [**Substack**](https://matthiasnehlsen.substack.com) | [**Project
     Background**](docs/BACKGROUND.md)'
 distractors:
 - rule: Update docs and localization as needed (run `make l10n`)
   collision_type: scope_ambiguity
-  why_distracting: The rule mentions running `make l10n` alongside updating docs.
-    An agent might try to update `.arb` files or run localization generation because
-    it updated the README and metainfo, but these are external metadata files, not
-    app UI strings that require localization updates.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 34-34
-- rule: run `dart-mcp.pub` + `make build_runner` (or `dart run build_runner`) via
-    MCP when regeneration is required
-  collision_type: scope_ambiguity
-  why_distracting: The agent might run `make build_runner` assuming the changes to
-    task status handling in the UI require regenerating freezed models, wasting time
-    and potentially causing unrelated diffs, even though no data models were actually
-    changed.
+  why_distracting: The rule pairs updating documentation with updating localization
+    (running `make l10n`). An agent might assume that modifying the UI for task cards
+    requires localization updates, but the changes only involve hiding widgets and
+    changing colors, so searching for `.arb` files or running localization scripts
+    would be a waste of time.
   severity: low
   source:
     path: AGENTS.md
-    lines: 60-60
-hierarchy_analysis: The repository relies on a single `AGENTS.md` file at the root
-  level. The rules are straightforward, but the grouping of documentation and localization
-  updates in a single bullet point creates a potential trap where updating one might
-  incorrectly imply the need to update the other.
+    lines: 31-32
+hierarchy_analysis: The repository uses a flat, single-file configuration (`AGENTS.md`)
+  at the root level. No complex hierarchy traversal is required.

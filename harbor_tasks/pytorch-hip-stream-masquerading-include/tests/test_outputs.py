@@ -262,6 +262,122 @@ def test_file_ends_with_newline():
             assert False, f"{filepath} does not end with newline"
 
 
+def test_kernel_launch_checks():
+    """CUDA kernel launches have proper error checks (pass_to_pass)."""
+    # This is the same check CI runs via torch/testing/_internal/check_kernel_launches.py
+    r = subprocess.run(
+        ["python3", "torch/testing/_internal/check_kernel_launches.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Kernel launch check failed:\n{r.stderr[:500]}"
+
+
+def test_no_nonbreaking_spaces_in_modified_files():
+    """Modified files have no non-breaking spaces (pass_to_pass)."""
+    # Same check CI runs in quick-checks: git grep -Irn $'\xC2\xA0'
+    nbsp = chr(0xC2) + chr(0xA0)
+    for filepath in [CUDA_STREAM_H, HIP_MASQ_H]:
+        if not filepath.exists():
+            continue
+        content = filepath.read_text()
+        if nbsp in content:
+            assert False, f"Non-breaking space found in {filepath}"
+
+
+def test_no_tabs_in_modified_files():
+    """Modified files have no tab characters (pass_to_pass)."""
+    # Same check CI runs: grep for tab characters
+    for filepath in [CUDA_STREAM_H, HIP_MASQ_H]:
+        if not filepath.exists():
+            continue
+        content = filepath.read_text()
+        if "\t" in content:
+            assert False, f"Tab character found in {filepath}"
+
+
+def test_lintrunner_tabs_check():
+    """CI TABS linter passes on modified files (pass_to_pass)."""
+    # Run the same linter CI uses for tab detection
+    r = subprocess.run(
+        [
+            "python3",
+            "tools/linter/adapters/grep_linter.py",
+            "--pattern", "\t",
+            "--linter-name", "TABS",
+            "--error-name", "tab characters",
+            "--error-description", "Tab characters found",
+            str(CUDA_STREAM_H.relative_to(REPO)),
+            str(HIP_MASQ_H.relative_to(REPO)),
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TABS linter failed:\n{r.stdout[-500:]}"
+
+
+def test_lintrunner_trailing_whitespace_check():
+    """CI SPACES linter passes on modified files (pass_to_pass)."""
+    # Run the same linter CI uses for trailing whitespace detection
+    r = subprocess.run(
+        [
+            "python3",
+            "tools/linter/adapters/grep_linter.py",
+            "--pattern", "[[:blank:]]$",
+            "--linter-name", "SPACES",
+            "--error-name", "trailing spaces",
+            "--error-description", "Trailing spaces found",
+            str(CUDA_STREAM_H.relative_to(REPO)),
+            str(HIP_MASQ_H.relative_to(REPO)),
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPACES linter failed:\n{r.stdout[-500:]}"
+
+
+def test_lintrunner_newline_check():
+    """CI NEWLINE linter passes on modified files (pass_to_pass)."""
+    # Run the same linter CI uses for newline checking
+    r = subprocess.run(
+        [
+            "python3",
+            "tools/linter/adapters/newlines_linter.py",
+            str(CUDA_STREAM_H.relative_to(REPO)),
+            str(HIP_MASQ_H.relative_to(REPO)),
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"NEWLINE linter failed:\n{r.stdout[-500:]}"
+
+
+def test_lintrunner_exec_check():
+    """CI EXEC linter passes on modified files (pass_to_pass)."""
+    # Run the same linter CI uses to check files aren't executable
+    r = subprocess.run(
+        [
+            "python3",
+            "tools/linter/adapters/exec_linter.py",
+            str(CUDA_STREAM_H.relative_to(REPO)),
+            str(HIP_MASQ_H.relative_to(REPO)),
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"EXEC linter failed:\n{r.stdout[-500:]}"
+
+
+def test_codespell_check():
+    """CI codespell linter passes on modified files (pass_to_pass)."""
+    # Run the codespell linter CI uses for spell checking
+    r = subprocess.run(
+        [
+            "python3",
+            "tools/linter/adapters/codespell_linter.py",
+            str(CUDA_STREAM_H.relative_to(REPO)),
+            str(HIP_MASQ_H.relative_to(REPO)),
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Codespell linter failed:\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — C++ compilation verifies declarations accessible
 # ---------------------------------------------------------------------------

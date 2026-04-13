@@ -84,17 +84,20 @@ rubric:
     path: AGENTS.md
     lines: '80'
     commit: 02a25454bc8ff348b05ae2a62040d5ec48237e16
+  reference: code
 - rule: Follow existing code patterns in the same module
   source:
     path: CLAUDE.md
     lines: '76'
     commit: 02a25454bc8ff348b05ae2a62040d5ec48237e16
+  reference: code
 - rule: Explicit type hints on function signatures (except for standard framework
     objects like app or serving_models)
   source:
     path: AGENTS.md
     lines: 99-100
     commit: 02a25454bc8ff348b05ae2a62040d5ec48237e16
+  reference: code
 - rule: No wildcard imports (`from x import *`).
   source:
     path: AGENTS.md
@@ -102,30 +105,51 @@ rubric:
   evidence: The gold solution explicitly imports `LoRARequest` from `vllm.lora.request`
     rather than using a wildcard import.
   category: style
+  reference: code
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '34'
+  evidence: The gold solution reuses the existing `logger` object in the file for
+    its `logger.info` and `logger.warning` calls, matching the surrounding code's
+    logging style instead of introducing a new logger.
+  category: style
+  reference: code
 distractors:
-- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
-    `print` or `logging.__name__`.'
-  collision_type: architecture_boundary
-  why_distracting: The file `areal_vllm_server.py` is a vLLM extension and already
-    uses vLLM's logger (`from vllm.logger import init_logger`). Forcing the AReaL-specific
-    logger (`areal.utils.logging.getLogger`) here would mix logging frameworks in
-    a vLLM-owned context and violate the file's existing pattern.
+- rule: No hardcoded secrets, paths, or endpoints.
+  collision_type: rule_conflict
+  why_distracting: The rule forbids hardcoded paths, but the PR instruction explicitly
+    requires falling back to a synthetic `xccl://` path. An agent strictly following
+    the rule might refuse to implement the fallback, ask for clarification, or try
+    to make it configurable, which overcomplicates the requested fix.
   severity: high
   source:
     path: AGENTS.md
-    lines: 55-56
-- rule: Add tests for new functionality
+    lines: 24-24
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    print or logging.__name__.'
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates using `areal.utils.logging.getLogger(name)` with
+    PascalCase names. However, this specific file (`areal_vllm_server.py`) is a vLLM
+    extension and uses vLLM's native logging (`vllm.logger.init_logger`). Applying
+    the AReaL logging convention here would break consistency with the vLLM subsystem.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 65-67
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The task is specifically to harden the registration path in the
-    vLLM server file. Writing unit tests for this vLLM server extension would require
-    complex mocking of vLLM internals and FastAPI requests, which is out of scope
-    for this specific fix.
+  why_distracting: The rule requires adding tests for new functionality. The agent
+    might attempt to write unit tests for the new `_infer_runtime_lora_path` and `_register_runtime_lora_name`
+    helpers, which would require complex mocking of vLLM server state and is out of
+    scope for this specific bug fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 46-46
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide overlapping rules regarding
-  imports, code patterns, and testing. `AGENTS.md` provides more specific logging
-  rules, but applying them blindly ignores the architectural boundary of the vLLM
-  extension. The rule to 'Follow existing code patterns' must take precedence over
-  the global AReaL logging rule in this specific file.
+    path: AGENTS.md
+    lines: 32-32
+hierarchy_analysis: The repository uses a flat configuration structure with `AGENTS.md`
+  and `CLAUDE.md` at the root level providing identical or highly overlapping rules.
+  The primary challenge is not hierarchy traversal, but rather context-aware rule
+  application (e.g., knowing when a file belongs to a third-party extension boundary
+  like vLLM, and knowing when a direct prompt instruction overrides a general 'no
+  hardcoded paths' rule).

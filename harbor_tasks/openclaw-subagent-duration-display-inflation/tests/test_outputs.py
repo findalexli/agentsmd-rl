@@ -244,7 +244,7 @@ def test_repo_lint():
         ["pnpm", "exec", "oxlint", "--type-aware"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Lint failed:\\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
 
 
 # [repo_ci] pass_to_pass
@@ -254,7 +254,7 @@ def test_repo_format_time_tests():
         ["pnpm", "exec", "vitest", "run", "src/infra/format-time/format-time.test.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"format-time tests failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"format-time tests failed:\n{r.stderr[-500:]}"
 
 
 # [repo_ci] pass_to_pass
@@ -264,4 +264,55 @@ def test_repo_no_conflict_markers():
         ["pnpm", "check:no-conflict-markers"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Conflict markers check failed:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ts_check_subagents_format():
+    """TypeScript syntax check on subagents-format.ts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/src/shared/subagents-format.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TS syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_modified_files_syntax():
+    """Syntax check on all modified files passes (pass_to_pass)."""
+    modified_files = [
+        "src/shared/subagents-format.ts",
+        "src/agents/subagent-control.ts",
+        "src/auto-reply/reply/commands-subagents/shared.ts",
+    ]
+    for rel in modified_files:
+        p = Path(f"{REPO}/{rel}")
+        if not p.exists():
+            continue
+        r = subprocess.run(
+            ["node", "--check", str(p)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax check failed for {rel}:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_format_time_related_tests():
+    """All format-time related unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "src/infra/format-time/", "--config", "vitest.unit.config.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"format-time tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_git_status_clean():
+    """Git workspace is clean (no uncommitted changes) at base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed:\n{r.stderr[-500:]}"
+    # At base commit, there should be no uncommitted changes
+    assert r.stdout.strip() == "", f"Git workspace has uncommitted changes:\n{r.stdout}"

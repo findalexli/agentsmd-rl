@@ -612,6 +612,139 @@ def test_repo_shell_scripts_executable():
     assert r.returncode == 0, f"Shell script syntax check failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_no_crlf():
+    """
+    CI: Source file has no CRLF line endings (pass_to_pass).
+
+    Based on ClickHouse CI check for Windows-style line endings.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'rb') as f:
+    content = f.read()
+
+if b'\\r\\n' in content:
+    print("FAIL: CRLF line endings found")
+    sys.exit(1)
+
+print("PASS: No CRLF line endings")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CRLF check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_multiple_empty_lines():
+    """
+    CI: Source file has no more than 2 consecutive empty lines (pass_to_pass).
+
+    Based on ClickHouse CI style check - no more than 2 consecutive empty lines.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    lines = f.readlines()
+
+consecutive_empty = 0
+for i, line in enumerate(lines, 1):
+    if line.strip() == '':
+        consecutive_empty += 1
+        if consecutive_empty > 2:
+            print(f"FAIL: More than 2 consecutive empty lines at line {{i}}")
+            sys.exit(1)
+    else:
+        consecutive_empty = 0
+
+print("PASS: No excessive consecutive empty lines")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Empty lines check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_excessive_exclamation():
+    """
+    CI: Source file has no excessive exclamation marks (pass_to_pass).
+
+    Based on ClickHouse CI style check - no '!!!' patterns.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    content = f.read()
+
+if '!!!' in content:
+    print("FAIL: Excessive exclamation marks found (!!!)")
+    sys.exit(1)
+
+print("PASS: No excessive exclamation marks")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Exclamation check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_builtin_unreachable():
+    """
+    CI: No __builtin_unreachable() in source (pass_to_pass).
+
+    Based on ClickHouse CI - use UNREACHABLE() macro instead.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    content = f.read()
+
+if '__builtin_unreachable' in content:
+    print("FAIL: __builtin_unreachable found, use UNREACHABLE() instead")
+    sys.exit(1)
+
+print("PASS: No __builtin_unreachable")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"builtin_unreachable check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_mt19937_random():
+    """
+    CI: No std::mt19937 or std::random_device in source (pass_to_pass).
+
+    Based on ClickHouse CI - use pcg64_fast instead.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    content = f.read()
+
+forbidden = ['std::mt19937', 'std::mersenne_twister_engine', 'std::random_device']
+for pattern in forbidden:
+    if pattern in content:
+        print(f"FAIL: {{pattern}} found, use pcg64_fast instead")
+        sys.exit(1)
+
+print("PASS: No forbidden random generators")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Random generator check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
 # ============================================================================
 # AGENT_CONFIG TESTS (Compliance with project conventions)
 # ============================================================================

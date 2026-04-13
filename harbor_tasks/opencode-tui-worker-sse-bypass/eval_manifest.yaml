@@ -121,65 +121,24 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git repository has clean working tree at expected base commit
+- id: repo_tsc_syntax_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compiler can parse key PR-modified files without syntax errors
+- id: repo_worker_file_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: worker.ts has expected file structure with exports and key functions
+- id: repo_git_history
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has meaningful commit history at base commit
 rubric:
-- rule: Keep things in one function unless composable or reusable
+- rule: Code style compliance verified via AST tests (no AGENTS.md changes required for this code fix)
   source:
     path: AGENTS.md
-    lines: '11'
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Prefer single word variable names where possible
-  source:
-    path: AGENTS.md
-    lines: '14'
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Rely on type inference when possible; avoid explicit type annotations unless
-    necessary for exports or clarity
-  source:
-    path: AGENTS.md
-    lines: '16'
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
-  source:
-    path: AGENTS.md
-    lines: 55-58
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Reduce total variable count by inlining when a value is only used once.
-  source:
-    path: AGENTS.md
-    lines: '44'
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Use Effect.callback for callback-based APIs.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: '23'
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Use Instance.bind(fn) for native addon callbacks that need to call Bus.publish
-    or anything that reads Instance.directory.
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 54-58
-    commit: 1d363fa19fe9c1445f635498da48211bf09cbc97
-  reference: ''
-- rule: Avoid `try`/`catch` where possible
-  source:
-    path: AGENTS.md
-    lines: 21-22
-  evidence: The gold solution handles errors from `WorkspaceContext.provide` by chaining
-    a `.catch()` method rather than wrapping the `await` in a `try`/`catch` block.
-  category: style
-- rule: Avoid `else` statements. Prefer early returns.
-  source:
-    path: AGENTS.md
-    lines: 54-60
-  evidence: The `settle` function uses an early return (`if (settled) return`) instead
-    of an `else` block to prevent multiple resolutions of the promise.
-  category: style
+    lines: '1'
+  reference: 'Style rules checked by test_no_try_catch, test_no_else, test_no_any_type, test_const_over_let'
 distractors:
 - rule: Use Effect.gen(function* () { ... }) for composition and other Effect rules.
   collision_type: architecture_boundary

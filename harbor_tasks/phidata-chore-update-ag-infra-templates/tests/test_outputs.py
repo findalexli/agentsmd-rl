@@ -337,3 +337,57 @@ def test_agno_infra_modules_importable():
     )
     assert r.returncode == 0, f"Failed to import operator module: {r.stderr}"
     assert "Operator import OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_ruff_format_check():
+    """Repo's ruff format check passes on agno_infra (pass_to_pass)."""
+    # Install dev dependencies first
+    install = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install.returncode == 0, f"Failed to install dev dependencies: {install.stderr}"
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/libs/agno_infra"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_format_script():
+    """Repo's format.sh script runs successfully on agno_infra (pass_to_pass)."""
+    # Install dev dependencies first
+    install = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install.returncode == 0, f"Failed to install dev dependencies: {install.stderr}"
+    r = subprocess.run(
+        ["bash", f"{REPO}/libs/agno_infra/scripts/format.sh"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Format script failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_import_check():
+    """Repo's agno_infra package imports correctly from installed location (pass_to_pass)."""
+    # Install agno_infra first
+    install = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install.returncode == 0, f"Failed to install agno_infra: {install.stderr}"
+
+    # Verify imports work after pip install
+    r = subprocess.run(
+        ["python3", "-c",
+         "from agno.infra.enums import InfraStarterTemplate; "
+         "from agno.infra.operator import TEMPLATE_TO_NAME_MAP, TEMPLATE_TO_REPO_MAP; "
+         "print('All agno.infra imports OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Import check failed: {r.stderr}"
+    assert "All agno.infra imports OK" in r.stdout

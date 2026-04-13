@@ -3,15 +3,15 @@ set -euo pipefail
 
 cd /workspace/openclaw
 
-# Idempotency check: if the scope authorization is already in tools-invoke-http.ts, skip
-if grep -q 'authorizeOperatorScopesForMethod' src/gateway/tools-invoke-http.ts 2>/dev/null; then
+# Idempotency check
+if grep -q "authorizeOperatorScopesForMethod" src/gateway/tools-invoke-http.ts 2>/dev/null; then
   echo "Patch already applied."
   exit 0
 fi
 
-git apply - <<'PATCH'
+cat > /tmp/patch.diff << 'PATCH_EOF'
 diff --git a/src/gateway/tools-invoke-http.ts b/src/gateway/tools-invoke-http.ts
-index f9f97c5c9ee0..43d08b28e1c9 100644
+index f9f97c5c9ee0..9e6b8c5a2b4f 100644
 --- a/src/gateway/tools-invoke-http.ts
 +++ b/src/gateway/tools-invoke-http.ts
 @@ -13,6 +13,7 @@ import {
@@ -22,7 +22,7 @@ index f9f97c5c9ee0..43d08b28e1c9 100644
    collectExplicitAllowlist,
    mergeAlsoAllowPolicy,
    resolveToolProfilePolicy,
-@@ -28,7 +29,10 @@ import { DEFAULT_GATEWAY_HTTP_TOOL_DENY } from "../security/dangerous-tools.js";
+@@ -28,7 +29,10 @@ import { DEFAULT_GATEWAY_HTTP_TOOL_DENY } from "../security/dangerous-tools.js"
  import { normalizeMessageChannel } from "../utils/message-channel.js";
  import type { AuthRateLimiter } from "./auth-rate-limit.js";
  import type { ResolvedGatewayAuth } from "./auth.js";
@@ -39,13 +39,13 @@ index f9f97c5c9ee0..43d08b28e1c9 100644
  } from "./http-common.js";
  import { getHeader } from "./http-utils.js";
 +import { authorizeOperatorScopesForMethod } from "./method-scopes.js";
-
+ 
  const DEFAULT_BODY_BYTES = 2 * 1024 * 1024;
  const MEMORY_TOOL_NAMES = new Set(["memory_search", "memory_get"]);
 @@ -168,6 +173,19 @@ export async function handleToolsInvokeHttpRequest(
      return true;
    }
-
+ 
 +  const requestedScopes = resolveGatewayRequestedOperatorScopes(req);
 +  const scopeAuth = authorizeOperatorScopesForMethod("agent", requestedScopes);
 +  if (!scopeAuth.allowed) {
@@ -71,7 +71,7 @@ index f9f97c5c9ee0..43d08b28e1c9 100644
 +  // stay unavailable on this surface even when callers assert admin scopes.
 +  const ownerFiltered = applyOwnerOnlyToolPolicy(subagentFiltered, false);
 +  const gatewayFiltered = ownerFiltered.filter((t) => !gatewayDenySet.has(t.name));
-
+ 
    const tool = gatewayFiltered.find((t) => t.name === toolName);
    if (!tool) {
 diff --git a/src/security/dangerous-tools.ts b/src/security/dangerous-tools.ts
@@ -108,7 +108,8 @@ index 6d1274723a52..12c4417242c2 100644
    // Interactive setup — requires terminal QR scan, hangs on HTTP
    "whatsapp_login",
  ] as const;
+PATCH_EOF
 
-PATCH
+git apply /tmp/patch.diff
 
 echo "Patch applied successfully."

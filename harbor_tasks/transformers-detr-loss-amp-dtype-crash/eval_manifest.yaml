@@ -1,96 +1,37 @@
-version: '2.0'
+version: "2.0"
+
 source:
-  repo: huggingface/transformers
-  pr: 44886
-  base_commit: b94fee049373eb2e140d4866847559c4c42b3d7e
-  merge_commit: 18f88de7f575410f3ad8a64418abf2572fecb259
+  repo: "expressjs/express-async-handler"
+  pr: 24
+  base_commit: "3b71cf2842d60d2f200361db42f238ce43d6e7eb"
+
 checks:
-- id: syntax_check
-  type: pass_to_pass
-  origin: static
-  description: Both modified loss files must parse without errors
-- id: lwdetr_loss_labels_float16_pow_promotion
-  type: fail_to_pass
-  origin: pr_diff
-  description: LwDetrImageLoss.loss_labels must not crash when pow promotes to float32
-    under float16 autocast
-- id: rtdetr_loss_labels_vfl_float16_pow_promotion
-  type: fail_to_pass
-  origin: pr_diff
-  description: RTDetrLoss.loss_labels_vfl must not crash when pow promotes to float32
-    under float16 autocast
-- id: lwdetr_loss_labels_float32
-  type: pass_to_pass
-  origin: pr_diff
-  description: LwDetrImageLoss.loss_labels still works with default float32 inputs
-- id: rtdetr_loss_labels_vfl_float32
-  type: pass_to_pass
-  origin: pr_diff
-  description: RTDetrLoss.loss_labels_vfl still works with default float32 inputs
-- id: no_bare_type_ignore
-  type: pass_to_pass
-  origin: agent_config
-  description: 'type: ignore comments must include specific error codes, not bare'
-  source:
-    path: .ai/skills/add-or-fix-type-checking/SKILL.md
-    lines: 185-186
-    commit: b94fee049373eb2e140d4866847559c4c42b3d7e
-- id: test_repo_import_lw_detr_loss
-  type: pass_to_pass
-  origin: repo_tests
-  description: LwDetrImageLoss can be imported from loss_lw_detr
-- id: test_repo_import_rt_detr_loss
-  type: pass_to_pass
-  origin: repo_tests
-  description: RTDetrLoss can be imported from loss_rt_detr
-- id: test_repo_py_compile_loss_files
-  type: pass_to_pass
-  origin: repo_tests
-  description: Both modified loss files compile with py_compile
-- id: test_repo_transformers_package_imports
-  type: pass_to_pass
-  origin: repo_tests
-  description: transformers package imports correctly from source
-rubric:
-- rule: Bugfix PRs in particular can often be only one or two lines long, and do not
-    need large comments, docstrings or new functions in this case. Aim to minimize
-    the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: b94fee049373eb2e140d4866847559c4c42b3d7e
-- rule: We try to avoid direct inheritance between model-specific files
-  source:
-    path: CLAUDE.md
-    lines: 60-62
-  evidence: The gold solution implements the exact same autocast dtype fix (`.to(dtype)`)
-    independently in both `loss_lw_detr.py` and `loss_rt_detr.py` rather than attempting
-    to refactor them to inherit from a co
-  category: architecture
-distractors:
-- rule: Do not edit a `# Copied from` block... Ideally you should edit the code it's
-    copying from and propagate the change
-  collision_type: scope_ambiguity
-  why_distracting: The agent might assume that because `loss_lw_detr.py` and `loss_rt_detr.py`
-    require nearly identical fixes, one is copied from the other, and thus might try
-    to only edit one file and run `make fix-repo` to propagate the change. However,
-    these files do not use the `# Copied from` mechanism, so both must be edited manually.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 63-65
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: rule_conflict
-  why_distracting: The issue description mentions a 'related deprecation warning...
-    where a list is used for advanced indexing'. An agent might refuse to fix this,
-    citing the rule against 'tiny edits' or 'isolated lint cleanup'. However, the
-    rule only forbids *one-off* PRs for these; bundling the fix with the main AMP
-    crash fix is correct and expected.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 38-39
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical rules. The rules
-  primarily focus on PR submission policies and the `# Copied from` mechanism for
-  model files.
+  # Fail-to-pass tests: These must fail on base commit, pass after fix
+  - id: test_sync_error_caught
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Sync errors thrown by handler are caught and passed to next()"
+
+  - id: test_no_thrown_error_escapes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No sync error escapes the wrapper uncaught"
+
+  # Pass-to-pass tests: These must pass on both base and fix
+  - id: test_async_error_still_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Async errors (Promise rejections) continue to work as before"
+
+  - id: test_return_value_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: "The return value from the handler is still available"
+
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "The main index.js file exists"
+
+rubric: []
+config_edits: []

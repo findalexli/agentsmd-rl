@@ -23,6 +23,20 @@ checks:
   origin: repo_tests
   description: Repo's package.json lint check passes (validates exact dependency versions
     in test package.json files)
+- id: repo_int_from_float
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's intFromFloat test passes (bun.intFromFloat function behavior
+    for float-to-integer conversion)
+- id: repo_sort_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's sort-imports script passes (Zig import sorting via scripts/sort-imports.ts)
+- id: repo_glob_sources
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's glob-sources script passes (validates Bun Glob API scanning 2000+
+    source files for CMake)
 - id: workitem_tracks_multiple_indices
   type: fail_to_pass
   origin: pr_diff
@@ -117,35 +131,51 @@ rubric:
   evidence: The gold solution uses `bun.bit_set.AutoBitSet` instead of `std.bit_set`
     to implement the `ComponentSet` for tracking active component indices.
   category: architecture
+- rule: Always use bun.* APIs instead of std.*
+  source:
+    path: src/AGENTS.md
+    lines: 15-28
+  evidence: The gold solution uses `bun.bit_set.AutoBitSet` in `GlobWalker.zig` instead
+    of reaching for `std.bit_set`, adhering to the rule to prefer Bun APIs over the
+    standard library.
+  category: architecture
+- rule: 'Decl literals in Zig are recommended. const decl: Decl = .{ .binding = 0,
+    .value = 0 };'
+  source:
+    path: src/AGENTS.md
+    lines: 6-7
+  evidence: In `src/collections/bit_set.zig`, the `iterator` method returns `.{ .static
+    = s.iterator(options) }` and `.{ .dynamic = d.iterator(options) }`, correctly
+    using the recommended decl literal syntax inst
+  category: style
 distractors:
-- rule: 'When multi-file tests are required: ... await using proc = Bun.spawn(...)'
-  collision_type: scope_ambiguity
-  why_distracting: Testing `Bun.Glob.scan()` requires creating a multi-file directory
-    structure (e.g., `node_modules/**/*.js`) to reproduce the bug. The agent might
-    interpret this as a 'multi-file test' and use `Bun.spawn` to run the test in a
-    separate process. However, `Bun.Glob.scan()` is a JS API that should be tested
-    directly in the same process using `tempDir` to create the files, rather than
-    spawning a new process just to call the API.
+- rule: "bun.sys \u2014 System Calls (src/sys.zig) ... Key functions: openat, read,\
+    \ etc."
+  collision_type: architecture_boundary
+  why_distracting: The bug description explicitly complains about 'redundant openat
+    + readdir + close syscalls'. The config file provides a large section detailing
+    how to use `bun.sys.openat`, `bun.sys.read`, and `bun.sys.File`. An agent might
+    be tempted to implement a directory caching mechanism at the `bun.sys` level or
+    modify the I/O calls directly, missing that the correct fix is algorithmic (fixing
+    the NFA state duplication in `GlobWalker.zig`).
+  severity: high
+  source:
+    path: src/AGENTS.md
+    lines: 30-70
+- rule: Do not write flaky tests. Unless explicitly asked, never wait for time to
+    pass in tests.
+  collision_type: would_cause_bug
+  why_distracting: The bug is described as a performance issue where the scan 'takes
+    roughly 2x longer'. An agent writing a regression test might try to measure execution
+    time (e.g., using `performance.now()`) to assert the fix, which directly violates
+    the rule against writing flaky tests.
   severity: medium
   source:
-    path: test/CLAUDE.md
-    lines: 44-62
-- rule: Never use `@import()` inline inside of functions. Always put them at the bottom
-    of the file or containing struct.
-  collision_type: rule_conflict
-  why_distracting: The gold solution defines `const ComponentSet = bun.bit_set.AutoBitSet;`
-    inside the `GlobWalker_` function. An agent might mistakenly think this violates
-    the rule against inline imports and try to move it to the bottom of the file or
-    add an `@import` at the bottom. However, `bun` is already available and type aliases
-    inside functions are perfectly valid Zig as long as they aren't inline `@import()`s.
-  severity: low
-  source:
-    path: src/CLAUDE.md
-    lines: 13-14
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` and `AGENTS.md`
-  files, with specific overrides in `src/` and `test/` directories. The `src/CLAUDE.md`
-  file provides Zig-specific guidelines, emphasizing the use of `bun.*` APIs over
-  `std.*`, which is crucial for the `GlobWalker.zig` changes. The `test/CLAUDE.md`
-  file provides testing guidelines, but its distinction between single-file and multi-file
-  tests can be ambiguous for API tests that require multi-file fixtures but don't
-  need to spawn a separate Bun process.
+    path: test/AGENTS.md
+    lines: 15-17
+hierarchy_analysis: The config hierarchy requires the agent to apply domain-specific
+  rules based on the file being edited. `src/AGENTS.md` governs the Zig implementation
+  (enforcing `bun.*` APIs and decl literals), while `test/AGENTS.md` governs the test
+  file. The root `AGENTS.md` provides the overarching build commands. The agent must
+  synthesize these separate domain rules without letting the extensive `bun.sys` documentation
+  distract from the algorithmic nature of the bug.

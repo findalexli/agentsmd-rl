@@ -79,13 +79,31 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Tanstack example builds successfully with pnpm and vite
+- id: typescript_client_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript client package typecheck passes with tsc
+- id: typescript_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript client package builds successfully with pnpm
+- id: typescript_client_stylecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript client package passes ESLint linting
+- id: repo_lockfile_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm-lock.yaml is valid and dependencies install successfully
 rubric:
 - rule: Documentation updates are consistent with the style of existing docs in the
     repo
   source:
-    path: examples/tanstack-db-web-starter/AGENTS.md
-    lines: 1-10
+    path: AGENTS.md
+    lines: 195-205
     commit: 551cb0265c7d4b53b8cba6d9fc8181997c463940
+  reference: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client`
+    v1.0.13+ UPGRADE!
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -142,18 +160,19 @@ config_edits:
     \ - No connection limits or artificial delays\n- **Production-like performance**\
     \ - Your l"
 distractors:
-- rule: Put Electric behind server/proxy – never call directly from production
+- rule: Put Electric behind server/proxy – never call directly from production / enforce
+    auth at proxy
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates putting Electric behind a proxy for production
-    security. An agent might confuse the local dev Caddy proxy (which was only used
-    to bypass browser HTTP/1.1 connection limits) with this required security proxy,
-    and either refuse to remove Caddy or try to replace it with a different proxy
-    instead of relying on the new client's subdomain sharding.
+  why_distracting: The instruction asks the agent to remove the Caddy HTTP/2 proxy
+    used for local development. However, the security rules mandate putting Electric
+    behind a server/proxy for production and enforcing auth at the proxy. An agent
+    might either refuse to remove Caddy thinking it violates this rule, or mistakenly
+    delete these production security rules thinking all proxies are now deprecated.
   severity: high
   source:
     path: AGENTS.md
-    lines: 18-20
-hierarchy_analysis: The AGENTS.md file acts as the root configuration. The PR actually
-  modifies this file to update troubleshooting steps, which means the agent needs
-  to recognize that the architectural rules about proxies in production (for security)
-  are distinct from the local development proxy (Caddy) being removed in this PR.
+    lines: 19-21
+hierarchy_analysis: The task involves editing the root `AGENTS.md` file, which acts
+  as the agent's own instruction/config file. The agent must update its own guidelines
+  to reflect the new architectural capability (subdomain sharding replacing the need
+  for a local proxy) without destroying unrelated production proxy rules.

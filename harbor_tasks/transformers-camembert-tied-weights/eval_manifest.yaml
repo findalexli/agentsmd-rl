@@ -41,6 +41,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Pipeline type hints are correct
+- id: config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config attributes are correctly defined
 - id: modeling_file_structure
   type: pass_to_pass
   origin: static
@@ -51,6 +55,14 @@ checks:
   origin: static
   description: CamembertForCausalLM has _tied_weights_keys defined in both modeling
     and modular files
+- id: syntax_valid_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified camembert files must parse without syntax errors via AST
+- id: camembert_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: CamembertForCausalLM can be imported without errors
 - id: model_instantiates
   type: fail_to_pass
   origin: pr_diff
@@ -80,50 +92,48 @@ checks:
 rubric:
 - rule: Code fix tasks require only code changes, not config file modifications. The
     tied weights fix correctly changes only modeling_camembert.py and modular_camembert.py.
+  source:
+    path: src/transformers/models/camembert/modeling_camembert.py
   reference: _tied_weights_keys defines roberta.embeddings.word_embeddings.weight
 - rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
     `modular` files can inherit from other models.
   source:
-    path: CLAUDE.md
-    lines: 58-62
+    path: src/transformers/models/camembert/modular_camembert.py
   evidence: The gold solution modifies `modular_camembert.py` to add the `_tied_weights_keys`
     override to `CamembertForCausalLM`, which inherits from `RobertaForCausalLM`,
-    aligning with the modular file design pa
+    aligning with the modular file design pattern
   category: architecture
 distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
+  collision_type: meta_confusion
+  why_distracting: The prompt does not provide coordination evidence or an issue link.
+    The agent might follow the fail-closed behavior and refuse to generate the fix,
+    returning an explanation instead.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-64
+- rule: If approval is missing or ambiguous, stop and ask for clarification instead
+    of drafting a PR.
+  collision_type: meta_confusion
+  why_distracting: The agent might stop and ask for clarification instead of drafting
+    the fix because there is no explicit approval or issue thread provided in the
+    prompt.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 38-42
 - rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
     one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The fix requires changing a single string prefix from 'camembert'
-    to 'roberta'. The agent might interpret this as a 'tiny edit' or 'single typo'
-    and refuse to solve the issue or attempt to bundle it with unrelated cleanups
-    to justify the PR.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 36-37
-- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
-    be able to defend the change end-to-end... Do not raise PRs without human validation.'
-  collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate a solution entirely, citing
-    the policy that 'Pure code-agent PRs are not allowed' and that it cannot proceed
-    without human validation.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 41-49
-- rule: '`make fix-repo` will copy code to generate standalone `modeling` and other
-    files from the `modular`'
-  collision_type: architecture_boundary
-  why_distracting: The rule states `make fix-repo` generates the `modeling` files
-    from `modular` files. An agent might edit only the modular file and rely on `make
-    fix-repo`, which could fail in the test environment or time out. The gold solution
-    manually patches both files to ensure the fix is applied.
+  why_distracting: The agent might classify this single-line dictionary value fix
+    as a 'tiny edit' or 'low-value busywork' and refuse to generate the patch.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 58-62
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical content and apply
-  globally. The agent must navigate the meta-rules restricting AI contributions by
-  ignoring them in the context of a benchmark evaluation, while adhering to the architectural
-  guidelines regarding modular models.'
+    path: AGENTS.md
+    lines: 49-51
+hierarchy_analysis: The config is flat (Level 0 `AGENTS.md` and `CLAUDE.md` are identical).
+  The primary challenge is balancing the strict meta-instructions (fail-closed, coordination
+  required) against the user's direct instruction to fix the bug. The agent must proceed
+  with the fix despite the lack of coordination evidence.

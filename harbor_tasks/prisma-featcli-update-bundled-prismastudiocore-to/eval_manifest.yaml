@@ -20,14 +20,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's engines override check passes
+- id: test_repo_lint_studio
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check on Studio.ts passes
+- id: test_repo_studio_vitest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Studio vitest tests pass
 - id: test_studio_syntax_node_check
   type: pass_to_pass
   origin: repo_tests
   description: Studio.ts must pass Node.js syntax validation
-- id: test_repo_studio_unit_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Studio unit tests pass
 - id: transaction_procedure_handler
   type: fail_to_pass
   origin: pr_diff
@@ -73,7 +77,7 @@ rubric:
     path: AGENTS.md
     lines: 108-114
     commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
-- rule: always edit `AGENTS.md` directly. When learning something new about the codebase
+- rule: always edit AGENTS.md directly. When learning something new about the codebase
     that would help with future tasks, update this file immediately.
   source:
     path: AGENTS.md
@@ -82,36 +86,30 @@ rubric:
     Studio CLI compatibility patterns, import map alignment, and esm.sh React pinning,
     fulfilling the instruction to update the file w
   category: documentation
-config_edits:
-- path: AGENTS.md
-  tier: 1
-  gold_added: "- For isolated Studio verification, you can run `packages/cli/src/Studio.ts`\
-    \ directly via `pnpm exec tsx` and pass a config object that preserves `loadedFromFile`;\
-    \ this keeps SQLite URLs resolving relative to the config file while avoiding\
-    \ unrelated `packages/cli/src/bin.ts` imports.\n  - Recent `@prisma/studio-core`\
-    \ bumps can require keeping the CLI's HTML import map in `packages/cli/src/Studio.ts`\
-    \ aligned with new bare browser imports (for example `@radix-ui/react-toggle`\
-    \ and `chart.js/auto`), and the CLI shell can serve `/favicon.ico` directly if\
-    \ the Studio UI starts requesting one.\n  - `esm.sh` may resolve React-based browser\
-    \ dependencies against a newer canary React by default. When the Studio shell\
-    \ imports such packages via the HTML import map, pin them with `?deps=react@<shell-version>,react-dom@<shell-version>`\
-    \ or the command palette can crash with invalid-hook-call style errors.\n  - If\
-    \ Enter or click does not open a cell editor in Studio, verify that the current\
-    \ table and column are writable before assuming a keyboard regression; views/system\
-    \ tables and read-only columns legitimately stay non-editable."
-  gold_removed: ''
-distractors:
-- rule: Build configuration uses esbuild via `helpers/compile/build.ts` with configs
-    in `helpers/compile/configs.ts`.
-  collision_type: architecture_boundary
-  why_distracting: The agent might attempt to modify the esbuild configuration in
-    `helpers/compile/configs.ts` to bundle the new dependencies (`@radix-ui/react-toggle`
-    and `chart.js/auto`), but these are loaded dynamically in the browser via the
-    HTML import map in `Studio.ts`.
-  severity: high
+- rule: When learning something new about the codebase that would help with future
+    tasks, update this file immediately.
   source:
     path: AGENTS.md
-    lines: 14-16
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical content, but the root
-  rule explicitly states that CLAUDE.md is a symlink and AGENTS.md must be edited
-  directly. The gold solution correctly targets AGENTS.md for the documentation update.
+    lines: 3-4
+  evidence: The gold solution directly modifies AGENTS.md to document the newly learned
+    Studio CLI compatibility patterns (import map alignment, esm.sh React pinning)
+    as instructed by the meta note.
+  category: documentation
+- rule: Keep examples aligned with new config-first workflow.
+  source:
+    path: AGENTS.md
+    lines: 67-68
+  evidence: The added documentation in AGENTS.md mentions passing a config object
+    that preserves loadedFromFile to keep SQLite URLs resolving relative to the config
+    file, aligning with the config-first workflow
+  category: documentation
+distractors:
+- rule: adapter changes typically require fixture/test updates
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  collision_type: scope_ambiguity
+  why_distracting: The rule mentions that adapter changes typically require fixture/test
+    updates. While this PR touches the CLI and database connections, it is not a driver
+    adapter change, so an agent might mistakenly try to update adapter fixtures.
+  severity: low

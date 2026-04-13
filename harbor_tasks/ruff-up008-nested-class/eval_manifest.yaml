@@ -131,28 +131,16 @@ rubric:
     };` to safely handle options without unwrappi
   category: style
 distractors:
-- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
-    the `ty` GitHub label.
-  collision_type: scope_ambiguity
-  why_distracting: This issue is about `UP008`, which is a `pyupgrade` rule in Ruff
-    (`ruff_linter`), not the `ty` type checker. An agent might mistakenly apply `ty`
-    guidelines (like PR titles or running `ty` specific tests) to this Ruff issue.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: '68'
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
-  collision_type: scope_ambiguity
-  why_distracting: The tests for this bug already exist in `UP008.py` but were marked
-    with `TODO(charlie)` comments because they were known false positives. An agent
-    might think it needs to write new test cases, duplicating the existing ones, instead
-    of just uncommenting/fixing the existing ones.
+- rule: Prefer let chains (`if let` combined wit
+  collision_type: rule_conflict
+  why_distracting: The agent might try to combine the scope filtering and the `next()`
+    call into a complex `if let` chain, but the gold solution cleanly separates the
+    iterator creation (using `let ... else` inside `filter_map`) and the `let Some(...)
+    = ... else` for early returns, which is more readable.
   severity: low
   source:
     path: AGENTS.md
-    lines: '72'
-hierarchy_analysis: The configuration is flat with only `AGENTS.md` providing rules.
-  There are no conflicts between files, but there is a clear distinction between `ruff`
-  and `ty` projects within the same repository. Agents must correctly identify that
-  this is a `ruff` issue and ignore `ty`-specific instructions.
+    lines: 67-67
+hierarchy_analysis: The configuration is flat, with all rules contained in a single
+  `AGENTS.md` file (which is referenced by `CLAUDE.md`). There are no conflicting
+  rules across different levels of a hierarchy.

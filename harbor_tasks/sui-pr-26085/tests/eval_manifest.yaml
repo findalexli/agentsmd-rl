@@ -1,0 +1,100 @@
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 63cb7f767409e0589a9d5265e55a727cb8a020b5
+  merge_commit: 
+checks:
+- id: test_map_mut_macro_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: map_mut macro must exist in option.move with correct signature
+- id: test_is_none_or_macro_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_none_or macro must exist in option.move
+- id: test_fold_macro_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: fold macro must exist in option.move with consume semantics
+- id: test_fold_ref_macro_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: fold_ref macro must exist in option.move
+- id: test_fold_mut_macro_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: fold_mut macro must exist in option.move
+- id: test_map_mut_functionality
+  type: fail_to_pass
+  origin: pr_diff
+  description: map_mut tests must cover Some, None, and mutation cases
+- id: test_is_none_or_functionality
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_none_or tests must cover all three cases (Some+match, Some+no-match,
+    None)
+- id: test_fold_functionality
+  type: fail_to_pass
+  origin: pr_diff
+  description: fold tests must cover both Some and None cases
+- id: test_fold_ref_functionality
+  type: fail_to_pass
+  origin: pr_diff
+  description: fold_ref tests must exist
+- id: test_fold_mut_functionality
+  type: fail_to_pass
+  origin: pr_diff
+  description: fold_mut tests must cover mutation validation
+- id: test_move_tests_compile
+  type: pass_to_pass
+  origin: static
+  description: sui-framework Move code has valid syntax
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Rust code passes cargo fmt --check
+- id: test_repo_cargo_check_sui_framework
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-framework crate passes cargo check
+- id: test_repo_cargo_check_sui_framework_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-framework-tests crate passes cargo check
+- id: test_repo_cargo_check_sui_move
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-move crate passes cargo check
+- id: test_repo_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes cargo xlint license check
+- id: test_repo_cargo_clippy_sui_framework
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-framework crate passes cargo clippy
+rubric: []
+distractors:
+- rule: Use `#[cfg(test)]` for test-only code used within the same crate.
+  collision_type: would_cause_bug
+  why_distracting: The rule instructs using `#[cfg(test)]` for test-only code, which
+    is a Rust attribute. The agent is writing tests in Move (`.move` files), which
+    use the `#[test]` attribute. Applying the Rust-specific rule to Move code would
+    cause a syntax error.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 69-70
+- rule: All new files must start with the license in comments at the top of the file.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding a license header to all new files. The
+    agent is modifying existing files (`option.move` and `option_tests.move`), so
+    applying this rule would incorrectly duplicate the license header.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 15-18
+hierarchy_analysis: The config hierarchy is flat, consisting of root-level AGENTS.md
+  and CLAUDE.md files. The primary challenge is filtering out Rust-specific instructions
+  when working on Move code.
+version: '2.0'

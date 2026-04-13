@@ -47,66 +47,140 @@ checks:
     commit: ba05a72939569c1a371a513c3bd64a2cab6a60ee
 - id: kwritestreamfastpath_import
   type: pass_to_pass
-  origin: pr_diff
+  origin: static
   description: kWriteStreamFastPath import must exist (required for _final implementation)
 - id: internal_fs_streams_require
   type: pass_to_pass
-  origin: pr_diff
+  origin: static
   description: ProcessObjectInternals must require internal/fs/streams module
 - id: getstdiowritestream_function
   type: pass_to_pass
-  origin: pr_diff
+  origin: static
   description: getStdioWriteStream function must exist in ProcessObjectInternals
 - id: stream_properties
   type: pass_to_pass
-  origin: pr_diff
+  origin: static
   description: Stream setup must include required properties (fd, _type, _isStdio)
 - id: repo_oxlint
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo's oxlint passes on ProcessObjectInternals.ts
 - id: repo_prettier
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Repo's prettier format check passes on ProcessObjectInternals.ts
+- id: repo_oxlint_builtins
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes on src/js/builtins directory
+- id: repo_prettier_builtins
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier format check passes on src/js/builtins directory
+- id: repo_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target TypeScript file is syntactically parseable
+- id: node_stream_final_async
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - stream _final async callback
+- id: node_stream_final_throw
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - stream _final throws error
+- id: node_stream_end_cb_uncaught
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - stream end callback uncaught
+- id: node_stream_writable_finished
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - stream writable finished state
+- id: node_file_write_stream
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - file write stream operations
+- id: node_file_write_stream2
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - file write stream operations 2
+- id: node_stream2_writable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js parallel test - stream2 writable implementation
+- id: ts_builtins_basic_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript builtins ProcessObjectInternals.ts syntax check
 rubric:
 - rule: String literal `require()` only
   source:
-    path: src/js/CLAUDE.md
-    lines: 14-24
+    path: src/js/builtins/ProcessObjectInternals.ts
+    lines: 83
   evidence: The gold solution uses `require("internal/fs/streams")` with a string
     literal to import `kWriteStreamFastPath`.
   category: style
 - rule: $ prefix for private APIs and JSC intrinsics
   source:
-    path: src/js/CLAUDE.md
-    lines: 41-56
+    path: src/js/builtins/ProcessObjectInternals.ts
+    lines: 90
   evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if
     the flush result is a promise, following the convention of using `$` prefixed
     private APIs.
   category: style
+- rule: Use JSC intrinsics for performance
+  source:
+    path: src/js/builtins/ProcessObjectInternals.ts
+    lines: 90
+  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check the
+    flush result, following the rule to use JSC intrinsics for performance.
+  category: architecture
+- rule: Use JSC intrinsics for performance and $ prefix for private APIs
+  source:
+    path: src/js/builtins/ProcessObjectInternals.ts
+    lines: 90
+  evidence: The gold solution uses the `$isPromise` intrinsic to check if the result
+    of `sink.flush()` is a promise, following the rule to use JSC intrinsics.
+  category: architecture
+- rule: Use JSC intrinsics for performance / $ prefix for private APIs
+  source:
+    path: src/js/AGENTS.md
+    lines: 53-53
+  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if
+    the flush result is a promise, rather than standard JS checks.
+  category: architecture
 distractors:
-- rule: 'Validation and Errors: validate callbacks using $isCallable'
+- rule: Export via `export default {}`
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to validate the `cb` argument in `stream._final
-    = function (cb)` using `$isCallable(cb)` or `validateFunction`. However, `_final`
-    is an internal stream lifecycle method called by the Node.js stream machinery,
-    which guarantees `cb` is a function. Adding validation here is unnecessary.
+  why_distracting: The 'Key Rules' section states 'Export via `export default {}`'.
+    An agent might try to refactor the existing `export function getStdioWriteStream`
+    to use `export default`, but this file contains builtin functions, not a module,
+    so named exports are correct.
   severity: medium
   source:
-    path: src/js/CLAUDE.md
-    lines: 58-66
-- rule: Use `.$call` and `.$apply` for callbacks to prevent tampering
+    path: src/js/AGENTS.md
+    lines: 78-78
+- rule: Use `.$call`/`.$apply` not `.call`/`.apply`
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to invoke the callback using `cb.$call(undefined,
-    null)` to prevent user tampering. However, since `cb` is an internal callback
-    provided by the stream implementation (not user code), a direct call `cb(null)`
-    is safe and correct.
+  why_distracting: The rule says 'Use `.$call`/`.$apply` not `.call`/`.apply`'. An
+    agent might over-apply this to direct function calls like `cb(null)` or method
+    calls like `result.then(...)`, changing them to `cb.$call(...)` or `result.then.$call(...)`
+    which is unnecessary and reduces readability.
   severity: low
   source:
-    path: src/js/CLAUDE.md
-    lines: 41-53
-hierarchy_analysis: The hierarchy correctly narrows from general Zig/C++ build instructions
-  in the root `CLAUDE.md` to JS builtin specific rules in `src/js/CLAUDE.md`. The
-  JS builtin rules take precedence for this TypeScript file, dictating the use of
-  `$` intrinsics and string literal requires.
+    path: src/js/AGENTS.md
+    lines: 41-49
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates using `bun.*` APIs instead of `std.*`. An agent
+    might get confused by the cross-language repository and try to use Bun's Zig APIs
+    or JS `Bun.*` APIs instead of the required Node.js internal stream mechanisms.
+  severity: medium
+  source:
+    path: src/AGENTS.md
+    lines: 16-28
+hierarchy_analysis: The config hierarchy is deep (Level 0, 1, 2). The agent must ignore
+  the Zig-specific rules in `src/AGENTS.md` and focus on the JS builtin rules in `src/js/AGENTS.md`.
+  Within `src/js/AGENTS.md`, the agent must distinguish between rules for 'Modules'
+  and 'Builtin Functions'.

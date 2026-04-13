@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T05:49:51.964613",
-  "total_time": 15996.3,
-  "sandbox_id": "i4z1yno0xsfny7l3y9jrc",
+  "validated_at": "2026-04-12T03:37:21.165703",
+  "total_time": 2271.34,
+  "sandbox_id": "iho469qgxo31nbr4jd3jo",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 421.78,
+      "time": 434.8,
       "notes": ""
     },
     "improve": {
@@ -29,10 +28,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All core validation checks passed. Docker build succeeds, NOP test correctly fails on buggy code (reward=0), Gold test passes after fix (reward=1). All 10 pytest tests pass (5 fail-to-pass, 5 pass-to-pass). Fixed rubric format from 'criterion' to 'rule' keys. Rubric judge has infrastructure limitations for Docker-based tasks. Previous: All validation checks passed. Docker build succeeds, NOP test correctly fails on buggy code (reward=0), Gold test passes after fix (reward=1). All 10 pytest tests pass (5 fail-to-pass, 5 pass-to-pass).",
+      "notes": "All core validation checks passed. Docker build succeeded. NOP test (reward=0) correctly fails on base code - the 5 fail-to-pass tests detect missing fix. Gold test (reward=1) passes all 13 tests after solve.sh applies the fix. Rubric judge is expected to have limitations for Docker tasks (no git diff in /workspace/repo since changes are applied inside container via solve.sh).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 290.0
+      "time": 374.07
     },
     "rubric_judge": {
       "status": "fail",
@@ -40,33 +39,19 @@
       "backend": "fireworks",
       "time": 1.2,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 19.94,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 205.09,
-      "at": "2026-04-09T15:01:16.561351"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 5480.57,
-      "at": "2026-04-09T23:30:28.808233"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 5480.83,
-      "at": "2026-04-09T23:30:28.973644"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -82,6 +67,30 @@
       "backend": "fireworks",
       "time": 15996.3,
       "at": "2026-04-10T05:49:51.964613"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2779.08,
+      "at": "2026-04-11T23:58:59.696740"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2252.46,
+      "at": "2026-04-12T00:40:39.910446"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2271.34,
+      "at": "2026-04-12T03:37:21.165703"
     }
   ]
 }

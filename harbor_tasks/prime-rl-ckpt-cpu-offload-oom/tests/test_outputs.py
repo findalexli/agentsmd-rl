@@ -124,6 +124,70 @@ def test_repo_all_prime_rl_files_compile():
     assert not failed_files, f"py_compile failed for:\n" + "\n".join(failed_files)
 
 
+# [repo_tests] pass_to_pass - Repo CI: AST structure validation for ckpt.py
+def test_repo_ckpt_ast_structure():
+    """ckpt.py has required AST structure (AppState class, load_state_dict method) (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import ast
+import sys
+
+with open(\"{REPO}/src/prime_rl/trainer/ckpt.py\") as f:
+    content = f.read()
+
+tree = ast.parse(content)
+
+# Check for AppState class
+classes = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+class_names = [c.name for c in classes]
+if \"AppState\" not in class_names:
+    print(\"FAIL: AppState class not found\")
+    sys.exit(1)
+
+# Check for load_state_dict method in any class
+found_method = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef):
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == \"load_state_dict\":
+                found_method = True
+                break
+        if found_method:
+            break
+
+if not found_method:
+    print(\"FAIL: load_state_dict method not found\")
+    sys.exit(1)
+
+print(\"PASS: AST structure valid\")
+sys.exit(0)
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"AST structure check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: ruff check on trainer module
+def test_repo_ruff_check_trainer_module():
+    """Repo's ruff lint check passes on trainer module (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on trainer module failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

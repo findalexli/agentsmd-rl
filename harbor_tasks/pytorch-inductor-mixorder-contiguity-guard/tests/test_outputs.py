@@ -239,7 +239,7 @@ for score, numel in [(999999, 100), (0, 1), (42, 99999)]:
     result = func(mock_self, node1, node2, ())
     assert result is False, (
         f"Expected False for contiguous + non-contiguous reduction "
-        f"(score={score}, numel={numel}), got {result!r}"
+        f"(score={numel}), got {result!r}"
     )
 print("PASS")
 ''')
@@ -379,11 +379,11 @@ def test_init_contiguity_assertion_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI/CD checks
+# Pass-to-pass (static) — syntax/AST checks (in-process file reads)
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-# CI: Python syntax check for all inductor Python files
+# [static] pass_to_pass
+# AST-only because: torch/_inductor requires full torch install + GPU runtime
 def test_repo_inductor_syntax():
     """All torch/_inductor/*.py files must have valid Python syntax (pass_to_pass)."""
     import py_compile
@@ -394,12 +394,119 @@ def test_repo_inductor_syntax():
         py_compile.compile(str(f), doraise=True)
 
 
-# [repo_tests] pass_to_pass
-# CI: AST validity check for scheduler.py (modified by this PR)
+# [static] pass_to_pass
+# AST-only because: torch/_inductor requires full torch install + GPU runtime
 def test_repo_scheduler_ast():
     """scheduler.py must have valid AST structure (pass_to_pass)."""
     source = Path(SCHEDULER).read_text()
     tree = ast.parse(source)  # noqa: F841 - validates parse succeeds
+
+
+# [static] pass_to_pass
+# AST-only because: torch/_inductor requires full torch install + GPU runtime
+def test_repo_inductor_compileall():
+    """All torch/_inductor/*.py files must compile without errors (pass_to_pass)."""
+    import compileall
+    inductor_dir = Path(REPO) / "torch" / "_inductor"
+    result = compileall.compile_dir(str(inductor_dir), quiet=True)
+    assert result, f"compileall failed for {inductor_dir}"
+
+
+# [static] pass_to_pass
+# AST-only because: torch/_inductor requires full torch install + GPU runtime
+def test_repo_scheduler_structure():
+    """scheduler.py must contain MixOrderReduction and FusedMixOrderReductions classes (pass_to_pass)."""
+    source = Path(SCHEDULER).read_text()
+    tree = ast.parse(source)
+
+    found_classes = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            methods = [item.name for item in node.body
+                      if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))]
+            found_classes[node.name] = methods
+
+    assert "MixOrderReduction" in found_classes, "MixOrderReduction class not found"
+    assert "FusedMixOrderReductions" in found_classes, "FusedMixOrderReductions class not found"
+    assert "sub_node_can_fuse" in found_classes.get("FusedMixOrderReductions", []), \
+        "sub_node_can_fuse method not found in FusedMixOrderReductions"
+
+
+# [static] pass_to_pass
+# AST-only because: torch/_inductor requires full torch install + GPU runtime
+def test_repo_torch_package_syntax():
+    """All torch/*.py files must have valid Python syntax (pass_to_pass)."""
+    import py_compile
+    torch_dir = Path(REPO) / "torch"
+    py_files = list(torch_dir.glob("*.py"))
+    assert py_files, f"No Python files found in {torch_dir}"
+    errors = []
+    for f in py_files:
+        try:
+            py_compile.compile(str(f), doraise=True)
+        except py_compile.PyCompileError as e:
+            errors.append(f"{f.name}: {e}")
+    assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks (actual subprocess commands)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+# CI: Python syntax check via subprocess for scheduler.py (from lint.yml quick-checks)
+def test_repo_ci_scheduler_syntax():
+    """scheduler.py must pass Python syntax check via subprocess (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "torch/_inductor/scheduler.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+# CI: Full compileall on torch/_inductor via subprocess (from Makefile/setup)
+def test_repo_ci_inductor_compileall():
+    """All torch/_inductor files must compile via compileall subprocess (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "compileall", "torch/_inductor/", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"compileall failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+# CI: CUDA kernel launch check (from lint.yml quick-checks job)
+def test_repo_ci_kernel_launch_check():
+    """CUDA kernel launch patterns must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "torch/testing/_internal/check_kernel_launches.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Kernel launch check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+# CI: ciflow labels validation (from lint.yml quick-checks job)
+def test_repo_ci_ciflow_labels():
+    """CI flow labels must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", ".github/scripts/collect_ciflow_labels.py", "--validate-tags"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ciflow labels validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+# CI: Related test file syntax check via subprocess
+def test_repo_ci_mix_order_test_syntax():
+    """test_mix_order_reduction.py must have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "test/inductor/test_mix_order_reduction.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test file syntax check failed:\n{r.stderr}"
+
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md

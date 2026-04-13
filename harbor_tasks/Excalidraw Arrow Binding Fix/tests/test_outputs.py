@@ -261,3 +261,16 @@ def test_repo_utils_tests_pass():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Utils tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_binding_tests_pass():
+    """Repo's binding-specific tests pass (pass_to_pass).
+
+    These tests directly cover the binding.ts file that the fix modifies,
+    testing arrow binding behavior including the updateBoundPoint function.
+    """
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/element/tests/binding.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Binding tests failed:\n{r.stderr[-500:]}"

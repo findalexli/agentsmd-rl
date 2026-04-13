@@ -84,6 +84,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: app.py ends with exactly one newline
+- id: test_repo_check_json_valid
+  type: pass_to_pass
+  origin: static
+  description: JSON files in data_proxy are valid
+- id: test_repo_no_private_keys
+  type: pass_to_pass
+  origin: static
+  description: No private keys in data_proxy Python files
+- id: test_repo_python_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: All Python files in data_proxy have valid syntax
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in data_proxy compile successfully via py_compile
+- id: test_repo_check_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML workflow files are valid
 rubric:
 - rule: Code change demonstrates composition over inheritance — POST /data/batch uses
     flat async function, no class hierarchies introduced
@@ -118,38 +138,66 @@ rubric:
   evidence: The gold solution explicitly imports `JSONResponse` and `StreamingResponse`
     from `fastapi.responses` instead of using a wildcard import.
   category: style
-distractors:
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The issue description explicitly states that integration tests
-    are already failing due to this missing endpoint. The tests already exist, so
-    trying to add new unit tests for this specific proxy endpoint is redundant and
-    out of scope for fixing the immediate bug.
-  severity: medium
+- rule: No wildcard imports (`from x import *`).
   source:
-    path: CLAUDE.md
-    lines: 48-50
-- rule: No hardcoded secrets, paths, or endpoints
-  collision_type: meta_confusion
-  why_distracting: An agent might misinterpret 'endpoints' to mean FastAPI route paths
-    and try to extract `"/data/batch"` into a configuration file or environment variable,
-    which is unnecessary and breaks standard FastAPI routing conventions.
+    path: AGENTS.md
+    lines: '25'
+  evidence: The gold solution explicitly imports `JSONResponse` and `StreamingResponse`
+    from `fastapi.responses` instead of using wildcard imports.
+  category: style
+- rule: 'Logging: ... never `print`'
+  source:
+    path: AGENTS.md
+    lines: 68-69
+  evidence: The gold solution uses the existing `logger` object for `logger.debug`
+    and `logger.error` instead of using `print`.
+  category: style
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 28-28
+  evidence: The gold solution integrates seamlessly with the existing FastAPI application
+    by reusing the existing `logger` instance and returning `JSONResponse` and `RawResponse`
+    objects, matching the style of ot
+  category: style
+- rule: Read relevant files before modifying code.
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  evidence: The gold solution correctly implements the specific request/response contract
+    (e.g., returning `missing_shard_ids`, using `orjson.dumps(serialize_value(data))`)
+    by mirroring the logic from `rpc_server
+  category: architecture
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly states that integration tests already exist
+    and are failing because the endpoint is missing. Attempting to add new tests would
+    be redundant and out of scope for this specific fix.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 21-23
-- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names'
+    lines: 29-29
+- rule: No hardcoded secrets, paths, or endpoints.
   collision_type: rule_conflict
-  why_distracting: The file `app.py` already has a module-level logger configured.
-    If the agent tries to strictly follow this rule by instantiating a new PascalCase
-    logger specifically for this new endpoint, it will violate the 'Follow existing
-    code patterns' rule and create inconsistent logging within the file.
+  why_distracting: The agent might try to abstract the `/data/batch` route path into
+    a configuration file or environment variable to avoid 'hardcoding', but FastAPI
+    route decorators conventionally require hardcoded string paths.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 21-21
+- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names... Register
+    new loggers with color in areal/utils/logging.py.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to register a new PascalCase logger in `areal/utils/logging.py`
+    for this specific endpoint, which is unnecessary since the file already has an
+    instantiated logger that should be reused.
   severity: low
   source:
     path: AGENTS.md
     lines: 54-56
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are both Level 0 and contain largely
-  overlapping rules. `AGENTS.md` provides more specific details on logging and code
-  style. The conflict between the strict logging rule in `AGENTS.md` and the general
-  ''Follow existing code patterns'' rule requires the agent to prioritize local file
-  consistency over global logging rules for a small bug fix.'
+hierarchy_analysis: The configuration consists of two root-level markdown files (`AGENTS.md`
+  and `CLAUDE.md`) with overlapping rules. The agent must synthesize these flat rules
+  and apply them contextually, ignoring rules that conflict with the specific framework
+  (FastAPI) or the current state of the codebase (tests already exist).

@@ -11,6 +11,7 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
 import yaml
 
 REPO = "/workspace/uv"
@@ -59,18 +60,47 @@ def test_repo_ruff_format():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_ruff_check_python():
+    """Repo's python/ directory passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "python/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check on python/ failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_shellcheck_scripts():
-    """Repo's shell scripts pass shellcheck (pass_to_pass)."""
+    """Repo's shell scripts pass shellcheck at warning severity (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "shellcheck-py", "-q"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Find shell scripts and run shellcheck
+    # Run shellcheck on all shell scripts at warning severity (CI standard)
     r = subprocess.run(
-        ["bash", "-c", f"find {REPO}/scripts -name '*.sh' -type f | head -20 | xargs shellcheck --shell bash --severity warning"],
+        ["bash", "-c", f"find {REPO} -name '*.sh' -type f | xargs shellcheck --shell bash --severity warning"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"shellcheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck_style():
+    """Repo's shell scripts pass shellcheck style checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "shellcheck-py", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run shellcheck at style severity (stricter CI check)
+    r = subprocess.run(
+        ["bash", "-c", f"find {REPO} -name '*.sh' -type f | xargs shellcheck --shell bash --severity style"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"shellcheck style check failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -99,6 +129,62 @@ def test_repo_typos():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"typos check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_readme_transform():
+    """README transform script works for PyPI target (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/scripts/transform_readme.py", "--target", "pypi"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"transform_readme.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """Repo Rust code is properly formatted (pass_to_pass)."""
+    # Skip if rustup/cargo not available in environment
+    r = subprocess.run(
+        ["which", "rustup"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        pytest.skip("rustup not available in environment")
+    r = subprocess.run(
+        ["rustup", "component", "add", "rustfmt"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_workflows():
+    """Repo workflow YAML files are properly formatted (pass_to_pass)."""
+    # Skip if npm not available in environment
+    r = subprocess.run(
+        ["which", "npm"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        pytest.skip("npm not available in environment")
+    r = subprocess.run(
+        ["npm", "install", "-g", "prettier"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    workflow_dir = Path(REPO) / ".github" / "workflows"
+    workflow_files = list(workflow_dir.glob("*.yml"))
+    if not workflow_files:
+        pytest.skip("No workflow YAML files found")
+    r = subprocess.run(
+        ["prettier", "--check"] + [str(f) for f in workflow_files],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -206,12 +292,6 @@ def test_script_detects_missing_tools():
     combined = r.stdout + r.stderr
     assert "required" in combined.lower() or "not found" in combined.lower(), \
         "Error message should indicate a tool is missing/required"
-
-
-# [pr_diff] fail_to_pass
-
-
-# [pr_diff] fail_to_pass
 
 
 # ---------------------------------------------------------------------------

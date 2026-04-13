@@ -58,6 +58,14 @@ checks:
   type: fail_to_pass
   origin: repo_tests
   description: composer audit runs successfully (may skip if no packages)
+- id: repo_php_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo PHP code passes Pint linting (PSR-12 style)
+- id: repo_phpstan_analyze
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo PHP code passes PHPStan static analysis
 rubric:
 - rule: Use dependency injection via inject() method instead of global Config::getParam()
     for accessing request-scoped values like domainVerification and cookieDomain.
@@ -94,32 +102,29 @@ rubric:
   evidence: The gold solution defines the new `domainVerification` and `cookieDomain`
     resources in `app/init/resources.php`.
   category: architecture
-distractors:
-- rule: Inside Http directories for services, file names can only be Get.php, Update.php,
-    Create.php, Delete.php or XList.php. For non-CRUD operations, model the endpoint
-    as a property update.
-  collision_type: scope_ambiguity
-  why_distracting: The agent is modifying `src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php`
-    to update DI injections. Reading the strict naming conventions for HTTP endpoints
-    might distract the agent into thinking it needs to rename files, restructure the
-    endpoint, or create a new endpoint for domain verification, rather than just updating
-    the existing file's injections.
-  severity: low
-  source:
-    path: src/Appwrite/Platform/AGENTS.md
-    lines: 29-35
-- rule: PHP 8.3+, Swoole 6.x (async runtime, replaces PHP-FPM)
-  collision_type: architecture_boundary
-  why_distracting: Knowing that the application runs on Swoole (an async runtime)
-    might lead an agent to attempt storing request-scoped variables in Swoole coroutine
-    contexts or using Swoole-specific request objects, bypassing the Utopia PHP dependency
-    injection system entirely.
-  severity: medium
+- rule: Use Utopia PHP's DI system by chaining `->inject()` and adding the injected
+    resource to the action callback signature.
   source:
     path: AGENTS.md
-    lines: 16-16
-hierarchy_analysis: The root `AGENTS.md` provides the foundational architecture rules
-  (Utopia PHP DI, `app/init/` structure) which are directly applicable to this refactoring
-  task. The leaf `src/Appwrite/Platform/AGENTS.md` provides strict naming conventions
-  for module endpoints, which applies to the files being edited but is out of scope
-  for the actual changes required, potentially causing scope ambiguity.
+    lines: 46-65
+  evidence: The gold solution adds `->inject('domainVerification')` and `->inject('cookieDomain')`
+    to the route definitions and adds `bool $domainVerification, ?string $cookieDomain`
+    to the action closure paramet
+  category: architecture
+distractors:
+- rule: File names in Http directories can only be Get.php, Update.php, Create.php,
+    Delete.php or XList.php.
+  collision_type: architecture_boundary
+  why_distracting: The strict file naming rules (`Get.php`, `Create.php`, etc.) apply
+    to the new Modules architecture. An agent might try to apply these rules to the
+    legacy `app/controllers/api/account.php` file and split it into multiple files,
+    which is out of scope for this DI migration PR.
+  severity: high
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 28-35
+hierarchy_analysis: The root `AGENTS.md` defines the general Action pattern for DI
+  injection which applies globally. The leaf `src/Appwrite/Platform/AGENTS.md` defines
+  strict naming and structural conventions for the new Modules architecture. The agent
+  must recognize that `app/controllers/api/account.php` is legacy and should only
+  receive the DI updates, not a structural refactor to match the leaf config's rules.

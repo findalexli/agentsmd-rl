@@ -37,6 +37,15 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: T5 test file must compile without errors
+- id: repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo check_inits.py passes - validates model inits are consistent
+- id: repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo check_dummies.py passes - validates dummy objects are properly
+    defined
 - id: qwen2_speculative_generation_uses_consistent_model
   type: fail_to_pass
   origin: pr_diff
@@ -56,56 +65,53 @@ checks:
   origin: static
   description: Fixes must include actual code changes (Expectations, decode calls)
 rubric:
-- rule: Run `make fixup` or `make style` before submitting changes. Code style is
-    enforced in CI and PRs will fail checks if not properly formatted.
+- rule: 'Many tests are marked as ''slow'' and skipped by default in the CI. To run
+    them, use: `RUN_SLOW=1 pytest ...`'
   source:
     path: CLAUDE.md
-    lines: 1-8
-    commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
-- rule: Bugfix PRs should be as brief as possible - often only one or two lines long.
-    Do not add large comments, docstrings or new functions for simple bugfixes. Minimize
-    the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
-- rule: When writing tests, add them to existing test files rather than creating new
-    ones. Test files are located in tests/models/<model_name>/ directories.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '16'
-    commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
-- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
-    style checks'
-  source:
-    path: CLAUDE.md
-    lines: 2-2
-  evidence: 'The gold solution appends `# fmt: skip` to the `Expectations` dictionary
-    to ensure it passes the `make style` ruff formatting checks without being mangled.'
-  category: style
+    lines: 6-6
+  evidence: The tests modified in the gold solution (`test_speculative_generation`
+    and `test_compile_static_cache`) are decorated with `@slow`, meaning the agent
+    must use `RUN_SLOW=1` to verify the fixes locally.
+  category: testing
+  verification: llm_judge
 distractors:
 - rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
   collision_type: meta_confusion
-  why_distracting: The agent is in an evaluation environment where it must output
-    the code fix. Following the 'Fail-closed behavior' and refusing to output a PR-ready
-    patch because there is no issue link or coordination evidence would cause the
-    agent to fail the benchmark.
+  why_distracting: The repository's agent guidelines strictly mandate a 'fail-closed'
+    behavior, instructing the agent to refuse to generate PR-ready output if coordination
+    evidence (like an issue link or approval) is missing. Since the user prompt directly
+    asks for a code fix without providing this meta-context, an agent might refuse
+    to complete the task.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 48-49
+    path: AGENTS.md
+    lines: 49-52
 - rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
     one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The agent might misclassify fixing a few strings and method names
-    in tests as 'tiny edits' or 'low-value busywork' and refuse to generate the fix,
-    but fixing broken integration tests is high-value and required by the prompt.
+  why_distracting: The guidelines forbid opening PRs for 'tiny edits' or 'low-value
+    busywork'. An agent might misclassify fixing two localized test methods as a tiny
+    edit and refuse to proceed, even though fixing failing integration tests is highly
+    valuable.
   severity: medium
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 34-36
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  agent must recognize that the strict contribution policies (like fail-closed behavior
-  and coordination checks) are intended for real-world PR submission, but in this
-  isolated evaluation environment, it must bypass them to actually provide the requested
-  code fix.
+- rule: We try to avoid direct inheritance between model-specific files... mark classes
+    or functions with `# Copied from ...`.
+  collision_type: architecture_boundary
+  why_distracting: The rule discusses avoiding direct inheritance and managing code
+    duplication using `# Copied from ...` blocks. While this applies to `src/transformers/models/`,
+    an agent might mistakenly try to apply this logic to the `tests/models/` directory
+    and search for or modify copy-mechanisms instead of just fixing the test logic.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 54-59
+hierarchy_analysis: The configuration is flat, consisting of identical `AGENTS.md`
+  and `CLAUDE.md` files at the root level. The primary challenge is that these files
+  contain strict meta-instructions governing agent behavior (e.g., refusing to code
+  without issue coordination) that directly conflict with the user's prompt to fix
+  the tests.

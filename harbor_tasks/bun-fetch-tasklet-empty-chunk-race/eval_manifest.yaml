@@ -46,57 +46,56 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's TypeScript prettier check passes on scripts/
+- id: test_repo_fetch_body_stream
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch body stream tests pass (validates FetchTasklet body streaming)
+- id: test_repo_fetch_response
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch response tests pass (validates Response body handling)
+- id: test_repo_fetch_body
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch body tests pass (validates Request/Response body mixin)
+- id: test_repo_fetch_body_clone
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch body clone tests pass (validates body cloning with streaming)
+- id: test_repo_fetch_stream_fast_path
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's stream fast path tests pass (validates byte blob streaming)
+distractors:
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead, such as; test/js/web/ - Web API tests
+  collision_type: scope_ambiguity
+  why_distracting: The testing guidelines suggest adding tests for Web APIs in test/js/web/.
+    An agent might waste significant time trying to write a reliable test for this
+    multi-threaded race condition, which is notoriously difficult to reproduce deterministically
+    in JS. The gold solution correctly focuses only on the Zig fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-55
+hierarchy_analysis: The config hierarchy provides general Zig and testing guidelines,
+  but none are directly applicable to fixing this specific logical race condition.
+  The agent must rely entirely on the task instructions rather than the config files.
 rubric:
-- rule: Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform
-    wrappers that preserve OS error info and never use unreachable.
+- rule: Always use `bun.*` APIs instead of `std.*`.
   source:
     path: src/CLAUDE.md
-    lines: 22-38
-    commit: 770893d28ff94013abed5520482848609a6872f9
-- rule: Never use @import() inline inside of functions. Always put them at the bottom
-    of the file or containing struct.
-  source:
-    path: src/CLAUDE.md
-    lines: 12-14
-    commit: 770893d28ff94013abed5520482848609a6872f9
-- rule: Follow existing code style - check neighboring files for patterns
-  source:
-    path: CLAUDE.md
-    lines: '168'
-    commit: 770893d28ff94013abed5520482848609a6872f9
+    lines: 16-17
+  evidence: The gold solution implements the guard using only internal struct fields
+    (`this.scheduled_response_buffer`, `this.result`) without falling back to any
+    `std.*` library functions.
+  category: architecture
+  verification: llm_judge
 - rule: Never use `@import()` inline inside of functions.
   source:
     path: src/CLAUDE.md
-    lines: 10-10
-  evidence: The gold solution adds logic inside the `FetchTasklet` struct's function
-    without using any inline `@import()` statements, relying entirely on existing
-    in-scope variables and types.
+    lines: 11-12
+  evidence: The gold solution adds logic inside `FetchTasklet.zig` without adding
+    any inline imports.
   category: style
-distractors:
-- rule: Test Organization and Writing Tests guidelines
-  collision_type: scope_ambiguity
-  why_distracting: The instructions provide detailed guidance on how and where to
-    write tests (e.g., `test/js/web/` for fetch). An agent might waste significant
-    effort trying to write a reliable test for this multi-threaded stale-task race
-    condition, which is notoriously difficult to reproduce deterministically. The
-    gold solution correctly focuses only on the Zig fix and documentation.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 40-60
-- rule: Prefer Bun APIs over `std`
-  collision_type: scope_ambiguity
-  why_distracting: The rule mandates using `bun.*` APIs over `std.*` for system operations.
-    An agent might get distracted looking for Bun-specific buffer or stream APIs to
-    handle the empty chunk, but the fix requires a simple logical check on the existing
-    `scheduled_response_buffer.list.items.len` and `result` state.
-  severity: low
-  source:
-    path: src/CLAUDE.md
-    lines: 15-26
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` focusing on build
-  and test instructions, and `src/CLAUDE.md` focusing on Zig-specific conventions
-  and Bun APIs. The root-level testing rules are highly distracting for this specific
-  issue because testing a multi-threaded race condition is extremely difficult and
-  not required by the gold solution. The agent must prioritize the Zig logic fix over
-  the general testing guidelines.
+  verification: llm_judge

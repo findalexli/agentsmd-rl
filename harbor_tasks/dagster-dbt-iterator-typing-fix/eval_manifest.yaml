@@ -41,6 +41,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax check passes on dbt_event_iterator.py
+- id: test_ruff_format_check_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on component.py
+- id: test_ruff_format_check_iterator
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on dbt_event_iterator.py
+- id: test_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dbt pyproject.toml is valid
+- id: test_check_manifest
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dbt package manifest is complete
 - id: test_dagster_dbt_package_structure
   type: pass_to_pass
   origin: static
@@ -90,22 +106,19 @@ checks:
   type: fail_to_pass
   origin: pr_diff
 distractors:
-- rule: 'MANDATORY: After any code changes, ALWAYS run `make ruff` to format, lint,
-    and autofix code'
-  collision_type: meta_confusion
-  why_distracting: The instructions strongly mandate running `make ruff` after any
-    Python code changes. However, the gold solution uses precise `sed` replacements
-    to update type hints and imports without invoking the formatter. Running `make
-    ruff` could reformat unrelated code, polluting the diff, or require a complex
-    environment setup that wastes time for a simple type hint fix.
-  severity: high
+- rule: See [.claude/coding_conventions.md](./.claude/coding_conventions.md) for all
+    code style and convention guidelines
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to read the external coding_conventions.md
+    file for type annotation rules, but the prompt already explicitly dictates the
+    exact type aliases and imports to use.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 68-69
-hierarchy_analysis: 'Only a single root-level `CLAUDE.md` file is provided, so there
-  are no inter-file conflicts. The primary tension lies within the file itself: balancing
-  the strict mandate to run code quality tools (`make ruff`) against the practical
-  reality of making a minimal, precise type hint fix without polluting the diff.'
+    lines: 54-55
+hierarchy_analysis: The config hierarchy consists of a single root CLAUDE.md file
+  containing general repository guidelines. No specific rules apply to the type annotation
+  changes requested in the prompt.
 version: '2.0'
 source:
   repo: dagster-io/dagster

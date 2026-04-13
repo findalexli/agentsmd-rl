@@ -1,5 +1,4 @@
-"""
-Task: transformers-smollm3-dosample-test-fix
+"""Task: transformers-smollm3-dosample-test-fix
 Repo: huggingface/transformers @ 9cd278715c5154597a44110d6e0c114a7e90d6f5
 PR:   45048
 
@@ -303,3 +302,31 @@ def test_repo_style_check():
         cwd=REPO, capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, f"Repo style check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — repo Makefile init_isort check
+def test_repo_init_isort():
+    """Import ordering must follow repo's isort standards (pass_to_pass).
+
+    Runs custom_init_isort --check_only via checkers.py, matching CI behavior.
+    From Makefile: style target includes init_isort.
+    """
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "init_isort"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Import ordering check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — repo Makefile auto_mappings check
+def test_repo_auto_mappings():
+    """Auto mappings must be correctly sorted (pass_to_pass).
+
+    Runs sort_auto_mappings.py --check_only via checkers.py, matching CI behavior.
+    From Makefile: style target includes auto_mappings.
+    """
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "auto_mappings"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Auto mappings check failed:\n{r.stderr[-500:]}"

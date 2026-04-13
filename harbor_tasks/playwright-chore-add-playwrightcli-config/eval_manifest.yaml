@@ -21,6 +21,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: package.json files are valid JSON
+- id: test_repo_workspace_packages_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All workspace package.json files are valid JSON
+- id: test_repo_npm_ci_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: npm ci dry-run exits successfully
+- id: test_repo_mcp_terminal_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP terminal module has consistent exports and structure
+- id: test_repo_modified_files_are_typescript
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files from PR are valid TypeScript files
+- id: test_repo_browser_config_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Browser config module has expected exports
+- id: test_repo_commands_has_session_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: Commands module has session management commands
+- id: test_repo_program_has_session_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Program module has SessionManager class
 - id: config_category_in_type
   type: fail_to_pass
   origin: pr_diff
@@ -60,48 +88,16 @@ rubric:
     lines: 108-118
     commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
   reference: '### Configuration
-
-
     ```bash
-
-
     # configure the session
-
-
     playwright-cli config my-config.json
-
-
     # Configure named session
-
-
     playwright-cli --session=mysession config my-config.json
-
-
     # Start with configured session
-
-
     playwright-cli open --config=my-config.json
-
-
     ```'
 config_edits:
 - path: packages/playwright/src/mcp/terminal/SKILL.md
   tier: 1
-  gold_added: '### Configuration
-
-    ```bash
-
-    # configure the session
-
-    playwright-cli config my-config.json
-
-    # Configure named session
-
-    playwright-cli --session=mysession config my-config.json
-
-    # Start with configured session
-
-    playwright-cli open --config=my-config.json
-
-    ```'
+  gold_added: "### Configuration\n```bash\n# configure the session\nplaywright-cli config my-config.json\n# Configure named session\nplaywright-cli --session=mysession config my-config.json\n# Start with configured session\nplaywright-cli open --config=my-config.json\n```"
   gold_removed: ''

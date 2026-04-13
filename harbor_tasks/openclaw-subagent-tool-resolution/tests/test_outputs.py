@@ -334,6 +334,54 @@ def test_repo_tools_optional():
     )
     assert r.returncode == 0, f"Tools optional tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
+# [repo_tests] pass_to_pass - TypeScript type check
+# This validates that the modified code (tools.ts) type-checks correctly
+def test_repo_typescript_check():
+    """Repo's TypeScript type check passes (pass_to_pass).
+
+    Validates that the modified code type-checks without errors.
+    The fix adds a new import and function, so type checking is essential.
+    """
+    r = subprocess.run(
+        ["pnpm", "tsgo"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - loader.test.ts (resolveRuntimePluginRegistry)
+# The fix uses resolveRuntimePluginRegistry as a fallback, so these tests are relevant
+def test_repo_loader_unit():
+    """Repo's loader unit tests pass (pass_to_pass) - tests resolveRuntimePluginRegistry.
+
+    The fix adds resolvePluginToolRegistry which delegates to resolveRuntimePluginRegistry
+    as a fallback. These tests ensure the loader functions correctly.
+    """
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/loader.test.ts", "--reporter=verbose", "--no-color"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Loader unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - runtime.test.ts (getActivePluginRegistry)
+# The fix uses getActivePluginRegistry from runtime.js, so these tests are relevant
+def test_repo_runtime_unit():
+    """Repo's runtime unit tests pass (pass_to_pass) - tests getActivePluginRegistry.
+
+    The fix uses getActivePluginRegistry() to check for an active registry.
+    These tests ensure the runtime module functions correctly.
+    """
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/runtime.test.ts", "--reporter=verbose", "--no-color"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Runtime unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / src/plugins/CLAUDE.md

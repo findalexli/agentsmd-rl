@@ -17,6 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff format check passes on modified files (pass_to_pass)
+- id: repo_pre_commit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's trailing-whitespace pre-commit hook passes on modified files
+- id: repo_pre_commit_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's end-of-file-fixer pre-commit hook passes on modified files
+- id: repo_serialization_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's serialization module tests pass (primitives, tensors, numpy)
 - id: batch_endpoint_returns_data
   type: fail_to_pass
   origin: pr_diff
@@ -96,37 +108,53 @@ rubric:
     path: AGENTS.md
     lines: '81'
     commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
-distractors:
-- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names and
-    register new loggers.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to refactor the existing logger in `rpc_server.py`
-    to use PascalCase or register a new logger in `areal/utils/logging.py`, which
-    is out of scope for this specific bug fix.
-  severity: medium
+- rule: 'Logging: never print'
   source:
     path: AGENTS.md
-    lines: 54-56
+    lines: 65-66
+  evidence: The gold solution uses `logger.debug` and `logger.error` in `rpc_server.py`
+    to log batch retrieval details and errors, avoiding the use of `print`.
+  category: style
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 23-23
+  evidence: The gold solution explicitly imports `cast` from `typing` in `rtensor.py`
+    rather than using a wildcard import.
+  category: style
+distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The instructions only specify modifying `rpc_server.py` and `rtensor.py`.
-    Attempting to add tests would require modifying files outside the specified scope,
-    violating the implicit boundary of the task.
+  why_distracting: The rule mandates adding tests for new functionality, but the task
+    instruction explicitly restricts the 'Files to Modify' to just `rpc_server.py`
+    and `rtensor.py`. Attempting to add tests would violate the explicit file scope
+    of the prompt.
   severity: high
   source:
     path: AGENTS.md
-    lines: '34'
+    lines: 35-35
 - rule: No hardcoded secrets, paths, or endpoints.
   collision_type: rule_conflict
-  why_distracting: The agent might interpret adding the `/data/batch` route and calling
-    it in `rtensor.py` as 'hardcoding an endpoint' and attempt to make the path configurable
-    via environment variables or config files, overcomplicating the solution.
+  why_distracting: The rule forbids hardcoded endpoints. An agent might interpret
+    this as a requirement to make the new `/data/batch` route path configurable via
+    `cli_args.py` or environment variables. However, internal RPC routes in this module
+    are conventionally hardcoded, and making it configurable would overcomplicate
+    the PR and potentially violate the 'Ask first before modifying config structures'
+    rule.
   severity: medium
   source:
     path: AGENTS.md
-    lines: '26'
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain similar rules, but `AGENTS.md`
-  provides more specific operational guidelines for agents (e.g., logging conventions).
-  The rules are consistent across both files, so there are no direct conflicts between
-  the config files themselves. The agent should apply the accumulative rules without
-  issue.
+    lines: 24-24
+- rule: Register new loggers with color in `areal/utils/logging.py`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires registering new loggers with color in `areal/utils/logging.py`.
+    An agent might try to create a new logger specifically for the batch endpoint,
+    but the file already has an initialized logger that should be reused.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 58-59
+hierarchy_analysis: The config hierarchy is flat, consisting of two Level 0 files
+  (`AGENTS.md` and `CLAUDE.md`) that share mostly identical rules. The primary tension
+  is between the general repository rules (e.g., 'Add tests', 'No hardcoded endpoints')
+  and the strict boundaries set by the task instruction ('Files to Modify').

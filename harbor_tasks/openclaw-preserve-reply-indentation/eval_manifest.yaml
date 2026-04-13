@@ -79,6 +79,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's oxlint passes on directive-tags.ts
+- id: test_repo_format_directive_tags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxfmt format check passes on directive-tags.ts
 - id: test_repo_unit_tests_directive_tags
   type: pass_to_pass
   origin: repo_tests
@@ -88,6 +92,18 @@ checks:
   origin: repo_tests
   description: Repo's TypeScript typecheck (tsgo) runs without crashing and directive-tags.ts
     has no type errors
+- id: test_repo_extension_boundary_src
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions must not import from src/ outside src/plugin-sdk
+- id: test_repo_extension_boundary_internal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions must not import from src/plugin-sdk-internal
+- id: test_repo_extension_boundary_relative
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions must not use relative imports escaping their package
 rubric:
 - rule: Prefer strict typing; avoid `any`.
   source:
@@ -132,27 +148,15 @@ rubric:
   category: architecture
 distractors:
 - rule: 'Messaging channels: always consider all built-in + extension channels when
-    refactoring shared logic... Core channel code: src/telegram, src/discord...'
+    refactoring shared logic'
   collision_type: architecture_boundary
-  why_distracting: The issue specifically mentions the 'Discord outbound layer'. An
-    agent reading this rule might try to implement a workaround directly in `src/discord/`
-    to avoid affecting other channels, rather than fixing the root cause in the shared
-    `src/utils/directive-tags.ts` file.
-  severity: high
+  why_distracting: The issue mentions the bug affects the 'Discord outbound layer'.
+    The agent might be tempted to apply a Discord-specific fix in `src/discord` or
+    audit all channels based on this rule, but the root cause and proper fix are entirely
+    contained within the shared `directive-tags.ts` parser.
+  severity: medium
   source:
-    path: CLAUDE.md
-    lines: 19-21
-- rule: 'Tests: colocated `*.test.ts`.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write or modify colocated tests (`src/utils/directive-tags.test.ts`)
-    to verify the regex changes. While generally good practice, in this specific PR
-    context it could lead to hallucinated test setups or wasted effort, whereas the
-    gold solution focuses purely on the regex fix.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 11-11
-hierarchy_analysis: The `CLAUDE.md` and `AGENTS.md` files contain identical rules.
-  The primary challenge is navigating the architectural boundary between shared utilities
-  (`src/utils/`) and channel-specific code (`src/discord/`), especially since the
-  bug manifests in a specific channel (Discord) but originates in a shared utility.
+    path: AGENTS.md
+    lines: 18-21
+hierarchy_analysis: The config hierarchy is flat, consisting of identical AGENTS.md
+  and CLAUDE.md files at the root level. There are no conflicting rules between files.

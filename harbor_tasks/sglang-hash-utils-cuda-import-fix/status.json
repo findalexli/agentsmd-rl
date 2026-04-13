@@ -1,23 +1,23 @@
 {
   "schema_version": 2,
   "verdict": "pass",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T07:00:00",
-  "total_time": 413.75,
-  "sandbox_id": "ifh5tbfq2ub5o1e8k73fn",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-12T04:09:33.690198",
+  "total_time": 2799.44,
+  "sandbox_id": "isbs1q0thusg7oksih9ib",
   "backend": "fireworks",
   "pipeline": "agents",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
-      "notes": "Added 3 repo_tests pass_to_pass gates: (1) test_modified_files_syntax - runs py_compile on modified files, (2) test_modified_files_lint - runs ruff --select=E9,F821 on modified files, (3) test_hash_functions_work_on_base - verifies hash functions produce correct output regardless of which module they're in. CI commands found: python3 -m py_compile (syntax check), ruff check --select=E9,F821 (lint check), direct hash function execution tests. Docker image built successfully."
+      "notes": "Added 6 repo_tests pass_to_pass gates: (1) test_modified_files_syntax - runs py_compile on modified files, (2) test_modified_files_lint - runs ruff --select=E9,F821 on modified files, (3) test_hash_functions_work_on_base - verifies hash functions produce correct output regardless of module location, (4) test_modified_files_black_formatting - runs black --check on modified files, (5) test_modified_files_isort - runs isort --check-only on modified files, (6) test_repo_ruff_full_check - runs ruff with --select=F401,F821 matching CI. CI commands found: python3 -m py_compile, ruff check --select=E9/F821/F401, black --check, isort --check-only. Docker image built successfully."
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 314.5,
+      "time": 1304.72,
       "notes": ""
     },
     "improve": {
@@ -33,7 +33,12 @@
       "gold_reward": 1.0,
       "icr": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful. NOP test correctly returns 0 (fail-to-pass tests fail on base commit). Gold test correctly returns 1 (all tests pass after solve.sh applied). Rubric judge ICR=1.0 (all 3 rubric rules pass)."
+      "notes": "All validation checks passed. Docker build successful. NOP test returns 0 (fail-to-pass tests fail on base commit as expected). Gold test returns 1 (all tests pass after solve.sh applied). Rubric judge returns 1.0.",
+      "validated_at": "2026-04-12",
+      "validator": "manual-validate",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 60.42
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -41,36 +46,30 @@
       "backend": "fireworks",
       "time": 68.6,
       "notes": ""
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.19,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
     {
       "verdict": "fail",
-      "nop": -1.0,
+      "nop": 0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 12926.61,
-      "at": "2026-04-09T12:47:19.113527"
+      "time": 1191.31,
+      "at": "2026-04-09T14:48:02.483619"
     },
     {
       "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1190.99,
-      "at": "2026-04-09T14:48:02.139378"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1191.26,
-      "at": "2026-04-09T14:48:02.307614"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
+      "nop": 0,
       "gold": -1.0,
       "backend": "fireworks",
       "time": 413.49,
@@ -78,11 +77,27 @@
     },
     {
       "verdict": "fail",
-      "nop": -1.0,
+      "nop": 0,
       "gold": -1.0,
       "backend": "fireworks",
       "time": 413.75,
       "at": "2026-04-09T15:04:45.211453"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1967.68,
+      "at": "2026-04-12T02:39:54.868488"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2799.44,
+      "at": "2026-04-12T04:09:33.690198"
     }
   ]
 }

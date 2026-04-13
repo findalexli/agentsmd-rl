@@ -296,3 +296,17 @@ def test_repo_custom_init_isort():
     assert r.returncode == 0, (
         f"custom_init_isort failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
     )
+
+
+# [repo_tests] pass_to_pass — check_doc_toc validates documentation TOC
+def test_repo_check_doc_toc():
+    """Repo's check_doc_toc passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "utils/check_doc_toc.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"check_doc_toc failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )

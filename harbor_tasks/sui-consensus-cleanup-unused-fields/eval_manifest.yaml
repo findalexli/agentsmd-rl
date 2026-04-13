@@ -1,132 +1,52 @@
-source:
-  repo: MystenLabs/sui.git
-  pr: 0
-  base_commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
-  merge_commit: ''
+version: "1.0"
+task_id: requests-sample-task
+repo: psf/requests
+
+# Checks for evaluation
 checks:
-- id: test_cargo_check_consensus
-  type: pass_to_pass
-  origin: repo_tests
-  description: Cargo check passes on modified consensus crates
-- id: test_cargo_fmt
-  type: pass_to_pass
-  origin: repo_tests
-  description: Rust code is properly formatted
-- id: test_cargo_test_consensus
-  type: pass_to_pass
-  origin: repo_tests
-  description: Consensus crate unit tests pass
-- id: test_cargo_clippy_consensus
-  type: pass_to_pass
-  origin: repo_tests
-  description: Cargo clippy passes on modified consensus crates
-- id: test_consensus_config_field_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: always_accept_system_transactions field removed from ConsensusProtocolConfig
-    struct
-- id: test_consensus_config_method_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: always_accept_system_transactions() getter method removed
-- id: test_committed_subdag_field_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: always_accept_system_transactions field removed from CommittedSubDag
-    struct
-- id: test_load_committed_subdag_signature
-  type: fail_to_pass
-  origin: pr_diff
-  description: load_committed_subdag_from_store() doesn't take context parameter
-- id: test_authority_tables_events_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: Deprecated events column family removed from AuthorityPerpetualTables
-- id: test_unused_event_import_removed
-  type: fail_to_pass
-  origin: pr_diff
-  description: Unused Event import removed from authority.rs
-- id: test_parse_block_transactions_signature
-  type: fail_to_pass
-  origin: pr_diff
-  description: parse_block_transactions() doesn't take always_accept_system_transactions
-    parameter
-- id: test_parse_block_transactions_logic
-  type: fail_to_pass
-  origin: pr_diff
-  description: parse_block_transactions logic simplified to always accept system transactions
-- id: test_consensus_manager_no_flag
-  type: fail_to_pass
-  origin: pr_diff
-  description: consensus_manager doesn't pass the flag to protocol config builder
+  # Fail-to-pass tests (original issue verification)
+  - id: test_agent_can_import_requests
+    type: fail_to_pass
+    origin: agent_config
+    description: The requests library can be imported
+
+  - id: test_requests_http_get
+    type: fail_to_pass
+    origin: agent_config
+    description: Basic HTTP GET works
+
+  # Pass-to-pass tests (repo CI tests)
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff linter passes
+
+  - id: test_repo_ruff_format_src
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's source code passes ruff format check
+
+  - id: test_repo_pyproject_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's pyproject.toml is valid TOML
+
+  - id: test_repo_src_structure
+    type: pass_to_pass
+    origin: static
+    description: Repo source structure is intact (key files exist)
+
+  - id: test_repo_tests_structure
+    type: pass_to_pass
+    origin: static
+    description: Repo test structure is intact (key test files exist)
+
+  - id: test_repo_makefile_ci
+    type: pass_to_pass
+    origin: static
+    description: Repo Makefile has ci target defined
+
+# Rubric for scoring
+# Note: For install-only tasks, the rubric checks that no harmful changes were made
 rubric:
-- rule: When removing dead code, also remove any associated lint suppressions (#[allow(dead_code)],
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
-- rule: Unused imports must be removed rather than left with suppression attributes
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
-- rule: Deprecated/obsolete column families and database fields should be removed
-    completely rather than marked with
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
-- rule: Code simplifications should include clarifying comments when the 'why' isn't
-    immediately obvious from the code structure
-  source:
-    path: CLAUDE.md
-    lines: 116-124
-    commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
-- rule: Core Components Structure defines `consensus/` for the consensus mechanism
-    and `crates/sui-core/` for core blockchain logic.
-  source:
-    path: CLAUDE.md
-    lines: 48-56
-  evidence: The gold solution correctly navigates the architectural boundary between
-    the consensus mechanism and core blockchain logic, removing the `always_accept_system_transactions`
-    flag from `consensus/config
-  category: architecture
-distractors:
-- rule: Always consult CLAUDE.md files in sub-crates. Instructions in local CLAUDE.md
-    files override instructions in this file when they are in conflict.
-  collision_type: meta_confusion
-  why_distracting: The agent might halt progress to search for or request `CLAUDE.md`
-    files in the `consensus/` or `crates/sui-core/` sub-crates. For a straightforward
-    dead-code elimination task, this leads to unnecessary file system exploration
-    and meta-confusion.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 7-8
-- rule: Consult crate-specific CLAUDE.md or AGENTS.md files when changing files in
-    those crates.
-  collision_type: meta_confusion
-  why_distracting: Similar to the sub-crate CLAUDE.md rule, this instructs the agent
-    to look for crate-specific `AGENTS.md` files, which are not provided and not necessary
-    for this PR, leading to wasted effort.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 3-4
-- rule: When compiling or running tests in this repository, set timeout limits to
-    at least 10 minutes due to the large codebase size
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the full test suite (like `cargo
-    simtest -p sui-e2e-tests`) and wait 10+ minutes as suggested by the timeout rule,
-    wasting significant time on a simple unused field removal that can be quickly
-    verified with `cargo check`.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 31-32
-hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` and a root `AGENTS.md`.
-  Both files emphasize checking for crate-specific configuration files (`CLAUDE.md`
-  or `AGENTS.md` in sub-crates). Since no sub-crate configs are provided in the context,
-  these rules act as distractors that could cause an agent to over-explore the file
-  system.
-version: '2.0'
+  - rule: "No destructive modifications to the codebase"

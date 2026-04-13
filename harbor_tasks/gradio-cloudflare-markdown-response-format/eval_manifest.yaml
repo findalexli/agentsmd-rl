@@ -53,6 +53,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified TypeScript files have valid syntax and can be parsed
+- id: test_repo_client_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: '@gradio/client node tests pass (pnpm --filter @gradio/client test:node)'
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
@@ -79,31 +83,45 @@ rubric:
     and Svelte components (`.svelte`) within the `js/_website/` directory to fix the
     frontend markdown fetching issue, adheri
   category: architecture
-distractors:
-- rule: '`gradio/` — Python source for the Gradio library (backend)'
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions 'API endpoints' and 'Cloudflare Functions'.
-    An agent might mistakenly assume these are Python backend APIs in the `gradio/`
-    directory, especially since Gradio is primarily a Python library. However, the
-    website's API endpoints are actually SvelteKit server routes in the `js/` directory.
-  severity: high
+- rule: '`js/` — frontend code (Svelte/TypeScript)'
   source:
     path: AGENTS.md
-    lines: 7-7
-- rule: Tests must pass. PRs are only merged when CI is green. Run backend tests locally
-    with bash scripts/run_backend_tests.sh.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run backend tests (`bash scripts/run_backend_tests.sh`)
-    to verify the fix, but the change is entirely in the frontend website code (`js/_website/`).
-    Running backend tests is irrelevant to this SvelteKit API endpoint fix and wastes
-    time.
+    lines: 11-11
+  evidence: The gold solution correctly modifies the frontend code in the `js/` directory
+    using TypeScript and Svelte, adhering to the repository structure defined in the
+    config.
+  category: architecture
+- rule: Frontend code is formatted with prettier.
+  source:
+    path: AGENTS.md
+    lines: 38-39
+  evidence: The patch maintains Prettier formatting conventions in the Svelte and
+    TypeScript files, such as correct indentation and spacing in the MARKDOWN_HEADERS
+    object and new Response calls.
+  category: style
+distractors:
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The rule requires AI agents to include the keyword 'kumquat' in
+    the PR description. An agent might waste time trying to create a PR using the
+    GitHub CLI or writing a PR description file, which is outside the scope of a pure
+    code-edit evaluation task.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 27-27
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root. The
-  primary challenge is correctly identifying the architectural boundary between the
-  Python backend (`gradio/`) and the SvelteKit frontend (`js/`). The issue mentions
-  'API endpoints', which could mislead an agent into looking at the Python backend,
-  but the repository structure clearly delineates `js/` for frontend code, which includes
-  the website's SvelteKit server routes.
+    lines: 70-72
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The rule states that every non-trivial PR should reference an existing
+    GitHub issue, and if one doesn't exist, create it first. The agent might attempt
+    to use CLI tools to create an issue or write an issue document, distracting from
+    fixing the actual bug.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 20-21
+hierarchy_analysis: The repository uses a flat, single-file configuration (`AGENTS.md`)
+  at the root level. There are no conflicting rules within the hierarchy, as all instructions
+  are centralized in this single document.

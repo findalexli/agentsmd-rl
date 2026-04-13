@@ -73,6 +73,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Modified test files can be parsed and have test functions
+- id: precommit_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit check-yaml hook passes on config files
+- id: precommit_check_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit check-json hook passes on JSON files
+- id: precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit trailing-whitespace hook passes on modified files
+- id: precommit_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit end-of-file-fixer hook passes on modified files
 rubric:
 - rule: Tests parametrized for multiple backends (fsdp/megatron) must use @pytest.mark.parametrize
     decorator, not ad-hoc loops
@@ -94,6 +110,33 @@ rubric:
     lines: 11-13
   evidence: The gold solution includes formatting updates to `docs/cli_reference.md`,
     which aligns with the rule that pre-commit runs CLI doc generation and mdformat.
+  category: tooling
+- rule: Run pre-commit hooks (which include CLI doc generation and formatting) before
+    submitting patches.
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution includes edits to `docs/cli_reference.md`, which aligns
+    with the instruction to run pre-commit hooks that automatically handle CLI doc
+    generation and formatting.
+  category: tooling
+- rule: 'Tooling: `.pre-commit-config.yaml` runs Ruff (lint+format), mdformat, clang-format,
+    nbstripout, and CLI doc generation; install with `pre-commit install` before submitting
+    patches.'
+  source:
+    path: AGENTS.md
+    lines: 10-12
+  evidence: The gold solution includes updates to `docs/cli_reference.md`, aligning
+    with the instruction to include formatting updates from pre-commit and the config
+    rule about CLI doc generation.
+  category: tooling
+- rule: Use `.pre-commit-config.yaml` to run formatting and CLI doc generation before
+    submitting patches.
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution includes updates to `docs/cli_reference.md` as a result
+    of running the pre-commit hooks, which handle CLI doc generation and formatting.
   category: tooling
 config_edits:
 - path: examples/experimental/proxy/README.md
@@ -128,24 +171,29 @@ config_edits:
     You may modify the configuration file to fit your needs, or override configuration
     values in the command line (see quick start above as an example).'
 distractors:
-- rule: Explain skips explicitly when you cannot access the cluster.
-  collision_type: meta_confusion
-  why_distracting: The rule asks to 'Explain skips explicitly when you cannot access
-    the cluster.' An agent might interpret this as a directive to add `@pytest.mark.skip`
-    to the new Megatron tests in the code since it (the agent) cannot run them, which
-    would incorrectly disable the tests in the repository.
+- rule: Integration and performance tests require multi-node hardware. Explain skips
+    explicitly when you cannot access the cluster.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that integration tests require multi-node hardware
+    and instructs the agent to 'explain skips explicitly when you cannot access the
+    cluster'. An agent might misinterpret this as an instruction to add `@pytest.mark.skip`
+    decorators to the new Megatron tests, whereas the goal is to parametrize the
+    tests so they can be executed by the CI/CD pipeline.
   severity: high
   source:
     path: AGENTS.md
-    lines: 9-10
-- rule: Before editing code, outline the proposed plan and confirm it with the user.
+    lines: 8-10
+- rule: Coordinate doc edits with the docs build pipeline.
   collision_type: meta_confusion
-  why_distracting: The rule states 'Before editing code, outline the proposed plan
-    and confirm it with the user.' An agent might stop and ask for permission instead
-    of providing the requested patch, failing the evaluation.
-  severity: high
+  why_distracting: The rule says to 'Coordinate doc edits with the docs build pipeline'.
+    An agent might avoid committing the changes to `docs/cli_reference.md` or try
+    to trigger a complex external build pipeline, not realizing that the CLI doc generation
+    is handled automatically by the local pre-commit hook.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 20-21
-hierarchy_analysis: Only one config file (`AGENTS.md`) is provided at the root level.
-  No conflicts between multiple config files exist.
+    lines: 16-17
+hierarchy_analysis: The repository uses a flat, single-file config (`AGENTS.md`) that
+  provides high-level operational guidelines. The agent must synthesize the instruction
+  to update `docs/cli_reference.md` with the `AGENTS.md` rule about pre-commit hooks
+  generating CLI docs.

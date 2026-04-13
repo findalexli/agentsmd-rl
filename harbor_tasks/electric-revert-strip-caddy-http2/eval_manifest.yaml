@@ -10,24 +10,53 @@ checks:
   origin: pr_diff
   description: vite-plugin-caddy.ts exports caddyPlugin returning valid plugin with
     configureServer and buildEnd
+  xfail: true  # Expected to fail at base commit, passes after fix
 - id: vite_config_uses_caddy
   type: fail_to_pass
   origin: pr_diff
   description: vite.config.ts imports and uses caddyPlugin with server.host enabled
+  xfail: true  # Expected to fail at base commit, passes after fix
 - id: agents_md_http2_proxy_tip
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md slow shapes tip mentions HTTP/2 proxy fix, not outdated version
     upgrade
+  xfail: true  # Expected to fail at base commit, passes after fix
 - id: readme_documents_caddy
   type: fail_to_pass
   origin: pr_diff
   description: README documents Caddy with HTTP/2 multiplexing explanation and setup
     instructions
+  xfail: true  # Expected to fail at base commit, passes after fix
 - id: vite_config_still_has_existing_plugins
   type: pass_to_pass
   origin: static
   description: vite.config.ts retains all existing plugins (tanstack, react, tailwind)
+- id: test_repo_stylecheck_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo-wide stylecheck passes - runs `pnpm run stylecheck-all` CI command
+- id: test_repo_typescript_client_stylecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript client package stylecheck passes - runs `pnpm run stylecheck`
+- id: test_repo_typescript_client_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript client package typecheck passes - runs `pnpm run typecheck`
+- id: test_repo_tanstack_plugin_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: New vite-plugin-caddy.ts has valid JS/TS syntax - runs `node --check`
+- id: test_repo_tanstack_plugin_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: New vite-plugin-caddy.ts passes eslint - runs `npx eslint` CI command
+- id: test_repo_tanstack_plugin_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: New vite-plugin-caddy.ts passes prettier format check - runs `npx prettier
+    --check`
 rubric:
 - rule: Root AGENTS.md slow shapes tip must document HTTP/2 proxy solution instead
     of outdated version upgrade
@@ -35,8 +64,8 @@ rubric:
     path: AGENTS.md
     lines: 197-200
     commit: 617b429f0f8b9b78bed42b897092e065cf993e35
-  reference: '3. **Local dev slow shapes** - HTTP/1.1 6-connection limit. Fix: HTTP/2
-    proxy (Caddy/nginx) or Electric Cloud'
+  reference: 3. **Local dev slow shapes** - HTTP/2 proxy (Caddy/nginx) or Electric
+    Cloud ([Electric][18])
 - rule: Examples README.md must document Caddy setup and HTTP/2 benefits for TanStack
     starter
   source:
@@ -53,20 +82,13 @@ rubric:
     which aligns with the architectural rule to put Electric behind a proxy (even
     though this rule specifically mentions produc
   category: architecture
-- rule: file names should always use kebab-case
-  source:
-    path: examples/tanstack-db-web-starter/AGENTS.md
-    lines: 45-47
-  evidence: The new Vite plugin is named `vite-plugin-caddy.ts`, which follows the
-    kebab-case naming convention specified in the config.
-  category: naming
 config_edits:
 - path: AGENTS.md
   tier: 1
   gold_added: '3. **Local dev slow shapes** - HTTP/1.1 6-connection limit. Fix: HTTP/2
     proxy (Caddy/nginx) or Electric Cloud ([Electric][18])'
-  gold_removed: 3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client`
-    v1.0.13+ UPGRADE!
+  gold_removed: '3. **Local dev slow shapes** - Fixed by default in `@electric-sql/client`
+    v1.0.13+ UPGRADE!'
 - path: examples/burn/README.md
   tier: 2
   gold_added: '# `asdf plugin add <name> <git-url> if you don''t have the dependency
@@ -114,57 +136,58 @@ config_edits:
     \n   ```sh\n   caddy start\n   ```\n\n2. **Check certificate trust:**\n\n   ```sh\n\
     \   caddy trust\n   # To remove later: caddy untrust\n   ```\n\n3. **Verify Caddyfile\
     \ was generated:**\n   Look for a `Caddyfile` in your project root after running\
-    \ `pnpm dev`\n\n4. **Stop conflicting Caddy instances:**\n\n   ```sh\n   caddy\
-    \ stop\n   ```\n\n5. **Check for port conflicts:**\n   Caddy needs ports 80 and\
-    \ 443 available\n\n| Issue                    | Symptoms                     \
-    \              | Solution                                                    \
-    \       |\n| ------------------------ | ------------------------------------------\
-    \ | ------------------------------------------------------------------ |\n| **Docker\
+    \ `pnpm dev`\n\n4. **Stop conflicting Caddy instances:\n\n   ```sh\n   caddy stop\n\
+    \ \\   ```\n\n5. **Check for port conflicts:**\n   Caddy needs ports 80 and 443\
+    \ available\n\n| Issue                    | Symptoms                     \\\n    \ | Solution                                                    \\   \t      \\ |
+| ------------------------ | ------------------------------------------ |\
+    \ ------------------------------------------------------------------ |\
+| **Docker\
     \ not running**   | `docker compose ps` shows nothing          | Start Docker\
-    \ Desktop/daemon                                        |\n| **Caddy not trusted**\
+    \ Desktop/daemon                                        |\
+| **Caddy not trusted**\
     \    | SSL warnings in browser                    | Run `caddy trust` (see Caddy\
-    \ section below)                        |\n| **Port conflicts**       | Postgres\
+    \ section below)                        |\
+| **Port conflicts**       | Postgres\
     \ (54321) or Electric (3000) in use | Stop conflicting services or change ports\
-    \ in `docker-compose.yaml` |\n| **Missing .env**         | Database connection\
-    \ errors          "
+    \ in `docker-compose.yaml` |\
+| **Missing .env**         | Database connection\
+    \ errors          | Copy `.env.example` to `.env`                   |"
   gold_removed: "This starts the dev server and Docker Compose (Postgres + Electric)\
     \ automatically.\n   Open [http://localhost:5173](http://localhost:5173)\nThis\
     \ project uses [Docker](https://www.docker.com) and [Node](https://nodejs.org/en)\
     \ with [pnpm](https://pnpm.io). You can see compatible versions in the `.tool-versions`\
-    \ file.\n| Issue                  | Symptoms                                 \
-    \  | Solution                                                           |\n| ----------------------\
-    \ | ------------------------------------------ | ------------------------------------------------------------------\
+    \ file.\n| Issue                  | Symptoms                                 \\\n    \ | Solution                                                           |\n\
+    | ---------------------- | ------------------------------------------ | ------------------------------------------------------------------\
     \ |\n| **Docker not running** | `docker compose ps` shows nothing          | Start\
     \ Docker Desktop/daemon                                        |\n| **Port conflicts**\
     \     | Postgres (54321) or Electric (3000) in use | Stop conflicting services\
     \ or change ports in `docker-compose.yaml` |\n| **Missing .env**       | Database\
-    \ connection errors                 | Copy `.env.example` to `.env`          \
-    \          "
+    \ connection errors                 | Copy `.env.example` to `.env`          \\\n    \ |"
 distractors:
-- rule: Use latest packages - Check npm for @electric-sql/*
-  collision_type: rule_conflict
-  why_distracting: The rule suggests using the latest packages, and the old AGENTS.md
-    text explicitly claimed that upgrading `@electric-sql/client` to v1.0.13+ fixed
-    the slow shapes issue. An agent might try to just run `npm install @electric-sql/client@latest`
-    instead of building the Caddy Vite plugin, missing the core requirement.
+- rule: Local dev slow shapes - Fixed by default in `@electric-sql/client` v1.0.13+
+    UPGRADE!
+  collision_type: meta_confusion
+  why_distracting: The config file explicitly states that slow shapes are 'Fixed by
+    default in @electric-sql/client v1.0.13+ UPGRADE!'. An agent that blindly trusts
+    its config files over the user instruction might refuse to implement the Caddy
+    proxy or get confused about the expected implementation.
   severity: high
   source:
     path: AGENTS.md
-    lines: 197-199
-- rule: 'Services: Docker Compose setup'
-  collision_type: architecture_boundary
-  why_distracting: The config states that services (Postgres, Electric) are managed
-    via Docker Compose. An agent might try to add the new Caddy proxy service to `docker-compose.yml`
-    instead of creating a Vite plugin to manage the Caddy process, which would violate
-    the explicit instruction to integrate it into the Vite dev server workflow.
-  severity: high
+    lines: 58-58
+- rule: After you edit files, you must do the equivalent by running `pnpm lint`...
+    Use your judgement as to which of the linter violations should be fixed.
+  collision_type: scope_ambiguity
+  why_distracting: The config instructs the agent to run `pnpm lint` and fix linter
+    violations after editing files. The agent might run the linter and start fixing
+    unrelated linting errors across the project, expanding the scope of the PR unnecessarily
+    and wasting time.
+  severity: medium
   source:
     path: examples/tanstack-db-web-starter/AGENTS.md
-    lines: 29-31
-hierarchy_analysis: The root `AGENTS.md` contains outdated information about fixing
-  slow shapes via a package upgrade, which directly conflicts with the PR's goal of
-  implementing a Caddy HTTP/2 proxy. The agent must recognize that the prompt's instructions
-  override the root config's claim about v1.0.13+. Additionally, the project-level
-  `AGENTS.md` specifies that services are managed via Docker Compose, but the agent
-  must follow the prompt to manage Caddy via a Vite plugin instead, crossing typical
-  architecture boundaries for local services.
+    lines: 18-21
+hierarchy_analysis: The task involves a 2-level hierarchy (`AGENTS.md` at root and
+  `examples/tanstack-db-web-starter/AGENTS.md`). The most critical aspect is that
+  the root `AGENTS.md` contains outdated/incorrect information that the agent is
+  explicitly instructed to fix. This creates a meta-referential scenario where the
+  agent must modify its own instructions, overriding the existing rule.

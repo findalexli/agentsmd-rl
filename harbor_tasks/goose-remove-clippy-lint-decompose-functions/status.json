@@ -3,20 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T12:18:32.214283",
-  "total_time": 3875.4,
-  "sandbox_id": "izzk8vyg5mmlq7jtlldbo",
+  "validated_at": "2026-04-11T21:54:52.389757",
+  "total_time": 3637.26,
+  "sandbox_id": "i6azgkkc0zfks9izkby6w",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 1.0,
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 5.55,
-      "notes": "Added 3 new repo_tests p2p gates: test_repo_cargo_clippy_goose, test_repo_cargo_clippy_goose_cli, test_repo_cargo_check_workspace_lib"
+      "notes": "Added 4 repo_tests p2p gates: test_repo_cargo_clippy_goose, test_repo_cargo_clippy_goose_cli, test_repo_cargo_check_workspace_lib, test_repo_cargo_clippy_all_targets"
     },
     "improve": {
       "status": "skipped",
@@ -29,7 +27,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2288.29,
+      "time": 1030.45,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -59,11 +57,18 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "Docker build succeeded. NOP test returned reward=0 (expected - base code correctly fails). Gold test returned reward=1 (all 12 tests pass after solve.sh applied). Rubric judge requires LLM API keys (GEMINI_API_KEY or ANTHROPIC_API_KEY) which are not available in this environment.",
+      "notes": "Docker build succeeded. NOP test returned reward=0 (base code correctly fails). Gold test returned reward=1 (all 13 tests pass after solve.sh applied). Fixed eval_manifest.yaml YAML formatting issue and removed non-evaluable rubric rules. Fixed judge.py schema mismatch bug. Rubric judge ICR=1.00.",
+      "fixes": [
+        "Fixed eval_manifest.yaml: Corrected indentation of test_repo_cargo_clippy_all_targets check",
+        "Fixed eval_manifest.yaml: Removed 5 non-evaluable rubric rules about code conventions (no code files modified in this task)",
+        "Fixed eval_manifest.yaml: Added reference field to remaining rubric rule",
+        "Fixed judge.py: Added _CONFIG_EDIT_SCHEMA and updated _call_gemini to accept schema parameter"
+      ],
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 811.31
+      "time": 995.2
     },
     "rubric_judge": {
       "status": "pass",
@@ -71,6 +76,16 @@
       "backend": "fireworks",
       "time": 5.12,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 17.63,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -89,6 +104,22 @@
       "backend": "fireworks",
       "time": 3875.4,
       "at": "2026-04-10T12:18:32.214283"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5770.15,
+      "at": "2026-04-11T20:53:36.437935"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3637.26,
+      "at": "2026-04-11T21:54:52.389757"
     }
   ]
 }

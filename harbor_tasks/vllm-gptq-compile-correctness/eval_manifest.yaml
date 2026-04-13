@@ -73,45 +73,37 @@ checks:
     path: AGENTS.md
     lines: 86-98
     commit: 37a83007fef9925609a8d9b7c7b86bb41dab4e5d
-rubric:
-- rule: No low-value busywork PRs
-  source:
-    path: AGENTS.md
-    lines: 21-22
-  evidence: The gold solution implements a substantive fix for a flaky test and uninitialized
-    memory bug on ROCm, rather than a trivial mechanical cleanup, aligning with the
-    requirement to avoid low-value busywor
-  category: testing
+rubric: []
 distractors:
-- rule: Pure code-agent PRs are not allowed
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The agent is operating in an autonomous evaluation sandbox. If
-    it follows the rule that 'Pure code-agent PRs are not allowed', it will refuse
-    to generate the patch, incorrectly failing the evaluation.
+  why_distracting: The instruction explicitly forbids pure code-agent PRs, which might
+    cause an AI agent to refuse to complete the task out of compliance.
   severity: high
   source:
     path: AGENTS.md
-    lines: 25-27
-- rule: Duplicate-work checks using gh CLI
+    lines: 23-24
+- rule: 'Before proposing a PR, run these checks: gh issue view <issue_number> --repo
+    vllm-project/vllm --comments'
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to run `gh` commands in the `solve.sh`
-    script or refuse to proceed because it lacks internet access to check for duplicate
-    PRs.
+  why_distracting: Instructs the contributor to run `gh` CLI commands to check for
+    duplicate issues/PRs, which is irrelevant in an isolated benchmark setting and
+    may cause the agent to fail or halt.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 11-18
-- rule: Never use system python3 or bare pip; use uv
-  collision_type: meta_confusion
-  why_distracting: The agent might try to include `uv` installation, environment setup,
-    and test execution commands inside `solve.sh`, which is only meant to apply the
-    code patch. This could cause the script to fail or timeout.
-  severity: medium
+    lines: 9-14
+- rule: Never use system python3 or bare pip/pip install. All Python commands must
+    go through uv and .venv/bin/python.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to install `uv` and set up a virtual environment
+    to run tests, which is unnecessary for generating the patch and might fail in
+    the sandbox.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 41-42
-hierarchy_analysis: The `AGENTS.md` file contains workflow instructions intended for
-  human contributors using AI assistants, rather than instructions for an autonomous
-  agent generating a patch script. This creates a meta-level conflict where the agent
-  must ignore the human-in-the-loop and workflow requirements (like `uv`, `gh` CLI,
-  and human submission) and focus solely on the code changes.
+    lines: 38-40
+hierarchy_analysis: The hierarchy is flat. CLAUDE.md simply redirects to AGENTS.md,
+  which contains generic repository contribution guidelines rather than specific coding
+  standards.

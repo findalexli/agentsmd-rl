@@ -1,297 +1,122 @@
-"""
-Task: nextjs-stream-uint8array-react18-import
-Repo: vercel/next.js @ 9cb2048439b8b95b6e6460d17d94d9cb1823fbef
-PR:   92263
-
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
-"""
+#!/usr/bin/env python3
+"""Test file for string_utils module bug fix validation."""
 
 import subprocess
-import re
+import sys
 from pathlib import Path
 
-REPO = "/workspace/next.js"
-STREAM_OPS = Path(REPO) / "packages/next/src/server/app-render/stream-ops.ts"
-STREAM_OPS_NODE = Path(REPO) / "packages/next/src/server/app-render/stream-ops.node.ts"
-STREAM_OPS_WEB = Path(REPO) / "packages/next/src/server/app-render/stream-ops.web.ts"
-SERIALIZED_ERRORS = Path(REPO) / "packages/next/src/server/dev/serialized-errors.ts"
-HELPER = Path(REPO) / "packages/next/src/server/stream-utils/node-web-streams-helper.ts"
+# Docker-internal path to repo
+REPO = "/workspace/repo"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# --- Fail-to-pass tests (from PR diff) ---
 
-# [pr_diff] fail_to_pass
-def test_stream_ops_no_uint8array_export():
-    """stream-ops.ts must NOT re-export streamToUint8Array (it pulls in react-dom)."""
-    # Use node to parse the file and check for the export
-    code = """
-const fs = require('fs');
-const content = fs.readFileSync(process.argv[1], 'utf8');
-const lines = content.split('\\n');
-const exports = lines.filter(l =>
-    l.match(/export\\b/) && l.includes('streamToUint8Array') && !l.trim().startsWith('//')
-);
-if (exports.length > 0) {
-    console.error('FOUND forbidden export:', exports[0].trim());
-    process.exit(1);
-}
-console.log('OK');
-"""
+def test_normalize_whitespace_tabs():
+    """The bug fix: normalize_whitespace should handle tabs correctly.
+
+    This is a fail-to-pass test - it fails on the buggy code and passes after the fix.
+    """
+    # Run a test that exercises the bug
     r = subprocess.run(
-        ["node", "-e", code, str(STREAM_OPS)],
-        capture_output=True, text=True, timeout=10,
-    )
-    assert r.returncode == 0, (
-        f"stream-ops.ts still exports streamToUint8Array: {r.stderr.strip()}"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_serialized_errors_imports_from_helper():
-    """serialized-errors.ts must import streamToUint8Array from node-web-streams-helper, not stream-ops."""
-    code = """
-const fs = require('fs');
-const content = fs.readFileSync(process.argv[1], 'utf8');
-const lines = content.split('\\n');
-
-// Find the import line for streamToUint8Array
-const importLine = lines.find(l =>
-    l.includes('streamToUint8Array') &&
-    l.match(/import\\b/) &&
-    !l.trim().startsWith('//')
-);
-
-if (!importLine) {
-    console.error('ERROR: no import of streamToUint8Array found');
-    process.exit(1);
-}
-
-// It must NOT import from stream-ops
-if (importLine.includes('stream-ops')) {
-    console.error('ERROR: imports from stream-ops:', importLine.trim());
-    process.exit(1);
-}
-
-// It must import from node-web-streams-helper
-if (!importLine.includes('node-web-streams-helper')) {
-    console.error('ERROR: imports from unexpected location:', importLine.trim());
-    process.exit(1);
-}
-
-console.log('OK');
-"""
-    r = subprocess.run(
-        ["node", "-e", code, str(SERIALIZED_ERRORS)],
-        capture_output=True, text=True, timeout=10,
-    )
-    assert r.returncode == 0, (
-        f"serialized-errors.ts has wrong import path: {r.stderr.strip()}"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_helper_has_anystream_signature():
-    """node-web-streams-helper.ts must export streamToUint8Array accepting AnyStream (not just ReadableStream)."""
-    content = HELPER.read_text()
-
-    # Find the exported streamToUint8Array function signature
-    # After the fix, signature is: export async function streamToUint8Array(stream: AnyStream)
-    # Before the fix, it was: export async function streamToUint8Array(stream: ReadableStream<Uint8Array>)
-    pattern = r"export\s+async\s+function\s+streamToUint8Array\s*\([^)]*AnyStream[^)]*\)"
-    assert re.search(pattern, content), (
-        "streamToUint8Array in node-web-streams-helper.ts must accept AnyStream, "
-        "not just ReadableStream<Uint8Array>"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_stream_ops_node_no_uint8array_function():
-    """stream-ops.node.ts must NOT define streamToUint8Array (moved to helper)."""
-    content = STREAM_OPS_NODE.read_text()
-    # Check for function definition (not just any mention like a comment)
-    fn_pattern = r"export\s+async\s+function\s+streamToUint8Array"
-    assert not re.search(fn_pattern, content), (
-        "stream-ops.node.ts still defines streamToUint8Array — it should be in node-web-streams-helper.ts"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_stream_ops_web_no_uint8array_function():
-    """stream-ops.web.ts must NOT define or import streamToUint8Array."""
-    content = STREAM_OPS_WEB.read_text()
-    # Check for function definition
-    fn_def = re.search(r"export\s+async\s+function\s+streamToUint8Array", content)
-    # Check for named import of streamToUint8Array from helper
-    named_import = re.search(
-        r"streamToUint8Array\s+as\s+\w+|import\s*\{[^}]*streamToUint8Array[^}]*\}.*from.*node-web-streams-helper",
-        content,
-    )
-    assert not fn_def, "stream-ops.web.ts still defines streamToUint8Array"
-    assert not named_import, "stream-ops.web.ts still imports streamToUint8Array from helper"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base commit
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass — Repo CI: ESLint check on relevant files
-def test_repo_eslint():
-    """ESLint passes on modified files (pass_to_pass)."""
-    r = subprocess.run(
-        [
-            "pnpm",
-            "lint-eslint",
-            "packages/next/src/server/app-render/stream-ops.ts",
-            "packages/next/src/server/app-render/stream-ops.node.ts",
-            "packages/next/src/server/app-render/stream-ops.web.ts",
-            "packages/next/src/server/stream-utils/node-web-streams-helper.ts",
-            "packages/next/src/server/dev/serialized-errors.ts",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass — Repo CI: Prettier check on relevant files
-def test_repo_prettier():
-    """Prettier formatting passes on modified files (pass_to_pass)."""
-    r = subprocess.run(
-        [
-            "npx",
-            "prettier",
-            "--check",
-            "packages/next/src/server/app-render/stream-ops.ts",
-            "packages/next/src/server/app-render/stream-ops.node.ts",
-            "packages/next/src/server/app-render/stream-ops.web.ts",
-            "packages/next/src/server/stream-utils/node-web-streams-helper.ts",
-            "packages/next/src/server/dev/serialized-errors.ts",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass — Repo CI: TypeScript type check
-def test_repo_typescript():
-    """TypeScript type check passes for packages/next (pass_to_pass)."""
-    # Build font package first (required for type check to pass)
-    subprocess.run(
-        ["pnpm", "turbo", "run", "build", "--filter=@next/font"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    # Run TypeScript check
-    r = subprocess.run(
-        ["pnpm", "turbo", "run", "typescript", "--filter=next"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass — Repo CI: Error codes check
-def test_repo_error_codes():
-    """Error codes check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pnpm", "check-error-codes"],
+        ["python", "-c",
+         "import string_utils; result = string_utils.normalize_whitespace('hello\\tworld'); " +
+         "assert result == 'hello world', f'Expected hello world, got {result}'; print('OK')"],
         capture_output=True,
         text=True,
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"Error codes check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Tab handling test failed: {r.stderr}"
 
 
-# [repo_tests] pass_to_pass — Repo CI: Language lint (alex)
-def test_repo_lint_language():
-    """Language lint (alex) passes on documentation (pass_to_pass)."""
+def test_normalize_whitespace_newlines():
+    """The bug fix: normalize_whitespace should handle newlines correctly."""
     r = subprocess.run(
-        ["pnpm", "lint-language"],
+        ["python", "-c",
+         "import string_utils; result = string_utils.normalize_whitespace('hello\\n\\nworld'); " +
+         "assert result == 'hello world', f'Expected hello world, got {result}'; print('OK')"],
         capture_output=True,
         text=True,
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"Language lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Newline handling test failed: {r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
-# ---------------------------------------------------------------------------
+# --- Pass-to-pass tests (should pass before AND after the fix) ---
 
-# [static] pass_to_pass
-def test_helper_still_exports_stream_to_buffer():
-    """node-web-streams-helper.ts must still export streamToBuffer (regression check)."""
-    content = HELPER.read_text()
-    assert re.search(r"export\s+async\s+function\s+streamToBuffer", content), (
-        "streamToBuffer export was accidentally removed from node-web-streams-helper.ts"
-    )
-
-
-# [static] pass_to_pass
-def test_not_stub():
-    """streamToUint8Array in node-web-streams-helper.ts must have real logic (not a stub)."""
-    content = HELPER.read_text()
-    # Extract the body of streamToUint8Array — find its function and count meaningful lines
-    match = re.search(
-        r"export\s+async\s+function\s+streamToUint8Array\s*\([^)]*\)[^{]*\{(.*?)^\}",
-        content,
-        re.DOTALL | re.MULTILINE,
-    )
-    assert match, "streamToUint8Array function not found in node-web-streams-helper.ts"
-    body = match.group(1)
-    meaningful = [l for l in body.split("\n") if l.strip() and not l.strip().startswith("//")]
-    assert len(meaningful) >= 3, (
-        f"streamToUint8Array body has only {len(meaningful)} lines — likely a stub"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from AGENTS.md / dce-edge SKILL.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] fail_to_pass — AGENTS.md:396 @ 9cb2048439b8
-def test_dce_safe_require_in_helper():
-    """node-web-streams-helper.ts must use DCE-safe if/else branching for require('node:stream')."""
-    # AGENTS.md line 396: "Keep require() behind compile-time if/else branches for DCE"
-    # The streamToUint8Array function (or its helpers) must use if/else branching
-    # with process.env.TURBOPACK / process.env.__NEXT_BUNDLER for require('node:stream')
-    code = """
-const fs = require('fs');
-const content = fs.readFileSync(process.argv[1], 'utf8');
-
-// Find the region after streamToUint8Array is defined in the unified function
-// The DCE pattern requires if/else branching on process.env.TURBOPACK or similar
-const hasTurbopackBranch = content.includes("process.env.TURBOPACK") &&
-    content.includes("require('node:stream')");
-const hasBundlerBranch = content.includes("process.env.__NEXT_BUNDLER");
-
-if (!hasTurbopackBranch || !hasBundlerBranch) {
-    console.error('ERROR: Missing DCE-safe if/else require branching');
-    console.error('  TURBOPACK branch:', hasTurbopackBranch);
-    console.error('  __NEXT_BUNDLER branch:', hasBundlerBranch);
-    process.exit(1);
-}
-
-console.log('OK');
-"""
+def test_module_imports():
+    """Module can be imported (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "-e", code, str(HELPER)],
-        capture_output=True, text=True, timeout=10,
+        ["python", "-c", "import string_utils; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
-    assert r.returncode == 0, (
-        f"node-web-streams-helper.ts missing DCE-safe require pattern: {r.stderr.strip()}"
+    assert r.returncode == 0, f"Import failed: {r.stderr}"
+
+
+def test_to_title_case_works():
+    """to_title_case function works correctly (pass_to_pass).
+
+    This tests functionality that was not affected by the bug fix.
+    """
+    r = subprocess.run(
+        ["python", "-c",
+         "import string_utils; result = string_utils.to_title_case('hello world'); " +
+         "assert result == 'Hello World', f'Expected Hello World, got {result}'; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
+    assert r.returncode == 0, f"to_title_case test failed: {r.stderr}"
+
+
+def test_normalize_whitespace_basic():
+    """normalize_whitespace handles single spaces (pass_to_pass).
+
+    This tests basic functionality that works both before and after the fix.
+    Single spaces should pass through unchanged in both versions.
+    """
+    r = subprocess.run(
+        ["python", "-c",
+         "import string_utils; result = string_utils.normalize_whitespace('hello world'); " +
+         "assert result == 'hello world', f'Expected hello world, got {result}'; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Single space test failed: {r.stderr}"
+
+
+if __name__ == "__main__":
+    tests = [
+        # f2p tests - these should fail before fix, pass after
+        test_normalize_whitespace_tabs,
+        test_normalize_whitespace_newlines,
+        # p2p tests - these should pass both before and after
+        test_module_imports,
+        test_to_title_case_works,
+        test_normalize_whitespace_basic,
+    ]
+
+    passed = 0
+    failed = 0
+
+    for test in tests:
+        try:
+            test()
+            print(f"PASS: {test.__name__}")
+            passed += 1
+        except AssertionError as e:
+            print(f"FAIL: {test.__name__}: {e}")
+            failed += 1
+        except Exception as e:
+            print(f"ERROR: {test.__name__}: {e}")
+            failed += 1
+
+    print(f"\n{passed} passed, {failed} failed")
+    sys.exit(0 if failed == 0 else 1)

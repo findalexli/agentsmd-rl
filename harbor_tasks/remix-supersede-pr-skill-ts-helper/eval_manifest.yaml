@@ -25,6 +25,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo @remix-run/cookie unit tests pass
+- id: test_repo_scripts_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo scripts/utils unit tests pass
+- id: test_repo_headers_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo @remix-run/headers unit tests pass
+- id: test_repo_route_pattern_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo @remix-run/route-pattern unit tests pass
 - id: syntax_check
   type: fail_to_pass
   origin: pr_diff
@@ -60,47 +72,84 @@ rubric:
     path: AGENTS.md
     lines: 23-30
     commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+  reference: '- **One-off scripts**: Write one-off scripts in this repo as TypeScript
+    and make them executable natively with modern Node.js (for example, executable
+    `.ts` files)'
 - rule: SKILL.md files follow consistent YAML frontmatter format with name and description
     fields
   source:
     path: skills/supersede-pr/SKILL.md
     lines: 1-4
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: '---
+
+    name: supersede-pr
+
+    description: Safely replace one GitHub pull request
+
+    ---'
 - rule: AGENTS.md Code Style section includes one-off scripts guidance
   source:
     path: AGENTS.md
     lines: '25'
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: One-off scripts
 - rule: AGENTS.md has a Skills section explaining the concept
   source:
     path: AGENTS.md
     lines: 65-72
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: '## Skills
+
+
+    A skill is a reusable local instruction set stored in a `SKILL.md` file.'
 - rule: AGENTS.md lists the supersede-pr skill
   source:
     path: AGENTS.md
     lines: '71'
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: supersede-pr
 - rule: AGENTS.md lists the make-pr skill
   source:
     path: AGENTS.md
     lines: '72'
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: make-pr
 - rule: supersede-pr SKILL.md exists with proper frontmatter and content
   source:
     path: skills/supersede-pr/SKILL.md
     lines: 1-54
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: '---
+
+    name: supersede-pr
+
+    description: Safely replace one GitHub pull request with another.
+
+    ---
+
+
+    # Supersede PR'
 - rule: make-pr SKILL.md exists with proper frontmatter and content
   source:
     path: skills/make-pr/SKILL.md
     lines: 1-65
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+  reference: '---
+
+    name: make-pr
+
+    description: Create GitHub pull requests with clear, reviewer-friendly descriptions.
+
+    ---
+
+
+    # Make PR'
 - rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
     `var`'
   source:
     path: AGENTS.md
-    lines: 26-26
+    lines: 27-28
   evidence: The `close_superseded_pr.ts` script uses `let parsed = parseArgs(...)`
     and `let repo = ...` instead of `const` for local variables.
   category: style
@@ -108,17 +157,9 @@ rubric:
     not tabs)'
   source:
     path: AGENTS.md
-    lines: 30-30
-  evidence: The `close_superseded_pr.ts` script uses single quotes for imports (e.g.,
-    `'node:child_process'`) and omits semicolons at the end of statements.
-  category: style
-- rule: 'Functions: Use regular function declarations/expressions by default.'
-  source:
-    path: AGENTS.md
-    lines: 27-27
-  evidence: 'The `close_superseded_pr.ts` script defines its main entry point using
-    a standard function declaration (`function main(): void { ... }`) rather than
-    an arrow function.'
+    lines: 31-32
+  evidence: The `close_superseded_pr.ts` script uses single quotes for imports (`'node:child_process'`)
+    and omits semicolons at the end of statements.
   category: style
 config_edits:
 - path: AGENTS.md
@@ -273,32 +314,30 @@ config_edits:
     - `scripts/close_superseded_pr.ts`'
   gold_removed: ''
 distractors:
-- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
-    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
-    Node.js APIs'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to avoid using `node:child_process` or `node:process`
-    to make the script runtime-agnostic, but this is a local CLI script specifically
-    meant to run in Node and execute the `gh` CLI via spawn. The rule is intended
-    for the published packages, not internal tooling scripts.
+- rule: 'Philosophy: Web standards-first, runtime-agnostic... Use Web Streams API...
+    instead of Node.js APIs'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly forbids Node.js APIs in favor of Web standards.
+    However, the task requires building a CLI script that executes the `gh` command,
+    which inherently requires Node.js APIs like `node:child_process`. An agent strictly
+    following this rule might fail to implement the script or attempt to use inappropriate
+    web APIs.
   severity: high
   source:
     path: AGENTS.md
-    lines: 21-21
-- rule: 'Changes and Releases: Adding changes: Create `packages/*/.changes/[major|minor|patch]/...`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to create a changeset file for these new skills,
-    but skills are internal repo tooling, not published packages in the `packages/`
-    directory.
+    lines: 24-25
+- rule: 'Monorepo: pnpm workspace with packages in `packages/` directory... All `exports`
+    in `package.json` have a dedicated file in `src`'
+  collision_type: architecture_boundary
+  why_distracting: The config specifies that the monorepo uses a pnpm workspace with
+    packages in `packages/` and a specific `src/lib` export structure. An agent might
+    incorrectly assume the new skills should be scaffolded as standard packages in
+    `packages/` rather than simple scripts in the `skills/` directory.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 43-43
-hierarchy_analysis: The `AGENTS.md` file contains rules primarily targeted at the
-  published packages in the `packages/` directory (e.g., runtime-agnostic philosophy,
-  changesets). However, the task involves creating internal tooling scripts in the
-  `skills/` directory. This creates a scope ambiguity where the agent must discern
-  which rules apply to library code versus internal Node.js scripts. The gold solution
-  resolves this by explicitly adding a new rule to `AGENTS.md` that carves out an
-  exception for one-off scripts, specifying they should be executable natively with
-  modern Node.js.
+    lines: 20-23
+hierarchy_analysis: The configuration is contained in a single `AGENTS.md` file, but
+  the task requires the agent to modify this very file to append new rules and documentation.
+  The agent must apply the existing style rules to the new script while simultaneously
+  updating the config file's contents.

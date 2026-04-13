@@ -57,21 +57,50 @@ checks:
     origin: repo_tests
     description: "The slime package can be imported without errors"
 
-rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: ".claude/skills/add-tests-and-ci/SKILL.md"
-      lines: "22"
-      commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
+  - id: test_repo_precommit_check_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pre-commit check-yaml hook passes"
 
+  - id: test_repo_precommit_check_added_large_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pre-commit check-added-large-files hook passes"
+
+  - id: test_repo_precommit_detect_private_key
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pre-commit detect-private-key hook passes"
+
+  - id: test_repo_precommit_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pre-commit isort hook passes"
+
+  - id: test_repo_precommit_autoflake
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pre-commit autoflake hook passes"
+
+  - id: test_repo_precommit_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pre-commit black hook passes"
+
+  - id: test_repo_sglang_config_update_weights_explicit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SglangConfig correctly parses explicit update_weights values from YAML"
+
+  - id: test_repo_sglang_config_multi_model_gpus
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SglangConfig correctly sums GPUs across multiple models in config"
+
+rubric:
   - rule: "Use defensive attribute checking (e.g., hasattr) when accessing optional attributes that may not exist on all object types."
     source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "73-76"
+      path: "slime/backends/sglang_utils/sglang_engine.py"
+      lines: "54"
       commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
-
-  - rule: "Follow repository import ordering conventions (isort compliance)."
-    source:
-      path: ".claude/skills/add-tests-and-ci/SKILL.md"
-      lines: "22-24"
-      commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
+    reference: "Changed 'if server_args.encoder_only:' to 'if hasattr(server_args, \"encoder_only\") and server_args.encoder_only:' to safely check for optional attribute before accessing it."

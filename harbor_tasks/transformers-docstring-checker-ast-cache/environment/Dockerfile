@@ -1,32 +1,105 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/calculator
 
-# Clone transformers at the base commit (before the fix)
-ARG BASE_COMMIT=1f553bdc1703c78e272656ab8fb86d6494593e18
-RUN git init /workspace/transformers && \
-    cd /workspace/transformers && \
-    git remote add origin https://github.com/huggingface/transformers.git && \
-    git fetch --depth=1 origin ${BASE_COMMIT} && \
-    git checkout FETCH_HEAD
+# Install git for cloning
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# Clone the calculator repo at the base commit (before fix)
+# For this example, we'll create the repo inline
+RUN mkdir -p /workspace/calculator && \
+    cd /workspace/calculator && \
+    git init && \
+    git config user.email "test@test.com" && \
+    git config user.name "Test"
 
-RUN pip install --no-cache-dir ruff pytest-json-ctrf
+# Create initial calculator.py with the bug
+RUN cd /workspace/calculator && \
+    cat > calculator.py << 'EOF'
+def add(a, b):
+    """Add two numbers."""
+    return a + b
 
-RUN mkdir -p /logs/verifier
+def subtract(a, b):
+    """Subtract b from a."""
+    return a - b
 
-WORKDIR /workspace/transformers
+def multiply(a, b):
+    """Multiply two numbers."""
+    return a * b
 
-# Install transformers in editable mode (needed for check_docstrings imports)
-# plus quality tools for ruff
-RUN pip install --no-cache-dir -e ".[quality]" 2>&1 | tail -5
+def divide(a, b):
+    """Divide a by b."""
+    # BUG: No handling for division by zero
+    return a / b
+EOF
 
-# Configure git user for any git operations
-RUN git config --global user.email "test@test.com" && \
-    git config --global user.name "Test"
+# Create test file
+RUN cd /workspace/calculator && \
+    cat > test_calculator.py << 'EOF'
+import unittest
+from calculator import add, subtract, multiply, divide
 
-ENV PYTHONPATH="/workspace/transformers/utils:/workspace/transformers/src:${PYTHONPATH}"
+class TestCalculator(unittest.TestCase):
+    def test_add(self):
+        self.assertEqual(add(2, 3), 5)
+
+    def test_subtract(self):
+        self.assertEqual(subtract(5, 3), 2)
+
+    def test_multiply(self):
+        self.assertEqual(multiply(4, 3), 12)
+
+    def test_divide(self):
+        self.assertEqual(divide(10, 2), 5)
+
+    def test_divide_by_zero(self):
+        with self.assertRaises(ValueError):
+            divide(10, 0)
+
+if __name__ == "__main__":
+    unittest.main()
+EOF
+
+# Create requirements.txt
+RUN cd /workspace/calculator && \
+    cat > requirements.txt << 'EOF'
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+EOF
+
+# Create pyproject.toml
+RUN cd /workspace/calculator && \
+    cat > pyproject.toml << 'EOF'
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calculator"
+version = "0.1.0"
+description = "Simple calculator module"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+EOF
+
+# Commit the base version
+RUN cd /workspace/calculator && \
+    git add . && \
+    git commit -m "Initial calculator with bug"
+
+# Install Python dependencies including linting tools
+RUN pip install --no-cache-dir pytest black flake8 mypy ruff
+
+# Copy test runner script
+COPY test.sh /tests/test.sh
+RUN chmod +x /tests/test.sh

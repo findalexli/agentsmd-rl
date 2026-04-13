@@ -39,6 +39,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff lint check on cpu_worker.py passes
+- id: test_repo_typos_cpu_worker
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typos check on cpu_worker.py passes
+- id: test_repo_spdx_header_cpu_worker
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's SPDX header check on cpu_worker.py passes
+- id: test_repo_mypy_cpu_worker
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's mypy type check on cpu_worker.py passes
 rubric:
 - rule: Use pre-commit hooks to ensure code passes ruff linting.
   source:
@@ -55,36 +67,20 @@ distractors:
 - rule: Pure code-agent PRs are not allowed. A human submitter must understand and
     defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The agent is acting as an autonomous coding agent in an evaluation
-    environment. If it strictly follows the rule 'Pure code-agent PRs are not allowed',
-    it might refuse to generate the fix and instead output a message asking for a
-    human submitter, failing the evaluation.
+  why_distracting: The agent might refuse to generate the fix, citing the rule that
+    pure code-agent PRs are not allowed and a human must submit it.
   severity: high
   source:
     path: AGENTS.md
     lines: 24-25
-- rule: Before proposing a PR, run duplicate-work checks using `gh issue view` and
-    `gh pr list`.
-  collision_type: meta_confusion
-  why_distracting: The agent is in an isolated evaluation environment without GitHub
-    CLI credentials or network access to GitHub. Attempting to run these `gh` commands
-    will fail and waste time/tokens, potentially causing the agent to halt or fail
-    the task.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 10-14
 - rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
     one mutable default, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The fix is small (a few lines overriding `torch.set_num_threads`),
-    so the agent might misclassify it as a 'tiny edit' or 'low-value busywork' and
-    refuse to proceed due to the 'Fail-closed behavior' rule.
+  why_distracting: The agent might misclassify this small 5-line bug fix as a 'tiny
+    edit' or 'low-value busywork' and refuse to implement it.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 20-21
-hierarchy_analysis: The hierarchy consists of CLAUDE.md which simply includes AGENTS.md.
-  AGENTS.md contains strict contribution policies aimed at human contributors and
-  PR submission, which conflict with the autonomous nature of the agent evaluation
-  environment.
+    lines: 19-20
+hierarchy_analysis: The hierarchy is flat, with CLAUDE.md simply pointing to AGENTS.md.
+  The rules are generic repository guidelines rather than code-specific constraints.

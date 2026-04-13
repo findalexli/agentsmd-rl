@@ -25,6 +25,41 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Test-EstablishBrokenBaseline.ps1 has valid PowerShell syntax
+- id: repo_ps_syntax_all_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PowerShell scripts related to PR changes have valid syntax
+- id: repo_git_show_toplevel
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git reports valid repository root
+- id: repo_ps_module_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell shared utils export expected helper functions
+- id: repo_baseline_test_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: EstablishBrokenBaseline test suite runs and produces results
+- id: repo_cake_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Android cake script has valid PowerShell-embedded syntax
+- id: repo_git_ls_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git ls-files correctly lists PowerShell scripts in repo
+
+- id: test_repo_git_ls_files_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git ls-files correctly lists all files modified in the PR
+
+- id: test_repo_ps_script_signature_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key PowerShell scripts modified in PR are accessible
+
 - id: write_warn_executes
   type: fail_to_pass
   origin: pr_diff
@@ -115,17 +150,26 @@ rubric:
     emulator timeout and scripts in `.github/scripts/` for the agent infrastructure,
     adhering to the defined directory structure whe
   category: architecture
+- rule: Agent state files live in CustomAgentLogsTmp/ and must not be reverted or
+    cleaned during working tree restoration.
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: N/A
+  evidence: The gold solution adds `git clean -fd --exclude=CustomAgentLogsTmp/` in
+    `post-gate.md` to ensure the mandatory cleanup between try-fix attempts does not
+    delete the agent's own state directory.
+  category: tooling
 config_edits:
 - path: .github/skills/try-fix/SKILL.md
   tier: 1
   gold_added: 'git checkout HEAD -- .
 
-    **⚠️ Do NOT `git add` or `git commit` the state file.** It lives in `CustomAgentLogsTmp/`
+    ** Do NOT `git add` or `git commit` the state file.** It lives in `CustomAgentLogsTmp/`
     which is `.gitignore`d. Committing it with `git add -f` would cause `git checkout
     HEAD -- .` (used between phases) to revert it, losing data.
 
 
-    **⚠️ IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
+    ** IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
     is determined by the pr agent after invoking ALL 6 models and confirming none
     have new ideas. try-fix only reports its own attempt result.
 
@@ -135,14 +179,14 @@ config_edits:
 
     4. **Commit state file:**
 
-    ```bash
+    ```
 
     git add "$STATE_FILE" && git commit -m "try-fix: attempt #N"
 
     ```
 
 
-    **⚠️ IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
+    ** IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
     is determined by the pr agent after invoking ALL 5 models and confirming none
     have new ideas. try-fix only reports its own attempt result.
 
@@ -153,29 +197,29 @@ distractors:
     pr-finalize skill to verify that the PR title and description accurately match
     the actual implementation.
   collision_type: meta_confusion
-  why_distracting: The task involves fixing the `Review-PR.ps1` script and PR review
-    agent instructions. The agent might misinterpret the instruction to 'run the pr-finalize
-    skill' as an action it needs to perform on the current PR, rather than fixing
-    the underlying infrastructure scripts that power the review process.
+  why_distracting: The agent is tasked with fixing a hang in `Review-PR.ps1`. The
+    rule instructs the agent to run the `pr-finalize` skill 'When performing a code
+    review'. The agent might misinterpret this as an instruction to modify `Review-PR.ps1`
+    to automatically invoke the `pr-finalize` skill, confusing a prompt instruction
+    for its current session with the CI script's logic.
   severity: high
   source:
     path: .github/copilot-instructions.md
-    lines: 11-11
-- rule: 'Platform-specific files use naming conventions to control compilation: .android.cs
-    - Android TFM only'
+    lines: 13-14
+- rule: Android specific code is inside folders labeled Android
   collision_type: scope_ambiguity
-  why_distracting: The task requires fixing Android-specific build and infrastructure
-    scripts (`eng/devices/android.cake`, `Start-Emulator.ps1`). The agent might try
-    to apply the `.android.cs` naming convention to these files or assume that Android-specific
-    logic must only reside in C# files, which is incorrect for build and PowerShell
-    scripts.
-  severity: medium
+  why_distracting: The agent needs to increase the Android emulator boot timeout in
+    `eng/devices/android.cake`. The rule states that Android specific code is inside
+    folders labeled `Android`. The agent might erroneously attempt to move the `.cake`
+    file to an `Android` folder or look for the timeout setting in `src/Core/Android/`
+    instead of modifying the existing engineering script.
+  severity: low
   source:
     path: .github/copilot-instructions.md
-    lines: 60-62
-hierarchy_analysis: The `.github/copilot-instructions.md` file provides general repository
-  guidelines. However, this task is highly meta-referential as it involves modifying
-  the agent's own instructions (`PLAN-TEMPLATE.md`, `SHARED-RULES.md`, `post-gate.md`)
-  and the skills it uses (`try-fix/SKILL.md`). The agent must distinguish between
-  rules that apply to the code it writes for the MAUI framework versus the code it
-  writes to maintain its own infrastructure.
+    lines: 44-45
+hierarchy_analysis: The task requires the agent to operate at a meta-level, modifying
+  its own instruction hierarchy (`PLAN-TEMPLATE.md`, `SHARED-RULES.md`, `post-gate.md`,
+  `SKILL.md`). The root config `.github/copilot-instructions.md` provides general
+  repository guidelines, but the agent must distinguish between rules that apply to
+  the repository's code and rules that govern its own behavior, updating the latter
+  without being distracted by the former.

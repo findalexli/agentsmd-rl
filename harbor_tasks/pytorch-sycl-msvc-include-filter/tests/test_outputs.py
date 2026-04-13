@@ -297,3 +297,134 @@ def test_repo_ruff():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"ruff failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Additional CI gate added during p2p enrichment
+# Verifies AST integrity and that key functions exist in the module
+def test_repo_module_ast_integrity():
+    """Target file has valid AST with expected top-level constructs (pass_to_pass)."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+    # Check for expected function definitions
+    func_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
+    assert "win_cuda_flags" in func_names, "win_cuda_flags function missing from AST"
+    assert "win_hip_flags" in func_names, "win_hip_flags function missing from AST"
+    assert "win_wrap_ninja_compile" in func_names, "win_wrap_ninja_compile function missing from AST"
+
+
+
+
+# [repo_tests] pass_to_pass - Security scan
+# Added during p2p enrichment: bandit security check for common Python security issues
+def test_repo_bandit():
+    """Target file passes bandit security scan (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "bandit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "bandit", "-f", "json", "-o", "/dev/null", str(TARGET)],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Bandit exits 0 even if it finds issues when output is redirected
+    # Check for high-severity issues in stderr/stdout
+    if r.returncode != 0:
+        # Only fail for high/medium severity, not low
+        assert "HIGH" not in r.stdout and "HIGH" not in r.stderr, f"Bandit found HIGH severity issues:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Code quality check
+# Added during p2p enrichment: pylint errors-only check for code correctness
+def test_repo_pylint_errors_only():
+    """Target file has no pylint errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pylint", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pylint", str(TARGET), "--errors-only", "--disable=E0401,E0601,E0606"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Filter out import errors (E0401) and used-before-assignment errors (E0601, E0606)
+    # which are false positives due to torch not being built
+    error_lines = [line for line in r.stdout.splitlines() + r.stderr.splitlines()
+                   if ": error" in line and "E0401" not in line and "E0601" not in line and "E0606" not in line]
+    newline = chr(10)
+    assert len(error_lines) == 0, f"Pylint found errors:\n{newline.join(error_lines)}"
+
+
+# [repo_tests] pass_to_pass - AST validation for key constants
+# Added during p2p enrichment: verify key constants are defined with proper types
+def test_repo_constants_defined():
+    """Key module constants are properly defined (pass_to_pass)."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+
+    # Check for expected constant definitions
+    expected_constants = [
+        "_COMMON_SYCL_FLAGS",
+        "IS_WINDOWS",
+        "IS_LINUX",
+        "IS_MACOS",
+    ]
+
+    assign_names = {node.targets[0].id for node in ast.walk(tree)
+                    if isinstance(node, ast.Assign)
+                    and isinstance(node.targets[0], ast.Name)}
+
+    for const in expected_constants:
+        assert const in assign_names, f"Expected constant '{const}' not found in module"
+
+
+# [repo_tests] pass_to_pass - API surface check
+# Added during p2p enrichment: verify public API exports are present
+def test_repo_public_api_exports():
+    """Public API exports are defined (pass_to_pass)."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+
+    # Check __all__ exports exist
+    all_exports = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "__all__":
+                    if isinstance(node.value, ast.List):
+                        all_exports = [elt.value for elt in node.value.elts if isinstance(elt, ast.Constant)]
+                    break
+
+    assert all_exports is not None, "__all__ not found in module"
+    expected_exports = [
+        "get_default_build_root",
+        "CppExtension",
+        "CUDAExtension",
+        "SyclExtension",
+        "include_paths",
+        "library_paths",
+        "load",
+        "load_inline",
+    ]
+    for export in expected_exports:
+        assert export in all_exports, f"Expected export '{export}' missing from __all__"
+
+
+# [repo_tests] pass_to_pass - Extension function definitions check
+# Added during p2p enrichment: verify key extension functions are defined
+def test_repo_extension_functions_defined():
+    """Key extension functions are defined in the module (pass_to_pass)."""
+    source = TARGET.read_text()
+    tree = ast.parse(source)
+
+    # Check for expected function definitions (CppExtension, CUDAExtension etc are functions)
+    func_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
+
+    expected_funcs = [
+        "CppExtension",
+        "CUDAExtension",
+        "SyclExtension",
+        "load",
+        "load_inline",
+    ]
+
+    for func in expected_funcs:
+        assert func in func_names, f"Expected function '{func}' not found in module"

@@ -29,6 +29,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Source files end with a single newline
+- id: kernel_launch_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: CUDA kernel launches have proper error checks
+- id: no_nonbreaking_spaces_in_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no non-breaking spaces
+- id: no_tabs_in_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no tab characters
+- id: lintrunner_tabs_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI TABS linter passes on modified files
+- id: lintrunner_trailing_whitespace_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI SPACES linter passes on modified files
+- id: lintrunner_newline_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI NEWLINE linter passes on modified files
+- id: lintrunner_exec_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI EXEC linter passes on modified files
+- id: codespell_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI codespell linter passes on modified files (no spelling errors)
 - id: getCurrentHIPStreamMasqueradingAsCUDA
   type: fail_to_pass
   origin: pr_diff
@@ -119,37 +151,37 @@ rubric:
     commit: 4b8a514606230b60bb8f27be5f11612f21b4aec1
 distractors:
 - rule: When you are working on a bug, first create a standalone file that reproduces
-    the bug and verify it fails in the expected way.
+    the bug... Once the change is passing, find an appropriate test file to add the
+    test to
   collision_type: scope_ambiguity
-  why_distracting: The bug is about C++ header visibility for external projects compiling
-    against PyTorch on ROCm. Creating a standalone reproducer would require setting
-    up a dummy C++ project, CMake/Makefile, and compiling against PyTorch headers
-    on a ROCm environment, which is extremely complex and likely to fail or waste
-    time in an agent environment.
+  why_distracting: The bug is about external C++ projects failing to compile due to
+    missing headers. Trying to write a standalone Python reproduction script or adding
+    a test to the standard PyTorch test suite would not verify this external C++ build
+    issue, leading to wasted effort.
   severity: high
   source:
     path: AGENTS.md
-    lines: 2-5
-- rule: 'Use our test class and test runner: ... from torch.testing._internal.common_utils
+    lines: 3-7
+- rule: 'Use our test class and test runner: from torch.testing._internal.common_utils
     import run_tests, TestCase'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to write a Python test using `TestCase` for
-    this C++ header visibility issue, which is not testable via Python since it affects
-    external C++ compilation.
+  collision_type: architecture_boundary
+  why_distracting: Instructs the agent to use the Python `TestCase` from `torch.testing._internal.common_utils`,
+    which is completely inapplicable for testing a C++ header visibility issue for
+    external projects.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 12-20
 - rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
   collision_type: rule_conflict
-  why_distracting: AGENTS.md instructs to use `lintrunner -a`, while CLAUDE.md instructs
-    to use `spin lint`. This creates a direct conflict for the agent when trying to
-    lint the C++ changes.
-  severity: low
+  why_distracting: AGENTS.md instructs the use of `lintrunner -a`, which directly
+    conflicts with CLAUDE.md's instruction to 'Only use commands provided via spin
+    for linting'.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 8-8
-hierarchy_analysis: CLAUDE.md and AGENTS.md both apply to the root. There is a direct
-  conflict regarding linting tools (`spin` vs `lintrunner`). Additionally, both files
-  heavily assume Python-level bugs (reproducers, TestCase), which conflicts with the
-  C++ header nature of this specific bug.
+    lines: 11-11
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` reside at the root level (Level
+  0) and contain conflicting instructions regarding linting (`lintrunner` vs `spin`).
+  Furthermore, both files heavily emphasize Python-based testing workflows which are
+  entirely distracting for this C++ header visibility bug.

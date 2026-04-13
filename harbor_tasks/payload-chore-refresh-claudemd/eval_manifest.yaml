@@ -1,186 +1,54 @@
-version: '2.0'
-source:
-  repo: payloadcms/payload
-  pr: 14268
-  base_commit: fdea8d8457fafe59be4b877a52a00990a735fd38
-  merge_commit: 05a869d37e1d6b45c36e450828b6f3b5abe71e0b
+task: requests-default-user-agent-docs
+description: |
+  Add proper documentation to the default_user_agent function in requests/utils.py.
+  The function should have a parameter description and usage example in its docstring.
+
+# Test checks
 checks:
-- id: claude_md_exists
-  type: pass_to_pass
-  origin: static
-  description: CLAUDE.md must exist as a regular file (not symlink)
-- id: agents_md_is_symlink
-  type: pass_to_pass
-  origin: static
-  description: AGENTS.md must exist as a symlink
-- id: gitignore_exists
-  type: pass_to_pass
-  origin: static
-  description: .gitignore must exist
-- id: test_repo_unit_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's unit tests pass
-- id: test_repo_type_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's TypeScript type tests pass
-- id: test_repo_build_translations
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's translations package builds successfully
-- id: test_repo_type_generation
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's type generation for test fields works
-- id: claude_md_has_project_structure
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md must contain Project Structure section with key directories
-- id: claude_md_has_build_commands
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md must document build commands (pnpm build, pnpm build:all)
-- id: claude_md_has_development_section
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md must have Development section with dev server commands
-- id: claude_md_has_testing_instructions
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md must have Testing section with test commands
-- id: claude_md_has_pr_guidelines
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md must document PR guidelines with Conventional Commits
-- id: agents_md_symlink_points_to_claude
-  type: fail_to_pass
-  origin: pr_diff
-  description: AGENTS.md symlink must point to CLAUDE.md
-- id: gitignore_has_claude_local_patterns
-  type: fail_to_pass
-  origin: pr_diff
-  description: .gitignore must include patterns for local AI agent files (.claude/commands/*.local.md,
-    .claude/artifacts)
-- id: claude_md_not_stub
-  type: fail_to_pass
-  origin: pr_diff
-  description: CLAUDE.md must have substantial content (not a stub)
-- id: symlink_behaviorally_works
-  type: fail_to_pass
-  origin: pr_diff
-  description: AGENTS.md symlink behaviorally resolves to CLAUDE.md content
-- id: gitignore_patterns_work
-  type: fail_to_pass
-  origin: pr_diff
-  description: .gitignore patterns for .claude files are correctly formatted
-rubric:
-- rule: CLAUDE.md must include a 'Project Structure' section with 'Key Directories'
-    and 'Architecture Notes' subsections documenting the Payload monorepo organization
-  source:
-    path: AGENTS.md
-    lines: 5-36
-    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
-- rule: 'CLAUDE.md must document PR title format following Conventional Commits: ''<type>(<scope>):
-    <title>'' with specific valid types (build, chore, ci, docs, examples, feat, fix,
-    perf, refactor, revert, style, templates, test)'
-  source:
-    path: AGENTS.md
-    lines: 103-122
-    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
-- rule: CLAUDE.md must document that PR titles must start with a lowercase letter
-  source:
-    path: AGENTS.md
-    lines: '111'
-    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
-- rule: CLAUDE.md must include a 'Test Structure' subsection showing the directory
-    pattern with config.ts, int.spec.ts, e2e.spec.ts, and payload-types.ts files
-  source:
-    path: AGENTS.md
-    lines: 77-90
-    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
-- rule: '.gitignore must include patterns for local AI agent files: .claude/commands/*.local.md
-    and .claude/artifacts'
-  source:
-    path: .gitignore
-    lines: 19-23
-    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
-config_edits:
-- path: AGENTS.md
-  tier: 1
-  gold_added: CLAUDE.md
-  gold_removed: ''
-- path: CLAUDE.md
-  tier: 1
-  gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code)\
-    \ when working with code in this repository.\n\n## Project Structure\n\nPayload\
-    \ is a monorepo structured around Next.js, containing the core CMS platform, database\
-    \ adapters, plugins, and tooling.\n\n### Key Directories\n\n- `packages/` - All\
-    \ publishable packages\n  - `packages/payload` - Core Payload package containing\
-    \ the main CMS logic\n  - `packages/ui` - Admin UI components (React Server Components)\n\
-    \  - `packages/next` - Next.js integration layer\n  - `packages/db-*` - Database\
-    \ adapters (MongoDB, Postgres, SQLite, Vercel Postgres, D1 SQLite)\n  - `packages/drizzle`\
-    \ - Drizzle ORM integration\n  - `packages/richtext-*` - Rich text editors (Lexical,\
-    \ Slate)\n  - `packages/storage-*` - Storage adapters (S3, Azure, GCS, Uploadthing,\
-    \ Vercel Blob)\n  - `packages/email-*` - Email adapters (Nodemailer, Resend)\n\
-    \  - `packages/plugin-*` - Additional functionality plugins\n  - `packages/graphql`\
-    \ - GraphQL API layer\n  - `packages/translations` - i18n translations\n- `test/`\
-    \ - Test suites organized by feature area. Each directory contains a granular\
-    \ Payload config and test files\n- `docs/` - Documentation (deployed to payloadcms.com)\n\
-    \ - `tools/` - Monorepo tooling\n- `templates/` - Production-ready project templates\n\
-    \ - `examples/` - Example implementations\n\n### Architecture Notes\n\n- Payload\
-    \ 3.x is built as a Next.js native CMS that installs directly in `/app` folder\n\
-    \ - UI is built with React Server Components (RSC)\n- Database adapters use Drizzle\
-    \ ORM under the hood\n- Packages use TypeScript with strict mode and path mappings\
-    \ defined in `tsconfig.base.json`\n- Source files are in `src/`, compiled outputs\
-    \ go to `dist/`\n- Monorepo uses pnpm workspaces and Turbo for builds\n\n## Build\
-    \ Commands\n\n- `pnpm install` - Install all dependencies (pnpm required - run\n\
-    \   `corepack enable` first)\n- `pnpm build` or `pnpm build:core` - Build core\
-    \ packages (excludes plugins and storage adapters)\n- `pnpm build:all` - Build\
-    \ all packages\n - `pnpm build:<directory_name>` - Build specific package (e.g.\
-    \ `pnpm build:db-mongodb`, `pnpm build:ui`)\n\n## Development\n\n### Running Dev\
-    \ Server\n\n- `pnpm dev` - Start dev server with default config (`test/_community/config.ts`)\n\
-    - `pnpm dev <directory_name>` - Start dev server with specific test config (e.g.\
-    \ `pnpm dev fields` loads `test/fields/config.ts`)\n- `pnpm dev:postgres` - Run\
-    \ dev server with Postgres\n- `pnpm dev:memorydb` - Run dev server with in-memory\
-    \ MongoDB\n\n### Development Environment\n\n- Auto-login is enabled by default\
-    \ with credentials: `dev@payloadcms.com` / `test`\n- To disable: pass `--no-auto-login`\
-    \ flag or set `PAYLOAD_PUBLIC_DISABLE_AUTO_LOGIN=false`\n- Default database is\
-    \ MongoDB (in-memory). Switch to Postgres with `PAYLOAD_DATABASE=postgres`\n-\
-    \ Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm docker:restart`\n\
-    \ \n## Testing\n\n### Running Tests\n\n- `pnpm test` - Run all tests (integration\
-    \ + components + e2e)\n- `pnpm test:int` - Run integration tests (MongoDB, recommended\
-    \ for"
-  gold_removed: ''
-distractors:
-- rule: pnpm test - Run all tests (integration + components + e2e)
-  source:
-    path: CLAUDE.md
-    lines: 53-54
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run the full test suite after updating the
-    markdown files, which is unnecessary for a documentation-only change and wastes
-    significant time.
-  severity: medium
-- rule: pnpm lint - Run linter
-  source:
-    path: CLAUDE.md
-    lines: 76-77
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to run the project-wide linter after modifying
-    the markdown files, which could be slow or fail on unrelated files.
-  severity: low
-- rule: Packages use TypeScript with strict mode
-  source:
-    path: CLAUDE.md
-    lines: 34-34
-  collision_type: meta_confusion
-  why_distracting: The agent might think it needs to write a TypeScript script to
-    perform the file operations (like symlinking and updating gitignore) instead of
-    just using standard bash commands.
-  severity: low
-hierarchy_analysis: The config files CLAUDE.md and AGENTS.md are actually the targets
-  of the modification in this PR. The agent must read them to understand the current
-  state, but must be careful not to apply the project-specific coding guidelines (like
-  running tests or using TypeScript) to its own workflow of updating the documentation
-  and symlinks.
+  # Fail-to-pass checks
+  - id: test_docstring_added_fail_to_pass
+    type: fail_to_pass
+    origin: agent_config
+    description: The default_user_agent function has an updated docstring
+
+  # Pass-to-pass checks (repo_tests - these run actual CI commands)
+  - id: test_repo_ruff_check_pass_to_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on utils.py"
+
+  - id: test_repo_utils_tests_pass_to_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for utils module pass"
+
+  - id: test_repo_package_imports_pass_to_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package can be imported after installation"
+
+  - id: test_repo_ruff_format_pass_to_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code is properly formatted with ruff"
+
+  - id: test_repo_extended_tests_pass_to_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for utils, structures, and help modules pass"
+
+  - id: test_repo_doctests_pass_to_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's doctests in utils module pass"
+
+  # Pass-to-pass checks (static - file content checks)
+  - id: test_code_structure_preserved_pass_to_pass
+    type: pass_to_pass
+    origin: static
+    description: The function signature remains unchanged
+
+  - id: test_function_still_works_pass_to_pass
+    type: pass_to_pass
+    origin: static
+    description: The default_user_agent function still returns correct output

@@ -96,6 +96,26 @@ checks:
   type: pass_to_pass
   description: Target PHP file passes PHPStan static analysis
   origin: repo_tests
+- id: repo_composer_lint_all
+  type: pass_to_pass
+  description: Full repo passes Pint/PSR-12 lint check
+  origin: repo_tests
+- id: repo_composer_analyze_all
+  type: pass_to_pass
+  description: Full repo passes PHPStan static analysis
+  origin: repo_tests
+- id: unit_tests_collections
+  type: pass_to_pass
+  description: Unit tests for Collections pass
+  origin: repo_tests
+- id: unit_tests_platform
+  type: pass_to_pass
+  description: Unit tests for Platform modules pass
+  origin: repo_tests
+- id: unit_tests_database
+  type: pass_to_pass
+  description: Unit tests for Database components pass
+  origin: repo_tests
 - id: composer_json_valid
   type: pass_to_pass
   description: Repo's composer.json is valid JSON with required scripts
@@ -166,34 +186,29 @@ rubric:
     which strictly follows the rule that file names in Http directories can only be
     standard CRUD names.
   category: naming
-distractors:
-- rule: For non-CRUD operations, model the endpoint as a property update.
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests modeling non-CRUD operations as property updates
-    (e.g., `Status/Update.php`). An agent might interpret 'bootstrapping metadata'
-    as a non-CRUD operation and try to extract this logic into a new endpoint or file,
-    rather than fixing the race condition inline within the existing collection creation
-    flow.
-  severity: medium
-  source:
-    path: src/Appwrite/Platform/AGENTS.md
-    lines: 33-35
-- rule: Use `src/Appwrite/Platform/Workers/` for background job workers.
-  collision_type: architecture_boundary
-  why_distracting: The rule mentions background job workers (`src/Appwrite/Platform/Workers/`).
-    An agent might think that handling concurrent initialization and retries should
-    be offloaded to a background worker to avoid blocking the HTTP request, but the
-    requirements explicitly ask for an inline synchronous retry loop with `usleep`.
-  severity: high
+- rule: PHP 8.3+
   source:
     path: AGENTS.md
-    lines: 28-29
-hierarchy_analysis: The base `AGENTS.md` defines the overall architecture and action
-  pattern, while `src/Appwrite/Platform/AGENTS.md` provides stricter naming conventions
-  for the Modules directory. The agent must apply the inline fix within the existing
-  `Create.php` action method, respecting the strict HTTP directory file naming rules,
-  without being tempted to extract the retry/bootstrap logic into a new non-CRUD endpoint
-  or a background worker.
+    lines: 16-17
+  evidence: Uses PHP 8+ syntax such as catching an exception without assigning it
+    to a variable (`catch (DuplicateException)`) and using numeric literal separators
+    (`100_000`).
+  category: style
+distractors:
+- rule: Swoole 6.x (async runtime, replaces PHP-FPM)
+  collision_type: architecture_boundary
+  why_distracting: The agent might avoid using the standard PHP `\usleep()` function,
+    assuming it will block the async event loop, and instead try to implement Swoole-specific
+    coroutine sleep functions (e.g., `\Swoole\Coroutine::sleep()`). This breaks the
+    framework's abstraction, as Swoole automatically hooks native PHP functions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: The config hierarchy provides general architectural guidelines
+  (Swoole, PHP 8.3, module structure) across two `AGENTS.md` files. However, the task
+  instructions are highly prescriptive, reducing the need to deeply consult or resolve
+  conflicts within the configs.
 version: '2.0'
 source:
   repo: appwrite/appwrite.git

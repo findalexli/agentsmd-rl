@@ -160,3 +160,57 @@ def test_fetch_router_all_tests_pass():
         timeout=180,
     )
     assert result.returncode == 0, f"Fetch-router tests failed:\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_fetch_router_app_storage_tests():
+    """fetch-router app-storage tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node",
+            "--disable-warning=ExperimentalWarning",
+            "--test",
+            "./packages/fetch-router/src/lib/app-storage.test.ts",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"App-storage tests failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_fetch_router_middleware_tests():
+    """fetch-router middleware tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node",
+            "--disable-warning=ExperimentalWarning",
+            "--test",
+            "./packages/fetch-router/src/lib/middleware.test.ts",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Middleware tests failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_fetch_router_route_map_tests():
+    """fetch-router route-map tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node",
+            "--disable-warning=ExperimentalWarning",
+            "--test",
+            "./packages/fetch-router/src/lib/route-map.test.ts",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Route-map tests failed:\n{result.stdout}\n{result.stderr}"

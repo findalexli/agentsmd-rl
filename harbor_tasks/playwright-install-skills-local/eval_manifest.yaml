@@ -4,6 +4,12 @@ source:
   pr: 39078
   base_commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
   merge_commit: 5c749f58b0c958606c0fc29150c61bfeeed3c14e
+  ci_commands:
+    - npm run tsc
+    - npm run check-deps
+    - npm run lint-packages
+    - npm run lint-tests
+    - npm run test-types
 checks:
 - id: syntax_check
   type: pass_to_pass
@@ -29,6 +35,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's type tests pass (npm run test-types)
+- id: test_repo_lint_code_snippets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation code snippet linting passes (node utils/doclint/linting-code-snippets/cli.js --js-only)
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's channel generation check passes (node utils/generate_channels.js)
 - id: install_skills_command_declared
   type: fail_to_pass
   origin: pr_diff

@@ -32,10 +32,10 @@ checks:
     origin: static
     description: "Component imports required dependencies correctly"
 
-  - id: test_repo_pnpm_install
+  - id: test_repo_typescript_parse
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's pnpm install works (basic sanity)"
+    description: "TypeScript syntax check on the modified file passes"
 
   - id: test_repo_billing_tests
     type: pass_to_pass
@@ -52,29 +52,35 @@ checks:
     origin: repo_tests
     description: "Repo's config tests pass"
 
-  - id: test_repo_typescript_compiler_version
+  - id: test_repo_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "TypeScript compiler is available and works"
+    description: "Repo's linter passes"
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code formatting passes for modified file"
+
+  - id: test_repo_component_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's component tests pass"
+
+  - id: test_repo_features_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's feature tests pass"
+
+  - id: test_repo_pages_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pages tests pass"
 
 rubric:
-  # Rules for this specific refactor task
+  # Rules for this specific refactor task (code change validation)
   - rule: "Component should use the useSelectedOrganizationQuery hook instead of receiving organization via props"
     reference: "import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'"
 
   - rule: "Component should have no parameters (no props interface)"
-    reference: "export const NoProjectsOnPaidOrgInfo = () => {"
-
-  # Rules from agent config files (studio-best-practices)
-  - rule: "Derive boolean state instead of storing it. Extract complex conditions into named variables like `isEligible` rather than inlining multi-condition checks."
-    source:
-      path: ".claude/skills/studio-best-practices/SKILL.md"
-      lines: "22-49"
-      commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
-
-  # Rules from agent config files (CLAUDE.md)
-  - rule: "Co-locate sub-components with parent. Avoid barrel re-export files."
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "37"
-      commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
+    reference: "export const NoProjectsOnPaidOrgInfo = () =>"

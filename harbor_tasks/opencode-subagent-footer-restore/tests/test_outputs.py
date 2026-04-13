@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 import re
 from pathlib import Path
@@ -70,7 +71,7 @@ def test_syntax_check():
 
 def test_repo_prettier_format():
     """Repo code formatting passes Prettier check (pass_to_pass)."""
-    # Check formatting on the modified files
+    # Check formatting on the modified files and session directory
     modified_files = [
         "packages/opencode/src/cli/cmd/tui/component/dialog-model.tsx",
         "packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx",
@@ -85,6 +86,16 @@ def test_repo_prettier_format():
             cwd=REPO,
         )
         assert r.returncode == 0, f"Prettier check failed for {file}:\n{r.stderr[-500:]}"
+
+    # Also check the entire session directory for consistent formatting
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for session directory:\n{r.stderr[-500:]}"
 
 
 def test_repo_node_syntax_check():
@@ -119,6 +130,90 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Node syntax check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+def test_repo_typecheck():
+    """Repo typecheck passes via bun turbo typecheck (pass_to_pass)."""
+    # Install unzip first (required for bun)
+    subprocess.run("apt-get update -qq && apt-get install -y -qq unzip", shell=True, timeout=60)
+    
+    # Install bun first (not in base image)
+    install_bun = subprocess.run(
+        "curl -fsSL https://bun.sh/install | bash -s",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert install_bun.returncode == 0, f"Bun install failed: {install_bun.stderr[-500:]}"
+
+    bun_path = "/root/.bun/bin/bun"
+    bun_env = {**os.environ, "BUN_INSTALL": "/root/.bun", "PATH": "/root/.bun/bin:" + os.environ.get("PATH", "")}
+
+    # Install dependencies
+    install_deps = subprocess.run(
+        [bun_path, "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+        env=bun_env,
+    )
+    assert install_deps.returncode == 0, f"Dependencies install failed: {install_deps.stderr[-500:]}"
+
+    # Run typecheck using bun turbo (matches CI)
+    r = subprocess.run(
+        [bun_path, "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+        env=bun_env,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_bun_unit_tests():
+    """Repo unit tests pass via bun test (pass_to_pass)."""
+    # Install unzip first (required for bun)
+    subprocess.run("apt-get update -qq && apt-get install -y -qq unzip", shell=True, timeout=60)
+    
+    # Install bun first (not in base image)
+    install_bun = subprocess.run(
+        "curl -fsSL https://bun.sh/install | bash -s",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert install_bun.returncode == 0, f"Bun install failed: {install_bun.stderr[-500:]}"
+
+    bun_path = "/root/.bun/bin/bun"
+    bun_env = {**os.environ, "BUN_INSTALL": "/root/.bun", "PATH": "/root/.bun/bin:" + os.environ.get("PATH", "")}
+
+    # Install dependencies
+    install_deps = subprocess.run(
+        [bun_path, "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+        env=bun_env,
+    )
+    assert install_deps.returncode == 0, f"Dependencies install failed: {install_deps.stderr[-500:]}"
+
+    # Run bun tests for the opencode package (matches CI's bun turbo test)
+    r = subprocess.run(
+        [bun_path, "test", "test/bun.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+        env=bun_env,
+    )
+    assert r.returncode == 0, f"Bun unit tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -434,3 +529,4 @@ def test_prefer_const_in_footer():
     let_matches = re.findall(r"^\s*(?:export\s+)?let\s+\w+", code, re.MULTILINE)
     assert len(let_matches) == 0, \
         f"SubagentFooter uses 'let' ({len(let_matches)}x) — prefer const (AGENTS.md:70)"
+

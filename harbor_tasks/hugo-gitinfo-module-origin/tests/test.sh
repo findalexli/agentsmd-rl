@@ -5,7 +5,7 @@ echo "==> Installing pytest..."
 pip3 install pytest --quiet
 
 echo "==> Running tests..."
-cd /workspace/task/tests
+cd /tests
 
 # Run tests and capture exit code (PIPESTATUS doesn't work with set -e)
 set +e

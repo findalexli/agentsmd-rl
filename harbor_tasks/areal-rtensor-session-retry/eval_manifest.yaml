@@ -19,19 +19,19 @@ checks:
   description: Modified files pass ruff format check (repo CI standard)
 - id: no_large_files
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified files are not unreasonably large (>1000KB)
 - id: no_private_keys
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified files do not contain private keys
 - id: no_trailing_whitespace
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified files have no trailing whitespace
 - id: files_end_with_newline
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified files end with a newline
 - id: python_ast_valid
   type: pass_to_pass
@@ -140,38 +140,27 @@ rubric:
     settings.
   category: architecture
 distractors:
+- rule: 'Per-rank format: `[{Component} Rank {N}]`.'
+  collision_type: architecture_boundary
+  why_distracting: The rule specifies a per-rank log format `[{Component} Rank {N}]`.
+    An agent might try to manually prepend this to the warning message, but the custom
+    logger likely handles this formatting internally, or rank information is not accessible/relevant
+    in this specific HTTP backend context.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 69-70
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: This is a bug fix for network resilience, not new functionality.
-    Attempting to add tests for this retry logic would require complex `aiohttp` mocking
-    or spinning up a local test server, which is out of scope and overcomplicates
-    the PR.
+  why_distracting: The rule requires adding tests for new functionality, which might
+    lead the agent to write complex mock-based async tests for the retry logic. However,
+    this is a bug fix for an existing feature, and the gold solution correctly scopes
+    the PR to just the fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 49-50
-- rule: No hardcoded secrets, paths, or endpoints.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might see `url = f"http://{node_addr}/data/{shard_id}"`
-    and try to extract the `/data/` path or HTTP scheme into a configuration file.
-    This rule is meant for external API endpoints and secrets, not internal RPC routing
-    paths.
-  severity: low
-  source:
     path: AGENTS.md
-    lines: 18-19
-- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
-  collision_type: scope_ambiguity
-  why_distracting: The agent might consider tensor fetching a 'hot path' and try to
-    optimize the deserialization or avoid CPU operations. However, this is network
-    I/O where network latency dominates, and CPU processing of the payload is necessary
-    and expected.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 52-53
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` apply cumulatively. `AGENTS.md`
-  provides more specific, actionable rules for logging and performance, which complement
-  the general guidelines in `CLAUDE.md`. There are no direct conflicts between the
-  two files, but `AGENTS.md`'s strict logging rules dictate the exact implementation
-  of the logger in the gold solution.
+    lines: '29'
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
+  overlapping rules. `AGENTS.md` provides more specific guidance on logging conventions
+  (PascalCase, `areal.utils.logging.getLogger`) which the agent must prioritize over
+  generic Python logging practices.

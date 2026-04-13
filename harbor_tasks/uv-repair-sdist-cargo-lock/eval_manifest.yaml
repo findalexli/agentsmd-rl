@@ -57,65 +57,57 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python scripts in scripts/ pass ruff format check
-- id: test_repo_cargo_shear
-  type: pass_to_pass
-  origin: repo_tests
-  description: No unused dependencies found in workspace (cargo shear)
 - id: test_repo_cargo_deny_uv_build
   type: pass_to_pass
   origin: repo_tests
   description: uv-build crate passes cargo deny bans check
+- id: test_repo_cargo_shear
+  type: pass_to_pass
+  origin: repo_tests
+  description: No unused dependencies found via cargo-shear
 rubric:
-- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
-    `requires_python` instead of `rp`
-  source:
-    path: AGENTS.md
-    lines: 17-18
-    commit: c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
 - rule: PREFER top-level imports over local imports or fully qualified names
   source:
     path: AGENTS.md
     lines: 15-15
-  evidence: The `scripts/repair-sdist-cargo-lock.py` script uses top-level imports
-    for all standard library modules (`import argparse`, `import os`, `import subprocess`,
-    etc.) rather than local imports.
+  evidence: The Python script `scripts/repair-sdist-cargo-lock.py` uses top-level
+    imports (`import argparse`, `import os`, `import subprocess`, etc.) rather than
+    local imports.
   category: style
+  verification: llm_judge
 - rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
   source:
     path: AGENTS.md
     lines: 16-17
-  evidence: The `scripts/repair-sdist-cargo-lock.py` script uses descriptive, unshortened
-    variable names like `sdist_path`, `extracted_dir`, `top_level_name`, and `cargo_lock`.
+  evidence: The script uses descriptive, unshortened variable names like `sdist_path`,
+    `extracted_dir`, and `top_level_name`.
   category: naming
+  verification: llm_judge
 distractors:
 - rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
     --precise` to make lockfile changes
   collision_type: scope_ambiguity
-  why_distracting: The goal of the script is to prune the `Cargo.lock` inside the
-    generated sdist tarball, which is typically done by running `cargo update --workspace`
-    (as noted in the script's docstring). The rule forbidding non-precise lockfile
-    updates is intended for the main repository's lockfile, not for fixing a generated
-    sdist's lockfile. An agent following this rule might try to manually parse and
-    modify the lockfile or fail to use the correct `cargo update` command.
+  why_distracting: The task requires pruning a Cargo.lock file inside an extracted
+    sdist tarball, which is best achieved by running `cargo update --workspace` (as
+    noted in the gold solution's docstring). The rule forbids updating all dependencies
+    and mandates `--precise`, but this rule is intended for the main repository's
+    lockfile, not a temporary lockfile being repaired for a distribution.
   severity: high
   source:
     path: AGENTS.md
     lines: 12-13
-- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
-    tests, e.g., at `it/...` over unit tests
+- rule: ALWAYS attempt to add a test case for changed behavior and PREFER integration
+    tests, e.g., at `it/...`
   collision_type: architecture_boundary
-  why_distracting: The PR involves adding a Python script for release tooling and
-    modifying a GitHub Actions workflow. The workflow already tests the sdist directly
-    (`Test sdist uv-build`). Attempting to add a Rust integration test in `it/...`
-    for a Python release script would cross architecture boundaries and waste effort.
+  why_distracting: The agent might attempt to write a Rust integration test in `it/...`
+    to test the lockfile repair behavior. However, this is a Python packaging script
+    invoked during the GitHub Actions release workflow, and testing it requires a
+    full sdist build environment, which is already handled by the CI workflow modifications
+    in the gold solution.
   severity: medium
   source:
     path: AGENTS.md
     lines: 2-3
-hierarchy_analysis: The configuration hierarchy consists of `CLAUDE.md` which simply
-  includes `AGENTS.md`. The rules in `AGENTS.md` are heavily Rust-focused, but the
-  task requires writing a Python script and modifying GitHub Actions workflows. This
-  creates a significant context mismatch where the agent must discern which general
-  rules (like variable naming and imports) apply to Python, while ignoring Rust-specific
-  rules (like `it/...` testing and repo-level `Cargo.lock` management) that would
-  be inappropriate for release tooling.
+hierarchy_analysis: The configuration is effectively a flat single file, as `CLAUDE.md`
+  simply includes `AGENTS.md`. The primary challenge is discerning which Rust-centric
+  rules apply to a Python script operating on Rust artifacts (Cargo.lock).

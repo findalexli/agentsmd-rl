@@ -139,6 +139,102 @@ print('SizeDict attributes OK')
     assert r.returncode == 0, f"SizeDict attributes test failed:\n{r.stderr}\n{r.stdout}"
 
 
+# [repo_tests] pass_to_pass — ruff lint check
+def test_repo_ruff_check():
+    """Repo CI: ruff check passes on image_utils.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "src/transformers/image_utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr}\n{r.stdout}"
+
+
+
+
+# [repo_tests] pass_to_pass — ruff format check
+def test_repo_ruff_format():
+    """Repo CI: ruff format check passes on image_utils.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "src/transformers/image_utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — ty type check on image_utils
+def test_repo_typing_check():
+    """Repo CI: ty type checker runs on image_utils.py without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ty", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ty", "check", "src/transformers/image_utils.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # ty returns 0 or 1 depending on diagnostics, we just check it runs without crashing
+    assert r.returncode in [0, 1], f"ty check crashed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — SizeDict pickling
+def test_repo_sizedict_pickle():
+    """SizeDict can be pickled and unpickled (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+import pickle
+sys.path.insert(0, 'src')
+from transformers.image_utils import SizeDict
+
+sd = SizeDict(height=10, width=20, longest_edge=30)
+
+# Test pickling
+pickled = pickle.dumps(sd)
+unpickled = pickle.loads(pickled)
+
+assert unpickled.height == 10
+assert unpickled.width == 20
+assert unpickled.longest_edge == 30
+assert isinstance(unpickled, SizeDict)
+
+print('SizeDict pickle OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SizeDict pickle test failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — SizeDict repr
+def test_repo_sizedict_repr():
+    """SizeDict repr is valid and can be eval'd back (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, 'src')
+from transformers.image_utils import SizeDict
+
+sd = SizeDict(height=10, width=20)
+repr_str = repr(sd)
+
+# Check repr contains expected fields
+assert 'SizeDict' in repr_str
+assert 'height=10' in repr_str or 'height=10,' in repr_str or 'height=10 ' in repr_str
+
+print('SizeDict repr OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SizeDict repr test failed:\n{r.stderr}\n{r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

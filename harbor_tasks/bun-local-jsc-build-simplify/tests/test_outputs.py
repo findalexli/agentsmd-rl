@@ -247,3 +247,146 @@ def test_cmake_no_syntax_errors():
     # Use _cmake_check to run a basic CMake script
     r = _cmake_check('message(STATUS "CMake syntax OK")')
     assert r.returncode == 0, f"CMake basic syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_package_json_valid():
+    """Repo package.json must be valid JSON if it exists (pass_to_pass)."""
+    pkg_path = Path(REPO) / "package.json"
+    if not pkg_path.exists():
+        return  # Skip if package.json not in sparse checkout
+    r = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{REPO}/package.json'))"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"package.json is invalid JSON:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_shell_scripts_valid():
+    """Shell scripts must have valid bash syntax (pass_to_pass)."""
+    scripts = [
+        "scripts/run-clang-format.sh",
+        "scripts/bd",
+    ]
+    for script in scripts:
+        script_path = Path(REPO) / script
+        if script_path.exists():
+            r = subprocess.run(
+                ["bash", "-n", str(script_path)],
+                capture_output=True, text=True, timeout=30,
+            )
+            assert r.returncode == 0, f"Script {script} has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Real CI commands (enriched)
+# Following commands verified to work in Docker container:
+# - git status, python3 for file validation
+
+def test_git_repo_valid():
+    """Git repository must be valid and at expected commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git repo not valid:\n{r.stderr}"
+    # Verify we're at a detached HEAD with the expected base commit
+    r2 = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r2.returncode == 0, f"Git log failed:\n{r2.stderr}"
+    # Commit hash a14a89c is the base_commit from eval_manifest
+    assert "a14a89c" in r2.stdout, f"Not at expected base commit:\n{r2.stdout}"
+
+
+def test_contributing_md_syntax():
+    """CONTRIBUTING.md must have valid markdown syntax (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"""
+import sys
+from pathlib import Path
+content = Path('{REPO}/CONTRIBUTING.md').read_text()
+# Check for balanced code blocks
+if content.count('```') % 2 != 0:
+    print('ERROR: Unbalanced code blocks', file=sys.stderr)
+    sys.exit(1)
+# Check for trailing whitespace
+lines_with_ws = [i for i, line in enumerate(content.split(chr(10)), 1) if line.endswith(' ')]
+if lines_with_ws:
+    print(f'WARNING: {{len(lines_with_ws)}} lines with trailing whitespace', file=sys.stderr)
+print('CONTRIBUTING.md syntax OK')
+"""
+        ],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"CONTRIBUTING.md syntax check failed:\n{r.stderr}"
+
+
+def test_contributing_mdx_syntax():
+    """docs/project/contributing.mdx must have valid MDX syntax (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"""
+import sys
+import re
+from pathlib import Path
+content = Path('{REPO}/docs/project/contributing.mdx').read_text()
+# Check for balanced code blocks
+if content.count('```') % 2 != 0:
+    print('ERROR: Unbalanced code blocks', file=sys.stderr)
+    sys.exit(1)
+print('contributing.mdx syntax OK')
+"""
+        ],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"contributing.mdx syntax check failed:\n{r.stderr}"
+
+
+def test_cmake_structure_setup_webkit():
+    """SetupWebKit.cmake must have required structure (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"""
+import sys
+import re
+from pathlib import Path
+content = Path('{REPO}/cmake/tools/SetupWebKit.cmake').read_text()
+required_patterns = ['WEBKIT_VERSION', 'WEBKIT_LOCAL', 'DEFAULT_WEBKIT_PATH', 'WEBKIT_INCLUDE_PATH', 'WEBKIT_LIB_PATH']
+for p in required_patterns:
+    if p not in content:
+        print(f'MISSING: {{p}}', file=sys.stderr)
+        sys.exit(1)
+print('SetupWebKit.cmake structure OK')
+"""
+        ],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"SetupWebKit.cmake structure check failed:\n{r.stderr}"
+
+
+def test_cmake_structure_build_bun():
+    """BuildBun.cmake must have required structure (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"""
+import sys
+from pathlib import Path
+content = Path('{REPO}/cmake/targets/BuildBun.cmake').read_text()
+required_patterns = ['WEBKIT_LIB_PATH', 'WEBKIT_INCLUDE_PATH', 'target_link_libraries']
+for p in required_patterns:
+    if p not in content:
+        print(f'MISSING: {{p}}', file=sys.stderr)
+        sys.exit(1)
+print('BuildBun.cmake structure OK')
+"""
+        ],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"BuildBun.cmake structure check failed:\n{r.stderr}"

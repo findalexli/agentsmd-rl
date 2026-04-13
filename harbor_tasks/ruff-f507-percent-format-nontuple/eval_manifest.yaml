@@ -85,6 +85,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo ruff_linter package compiles without errors
+- id: repo_ruff_python_semantic_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff_python_semantic tests pass - contains ResolvedPythonType used by F507 fix
 rubric:
 - rule: Follow existing code style. Check neighboring files for patterns.
   source:
@@ -128,31 +132,34 @@ rubric:
     utility to infer the type of the RHS instead of writing custom AST traversal or
     type checking logic.
   category: architecture
-distractors:
-- rule: Run a single mdtest file. The path to the mdtest file should be relative to
-    the `crates/ty_python_semantic/resources/mdtest` folder
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to write tests using the `mdtest` framework
-    in `ty_python_semantic` because the bug involves type inference and the instructions
-    mention `ruff_python_semantic`. However, this is a Ruff linter rule (`pyflakes`),
-    which uses standard Python fixtures and snapshots.
-  severity: high
+- rule: Prefer let chains (`if let` combined with...)
   source:
     path: AGENTS.md
-    lines: 18-21
+    lines: 66-66
+  evidence: The gold solution uses `} else if let ResolvedPythonType::Atom(resolved_type)
+    = ResolvedPythonType::from(right) {` to safely extract the resolved type without
+    panicking or unwrapping.
+  category: style
+distractors:
 - rule: When working on ty, PR titles should start with `[ty]` and be tagged with
     the `ty` GitHub label.
   collision_type: scope_ambiguity
-  why_distracting: The agent might mistakenly classify this as a `ty` issue because
-    it involves type inference and semantic analysis, leading it to apply `ty`-specific
-    conventions (like PR titles or labels) to a Ruff linter bug.
+  why_distracting: The agent might try to apply `ty` PR guidelines (like prefixing
+    with `[ty]`) to this task, but the task is explicitly about fixing a bug in `ruff_linter`,
+    not the `ty` type checker.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 47-48
-hierarchy_analysis: The configuration is flat with only `AGENTS.md` providing rules.
-  The primary challenge is distinguishing between the `ruff` and `ty` ecosystems within
-  the same repository. The bug requires using semantic analysis (`ruff_python_semantic`),
-  which closely borders the `ty` type-checker domain, creating a risk that the agent
-  might incorrectly apply `ty`-specific testing frameworks (`mdtest`) or conventions
-  to a standard Ruff linter rule.
+    lines: 54-55
+- rule: 'Run tests for a specific crate: cargo nextest run -p ty_python_semantic'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run tests specifically for `ty_python_semantic`
+    as suggested by the example command, which would fail to verify the fix made in
+    `ruff_linter`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 15-17
+hierarchy_analysis: The config hierarchy is flat (CLAUDE.md just includes AGENTS.md).
+  The main challenge is distinguishing between rules that apply to the `ruff` crates
+  versus the `ty` crates within the same repository.

@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: Target file must parse without syntax errors
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Target file retains full cpp_extension module content
 - id: test_repo_pyflakes
   type: pass_to_pass
   origin: repo_tests
@@ -25,6 +29,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Target file passes ruff linting per repo config
+- id: test_repo_module_ast_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has valid AST with expected top-level constructs
+- id: test_cuda_hip_flags_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: CUDA and HIP flag functions are not removed or broken
+- id: test_repo_bandit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes bandit security scan without HIGH severity issues
+- id: test_repo_pylint_errors_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has no pylint errors (excluding import/false-positive errors)
+- id: test_repo_constants_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key module constants (_COMMON_SYCL_FLAGS, IS_WINDOWS, etc.) are properly defined
+- id: test_repo_public_api_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Public API exports (__all__) contain expected functions and classes
+- id: test_repo_extension_functions_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key extension functions (CppExtension, CUDAExtension, SyclExtension, load, load_inline) are defined
 - id: filter_msvc_paths_new_oneapi
   type: fail_to_pass
   origin: pr_diff
@@ -49,14 +81,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: sycl_cflags construction wraps pp_opts through filter function
-- id: cuda_hip_flags_preserved
-  type: pass_to_pass
-  origin: repo_tests
-  description: CUDA and HIP flag functions are not removed or broken
-- id: not_stub
-  type: pass_to_pass
-  origin: static
-  description: Target file retains full cpp_extension module content
 rubric:
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
   source:
@@ -68,34 +92,28 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 51-52
-    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 - rule: Match existing code style and architectural patterns.
   source:
     path: CLAUDE.md
     lines: '57'
-    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 - rule: If uncertain, choose the simpler, more concise implementation.
   source:
     path: CLAUDE.md
     lines: '62'
-    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 - rule: Self-explanatory code — variable and function names convey intent; minimal
     comments needed.
   source:
     path: .claude/skills/pr-review/review-checklist.md
     lines: '28'
-    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 - rule: No over-engineering — only requested changes are made; no speculative features.
   source:
     path: .claude/skills/pr-review/review-checklist.md
     lines: '11'
-    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 - rule: Appropriate complexity — solutions are as simple as possible for the current
     requirements.
   source:
     path: CLAUDE/skills/pr-review/review-checklist.md
     lines: '31'
-    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 - rule: Comments should be useful, for example, comments that remind the reader about
     some global context that is non-obvious and can't be inferred locally.
   source:
@@ -106,38 +124,38 @@ rubric:
     non-obvious global context that cannot be
   category: documentation
 distractors:
-- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+- rule: When you are working on a bug, first create a standalone file that reproduces
+    the bug and verify it fails in the expected way.
   collision_type: rule_conflict
-  why_distracting: AGENTS.md instructs to use `lintrunner -a` for linting, which directly
-    conflicts with CLAUDE.md's instruction to 'Only use commands provided via `spin`
-    for linting'. An agent might fail or use the wrong tool if it follows this rule.
+  why_distracting: The bug is specific to Windows and Intel oneAPI 2025.3+. The agent
+    is running in a constrained environment and is explicitly told 'you do not have
+    a working build environment'. Attempting to create a standalone reproduction script
+    will fail and waste effort.
   severity: high
   source:
     path: AGENTS.md
-    lines: '11'
-- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
-  collision_type: scope_ambiguity
-  why_distracting: An agent might strictly follow the instruction to minimize comments
-    and make code self-explanatory, omitting the crucial explanation of the oneAPI
-    2025.3+ behavior change which is necessary to understand why the filtering is
-    happening.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: '43'
+    lines: 3-6
 - rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
     it significantly improves code readability.
   collision_type: scope_ambiguity
-  why_distracting: An agent might try to inline the filtering logic directly into
-    the `sycl_cflags` assignment to avoid creating a single-use helper function, which
-    would make the complex `win_wrap_ninja_compile` function harder to read and violate
-    the existing pattern of using nested helpers.
+  why_distracting: The agent might inline the MSVC filtering logic directly into the
+    `sycl_cflags` assignment to avoid creating a single-use helper function, which
+    would clutter the main function body and violate the existing nested-helper pattern.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 46-47
-hierarchy_analysis: 'The hierarchy contains a direct conflict regarding linting tools:
-  `AGENTS.md` recommends `lintrunner -a` while `CLAUDE.md` strictly mandates `spin
-  lint`. Additionally, there is tension within `CLAUDE.md`''s coding style guidelines
-  between minimizing comments/helper functions and providing necessary global context/matching
-  existing architectural patterns (nested helpers).'
+    lines: 45-46
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might omit the crucial comment explaining the oneAPI
+    2025.3+ behavior change, thinking the code should be self-explanatory, which would
+    leave future readers confused about why the filtering is necessary.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 42-42
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md are at the root level. The agent
+  must balance the general instruction to reproduce bugs with the specific constraint
+  that the build environment is broken. It must also balance the instruction to minimize
+  comments/helpers with the need to explain non-obvious compiler behavior and maintain
+  the nested helper pattern.

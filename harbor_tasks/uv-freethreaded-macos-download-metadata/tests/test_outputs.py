@@ -93,18 +93,35 @@ def test_repo_ruff():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_pyright():
+def test_repo_ty():
     """Repo's Python type checking passes on fetch-download-metadata.py (pass_to_pass)."""
+    # The repo's CI uses `ty` (ty type checker) not pyright for this file:
+    # uvx --directory crates/uv-python --with-requirements fetch-download-metadata.py ty check --python-version 3.13 fetch-download-metadata.py
     r = subprocess.run(
-        ["pip", "install", "pyright", "httpx", "-q"],
+        ["pip", "install", "ty", "httpx", "-q"],
         capture_output=True, text=True, timeout=120,
     )
-    assert r.returncode == 0, f"Failed to install pyright: {r.stderr}"
+    assert r.returncode == 0, f"Failed to install ty: {r.stderr}"
     r = subprocess.run(
-        ["pyright", SCRIPT],
+        ["ty", "check", "--python-version", "3.13", "crates/uv-python/fetch-download-metadata.py"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Pyright type check failed:\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"ty type check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python code is formatted correctly (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+    r = subprocess.run(
+        ["ruff", "format", "--diff", SCRIPT],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -130,6 +147,37 @@ print('IMPORT_OK')
     )
     assert r.returncode == 0, f"Import failed:\n{r.stderr}"
     assert "IMPORT_OK" in r.stdout, f"Import did not complete successfully: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validate_pyproject():
+    """Repo pyproject.toml is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "validate-pyproject", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install validate-pyproject: {r.stderr}"
+    r = subprocess.run(
+        ["validate-pyproject", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"validate-pyproject failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_help_runs():
+    """Script --help runs without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "httpx", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install httpx: {r.stderr}"
+    r = subprocess.run(
+        ["python", "crates/uv-python/fetch-download-metadata.py", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script --help failed:\n{r.stderr}"
+    assert "usage:" in r.stdout, f"Script --help output missing usage info:\n{r.stdout}"
 
 
 # ---------------------------------------------------------------------------

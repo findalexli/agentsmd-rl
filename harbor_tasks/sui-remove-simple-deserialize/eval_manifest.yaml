@@ -48,55 +48,33 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: cargo build --all-targets should pass on move-core-types (repo CI check)
-rubric:
-- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
-    - fix the underlying issues instead. When removing unused code, delete it completely
-    rather than suppressing warnings.'
-  source:
-    path: CLAUDE.md
-    lines: '117'
-    commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
-- rule: ALWAYS run cargo xclippy after finishing development to ensure code passes
-    all linting checks. Code cleanup changes must not introduce new clippy warnings.
-  source:
-    path: CLAUDE.md
-    lines: '115'
-    commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
-- rule: 'Use #[cfg(test)] for test-only code used within the same crate. When modifying
-    tests alongside code changes, ensure the test code follows the same quality standards
-    as production code.'
-  source:
-    path: CLAUDE.md
-    lines: 104-106
-    commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
 distractors:
 - rule: Use `#[cfg(test)]` for test-only code used within the same crate.
   collision_type: scope_ambiguity
-  why_distracting: The config instructs to use `#[cfg(test)]` for test-only code.
-    An agent might apply this to the `deser_annotated_value` helper function added
-    in `value_test.rs`. However, since `value_test.rs` is already a test-only module
-    (indicated by its path `unit_tests/value_test.rs`), adding the attribute to individual
-    functions inside it is redundant and not done in the gold solution.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 68-69
-- rule: 'Formats & lints all Rust & Move, run before commit: ./scripts/lint.sh'
-  collision_type: scope_ambiguity
-  why_distracting: The config suggests running `./scripts/lint.sh` before commit.
-    An agent might run this global script, which could format or lint the entire large
-    repository, potentially taking a long time or introducing unrelated formatting
-    changes, rather than just checking the modified crate.
+  why_distracting: 'The rule suggests using #[cfg(test)] for test-only code, which
+    might lead an agent to add this attribute to the newly added `deser_annotated_value`
+    helper function in `value_test.rs`. However, since the entire file is already
+    a test module, adding it to individual functions is redundant and not done in
+    the gold solution.'
   severity: low
   source:
     path: CLAUDE.md
-    lines: 43-44
-hierarchy_analysis: The repository has a root `CLAUDE.md` and an `AGENTS.md`. The
-  root `CLAUDE.md` provides general Rust guidelines, including testing and test-only
-  code annotations. `AGENTS.md` defers to `CLAUDE.md`.
+    lines: 76-77
+hierarchy_analysis: The configuration hierarchy is flat for this task, consisting
+  only of root-level `AGENTS.md` and `CLAUDE.md` files. No crate-specific configuration
+  files are provided or needed.
 version: '2.0'
 source:
   repo: MystenLabs/sui.git
   pr: 0
   base_commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
   merge_commit: ''
+rubric:
+- rule: Check code without building (preferred) cargo check
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+  evidence: The task requires verifying the removal of methods, which aligns with
+    the preferred 'cargo check' command for checking code without building.
+  category: tooling
+  verification: llm_judge

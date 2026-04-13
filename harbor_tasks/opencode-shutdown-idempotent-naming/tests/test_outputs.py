@@ -79,6 +79,51 @@ def test_repo_typecheck():
 # The repo's own test suite has pre-existing failures at this commit.
 
 
+def test_repo_cli_tests():
+    """Repo's CLI tests pass (pass_to_pass).
+
+    Runs 'bun test test/cli/' - tests CLI-related functionality including
+    TUI transcript tests. These tests pass on the base commit.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/cli/"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, f"CLI tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_util_tests():
+    """Repo's utility tests pass (pass_to_pass).
+
+    Runs 'bun test test/util/' - tests utility functions including
+    timeout, process, and wildcard matching. These tests pass on the base commit.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/util/"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, f"Util tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier():
+    """Repo's code formatting passes prettier check (pass_to_pass).
+
+    Runs 'npx prettier --check packages/opencode/src/cli/cmd/tui/' to verify
+    that modified files follow the repo's code style.
+    """
+    r = _run_in_repo(
+        ["npx", "prettier", "--check", "packages/opencode/src/cli/cmd/tui/"],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral tests for shutdown fix
 # -----------------------------------------------------------------------------

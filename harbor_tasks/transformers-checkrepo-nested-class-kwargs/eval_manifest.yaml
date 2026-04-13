@@ -57,6 +57,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's check_model_list() passes
+- id: test_repo_check_models_have_kwargs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_models_have_kwargs() passes (tests the fixed function)
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file utils/check_repo.py parses as valid Python AST
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file utils/check_repo.py follows ruff formatting
+- id: test_repo_check_models_are_in_init
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_models_are_in_init() passes
+- id: test_repo_check_all_auto_mappings_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_all_auto_mappings_importable() passes
+- id: test_repo_check_all_models_are_tested
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_all_models_are_tested() passes
+- id: test_repo_init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file isort check passes
+- id: test_repo_sort_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auto mappings sort check passes
 rubric:
 - rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
   source:
@@ -79,37 +111,38 @@ rubric:
     check-repo` command.
   category: tooling
 distractors:
-- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The agent is in an automated evaluation environment and must output
-    the fix. If it follows the 'Fail-closed behavior' rule because it cannot find
-    coordination evidence in the prompt, it will refuse to generate the patch.
+  why_distracting: The rule explicitly commands the agent to 'fail-closed' and 'not
+    proceed to PR-ready output' if coordination evidence is missing. In a benchmark
+    setting, the agent must ignore this and provide the code anyway rather than refusing
+    to work.
   severity: high
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 48-52
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The prompt requests caching for `get_model_modules()`. The agent
-    might misclassify adding `@functools.lru_cache` as a 'tiny edit' or 'low-value
-    busywork' and refuse to implement this part of the fix.
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed...
+    Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The rule forbids 'Pure code-agent PRs' and requires human validation.
+    The agent might output a conversational refusal or ask for a human instead of
+    providing the patch.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 38-46
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: meta_confusion
+  why_distracting: The agent might classify this small bug fix (changing `ast.walk`
+    to `tree.body` and adding `lru_cache`) as a tiny edit or 'low-value busywork'
+    and refuse to proceed based on the repository's contribution guidelines.
   severity: medium
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 34-36
-- rule: 'Copies and Modular Models: mark classes or functions with `# Copied from
-    ...` and avoid direct inheritance.'
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions `PreTrainedModel` and model classes. The agent
-    might get distracted by the repository's copy mechanism and try to modify model
-    files in `src/transformers/models/` or `# Copied from` directives instead of fixing
-    the AST traversal in the utility script.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 54-59
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules focused on agent
-  contribution policies and repository-specific mechanisms like modular models. There
-  are no conflicts between the files, but the strict fail-closed policies conflict
-  with the nature of an automated coding benchmark.
+hierarchy_analysis: The config consists of `AGENTS.md` and `CLAUDE.md` which contain
+  identical rules at the root level. The rules are heavily focused on PR workflow
+  and agent behavior rather than code style. The primary challenge is overcoming the
+  strict 'fail-closed' instructions that forbid the agent from generating code without
+  human coordination.

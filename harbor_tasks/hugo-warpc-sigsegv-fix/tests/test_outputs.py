@@ -314,5 +314,20 @@ def test_repo_staticcheck():
     assert result.returncode == 0, f"staticcheck failed:\n{result.stderr}\n{result.stdout}"
 
 
+def test_repo_check_sh():
+    """
+    Repo's check.sh script passes on warpc package (pass_to_pass).
+    This runs gofmt, staticcheck, and tests as per Hugo's CI.
+    """
+    result = subprocess.run(
+        ["./check.sh", "./internal/warpc/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, f"check.sh failed:\n{result.stdout}\n{result.stderr}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

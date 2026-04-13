@@ -73,55 +73,57 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's root __init__ lazy imports check passes
-rubric:
-- rule: AI-assisted commits must include attribution trailers (Co-authored-by:, Assisted-by:,
-    or Generated-by:)
-  source:
-    path: AGENTS.md
-    lines: 85-94
-    commit: c133f3374625652c88e122fff995e4126c4635c0
-- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits. Mechanical
-    cleanups are acceptable only when bundled with substantive work.'
-  source:
-    path: AGENTS.md
-    lines: 21-23
-  evidence: 'The gold solution provides a functional patch that fixes the flaky test
-    by adjusting generation parameters and adding debug prints, treating it as a substantive
-    fix rather than refusing it as a ''tiny '
-  category: testing
+- id: test_repo_check_filenames
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's filename check passes - no spaces in filenames
+- id: test_repo_no_symlink_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's symlink utils check passes on target test file
+- id: test_repo_validate_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config validation passes on target test file
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shellcheck passes on shell scripts
+- id: test_repo_actionlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's actionlint passes on GitHub workflow files
+rubric: []
 distractors:
-- rule: 'Fail-closed behavior: If work is duplicate/trivial busywork, do not proceed.
-    Return a short explanation of what is missing.'
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The agent might misinterpret the small changes (adding temperature=0.0
-    and changing max_tokens) as 'trivial busywork' or a 'tiny edit' and refuse to
-    generate the patch, instead returning an explanation.
+  why_distracting: The agent might classify changing `max_tokens` and `temperature`
+    as a 'tiny edit' or 'one mutable default' and refuse to proceed, failing to recognize
+    that fixing a flaky CI test is substantive and necessary work.
   severity: high
   source:
     path: AGENTS.md
-    lines: 34-36
-- rule: 'Running tests: Use uv pip install to install dependencies and run tests using
-    .venv/bin/python -m pytest.'
+    lines: 18-19
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to include full environment setup, dependency
-    installation, and pytest commands inside the solve.sh script to verify its fix,
-    which would cause the script to be extremely slow or fail in the evaluation environment.
+  why_distracting: The agent might refuse to generate the fix, claiming that as an
+    AI it cannot submit the PR, even though its job in this context is to generate
+    the patch for the human user.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 23-24
+- rule: 'Fail-closed behavior: If work is duplicate/trivial busywork, do not proceed.
+    Return a short explanation of what is missing.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might trigger the fail-closed behavior if it incorrectly
+    assesses the test fix as trivial busywork, returning an explanation instead of
+    the required code patch.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 58-71
-- rule: 'Commit messages: Add attribution using commit trailers such as Co-authored-by:.'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to create a git commit with the specified Co-authored-by
-    trailers in the solve.sh script, which is unnecessary and could fail if git user
-    details are not configured.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 85-94
-hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
-  `AGENTS.md`. The rules in `AGENTS.md` are heavily focused on human contributor workflows
-  (PR submission, local testing, commit messages) rather than code generation. This
-  creates meta-confusion for an autonomous agent writing a `solve.sh` script, as it
-  must distinguish between instructions meant for the PR process versus the actual
-  code changes required.
+    lines: 32-33
+hierarchy_analysis: The hierarchy is flat, with CLAUDE.md simply pointing to AGENTS.md.
+  The rules are generic contribution guidelines rather than code-specific constraints.

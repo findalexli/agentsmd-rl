@@ -254,3 +254,13 @@ def test_copilot_instructions_created():
     assert any(w in content for w in ["style", "formatting", "naming", "whitespace"]), (
         "Should mention skipping style/formatting issues"
     )
+
+
+
+def test_repo_build():
+    '''Repo's build passes (pass_to_pass).'''
+    r = subprocess.run(
+        ['npm', 'run', 'build'],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f'build failed: {r.stderr[-500:] if r.stderr else r.stdout[-500:]}'

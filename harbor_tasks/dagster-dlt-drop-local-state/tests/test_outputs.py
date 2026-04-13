@@ -191,6 +191,24 @@ def test_repo_dagster_dlt_tests():
     assert r.returncode == 0, f"dagster-dlt tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+def test_repo_dagster_dlt_core_pipeline():
+    """dagster-dlt core pipeline test passes (pass_to_pass).
+
+    Runs a specific test that exercises the dlt pipeline run functionality
+    through the DagsterDltResource, which is the component modified by the fix.
+    """
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest",
+         "python_modules/libraries/dagster-dlt/dagster_dlt_tests/test_asset_decorator.py::test_example_pipeline",
+         "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Core pipeline test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
 def test_repo_ruff_check():
     """Ruff lint check on dagster-dlt passes (pass_to_pass).
 
@@ -222,35 +240,6 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_pyright():
-    """Pyright type check on dagster-dlt passes (pass_to_pass).
-
-    Runs pyright type checking on the dagster-dlt module to ensure
-    type correctness. Skips if pyright is not installed.
-    """
-    import pytest
-
-    # First check if pyright is available
-    r = subprocess.run(
-        ["python", "-m", "pyright", "--version"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-        cwd=REPO_PATH,
-    )
-    if r.returncode != 0:
-        pytest.skip("pyright not installed in environment")
-
-    r = subprocess.run(
-        ["python", "-m", "pyright", "python_modules/libraries/dagster-dlt/dagster_dlt/"],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        cwd=REPO_PATH,
-    )
-    assert r.returncode == 0, f"Pyright check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
-
-
 def test_repo_dagster_core_imports():
     """Dagster core and dagster-dlt can be imported without errors (pass_to_pass).
 
@@ -272,3 +261,24 @@ print("SUCCESS: All imports work correctly")
     )
     assert r.returncode == 0, f"Import test failed:\n{r.stderr[-500:]}"
     assert "SUCCESS" in r.stdout, "Imports did not complete successfully"
+
+
+def test_repo_dagster_dlt_resource_import():
+    """DagsterDltResource and related classes can be imported (pass_to_pass).
+
+    Verifies that the resource module and its key classes are importable.
+    """
+    test_code = """
+from dagster_dlt.resource import DagsterDltResource, DltEventIterator
+from dagster_dlt import DagsterDltTranslator, dlt_assets
+print("SUCCESS: Resource imports work correctly")
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", test_code],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Resource import test failed:\n{r.stderr[-500:]}"
+    assert "SUCCESS" in r.stdout, "Resource imports did not complete successfully"

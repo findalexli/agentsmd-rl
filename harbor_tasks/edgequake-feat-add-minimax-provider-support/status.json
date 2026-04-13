@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T11:42:03.826958",
-  "total_time": 1686.85,
-  "sandbox_id": "itybh72mub5b3jspepsuo",
+  "validated_at": "2026-04-11T21:17:32.481370",
+  "total_time": 3158.19,
+  "sandbox_id": "ipr6ywg5h1l7o9rcrmf0i",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 1359.65,
-      "notes": "CI commands found: cargo fmt --all -- --check, cargo check --workspace --lib, cargo test --workspace --lib (from .github/workflows/ci.yml, test-quality-gates.yml). Current p2p tests: test_models_toml_valid, test_existing_providers_intact, test_repo_cargo_fmt, test_repo_cargo_check, test_repo_cargo_test. All 5 p2p tests pass on base commit. Dockerfile builds successfully."
+      "notes": "CI commands found: cargo fmt --all -- --check, cargo check --workspace --lib, cargo test --workspace --lib --no-fail-fast, cargo clippy --workspace --lib -- -D warnings, cargo doc --workspace --no-deps, cargo build --workspace --lib, cargo test --workspace --lib --no-default-features --no-fail-fast (from .github/workflows/ci.yml, test-quality-gates.yml). Current p2p tests: test_models_toml_valid, test_existing_providers_intact (static), test_repo_cargo_fmt, test_repo_cargo_check, test_repo_cargo_test, test_repo_cargo_clippy, test_repo_cargo_doc, test_repo_cargo_build_lib, test_repo_unit_tests_no_default_features (repo_tests). All 9 p2p tests pass on base commit. All 5 f2p tests fail as expected on base commit. Dockerfile builds successfully."
     },
     "improve": {
       "status": "skipped",
@@ -30,10 +29,10 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All four validation checks passed. Fixed eval_manifest.yaml by removing 3 unreasonable rubric rules that judge could not evaluate (docs/ and .env.example files not handled by extract_config_hunks). Rubric ICR now 1.00.",
+      "notes": "All four validation checks passed. Removed 1 unreasonable rubric rule about AGENTS.md (meta-instruction about 'thinking deeply' not a code convention). Rubric ICR now 1.00 (2/2 rules pass).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1229.95
+      "time": 978.2
     },
     "rubric_judge": {
       "status": "pass",
@@ -46,27 +45,21 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 423.59,
+      "time": 849.28,
       "notes": ""
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 28.14,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T06:05:21.114239"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 9896.84,
-      "at": "2026-04-09T06:05:21.277969"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -90,6 +83,22 @@
       "backend": "fireworks",
       "time": 1686.85,
       "at": "2026-04-10T11:42:03.826958"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5556.07,
+      "at": "2026-04-11T20:38:51.407389"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3158.19,
+      "at": "2026-04-11T21:17:32.481370"
     }
   ]
 }

@@ -13,7 +13,18 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
-python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
+# Determine test path based on what's mounted
+if [ -f "/tests/test_outputs.py" ]; then
+    TEST_PATH="/tests/test_outputs.py"
+elif [ -f "/task/tests/test_outputs.py" ]; then
+    TEST_PATH="/task/tests/test_outputs.py"
+else
+    echo "ERROR: Cannot find test_outputs.py"
+    exit 1
+fi
+
+# Run from / to avoid loading conftest from /workspace/vllm/tests
+cd / && python3 -m pytest --ctrf /logs/verifier/ctrf.json "$TEST_PATH" -rA --tb=short -q
 
 if [ $? -eq 0 ]; then
     echo 1 > /logs/verifier/reward.txt

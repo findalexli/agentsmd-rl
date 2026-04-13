@@ -125,7 +125,7 @@ def test_core_resolver_structure():
         assert required in content, f"Missing required symbol: {required}"
 
 
-# [repo_tests] pass_to_pass — CI/CD: zig fmt check (from .github/workflows/format.yml)
+# [repo_tests] pass_to_pass — CI/CD: zig fmt syntax validation (from .github/workflows/format.yml)
 def test_zig_fmt_syntax_valid():
     """dns.zig has valid syntax (balanced braces, no unclosed blocks) for zig fmt compatibility."""
     content = Path(TARGET).read_text()
@@ -159,6 +159,33 @@ def test_zig_fmt_syntax_valid():
     assert "pub const Resolver = struct" in content, "Missing Resolver struct definition"
 
 
+# [repo_tests] pass_to_pass — CI/CD: oxlint on DNS JS files (from .github/workflows/lint.yml)
+def test_oxlint_dns_js():
+    """DNS JS files pass oxlint validation (pass_to_pass)."""
+    # Check DNS-related JS files with oxlint via npx (actual CI command)
+    dns_js_files = [
+        f"{REPO}/src/js/node/dns.ts",
+        f"{REPO}/src/js/node/dns.promises.ts",
+    ]
+
+    for js_file in dns_js_files:
+        if not Path(js_file).exists():
+            continue
+
+        # Run oxlint via npx on the file (actual CI command from lint.yml)
+        r = subprocess.run(
+            ["npx", "oxlint", "--config=oxlint.json", js_file],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO,
+        )
+        # Exit 0 = no errors, exit 1 = warnings only (both acceptable)
+        assert r.returncode in [0, 1], (
+            f"oxlint failed for {js_file} with exit {r.returncode}:\n{r.stderr[-500:]}"
+        )
+
+
 # [repo_tests] pass_to_pass — CI/CD: ban-words check (from .github/workflows/format.yml)
 def test_no_banned_words_in_dns_zig():
     """dns.zig does not contain banned words/patterns (CI ban-words check)."""
@@ -187,102 +214,59 @@ def test_no_banned_words_in_dns_zig():
                     pytest.fail(f"Line {i}: Banned pattern '{pattern}' found. {message}")
 
 
-# [repo_tests] pass_to_pass — CI/CD: oxlint config validation (from oxlint.json)
-def test_dns_js_no_oxlint_violations():
-    """JS/TS files in dns-related paths pass basic linting rules (from oxlint.json)."""
-    # Check the actual DNS JS files: src/js/node/dns.ts and src/js/node/dns.promises.ts
-    dns_js_files = [
-        f"{REPO}/src/js/node/dns.ts",
-        f"{REPO}/src/js/node/dns.promises.ts",
+# [repo_tests] pass_to_pass — CI/CD: prettier check on DNS test files (from .github/workflows/format.yml)
+def test_prettier_dns_test_files():
+    """DNS test files pass prettier format check (pass_to_pass)."""
+    dns_test_files = [
+        f"{REPO}/test/js/node/dns/node-dns.test.js",
+        f"{REPO}/test/js/node/dns/dns-lookup-keepalive.test.ts",
     ]
 
-    for js_file in dns_js_files:
-        if not Path(js_file).exists():
+    for test_file in dns_test_files:
+        if not Path(test_file).exists():
             continue
 
-        try:
-            content = Path(js_file).read_text()
-        except Exception:
-            continue
-
-        lines = content.split("\n")
-        for i, line in enumerate(lines, 1):
-            stripped = line.strip()
-            # Skip comments
-            if stripped.startswith("//") or stripped.startswith("/*"):
-                continue
-            # Check for debugger statement (from oxlint.json no-debugger rule)
-            if re.search(r'\bdebugger\b', stripped):
-                pytest.fail(f"{js_file}:{i}: debugger statement found (violation of no-debugger rule)")
-
-
-# [repo_tests] pass_to_pass — CI/CD: ban-words check for JS DNS files (from .github/workflows/format.yml)
-def test_no_banned_words_in_js_dns():
-    """DNS JS files do not contain banned words/patterns (CI ban-words check)."""
-    dns_js_files = [
-        f"{REPO}/src/js/node/dns.ts",
-        f"{REPO}/src/js/node/dns.promises.ts",
-    ]
-
-    # Banned patterns from test/internal/ban-words.test.ts relevant to JS files
-    banned_patterns = {
-        " != undefined": "This is by definition Undefined Behavior",
-        " == undefined": "This is by definition Undefined Behavior",
-        "undefined != ": "This is by definition Undefined Behavior",
-        "undefined == ": "This is by definition Undefined Behavior",
-        "debugger": "Don't commit debugger statements",
-    }
-
-    for js_file in dns_js_files:
-        if not Path(js_file).exists():
-            continue
-
-        try:
-            content = Path(js_file).read_text()
-        except Exception:
-            continue
-
-        lines = content.split("\n")
-        for pattern, message in banned_patterns.items():
-            for i, line in enumerate(lines, 1):
-                if pattern in line:
-                    # Skip commented lines
-                    stripped = line.strip()
-                    if not stripped.startswith("//") and not stripped.startswith("/*"):
-                        pytest.fail(f"{js_file}:{i}: Banned pattern '{pattern}' found. {message}")
-
-
-# [repo_tests] pass_to_pass — CI/CD: JS syntax validation
-def test_dns_js_syntax_valid():
-    """DNS JS files have valid syntax (pass_to_pass)."""
-    dns_js_files = [
-        f"{REPO}/src/js/node/dns.ts",
-        f"{REPO}/src/js/node/dns.promises.ts",
-    ]
-
-    for js_file in dns_js_files:
-        if not Path(js_file).exists():
-            continue
-
-        try:
-            content = Path(js_file).read_text()
-        except Exception as e:
-            pytest.fail(f"Failed to read {js_file}: {e}")
-
-        # Basic syntax checks for JS/TS files
-        # Check for balanced parentheses in function signatures (common error)
-        open_parens = content.count("(")
-        close_parens = content.count(")")
-        # Allow some flexibility for unclosed parens in comments/strings
-        assert abs(open_parens - close_parens) <= 10, (
-            f"{js_file}: Parenthesis imbalance: {open_parens} open vs {close_parens} close"
+        # Run prettier --check via npx (actual CI command)
+        r = subprocess.run(
+            ["npx", "prettier", "--check", test_file],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        # Exit 0 = formatted correctly
+        assert r.returncode == 0, (
+            f"Prettier check failed for {test_file}:\n{r.stderr[-500:]}"
         )
 
-        # Check for balanced braces
-        open_braces = content.count("{")
-        close_braces = content.count("}")
-        assert abs(open_braces - close_braces) <= 5, (
-            f"{js_file}: Brace imbalance: {open_braces} open vs {close_braces} close"
+
+# [repo_tests] pass_to_pass — CI/CD: node syntax check on DNS JS files
+def test_dns_js_syntax_valid():
+    """DNS JS files have valid Node.js syntax (pass_to_pass)."""
+    dns_js_files = [
+        f"{REPO}/src/js/node/dns.ts",
+        f"{REPO}/src/js/node/dns.promises.ts",
+    ]
+
+    for js_file in dns_js_files:
+        if not Path(js_file).exists():
+            continue
+
+        # Use node --check to validate syntax (ignores type errors, checks syntax only)
+        # For .ts files, node --check doesn't work directly, so we skip or use npx ts-node
+        if js_file.endswith(".ts"):
+            # Skip TypeScript files for node --check (no ts-node in container)
+            continue
+
+        r = subprocess.run(
+            ["node", "--check", js_file],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, (
+            f"Node.js syntax check failed for {js_file}:\n{r.stderr[-500:]}"
         )
 
 

@@ -69,6 +69,13 @@ def run_cargo_test_function_arg_tests(timeout=600):
     return result
 
 
+def run_cargo_move_clippy(timeout=300):
+    """Run cargo move-clippy on the external-crates/move workspace."""
+    cmd = ["cargo", "move-clippy"]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=MOVE_CRATES)
+    return result
+
+
 def test_compilation():
     """Verify move-vm-runtime compiles successfully (p2p)."""
     result = run_cargo_check()
@@ -89,7 +96,7 @@ def test_repo_cargo_check_all():
 
 def test_repo_cargo_test_move_vm_runtime():
     """Repo's cargo test on move-vm-runtime --lib passes (pass_to_pass)."""
-    result = run_cargo_test_move_vm_runtime(timeout=120)
+    result = run_cargo_test_move_vm_runtime(timeout=300)
     assert result.returncode == 0, f"cargo test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
@@ -103,6 +110,12 @@ def test_repo_function_arg_tests():
     """Repo's function_arg_tests module passes (pass_to_pass)."""
     result = run_cargo_test_function_arg_tests(timeout=120)
     assert result.returncode == 0, f"function_arg_tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_move_clippy():
+    """Repo's cargo move-clippy on external-crates/move passes (pass_to_pass)."""
+    result = run_cargo_move_clippy(timeout=300)
+    assert result.returncode == 0, f"cargo move-clippy failed:\n{result.stderr[-500:]}"
 
 
 def test_argument_count_mismatch_0_expected_1_got():

@@ -1,29 +1,22 @@
-FROM python:3.12-slim
+FROM node:18-slim
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace/express-async-handler
 
-RUN git init /repo && \
-    cd /repo && \
-    git remote add origin https://github.com/huggingface/transformers.git && \
-    git fetch --depth=1 origin b94fee049373eb2e140d4866847559c4c42b3d7e && \
-    git checkout FETCH_HEAD
-RUN mkdir -p /logs/verifier
+# Install Python and other dependencies for testing
+RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /repo
-RUN git checkout b94fee049373eb2e140d4866847559c4c42b3d7e
+# Install TypeScript and ts-node for code execution
+RUN npm install -g typescript ts-node
 
-# Install CPU-only torch (minimal) + deps needed by loss modules
-RUN pip install --no-cache-dir \
-    torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir scipy pillow numpy
+# Copy the mock repo content (from parent directory context)
+COPY repo/ .
 
-# Install transformers from source (editable, no extras)
-RUN pip install --no-cache-dir -e .
+# Install dependencies
+RUN npm install
 
-# Configure git for agent commits
-RUN git config user.email "agent@test.local" && \
-    git config user.name "Agent"
+# Copy tests (from parent directory context)
+COPY tests/test_outputs.py /tests/test_outputs.py
+COPY tests/test.sh /tests/test.sh
+RUN chmod +x /tests/test.sh
 
-ENV PYTHONPATH="/repo/src:${PYTHONPATH}"
+WORKDIR /workspace/express-async-handler

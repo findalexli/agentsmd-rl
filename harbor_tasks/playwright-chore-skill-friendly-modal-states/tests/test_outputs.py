@@ -33,102 +33,6 @@ def test_help_json_valid():
 
 
 # [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_commands_syntax():
-    """Repo MCP commands.ts has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/terminal/commands.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"commands.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_program_syntax():
-    """Repo MCP program.ts has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/program.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"program.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_tab_syntax():
-    """Repo MCP tab.ts has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/browser/tab.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"tab.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_evaluate_syntax():
-    """Repo MCP evaluate.ts has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/browser/tools/evaluate.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"evaluate.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_tool_types_syntax():
-    """Repo MCP tool.ts types file has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/browser/tools/tool.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"tool.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_config_syntax():
-    """Repo MCP config.ts has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/browser/config.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"config.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_response_syntax():
-    """Repo MCP response.ts has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('packages/playwright/src/mcp/browser/response.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"response.ts is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
-def test_repo_build_js_syntax():
-    """Repo build.js has valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('utils/build/build.js','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"build.js is not readable:\n{r.stderr}"
-
-
-# [repo] pass_to_pass - CI/CD gate
 def test_repo_npm_install():
     """Repo npm install succeeds (pass_to_pass)."""
     r = subprocess.run(
@@ -139,15 +43,77 @@ def test_repo_npm_install():
 
 
 # [repo] pass_to_pass - CI/CD gate
-def test_repo_mcp_cli_spec_syntax():
-    """Repo MCP CLI test spec has valid syntax (pass_to_pass)."""
+def test_repo_build():
+    """Repo npm run build succeeds (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "-e",
-         "require('fs').readFileSync('tests/mcp/cli.spec.ts','utf8');"
-         "console.log('OK')"],
-        cwd=REPO, capture_output=True, text=True, timeout=30,
+        ["npm", "run", "build"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
     )
-    assert r.returncode == 0, f"cli.spec.ts is not readable:\n{r.stderr}"
+    assert r.returncode == 0, f"npm run build failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_tsc():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_eslint_mcp():
+    """Repo ESLint on MCP files passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright/src/mcp/"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_check_deps():
+    """Repo dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_lint_packages():
+    """Repo workspace packages consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_files_syntax():
+    """Repo MCP modified files have valid syntax (pass_to_pass)."""
+    # Check that all modified MCP files can be read by Node.js
+    files = [
+        "packages/playwright/src/mcp/browser/config.ts",
+        "packages/playwright/src/mcp/browser/response.ts",
+        "packages/playwright/src/mcp/browser/tab.ts",
+        "packages/playwright/src/mcp/browser/tools/evaluate.ts",
+        "packages/playwright/src/mcp/browser/tools/tool.ts",
+        "packages/playwright/src/mcp/program.ts",
+        "packages/playwright/src/mcp/terminal/commands.ts",
+        "packages/playwright/src/mcp/terminal/help.json",
+        "utils/build/build.js",
+        "tests/mcp/cli.spec.ts",
+    ]
+    for f in files:
+        r = subprocess.run(
+            ["node", "-e", f"require('fs').readFileSync('{f}','utf8'); console.log('OK')"],
+            cwd=REPO, capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"{f} is not readable:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

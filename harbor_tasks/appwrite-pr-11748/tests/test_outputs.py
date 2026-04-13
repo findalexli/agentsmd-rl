@@ -374,3 +374,14 @@ def test_repo_unit_tests_platform():
         shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Platform unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_messaging():
+    """Repo's unit tests for Messaging namespace pass (pass_to_pass)."""
+    r = subprocess.run(
+        "composer install --ignore-platform-reqs > /dev/null 2>&1 && vendor/bin/phpunit tests/unit/Messaging/",
+        shell=True, capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Messaging unit tests failed:\n{r.stderr[-500:]}"
+
+

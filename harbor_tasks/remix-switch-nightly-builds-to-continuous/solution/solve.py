@@ -65,7 +65,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.number }}
 
       - name: Checkout (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
@@ -130,11 +130,8 @@ jobs:
 open('.github/workflows/preview.yml', 'w').write(new_preview)
 print("Updated preview.yml")
 
-# 3. Update setup-installable-branch.ts
-setup_content = open('scripts/setup-installable-branch.ts').read()
-
-# Replace the entire parseArgs section and comments
-new_setup = '''import * as fsp from 'node:fs/promises'
+# 3. Update setup-installable-branch.ts - use exact gold reference content
+gold_setup = '''import * as fsp from 'node:fs/promises'
 import * as path from 'node:path'
 import * as util from 'node:util'
 import { logAndExec } from './utils/process.ts'
@@ -146,16 +143,13 @@ import { logAndExec } from './utils/process.ts'
  *   pnpm install "remix-run/remix#preview&path:packages/remix"
  *
  * To do this, we can run a build, make some minor changes to the repo, and
- * commit the changes to the new branch. These changes would never be
- * committed to `main` and exist only in the installable branch.
+ * commit the build + changes to the new branch. These changes would never be
+ * down-merged back to the source branch.
  *
- * Overview of the changes:
- *
- *  - Build packages
- *  - Updates peer deps to use `workspace:` protocol
- *  - Adds `main` field to packages that don't have them
- *  - Adds `types` field to packages that don't have them
- *  - Removes all `node:*` protocol prefixes from package.json deps
+ * This script does the following:
+ *  - Checks out the new branch and resets it to the base (current) branch
+ *  - Runs a build
+ *  - Removes `dist/` from `.gitignore`
  *  - Updates all internal `@remix-run/*` deps to use the github format for the
  *    given installable branch
  *  - Copies all `publishConfig`'s down so we get `exports` from `dist/` instead of `src/`
@@ -177,23 +171,92 @@ if (!installableBranch) {
 }
 
 // Error if git status is not clean
+let gitStatus = logAndExec('git status --porcelain', true)
+if (gitStatus) {
+  throw new Error('Error: Git working directory is not clean. Commit or stash changes first.')
+}
+
+// Capture the current branch name
+let sha = logAndExec('git rev-parse --short HEAD ', true).trim()
+
+console.log(`Preparing installable branch \`${installableBranch}\` from sha ${sha}`)
+
+// Switch to new branch and reset to current commit on base branch
+logAndExec(`git checkout -B ${installableBranch}`)
+
+// Build dist/ folders
+logAndExec('pnpm build')
+
+await updateGitignore()
+await updatePackageDependencies()
+
+logAndExec('git add .')
+logAndExec(`git commit -a -m "installable build from ${sha}"`)
+
+console.log(
+  [
+    '',
+    `✅ Done!`,
+    '',
+    `You can now push the \`${installableBranch}\` branch to GitHub and install via:`,
+    '',
+    `  pnpm install "remix-run/remix#${installableBranch}&path:packages/remix"`,
+  ].join('\\n'),
+)
+
+// Remove `dist` from gitignore so we include built code in the repo
+async function updateGitignore() {
+  let gitignorePath = path.join(process.cwd(), '.gitignore')
+  let content = await fsp.readFile(gitignorePath, 'utf-8')
+  let filtered = content
+    .split('\\n')
+    .filter((line) => !line.trim().startsWith('dist'))
+    .join('\\n')
+  await fsp.writeFile(gitignorePath, filtered)
+  console.log('Updated .gitignore')
+}
+
+// Update `package.json` files to point to this branch on github
+async function updatePackageDependencies() {
+  let packagesDir = path.join(process.cwd(), 'packages')
+
+  let packageDirNames = await fsp.readdir(packagesDir, { withFileTypes: true })
+
+  for (let dir of packageDirNames) {
+    if (!dir.isDirectory()) continue
+
+    let packageJsonPath = path.join(packagesDir, dir.name, 'package.json')
+    let content = await fsp.readFile(packageJsonPath, 'utf-8')
+    let pkg = JSON.parse(content)
+
+    // Point all `@remix-run/` dependencies to this branch on github
+    if (pkg.dependencies) {
+      for (let name of Object.keys(pkg.dependencies)) {
+        if (name.startsWith('@remix-run/')) {
+          let packageDirName = name.replace('@remix-run/', '')
+          pkg.dependencies[name] =
+            `remix-run/remix#${installableBranch}&path:packages/${packageDirName}`
+        }
+      }
+    }
+
+    // Apply `publishConfig` overrides
+    if (pkg.publishConfig) {
+      Object.assign(pkg, pkg.publishConfig)
+      delete pkg.publishConfig
+    }
+
+    await fsp.writeFile(packageJsonPath, JSON.stringify(pkg, null, 2) + '\\n')
+    console.log(`Updated ${dir.name}`)
+  }
+
+  console.log('Done')
+}
+
+function commitChanges() {}
 '''
 
-# Keep everything after "Error if git status is not clean"
-match = re.search(r'// Error if git status is not clean\n(.*)', setup_content, re.DOTALL)
-if match:
-    rest = match.group(1)
-else:
-    # Find the line that starts the git status check
-    lines = setup_content.split('\n')
-    start_idx = 0
-    for i, line in enumerate(lines):
-        if 'git status' in line and 'not clean' in line:
-            start_idx = i + 1
-            break
-    rest = '\n'.join(lines[start_idx:])
-
-open('scripts/setup-installable-branch.ts', 'w').write(new_setup + rest)
+open('scripts/setup-installable-branch.ts', 'w').write(gold_setup)
 print("Updated setup-installable-branch.ts")
 
 # 4. Update README.md

@@ -47,15 +47,25 @@ checks:
 - id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ruff linting passes on routes.py
+  description: Repo's ruff linting passes on routes.py (CI from .github/workflows/test-python.yml)
 - id: test_repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ruff formatting passes on routes.py
+  description: Repo's ruff formatting passes on routes.py (CI from .github/workflows/test-python.yml)
 - id: test_repo_py_compile
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's Python code compiles without syntax errors
+  description: Repo's Python code compiles without syntax errors (standard Python
+    validation)
+- id: test_repo_ruff_format_test_routes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on test/test_routes.py (CI from .github/workflows/test-python.yml)
+- id: test_repo_py_compile_test_routes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test/test_routes.py compiles without syntax errors (standard
+    Python validation)
 - id: test_queue_data_helper_function_exists
   type: pass_to_pass
   origin: repo_tests
@@ -64,37 +74,43 @@ rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: b3722285163dcee97fe236e87d6ef98cee6be441
+    lines: 44-46
+  evidence: The patch correctly indents the `heartbeat_task.cancel()` calls to match
+    the surrounding `try/except` and `while` blocks in `gradio/routes.py`, adhering
+    to the surrounding code style.
+  category: style
+  verification: llm_judge
 distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    etc.).
   collision_type: scope_ambiguity
-  why_distracting: The agent might consider a 5-line fix to be a 'tiny edit' and either
-    refuse to make the change or attempt to bundle it with unrelated mechanical cleanups,
-    misunderstanding that a memory/task leak fix is high-value regardless of line
-    count.
+  why_distracting: The agent might misclassify this small 4-line bug fix as a 'tiny
+    edit' or 'low-value busywork' and fail to recognize that fixing a memory/task
+    leak is a high-value, critical change.
   severity: high
   source:
     path: AGENTS.md
-    lines: 49-51
-- rule: 'AI Agent PR Requirement: include the keyword kumquat in your PR description.'
+    lines: 61-64
+- rule: 'AI Agent PR Requirement: include the keyword `kumquat` somewhere in your
+    PR description.'
   collision_type: meta_confusion
-  why_distracting: The agent is instructed to include the keyword `kumquat` in the
-    PR description. Since it is only generating a code patch in this environment,
-    it might erroneously insert the keyword into the source code comments.
+  why_distracting: The agent might try to write a write a PR description file, modify
+    a PR template, or inappropriately inject the word 'kumquat' into the source code
+    or commit message, which is outside the scope of the code patch.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 58-60
-- rule: Format your code before pushing using bash scripts/format_backend.sh.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might run `bash scripts/format_backend.sh` which could
-    reformat unrelated code in `gradio/routes.py` or other files, creating a noisy
-    diff that violates the principle of minimal changes.
+    lines: 71-73
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use tools to create a GitHub issue before
+    writing the code, or refuse to proceed without an issue number, halting progress
+    on the actual bug fix.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 23-25
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
-  There are no conflicts between multiple config files, but the agent must distinguish
-  between repository-level PR instructions and code-level fixes.
+    lines: 20-20
+hierarchy_analysis: The repository has a single flat config file (`AGENTS.md`) at
+  the root level. There is no complex hierarchy to traverse, but the agent must filter
+  out PR-related meta-instructions to focus on the code fix.

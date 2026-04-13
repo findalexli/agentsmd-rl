@@ -90,41 +90,19 @@ rubric:
     lines: 353-358
     commit: b5cb015c5f94088cf0211613051fb696b67cddda
 distractors:
-- rule: 'Start watch build in background: `pnpm --filter=next dev`'
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits'
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev`
-    in a background terminal for iterative development. However, this PR is a pure
-    Rust fix in `turbo-tasks-backend` (Turbopack). Running the Next.js JS/TS dev server
-    is irrelevant for compiling or testing a Rust deadlock and would waste agent time
-    and resources.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 64-68
-- rule: Run tests fast (no isolation, no packing) using `pnpm testheadless`
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests using `NEXT_SKIP_ISOLATE=1 pnpm testheadless`
-    for fast test execution. This applies to the Next.js JS/TS test suite, but the
-    agent is fixing a Rust deadlock in a Turbopack crate and should instead use `cargo
-    test` within the specific crate.
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` for Next.js
+    source changes. An agent might try to run this to test the Turbopack Rust changes,
+    but the bug only occurs when a specific Cargo feature (`print_cache_item_size`)
+    is enabled, which `pnpm dev` won't enable by default. The agent needs to use `cargo`
+    directly in the crate to reproduce and verify the fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 74-78
-- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files
-  collision_type: scope_ambiguity
-  why_distracting: The rule advises preferring `pnpm --filter=next build` when edits
-    are limited to core Next.js files. An agent might misinterpret this and try to
-    use it to build the Rust changes, which will not properly compile the Turbopack
-    Rust crates in isolation compared to using `cargo` directly.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 84-85
-hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md`) are identical and
-  heavily focused on the TypeScript/JavaScript side of the Next.js monorepo (`packages/next`).
-  Because this bug is located entirely within the Rust-based Turbopack subsystem (`turbopack/crates/turbo-tasks-backend`),
-  almost all of the build, dev, and test commands provided in the root config are
-  distractors. The agent must recognize the architectural boundary between the JS
-  framework and the Rust bundler to avoid applying JS-centric workflows to a Rust
-  deadlock fix.
+    path: AGENTS.md
+    lines: 65-70
+hierarchy_analysis: The hierarchy is flat (Level 0 only). `AGENTS.md` and `CLAUDE.md`
+  are symlinks to the same file. The instructions are heavily skewed towards the TypeScript/Next.js
+  parts of the monorepo, providing little to no guidance for the Rust (`turbopack/crates/*`)
+  workspace other than a generic `pnpm build-all` command.

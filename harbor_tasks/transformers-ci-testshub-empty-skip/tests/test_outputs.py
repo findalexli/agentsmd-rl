@@ -90,6 +90,66 @@ def test_repo_tests_fetcher_help():
 
 
 # [repo_ci] pass_to_pass
+def test_repo_tests_fetcher_filter_tests():
+    """Repo's tests_fetcher.py --filter_tests runs without error (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/tests_fetcher.py", "--filter_tests"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    # Note: This may not produce output in base commit, but should not crash
+    assert r.returncode == 0, f"Filter tests command failed:\n{r.stderr}"
+
+# [repo_ci] pass_to_pass
+def test_repo_tests_fetcher_empty_list():
+    """Repo's tests_fetcher create_test_list_from_filter handles empty list (pass_to_pass)."""
+    # This tests the Python API behavior via subprocess to avoid import side effects
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "import sys; sys.path.insert(0, 'utils'); "
+            "from tests_fetcher import create_test_list_from_filter; "
+            "import tempfile; import os; "
+            "tmpdir = tempfile.mkdtemp(); "
+            "create_test_list_from_filter([], tmpdir); "
+            "hub = os.path.join(tmpdir, 'tests_hub_test_list.txt'); "
+            "print('EXISTS' if os.path.exists(hub) else 'NOT_EXISTS'); "
+            "import shutil; shutil.rmtree(tmpdir)"
+        ],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Empty list test failed:\n{r.stderr}"
+    # In the buggy state, the file IS created for empty list (base commit behavior)
+    # This test verifies the API runs without error
+
+
+# [repo_ci] pass_to_pass
+def test_repo_tests_fetcher_with_tests():
+    """Repo's tests_fetcher create_test_list_from_filter works with real tests (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "import sys; sys.path.insert(0, 'utils'); "
+            "from tests_fetcher import create_test_list_from_filter; "
+            "import tempfile; import os; "
+            "tmpdir = tempfile.mkdtemp(); "
+            "create_test_list_from_filter(['tests/models/bert/test_modeling_bert.py'], tmpdir); "
+            "hub = os.path.join(tmpdir, 'tests_hub_test_list.txt'); "
+            "torch = os.path.join(tmpdir, 'tests_torch_test_list.txt'); "
+            "print(f'HUB_EXISTS={os.path.exists(hub)} TORCH_EXISTS={os.path.exists(torch)}'); "
+            "import shutil; shutil.rmtree(tmpdir)"
+        ],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"With tests test failed:\n{r.stderr}"
+    # Verify that real test files result in expected output files
+    assert "HUB_EXISTS=True" in r.stdout, f"Expected tests_hub_test_list.txt to exist:\n{r.stdout}"
+    assert "TORCH_EXISTS=True" in r.stdout, f"Expected tests_torch_test_list.txt to exist:\n{r.stdout}"
+
+
+
+
+
+# [repo_ci] pass_to_pass
 def test_repo_syntax_all():
     """All repo Python files must have valid syntax (pass_to_pass)."""
     import ast

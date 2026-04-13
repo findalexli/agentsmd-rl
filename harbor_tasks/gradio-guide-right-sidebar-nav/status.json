@@ -3,19 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T17:46:51.504324",
-  "total_time": 1076.22,
-  "sandbox_id": "irub0bb64al7ttwa66ior",
+  "validated_at": "2026-04-11T22:18:10.246142",
+  "total_time": 1790.98,
+  "sandbox_id": "itqcphlwx3rywbek4d2fr",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
+    "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 353.64,
-      "notes": "CI/CD commands discovered from repo: package.json has 'ts:check' (svelte-check), 'lint' (ESLint), 'format:check' (prettier), 'build'. Website package.json has 'check' (svelte-check). Dockerfile lacks Node.js so only static Python-based tests can run. Added 5 new p2p test definitions to eval_manifest.yaml: repo_typescript_syntax_valid, repo_svelte_imports_valid, repo_svelte_template_bindings_valid, repo_html_structure_valid, repo_js_expressions_valid. NOTE: test_outputs.py could not be modified due to file permissions (owned by user:1001, running as worker:1002). The tests directory needs chmod 666 or ownership change to allow test file modifications."
+      "time": 636.79,
+      "notes": ""
     },
     "improve": {
       "status": "skipped",
@@ -29,66 +28,38 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed eval_manifest.yaml by removing non-applicable rubric rule. The rule referenced AGENTS.md line 45 (\"Be consistent with style\"), but this is a code-only task - the gold solution only modifies a Svelte file, not AGENTS.md. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "notes": "All validation checks passed. Docker build successful. NOP test returns 0 (6 fail-to-pass tests correctly fail on base commit). Gold test returns 1 (all 20 tests pass after solve.sh applied). Rubric is empty (no rules to evaluate).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 117.85
+      "time": 245.3
     },
-    "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
       "backend": "fireworks",
-      "time": 363.48,
-      "notes": ""
-    },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.17,
-      "notes": "ICR=1.00"
+      "time": 0.14,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4777.89,
-      "at": "2026-04-09T10:31:30.944433"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 471.78,
-      "at": "2026-04-09T14:36:02.970182"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 472.03,
-      "at": "2026-04-09T14:36:03.127920"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 129.7,
-      "at": "2026-04-09T15:00:01.178133"
+      "time": 1909.79,
+      "at": "2026-04-11T20:52:46.698219"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1076.22,
-      "at": "2026-04-10T17:46:51.504324"
+      "time": 1790.98,
+      "at": "2026-04-11T22:18:10.246142"
     }
   ]
 }

@@ -53,59 +53,79 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's frontend product build passes on base commit
+- id: test_prefix_day_ticks
+  type: fail_to_pass
+  origin: pr_diff
+  description: createXAxisTickCallback returns 'Day N' when numericTickPrefix='Day'
+    with numeric allDays
+- id: test_prefix_week_and_month_ticks
+  type: fail_to_pass
+  origin: pr_diff
+  description: numericTickPrefix works for 'Week' and 'Month' prefixes, not just 'Day'
+- id: test_linegraph_stickiness_wiring
+  type: fail_to_pass
+  origin: pr_diff
+  description: LineGraph.tsx passes numericTickPrefix to createXAxisTickCallback and
+    references isStickiness
+- id: test_no_prefix_returns_plain_numbers
+  type: pass_to_pass
+  origin: pr_diff
+  description: Without numericTickPrefix, numeric allDays still return plain number
+    strings
+- id: test_dayjs_import_convention
+  type: pass_to_pass
+  origin: agent_config
+  description: dates.ts imports dayjs from 'lib/dayjs', not directly from 'dayjs'
+    package
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 314b93aa807030d5ef1c9bb17d44cb3609f10cb3
 rubric:
-- rule: Code changes must follow existing codebase patterns and pass all functional
-    tests
-  description: Gold solution passes all 10 tests - fail-to-pass and pass-to-pass
-- rule: 'Universal: `hogli test <file_or_directory>` — auto-detects test type'
+- rule: Code changes implement the numericTickPrefix feature correctly with proper TypeScript typing and test coverage
+  description: |
+    The solution must:
+    1. Add numericTickPrefix?: string to CreateXAxisTickCallbackArgs interface in dates.ts
+    2. Update the return function to prefix values when numericTickPrefix is provided
+    3. Wire isStickiness logic in LineGraph.tsx to pass the formatted prefix
+    4. Add test cases in dates.test.ts for the new functionality
+    5. Maintain backward compatibility when numericTickPrefix is not provided
   source:
-    path: AGENTS.md
-    lines: 15-16
-  evidence: The gold solution updates `frontend/src/lib/charts/utils/dates.test.ts`
-    to verify the new `numericTickPrefix` behavior, demonstrating the need to run
-    frontend tests using the specified `hogli test` co
-  category: testing
-- rule: 'TypeScript check: `pnpm --filter=@posthog/frontend typescript:check`'
-  source:
-    path: AGENTS.md
-    lines: 23-23
-  evidence: 'The gold solution correctly updates the `CreateXAxisTickCallbackArgs`
-    interface in `dates.ts` with `numericTickPrefix?: string` and passes it in `LineGraph.tsx`,
-    ensuring the required TypeScript check'
-  category: tooling
+    path: frontend/src/lib/charts/utils/dates.ts
+  reference: |
+    Target files and expected changes:
+
+    FILE: frontend/src/lib/charts/utils/dates.ts
+    - Add to interface: numericTickPrefix?: string
+    - Update return: (value) => (numericTickPrefix ? `${numericTickPrefix} ${String(value)}` : String(value))
+
+    FILE: frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx
+    - Add isStickiness to destructured values from insightVizDataLogic
+    - Pass numericTickPrefix to createXAxisTickCallback when isStickiness is true
+
+    FILE: frontend/src/lib/charts/utils/dates.test.ts
+    - Add test: 'formats numbers with a prefix when provided'
+    - Test verifies callback(1, 0) returns 'Day 1' when numericTickPrefix is 'Day'
 distractors:
-- rule: Django serializers are the source of truth for frontend API types — `hogli
-    build:openapi` generates TypeScript
+- rule: Django serializers are the source of truth for frontend API types
   collision_type: architecture_boundary
-  why_distracting: The agent might attempt to modify the backend API to return pre-formatted
-    interval strings (e.g., 'Day 1') instead of numbers, and then regenerate the frontend
-    types. This would violate the architecture boundary, as the backend should return
-    raw data and the frontend should handle presentation formatting.
+  why_distracting: The agent might assume that the stickiness interval data needs
+    to be formatted on the backend and try to modify Django serializers to return
+    formatted strings, rather than handling the presentation logic in the frontend
+    line graph component.
   severity: high
   source:
     path: AGENTS.md
-    lines: 61-61
+    lines: 61-63
 - rule: 'Scope convention: use `llma` for LLM analytics changes'
   collision_type: scope_ambiguity
-  why_distracting: The agent might see 'insights' and 'analytics' in the issue description
-    and incorrectly apply the `llma` scope to its commit or PR title, even though
-    this is a core product feature (stickiness), not LLM analytics.
+  why_distracting: The agent might misinterpret the scope of the PR and use the `llma`
+    scope in the commit message, which is strictly reserved for LLM analytics, not
+    general stickiness insights.
   severity: low
   source:
     path: AGENTS.md
     lines: 38-38
-- rule: Never use `flox activate` in interactive sessions (it hangs)
-  collision_type: would_cause_bug
-  why_distracting: The agent might naturally try to run `flox activate` to set up
-    its environment before running frontend tests or type checks, which will cause
-    the terminal to hang and prevent task completion. It must use the `flox activate
-    -- bash -c` pattern instead.
-  severity: high
-  source:
-    path: .cursorrules
-    lines: 21-22
-hierarchy_analysis: The `.cursorrules` file provides general agent behavior and flox
-  environment rules, while `AGENTS.md` provides PostHog-specific architecture and
-  command guidelines. `CLAUDE.md` simply points to `AGENTS.md`. The agent must synthesize
-  the flox command wrapper from `.cursorrules` with the `hogli` and `pnpm` commands
-  from `AGENTS.md` (e.g., `flox activate -- bash -c "hogli test frontend/src/lib/charts/utils/dates.test.ts"`).
+hierarchy_analysis: The configuration hierarchy is flat, consisting of Level 0 `.cursorrules`
+  and `AGENTS.md` files. The rules are mostly generic repository guidelines and boilerplate
+  instructions that do not conflict with each other.

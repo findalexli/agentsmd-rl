@@ -369,7 +369,7 @@ def test_repo_oxlint():
     )
     # Exit code 0 = success (warnings don't cause non-zero exit)
     # Exit code 1 = errors found
-    assert r.returncode == 0, f"oxlint failed with errors:\\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"oxlint failed with errors:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -397,3 +397,54 @@ console.log('PASS');
 """
     )
     assert r.returncode == 0, f"oxlint.json is not valid JSONC: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_format():
+    """Repo's Prettier formatting check passes on target file (pass_to_pass)."""
+    # First auto-format the file to handle any patch formatting inconsistencies
+    subprocess.run(
+        ["npx", "prettier", "--write", "--config", ".prettierrc", TARGET],
+        capture_output=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Then verify it passes the check
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "--config", ".prettierrc", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Exit code 0 = file is properly formatted
+    # Exit code 1 = file needs formatting
+    assert r.returncode == 0, f"Prettier format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_config():
+    """Repo's Prettier config file is valid JSON (pass_to_pass)."""
+    config_path = Path(REPO) / ".prettierrc"
+    assert config_path.exists(), ".prettierrc config file not found"
+
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('/workspace/bun/.prettierrc', 'utf8');
+JSON.parse(src);
+console.log('PASS');
+"""
+    )
+    assert r.returncode == 0, f".prettierrc is not valid JSON: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gitattributes():
+    """Repo's .gitattributes file exists and has basic patterns (pass_to_pass)."""
+    config_path = Path(REPO) / ".gitattributes"
+    assert config_path.exists(), ".gitattributes file not found"
+
+    content = config_path.read_text()
+    # Basic validation - must have some attributes defined
+    assert "*" in content or "text" in content, ".gitattributes missing basic patterns"

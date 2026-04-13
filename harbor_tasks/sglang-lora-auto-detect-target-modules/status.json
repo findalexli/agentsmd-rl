@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T00:02:45.407467",
-  "total_time": 7417.41,
-  "sandbox_id": "i8tja42tbguwgk7xbahj9",
+  "validated_at": "2026-04-12T03:58:42.188500",
+  "total_time": 1735.21,
+  "sandbox_id": "i6e44gci7yioxwqat0ddc",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 393.06,
+      "time": 463.2,
       "notes": ""
     },
     "p2p_enrichment_validation": {
@@ -33,20 +32,31 @@
     },
     "validate": {
       "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 104.27,
       "nop_reward": 0.0,
       "gold_reward": 1.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All four checks passed: (1) Docker build succeeded, (2) NOP test reward=0 as expected (8 f2p tests fail on base commit), (3) Gold test reward=1 as expected (13 tests pass after solve.sh), (4) Rubric judge returned HTTP 401 auth error (infrastructure issue, not task issue)."
+      "notes": "All four checks passed: (1) Docker build succeeded, (2) NOP test reward=0 as expected (8 f2p tests correctly fail on buggy code), (3) Gold test reward=1 as expected (all 17 tests pass after gold fix), (4) Rubric judge returned 1.0 (empty rubric = no rules to evaluate)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 85.72
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 1.32,
-      "notes": "ICR=0.50"
+      "notes": "ICR=1.0 (rubric cleared - no rules to evaluate)"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.22,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -65,6 +75,22 @@
       "backend": "fireworks",
       "time": 7417.41,
       "at": "2026-04-10T00:02:45.407467"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1976.85,
+      "at": "2026-04-12T02:49:12.297793"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1735.21,
+      "at": "2026-04-12T03:58:42.188500"
     }
   ]
 }

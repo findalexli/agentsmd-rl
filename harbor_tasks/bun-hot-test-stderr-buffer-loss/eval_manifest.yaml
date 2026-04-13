@@ -60,6 +60,10 @@ checks:
   origin: repo_tests
   description: 'Repo''s TypeScript project compiles without errors, excluding regression
     fixtures (CI: cd test && bun run typecheck)'
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo banned words test passes (CI: bun test test/internal/ban-words.test.ts)'
 rubric:
 - rule: Do not write flaky tests. Unless explicitly asked, never wait for time to
     pass in tests. Always wait for the condition to be met instead of waiting for
@@ -68,59 +72,68 @@ rubric:
     path: test/CLAUDE.md
     lines: '21'
     commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+  reference: 'Promise.race([driveErrorReloadCycle(...), bundler.exited.then(...)])'
 - rule: Generally, await using or using is a good idea to ensure proper resource cleanup.
   source:
     path: test/CLAUDE.md
     lines: '100'
     commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+  reference: runner.kill() is called when targetCount is reached to clean up process
 - rule: Prefer async/await over callbacks.
   source:
     path: test/CLAUDE.md
     lines: '104'
     commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
-distractors:
-- rule: Prefer concurrent tests over sequential tests
-  collision_type: would_cause_bug
-  why_distracting: The tests in `hot.test.ts` share global state (`hotRunnerRoot`,
-    `cwd`) which is modified in `beforeEach`. Making these tests concurrent would
-    cause race conditions and test failures.
-  severity: high
+  reference: 'async function driveErrorReloadCycle with for await...of loop'
+- rule: Always wait for the condition to be met instead of waiting for an arbitrary
+    amount of time.
   source:
-    path: test/CLAUDE.md
-    lines: 18-20
-- rule: For multi-file tests, prefer tempDir and Bun.spawn.
+    path: test/AGENTS.md
+    lines: 20-22
+  evidence: The driveErrorReloadCycle function uses a for await loop over runner.stderr
+    to wait for specific error output instead of using arbitrary timeouts.
+  category: testing
+  reference: 'for await (const chunk of runner.stderr) with pattern matching'
+- rule: 'Use stderr: ''pipe'' when spawning processes in tests as demonstrated in
+    the multi-file test example.'
+  source:
+    path: AGENTS.md
+    lines: 66-72
+  evidence: 'The gold solution ensures the spawned process uses stderr: ''pipe'' instead
+    of ''inherit'', matching the Bun.spawn example in the config.'
+  category: testing
+  reference: 'stderr: "pipe" in spawn options'
+distractors:
+- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
   collision_type: scope_ambiguity
-  why_distracting: The test file already has an established setup using `beforeEach`
-    to manage `hotRunnerRoot`. Refactoring the tests to use `tempDir` from `harness`
-    would be a massive scope creep and unnecessary for fixing the stderr hang.
+  why_distracting: 'The file already defines and uses a custom `timeout` variable
+    (`const timeout = isDebug ? Infinity : 10_000;`). An agent might try to remove
+    this to comply with the rule, but doing so is out of scope for the bug fix and
+    modifies existing test infrastructure.'
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 44-45
-- rule: Do not set a timeout on tests
+    path: test/AGENTS.md
+    lines: 109-110
+- rule: When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`.
   collision_type: scope_ambiguity
-  why_distracting: 'The file already defines and uses `timeout` and `longTimeout`
-    variables (e.g., `const timeout = isDebug ? Infinity : 10_000;`). An agent might
-    try to remove these to comply with the rule, which is out of scope and alters
-    existing test behavior.'
+  why_distracting: The test file `hot.test.ts` spawns Bun processes. An agent might
+    try to rename the file or extract the spawned code into a `*-fixture.ts` file,
+    which is an unnecessary refactor for this bug fix.
   severity: low
   source:
-    path: test/CLAUDE.md
-    lines: 112-114
-- rule: Use `await using` or `using` for resource cleanup
-  collision_type: would_cause_bug
-  why_distracting: The `driveErrorReloadCycle` helper explicitly manages the process
-    lifecycle by calling `runner.kill()` when the target count is reached. Refactoring
-    the existing `spawn` to use `await using` might interfere with this manual lifecycle
-    management required for testing hot reloads.
+    path: test/AGENTS.md
+    lines: 89-90
+- rule: Use `tempDir` from `"harness"` to create a temporary directory.
+  collision_type: scope_ambiguity
+  why_distracting: The test already has an established way of writing files (`writeFileSync(hotRunnerRoot,
+    ...)`). Refactoring it to use `tempDir` would be out of scope and potentially
+    break the specific hot-reload test setup.
   severity: medium
   source:
-    path: test/CLAUDE.md
-    lines: 95-96
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md`/`AGENTS.md` and
-  test-specific `test/CLAUDE.md`/`test/AGENTS.md`. The test-specific configs provide
-  more detailed guidance on test writing (e.g., `tempDir`, `bunExe`, `await using`).
-  However, many of these rules conflict with the existing patterns in `test/cli/hot/hot.test.ts`,
-  which uses shared global state and manual process management. Agents must be careful
-  not to blindly apply test refactoring rules (like concurrency or `tempDir`) when
-  fixing a specific bug in an established test file.
+    path: AGENTS.md
+    lines: 90-91
+hierarchy_analysis: The repository has a two-level config hierarchy (`AGENTS.md` at
+  root, `test/AGENTS.md` in the test directory). The test-specific config provides
+  more granular rules about testing style, timeouts, and process spawning. The agent
+  must apply the test-specific rules while ignoring those that would trigger out-of-scope
+  refactoring of existing test infrastructure.

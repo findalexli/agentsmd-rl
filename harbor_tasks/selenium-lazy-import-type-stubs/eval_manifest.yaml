@@ -69,30 +69,31 @@ rubric:
   category: style
 distractors:
 - rule: When implementing solutions prefer writing a test for it first
-  collision_type: meta_confusion
-  why_distracting: The rule asks to write a test first, but this PR is exclusively
-    about adding `.pyi` type stubs for static analysis (mypy/IDEs). The standard Bazel
-    test suite tests runtime behavior, so attempting to write a runtime test for type
-    stubs would be impossible or irrelevant, leading to wasted effort.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 32-33
-- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
   collision_type: scope_ambiguity
-  why_distracting: The rule advises avoiding repo-wide refactors and preferring small
-    diffs. An agent might misinterpret this and only create the root `__init__.pyi`
-    file to keep the diff small, failing to create the required 8 stub files across
-    all the webdriver submodules (chrome, edge, firefox, etc.) as instructed.
+  why_distracting: The rule instructs the agent to write a test first. However, `.pyi`
+    stub files are used exclusively for static type checking (e.g., by mypy) and do
+    not contain runtime logic, making runtime unit tests inapplicable and a waste
+    of effort.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 11-12
-hierarchy_analysis: The root `AGENTS.md` provides general guidelines on testing and
-  diff size, while `py/AGENTS.md` provides Python-specific guidance on type hints.
-  In this specific PR, the Python-specific need for type visibility (via `.pyi` files)
-  overrides the general testing mandate, as static type stubs cannot be meaningfully
-  tested via the standard runtime test suite.
+    lines: 45-46
+- rule: Use Google-style docstrings
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates Google-style docstrings with 'Args:', 'Returns:',
+    and 'Raises:' sections. An agent might try to apply this format to the module-level
+    docstrings in the new `.pyi` files, which is inappropriate for module docstrings
+    that just explain the stub's purpose.
+  severity: low
+  source:
+    path: py/AGENTS.md
+    lines: 62-74
+hierarchy_analysis: The agent must navigate a two-level hierarchy from the root `AGENTS.md`
+  to the Python-specific `py/AGENTS.md`. The root provides general guidance (explain
+  why in comments, write tests), while the child provides Python-specific rules (type
+  hints, Google docstrings). The agent must synthesize these while recognizing that
+  type stubs (.pyi) have different testing and documentation scopes than standard
+  Python runtime code.
 version: '2.0'
 source:
   repo: SeleniumHQ/selenium

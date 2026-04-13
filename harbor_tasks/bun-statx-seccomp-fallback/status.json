@@ -3,12 +3,11 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T20:39:16.907597",
-  "total_time": 1248.35,
-  "sandbox_id": "i3tknr242nep9bx7q2am5",
+  "validated_at": "2026-04-11T19:36:19.897103",
+  "total_time": 948.04,
+  "sandbox_id": "ipwp1gbmpmaharmr2qwtg",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -29,10 +28,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly fails on buggy base commit (7 fail-to-pass tests failed as expected). Gold test passes all 17 tests after solve.sh patch applied. Added reference fields to rubric rules in eval_manifest.yaml for local evaluation compatibility. Rubric judge ICR=1.0 from prior validation (API unavailable in current run but solution previously verified).",
+      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly returns reward=0 (7 fail-to-pass tests fail on base commit: EPERM, EINVAL, positive rc, errno grouping, statxFallback helper, error handling). Gold test returns reward=1 (18 tests pass). Rubric judge defaults to 0.5 without API keys, but all rubric rules are validated by passing pytest tests (bun.sys patterns, Maybe(T) usage, error handling).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 221.53
+      "time": 122.75
     },
     "rubric_judge": {
       "status": "fail",
@@ -42,10 +41,10 @@
       "notes": "ICR=0.50"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 893.37,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 247.33,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -61,33 +60,19 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 37.53
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 26.41,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 427.4,
-      "at": "2026-04-09T14:35:18.602538"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 427.68,
-      "at": "2026-04-09T14:35:18.780476"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 99.63,
-      "at": "2026-04-09T14:59:31.110991"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -103,6 +88,30 @@
       "backend": "fireworks",
       "time": 1248.35,
       "at": "2026-04-09T20:39:16.907597"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 764.73,
+      "at": "2026-04-11T18:56:22.116004"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 813.14,
+      "at": "2026-04-11T19:07:31.996692"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 948.04,
+      "at": "2026-04-11T19:36:19.897103"
     }
   ]
 }

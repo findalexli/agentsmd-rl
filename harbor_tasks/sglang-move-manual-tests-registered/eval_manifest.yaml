@@ -87,15 +87,22 @@ checks:
     origin: repo_tests
     description: "Registered test files pass isort import sorting check"
 
-rubric:
-  - rule: "Files in test/registered/ must have a register_*_ci() call at module level. Files moved to test/manual/ must NOT have CI registration calls."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "308-338"
-      commit: "4e4b4ac153e7e313bdf26e37f00188acd45c00e0"
+  - id: test_workflow_job_names_unique
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Workflow job names are unique across workflows"
 
-  - rule: "test/registered/ is for CI-discovered tests; test/manual/ is for non-CI debugging and one-off manual verification."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "369-396"
-      commit: "4e4b4ac153e7e313bdf26e37f00188acd45c00e0"
+  - id: test_pre_commit_hooks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All pre-commit hooks pass on the codebase"
+
+  - id: test_ci_permissions_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI_PERMISSIONS.json is valid JSON"
+
+  - id: test_all_ci_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All CI scripts in scripts/ci/ have valid Python syntax"

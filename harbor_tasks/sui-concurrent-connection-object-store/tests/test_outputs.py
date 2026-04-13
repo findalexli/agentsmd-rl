@@ -243,3 +243,23 @@ def test_cargo_doc():
     )
     output = stdout + stderr
     assert rc == 0, f"cargo doc failed:\n{output[-2000:]}"
+
+
+def test_cargo_clippy_full():
+    """
+    Run cargo clippy with full project lints (xclippy-style) on the crate.
+    Pass-to-pass test that should always pass.
+    Uses the project's xclippy flags from .cargo/config.
+    """
+    rc, stdout, stderr = run_cmd(
+        [
+            "cargo", "clippy", "-p", CRATE,
+            "--all-targets", "--all-features", "--",
+            "-Wclippy::all",
+            "-Wclippy::disallowed_methods",
+            "-Aclippy::unnecessary_get_then_check",
+        ],
+        timeout=300
+    )
+    output = stdout + stderr
+    assert rc == 0, f"cargo clippy (full lints) failed:\n{output[-2000:]}"

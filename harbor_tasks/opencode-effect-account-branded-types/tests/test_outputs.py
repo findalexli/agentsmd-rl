@@ -136,7 +136,7 @@ def test_repo_typecheck():
         ["bun", "turbo", "typecheck"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Typecheck failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_keybind():
@@ -145,7 +145,7 @@ def test_repo_unit_tests_keybind():
         ["bun", "test", "test/keybind.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
-    assert r.returncode == 0, f"Keybind tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Keybind tests failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_account_repo():
@@ -154,7 +154,7 @@ def test_repo_unit_tests_account_repo():
         ["bun", "test", "test/account/repo.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
-    assert r.returncode == 0, f"Account repo tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Account repo tests failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_account_service():
@@ -163,7 +163,7 @@ def test_repo_unit_tests_account_service():
         ["bun", "test", "test/account/service.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
-    assert r.returncode == 0, f"Account service tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Account service tests failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_storage_db():
@@ -172,7 +172,7 @@ def test_repo_unit_tests_storage_db():
         ["bun", "test", "test/storage/db.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
-    assert r.returncode == 0, f"Storage db tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Storage db tests failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_auth():
@@ -181,7 +181,7 @@ def test_repo_unit_tests_auth():
         ["bun", "test", "test/auth/auth.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
-    assert r.returncode == 0, f"Auth tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Auth tests failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_acp_agent_interface():
@@ -190,7 +190,16 @@ def test_repo_unit_tests_acp_agent_interface():
         ["bun", "test", "test/acp/agent-interface.test.ts"],
         capture_output=True, text=True, timeout=120, cwd=PKG,
     )
-    assert r.returncode == 0, f"ACP agent interface tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"ACP agent interface tests failed: {r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_acp_event_subscription():
+    """ACP event subscription tests pass (pass_to_pass) - tests agent event handling."""
+    r = subprocess.run(
+        ["bun", "test", "test/acp/event-subscription.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=PKG,
+    )
+    assert r.returncode == 0, f"ACP event subscription tests failed: {r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_cli_github_remote():
@@ -199,7 +208,25 @@ def test_repo_unit_tests_cli_github_remote():
         ["bun", "test", "test/cli/github-remote.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
-    assert r.returncode == 0, f"CLI github remote tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"CLI github remote tests failed: {r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_cli_github_action():
+    """CLI github action tests pass (pass_to_pass) - tests GitHub action utilities."""
+    r = subprocess.run(
+        ["bun", "test", "test/cli/github-action.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"CLI github action tests failed: {r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_cli_import():
+    """CLI import tests pass (pass_to_pass) - tests share URL/import utilities."""
+    r = subprocess.run(
+        ["bun", "test", "test/cli/import.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"CLI import tests failed: {r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

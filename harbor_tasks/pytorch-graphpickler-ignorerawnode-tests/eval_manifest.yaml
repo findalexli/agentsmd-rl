@@ -17,6 +17,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo test file imports must be syntactically valid (CI/CD gate)
+- id: test_p2p_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test file must compile via py_compile (CI/CD build gate)
+- id: test_p2p_repo_owner_label
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test file must have valid Owner(s) label (CI linting gate)
+- id: test_p2p_repo_has_main_run_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test file must have if __name__ == __main__ run_tests() pattern
+    (CI linting gate)
 - id: has_ignore_raw_node_tests
   type: fail_to_pass
   origin: pr_diff
@@ -70,90 +83,44 @@ checks:
     path: .claude/skills/pr-review/review-checklist.md
     lines: '60'
     commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+distractors:
+- rule: Use `torch._dynamo.config.patch` for temporarily changing config.
+  collision_type: architecture_boundary
+  why_distracting: The task involves setting `ignore_raw_node=True` on `GraphPickler.Options`.
+    An agent might confuse this with a global configuration and attempt to use `torch._dynamo.config.patch(ignore_raw_node=True)`
+    instead of instantiating and passing the `Options` object to `dumps()`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 67-86
+- rule: When you are working on a bug, first create a standalone file that reproduces
+    the bug and verify it fails in the expected way.
+  collision_type: scope_ambiguity
+  why_distracting: The task is to add missing test coverage for an existing feature,
+    not to fix a bug. An agent might waste time creating a standalone reproduction
+    file before modifying the test suite.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 3-6
+hierarchy_analysis: The configuration is flat, with both `AGENTS.md` and `CLAUDE.md`
+  at the root level. The agent must synthesize testing guidelines from `CLAUDE.md`
+  while avoiding the bug-reproduction workflow in `AGENTS.md`.
 rubric:
-- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
-  source:
-    path: CLAUDE.md
-    lines: '54'
-    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
-- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
-    it significantly improves code readability.
-  source:
-    path: CLAUDE.md
-    lines: 57-58
-    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
-- rule: Match existing code style and architectural patterns.
-  source:
-    path: CLAUDE.md
-    lines: '63'
-    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
-- rule: Test method names should be descriptive of what is being tested.
-  source:
-    path: .claude/skills/pr-review/review-checklist.md
-    lines: '62'
-    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
-- rule: No duplicated test logic - similar tests should share a private helper method
-    called from individual tests with different configs.
-  source:
-    path: .claude/skills/pr-review/review-checklist.md
-    lines: '69'
-    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
-- rule: Edge cases covered - tests include boundary conditions, empty inputs, and
-    error cases.
-  source:
-    path: .claude/skills/pr-review/review-checklist.md
-    lines: '67'
-    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
 - rule: 'Use our test class and test runner: `from torch.testing._internal.common_utils
     import run_tests, TestCase`'
   source:
     path: CLAUDE.md
-    lines: 16-26
-  evidence: The gold solution defines `class TestIgnoreRawNode(TestCase):`, inheriting
-    from the standard PyTorch test class as instructed.
+    lines: 16-24
+  evidence: The gold solution defines `class TestIgnoreRawNode(TestCase):` which inherits
+    from the required `TestCase` class.
   category: testing
+  verification: llm_judge
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
-    Comments should be useful for non-obvious global context.
   source:
     path: CLAUDE.md
-    lines: 53-55
-  evidence: The gold solution uses minimal comments, relying on clear docstrings for
-    the test methods and only adding one explanatory comment (`# Store a raw Node
-    reference in meta – this is the problematic case.
+    lines: 53-64
+  evidence: The gold solution uses concise docstrings and minimal comments, only explaining
+    the non-obvious injection of the raw node into metadata.
   category: style
-distractors:
-- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
-  collision_type: rule_conflict
-  why_distracting: AGENTS.md instructs the agent to use `lintrunner -a` for linting,
-    which directly conflicts with CLAUDE.md's instruction to 'Only use commands provided
-    via `spin` for linting' (lines 31-34).
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 10-10
-- rule: Use `torch._dynamo.config.patch` for temporarily changing config.
-  collision_type: would_cause_bug
-  why_distracting: The PR involves testing an `ignore_raw_node` option. An agent might
-    mistakenly assume this is a global Dynamo config and attempt to use `torch._dynamo.config.patch(ignore_raw_node=True)`,
-    which would fail because it is actually an attribute of `GraphPickler.Options`
-    passed directly to `dumps()`.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 70-72
-- rule: When you are working on a bug, first create a standalone file that reproduces
-    the bug... Once the change is passing, find an appropriate test file to add the
-    test to
-  collision_type: scope_ambiguity
-  why_distracting: The user explicitly requested adding test coverage to an existing
-    file (`test/fx/test_graph_pickler.py`) for a known feature. Instructing the agent
-    to first create a standalone reproduction file wastes time and tokens on an unnecessary
-    step.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 3-7
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md are at Level 0, leading to direct
-  conflicts in tooling instructions. Specifically, CLAUDE.md mandates `spin` for linting,
-  while AGENTS.md mandates `lintrunner`. Agents must navigate these conflicting root-level
-  directives.
+  verification: llm_judge

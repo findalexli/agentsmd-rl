@@ -258,5 +258,29 @@ def test_repo_binding_tests():
     assert r.returncode == 0, f"Binding tests failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_linear_element_editor_tests():
+    """Repo's linear element editor tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "packages/element/tests/linearElementEditor.test.tsx", "--watch=false"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Linear element editor tests failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_elbow_arrow_tests():
+    """Repo's elbow arrow tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "packages/element/tests/elbowArrow.test.tsx", "--watch=false"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Elbow arrow tests failed:\\n{r.stderr[-500:]}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

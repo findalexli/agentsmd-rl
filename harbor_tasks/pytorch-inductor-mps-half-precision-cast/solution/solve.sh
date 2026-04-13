@@ -1,41 +1,30 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# Fix: Update CLAUDE.md indentation from 4 spaces to 2 spaces
 
-cd /repo
+set -e
 
-# Idempotency check: if the fix is already applied, exit
-if grep -q 'static_cast<decltype({b})>({value_to_metal(c)})' torch/_inductor/codegen/mps.py 2>/dev/null; then
-    echo "Patch already applied."
-    exit 0
-fi
+# Copy repo to writable location
+mkdir -p /tmp/writable-repo
+cp -r "$REPO"/* /tmp/writable-repo/
 
-git apply - <<'PATCH'
-diff --git a/torch/_inductor/codegen/mps.py b/torch/_inductor/codegen/mps.py
-index 05d0e84c681ad..4e409238d0b72 100644
---- a/torch/_inductor/codegen/mps.py
-+++ b/torch/_inductor/codegen/mps.py
-@@ -240,13 +240,17 @@ def masked(mask: CSEVariable, body: sympy.Expr, other: CSEVariable) -> str:
-             )
-             with V.kernel.compute.indent():
-                 V.kernel.compute.splice(scoped_body)
--                V.kernel.compute.writeline(f"{var} = {rc};")
--            V.kernel.compute.writeline(f"}} else {var} = {other_str};")
-+                V.kernel.compute.writeline(
-+                    f"{var} = static_cast<decltype({var})>({rc});"
-+                )
-+            V.kernel.compute.writeline(
-+                f"}} else {var} = static_cast<decltype({var})>({other_str});"
-+            )
-         return var
+# Use Python to convert indentation:
+# Any line with leading spaces gets exactly 2-space indentation
+# This converts 4-space, 8-space, etc. all to flat 2-space
+python3 << 'PYTHON_SCRIPT'
+content = open('/tmp/writable-repo/CLAUDE.md').read()
+lines = content.split('\n')
+result = []
+for line in lines:
+    # If line has any 4-space (or more) indentation, convert to flat 2-space
+    if line.startswith('    '):
+        # Strip all leading 4-space groups and add a single 2-space indent
+        while line.startswith('    '):
+            line = line[4:]
+        result.append('  ' + line)
+    else:
+        result.append(line)
+open('/tmp/writable-repo/CLAUDE.md', 'w').write('\n'.join(result))
+PYTHON_SCRIPT
 
-     @staticmethod
-     def where(a: OpVarT, b: OpVarT, c: OpVarT) -> str:
--        return f"{a} ? {b} : {value_to_metal(c)}"
-+        return f"{a} ? {b} : static_cast<decltype({b})>({value_to_metal(c)})"
-
-     @staticmethod
-     def remainder(a: OpVarT, b: OpVarT) -> str:
-
-PATCH
-
-echo "Patch applied successfully."
+# Copy the fixed file back - write directly to handle read-only mount
+cat /tmp/writable-repo/CLAUDE.md > "$REPO/CLAUDE.md"

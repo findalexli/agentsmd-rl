@@ -451,3 +451,91 @@ def test_repo_precommit_end_of_file():
             assert False, "app.py does not end with a newline"
         elif source.endswith('\n\n'):
             assert False, "app.py ends with multiple newlines"
+
+
+def test_repo_check_json_valid():
+    """JSON files in data_proxy are valid (pass_to_pass)."""
+    import json
+
+    data_proxy_dir = Path(REPO) / "areal" / "experimental" / "inference_service" / "data_proxy"
+    for json_file in data_proxy_dir.rglob("*.json"):
+        content = json_file.read_text()
+        if content.strip():  # Only parse non-empty files
+            try:
+                json.loads(content)
+            except json.JSONDecodeError as e:
+                assert False, f"Invalid JSON in {json_file}: {e}"
+
+
+def test_repo_no_private_keys():
+    """No private keys detected in repo Python files (pass_to_pass)."""
+    data_proxy_dir = Path(REPO) / "areal" / "experimental" / "inference_service" / "data_proxy"
+    private_key_patterns = [
+        r"BEGIN RSA PRIVATE KEY",
+        r"BEGIN DSA PRIVATE KEY",
+        r"BEGIN EC PRIVATE KEY",
+        r"BEGIN OPENSSH PRIVATE KEY",
+        r"BEGIN PRIVATE KEY",
+        r"PuTTY-User-Key-File",
+    ]
+    for py_file in data_proxy_dir.rglob("*.py"):
+        source = py_file.read_text()
+        for pattern in private_key_patterns:
+            matches = re.findall(pattern, source)
+            assert not matches, f"Potential private key in {py_file}: {pattern}"
+
+
+def test_repo_python_syntax_valid():
+    """All Python files in data_proxy have valid syntax (pass_to_pass)."""
+    data_proxy_dir = Path(REPO) / "areal" / "experimental" / "inference_service" / "data_proxy"
+    for py_file in data_proxy_dir.glob("*.py"):
+        source = py_file.read_text()
+        try:
+            ast.parse(source)
+        except SyntaxError as e:
+            assert False, f"Syntax error in {py_file}: {e}"
+
+
+def test_repo_py_compile():
+    """All Python files in data_proxy compile successfully (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-m", "py_compile",
+            "areal/experimental/inference_service/data_proxy/app.py",
+            "areal/experimental/inference_service/data_proxy/__init__.py",
+            "areal/experimental/inference_service/data_proxy/__main__.py",
+            "areal/experimental/inference_service/data_proxy/backend.py",
+            "areal/experimental/inference_service/data_proxy/config.py",
+            "areal/experimental/inference_service/data_proxy/inf_bridge.py",
+            "areal/experimental/inference_service/data_proxy/pause.py",
+            "areal/experimental/inference_service/data_proxy/session.py",
+            "areal/experimental/inference_service/data_proxy/tokenizer_proxy.py",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+def test_repo_check_yaml_valid():
+    """YAML workflow files are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         """import yaml
+import sys
+from pathlib import Path
+repo = '/workspace/AReaL'
+errors = []
+for yaml_file in Path(repo).glob('.github/workflows/*.yml'):
+    try:
+        yaml.safe_load(yaml_file.read_text())
+    except yaml.YAMLError as e:
+        errors.append(f'{yaml_file}: {e}')
+if errors:
+    print('YAML errors:')
+    for e in errors:
+        print(e)
+    sys.exit(1)
+print('All YAML files valid')"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stdout}\n{r.stderr}"

@@ -33,6 +33,39 @@ checks:
   origin: repo_tests
   description: Verify modular_mistral4.py correctly imports get_llama_4_attn_scale
     from ministral3 via subprocess
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on modified ministral3 and mistral4 model files
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified ministral3 and mistral4 model
+    files
+- id: repo_all_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All affected files parse as valid Python via AST in subprocess
+- id: repo_ministral3_modeling_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ministral3 modeling module imports without errors including classes
+- id: repo_mistral4_modeling_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Mistral4 modeling module imports without errors including classes
+- id: repo_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI modeling structure check passes on repo
+- id: repo_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI doctest list check passes on repo
+- id: repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI dummies check passes on repo
 - id: ministral3_modeling_scale_shape
   type: fail_to_pass
   origin: pr_diff
@@ -90,59 +123,34 @@ checks:
     lines: '66'
     commit: e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
 rubric:
-- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
-    Prefer modular files.
-  source:
-    path: .ai/AGENTS.md
-    lines: '63'
-    commit: e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
-- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
-    only one or two lines long. Aim to minimize the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: e94695e574f969ba5eeb8e442a7fb1e9f72ff37f
-- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
-    `make fix-repo` will copy code to generate standalone `modeling` and other files
-    from the `modular` file.
-  source:
-    path: CLAUDE.md
-    lines: 61-66
-  evidence: The patch modifies both `modular_ministral3.py` and `modeling_ministral3.py`
-    (as well as the mistral4 equivalents) with identical changes, reflecting the architectural
-    requirement that modular files a
-  category: architecture
+- rule: The gold solution must modify both modular source files (modular_ministral3.py,
+    modular_mistral4.py) and their corresponding modeling files (modeling_ministral3.py,
+    modeling_mistral4.py) to properly follow the transformers modular architecture.
+  reference: "EDIT: modular_ministral3.py and modular_mistral4.py (the modular source files)
+    AND modeling_ministral3.py and modeling_mistral4.py (the generated files). The fix
+    changes get_llama_4_attn_scale to return 4D tensor and updates forward() to use
+    position_ids instead of absolute_positions."
 distractors:
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed,
+    and fail-closed behavior requires stopping if coordination evidence is missing.'
   collision_type: meta_confusion
-  why_distracting: The agent is instructed to fail-closed and not proceed to PR-ready
-    output if coordination evidence cannot be found. In a headless evaluation environment,
-    there is no coordination evidence, so the agent might refuse to solve the task.
+  why_distracting: The instructions mandate fail-closed behavior, requiring human
+    validation, issue coordination, and explicit approval before proceeding. An agent
+    might refuse to write the code fix, claiming it needs human interaction or issue
+    links first.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 56-59
-- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
-    open PRs and issue ownership using gh CLI commands.'
+    path: AGENTS.md
+    lines: 48-61
+- rule: Mandatory duplicate-work checks using GitHub CLI before proposing a PR.
   collision_type: meta_confusion
   why_distracting: The agent might attempt to run `gh issue view` or `gh pr list`
-    to check for duplicate work, which will fail or waste time in the sandbox environment.
+    to check for duplicate work before writing code, which could fail in an isolated
+    evaluation sandbox or waste execution time.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 29-36
-- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed...
-    Do not raise PRs without human validation.'
-  collision_type: meta_confusion
-  why_distracting: The agent might refuse to output a solution because it cannot fulfill
-    the requirement that a human submitter must review every changed line and provide
-    human validation.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 45-54
-hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` contain identical
-  rules. The rules heavily emphasize human-in-the-loop coordination, duplicate checking,
-  and fail-closed behavior for AI agents. In an automated evaluation context, these
-  meta-rules conflict directly with the goal of autonomously generating a patch.
+    path: AGENTS.md
+    lines: 33-41
+hierarchy_analysis: The configuration is flat, with identical rules provided in both
+  `AGENTS.md` and `CLAUDE.md` at the repository root. The agent must apply the architectural
+  rules regarding modular models to correctly implement the fix.

@@ -258,6 +258,54 @@ def test_skill_md_shows_ref_and_selector_examples():
 # Pass-to-pass (repo_tests) — repo CI/CD checks
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass - npm run check-deps
+def test_repo_check_deps():
+    """Repo dependency checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - npm run eslint on modified tool files
+def test_repo_eslint_tools():
+    """ESLint passes on modified tool files (pass_to_pass)."""
+    modified_tool_files = [
+        "packages/playwright-core/src/tools/tab.ts",
+        "packages/playwright-core/src/tools/tools.ts",
+        "packages/playwright-core/src/tools/snapshot.ts",
+        "packages/playwright-core/src/tools/evaluate.ts",
+        "packages/playwright-core/src/tools/screenshot.ts",
+        "packages/playwright-core/src/tools/verify.ts",
+        "packages/playwright-core/src/tools/form.ts",
+    ]
+    for f in modified_tool_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"File not found: {f}"
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--no-cache"] + modified_tool_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on tools:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - npm run eslint on modified CLI files
+def test_repo_eslint_cli():
+    """ESLint passes on modified CLI files (pass_to_pass)."""
+    modified_cli_files = [
+        "packages/playwright-core/src/cli/daemon/commands.ts",
+    ]
+    for f in modified_cli_files:
+        p = Path(REPO) / f
+        assert p.exists(), f"File not found: {f}"
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--no-cache"] + modified_cli_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on CLI files:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 # [repo_tests] pass_to_pass - npm run lint-packages
 def test_repo_lint_packages():
     """Repo workspace packages are consistent (pass_to_pass)."""

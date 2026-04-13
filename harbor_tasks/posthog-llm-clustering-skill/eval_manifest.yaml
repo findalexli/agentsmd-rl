@@ -92,39 +92,39 @@ checks:
 rubric:
 - rule: MCP tools must include proper scopes and annotations when being enabled
   source:
-    path: .agents/skills/implementing-mcp-tools/SKILL.md
-    lines: 100-130
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 35-55
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: New skills must use lowercase kebab-case naming with gerund form
   source:
-    path: .agents/skills/writing-skills/SKILL.md
-    lines: '44'
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 35-55
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: SKILL.md files must include required frontmatter with name and description
     fields
   source:
-    path: .agents/skills/writing-skills/SKILL.md
-    lines: '47'
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 35-55
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: Helper scripts in skills should have proper CLI interfaces with usage messages
   source:
-    path: .agents/skills/writing-skills/SKILL.md
-    lines: 60-65
+    path: pyproject.toml
+    lines: 280-295
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: Python code should use type hints
   source:
-    path: AGENTS.md
-    lines: 1-50
+    path: pyproject.toml
+    lines: 280-295
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: MCP tool names must be lowercase kebab-case following the domain-action pattern
   source:
-    path: .agents/skills/implementing-mcp-tools/SKILL.md
-    lines: 76-79
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 35-55
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: Skills must only use references and scripts subdirectories
   source:
-    path: .agents/skills/writing-skills/SKILL.md
-    lines: 60-64
+    path: pyproject.toml
+    lines: 280-295
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: 'Scope convention: use `llma` for LLM analytics changes (for example, `feat(llma):
     ...`)'
@@ -143,33 +143,41 @@ rubric:
     exploring-llm-clusters skill`) is entirely lowercase, does not end with a period,
     and the first line is exactly 71 characters long
   category: style
+- rule: Be accurate and thorough
+  source:
+    path: .cursorrules
+    lines: 4-5
+  evidence: The tool descriptions added to `tools.yaml` are highly detailed, explaining
+    the analysis level, event filters, and exactly how to query the results via docs-search
+    or execute-sql.
+  category: documentation
+- rule: Use conventional commits for all commit messages and PR titles.
+  source:
+    path: AGENTS.md
+    lines: 28-29
+  evidence: 'The patch subject uses the conventional commit format `feat(llma): ...`'
+  category: style
 distractors:
 - rule: 'Lint: Python: `ruff check . --fix` and `ruff format .`'
   collision_type: rule_conflict
-  why_distracting: The repository has a general rule to lint and format all Python
-    code using ruff. However, the task explicitly requires excluding the new skill
-    scripts from ruff in `pyproject.toml` and from lint-staged in `package.json`.
-    An agent strictly following the general linting rule might fail to add these exclusions
-    or try to force the script to comply with project-wide linting.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 18-20
-- rule: Django serializers are the source of truth for frontend API types — `hogli
-    build:openapi` generates TypeScript via drf-spectacular + Orval... change serializers
-    and rerun.
-  collision_type: architecture_boundary
-  why_distracting: The agent is asked to enable MCP tools, which interact with the
-    API. It might assume it needs to modify Django serializers or run OpenAPI generation
-    commands (`hogli build:openapi`) to expose these tools. However, the tools are
-    already implemented and just need their `enabled` flag flipped in `tools.yaml`.
+  why_distracting: The agent is instructed to run ruff and format Python code, which
+    might lead it to format the new print_clusters.py script or include it in the
+    standard linting pipeline, conflicting with the explicit task instruction to exclude
+    skill scripts from Python formatting.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 56-59
-hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines,
-  while `AGENTS.md` provides specific PostHog development rules. The commit message
-  rules in `AGENTS.md` are strictly followed by the gold solution. However, the general
-  linting rules in `AGENTS.md` conflict with the specific task instructions to exclude
-  the new scripts from linting, meaning the explicit task instructions must override
-  the general repository linting rules.
+    lines: 16-18
+- rule: 'Tests: All tests: `pytest`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write standard pytest unit tests for
+    the new print_clusters.py script, but this is an agent skill helper script, not
+    a production backend feature, and the task does not request tests.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 11-13
+hierarchy_analysis: The agent must navigate root-level configuration files (package.json,
+  pyproject.toml) to implement exclusions for a deeply nested product-specific directory
+  (products/llm_analytics/skills/). It must prioritize the explicit task instructions
+  to bypass the general Python linting rules defined in AGENTS.md.

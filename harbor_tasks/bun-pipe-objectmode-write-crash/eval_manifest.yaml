@@ -56,7 +56,7 @@ checks:
     validates)
 - id: claude_md_conventions
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Target file follows src/js/CLAUDE.md conventions (no console.log, has
     required structure)
 - id: repo_prettier_target
@@ -67,6 +67,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Target file passes oxlint (from CI)
+- id: repo_oxlint_streams_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Streams directory passes oxlint (from CI)
+- id: repo_bun_stream_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Bun stream tests pass (from CI, tests the modified readable.ts module)
 rubric:
 - rule: Agent must not modify the documentation file, as no new documentation is required
     for this bug fix.
@@ -80,34 +88,59 @@ rubric:
   source:
     path: src/js/CLAUDE.md
     lines: 46-52
+    commit: 2d4c2beb23085873380840c9bd18eeca29645843
   evidence: The gold solution correctly preserves the `$debug("dest.write", ret);`
     call inside the new `try` block, maintaining the use of Bun's internal debug intrinsic
     for stripped-in-release logging.
   category: style
+- rule: $ prefix for private APIs (e.g., $debug)
+  source:
+    path: src/js/AGENTS.md
+    lines: 42-50
+  evidence: The gold solution correctly preserves the `$debug("dest.write", ret);`
+    call when wrapping the block in a try-catch, recognizing it as a valid private
+    API macro that will be stripped in release.
+  category: naming
+- rule: '$ prefix for private APIs: $debug("Module loaded:", name);'
+  source:
+    path: src/js/AGENTS.md
+    lines: 41-47
+  evidence: The gold solution correctly preserves the `$debug("dest.write", ret);`
+    call inside the new `try` block, respecting the special `$` prefix syntax used
+    for private APIs and intrinsics in Bun's JS builti
+  category: style
+- rule: $ prefix for private APIs ... $debug(...) // Debug (stripped in release)
+  source:
+    path: src/js/AGENTS.md
+    lines: 40-45
+  evidence: The gold solution carefully preserves the `$debug("dest.write", ret);`
+    macro call, moving it inside the `try` block rather than replacing it with standard
+    `console.log` or removing it.
+  category: tooling
 distractors:
-- rule: 'CRITICAL: Use `.$call` and `.$apply`, never `.call` or `.apply`'
-  collision_type: architecture_boundary
-  why_distracting: An agent might try to call `dest.write.$call(dest, chunk)` or `dest.destroy.$call(dest,
-    err)` to prevent tampering. However, `dest` is a user-provided stream object,
-    and we are calling its public methods, not invoking an internal callback function.
-    Using `$call` on user objects crosses the boundary between internal builtins and
-    userland objects.
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug report explicitly mentions an 'Uncatchable crash' and 'process
+    crashes'. An agent would naturally want to write a test that asserts the process
+    does not crash or throw an uncaught exception, but the config explicitly forbids
+    this pattern because it won't fail in CI.
   severity: high
   source:
-    path: src/js/CLAUDE.md
-    lines: 37-44
+    path: AGENTS.md
+    lines: 63-64
 - rule: 'Validation and Errors: throw $ERR_INVALID_ARG_TYPE(...)'
-  collision_type: scope_ambiguity
-  why_distracting: An agent might try to proactively validate the chunk type against
-    the destination stream's `objectMode` and throw `$ERR_INVALID_ARG_TYPE` manually
-    before calling `write()`. But the issue states `dest.write()` already throws this
-    error; the bug is simply that the error isn't caught and forwarded to `dest.destroy()`.
+  collision_type: architecture_boundary
+  why_distracting: The bug is caused by `ERR_INVALID_ARG_TYPE` being thrown by the
+    destination stream. An agent might try to use Bun's internal validation helpers
+    (like `$ERR_INVALID_ARG_TYPE`) to check the chunk type before writing, rather
+    than correctly catching the error thrown by the destination stream as Node.js
+    does.
   severity: medium
   source:
-    path: src/js/CLAUDE.md
-    lines: 56-62
-hierarchy_analysis: The hierarchy progresses from general Bun repo instructions (Level
-  0) to Zig-specific system call instructions (Level 1) to JS builtins instructions
-  (Level 2). Since the file being edited is a JS builtin (`src/js/internal/streams/readable.ts`),
-  the rules in `src/js/CLAUDE.md` are the most relevant. The Zig rules in `src/CLAUDE.md`
-  are completely irrelevant for this PR and should be ignored.
+    path: src/js/AGENTS.md
+    lines: 48-54
+hierarchy_analysis: The config hierarchy is deep. The agent must navigate from the
+  root `AGENTS.md` (testing rules) past `src/AGENTS.md` (Zig rules, which are irrelevant
+  distractors for this JS file) down to `src/js/AGENTS.md` (JS builtins rules). The
+  agent must apply the JS-specific rules while still respecting the root testing constraints.

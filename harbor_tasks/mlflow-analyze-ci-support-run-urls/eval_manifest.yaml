@@ -45,23 +45,63 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff linting passes on analyze_ci.py
+- id: repo_ruff_check_all_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on all command files
+- id: repo_ruff_check_github_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on github module
+- id: repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on all skills files
 - id: repo_clint_tests
   type: pass_to_pass
   origin: repo_tests
   description: Clint linter tests pass
+- id: repo_mlflow_typo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: MLflow typo checker passes on modified files
+- id: repo_syntax_check_all_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: All command files parse without syntax errors
+- id: repo_syntax_check_github_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: All github module files parse without syntax errors
+- id: repo_analyze_ci_patterns_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Regex patterns in analyze_ci.py are valid and compile
+- id: repo_skill_md_frontmatter_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid YAML frontmatter with required fields
 rubric:
 - rule: SKILL.md update follows the style of existing usage and examples sections
   source:
     path: .claude/skills/analyze-ci/SKILL.md
     lines: 1-42
     commit: 6469b26207d525615816a9498e849bcf4a8da75e
+  reference: '# Analyze all failed jobs in a workflow run
+
+    uv run skills analyze-ci <run_url>
+
+
+    # Analyze a specific workflow run
+
+    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465'
 - rule: Only add comments that explain non-obvious logic or provide additional context
   source:
     path: CLAUDE.md
     lines: 14-14
-  evidence: The gold solution adds the `RUN_URL_PATTERN` regex and the `elif` block
-    for run URLs without adding any inline comments, treating the regex and standard
-    GitHub API logic as obvious and adhering to the
+  reference: The gold solution adds the RUN_URL_PATTERN regex and the elif block for
+    run URLs without adding any inline comments, treating the regex and standard GitHub
+    API logic as obvious.
   category: style
 config_edits:
 - path: .claude/skills/analyze-ci/SKILL.md
@@ -76,29 +116,15 @@ config_edits:
     uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465'
   gold_removed: ''
 distractors:
-- rule: New functionality in the tracking layer should be mirrored by workspace-aware
-    tests
+- rule: Only add comments that explain non-obvious logic or provide additional context
   collision_type: scope_ambiguity
-  why_distracting: The agent might see 'New functionality' and attempt to write tests
-    for the new URL parsing logic, but this code is part of a Claude skill (.claude/skills/),
-    not the MLflow tracking layer, making workspace-aware tests completely irrelevant.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 16-16
-- rule: Run Python tests using `uv run pytest tests/`
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run `uv run pytest tests/` to test the skill
-    changes, but the skills are standalone scripts in `.claude/skills/` and are not
-    covered by the main MLflow test suite, leading to wasted effort and confusion.
+  why_distracting: The agent might incorrectly apply the 'only add comments' rule
+    to SKILL.md, avoiding adding the required markdown headers (which use the '#'
+    comment syntax in bash/markdown examples) to document the new URL format.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 76-84
-hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. The
-  rules in this file are heavily focused on the main MLflow application (tracking
-  layer, SQLAlchemy store, Databricks backend) and its testing/development workflow.
-  Since the PR modifies a standalone Claude skill in `.claude/skills/`, many of the
-  root-level rules are out of scope or potentially distracting. The agent must recognize
-  that the skill is a separate tool and not apply MLflow core development practices
-  to it.
+    lines: 11-12
+hierarchy_analysis: The hierarchy is flat with only CLAUDE.md at the root. The rules
+  in CLAUDE.md are mostly irrelevant to the specific task of updating the analyze-ci
+  skill.

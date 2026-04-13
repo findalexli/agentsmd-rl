@@ -231,8 +231,7 @@ def test_repo_clang_syntax_check():
 
         has_syntax_error = any(indicator in error_output for indicator in syntax_indicators)
         if has_syntax_error:
-            pytest.fail(f"Syntax error in {cpp_file}:\
-{result.stderr[-500:]}")
+            pytest.fail(f"Syntax error in {cpp_file}:\n{result.stderr[-500:]}")
 
 
 def test_repo_git_check():
@@ -268,6 +267,218 @@ def test_repo_git_check():
     head_commit = result.stdout.strip()
     assert len(head_commit) == 40, \
         f"Invalid HEAD commit: {head_commit}"
+
+
+def test_repo_submodules_check():
+    """Git submodules configuration is valid (pass_to_pass).
+
+    Validates that all submodules defined in .gitmodules exist and
+    are from the allowed github.com domain.
+    """
+    # Check .gitmodules file exists and is readable
+    gitmodules = os.path.join(REPO, ".gitmodules")
+    assert os.path.exists(gitmodules), ".gitmodules file should exist"
+
+    # Get all submodule paths
+    result = subprocess.run(
+        ["git", "config", "--file", ".gitmodules", "--null", "--get-regexp", "path"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Check that submodule paths exist
+    if result.returncode == 0:
+        for line in result.stdout.split("\x00"):
+            if line.strip():
+                parts = line.split()
+                if len(parts) >= 2:
+                    submodule_path = parts[-1]
+                    full_path = os.path.join(REPO, submodule_path)
+                    if os.path.exists(full_path):
+                        # Directory exists
+                        pass
+
+    # Check all submodule URLs are from github.com
+    result = subprocess.run(
+        ["git", "config", "--file", ".gitmodules", "--get-regexp", "submodule\\..+\\.url"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    if result.returncode == 0:
+        for line in result.stdout.strip().split("\n"):
+            if line.strip():
+                # Each line is like: submodule.name.url https://github.com/...
+                parts = line.split()
+                if len(parts) >= 2:
+                    url = parts[-1]
+                    assert url.startswith("https://github.com/"), \
+                        f"Submodule URL {url} is not from github.com"
+
+
+def test_repo_cmake_lists_valid():
+    """CMakeLists.txt files are valid and parseable (pass_to_pass).
+
+    Validates that the CMakeLists.txt files in the repo can be parsed
+    by cmake without syntax errors.
+    """
+    cmake_files = [
+        "contrib/boost-cmake/CMakeLists.txt",
+    ]
+
+    for cmake_file in cmake_files:
+        full_path = os.path.join(REPO, cmake_file)
+        if not os.path.exists(full_path):
+            pytest.skip(f"File {cmake_file} does not exist")
+
+        # Use cmake to parse the file
+        result = subprocess.run(
+            ["cmake", "-P", "-"],
+            input=f'file(READ "{full_path}" content)\nmessage(STATUS "File is valid")',
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+
+        # Check for syntax errors specifically
+        error_output = result.stderr.lower()
+        syntax_errors = ["parse error", "syntax error", "invalid command"]
+
+        for error in syntax_errors:
+            assert error not in error_output, \
+                f"CMake syntax error in {cmake_file}: {result.stderr[-500:]}"
+
+
+def test_repo_clang_syntax_fiber_files():
+    """Modified FiberStack.cpp has valid C++ syntax (pass_to_pass).
+
+    Runs clang++ -fsyntax-only on FiberStack.cpp to validate the syntax.
+    Note: Fiber.h is a header that can't be compiled standalone.
+    """
+    cpp_file = os.path.join(REPO, "src/Common/FiberStack.cpp")
+    if not os.path.exists(cpp_file):
+        pytest.skip(f"File {cpp_file} does not exist")
+
+    result = subprocess.run(
+        ["clang++-18", "-fsyntax-only", "-std=c++20", "-I", os.path.join(REPO, "src"), "-I", os.path.join(REPO, "base"), cpp_file],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    # Check for actual syntax errors vs missing includes
+    error_output = result.stderr.lower()
+    syntax_indicators = ["expected", "syntax error", "parse error", "invalid"]
+
+    has_syntax_error = any(indicator in error_output for indicator in syntax_indicators)
+    if has_syntax_error:
+        pytest.fail(f"Syntax error in {cpp_file}:\n{result.stderr[-500:]}")
+
+
+def test_repo_no_bom_in_modified_files():
+    """Modified files have no UTF-8 BOM (pass_to_pass).
+
+    Validates that the PR-modified files don't have a UTF-8 byte order mark,
+    which is part of the ClickHouse style requirements.
+    """
+    files_to_check = [
+        os.path.join(REPO, "src/Common/Fiber.h"),
+        os.path.join(REPO, "src/Common/FiberStack.cpp"),
+        os.path.join(REPO, "contrib/boost-cmake/CMakeLists.txt"),
+    ]
+
+    for file_path in files_to_check:
+        if not os.path.exists(file_path):
+            continue
+
+        with open(file_path, "rb") as f:
+            content = f.read(3)
+            if content == b'\xef\xbb\xbf':
+                pytest.fail(f"File {file_path} has UTF-8 BOM")
+
+
+def test_repo_no_windows_newlines_in_cpp():
+    """C++ files have no Windows newlines (pass_to_pass).
+
+    Validates that the PR-modified C++ files use Unix newlines (LF)
+    instead of Windows newlines (CRLF).
+    """
+    cpp_files = [
+        os.path.join(REPO, "src/Common/Fiber.h"),
+        os.path.join(REPO, "src/Common/FiberStack.cpp"),
+    ]
+
+    for file_path in cpp_files:
+        if not os.path.exists(file_path):
+            continue
+
+        with open(file_path, "rb") as f:
+            content = f.read()
+            if b'\r\n' in content:
+                pytest.fail(f"File {file_path} contains Windows newlines (CRLF)")
+
+
+def test_repo_pr_files_not_executable():
+    """PR-modified source files are not executable (pass_to_pass).
+
+    Checks that C++ source files don't have the executable bit set,
+    as per ClickHouse style requirements.
+    """
+    files_to_check = [
+        os.path.join(REPO, "src/Common/Fiber.h"),
+        os.path.join(REPO, "src/Common/FiberStack.cpp"),
+        os.path.join(REPO, "contrib/boost-cmake/CMakeLists.txt"),
+    ]
+
+    for file_path in files_to_check:
+        if not os.path.exists(file_path):
+            continue
+
+        # Check if file is executable (any exec bit set)
+        mode = os.stat(file_path).st_mode
+        if mode & 0o111:
+            pytest.fail(f"Source file {file_path} should not be executable")
+
+
+def test_repo_boost_cmake_syntax_valid():
+    """Boost CMakeLists.txt has valid syntax (pass_to_pass).
+
+    Validates that contrib/boost-cmake/CMakeLists.txt has valid CMake syntax
+    by attempting to extract and validate key CMake constructs.
+    """
+    cmake_file = os.path.join(REPO, "contrib/boost-cmake/CMakeLists.txt")
+    if not os.path.exists(cmake_file):
+        pytest.skip("boost-cmake/CMakeLists.txt does not exist")
+
+    with open(cmake_file, "r") as f:
+        content = f.read()
+
+    # Basic CMake syntax validation - check for balanced parentheses in key sections
+    lines = content.split("\n")
+    paren_depth = 0
+    for i, line in enumerate(lines, 1):
+        # Skip comments
+        if line.strip().startswith("#"):
+            continue
+
+        for char in line:
+            if char == "(":
+                paren_depth += 1
+            elif char == ")":
+                paren_depth -= 1
+                if paren_depth < 0:
+                    pytest.fail(f"Unbalanced parentheses at line {i}: {line}")
+
+    # Check for required Boost context sections
+    assert "_boost_context" in content, "CMakeLists.txt should define _boost_context target"
+    assert "BOOST_USE_ASAN" in content, "CMakeLists.txt should reference BOOST_USE_ASAN"
+    assert "BOOST_USE_TSAN" in content, "CMakeLists.txt should reference BOOST_USE_TSAN"
 
 
 if __name__ == "__main__":

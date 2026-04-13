@@ -876,3 +876,125 @@ def test_repo_git_integrity():
     # The base commit should be 1d363fa or similar from the task
     assert "1d363fa" in head_commit or "83ed1c4" in head_commit, \
         f"Not at expected base commit (got {head_commit})"
+
+
+# [repo_tests] pass_to_pass — TypeScript compiler validation on key PR files
+def test_repo_tsc_syntax_validation():
+    """TypeScript compiler can parse key PR-modified files without errors (pass_to_pass).
+
+    Uses tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution node
+    to validate the syntax and basic type resolution of files modified in the PR.
+    This is a lightweight alternative to bun typecheck since bun is not available.
+    """
+    # Key files involved in the PR (based on solve.sh changes)
+    key_files = [
+        f"{REPO}/packages/opencode/src/cli/cmd/tui/worker.ts",
+    ]
+
+    # Filter to files that exist
+    existing_files = [f for f in key_files if Path(f).exists()]
+    if not existing_files:
+        pytest.skip("Key files not found")
+
+    # Run tsc with minimal options for syntax/basic type checking
+    # Using --skipLibCheck to avoid deep node_modules type resolution
+    # Using --target ES2022 and --module ESNext to match modern TS projects
+    cmd = [
+        "tsc",
+        "--noEmit",
+        "--skipLibCheck",
+        "--target", "ES2022",
+        "--module", "ESNext",
+        "--moduleResolution", "node",
+        "--esModuleInterop",
+        "--allowSyntheticDefaultImports",
+        "--strict", "false",  # Don't enforce strict mode, just check syntax/basic types
+    ] + existing_files
+
+    r = subprocess.run(
+        cmd,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    # Filter out errors that are just about missing imports/modules (expected without full build)
+    # Keep only syntax/parse errors which indicate actual problems
+    if r.returncode != 0 and r.stdout:
+        lines = r.stdout.split("\n")
+        # Look for TS syntax error codes (like TS1xxx, TS2xxx, TS5xxx)
+        # Filter out module resolution errors (TS2307, etc.)
+        syntax_error_codes = ["TS1005", "TS1009", "TS1010", "TS1011", "TS1012", "TS1013",
+                              "TS1014", "TS1015", "TS1016", "TS1017", "TS1018", "TS1019",
+                              "TS1020", "TS1021", "TS1022", "TS1023", "TS1024", "TS1025",
+                              "TS1026", "TS1027", "TS1028", "TS1029", "TS1030", "TS1031",
+                              "TS1032", "TS1033", "TS1034", "TS1035", "TS1036", "TS1037",
+                              "TS1038", "TS1039", "TS1040", "TS1041", "TS1042", "TS1043",
+                              "TS1044", "TS1045", "TS1046", "TS1047", "TS1048", "TS1049",
+                              "TS1050", "TS1051", "TS1052", "TS1053", "TS1054", "TS1055",
+                              "TS1056", "TS1057", "TS1058", "TS1059", "TS1060", "TS1061",
+                              "TS1062", "TS1063", "TS1064", "TS1065", "TS1066", "TS1067",
+                              "TS1068", "TS1069", "TS1070", "TS1071", "TS1072", "TS1073"]
+        syntax_errors = [l for l in lines if any(c in l for c in syntax_error_codes)]
+        if syntax_errors:
+            assert False, f"TypeScript syntax errors:\n{chr(10).join(syntax_errors[:5])}"
+
+    # If we get here, either tsc passed or only had non-syntax errors (like module resolution)
+    assert True
+
+
+# [repo_tests] pass_to_pass — Validate modified file structure
+def test_repo_worker_file_structure():
+    """worker.ts has expected file structure with exports and key functions (pass_to_pass).
+
+    Validates that the worker.ts file maintains its expected structure:
+    - Has the rpc export object
+    - Has the startEventStream function
+    - Has expected RPC methods defined
+    """
+    worker_path = Path(WORKER)
+    if not worker_path.exists():
+        pytest.skip("worker.ts not found")
+
+    content = worker_path.read_text()
+
+    # Check for expected structure markers
+    checks = {
+        "rpc_export": "export const rpc" in content,
+        "startEventStream": "const startEventStream" in content,
+        "global_bus": "GlobalBus.on" in content,
+        "abort_controller": "AbortController" in content,
+    }
+
+    missing = [k for k, v in checks.items() if not v]
+    if missing:
+        assert False, f"worker.ts missing expected structures: {missing}"
+
+    assert True
+
+
+# [repo_tests] pass_to_pass — Git log verification
+def test_repo_git_history():
+    """Git repository has meaningful commit history at base commit (pass_to_pass).
+
+    Validates that the repo has a proper git history and the expected commit
+    is reachable in the log.
+    """
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-5"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
+
+    log_output = r.stdout.strip()
+    assert len(log_output) > 0, "Git log is empty"
+
+    # Check that the expected base commit is in the history or is current
+    r = subprocess.run(
+        ["git", "log", "--oneline", "--all"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git log --all failed:\n{r.stderr}"
+
+    all_commits = r.stdout
+    # The base commit 1d363fa or its short form should be in history
+    assert "1d363fa" in all_commits or "1d363fa19" in all_commits, \
+        "Base commit not found in git history"

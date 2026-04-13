@@ -3,7 +3,7 @@ source:
   repo: anomalyco/opencode
   pr: 17072
   base_commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
-  merge_commit: 981c7b9e375b7d9ac57d2d6a3179451139b2b99b
+  merge_commit: 981c7b9e375b7d9ac57d2c6a3179451139b2b99b
 checks:
 - id: syntax_check
   type: pass_to_pass
@@ -17,6 +17,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Account tests pass on base commit
+- id: test_repo_auth_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Auth tests pass on base commit
+- id: test_repo_storage_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Storage tests pass on base commit
+- id: test_repo_bun_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun tests pass on base commit
+- id: test_repo_acp_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ACP (Agent Client Protocol) tests pass on base commit
+- id: test_repo_scheduler_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Scheduler tests pass on base commit
+- id: test_repo_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config tests pass on base commit
 - id: repo_passes_account_tests
   type: fail_to_pass
   origin: pr_diff
@@ -116,28 +140,30 @@ rubric:
     scope, which aligns with the rule to keep things in one function.
   category: style
 distractors:
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary for exports or clarity
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary. Do not introduce new camelCase compounds when a short single-word
+    alternative is clear.
   collision_type: rule_conflict
-  why_distracting: The instructions explicitly require adding a `Service` interface
-    for `AccountService`, which conflicts with the general guidance to avoid explicit
-    interfaces.
+  why_distracting: The rule mandates single-word names and forbids new camelCase compounds,
+    but the task explicitly requires creating multi-word identifiers like `RefreshToken`,
+    `DeviceCode`, `UserCode`, `AccountRepo`, and `AccountService`.
   severity: high
   source:
     path: AGENTS.md
-    lines: 16-16
-- rule: Prefer single word names for variables and functions. Only use multiple words
-    if necessary.
-  collision_type: scope_ambiguity
-  why_distracting: The instructions require adding branded types like `RefreshToken`,
-    `DeviceCode`, and `UserCode`, and updating methods like `orgsByAccount`. An agent
-    might try to shorten these to single words, violating the explicit naming requirements.
-  severity: medium
+    lines: 22-35
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: rule_conflict
+  why_distracting: The rule discourages explicit type annotations and interfaces,
+    but the task explicitly requires adding a `Service` interface to the `AccountService`
+    namespace and updating type signatures to use branded types.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 21-22
-hierarchy_analysis: The AGENTS.md file provides general style and naming guidelines.
-  However, the explicit instructions in the problem description for this specific
-  refactor (e.g., adding a `Service` interface, using specific multi-word names for
-  branded types) override the general guidelines to avoid interfaces and prefer single-word
-  names.
+    lines: 14-15
+hierarchy_analysis: The agent is provided with a single `AGENTS.md` file containing
+  general style guidelines. However, the task instructions explicitly contradict several
+  of these guidelines (e.g., requiring multi-word camelCase names and explicit interfaces).
+  Furthermore, the task requires the agent to document Effect patterns, which the
+  gold solution achieves by modifying the `AGENTS.md` file itself, making this a highly
+  meta-referential task where the agent must edit its own instructions.

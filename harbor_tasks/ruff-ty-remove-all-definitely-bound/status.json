@@ -3,25 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T00:19:33.206813",
-  "total_time": 8425.28,
-  "sandbox_id": "ieyu24dw0m3aawgovkuhu",
+  "validated_at": "2026-04-12T03:26:45.195261",
+  "total_time": 3579.26,
+  "sandbox_id": "ist44d9t90vwhn03brkmx",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
-    "p2p_enrich": {
-      "status": "completed",
-      "model": "claude-kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1800.0,
-      "notes": "Added 4 new pass_to_pass tests from repo CI: 1) cargo_check_ty - checks ty crate compiles (~90s), 2) cargo_fmt_check - verifies code formatting (~instant), 3) ty_python_semantic_unit - runs lib tests (~2m compile + ~1s test), 4) ty_python_semantic_infer - runs type inference tests (~2m compile + ~1s test). Fixed existing cargo_clippy test to use -D warnings only on ty_python_semantic package instead of workspace-wide to avoid unrelated warnings in ruff_annotate_snippets. All 6 pass_to_pass tests verified passing on base commit. All 9 tests (3 f2p + 6 p2p) verified passing after gold fix."
-    },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 984.13,
+      "time": 1352.94,
       "notes": ""
     },
     "improve": {
@@ -36,17 +28,20 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed: Docker build succeeds, NOP test reward=0 (3 f2p tests fail on buggy base, 6 p2p tests pass), Gold test reward=1 (all 9 tests pass after fix). Rubric judge returned 0.0 as expected (designed for config file evaluation, not Rust code changes).",
+      "notes": "All four validation checks passed: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0)",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 523.14
+      "time": 526.8
     },
-    "rubric_judge": {
-      "status": "fail",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
       "backend": "fireworks",
-      "time": 1.32,
-      "notes": "ICR=0.50"
+      "time": 17.16,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -55,40 +50,8 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 13144.45,
-      "at": "2026-04-09T12:50:56.937269"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1214.85,
-      "at": "2026-04-09T14:48:25.991289"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1215.12,
-      "at": "2026-04-09T14:48:26.163280"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8425.01,
-      "at": "2026-04-10T00:19:33.040758"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8425.28,
-      "at": "2026-04-10T00:19:33.206813"
+      "time": 3579.26,
+      "at": "2026-04-12T03:26:45.195261"
     }
   ]
 }

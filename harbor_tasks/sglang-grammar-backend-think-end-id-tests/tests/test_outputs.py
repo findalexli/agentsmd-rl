@@ -337,3 +337,39 @@ def test_repo_isort_prod_file():
         timeout=60,
     )
     assert r.returncode == 0, f"isort check failed on production file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell_test_file():
+    """Test file must pass codespell spell check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"codespell check failed on test file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell_prod_file():
+    """Production file must pass codespell spell check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", PROD_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"codespell check failed on production file:\n{r.stdout}{r.stderr}"

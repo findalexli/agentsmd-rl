@@ -330,6 +330,81 @@ def test_git_checks_pass():
     assert result.returncode == 0, f"git-checks.sh failed:\n{result.stderr[-1000:]}"
 
 
+def test_cargo_metadata_resolves():
+    """
+    Pass-to-pass: cargo metadata resolves (repo CI check - workspace dependency graph is consistent).
+    """
+    result = subprocess.run(
+        ["cargo", "metadata", "--format-version=1"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, f"cargo metadata failed:\n{result.stderr[-1000:]}"
+
+
+def test_sui_execution_generate_lib_works():
+    """
+    Pass-to-pass: Execution layer generate-lib works (repo CI check).
+    """
+    result = subprocess.run(
+        ["./scripts/execution_layer.py", "generate-lib"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    assert result.returncode == 0, f"execution_layer.py generate-lib failed:\n{result.stderr[-1000:]}"
+
+
+def test_cargo_check_sui_execution_passes():
+    """
+    Pass-to-pass: cargo check --lib on sui-execution passes (repo CI integration check).
+    """
+    result = subprocess.run(
+        ["cargo", "check", "--lib", "-p", "sui-execution"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, f"cargo check on sui-execution failed:\n{result.stderr[-2000:]}"
+
+
+def test_cargo_test_lib_protocol_config_passes():
+    """
+    Pass-to-pass: cargo test --lib on sui-protocol-config passes (library tests only).
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--lib", "-p", "sui-protocol-config"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, f"cargo test --lib on sui-protocol-config failed:\n{result.stderr[-2000:]}"
+
+
+def test_cargo_test_lib_move_natives_passes():
+    """
+    Pass-to-pass: cargo test --lib on sui-move-natives-latest passes (library tests only).
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--lib", "-p", "sui-move-natives-latest"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, f"cargo test --lib on sui-move-natives-latest failed:\n{result.stderr[-2000:]}"
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])

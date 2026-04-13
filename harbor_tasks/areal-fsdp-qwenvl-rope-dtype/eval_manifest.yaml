@@ -57,7 +57,7 @@ checks:
 - id: repo_ruff_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Engine files must pass ruff linting (E, W, I rules)
+  description: All areal files must pass ruff linting (E, W, I rules)
 - id: no_print_statements
   type: pass_to_pass
   origin: agent_config
@@ -70,69 +70,92 @@ checks:
 - id: repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
-  description: Engine files must be formatted according to ruff standards
+  description: All areal files must be formatted according to ruff standards
 - id: repo_yaml_valid
   type: pass_to_pass
   origin: repo_tests
-  description: All YAML workflow files must have valid syntax
+  description: All YAML files must have valid syntax
 - id: repo_json_valid
   type: pass_to_pass
   origin: repo_tests
   description: All JSON files in repo must have valid syntax
+- id: repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tracked files must not have trailing whitespace
+- id: repo_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tracked files must have proper end-of-file
+- id: repo_no_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must not contain large files (>1000KB)
+- id: repo_no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must not contain private keys
 rubric:
-- rule: Use explicit dtype/device for tensors; prefer explicit conversion over implicit.
-    Check dtype before operations that require specific types.
+- rule: Use explicit dtype/device for tensors - prefer explicit conversion over implicit
   source:
-    path: .claude/rules/code-style.md
-    lines: 65-68
+    path: areal/engine/fsdp_engine.py
+    lines: 1317-1320
     commit: f6556e88582e82b747ab1ac4038af2e106a464ee
-- rule: Use keyword arguments for clarity when calling functions with multiple optional/none
-    parameters. Prefer `fn(arg=value)` over positional when parameter meaning isn't
-    obvious from value alone.
+  evidence: The gold solution explicitly checks input_ids.dtype != torch.long and
+    casts using input_ids.to(torch.long)
+  category: style
+- rule: Use keyword arguments for clarity when calling functions with multiple optional
+    parameters
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1341-1345
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution uses keyword arguments (input_ids=input_ids, image_grid_thw=image_grid_thw,
+    etc.) when calling get_rope_index
+  category: style
+- rule: Follow existing code patterns in the same module for dictionary updates
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1319-1320
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution updates the input_ dictionary with the modified tensor
+    using input_["input_ids"] = input_ids
+  category: style
+- rule: No GPU-CPU sync in hot paths - avoid .item(), .tolist(), print(tensor)
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1317-1320
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution performs async dtype checks and tensor.to() operations
+    without any .item(), .tolist(), or print() calls
+  category: architecture
+- rule: 'Performance: No GPU-CPU sync in hot paths'
   source:
     path: AGENTS.md
-    lines: 83-84
-    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
-  reference: '# From AGENTS.md "Always do":
-
-    - Read relevant files before modifying code
-
-    - Run `pre-commit run --all-files` before committing
-
-    - Follow existing code patterns in the same module
-
-    - Add tests for new functionality
-
-    '
-- rule: Follow existing code patterns in the same module
-  source:
-    path: CLAUDE.md
-    lines: '76'
-  evidence: The gold solution casts `input_ids` to `torch.long` and then updates the
-    `input_` dictionary (`input_["input_ids"] = input_ids`), which perfectly matches
-    the existing pattern in `_prepare_mb_list` whe
+    lines: 65-67
+  evidence: The gold solution checks the tensor dtype and casts it using `input_ids.dtype
+    != torch.long` and `.to(torch.long)`, avoiding any CPU-GPU synchronization methods
+    like `.item()`.
   category: style
 distractors:
-- rule: Add tests for new functionality
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The rule asks to add tests for new functionality. However, this
-    PR is a bug fix for a specific FSDP crash with Qwen-VL models. Attempting to write
-    a test for this would require mocking FSDP distributed execution and specific
-    multimodal model architectures, which is highly complex and out of scope for a
-    simple kwarg/dtype patch.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: '77'
-- rule: Integration tests require multi-node hardware; explain skips when unavailable
-  collision_type: meta_confusion
-  why_distracting: An agent might attempt to write a test for this FSDP bug, realize
-    it cannot run it without multi-node hardware, and then commit a skipped test with
-    an explanation. This adds unnecessary test clutter for a straightforward bug fix.
+  why_distracting: The instruction is to fix a bug in an existing FSDP engine method,
+    not to add new functionality. Attempting to write unit tests for this would require
+    complex mocking of distributed training state and Qwen-VL models, wasting effort.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: '69'
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide identical guidance regarding
-  testing and code patterns. The rules are consistent across the hierarchy, reinforcing
-  the same constraints without conflict.
+    path: AGENTS.md
+    lines: 30-30
+- rule: Integration tests require multi-node hardware -- explain skips explicitly.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run integration tests to verify the FSDP
+    engine fix, but these require multi-node hardware. The agent might get stuck trying
+    to run them or writing explanations for skipping them.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-24
+hierarchy_analysis: The config hierarchy is flat (Level 0 files AGENTS.md and CLAUDE.md).
+  Both files share similar rules, with AGENTS.md providing more specific operational
+  constraints.

@@ -106,7 +106,7 @@ def _wordlevel_tokenizer_json():
 
 
 def _no_type_tokenizer_json():
-    """Older tokenizer.json format that omits the 'type' field in 'model'."""
+    """Older tokenizer.json format that omits the type field in model."""
     return {
         "version": "1.0",
         "model": {
@@ -281,7 +281,7 @@ def test_unigram_uses_from_file_fallback():
 
 # [pr_diff] pass_to_pass
 def test_missing_type_field_fallback():
-    """Tokenizer JSON without 'type' in model section must fall back to from_file."""
+    """Tokenizer JSON without type in model section must fall back to from_file."""
     tok_path = _write_tokenizer_json(_no_type_tokenizer_json())
 
     # Should not crash — falls back to from_file
@@ -342,9 +342,33 @@ def test_ruff_format():
         ["ruff", "format", "--check", TARGET],
         capture_output=True,
         text=True,
+        cwd=REPO,
+        timeout=60,
     )
     assert result.returncode == 0, (
         f"ruff found formatting issues in {TARGET}:\n{result.stdout}{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: make style check (ruff check)
+def test_ruff_check():
+    """Modified file passes ruff linting check (pass_to_pass)."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("ruff"):
+        import pytest
+        pytest.skip("ruff not available in this environment")
+
+    result = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"ruff found linting issues in {TARGET}:\n{result.stdout}{result.stderr}"
     )
 
 
@@ -391,7 +415,7 @@ def test_module_import():
         [
             "python",
             "-c",
-            "from transformers.tokenization_utils_tokenizers import TokenizersBackend; print('OK')",
+            "from transformers.tokenization_utils_tokenizers import TokenizersBackend; print(42)",
         ],
         capture_output=True,
         text=True,
@@ -431,3 +455,37 @@ def test_not_stub():
         and line[1:].strip() and not line[1:].strip().startswith("#")
     )
     assert added >= 3, f"Only {added} non-comment lines added — likely a stub"
+
+
+# [repo_tests] pass_to_pass — CI: verify transformers package import
+def test_transformers_import():
+    """Transformers package can be imported without errors (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", "-c", "import transformers; print(transformers.__version__)"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
+    )
+    assert result.returncode == 0, (
+        f"Transformers import failed:\n{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI: verify tokenizers library availability
+def test_tokenizers_lib_available():
+    """Tokenizers library is available and functional (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["python", "-c", "from tokenizers import Tokenizer; print('tokenizers ok')"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
+    )
+    assert result.returncode == 0, (
+        f"Tokenizers library check failed:\n{result.stderr}"
+    )

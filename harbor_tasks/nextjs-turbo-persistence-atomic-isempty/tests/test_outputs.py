@@ -338,6 +338,92 @@ print(f"PASS: found {{len(store_calls)}} store syncs at lines {{store_line_nums}
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (static) — Rust source code structure validation
+# ---------------------------------------------------------------------------
+
+
+# [static] pass_to_pass
+def test_repo_rust_syntax_valid():
+    """Rust source files have balanced braces and brackets (pass_to_pass).
+
+    Validates that Rust files have balanced braces and parentheses.
+    This is a lightweight structural check that doesn't require cargo.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
+rust_files = list(src_dir.glob("*.rs"))
+
+for fpath in rust_files:
+    src = fpath.read_text()
+
+    # Check for balanced braces (simplified check - counts all {{ and }})
+    open_count = src.count('{{')
+    close_count = src.count('}}')
+    if open_count != close_count:
+        print(f"FAIL: {{fpath.name}} has unbalanced braces ({{open_count}} open, {{close_count}} close)")
+        sys.exit(1)
+
+    # Check for balanced parentheses
+    open_parens = src.count('(')
+    close_parens = src.count(')')
+    if open_parens != close_parens:
+        print(f"FAIL: {{fpath.name}} has unbalanced parentheses ({{open_parens}} open, {{close_parens}} close)")
+        sys.exit(1)
+
+    # Check for balanced square brackets
+    open_brackets = src.count('[')
+    close_brackets = src.count(']')
+    if open_brackets != close_brackets:
+        print(f"FAIL: {{fpath.name}} has unbalanced brackets ({{open_brackets}} open, {{close_brackets}} close)")
+        sys.exit(1)
+
+print(f"PASS: All {{len(rust_files)}} Rust files have balanced structure")
+""")
+    assert r.returncode == 0, f"Rust syntax check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_imports_structure():
+    """Rust imports follow standard structure (pass_to_pass).
+
+    Validates that main source files have proper import structure with
+    std, external, and crate-level imports.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
+db_file = src_dir / "db.rs"
+
+# Check that key files exist and have use statements
+if not db_file.exists():
+    print("FAIL: db.rs not found")
+    sys.exit(1)
+
+src = db_file.read_text()
+
+# Check for presence of std imports
+if 'use std::' not in src:
+    print("FAIL: db.rs missing std imports")
+    sys.exit(1)
+
+# Check for crate-level imports (from crate::)
+if 'crate::' not in src:
+    print("FAIL: db.rs missing crate imports")
+    sys.exit(1)
+
+print("PASS: Rust imports structure is valid")
+""")
+    assert r.returncode == 0, f"Imports check failed: {r.stdout}\\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — Git repository integrity checks
 # ---------------------------------------------------------------------------
 

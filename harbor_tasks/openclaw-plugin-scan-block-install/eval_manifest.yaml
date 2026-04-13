@@ -81,6 +81,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Upstream hooks.security.test.ts vitest suite passes
+- id: test_plugin_contracts_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's plugin contracts tests pass (72 tests on plugin contract validation)
+- id: test_plugin_discovery_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's plugin discovery tests pass (26 tests)
+- id: test_plugin_loader_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's plugin loader tests pass (73 tests)
 rubric:
 - rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
     Do not create private backdoors that bundled plugins can use but external plugins
@@ -101,33 +113,40 @@ rubric:
     the installation in the `src/plugins/install-security-scan.runtime.ts` file when
     critical patterns are found, rather than just log
   category: architecture
+- rule: If a loader or registry change affects plugin authors, update the public SDK,
+    docs, and contract tests instead of relying on incidental internals.
+  source:
+    path: src/plugins/AGENTS.md
+    lines: 23-24
+  evidence: The gold solution updates the `InstallSecurityScanResult` type to include
+    a `code` field, formalizing the error contract for plugin authors rather than
+    relying on string parsing of the reason.
+  category: architecture
 distractors:
-- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
-    listed owner explicitly asked for the change or is already reviewing it with you.
-    Treat those paths as restricted surfaces, not drive-by cleanup.
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change or is already reviewing it with you. Treat
+    those paths as restricted surfaces, not drive-by cleanup.
   collision_type: meta_confusion
-  why_distracting: The files being edited (`install-security-scan.runtime.ts`) have
-    'security' in the name, which might cause an agent to refuse to edit them, thinking
-    they are restricted surfaces covered by security CODEOWNERS. However, the prompt
-    explicitly asks to fix the bug in these files.
+  why_distracting: The task involves fixing a critical security scan bypass in `install-security-scan.runtime.ts`.
+    An agent might refuse to edit these files or ask for permission, failing the task
+    because it misinterprets the instruction as a drive-by cleanup of a restricted
+    security surface.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 6-7
+    path: AGENTS.md
+    lines: 5-6
 - rule: 'Preserve manifest-first behavior: discovery, config validation, and setup
     should work from metadata before plugin runtime executes.'
-  collision_type: scope_ambiguity
-  why_distracting: An agent might interpret this as meaning the security scan should
-    only analyze the manifest metadata and not the source code, or that the scan should
-    be moved to a manifest validation step. This would break the source code scanning
-    functionality (e.g., detecting `eval('danger')`).
-  severity: medium
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to move the security scan logic into the
+    manifest validation phase to comply with 'manifest-first behavior', rather than
+    fixing the install-time scan as requested, leading to a massive out-of-scope refactor.
+  severity: high
   source:
-    path: src/plugins/CLAUDE.md
-    lines: 16-17
-hierarchy_analysis: The root `CLAUDE.md` defines general architecture boundaries,
-  while `src/plugins/CLAUDE.md` provides specific rules for the plugin boundary. The
-  agent must navigate the tension between 'manifest-first behavior' (from `src/plugins/CLAUDE.md`)
-  and the need to perform deep source code scanning during installation. The agent
-  must also realize that editing security-related files is required here despite the
-  general warning in the root `CLAUDE.md`.
+    path: src/plugins/AGENTS.md
+    lines: 15-16
+hierarchy_analysis: The config hierarchy includes root-level guidelines and plugin-specific
+  boundary rules. The root rules emphasize security file restrictions, while the plugin-specific
+  rules emphasize contract enforcement and manifest-first behavior. The agent must
+  navigate these rules to fix the install-time security scan without being derailed
+  by the security file restriction or the manifest-first architectural guideline.

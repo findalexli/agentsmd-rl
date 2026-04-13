@@ -281,3 +281,24 @@ def test_repo_lint_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Test lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint check passes (pass_to_pass). Verifies code style
+    conventions are correct on both base and after fix."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+    # Run ESLint with increased memory limit
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"

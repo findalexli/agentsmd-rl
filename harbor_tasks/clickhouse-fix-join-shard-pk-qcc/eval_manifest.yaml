@@ -16,20 +16,28 @@ checks:
     added_parts
 - id: test_file_syntax_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: C++ file has valid syntax (balanced braces, parentheses, quotes)
 - id: test_analysis_results_usage
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: analysis_results is properly used after the processing loop
 - id: test_code_structure_intact
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Overall code structure is intact with key variables and functions present
-- id: test_file_is_valid_cpp
+- id: test_repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository git status is clean (CI check)
+- id: test_repo_file_type
   type: pass_to_pass
   origin: repo_tests
   description: Target file is a valid C++ source file recognized by file command
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log is accessible and shows expected commit (CI check)
 - id: test_no_trailing_whitespace
   type: pass_to_pass
   origin: repo_tests
@@ -38,6 +46,54 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: No tabs used for indentation (ClickHouse uses 4 spaces)
+- id: test_file_has_pragma_once_in_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header files have #pragma once in first line (ClickHouse style check)
+- id: test_no_duplicate_includes
+  type: pass_to_pass
+  origin: repo_tests
+  description: No duplicate #include statements (ClickHouse style check)
+- id: test_repo_no_bom
+  type: pass_to_pass
+  origin: repo_tests
+  description: No UTF-8 BOM markers in source files (ClickHouse CI check)
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: No git conflict markers (ClickHouse CI check)
+- id: test_repo_no_dos_newlines
+  type: pass_to_pass
+  origin: repo_tests
+  description: No DOS/Windows newlines - Unix LF only (ClickHouse CI check)
+- id: test_repo_brace_balance
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has balanced braces (ClickHouse style check)
+- id: test_repo_paren_balance
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has balanced parentheses (ClickHouse style check)
+- id: test_repo_no_std_stringstream
+  type: pass_to_pass
+  origin: repo_tests
+  description: No std::stringstream usage - use WriteBufferFromOwnString instead (ClickHouse CI check)
+- id: test_repo_clang_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has valid syntax according to clang -fsyntax-only (CI check)
+- id: test_repo_header_pragma_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: All header files have #pragma once in first line (ClickHouse style check)
+- id: test_repo_include_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file uses angle brackets for includes not quotes (ClickHouse style check)
+- id: test_repo_no_cyrillic_chars
+  type: pass_to_pass
+  origin: repo_tests
+  description: No Cyrillic characters mixed with Latin in source code (ClickHouse style check)
 rubric:
 - rule: Use comments to explain WHY a code change is needed, especially for subtle
     invariants or non-obvious bugs.

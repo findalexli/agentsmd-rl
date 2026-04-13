@@ -31,20 +31,12 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
 def test_minimize_ts_exists():
     """minimize.ts must exist and be non-empty."""
     content = Path(MINIMIZE_TS).read_text()
     assert len(content) > 1000, "minimize.ts appears empty or truncated"
     assert "errorsMatch" in content, "minimize.ts missing expected function errorsMatch"
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo CI) - TypeScript compilation
-# ---------------------------------------------------------------------------
 
 def test_snap_typescript_compiles():
     """Snap package TypeScript must compile (pass_to_pass)."""
@@ -64,10 +56,6 @@ def test_snap_builds():
     assert r.returncode == 0, f"Snap build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo CI) - babel-plugin-react-compiler
-# ---------------------------------------------------------------------------
-
 def test_babel_plugin_lint():
     """babel-plugin-react-compiler must pass lint checks (pass_to_pass)."""
     r = subprocess.run(
@@ -86,9 +74,32 @@ def test_babel_plugin_jest():
     assert r.returncode == 0, f"babel-plugin-react-compiler jest failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - core behavioral: errorsMatch
-# ---------------------------------------------------------------------------
+def test_eslint_plugin_react_compiler():
+    """eslint-plugin-react-compiler tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "eslint-plugin-react-compiler", "test", "--passWithNoTests"],
+        capture_output=True, text=True, timeout=300, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"eslint-plugin-react-compiler tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_make_read_only_util():
+    """make-read-only-util tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "make-read-only-util", "test"],
+        capture_output=True, text=True, timeout=120, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"make-read-only-util tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_snap_prettier():
+    """Snap package must pass prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "snap", "run", "prettier", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"snap prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
 
 def test_errorsMatch_rejects_different_descriptions():
     """errorsMatch must return false when error descriptions differ."""
@@ -96,7 +107,6 @@ def test_errorsMatch_rejects_different_descriptions():
 const fs = require('fs');
 const src = fs.readFileSync('compiler/packages/snap/src/minimize.ts', 'utf-8');
 
-// Extract the errorsMatch function by finding its start and matching braces
 const funcStart = src.indexOf('function errorsMatch(');
 if (funcStart === -1) {
   console.error('errorsMatch function not found');
@@ -112,7 +122,6 @@ for (let i = funcStart; i < src.length; i++) {
   }
 }
 
-// Strip TypeScript type annotations to get valid JS
 let fnSrc = src.slice(funcStart, endIdx)
   .replace(/:\s*CompileErrors/g, '')
   .replace(/:\s*CompileResult/g, '')
@@ -120,7 +129,6 @@ let fnSrc = src.slice(funcStart, endIdx)
 
 eval(fnSrc);
 
-// Core test: same category+reason but DIFFERENT description must NOT match
 const a = { kind: 'errors', errors: [{ category: 'InvalidReact', reason: 'hook-rule', description: 'Cannot call hook inside condition' }] };
 const b = { kind: 'errors', errors: [{ category: 'InvalidReact', reason: 'hook-rule', description: 'Cannot call hook inside loop' }] };
 
@@ -129,7 +137,6 @@ if (errorsMatch(a, b) === true) {
   process.exit(1);
 }
 
-// Sanity: identical errors should still match
 const c = { kind: 'errors', errors: [{ category: 'X', reason: 'Y', description: 'Z' }] };
 const d = { kind: 'errors', errors: [{ category: 'X', reason: 'Y', description: 'Z' }] };
 if (!errorsMatch(c, d)) {
@@ -143,10 +150,6 @@ console.log('PASS');
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - description field in type definitions
-# ---------------------------------------------------------------------------
-
 def test_description_in_error_types():
     """CompileErrors and error.details types must include description: string | null."""
     r = _run_node(r"""
@@ -159,7 +162,6 @@ const ast = parser.parse(src, {
   plugins: ['typescript'],
 });
 
-// Count TSPropertySignature nodes with key 'description'
 let descriptionTypeCount = 0;
 
 function walk(node) {
@@ -179,9 +181,6 @@ function walk(node) {
 
 walk(ast.program);
 
-// The fix adds description to two type definitions:
-// 1. CompileErrors type alias
-// 2. error.details type in the catch block
 if (descriptionTypeCount < 2) {
   console.error('FAIL: Expected at least 2 description type annotations, found ' + descriptionTypeCount);
   process.exit(1);
@@ -191,10 +190,6 @@ console.log('PASS');
     assert r.returncode == 0, f"Type definition check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - error mapping preserves description
-# ---------------------------------------------------------------------------
 
 def test_error_mapping_copies_description():
     """error.details.map must copy description field onto each mapped error object."""
@@ -208,7 +203,6 @@ const ast = parser.parse(src, {
   plugins: ['typescript'],
 });
 
-// Look for ObjectProperty: description: detail.description
 let found = false;
 
 function walk(node) {
@@ -239,10 +233,6 @@ console.log('PASS');
     assert r.returncode == 0, f"Error mapping check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - new generator functions
-# ---------------------------------------------------------------------------
 
 def test_new_generators_defined():
     """Generator functions removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties must be defined."""
@@ -285,10 +275,6 @@ console.log('PASS');
     assert r.returncode == 0, f"Generator check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - strategies registered
-# ---------------------------------------------------------------------------
 
 def test_new_strategies_registered():
     """All three new strategies must be registered in simplificationStrategies array."""

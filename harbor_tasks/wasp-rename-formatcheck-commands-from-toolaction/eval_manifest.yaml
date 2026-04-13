@@ -27,7 +27,7 @@ checks:
   origin: repo_tests
   description: waspc/run script parses without bash syntax errors
 
-# New pass-to-pass tests added for p2p enrichment
+# Pass-to-pass tests - p2p enrichment (verify base commit state)
 - id: test_run_script_executes
   type: pass_to_pass
   origin: repo_tests
@@ -35,15 +35,15 @@ checks:
 - id: test_run_script_has_ormolu_commands
   type: pass_to_pass
   origin: repo_tests
-  description: waspc/run contains ormolu formatting commands
+  description: waspc/run contains ormolu formatting commands (ormolu:check, ormolu:format on base commit)
 - id: test_run_script_has_prettier_commands
   type: pass_to_pass
   origin: repo_tests
-  description: waspc/run contains prettier formatting commands
+  description: waspc/run contains prettier formatting commands (prettier:check, prettier:format on base commit)
 - id: test_run_script_has_cabal_gild_commands
   type: pass_to_pass
   origin: repo_tests
-  description: waspc/run contains cabal-gild formatting commands
+  description: waspc/run contains cabal-gild formatting commands (cabal-gild:check, cabal-gild:format on base commit)
 - id: test_package_json_has_prettier_scripts
   type: pass_to_pass
   origin: repo_tests
@@ -61,7 +61,7 @@ checks:
 - id: test_run_script_case_branches_renamed
   type: fail_to_pass
   origin: pr_diff
-  description: Case branches renamed from tool:action to action:tool format
+  description: Case branches renamed from tool:action to action:tool format (check:ormolu, format:ormolu, etc.)
 - id: test_run_script_has_top_level_format_command
   type: fail_to_pass
   origin: pr_diff
@@ -73,7 +73,7 @@ checks:
 - id: test_run_script_prettier_vars_use_new_npm_names
   type: fail_to_pass
   origin: pr_diff
-  description: PRETTIER_*_CMD variables reference new npm script names
+  description: PRETTIER_*_CMD variables reference new npm script names (check:prettier, format:prettier)
 - id: test_package_json_scripts_renamed
   type: fail_to_pass
   origin: pr_diff
@@ -85,7 +85,7 @@ checks:
 - id: test_run_script_help_text_uses_new_names
   type: fail_to_pass
   origin: pr_diff
-  description: print_usage section documents all renamed commands
+  description: print_usage section documents all renamed commands (action:tool format)
 rubric:
 - rule: Command renaming should be consistent across all files — the run script, package.json,
     CI config, and documentation should all use the same new naming convention.

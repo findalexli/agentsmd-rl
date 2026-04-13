@@ -36,6 +36,97 @@ def _parse_jsonc(text: str) -> dict:
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_check_manifests_script_syntax():
+    """scripts/check-manifests.js must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/check-manifests.js")
+    assert script_path.exists(), "scripts/check-manifests.js does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"check-manifests.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_is_release_script_syntax():
+    """scripts/check-is-release.js must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/check-is-release.js")
+    assert script_path.exists(), "scripts/check-is-release.js does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"check-is-release.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_unused_turbo_tasks_syntax():
+    """scripts/check-unused-turbo-tasks.mjs must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/check-unused-turbo-tasks.mjs")
+    assert script_path.exists(), "scripts/check-unused-turbo-tasks.mjs does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"check-unused-turbo-tasks.mjs has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_pull_turbo_cache_script_syntax():
+    """scripts/pull-turbo-cache.js must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/pull-turbo-cache.js")
+    assert script_path.exists(), "scripts/pull-turbo-cache.js does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"pull-turbo-cache.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_turbo_cache_script_syntax():
+    """scripts/turbo-cache.mjs must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/turbo-cache.mjs")
+    assert script_path.exists(), "scripts/turbo-cache.mjs does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"turbo-cache.mjs has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_prettier_root_package_json():
+    """package.json must be formatted according to Prettier standards (pass_to_pass)."""
+    pkg_path = Path(f"{REPO}/package.json")
+    assert pkg_path.exists(), "package.json does not exist"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(pkg_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json fails Prettier check:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_turbo_json_valid_syntax():
     """turbo.json must parse as valid JSON via Python json.tool."""
     turbo_path = Path(f"{REPO}/turbo.json")
@@ -69,18 +160,18 @@ with open(sys.argv[1], "r") as f:
     content = f.read()
 
 # Remove // comments (only when preceded by whitespace or start of line)
-content = re.sub(r\"(^|\\s)//.*$\", \"\", content, flags=re.MULTILINE)
+content = re.sub(r"(^|\\s)//.*$", "", content, flags=re.MULTILINE)
 # Remove trailing commas before } or ]
-content = re.sub(r\",(\\s*[}\\]])\", r\"\\1\", content)
+content = re.sub(r",(\\s*[}\\]])", r"\\1", content)
 
 try:
     data = json.loads(content)
-    if \"tasks\" not in data:
-        print(\"Missing tasks key\", file=sys.stderr)
+    if "tasks" not in data:
+        print("Missing tasks key", file=sys.stderr)
         sys.exit(1)
-    print(\"OK\")
+    print("OK")
 except json.JSONDecodeError as e:
-    print(f\"Parse error: {e}\", file=sys.stderr)
+    print(f"Parse error: {e}", file=sys.stderr)
     sys.exit(1)
 """
     r = subprocess.run(
@@ -164,6 +255,164 @@ def test_rust_fingerprint_script_valid():
         timeout=30,
     )
     assert r.returncode == 0, f"rust-fingerprint.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_prettier_turbo_json():
+    """turbo.json must be formatted according to Prettier standards (pass_to_pass)."""
+    turbo_path = Path(f"{REPO}/turbo.json")
+    assert turbo_path.exists(), "turbo.json does not exist"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(turbo_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"turbo.json fails Prettier check:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_prettier_turbo_jsonc():
+    """packages/next-swc/turbo.jsonc must be formatted according to Prettier standards (pass_to_pass)."""
+    turbo_path = Path(f"{REPO}/packages/next-swc/turbo.jsonc")
+    assert turbo_path.exists(), "turbo.jsonc does not exist"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(turbo_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"turbo.jsonc fails Prettier check:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_prettier_next_swc_package_json():
+    """packages/next-swc/package.json must be formatted according to Prettier standards (pass_to_pass)."""
+    pkg_path = Path(f"{REPO}/packages/next-swc/package.json")
+    assert pkg_path.exists(), "packages/next-swc/package.json does not exist"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(pkg_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json fails Prettier check:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_node_syntax_build_native():
+    """scripts/build-native.ts must have valid Node.js/TypeScript syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/build-native.ts")
+    assert script_path.exists(), "scripts/build-native.ts does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"build-native.ts has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_validate_externals_doc_script_syntax():
+    """scripts/validate-externals-doc.js must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/validate-externals-doc.js")
+    assert script_path.exists(), "scripts/validate-externals-doc.js does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"validate-externals-doc.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_git_configure_script_syntax():
+    """scripts/git-configure.mjs must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/git-configure.mjs")
+    assert script_path.exists(), "scripts/git-configure.mjs does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"git-configure.mjs has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_install_native_script_syntax():
+    """scripts/install-native.mjs must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/install-native.mjs")
+    assert script_path.exists(), "scripts/install-native.mjs does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"install-native.mjs has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_run_tests_script_syntax():
+    """run-tests.js must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/run-tests.js")
+    assert script_path.exists(), "run-tests.js does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"run-tests.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_run_evals_script_syntax():
+    """run-evals.js must have valid Node.js syntax (pass_to_pass)."""
+    script_path = Path(f"{REPO}/run-evals.js")
+    assert script_path.exists(), "run-evals.js does not exist"
+
+    r = subprocess.run(
+        ["node", "--check", str(script_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"run-evals.js has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_prettier_ignore_valid():
+    """.prettierignore must exist and be readable (pass_to_pass)."""
+    ignore_path = Path(f"{REPO}/.prettierignore")
+    assert ignore_path.exists(), ".prettierignore does not exist"
+
+    # Validate by running prettier with --ignore-path on a simple file
+    pkg_path = Path(f"{REPO}/package.json")
+    r = subprocess.run(
+        ["npx", "prettier", "--ignore-path", str(ignore_path), "--check", str(pkg_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Should exit 0 (formatted correctly) or 1 (formatting issues), not crash
+    assert r.returncode in [0, 1], f".prettierignore causes prettier to crash:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

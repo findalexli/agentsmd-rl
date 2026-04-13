@@ -32,6 +32,21 @@ checks:
     origin: repo_tests
     description: "Repo's autoflake check passes on modified files"
 
+  - id: check_yaml
+    type: pass_to_pass
+    origin: static
+    description: "Repo's YAML files must be valid"
+
+  - id: check_case_conflict
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo must not have case-conflicting filenames"
+
+  - id: detect_private_key
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo must not contain private keys"
+
   - id: checkpoint_uses_load_path
     type: fail_to_pass
     origin: pr_diff
@@ -81,22 +96,3 @@ checks:
     type: pass_to_pass
     origin: static
     description: "Modified functions have meaningful bodies (not stubs)"
-
-rubric:
-  - rule: "Prefer minimal changes to Megatron-related code. Avoid major modifications to Megatron utilities; follow existing variable passing patterns."
-    source:
-      path: "CONTRIBUTING.md"
-      lines: "33-34,78-79"
-      commit: "64e1e68f524e1da6ca646606c22e785eeb845268"
-
-  - rule: "Preserve data structure contracts when modifying sample handling code. Keep group/sample structure intact unless explicitly required otherwise."
-    source:
-      path: ".claude/skills/add-dynamic-filter/SKILL.md"
-      lines: "66-71"
-      commit: "64e1e68f524e1da6ca646606c22e785eeb845268"
-
-  - rule: "Keep data contract compatible. When modifying processor kwargs or data processing utilities, ensure required fields remain populated consistently."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "70-79"
-      commit: "64e1e68f524e1da6ca646606c22e785eeb845268"

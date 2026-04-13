@@ -46,6 +46,11 @@ checks:
     origin: repo_tests
     description: "Repo's ruff linting passes on slime/ package"
 
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on slime/ package"
+
   - id: test_repo_plugin_contracts
     type: pass_to_pass
     origin: repo_tests
@@ -61,6 +66,16 @@ checks:
     origin: repo_tests
     description: "Repo's plugin runtime hook contract tests pass (validates slime/ray/rollout.py callsites)"
 
+  - id: test_repo_plugin_path_loading_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin path loading contract tests pass"
+
+  - id: test_repo_plugin_generate_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin generate contract tests pass"
+
   - id: test_repo_isort_check
     type: pass_to_pass
     origin: repo_tests
@@ -69,23 +84,35 @@ checks:
   - id: test_repo_black_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's black formatting check passes on slime/ package"
+    description: "Repo's black formatting check passes on slime/ray/rollout.py"
 
+  - id: test_repo_black_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatting check passes on full slime/ package"
+
+  - id: test_repo_precommit_yaml_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's YAML files pass pre-commit check"
+
+  - id: test_repo_precommit_private_key_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no private keys committed"
+
+  - id: test_repo_precommit_large_files_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no large files (>1000KB) committed"
+
+  - id: test_repo_precommit_autoflake
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files pass autoflake check (no unused imports)"
 rubric:
-  - rule: "Code must pass ruff linting (E, F, B, UP rules). Run `ruff check slime/` to verify."
-    source:
-      path: "pyproject.toml"
-      lines: "25-36"
-      commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+  - rule: "When modifying slime/ray/rollout.py, ensure the changes follow the existing code style and patterns used elsewhere in the file."
 
-  - rule: "Imports must follow isort ordering with black profile. First party packages (slime, slime_plugins) should be separated from third party."
-    source:
-      path: "pyproject.toml"
-      lines: "9-19"
-      commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+  - rule: "PD disaggregation fix should remove the assertion that prevented slime router from working with PD, and add appropriate feature flags instead."
 
-  - rule: "When modifying router/rollout code, follow existing patterns for argument handling and router initialization. Check neighboring functions in slime/ray/rollout.py for patterns."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "100-107"
-      commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+  - rule: "Circuit breaker should be disabled for non-slime router when PD disaggregation is enabled, with a comment explaining why."

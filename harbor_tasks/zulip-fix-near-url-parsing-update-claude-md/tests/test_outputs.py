@@ -266,3 +266,48 @@ print("SUCCESS: Script imports cleanly")
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Script import test failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pycodestyle():
+    """pycodestyle (PEP 8) check passes on fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pycodestyle", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pycodestyle", "--max-line-length=100", str(FETCH_SCRIPT)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pycodestyle found issues:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flake8():
+    """Flake8 linter passes on fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "flake8", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "flake8", "--max-line-length=100", str(FETCH_SCRIPT)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flake8 found issues:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+
+
+# [repo_tests] pass_to_pass
+def test_script_dry_run_syntax():
+    """Script dry-run shows proper argument handling without network (pass_to_pass)."""
+    # Test that the script properly handles URL validation before network calls
+    r = subprocess.run(
+        [sys.executable, str(FETCH_SCRIPT), "https://chat.zulip.org/#narrow/channel/101/topic/test"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    # Should fail with network error (no API key/spectator access), not syntax error
+    # Exit code will be non-zero due to network/API failure, but no Python exceptions
+    assert "Traceback" not in r.stderr, f"Script had unhandled exception:\n{r.stderr}"
+    assert "Error:" in r.stderr or r.returncode != 0, "Should have expected error output"

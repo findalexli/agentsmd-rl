@@ -21,6 +21,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's init file consistency check passes
+- id: repo_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy model files consistency check passes
+- id: repo_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modeling structure check passes
+- id: repo_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's doctest list consistency check passes
+- id: repo_pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pipeline typing check passes
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -70,43 +86,31 @@ checks:
 rubric:
 - rule: Code changes should be minimal and focused. The gold solution correctly removes
     only the problematic tie_word_embeddings field from Qwen2VLTextConfig and Qwen2_5_VLTextConfig,
-    removes the propagation hack from composite configs, and adds type annotations
-    to ModernVBertForMaskedLM.__init__.
+    removes the propagation hack from composite configs, adds type annotations
+    to ModernVBertForMaskedLM.__init__ in both modeling and modular files.
   reference: Removed tie_word_embeddings from text configs; removed propagation hack;
-    added type hint
-- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
-    `modular` files can inherit from other models. `make fix-repo` will generate the
-    actual modeling file.
-  source:
-    path: CLAUDE.md
-    lines: 62-67
-  evidence: The gold solution applies the type annotation fix to `ModernVBertForMaskedLM.__init__`
-    in both `modeling_modernvbert.py` and its source `modular_modernvbert.py`, adhering
-    to the repository's modular m
-  category: architecture
+    added type hint to both modeling_modernvbert.py and modular_modernvbert.py
 distractors:
 - rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate the patch entirely, citing the
-    'Fail-closed behavior for agents' rule because it cannot verify coordination on
-    an issue or human validation in this automated evaluation setting.
+  why_distracting: The rule mandates refusing to output PR-ready code if coordination
+    evidence is missing. In an autonomous benchmark setting, following this causes
+    a false refusal.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 57-60
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The agent might ignore the instruction to add the missing type
-    annotation to `ModernVBertForMaskedLM.__init__`, classifying it as a 'tiny edit'
-    or 'isolated lint cleanup' forbidden by the policy, even though it was explicitly
-    requested in the prompt alongside the main bug fix.
+    path: AGENTS.md
+    lines: 56-59
+- rule: make fix-repo will generate the actual modeling file from the modular file.
+  collision_type: architecture_boundary
+  why_distracting: The rule implies that editing the modular file is sufficient because
+    `make fix-repo` will generate the modeling file. An agent might skip editing
+    `modeling_modernvbert.py`, which causes tests to fail if the generation script
+    isn't run during evaluation.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 42-44
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical repository-wide
-  guidelines. The rules regarding agent behavior (fail-closed, coordination) conflict
-  with the automated evaluation environment, requiring the agent to ignore meta-instructions
-  and focus on the code task. The architectural rule about modular models correctly
-  guides the agent to edit `modular_modernvbert.py` alongside `modeling_modernvbert.py`.
+    path: AGENTS.md
+    lines: 69-70
+hierarchy_analysis: The config hierarchy is flat, with identical AGENTS.md and CLAUDE.md
+  files at the root. The primary challenge is navigating the repository's dual-file
+  architecture for modular models and ignoring the strict human-in-the-loop coordination
+  policies.

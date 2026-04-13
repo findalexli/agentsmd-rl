@@ -106,6 +106,58 @@ def test_repo_insight_py_compiles():
     assert r.returncode == 0, f"insight.py failed to compile:\n{r.stderr}"
 
 
+def test_repo_ruff_check_insight_py():
+    """Repo: posthog/api/insight.py passes ruff lint check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/posthog/api/insight.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed for insight.py:\n{r.stderr}"
+
+
+def test_repo_ruff_format_check_insight_py():
+    """Repo: posthog/api/insight.py passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/posthog/api/insight.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed for insight.py:\n{r.stderr}"
+
+
+def test_repo_ruff_check_test_insight_py():
+    """Repo: posthog/api/test/test_insight.py passes ruff lint check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/posthog/api/test/test_insight.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed for test_insight.py:\n{r.stderr}"
+
+
+def test_repo_ruff_format_check_test_insight_py():
+    """Repo: posthog/api/test/test_insight.py passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/posthog/api/test/test_insight.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed for test_insight.py:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -326,3 +378,22 @@ def test_new_function_has_type_hints():
                 )
             return
     raise AssertionError("is_legacy_insight_filters_blocked function not found")
+
+
+
+def test_repo_ruff_check_posthog_api():
+    """Repo: posthog/api/ directory passes ruff lint check (pass_to_pass).
+
+    Validates that all Python files in the posthog/api/ directory,
+    including insight.py and related modules, conform to the project's
+    linting standards as defined in pyproject.toml.
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/posthog/api/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed for posthog/api/: {r.stderr}"

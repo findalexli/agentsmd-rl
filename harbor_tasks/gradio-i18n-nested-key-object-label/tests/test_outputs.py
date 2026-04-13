@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 import textwrap
 from pathlib import Path
@@ -368,3 +369,113 @@ def test_untranslated_label_preserved():
     assert data["file"] == "file", f"Expected 'file', got '{data['file']}'"
     assert data["custom_label"] == "My Custom Label"
     assert data["number_label"] == "42"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vitest_i18n():
+    """Repo's i18n unit tests pass (pass_to_pass).
+
+    Runs the actual vitest tests from js/core/src/i18n.test.ts to verify
+    the formatter function works correctly with i18n markers.
+    """
+    # Setup: install pnpm and dependencies
+    setup = subprocess.run(
+        "npm install -g pnpm@10.17.0 && cd /workspace/gradio && pnpm install",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert setup.returncode == 0, f"Setup failed: {setup.stderr[-500:]}"
+
+    # Build client first (required dependency)
+    build = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert build.returncode == 0, f"Client build failed: {build.stderr[-500:]}"
+
+    # Run vitest on i18n.test.ts with happy-dom environment (no browser needed)
+    env = os.environ.copy()
+    env["TEST_MODE"] = "happy-dom"
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", ".config/vitest.config.ts",
+         "js/core/src/i18n.test.ts", "--browser.enabled=false"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"i18n vitest failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's client package builds successfully (pass_to_pass).
+
+    Verifies the @gradio/client package can be built without errors.
+    """
+    # Setup: install pnpm and dependencies
+    setup = subprocess.run(
+        "npm install -g pnpm@10.17.0 && cd /workspace/gradio && pnpm install",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert setup.returncode == 0, f"Setup failed: {setup.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_node_tests():
+    """Repo's client node tests pass (pass_to_pass).
+
+    Runs the client package node tests (non-browser) using vitest.
+    These are the tests from client/js/src/test/*.test.ts.
+    """
+    # Setup: install pnpm and dependencies
+    setup = subprocess.run(
+        "npm install -g pnpm@10.17.0 && cd /workspace/gradio && pnpm install",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert setup.returncode == 0, f"Setup failed: {setup.stderr[-500:]}"
+
+    # Build client first (required for tests)
+    build = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert build.returncode == 0, f"Client build failed: {build.stderr[-500:]}"
+
+    # Run client node tests
+    env = os.environ.copy()
+    env["TEST_MODE"] = "node"
+    env["NODE_NO_WARNINGS"] = "1"
+    r = subprocess.run(
+        ["pnpm", "test:node"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/client/js",
+        env=env,
+    )
+    assert r.returncode == 0, f"Client node tests failed:\n{r.stderr[-500:]}"

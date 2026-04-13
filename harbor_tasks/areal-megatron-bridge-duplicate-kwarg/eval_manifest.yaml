@@ -55,93 +55,93 @@ checks:
     commit: 722e235a37e4a9f3e288e54629179befa494156b
 - id: test_repo_pyproject_toml_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: pyproject.toml is valid TOML syntax
 - id: test_repo_ruff_lint
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Ruff linter passes on megatron_engine.py
 - id: test_repo_ruff_format
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Ruff format check passes on megatron_engine.py
 - id: test_repo_engine_syntax_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: All Python files in areal/engine have valid syntax
 - id: test_repo_no_trailing_whitespace
   type: pass_to_pass
-  origin: pr_diff
+  origin: static
   description: megatron_engine.py has no trailing whitespace
 - id: test_repo_file_ends_with_newline
   type: pass_to_pass
-  origin: pr_diff
+  origin: static
   description: megatron_engine.py ends with a single newline
 - id: test_repo_yaml_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: All YAML files in the repo have valid syntax
 - id: test_repo_json_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: All JSON files in the repo have valid syntax
 - id: test_repo_no_private_keys
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: No private keys detected in repo files
 - id: test_repo_package_name_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Package name in pyproject.toml is 'areal'
 - id: test_repo_areal_init_ast_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: areal/__init__.py has valid AST structure
 - id: test_repo_project_urls_valid
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: pyproject.toml has required project URLs
-rubric:
-- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
-  source:
-    path: AGENTS.md
-    lines: '81'
-    commit: 722e235a37e4a9f3e288e54629179befa494156b
-- rule: No hardcoded secrets, paths, or endpoints -- use config objects (e.g. self.config.path)
-    rather than string literals for file paths or URLs.
-  source:
-    path: AGENTS.md
-    lines: '31'
-    commit: 722e235a37e4a9f3e288e54629179befa494156b
-- rule: Run `pre-commit run --all-files` before committing
-  source:
-    path: CLAUDE.md
-    lines: 46-46
-  evidence: 'The gold solution reformats the `mbridge.AutoBridge.from_pretrained`
-    call on lines 356-358 to comply with line length limits, demonstrating that a
-    formatter (via pre-commit) was run alongside the bug '
-  category: tooling
+- id: test_repo_imports_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core areal modules can be imported
+- id: test_repo_version_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal package has valid version string
 distractors:
-- rule: Add tests for new functionality
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: This is a bug fix for a duplicate keyword argument (a Python syntax/runtime
-    error), not new functionality. Attempting to add a test for `MegatronEngine` initialization
-    would likely require complex mocking or multi-node GPU hardware, wasting agent
-    effort on a trivial fix.
+  why_distracting: The agent might attempt to write a test for this bug fix, but the
+    issue is a basic Python syntax error (duplicate keyword argument). Testing MegatronEngine
+    initialization requires complex setup or multi-node hardware, which is unnecessary
+    and out of scope for a trivial syntax fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 48-48
-- rule: Integration tests require multi-node hardware; explain skips when unavailable
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run the test suite to verify the fix, encounter
-    failures due to missing multi-node hardware, and either get stuck trying to fix
-    the tests or add unnecessary skip explanations to the PR for a simple syntax error
-    fix.
+    path: AGENTS.md
+    lines: 31-31
+- rule: Integration tests require multi-node hardware -- explain skips explicitly.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write an integration test and then skip
+    it with an explanation, wasting effort on a trivial syntax error that prevents
+    the module from even being parsed by Python.
   severity: low
   source:
-    path: CLAUDE.md
-    lines: 42-43
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide consistent, overlapping
-  rules. `AGENTS.md` is specifically tailored for AI agents and reinforces the constraints
-  in `CLAUDE.md`. There are no direct conflicts between the two files; they act accumulatively.
+    path: AGENTS.md
+    lines: 26-26
+hierarchy_analysis: The config hierarchy is flat, consisting of two root-level files
+  (`AGENTS.md` and `CLAUDE.md`) that contain largely overlapping instructions. No
+  deep traversal or conflict resolution between files is required.
+rubric:
+- rule: If AGENTS.md is modified, ensure the changes are properly formatted and preserve
+    existing structure.
+  source:
+    path: AGENTS.md
+    lines: "1-100"
+  evidence: No changes to AGENTS.md are needed for this syntax fix task. The agent should
+    focus on code changes only, without unnecessarily modifying configuration files.
+  category: tooling
+  reference: |
+    No modifications to AGENTS.md required for this task.
+    The fix is a pure code change (removing duplicate kwarg) that doesn't affect
+    agent configuration or require documentation updates.

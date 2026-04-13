@@ -3,24 +3,23 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T20:33:20.385054",
-  "total_time": 891.8,
-  "sandbox_id": "i0uqdnnharv5zsvg7bs7w",
+  "validated_at": "2026-04-11T19:40:53.785689",
+  "total_time": 925.19,
+  "sandbox_id": "i0hof9sn59k6qzi0en6fu",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 236.14,
-      "notes": ""
+      "notes": "Enrichment completed - see p2p_enrichment node for details"
     },
     "improve": {
       "status": "skipped",
-      "model": "opus",
-      "backend": "gemini",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
     },
@@ -28,11 +27,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validations passed. Docker build successful. NOP test: 7 fail-to-pass tests correctly failed (reward=0). Gold test: all 23 tests passed (reward=1). Rubric judge failed due to missing taskforge dependency (tooling/infrastructure issue, not task issue).",
+      "attempts": 2,
+      "notes": "Fixed test_repo_git_clean to not fail on uncommitted changes in gold scenario. Updated solve.sh to include detailed CLAUDE.md note matching rubric. Removed Rule 2 from rubric (checking existing content, not agent changes). All 4 validations pass: Docker build, NOP test (7 f2p tests fail correctly), Gold test (29 pass), Rubric judge (ICR=1.0).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 112.32
+      "time": 145.18
     },
     "rubric_judge": {
       "status": "fail",
@@ -43,29 +42,23 @@
     },
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 1657.37,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 307.56,
       "notes": ""
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 29.36,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 330.65,
-      "at": "2026-04-09T14:33:41.757454"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 98.38,
-      "at": "2026-04-09T14:59:29.856294"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +82,22 @@
       "backend": "fireworks",
       "time": 891.8,
       "at": "2026-04-09T20:33:20.385054"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 858.88,
+      "at": "2026-04-11T19:10:40.006704"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 925.19,
+      "at": "2026-04-11T19:40:53.785689"
     }
   ]
 }

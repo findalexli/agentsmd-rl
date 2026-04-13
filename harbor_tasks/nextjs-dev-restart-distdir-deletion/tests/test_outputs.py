@@ -324,3 +324,251 @@ def test_dev_only_code_guard():
         "wp.on('remove') must be inside the if (isDev) block - "
         "directory deletion watching is dev-server-only behavior"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - Unit tests for modified code area
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - Unit tests for find-config
+def test_repo_unit_find_config():
+    """Unit tests for find-config pass (next.config.js location during startup)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const { execSync } = require('child_process');
+const path = require('path');
+
+// Check if jest is available and run the find-config unit test
+const testPath = path.join('/workspace/next.js', 'test/unit/find-config.test.ts');
+const fs = require('fs');
+
+if (!fs.existsSync(testPath)) {
+    console.log('SKIP: find-config.test.ts not found');
+    process.exit(0);
+}
+
+// Run jest on the specific test file
+try {
+    execSync('npx jest test/unit/find-config.test.ts --testPathIgnorePatterns=[] --passWithNoTests', {
+        cwd: '/workspace/next.js',
+        stdio: 'pipe',
+        timeout: 60000
+    });
+    console.log('OK');
+} catch (e) {
+    console.error('Test failed:', e.message);
+    process.exit(1);
+}
+"""],
+        capture_output=True, text=True, timeout=90, cwd=str(REPO),
+    )
+    if 'SKIP' in r.stdout or 'Cannot find module' in r.stderr:
+        return  # Skip if test file not found
+    assert r.returncode == 0, f"find-config unit tests failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "find-config tests did not complete"
+
+
+# [repo_tests] pass_to_pass - Unit tests for parse-page-static-info
+def test_repo_unit_parse_page_static_info():
+    """Unit tests for parse-page-static-info pass (server startup page parsing)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const { execSync } = require('child_process');
+const path = require('path');
+
+// Check if jest is available and run the parse-page-static-info unit test
+const testPath = path.join('/workspace/next.js', 'test/unit/parse-page-static-info.test.ts');
+const fs = require('fs');
+
+if (!fs.existsSync(testPath)) {
+    console.log('SKIP: parse-page-static-info.test.ts not found');
+    process.exit(0);
+}
+
+// Run jest on the specific test file
+try {
+    execSync('npx jest test/unit/parse-page-static-info.test.ts --testPathIgnorePatterns=[] --passWithNoTests', {
+        cwd: '/workspace/next.js',
+        stdio: 'pipe',
+        timeout: 60000
+    });
+    console.log('OK');
+} catch (e) {
+    console.error('Test failed:', e.message);
+    process.exit(1);
+}
+"""],
+        capture_output=True, text=True, timeout=90, cwd=str(REPO),
+    )
+    if 'SKIP' in r.stdout or 'Cannot find module' in r.stderr:
+        return  # Skip if test file not found
+    assert r.returncode == 0, f"parse-page-static-info unit tests failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "parse-page-static-info tests did not complete"
+
+
+# [repo_tests] pass_to_pass - Unit tests for find-page-file
+def test_repo_unit_find_page_file():
+    """Unit tests for find-page-file pass (dev server page lookup)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const { execSync } = require('child_process');
+const path = require('path');
+
+// Check if jest is available and run the find-page-file unit test
+const testPath = path.join('/workspace/next.js', 'test/unit/find-page-file.test.ts');
+const fs = require('fs');
+
+if (!fs.existsSync(testPath)) {
+    console.log('SKIP: find-page-file.test.ts not found');
+    process.exit(0);
+}
+
+// Run jest on the specific test file
+try {
+    execSync('npx jest test/unit/find-page-file.test.ts --testPathIgnorePatterns=[] --passWithNoTests', {
+        cwd: '/workspace/next.js',
+        stdio: 'pipe',
+        timeout: 60000
+    });
+    console.log('OK');
+} catch (e) {
+    console.error('Test failed:', e.message);
+    process.exit(1);
+}
+"""],
+        capture_output=True, text=True, timeout=90, cwd=str(REPO),
+    )
+    if 'SKIP' in r.stdout or 'Cannot find module' in r.stderr:
+        return  # Skip if test file not found
+    assert r.returncode == 0, f"find-page-file unit tests failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "find-page-file tests did not complete"
+
+
+# [repo_tests] pass_to_pass - TypeScript check for start-server.ts
+def test_repo_typescript_check_start_server():
+    """TypeScript can parse start-server.ts without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const path = require('path');
+
+const srcPath = '/workspace/next.js/packages/next/src/server/lib/start-server.ts';
+const src = fs.readFileSync(srcPath, 'utf8');
+
+// Basic TypeScript syntax checks
+// 1. Check for balanced braces
+const openBraces = (src.match(/{/g) || []).length;
+const closeBraces = (src.match(/}/g) || []).length;
+if (openBraces !== closeBraces) {
+    console.error('Unbalanced braces:', openBraces, 'open vs', closeBraces, 'close');
+    process.exit(1);
+}
+
+// 2. Check for balanced parentheses
+const openParens = (src.match(/\\(/g) || []).length;
+const closeParens = (src.match(/\\)/g) || []).length;
+if (openParens !== closeParens) {
+    console.error('Unbalanced parentheses:', openParens, 'open vs', closeParens, 'close');
+    process.exit(1);
+}
+
+// 3. Check for TypeScript-specific keywords and patterns
+const hasImport = /import\s+.*\s+from\s+['"]/.test(src);
+const hasExport = /export\s+(default\s+)?/.test(src);
+const hasTypeAnnotation = /:\s*(string|number|boolean|Promise|void|any)/.test(src);
+
+if (!hasImport && !hasExport) {
+    console.error('Missing import/export statements');
+    process.exit(1);
+}
+
+console.log('OK: TypeScript syntax checks passed');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"TypeScript check for start-server.ts failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "TypeScript check did not complete"
+
+
+# [repo_tests] pass_to_pass - CI: Watchpack import check
+def test_repo_watchpack_import():
+    """CI: Watchpack import exists in start-server.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+
+const srcPath = '/workspace/next.js/packages/next/src/server/lib/start-server.ts';
+const src = fs.readFileSync(srcPath, 'utf8');
+
+// Check for Watchpack import (required for the PR fix)
+const hasWatchpackImport = src.includes("import Watchpack from 'next/dist/compiled/watchpack'");
+
+if (!hasWatchpackImport) {
+    console.error('Missing Watchpack import in start-server.ts');
+    process.exit(1);
+}
+
+console.log('OK: Watchpack import found');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Watchpack import check failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "Watchpack import check did not complete"
+
+
+# [repo_tests] pass_to_pass - CI: isDev guard pattern check
+def test_repo_isdev_guard_structure():
+    """CI: isDev guard block exists for dev-only code (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+
+const srcPath = '/workspace/next.js/packages/next/src/server/lib/start-server.ts';
+const src = fs.readFileSync(srcPath, 'utf8');
+
+// Check that isDev is used to guard dev-only code sections
+const hasIsDevDeclaration = /isDev\s*:\s*boolean/.test(src);
+const hasIsDevCondition = /if\s*\(\s*isDev\s*\)/.test(src);
+
+if (!hasIsDevDeclaration) {
+    console.error('Missing isDev declaration in start-server.ts');
+    process.exit(1);
+}
+
+if (!hasIsDevCondition) {
+    console.error('Missing if (isDev) guard in start-server.ts');
+    process.exit(1);
+}
+
+console.log('OK: isDev guard structure found');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"isDev guard check failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "isDev guard check did not complete"
+
+
+# [repo_tests] pass_to_pass - CI: Config files constant check
+def test_repo_config_files_constant():
+    """CI: CONFIG_FILES constant is imported for config watching (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+
+const srcPath = '/workspace/next.js/packages/next/src/server/lib/start-server.ts';
+const src = fs.readFileSync(srcPath, 'utf8');
+
+// Check for CONFIG_FILES import (needed for watchConfigFiles)
+const hasConfigFilesImport = src.includes('CONFIG_FILES');
+
+if (!hasConfigFilesImport) {
+    console.error('Missing CONFIG_FILES import in start-server.ts');
+    process.exit(1);
+}
+
+console.log('OK: CONFIG_FILES import found');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"CONFIG_FILES check failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "CONFIG_FILES check did not complete"

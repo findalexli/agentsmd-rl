@@ -41,6 +41,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: dataloader.py compiles as valid Python bytecode
+- id: repo_bandit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bandit security checks pass on dataloader.py
 - id: no_trailing_whitespace
   type: pass_to_pass
   origin: static
@@ -75,58 +79,48 @@ checks:
     lines: 100-101
     commit: fdca82dc09e76052fd6ee2fe22afcdc5ff044743
 rubric:
-- rule: EvalDistributedSampler has explicit type annotations on __init__ parameters
-    (dataset, num_replicas, rank, shuffle, seed, drop_last)
-  source:
-    path: areal/utils/dataloader.py
-    lines: 77-85
-    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
-- rule: EvalDistributedSampler correctly handles total_size calculation without padding
-    when drop_last=False
-  source:
-    path: areal/utils/dataloader.py
-    lines: 88-91
-    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
-- rule: Composition over inheritance -- keep hierarchies <= 2 levels
+- rule: AGENTS.md was not modified - no unnecessary documentation changes
   source:
     path: AGENTS.md
-    lines: 45-46
-  evidence: The gold solution creates `EvalDistributedSampler` which inherits directly
-    from `DistributedSampler`, keeping the inheritance hierarchy shallow (1 level
-    of custom inheritance) and adhering to the cons
+    lines: 1
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  evidence: Gold solution only modifies dataloader.py, not AGENTS.md
+  category: scope
+- rule: CLAUDE.md was not modified - no unnecessary documentation changes
+  source:
+    path: CLAUDE.md
+    lines: 1
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  evidence: Gold solution only modifies dataloader.py, not CLAUDE.md
+  category: scope
+- rule: cli_args.py was not modified - handled via isinstance check in dataloader instead
+  source:
+    path: areal/api/cli_args.py
+    lines: 1
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  evidence: Gold solution avoids modifying config structures per AGENTS.md guidance
   category: architecture
-- rule: Follow existing code patterns in the same module
-  source:
-    path: CLAUDE.md
-    lines: 51-52
-  evidence: The gold solution integrates the new sampler cleanly into `create_dataloader`
-    by introducing `sampler_cls` and `drop_sampler_last` variables, rather than duplicating
-    the entire `StatefulDataLoader` in
-  category: style
 distractors:
-- rule: 'Ask First: Modifying config structures in areal/api/cli_args.py'
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   collision_type: architecture_boundary
-  why_distracting: The bug description explicitly lists `areal/api/cli_args.py` as
-    a relevant file. An agent might be tempted to modify `ValidDatasetConfig` to add
-    `drop_last` or `pad` fields to control the sampler behavior. However, doing so
-    violates the strict 'Ask First' constraint for modifying config structures. The
-    gold solution correctly avoids touching `cli_args.py` and instead uses `isinstance`
-    checking within `dataloader.py`.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 56-57
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The rule mandates adding tests for new functionality. An agent
-    might waste effort trying to create a new test file for `EvalDistributedSampler`
-    or modifying existing tests, which could lead to hallucinated test paths or broken
-    test suites. The gold solution focuses strictly on the fix in `dataloader.py`.
+  why_distracting: The agent might try to use composition to wrap `DistributedSampler`
+    instead of inheriting from it. However, PyTorch's `DataLoader` expects a `Sampler`
+    object, and inheriting from `DistributedSampler` is the standard and much simpler
+    way to override the padding behavior.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: '53'
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md are Level 0 and contain largely overlapping
-  rules. The constraints on modifying cli_args.py and adding tests are consistent
-  across both files, meaning the agent receives strong, unified signals about these
-  boundaries.
+    path: AGENTS.md
+    lines: 66-66
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a new test file or modify existing
+    tests to cover `EvalDistributedSampler`, which is out of scope for this specific
+    bug fix PR and not present in the gold solution.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 31-31
+hierarchy_analysis: AGENTS.md and CLAUDE.md provide overlapping rules at the root
+  level. The agent must synthesize the constraint against modifying `cli_args.py`
+  to arrive at the `isinstance` check in `dataloader.py`, while ignoring the 'composition
+  over inheritance' rule because it crosses the PyTorch architecture boundary.

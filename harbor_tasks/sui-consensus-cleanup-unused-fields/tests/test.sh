@@ -1,18 +1,12 @@
 #!/bin/bash
+set -e
 
-# Install pytest if needed
-pip3 install pytest --break-system-packages 2>/dev/null || pip3 install pytest
+# Run pytest with verbose output
+cd /workspace/requests || exit 1
 
-# Run the tests - always write reward at the end
-cd /workspace/sui
-python3 -m pytest /tests/test_outputs.py -v --tb=short
-EXIT_CODE=$?
+# Run all tests
+python -m pytest /tests/test_outputs.py -v 2>&1
 
-# Write binary reward to the verifier log
-if [ $EXIT_CODE -eq 0 ]; then
-    echo "1" > /logs/verifier/reward.txt
-else
-    echo "0" > /logs/verifier/reward.txt
-fi
-
-exit $EXIT_CODE
+# If we get here, all tests passed
+mkdir -p /logs/verifier
+echo "1" > /logs/verifier/reward.txt

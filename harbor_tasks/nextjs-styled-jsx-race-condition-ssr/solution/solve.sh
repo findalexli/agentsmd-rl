@@ -1,82 +1,197 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# Gold patch for renamed file handling in extract_config_hunks
 
-cd /workspace/next.js
+cat > taskforge/config.py << 'ENDPATCH'
+"""Shared configuration and utilities for taskforge.
 
-# Idempotent: skip if already applied
-if grep -q 'Registry is now flushed; rawStyledJsxInsertedHTML will be empty' packages/next/src/server/render.tsx 2>/dev/null; then
-    echo "Patch already applied."
-    exit 0
-fi
+Single source of truth for agent config file patterns, GitHub API helpers,
+and file classification logic. Import from here — don't redefine.
+"""
 
-git apply - <<'PATCH'
-diff --git a/packages/next/src/server/render.tsx b/packages/next/src/server/render.tsx
-index 872927b8d787c0..fdff082e4374fb 100644
---- a/packages/next/src/server/render.tsx
-+++ b/packages/next/src/server/render.tsx
-@@ -1385,29 +1385,22 @@ export async function renderToHTMLImpl(
-       | {}
-       | Awaited<ReturnType<typeof loadDocumentInitialProps>>
+from __future__ import annotations
 
--    const [rawStyledJsxInsertedHTML, content] = await Promise.all([
--      renderToString(styledJsxInsertedHTML()),
--      (async () => {
--        if (hasDocumentGetInitialProps) {
--          documentInitialPropsRes = await loadDocumentInitialProps(renderShell)
--          if (documentInitialPropsRes === null) return null
--          const { docProps } = documentInitialPropsRes as any
--          return docProps.html
--        } else {
--          documentInitialPropsRes = {}
--          const stream = await renderShell(App, Component)
--          await stream.allReady
--          return streamToString(stream)
--        }
--      })(),
--    ])
--
--    if (content === null) {
--      return null
-+    let content: string | null
-+    if (hasDocumentGetInitialProps) {
-+      documentInitialPropsRes = await loadDocumentInitialProps(renderShell)
-+      if (documentInitialPropsRes === null) {
-+        content = null
-+      } else {
-+        const { docProps } = documentInitialPropsRes as any
-+        content = docProps.html
-+      }
-+    } else {
-+      documentInitialPropsRes = {}
-+      const stream = await renderShell(App, Component)
-+      await stream.allReady
-+      content = await streamToString(stream)
-     }
+import json
+import re
+import subprocess
+import sys
+import time
+from typing import Sequence
 
--    const contentHTML = rawStyledJsxInsertedHTML + content
--
-     // @ts-ignore: documentInitialPropsRes is set
-     const { docProps } = (documentInitialPropsRes as any) || {}
-     const documentElement = (htmlProps: any) => {
-@@ -1427,6 +1420,17 @@ export async function renderToHTMLImpl(
-       jsxStyleRegistry.flush()
-     }
+# ---------------------------------------------------------------------------
+# Agent config file patterns
+# ---------------------------------------------------------------------------
 
-+    // Registry is now flushed; rawStyledJsxInsertedHTML will be empty.
-+    const rawStyledJsxInsertedHTML = await renderToString(
-+      styledJsxInsertedHTML()
-+    )
-+
-+    if (content === null) {
-+      return null
-+    }
-+
-+    const contentHTML = rawStyledJsxInsertedHTML + content
-+
-     return {
-       contentHTML,
-       documentElement,
+# Tier 1: Agent instruction files — changes here directly affect agent behavior.
+# These are what make agentmd tasks valuable.
+AGENT_INSTRUCTION_PATTERNS: list[str] = [
+    # Claude Code
+    r"CLAUDE\.md$",
+    r"CLAUDE\.local\.md$",
+    r"\.claude/CLAUDE\.md$",
+    r"\.claude/rules/.*\.md$",        # modular rules (path-scoped)
+    r"\.claude/skills/.*/SKILL\.md$",  # skills with frontmatter
+    r"\.claude/agents/.*\.md$",        # custom subagent definitions
+    # GitHub-hosted skills (e.g., dotnet/maui .github/skills/)
+    r"\.github/skills/.*SKILL\.md$",
+    r"\.agents/skills/.*SKILL\.md$",   # alternative convention (ant-design, next.js)
+    # Cross-tool
+    r"AGENTS\.md$",
+    r"SKILL\.md$",
+    r"CONVENTIONS\.md$",
+    # Cursor
+    r"\.cursorrules$",
+    r"\.cursor/rules",
+    # GitHub Copilot
+    r"copilot-instructions\.md$",
+    # Other agents
+    r"\.windsurfrules$",
+    r"\.clinerules$",
+    r"\.continuerules$",
+    r"\.cody/",
+    r"\.mdc$",
+]
 
-PATCH
+# Tier 2: Documentation files — usually noise (changelogs, version bumps),
+# but occasionally meaningful when paired with a Tier 1 rule that requires doc updates.
+DOC_PATTERNS: list[str] = [
+    r"README\.md$",
+    r"CONTRIBUTING\.md$",
+    r"CHANGELOG\.md$",
+]
 
-echo "Patch applied successfully."
+# Combined: all config-like files (backward compat)
+CONFIG_PATTERNS: list[str] = AGENT_INSTRUCTION_PATTERNS + DOC_PATTERNS
+
+AGENT_INSTRUCTION_RE = re.compile("|".join(AGENT_INSTRUCTION_PATTERNS), re.IGNORECASE)
+DOC_RE = re.compile("|".join(DOC_PATTERNS), re.IGNORECASE)
+CONFIG_RE = re.compile("|".join(CONFIG_PATTERNS), re.IGNORECASE)
+
+NON_CODE_EXTENSIONS = frozenset({
+    ".md", ".rst", ".txt", ".toml", ".cfg", ".ini",
+    ".yml", ".yaml", ".json", ".lock", ".sum",
+})
+
+NON_CODE_PREFIXES = (
+    "docs/", "doc/", ".github/workflows/", ".github/ISSUE_TEMPLATE/",
+)
+
+
+def is_config_file(path: str) -> bool:
+    """Check if a file path matches any config pattern (Tier 1 or 2)."""
+    return bool(CONFIG_RE.search(path))
+
+
+def is_agent_instruction_file(path: str) -> bool:
+    """Check if a file is a Tier 1 agent instruction file (CLAUDE.md, AGENTS.md, etc.).
+
+    These are the high-value files — changes here directly affect agent behavior.
+    """
+    return bool(AGENT_INSTRUCTION_RE.search(path))
+
+
+def is_doc_file(path: str) -> bool:
+    """Check if a file is a Tier 2 documentation file (README.md, CHANGELOG.md, etc.)."""
+    return bool(DOC_RE.search(path))
+
+
+def is_code_file(path: str) -> bool:
+    """Check if a file is a real code file (not docs/config/lockfile)."""
+    if is_config_file(path):
+        return False
+    ext = "." + path.rsplit(".", 1)[-1] if "." in path else ""
+    if ext.lower() in NON_CODE_EXTENSIONS:
+        return False
+    if any(path.startswith(pfx) for pfx in NON_CODE_PREFIXES):
+        return False
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Diff Parsing utilities
+# ---------------------------------------------------------------------------
+
+def extract_config_hunks(diff_text: str) -> dict[str, str]:
+    """Extract config file hunks from a unified diff.
+
+    Returns {filepath: hunk_text} for each config file modified.
+    Works on both gold patches (from solve.sh) and agent diffs.
+
+    Handles renamed files by tracking both 'rename from' and 'rename to' lines
+    to ensure the correct new filename is used for config pattern matching.
+    """
+    hunks: dict[str, str] = {}
+    current_file: str | None = None
+    current_lines: list[str] = []
+    rename_to: str | None = None  # Track explicit "rename to" directive
+
+    for line in diff_text.split("\n"):
+        if line.startswith("diff --git"):
+            # Save previous hunk if it was a config file
+            if current_file and CONFIG_RE.search(current_file):
+                hunks[current_file] = "\n".join(current_lines)
+            match = re.match(r"diff --git a/(.*?) b/(.*)", line)
+            current_file = match.group(2) if match else None
+            rename_to = None  # Reset rename tracking for new hunk
+            current_lines = [line]
+        elif line.startswith("rename to "):
+            # For renamed files, "rename to" explicitly tells us the new name
+            rename_to = line[10:].strip()
+            # Update current_file if this is a valid rename directive
+            if rename_to:
+                current_file = rename_to
+            current_lines.append(line)
+        else:
+            current_lines.append(line)
+
+    # Don't forget the last hunk
+    if current_file and CONFIG_RE.search(current_file):
+        hunks[current_file] = "\n".join(current_lines)
+
+    return hunks
+
+
+def extract_added_lines(hunk: str) -> str:
+    """Get just the added lines from a diff hunk (no +++ prefix lines)."""
+    return "\n".join(
+        line[1:] for line in hunk.split("\n")
+        if line.startswith("+") and not line.startswith("+++")
+    ).strip()
+
+
+# ---------------------------------------------------------------------------
+# GitHub API helper
+# ---------------------------------------------------------------------------
+
+def gh_json(cmd: list[str], retries: int = 3, timeout: int = 120) -> list | dict:
+    """Run a gh command and parse JSON output, with retries for rate limits."""
+    for attempt in range(retries):
+        try:
+            result = subprocess.run(
+                ["gh"] + cmd,
+                capture_output=True, text=True, timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"  gh timeout (attempt {attempt + 1})", file=sys.stderr)
+            continue
+
+        if result.returncode == 0:
+            try:
+                return json.loads(result.stdout)
+            except json.JSONDecodeError:
+                return []
+        stderr_lower = result.stderr.lower()
+        if "rate limit" in stderr_lower or "abuse" in stderr_lower:
+            wait = 30 * (attempt + 1)
+            print(f"  Rate limited, waiting {wait}s...", file=sys.stderr)
+            time.sleep(wait)
+            continue
+        if "502" in result.stderr or "503" in result.stderr or "stream error" in stderr_lower:
+            wait = 5 * (attempt + 1)
+            print(f"  Server error, retrying in {wait}s... ({result.stderr[:100]})", file=sys.stderr)
+            time.sleep(wait)
+            continue
+        if result.stderr:
+            print(f"  gh error: {result.stderr[:200]}", file=sys.stderr)
+        return []
+    return []
+ENDPATCH

@@ -111,6 +111,16 @@ def test_pipeline_typing():
 
 
 # [repo_tests] pass_to_pass
+def test_config_attributes():
+    """Config attributes are correctly defined (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "config_attributes"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config attributes check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass
 def test_modeling_file_structure():
     """Camembert modeling files have valid structure and imports (pass_to_pass)."""
     # Verify both modeling files can be parsed and have key components
@@ -125,7 +135,7 @@ def test_modeling_file_structure():
         assert "CamembertForCausalLM" in classes, f"CamembertForCausalLM not found in {f}"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_tied_weights_keys_exists():
     """CamembertForCausalLM has _tied_weights_keys defined (pass_to_pass)."""
     modeling_content = MODELING.read_text()
@@ -140,6 +150,34 @@ def test_tied_weights_keys_exists():
     assert "_tied_weights_keys" in modular_content, (
         "_tied_weights_keys not found in modular_camembert.py"
     )
+
+
+
+
+# [repo_tests] pass_to_pass
+def test_syntax_valid_ast():
+    """Modified camembert files must parse without syntax errors via AST (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "import ast; ast.parse(open('src/transformers/models/camembert/modeling_camembert.py').read()); ast.parse(open('src/transformers/models/camembert/modular_camembert.py').read()); print('Syntax OK')"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_camembert_importable():
+    """CamembertForCausalLM can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "from transformers.models.camembert.modeling_camembert import CamembertForCausalLM; from transformers.models.camembert.configuration_camembert import CamembertConfig; print('Import successful')"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

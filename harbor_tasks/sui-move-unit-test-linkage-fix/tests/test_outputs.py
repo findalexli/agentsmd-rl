@@ -168,5 +168,59 @@ def test_repo_cargo_fmt():
     )
 
 
+def test_repo_cargo_test_move_unit_test():
+    """PASS_TO_PASS: Cargo test for move-unit-test crate passes (CI ref external.yml).
+
+    This test runs the unit tests for the move-unit-test crate specifically,
+    as referenced in the external.yml CI workflow.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "move-unit-test", "--", "--test-threads=4"],
+        cwd=f"{REPO}/external-crates/move",
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, (
+        f"Cargo test for move-unit-test failed:\nstderr: {result.stderr[-2000:]}"
+    )
+
+
+def test_repo_cargo_check_move_vm_runtime():
+    """PASS_TO_PASS: Cargo check for move-vm-runtime passes (PR dependency).
+
+    The PR fix depends on linkage_context from move-vm-runtime.
+    This test verifies the runtime crate compiles correctly.
+    """
+    result = subprocess.run(
+        ["cargo", "check", "-p", "move-vm-runtime"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, (
+        f"Cargo check for move-vm-runtime failed:\nstderr: {result.stderr[-2000:]}"
+    )
+
+
+def test_repo_cargo_check_move_stdlib():
+    """PASS_TO_PASS: Cargo check for move-stdlib passes (test dependency).
+
+    The move-unit-test crate depends on move-stdlib.
+    This test verifies the stdlib crate compiles correctly.
+    """
+    result = subprocess.run(
+        ["cargo", "check", "-p", "move-stdlib"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, (
+        f"Cargo check for move-stdlib failed:\nstderr: {result.stderr[-2000:]}"
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

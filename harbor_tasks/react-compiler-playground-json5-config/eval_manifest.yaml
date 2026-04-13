@@ -77,6 +77,27 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: json5 dependency is available for repo tests
+- id: test_repo_tsconfig_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's playground tsconfig.json is valid JSON via node JSON.parse
+- id: test_repo_eslintrc_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's playground .eslintrc.json is valid JSON via node JSON.parse
+- id: test_repo_yarn_install_frozen_lockfile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's playground yarn install --frozen-lockfile passes CI validation
+- id: test_repo_page_spec_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's page.spec.ts e2e test file has valid syntax via node --check
+- id: test_repo_prettier_check_page_spec
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's page.spec.ts passes prettier formatting check via npx prettier
+    --check
 rubric:
 - rule: Run compiler tests with `yarn snap` when modifying compiler files. Tests should
     pass before submitting.
@@ -84,62 +105,59 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 21-36
     commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  reference: DISTRACTOR - This rule applies to core compiler passes, not the playground
+    app.
 - rule: Format code with `yarn prettier-all` when modifying compiler files. Code must
     pass formatting checks.
   source:
     path: compiler/CLAUDE.md
     lines: 45-50
     commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  reference: DISTRACTOR - This rule is for core compiler package.
 - rule: Use Sapling (`sl`) commands for version control, not git. Use `sl addremove`
     to track new/deleted files and `sl commit` to commit changes.
   source:
     path: compiler/CLAUDE.md
     lines: 77-98
     commit: 74568e8627aa43469b74f2972f427a209639d0b6
-- rule: React Compiler files are located in the `/compiler/` directory.
-  source:
-    path: CLAUDE.md
-    lines: 8-9
-  evidence: The gold solution correctly targets files within the `/compiler/` directory
-    (`compiler/apps/playground/...`) for React Compiler related changes, respecting
-    the monorepo structure.
-  category: architecture
+  reference: DISTRACTOR - The environment uses git, not sl.
+- rule: React Compiler playground files are located in the `/compiler/apps/playground/`
+    directory. Changes to the playground app should only modify files within this directory
+    tree, not the core compiler packages.
+  reference: 'PASS: The gold solution correctly modifies files within /compiler/apps/playground/
+    (compilation.ts, defaultStore.ts, ConfigEditor.tsx, package.json, page.spec.ts).
+    This rule is satisfied because all changed files are in the compiler/apps/playground/
+    directory.'
 distractors:
-- rule: Use Sapling (`sl`) for version control (e.g., `sl status`, `sl addremove`,
-    `sl commit`).
-  collision_type: meta_confusion
-  why_distracting: The instructions state to use Sapling (`sl`) for version control,
-    but the standard evaluation environment uses `git` (as seen in the gold solution's
-    `git status` and `git commit` commands). Attempting to use `sl` will fail and
-    waste agent effort.
-  severity: high
-  source:
-    path: compiler/CLAUDE.md
-    lines: 61-75
-- rule: Run tests using `yarn snap` or `yarn snap -p <pattern>`.
-  collision_type: architecture_boundary
-  why_distracting: The instructions tell the developer to use `yarn snap` to run tests.
-    However, `yarn snap` is specific to the `babel-plugin-react-compiler` package
-    and its fixture tests. The changes in this PR are in `compiler/apps/playground/`,
-    which has its own tests. Running `yarn snap` will not test the playground changes.
-  severity: high
-  source:
-    path: compiler/CLAUDE.md
-    lines: 20-33
 - rule: When modifying the compiler, you MUST read the documentation about that pass
-    in `docs/passes/`.
+    in compiler/packages/babel-plugin-react-compiler/docs/passes/
   collision_type: scope_ambiguity
-  why_distracting: The instructions mandate reading documentation in `docs/passes/`
-    when modifying the compiler. This PR modifies the playground app's config parsing,
-    not the compiler's internal passes, making this rule irrelevant and distracting.
+  why_distracting: The task is to fix an XSS vulnerability in the playground's config
+    parser, which is a separate app, not a compiler pass. Looking for pass documentation
+    would waste time and confuse the agent.
   severity: medium
   source:
     path: compiler/CLAUDE.md
-    lines: 11-18
-hierarchy_analysis: The root `CLAUDE.md` correctly routes React Compiler tasks to
-  the `/compiler/` directory. However, `compiler/CLAUDE.md` is heavily biased towards
-  the `babel-plugin-react-compiler` package (the core compiler) rather than the `apps/playground`
-  package. This creates significant scope ambiguity and architecture boundary collisions,
-  as the tooling (`yarn snap`), linting, and documentation rules in `compiler/CLAUDE.md`
-  do not apply to the playground app being modified in this PR. Additionally, the
-  version control instructions (`sl`) conflict with the standard git environment.
+    lines: 8-10
+- rule: Run all tests using `yarn snap`
+  collision_type: scope_ambiguity
+  why_distracting: '`yarn snap` is for the main compiler package''s snapshot tests,
+    but the task involves the playground app. The agent might try to run `yarn snap`
+    to test its changes and get confused when it doesn''t run the playground tests.'
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 20-22
+- rule: This repository uses Sapling (sl) for version control.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use `sl` commands to check status or commit,
+    which could fail or cause confusion if the environment uses `git` (as seen in
+    the gold solution's `git status`).
+  severity: low
+  source:
+    path: compiler/CLAUDE.md
+    lines: 60-62
+hierarchy_analysis: The root CLAUDE.md delegates compiler-specific instructions to
+  compiler/CLAUDE.md. However, compiler/CLAUDE.md is heavily focused on the babel-plugin-react-compiler
+  package, whereas this task is in compiler/apps/playground. The agent must recognize
+  this scope boundary and not apply compiler-pass rules to the playground app.

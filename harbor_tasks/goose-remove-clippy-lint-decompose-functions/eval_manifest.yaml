@@ -61,40 +61,27 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's workspace library code compiles with cargo check
+- id: test_repo_cargo_clippy_all_targets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must pass clippy on all targets
 rubric:
-- rule: Error handling should not add context that duplicates what the error already
-    states (e.g., avoid .context("Failed to X") when the error message already indicates
-    failure)
+- rule: 'Never: Merge without ./scripts/clippy-lint.sh'
   source:
     path: AGENTS.md
-    lines: '86'
-    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
-- rule: Self-evident operations must not have comments that restate what the code
-    does (e.g., // Initialize, // Return result), getters/setters, constructors, or
-    standard Rust idioms should not be commented
+    lines: 95-95
+  reference: 'Never: Merge without running clippy'
+  evidence: 'Instead of simply deleting the obsolete rule, the gold solution updates
+    it to `Never: Merge without running clippy`, preserving the strict linting requirement
+    while adapting to the new tooling.'
+  category: testing
+- rule: Update all documentation and configuration files that reference the old clippy
+    scripts to use the new standard approach
   source:
     path: AGENTS.md
-    lines: 95-96
-    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
-- rule: Comments should only explain why not what - prefer clear names over comments,
-    only comment for complex algorithms, non-obvious business logic
-  source:
-    path: AGENTS.md
-    lines: 81-83
-    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
-- rule: Avoid overly defensive code - trust Rust type system instead of adding unnecessary
-    checks
-  source:
-    path: AGENTS.md
-    lines: '87'
-    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
-- rule: This is a Rust project using cargo workspaces
-  source:
-    path: .github/copilot-instructions.md
-    lines: 42-43
-  evidence: The gold solution replaces the custom script with `cargo clippy --all-targets
-    -- -D warnings`, explicitly using `--all-targets` to ensure all crates in the
-    workspace are linted, respecting the workspa
+    lines: 29-32
+  evidence: The gold solution replaces `./scripts/clippy-lint.sh` with `cargo clippy
+    --all-targets -- -D warnings` in the Lint/Format section.
   category: tooling
 config_edits:
 - path: .github/copilot-instructions.md
@@ -125,37 +112,26 @@ config_edits:
   gold_removed: './scripts/clippy-lint.sh # run the linter'
 distractors:
 - rule: 'Never: Merge without ./scripts/clippy-lint.sh'
-  collision_type: rule_conflict
-  why_distracting: The agent is instructed to remove the custom clippy script. This
-    strict 'Never' rule directly conflicts with the instruction, potentially causing
-    the agent to leave the script, fail to update the rule, or abort the task.
+  collision_type: meta_confusion
+  why_distracting: 'The config explicitly states ''Never: Merge without ./scripts/clippy-lint.sh''.
+    An agent might hesitate to delete the script or might try to keep a wrapper script
+    to satisfy this ''Never'' rule, but the instruction explicitly demands removing
+    the custom infrastructure entirely.'
   severity: high
   source:
     path: AGENTS.md
     lines: 94-95
-- rule: 'If the PR contains both code changes to features/functionality AND updates
-    in `/documentation`: Documentation updates must be separated'
-  collision_type: scope_ambiguity
-  why_distracting: 'The agent is updating multiple markdown files (AGENTS.md, HOWTOAI.md,
-    CONTRIBUTING.md). It might mistakenly apply this rule and try to separate the
-    documentation updates or add `unlisted: true` frontmatter, missing that the rule
-    specifically applies to the `/documentation` directory for public docs.'
-  severity: medium
-  source:
-    path: .github/copilot-instructions.md
-    lines: 36-38
 - rule: 'Do not comment on: Clippy warnings - CI handles this (clippy-lint.sh)'
   collision_type: meta_confusion
-  why_distracting: This is an instruction for Copilot on how to review PRs, but it
-    references the script being removed. An agent might think it shouldn't modify
-    this file because it's 'meta' (instructions for another AI), or it might just
-    leave the `(clippy-lint.sh)` reference intact, resulting in stale documentation.
-  severity: medium
+  why_distracting: The file instructs Copilot not to comment on 'Clippy warnings -
+    CI handles this (clippy-lint.sh)'. The agent must realize it needs to edit this
+    very instruction file to update the reference, which requires modifying its own
+    meta-instructions.
+  severity: high
   source:
     path: .github/copilot-instructions.md
     lines: 78-79
-hierarchy_analysis: The config hierarchy contains rules that directly reference the
-  infrastructure being removed. The agent must recognize that its primary instruction
-  (removing the custom clippy scripts) overrides the 'Never' rules in AGENTS.md and
-  the meta-instructions in .github/copilot-instructions.md, requiring it to update
-  the rules themselves to reflect the new state.
+hierarchy_analysis: This task is highly meta-referential. The agent must edit the
+  very files that provide its instructions (`AGENTS.md`, `.github/copilot-instructions.md`).
+  It must override explicit 'Never' rules in the config files because the primary
+  instruction dictates a paradigm shift in how linting is handled.

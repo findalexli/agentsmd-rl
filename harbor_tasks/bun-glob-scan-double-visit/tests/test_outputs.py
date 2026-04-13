@@ -117,6 +117,51 @@ def test_repo_package_json_lint():
     assert r.returncode == 0, f"Package JSON lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_int_from_float():
+    """Repo's intFromFloat test passes (pass_to_pass).
+
+    Validates bun.intFromFloat function behavior for float-to-integer conversion.
+    From test/internal/int_from_float.test.ts CI test.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/internal/int_from_float.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"intFromFloat test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sort_imports():
+    """Repo's sort-imports script passes (pass_to_pass).
+
+    Validates Zig import sorting works correctly (used in CI format checks).
+    From scripts/sort-imports.ts which sorts @import statements in Zig files.
+    """
+    r = subprocess.run(
+        ["bun", "scripts/sort-imports.ts", "src"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Sort-imports failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_glob_sources():
+    """Repo's glob-sources script passes (pass_to_pass).
+
+    Validates Bun's Glob API works by scanning source files for CMake.
+    Uses bun.Glob to scan 2000+ source files - exercises glob scanning logic.
+    From scripts/glob-sources.mjs which is used by CI to generate source lists.
+    """
+    r = subprocess.run(
+        ["bun", "scripts/glob-sources.mjs"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Glob-sources failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    # Verify it actually found sources (sanity check that Glob worked)
+    assert "Globbed" in r.stdout and "sources" in r.stdout, "Glob-sources did not find any files"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------

@@ -84,26 +84,30 @@ distractors:
 - rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
     do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: The prompt provides a direct instruction to fix a specific bug
-    but lacks explicit issue coordination links or approval evidence. An agent strictly
-    following the 'fail-closed' rule would refuse to generate the patch, failing the
-    benchmark task.
+  why_distracting: The prompt does not provide an issue link or coordination evidence.
+    The agent might follow the fail-closed policy and refuse to generate the patch.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 48-51
+    path: AGENTS.md
+    lines: 58-61
 - rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
   collision_type: scope_ambiguity
-  why_distracting: The required fix is extremely small (changing `new_height, new_width`
-    to `height, width`). An agent might incorrectly categorize this one-line change
-    as a 'tiny edit' or 'busywork' and refuse to fix it, missing that it resolves
-    a critical functional bug in positional encoding.
+  why_distracting: The bug fix requires changing only a single line of code. The agent
+    might misclassify this as a 'tiny edit' or 'low-value busywork' and refuse to
+    fix it.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 34-36
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules regarding
-  agent contribution policies. There are no conflicts between the config files themselves,
-  but there is a significant conflict between the repository's strict 'fail-closed'
-  policy for autonomous agents and the benchmark's implicit requirement to generate
-  a fix.
+    path: AGENTS.md
+    lines: 42-44
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the fix because the policy explicitly
+    forbids pure code-agent PRs without a human submitter to validate the changes.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 46-56
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md contain identical repository-wide
+  contributor guidelines. They impose strict behavioral constraints on AI agents (fail-closed
+  without coordination, no tiny PRs, no pure code-agent PRs) that conflict with the
+  standard benchmark task of outputting a code fix based on a prompt.

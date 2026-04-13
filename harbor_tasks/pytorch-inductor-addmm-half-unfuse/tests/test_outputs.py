@@ -65,7 +65,7 @@ for node in ast.walk(tree):
         func_src = textwrap.dedent("".join(src_lines[node.lineno - 1:node.end_lineno]))
         ns = {{
             "torch": torch_mock,
-            "Match": type("Match", (), {{}}),
+            "Match": type("Match", (), {{}})(),
             "V": type("V", (), {{"ops": type("ops", (), {{
                 "__getattr__": lambda self, n: lambda *a, **k: None,
             }})()}})(),
@@ -312,3 +312,73 @@ def test_repo_bandit():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"bandit found security issues:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_lintrunner_flake8():
+    """Repo's lintrunner FLAKE8 check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "lintrunner", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install lintrunner: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["lintrunner", "--take", "FLAKE8", POST_GRAD],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lintrunner FLAKE8 failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_lintrunner_ruff():
+    """Repo's lintrunner RUFF check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "lintrunner", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install lintrunner: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["lintrunner", "--take", "RUFF", POST_GRAD],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lintrunner RUFF failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_lintrunner_tabs():
+    """Repo's lintrunner TABS check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "lintrunner", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install lintrunner: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["lintrunner", "--take", "TABS", POST_GRAD],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lintrunner TABS failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_lintrunner_spaces():
+    """Repo's lintrunner SPACES check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "lintrunner", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install lintrunner: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["lintrunner", "--take", "SPACES", POST_GRAD],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lintrunner SPACES failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_lintrunner_newline():
+    """Repo's lintrunner NEWLINE check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "lintrunner", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install lintrunner: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["lintrunner", "--take", "NEWLINE", POST_GRAD],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lintrunner NEWLINE failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

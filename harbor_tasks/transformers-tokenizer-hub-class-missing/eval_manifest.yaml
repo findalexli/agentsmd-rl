@@ -65,19 +65,67 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Tokenization auto module imports must work (repo import check)
+- id: repo_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copied from blocks are consistent (repo consistency check)
+- id: repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dummy objects are correctly defined (repo consistency check)
+- id: repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: __init__ files are correctly set up (repo consistency check)
+- id: repo_ruff_auto_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff check passes on transformers/models/auto/ directory
+- id: repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation TOC is valid (repo consistency check)
+- id: repo_tokenizer_mapping_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizer mapping names structure is valid (unit test from test_tokenization_auto.py)
+- id: repo_model_name_edge_cases
+  type: pass_to_pass
+  origin: repo_tests
+  description: Model name edge cases in tokenizer mappings are handled correctly
+- id: repo_check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config attributes are correctly documented (repo consistency check)
+- id: repo_check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config docstrings are correctly formatted (repo consistency check)
+- id: repo_check_pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pipeline typing is correctly defined (repo consistency check)
+config_edits:
+- path: src/transformers/models/auto/tokenization_auto.py
+  tier: 1
+  gold_added: |
+    "deepseek_v2",
+    "deepseek_v3",
+    "modernbert",
+  gold_removed: ""
+
 rubric:
-- rule: When a `modular` file is present, generated files should not be edited, as
-    changes will be overwritten by `make fix-repo`!
-  source:
-    path: CLAUDE.md
-    lines: '66'
-    commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
 - rule: Bugfix PRs should be as brief as possible and minimize the size of the diff.
     Do not add large comments, docstrings or new functions for brief fixes.
   source:
     path: .github/copilot-instructions.md
     lines: '15'
     commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+  reference: |
+    Gold solution adds exactly 3 lines to tokenization_auto.py:
+    "deepseek_v2", "deepseek_v3" in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS (after deepseek_vl_hybrid),
+    "modernbert" in the same set (after llava_next). No comments, no docstrings, no new functions.
+    Minimal diff following existing code style.
 distractors:
 - rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
     do not proceed to PR-ready output.'

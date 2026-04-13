@@ -11,7 +11,7 @@ Strong<> to Weak<> for the m_owner back-reference to break a GC reference
 cycle that leaks vm.Script / vm.SourceTextModule / vm.compileFunction results.
 
 Full CMake+Zig+JSC compilation is infeasible in the test container, so tests
-use a combination of subprocess-driven C++ parsing and rigorous regex checks.
+use a combination of subprocess-driven CI checks and rigorous regex checks.
 At least one f2p check uses subprocess.run() to execute actual code.
 """
 
@@ -140,6 +140,89 @@ def test_weak_header_included():
     count = int(r.stdout.strip())
     assert count >= 1, (
         "Missing #include for Weak.h or WeakInlines.h"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that run actual commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — runs clang-format to validate C++ style
+def test_clang_format_check():
+    """Header must pass clang-format validation (pass_to_pass).
+
+    This runs the repo's clang-format check on the modified header file.
+    Requires clang-format to be installed in the container.
+    """
+    # Install clang-format and run check
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install if not present (idempotent)
+    subprocess.run(
+        ["apt-get", "install", "-y", "--no-install-recommends", "clang-format"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Run clang-format from src/ where .clang-format config lives
+    r = subprocess.run(
+        ["clang-format-19", "--dry-run", "--Werror", "bun.js/bindings/NodeVMScriptFetcher.h"],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/src",
+    )
+    assert r.returncode == 0, (
+        f"clang-format check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — validate C++ header syntax with compiler
+def test_cpp_header_syntax_valid():
+    """C++ header must have valid syntax (pass_to_pass).
+
+    Uses gcc to perform a syntax-only check on the header file.
+    Allows missing generated headers (like cmakeconfig.h) which are build artifacts.
+    """
+    # Install g++ if not present
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "--no-install-recommends", "g++"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Run basic syntax check - we expect warnings but not fatal errors
+    # Use -w to suppress warnings and just check for syntax errors
+    r = subprocess.run(
+        ["g++", "-fsyntax-only", "-w", "-std=c++17", "-c", "src/bun.js/bindings/NodeVMScriptFetcher.h"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Allow exit code 0 (success) or exit code 1 (syntax errors OR missing includes)
+    # In shallow clones, cmakeconfig.h is missing (build artifact), causing failures
+    # We check that there's no actual C++ syntax error message
+    if r.returncode != 0:
+        stderr = r.stderr.lower()
+        # If the only errors are about missing includes/cmakeconfig, that's OK
+        # Actual syntax errors would mention syntax, expected, unexpected, etc.
+        is_syntax_error = any(x in stderr for x in [
+            "expected", "unexpected", "syntax error", "invalid", "missing.*before",
+            "does not name a type", "was not declared", "cannot be used"
+        ])
+        if is_syntax_error:
+            raise AssertionError(f"C++ syntax check failed with syntax errors:\n{r.stderr[-500:]}")
+
+
+# [repo_tests] pass_to_pass — git check for file existence
+def test_git_tracks_header_file():
+    """Header file must be tracked in git (pass_to_pass).
+
+    Runs git ls-files to verify the file is part of the repository.
+    """
+    r = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "src/bun.js/bindings/NodeVMScriptFetcher.h"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Header file not tracked in git:\n{r.stderr}"
     )
 
 

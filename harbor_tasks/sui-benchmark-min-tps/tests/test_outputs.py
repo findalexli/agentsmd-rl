@@ -97,6 +97,7 @@ def test_license_header_stress_rs():
     assert "Copyright (c) Mysten Labs, Inc." in content, "Copyright header missing in stress.rs"
 
 
+
 # ============================================================================
 # Pass-to-Pass Tests - Repo CI Commands (p2p_enrichment)
 # These run actual CI commands from the repo's CI configuration
@@ -125,3 +126,27 @@ def test_repo_git_checks():
         cwd=REPO,
     )
     assert r.returncode == 0, f"git-checks.sh failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_xlint():
+    """Repo passes cargo xlint license checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo xlint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_benchmark():
+    """Repo sui-benchmark package compiles with cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "sui-benchmark"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check --package sui-benchmark failed:\n{r.stderr[-500:]}"

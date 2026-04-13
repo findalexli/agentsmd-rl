@@ -50,6 +50,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's test types check passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test file linting passes
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's protocol channel generation passes
+- id: test_repo_generate_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type generation passes
 rubric:
 - rule: Code changes must pass the repository's lint checks (eslint, tsc, check-deps,
     lint-packages, test-types) without errors.
@@ -75,40 +87,43 @@ rubric:
     and tests `set-cookie` behavior across different browsers, which perfectly aligns
     with the directive that `tests/library/` '
   category: architecture
+- rule: Tests involving cookies, permissions, and browser-specific features belong
+    in `tests/library/`.
+  source:
+    path: CLAUDE.md
+    lines: 61-68
+  evidence: 'The gold solution modifies a test dealing with `set-cookie` and `SameSite`
+    within `tests/library/browsercontext-fetch.spec.ts`, adhering to the guideline
+    that `tests/library/` is the correct location '
+  category: testing
+- rule: tests/library/ is used for tests involving Browser/context lifecycle, cookies,
+    permissions, and browser-specific features.
+  source:
+    path: CLAUDE.md
+    lines: 76-83
+  evidence: The test deals with cookies and browser-specific behavior (isBidi, browserName),
+    so it correctly remains in `tests/library/` as per the directory purpose guidelines.
+  category: architecture
+- rule: Tests that need browser/browserType/context belong in tests/library/
+  source:
+    path: CLAUDE.md
+    lines: 68-75
+  evidence: The test remains in `tests/library/browsercontext-fetch.spec.ts` because
+    it tests browser context behavior (accessing `page.context().cookies()`), adhering
+    to the architectural boundary for library te
+  category: architecture
 distractors:
-- rule: 'Decision rule: Just needs `page` + `server` → `tests/page/`'
+- rule: 'Decision rule: Just needs page + server → tests/page/'
   collision_type: scope_ambiguity
-  why_distracting: The decision rule states 'Just needs `page` + `server` → `tests/page/`'.
-    The modified test destructures `page` and `server` (along with other fixtures),
-    which might lead an agent to incorrectly move the test to `tests/page/` instead
-    of keeping it in `tests/library/` where cookie/browser-specific tests belong.
+  why_distracting: The test signature destructures `page` and `server` (along with
+    primitive fixtures like `browserName` and `isBidi`), but not `context` or `browser`
+    directly. An agent reading the simplified decision rule might attempt to move
+    the test to `tests/page/`, which is out of scope and incorrect since the test
+    explicitly tests context-level cookie behavior.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 74-74
-- rule: Use `npm run ctest <filter>` for Chromium only library tests during development.
-  collision_type: meta_confusion
-  why_distracting: The config recommends using `npm run ctest` during development
-    for library tests. However, `ctest` only runs Chromium tests. Since this issue
-    is specifically about Firefox/BiDi behavior, following this rule to test the fix
-    would fail to verify the BiDi behavior and could lead the agent to think the issue
-    is already resolved or un-reproducible.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 50-56
-- rule: Key fixtures for `tests/library/` are `browser`, `context`, `browserType`.
-  collision_type: rule_conflict
-  why_distracting: The table lists `browser`, `context`, `browserType` as the key
-    fixtures for `tests/library/`. An agent might try to refactor the test to use
-    these fixtures instead of the existing `page`, `server`, `browserName`, and `isBidi`
-    fixtures, unnecessarily expanding the scope of the PR and potentially breaking
-    the test's logic.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 65-72
-hierarchy_analysis: 'Only a single root `CLAUDE.md` file is provided, so there are
-  no cross-file hierarchy conflicts. However, there is internal tension within the
-  file regarding test placement: the strict fixture-based decision rule (page+server
-  -> tests/page) conflicts with the feature-based directory purpose (cookies -> tests/library).'
+    lines: 68-75
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the repository root containing generic boilerplate guidelines for the Playwright
+  monorepo.

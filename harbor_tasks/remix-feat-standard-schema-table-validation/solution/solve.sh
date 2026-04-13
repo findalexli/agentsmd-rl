@@ -9,11 +9,9 @@ if grep -q 'validatePartialRowInput' packages/data-table/src/lib/table.ts 2>/dev
     exit 0
 fi
 
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
 git apply --whitespace=fix - <<'PATCH'
 diff --git a/AGENTS.md b/AGENTS.md
-index dfa203d3d43..9aee9cd378f 100644
+index dfa203d3d..9aee9cd37 100644
 --- a/AGENTS.md
 +++ b/AGENTS.md
 @@ -16,6 +16,7 @@
@@ -23,10 +21,10 @@ index dfa203d3d43..9aee9cd378f 100644
 +- **Cross-package boundaries**: Avoid re-exporting APIs/types from other packages. Consumers should import from the owning package directly. Reuse shared concepts from sibling packages internally instead of creating bespoke duplicate implementations.
  - **Philosophy**: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of Node.js APIs
  - **Tests run from source** (no build required), using Node.js test runner
-
+ 
 diff --git a/packages/data-table/.changes/minor.table-standard-schema.md b/packages/data-table/.changes/minor.table-standard-schema.md
 new file mode 100644
-index 00000000000..8778a3b348f
+index 000000000..8778a3b34
 --- /dev/null
 +++ b/packages/data-table/.changes/minor.table-standard-schema.md
 @@ -0,0 +1,3 @@
@@ -34,48 +32,48 @@ index 00000000000..8778a3b348f
 +
 +Table parsing now mirrors write validation semantics used by `create()`/`update()`: partial objects are accepted, provided values are parsed via column schemas, and unknown columns are rejected.
 diff --git a/packages/data-table/README.md b/packages/data-table/README.md
-index 616e1d5d79e..3771fd309d5 100644
+index 616e1d5d7..3771fd309 100644
 --- a/packages/data-table/README.md
 +++ b/packages/data-table/README.md
 @@ -14,10 +14,10 @@ Typed relational query toolkit for JavaScript runtimes.
-
+ 
  `data-table` gives you two complementary APIs:
-
+ 
 -- **Query Builder API** for expressive joins, aggregates, eager loading, and scoped writes
 -- **Database Helper API** for common CRUD flows (`find`, `create`, `update`, `delete`)
 +- [**Query Builder**](#query-builder) for expressive joins, aggregates, eager loading, and scoped writes
 +- [**CRUD Helpers**](#crud-helpers) for common create/read/update/delete flows (`find`, `create`, `update`, `delete`)
-
+ 
 -Both APIs are type-safe and validate values using your `remix/data-schema` definitions.
 +Both APIs are type-safe and validate values using your [remix/data-schema](https://github.com/remix-run/remix/tree/main/packages/data-schema) definitions.
-
+ 
  ## Installation
-
+ 
 @@ -67,9 +67,9 @@ let pool = new Pool({ connectionString: process.env.DATABASE_URL })
  let db = createDatabase(createPostgresDatabaseAdapter(pool))
  ```
-
+ 
 -## Query Builder API
 +## Query Builder
-
+ 
 -Use `db.query(Table)` when you need joins, custom shape selection, eager loading, or aggregate logic.
 +Use `db.query(table)` when you need joins, custom shape selection, eager loading, or aggregate logic.
-
+ 
  ```ts
  import { eq, ilike } from 'remix/data-table'
 @@ -115,11 +115,11 @@ await db
    .update({ status: 'processing' })
  ```
-
+ 
 -## Database Helper API (High-Level CRUD)
 +## CRUD Helpers
-
+ 
 -Use these helpers for common operations without building a full query chain.
 +`data-table` provides helpers for common create/read/update/delete operations. Use these helpers for common operations without building a full query chain.
-
+ 
 -### Read helpers
 +### Read operations
-
+ 
  ```ts
  import { or } from 'remix/data-table'
 @@ -216,11 +216,44 @@ Return behavior:
@@ -87,7 +85,7 @@ index 616e1d5d79e..3771fd309d5 100644
  - `update` -> updated row or `null`
  - `updateMany`/`deleteMany` -> `WriteResult`
  - `delete` -> `boolean`
-
+ 
 +### Data Validation
 +
 +For write operations, data validation happens before SQL is executed so invalid data does not get written to the database.
@@ -122,10 +120,10 @@ index 616e1d5d79e..3771fd309d5 100644
 +- Provided column values are parsed through each column schema
 +
  ## Transactions
-
+ 
  ```ts
 diff --git a/packages/data-table/src/index.ts b/packages/data-table/src/index.ts
-index 085c8a7d84..2a85c4916ef 100644
+index 0853a8a7d..2a85c4916 100644
 --- a/packages/data-table/src/index.ts
 +++ b/packages/data-table/src/index.ts
 @@ -25,7 +25,6 @@ export type {
@@ -137,13 +135,13 @@ index 085c8a7d84..2a85c4916ef 100644
    HasManyThroughOptions,
    HasOneOptions,
 diff --git a/packages/data-table/src/lib/database.ts b/packages/data-table/src/lib/database.ts
-index 127f67ceef1..80e5ea98c5f 100644
+index 127f67cee..80e5ea98c 100644
 --- a/packages/data-table/src/lib/database.ts
 +++ b/packages/data-table/src/lib/database.ts
 @@ -1,4 +1,5 @@
  import { parseSafe } from '@remix-run/data-schema'
 +import type { Schema } from '@remix-run/data-schema'
-
+ 
  import type {
    AdapterResult,
 @@ -22,17 +23,16 @@ import { DataTableAdapterError, DataTableQueryError, DataTableValidationError }
@@ -179,7 +177,7 @@ index 127f67ceef1..80e5ea98c5f 100644
  import { normalizeColumnInput } from './references.ts'
 -import type { ColumnInput, NormalizeColumnInput } from './references.ts'
 +import type { ColumnInput, NormalizeColumnInput, TableMetadataLike } from './references.ts'
-
+ 
  type QueryState = {
    select: '*' | SelectColumn[]
 @@ -152,13 +153,16 @@ export type QueryTableInput<
@@ -200,7 +198,7 @@ index 127f67ceef1..80e5ea98c5f 100644
 +> & {
 +  '~standard': Schema<unknown, Partial<row>>['~standard']
 +} & Record<string, unknown>
-
+ 
  export type QueryBuilderFor<
    tableName extends string,
 @@ -1993,7 +1997,7 @@ function prepareInsertValues<table extends AnyTable>(
@@ -211,7 +209,7 @@ index 127f67ceef1..80e5ea98c5f 100644
 +  let output = validateWriteValues(table, values)
    let timestamps = getTableTimestamps(table)
    let columns = getTableColumns(table)
-
+ 
 @@ -2025,7 +2029,7 @@ function prepareUpdateValues<table extends AnyTable>(
    now: unknown,
    touch: boolean,
@@ -220,11 +218,11 @@ index 127f67ceef1..80e5ea98c5f 100644
 +  let output = validateWriteValues(table, values)
    let timestamps = getTableTimestamps(table)
    let columns = getTableColumns(table)
-
+ 
 @@ -2043,49 +2047,52 @@ function prepareUpdateValues<table extends AnyTable>(
    return output
  }
-
+ 
 -function validatePartialRow<table extends AnyTable>(
 +function validateWriteValues<table extends AnyTable>(
    table: table,
@@ -234,28 +232,26 @@ index 127f67ceef1..80e5ea98c5f 100644
    let columns = getTableColumns(table)
    let tableName = getTableName(table)
 +  let result = validatePartialRow(table, values)
-
+ 
 -  for (let key in values as Record<string, unknown>) {
 -    if (!Object.prototype.hasOwnProperty.call(values, key)) {
+-      continue
+-    }
 +  if ('issues' in result) {
 +    let firstIssue = result.issues[0]
 +    let issuePath = firstIssue?.path
 +    let firstPathSegment = issuePath && issuePath.length > 0 ? issuePath[0] : undefined
 +    let column = typeof firstPathSegment === 'string' ? firstPathSegment : undefined
-+
-+    if (column && !Object.prototype.hasOwnProperty.call(columns, column)) {
-       continue
-     }
-
+ 
 -    if (!Object.prototype.hasOwnProperty.call(columns, key)) {
-+    if (column) {
++    if (column && !Object.prototype.hasOwnProperty.call(columns, column)) {
        throw new DataTableValidationError(
 -        'Unknown column "' + key + '" for table "' + tableName + '"',
 +        'Unknown column "' + column + '" for table "' + tableName + '"',
          [],
        )
      }
-
+ 
 -    let schema = columns[key]
 -    let inputValue = (values as Record<string, unknown>)[key]
 -    let result = parseSafe(schema as any, inputValue) as
@@ -277,7 +273,7 @@ index 127f67ceef1..80e5ea98c5f 100644
          },
        )
      }
-
+ 
 -    output[key] = result.value
 +    throw new DataTableValidationError(
 +      'Invalid value for table "' + tableName + '"',
@@ -289,14 +285,14 @@ index 127f67ceef1..80e5ea98c5f 100644
 +      },
 +    )
    }
--
+ 
 -  return output
 +  return result.value as Record<string, unknown>
  }
-
+ 
  type ResolvedPredicateColumn = {
 diff --git a/packages/data-table/src/lib/table.test.ts b/packages/data-table/src/lib/table.test.ts
-index 22c6017d201..9ec5ccc6926 100644
+index 22c6017d2..9ec5ccc69 100644
 --- a/packages/data-table/src/lib/table.test.ts
 +++ b/packages/data-table/src/lib/table.test.ts
 @@ -1,6 +1,6 @@
@@ -304,13 +300,13 @@ index 22c6017d201..9ec5ccc6926 100644
  import { describe, it } from 'node:test'
 -import { number, string } from '@remix-run/data-schema'
 +import { number, parseSafe, string } from '@remix-run/data-schema'
-
+ 
  import {
    columnMetadataKey,
 @@ -34,6 +34,38 @@ describe('table metadata', () => {
      assert.equal(users[tableMetadataKey].name, 'users')
    })
-
+ 
 +  it('is standard-schema compatible with create-style validation semantics', () => {
 +    let users = createTable({
 +      name: 'users',
@@ -347,7 +343,7 @@ index 22c6017d201..9ec5ccc6926 100644
      let users = createTable({
        name: 'users',
 diff --git a/packages/data-table/src/lib/table.ts b/packages/data-table/src/lib/table.ts
-index 59835fbc391..594251aaa9a 100644
+index 59835fbc3..594251aaa 100644
 --- a/packages/data-table/src/lib/table.ts
 +++ b/packages/data-table/src/lib/table.ts
 @@ -1,3 +1,5 @@
@@ -359,7 +355,7 @@ index 59835fbc391..594251aaa9a 100644
 @@ -10,24 +12,10 @@ import type { Pretty } from './types.ts'
   */
  export { columnMetadataKey, tableMetadataKey } from './references.ts'
-
+ 
 -/**
 - * Minimal Standard Schema-compatible contract used by `data-table`.
 - */
@@ -379,9 +375,9 @@ index 59835fbc391..594251aaa9a 100644
   */
 -export type ColumnSchemas = Record<string, DataSchema<any, any>>
 +export type ColumnSchemas = Record<string, Schema<any, any>>
-
+ 
  type ColumnNameFromColumns<columns extends ColumnSchemas> = keyof columns & string
-
+ 
 @@ -69,7 +57,7 @@ type TableMetadata<
  export type ColumnReference<
    tableName extends string,
@@ -394,16 +390,16 @@ index 59835fbc391..594251aaa9a 100644
 @@ -79,7 +67,7 @@ export type ColumnReference<
    }
  }
-
+ 
 -export type AnyColumn = ColumnReference<string, string, DataSchema<any, any>>
 +export type AnyColumn = ColumnReference<string, string, Schema<any, any>>
-
+ 
  export type ColumnReferenceForQualifiedName<qualifiedName extends string> = AnyColumn & {
    [columnMetadataKey]: {
 @@ -91,15 +79,33 @@ type TableColumnReferences<name extends string, columns extends ColumnSchemas> =
    [column in keyof columns & string]: ColumnReference<name, column, columns[column]>
  }
-
+ 
 +type TableParseOutput<columns extends ColumnSchemas> = Partial<{
 +  [column in keyof columns & string]: InferOutput<columns[column]>
 +}>
@@ -416,7 +412,7 @@ index 59835fbc391..594251aaa9a 100644
    [tableMetadataKey]: TableMetadata<name, columns, primaryKey>
 +  '~standard': Schema<unknown, TableParseOutput<columns>>['~standard']
  } & TableColumnReferences<name, columns>
-
+ 
 -export type AnyTable = Table<string, ColumnSchemas, readonly string[]>
 +export type AnyTable = TableMetadataLike<
 +  string,
@@ -432,13 +428,13 @@ index 59835fbc391..594251aaa9a 100644
 +  }
 +  '~standard': Schema<unknown, Partial<Record<string, unknown>>>['~standard']
 +} & Record<string, unknown>
-
+ 
  export type TableName<table extends AnyTable> = table[typeof tableMetadataKey]['name']
-
+ 
 @@ -109,11 +115,8 @@ export type TablePrimaryKey<table extends AnyTable> = table[typeof tableMetadata
-
+ 
  export type TableTimestamps<table extends AnyTable> = table[typeof tableMetadataKey]['timestamps']
-
+ 
 -export type InferSchemaOutput<schema> =
 -  schema extends DataSchema<any, infer output> ? output : never
 -
@@ -446,12 +442,12 @@ index 59835fbc391..594251aaa9a 100644
 -  [column in keyof TableColumns<table> & string]: InferSchemaOutput<TableColumns<table>[column]>
 +  [column in keyof TableColumns<table> & string]: InferOutput<TableColumns<table>[column]>
  }>
-
+ 
  export type TableRowWith<
 @@ -307,6 +310,81 @@ let defaultTimestampConfig: TimestampConfig = {
    updatedAt: 'updated_at',
  }
-
+ 
 +function prefixIssuePath(issue: Issue, key: string): Issue {
 +  let issuePath = issue.path ?? []
 +  return {
@@ -547,7 +543,7 @@ index 59835fbc391..594251aaa9a 100644
 +  let resolvedPrimaryKey = normalizePrimaryKey(tableName, columns, options.primaryKey)
    let timestampConfig = normalizeTimestampConfig(options.timestamps)
    let table = Object.create(null) as Table<name, columns, NormalizePrimaryKey<columns, primaryKey>>
-
+ 
    Object.defineProperty(table, tableMetadataKey, {
      value: Object.freeze({
 -      name: options.name,
@@ -560,7 +556,7 @@ index 59835fbc391..594251aaa9a 100644
 @@ -338,13 +425,26 @@ export function createTable<
      configurable: false,
    })
-
+ 
 -  for (let columnName in options.columns) {
 -    if (!Object.prototype.hasOwnProperty.call(options.columns, columnName)) {
 +  Object.defineProperty(table, '~standard', {
@@ -580,17 +576,18 @@ index 59835fbc391..594251aaa9a 100644
 +    if (!Object.prototype.hasOwnProperty.call(columns, columnName)) {
        continue
      }
-
+ 
 -    let schema = options.columns[columnName]
 -    let column = createColumnReference(options.name, columnName, schema)
 +    let schema = columns[columnName]
 +    let column = createColumnReference(tableName, columnName, schema)
-
+ 
      Object.defineProperty(table, columnName, {
        value: column,
-@@ -360,7 +460,7 @@ function createColumnReference<
-   tableName: tableName,
-   columnName: columnName,
+@@ -360,7 +460,7 @@ export function createTable<
+ function createColumnReference<
+   tableName extends string,
+   columnName extends string,
 -  schema extends DataSchema<any, any>,
 +  schema extends Schema<any, any>,
  >(
@@ -639,7 +636,7 @@ index 59835fbc391..594251aaa9a 100644
 +    }
 +  })
  }
-
+ 
  let defaultTimestampSchema = timestampSchema()
 @@ -573,8 +663,8 @@ let defaultTimestampSchema = timestampSchema()
   * @returns Column schema map for `created_at`/`updated_at`.
@@ -652,7 +649,9 @@ index 59835fbc391..594251aaa9a 100644
    return {
      created_at: schema,
      updated_at: schema,
-
 PATCH
+
+# Format the modified files to match repo style
+pnpm prettier --write packages/data-table/src/lib/table.ts packages/data-table/src/lib/database.ts packages/data-table/src/lib/table.test.ts packages/data-table/src/index.ts packages/data-table/README.md AGENTS.md
 
 echo "Patch applied successfully."

@@ -302,6 +302,23 @@ def test_repo_cargo_test_uv_python():
     assert r.returncode == 0, f"cargo test failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Python syntax check for uv-python Python files
+def test_repo_python_syntax_uv_python():
+    """Python files in uv-python crate have valid syntax (pass_to_pass)."""
+    python_files = [
+        "crates/uv-python/fetch-download-metadata.py",
+        "crates/uv-python/python/get_interpreter_info.py",
+    ]
+    for f in python_files:
+        r = subprocess.run(
+            ["python", "-m", "py_compile", f"{REPO}/{f}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"Python syntax error in {f}: {repr(r.stderr)}"
+
+
 # [repo_tests] pass_to_pass — ruff check on uv-python Python files
 def test_repo_ruff_check_uv_python():
     """Python files in uv-python crate pass ruff linting (pass_to_pass)."""

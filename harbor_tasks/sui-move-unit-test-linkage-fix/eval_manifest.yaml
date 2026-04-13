@@ -30,7 +30,7 @@ checks:
 - id: test_repo_cargo_fmt
   type: pass_to_pass
   origin: repo_tests
-  description: Cargo fmt check passes for move-unit-test crate
+  description: Cargo fmt check passes for move crates
 - id: test_repo_cargo_test_move_unit_test
   type: pass_to_pass
   origin: repo_tests
@@ -43,60 +43,21 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Cargo check for move-stdlib passes (test dependency)
-rubric:
-- rule: Comments should explain the 'why' not the 'what'. Explain non-obvious algorithms,
-    temporary exclusions, complex calculations, subtle race conditions, and assumptions
-    - not simple variable assignments or standard library usage.
-  source:
-    path: CLAUDE.md
-    lines: 116-131
-    commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
-- rule: Always run tests before submitting changes. Do not disable or ignore tests
-    - all tests must pass and be enabled.
-  source:
-    path: CLAUDE.md
-    lines: 105-107,112
-    commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
-- rule: 'Never use #[allow(dead_code)], #[allow(unused)], or other linting suppressions.
-    Fix the underlying issues instead.'
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
+rubric: []
 distractors:
-- rule: All new files must start with the following license in comments
+- rule: All new files must start with the Mysten Labs license header
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to prepend the license header to `test_runner.rs`
-    while modifying it, but the rule strictly applies only to *new* files.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 18-21
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
-  collision_type: scope_ambiguity
-  why_distracting: The agent might run `cargo simtest -p sui-e2e-tests` to verify
-    its fix, but this PR only affects the Move unit test runner (`move-unit-test`),
-    making e2e tests an unnecessary and slow verification step.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 31-32
-- rule: '`cargo xclippy does not recognize -p option`'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to lint the specific package using `cargo xclippy
-    -p move-unit-test` out of habit to verify its changes, which will fail as explicitly
-    stated in the config, causing wasted iteration cycles.
+  why_distracting: The rule mandates a specific Mysten Labs license header for all
+    new files. An agent might misinterpret this and attempt to prepend the license
+    header to the existing `test_runner.rs` file being modified, which already has
+    one or doesn't need it injected again.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 52-53
-hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` that define
-  general testing, linting, and architectural guidelines. There are no crate-specific
-  config files provided for `external-crates/move/crates/move-unit-test`, so the root
-  rules apply. However, because the root rules are heavily geared towards the core
-  Sui blockchain components (like `sui-e2e-tests`), applying them blindly to the Move
-  compiler/VM external crates can lead to scope ambiguity and wasted test execution
-  time.
+    lines: 16-19
+hierarchy_analysis: The config hierarchy is flat, consisting only of root-level `CLAUDE.md`
+  and `AGENTS.md` files. There are no crate-specific overrides provided in the context,
+  meaning the agent only has to rely on generic repository guidelines.
 version: '2.0'
 source:
   repo: MystenLabs/sui

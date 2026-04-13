@@ -103,18 +103,90 @@ def test_syntax_check():
 # [repo_ci] pass_to_pass — ruff lint check
 def test_repo_ruff():
     """Repo's ruff lint check passes on modified files (pass_to_pass)."""
-    # Install ruff if not available
-    try:
-        subprocess.run(["pip", "install", "ruff", "-q"], check=True, capture_output=True)
-    except Exception:
-        pass  # May already be installed
+    subprocess.run(["pip", "install", "ruff", "-q"], check=True, capture_output=True)
 
-    for file in ["slime/rollout/data_source.py", "slime/ray/rollout.py"]:
-        r = subprocess.run(
-            ["ruff", "check", f"{REPO}/{file}", "--select", "E,F,B,UP"],
-            capture_output=True, text=True, timeout=60, cwd=REPO,
-        )
-        assert r.returncode == 0, f"Ruff check failed for {file}:\n{r.stdout}{r.stderr}"
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/slime/rollout/data_source.py", f"{REPO}/slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — black format check
+def test_repo_black():
+    """Repo's black format check passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "black", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        ["black", "--check", f"{REPO}/slime/rollout/data_source.py", f"{REPO}/slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — isort import order check
+def test_repo_isort():
+    """Repo's isort import order check passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "isort", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        ["isort", "--check", "--profile=black",
+         f"{REPO}/slime/rollout/data_source.py", f"{REPO}/slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Isort check failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — chunked GAE unit tests
+def test_repo_chunked_gae():
+    """Repo's chunked GAE unit tests pass (pass_to_pass)."""
+    # Install dependencies
+    subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        check=True, capture_output=True
+    )
+    subprocess.run(["pip", "install", "pytest", "numpy", "-q"], check=True, capture_output=True)
+    subprocess.run(["pip", "install", "-e", REPO, "--no-deps", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/test_chunked_gae.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Chunked GAE tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_ci] pass_to_pass — autoflake unused import check
+def test_repo_autoflake():
+    """Repo's autoflake unused import check passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "autoflake", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        ["autoflake", "--remove-all-unused-imports", "--check",
+         f"{REPO}/slime/rollout/data_source.py", f"{REPO}/slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Autoflake check failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — plugin contract tests
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass)."""
+    # Install dependencies
+    subprocess.run(["pip", "install", "pillow", "packaging", "pyyaml", "omegaconf", "tqdm",
+                     "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "-q"],
+                   check=True, capture_output=True)
+    subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        check=True, capture_output=True
+    )
+    subprocess.run(["pip", "install", "pytest", "numpy", "-q"], check=True, capture_output=True)
+    subprocess.run(["pip", "install", "-e", REPO, "--no-deps", "-q"], check=True, capture_output=True)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin contract tests failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

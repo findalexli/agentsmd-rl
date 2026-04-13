@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T01:09:03.947778",
-  "total_time": 11396.24,
-  "sandbox_id": "ic86xfnetstaevag6pqx6",
+  "validated_at": "2026-04-12T05:05:59.213455",
+  "total_time": 3169.14,
+  "sandbox_id": "ilav8pa2npnoagicd9isz",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1805.33,
+      "time": 1604.56,
       "notes": ""
     },
     "improve": {
@@ -29,10 +28,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed: Docker build succeeded, NOP test correctly failed with reward=0 (4 fail-to-pass tests failed as expected on base commit), Gold test passed with reward=1 (all 9 tests passed after applying solve.sh patch), Rubric judge ICR=1.0 (no rubric rules specified)",
+      "notes": "All core validation checks passed: Docker build succeeded, NOP test correctly failed with reward=0 (4 fail-to-pass tests failed as expected on base commit), Gold test passed with reward=1 (all 13 tests passed after applying solve.sh patch). Rubric judge ICR is 0.00 because the rubric rules are about config file changes but the gold solution only modifies test_runner.rs (a code file). The judge extract_config_hunks function only extracts changes to config files like CLAUDE.md, not Rust source files. This is a framework limitation for code-only tasks - the rubric rules from CLAUDE.md are not applicable to this code fix task.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 861.38
+      "time": 680.83
     },
     "rubric_judge": {
       "status": "fail",
@@ -51,25 +50,19 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 49.38
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 20.86,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 10207.57,
-      "at": "2026-04-09T12:02:00.356792"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 900.0,
-      "at": "2026-04-09T14:49:55.305318"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -93,6 +86,22 @@
       "backend": "fireworks",
       "time": 11396.24,
       "at": "2026-04-10T01:09:03.947778"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3429.92,
+      "at": "2026-04-12T03:55:27.429886"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3169.14,
+      "at": "2026-04-12T05:05:59.213455"
     }
   ]
 }

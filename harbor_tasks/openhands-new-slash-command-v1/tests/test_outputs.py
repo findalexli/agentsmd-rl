@@ -146,6 +146,48 @@ def test_repo_unit_tests():
     assert result.returncode == 0, f"Slash-command tests failed:\n{result.stdout}\n{result.stderr}"
 
 
+def test_new_conversation_command():
+    """PASS-TO-PASS: useNewConversationCommand hook tests pass (vitest run).
+
+    Tests the mutation hook that implements the /new command functionality.
+    This hook is closely related to the slash command feature being modified,
+    verifying that the underlying command implementation works correctly.
+    """
+    result = run_npm_command(
+        ["npm", "run", "test", "--", "--run", "--reporter=verbose", "use-new-conversation-command"],
+        timeout=60
+    )
+    assert result.returncode == 0, f"New conversation command tests failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_hooks_mutation():
+    """PASS-TO-PASS: Mutation hook tests pass (vitest run).
+
+    Tests for TanStack Query mutation hooks including useConversationSkills
+    which is used by the modified useSlashCommand hook. Validates that
+    related query/mutation infrastructure works correctly.
+    """
+    result = run_npm_command(
+        ["npm", "run", "test", "--", "--run", "hooks/mutation"],
+        timeout=120
+    )
+    assert result.returncode == 0, f"Mutation hooks tests failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_hooks_query():
+    """PASS-TO-PASS: Query hook tests pass (vitest run).
+
+    Tests for TanStack Query hooks including useActiveConversation
+    which is used by the modified useSlashCommand hook. Validates that
+    the data fetching infrastructure for conversations works correctly.
+    """
+    result = run_npm_command(
+        ["npm", "run", "test", "--", "--run", "hooks/query"],
+        timeout=120
+    )
+    assert result.returncode == 0, f"Query hooks tests failed:\n{result.stdout}\n{result.stderr}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

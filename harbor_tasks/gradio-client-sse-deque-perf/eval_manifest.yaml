@@ -37,6 +37,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files are not empty or stubbed out
+- id: test_repo_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python files compile without errors
+- id: repo_ruff_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python files pass ruff syntax checks (E9,F63,F7,F82)
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python files pass ruff format check
+- id: test_repo_imports_gradio_client_subprocess
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client package imports via subprocess without errors
+- id: test_repo_test_files_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository test files compile without errors
+- id: test_repo_gradio_client_imports_subprocess
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client utils module imports work via subprocess
 - id: repo_no_syntax_errors
   type: pass_to_pass
   origin: static
@@ -57,50 +81,40 @@ checks:
   type: pass_to_pass
   origin: static
   description: No undefined name references in modified files
-- id: repo_ruff_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repository Python files pass ruff syntax checks (E9,F63,F7,F82)
 - id: repo_ast_valid
   type: pass_to_pass
   origin: static
   description: Modified files produce valid AST with no syntax errors
-- id: repo_ruff_format
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repository Python files pass ruff format check
-- id: repo_imports_gradio_client_subprocess
-  type: pass_to_pass
-  origin: repo_tests
-  description: gradio_client package imports via subprocess without errors
+distractors:
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md,
+    including AI disclosure and linked issue.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to create or modify a PR template, or write
+    a PR description file to satisfy the AI disclosure and issue linking requirements.
+    In a code evaluation environment, this wastes effort and modifies out-of-scope
+    files.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-22
+- rule: 'Format your code before pushing. Backend: bash scripts/format_backend.sh'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `bash scripts/format_backend.sh` after
+    making its changes. This could format unrelated files in the repository and pollute
+    the diff, or fail entirely if the script is not available in the test environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-26
+hierarchy_analysis: The config hierarchy is flat, consisting of a single AGENTS.md
+  file at the root. The file contains generic repository contribution guidelines rather
+  than specific architectural or coding rules.
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: 83b223b746c3933920dfef670e545a12de9177ed
-distractors:
-- rule: 'Format your code before pushing. Backend: bash scripts/format_backend.sh'
-  collision_type: scope_ambiguity
-  why_distracting: The instruction to run `bash scripts/format_backend.sh` might cause
-    the agent to reformat entire files. If the repository's formatting is slightly
-    out of sync with the script, this will introduce unrelated formatting changes
-    and pollute the PR diff. The agent should only ensure its own changes are formatted
-    correctly.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 26-27
-- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
-    issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The instruction to 'create an issue first' if one doesn't exist
-    is impossible in a disconnected evaluation environment. An agent might waste time
-    attempting to use tools to interact with the GitHub API to create an issue before
-    writing code.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 15-16
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
-  so there are no hierarchy conflicts. The rules apply globally to the repository.
+    lines: 39-41
+  evidence: The gold solution updates the type annotations to `deque[Message | None]`
+    to match the existing `list[Message | None]` style, and places the import `from
+    collections import deque` in the correct alpha
+  category: style

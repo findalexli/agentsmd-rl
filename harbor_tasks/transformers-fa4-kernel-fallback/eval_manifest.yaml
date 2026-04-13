@@ -50,6 +50,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: check_inits.py validates __init__.py files expose public APIs correctly
+- id: repo_check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_doctest_list.py validates doctest lists are correctly maintained
+- id: repo_sort_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: sort_auto_mappings.py --check_only validates auto mappings are correctly sorted
 - id: ruff_check
   type: pass_to_pass
   origin: agent_config
@@ -83,56 +91,44 @@ checks:
     lines: '67'
     commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
 rubric:
-- rule: PRs should be as brief as possible. Bugfix PRs can often be only one or two
-    lines long. Aim to minimize the size of the diff.
-  source:
-    path: .github/copilot-instructions.md
-    lines: '15'
-    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
-- rule: Manage code duplication by avoiding direct inheritance between model-specific
-    files, utilizing shared core utilities where appropriate.
-  source:
-    path: CLAUDE.md
-    lines: 62-67
-  evidence: The gold solution modifies the shared utility files (`modeling_utils.py`
-    and `modeling_flash_attention_utils.py`) to implement the fallback logic globally,
-    rather than attempting to modify model-speci
+- rule: Code changes should modify shared utility files (modeling_utils.py and modeling_flash_attention_utils.py)
+    rather than model-specific files. The fix adds the FA4 kernel fallback entry
+    and removes the version 4 skip in the fallback loop. No config file changes needed.
   category: architecture
+  evidence: The gold solution adds flash_attention_4 kernel entry to FLASH_ATTN_KERNEL_FALLBACK
+    in modeling_flash_attention_utils.py and removes the version 4 skip in modeling_utils.py
+  reference: "No config file changes required. Gold solution modifies: src/transformers/modeling_flash_attention_utils.py (add FA4 entry), src/transformers/modeling_utils.py (remove v4 skip)"
 distractors:
-- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
   collision_type: meta_confusion
-  why_distracting: In an automated evaluation environment, the agent is given a bug
-    report and expected to produce a patch autonomously. There is no human to coordinate
-    with and no issue thread provided. If the agent follows this 'fail-closed' rule
-    strictly, it will refuse to output the patch and instead output a message asking
-    for coordination evidence.
+  why_distracting: The rule explicitly commands the agent to 'fail-closed' and not
+    proceed to PR-ready output if coordination evidence is missing. In a benchmark
+    setting, the agent must provide the code fix regardless of issue coordination,
+    but this rule strongly pressures it to refuse.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 57-60
-- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
-    be able to defend the change end-to-end. Do not raise PRs without human validation.'
+    path: AGENTS.md
+    lines: 49-52
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed.'
   collision_type: meta_confusion
-  why_distracting: The rule explicitly forbids 'pure code-agent PRs' and mandates
-    human validation. An autonomous agent in a benchmark might read this and halt
-    execution, stating it needs a human to validate the changes before it can output
-    the patch.
+  why_distracting: States that 'Pure code-agent PRs are not allowed' and requires
+    a human submitter. An autonomous agent might interpret this as a hard block against
+    generating the patch independently.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 46-55
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
-  collision_type: scope_ambiguity
-  why_distracting: The bug fix requires changing only 4 lines of code (removing a
-    3-line `continue` block and adding a 1-line dictionary entry). An agent might
-    misinterpret this small diff as a 'tiny edit' or 'low-value busywork' and refuse
-    to fix it, even though it resolves a legitimate feature fallback bug.
+    path: AGENTS.md
+    lines: 40-47
+- rule: Mandatory duplicate-work checks using gh CLI before proposing a PR.
+  collision_type: meta_confusion
+  why_distracting: Instructs the agent to run `gh issue view` and `gh pr list` before
+    proposing a PR. In an isolated evaluation sandbox, these network/CLI calls will
+    fail and might derail the agent from writing the actual code fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 42-44
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules at the
-  root level. The rules are heavily focused on the PR submission process, human accountability,
-  and preventing spam. There are no conflicting rules between the files, but the entire
-  ruleset is highly restrictive for autonomous agents.
+    path: AGENTS.md
+    lines: 28-34
+hierarchy_analysis: The repository contains `AGENTS.md` and `CLAUDE.md` at the root
+  level, which are identical. They provide meta-instructions for AI agents contributing
+  to the repository. There is no deep hierarchy or overriding between files, just
+  root-level guidelines that apply globally.

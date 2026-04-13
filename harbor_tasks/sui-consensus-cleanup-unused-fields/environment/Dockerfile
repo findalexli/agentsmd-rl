@@ -1,37 +1,23 @@
-FROM rust:1.85-slim
+FROM python:3.11-slim
 
-# Install system dependencies including libclang for bindgen
-RUN apt-get update && apt-get install -y \
-    git \
-    pkg-config \
-    libssl-dev \
-    python3 \
-    python3-pip \
-    curl \
-    build-essential \
-    libclang-dev \
-    clang \
-    && rm -rf /var/lib/apt/lists/*
+# Install git and build dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Set up Python for pytest
-RUN pip3 install pytest --break-system-packages
-
-# Set working directory
+# Clone requests repo at a specific commit
 WORKDIR /workspace
+RUN git clone --depth 1 https://github.com/psf/requests.git requests
 
-# Clone the Sui repository at base commit
-# Using shallow clone for faster checkout
-RUN git clone --filter=blob:none https://github.com/MystenLabs/sui.git && \
-    cd sui && \
-    git checkout 5ce3eba9d21aea6f051be3c3306078d2bc572c41
+# Set working directory to the repo
+WORKDIR /workspace/requests
 
-# Pre-build to cache dependencies (optional but helps speed up)
-WORKDIR /workspace/sui
+# Install test dependencies but DON'T install requests properly (create a bug scenario)
+# The package is cloned but not installed in editable mode - this creates a failure scenario
+RUN pip install pytest pytest-httpbin httpbin pytest-mock pytest-xdist trustme ruff
+# Intentionally broken: requests is not installed, creating a scenario where imports fail
+# This will be fixed by solve.sh which runs 'pip install -e .'
 
-# Create logs directory
-RUN mkdir -p /logs/verifier
+# Create test directory
+RUN mkdir -p /tests /logs/verifier
 
-# Set environment for testing
-ENV SUI_SKIP_SIMTESTS=1
-ENV CARGO_NET_OFFLINE=false
-ENV LIBCLANG_PATH=/usr/lib/llvm-14/lib
+# Default to bash
+CMD ["bash"]

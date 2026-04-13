@@ -31,6 +31,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's function_arg_tests module passes
+- id: test_repo_move_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo move-clippy on external-crates/move passes (CI lint)
 - id: test_argument_count_mismatch_0_expected_1_got
   type: fail_to_pass
   origin: pr_diff
@@ -69,7 +73,7 @@ checks:
   description: Calling function expecting 2 type args with 3 fails
 - id: test_vm_code_present
   type: fail_to_pass
-  origin: pr_diff
+  origin: static
   description: VM argument checking code is present in vm.rs
 rubric:
 - rule: All new files must start with the Mysten Labs Apache-2.0 license header
@@ -104,31 +108,29 @@ rubric:
     the execution pipeline architecture.
   category: architecture
 distractors:
-- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
-    with `cargo nextest`
+- rule: Run tests using `cargo simtest -p sui-e2e-tests` or `SUI_SKIP_SIMTESTS=1 cargo
+    nextest run`
   collision_type: rule_conflict
-  why_distracting: The global config suggests running all tests with `SUI_SKIP_SIMTESTS=1
-    cargo nextest run`. However, the prompt provides a specific, scoped test command
-    (`cargo test --lib function_arg`) for this localized VM fix. Running the global
-    test suite would waste significant time and compute.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 33-34
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
-  collision_type: scope_ambiguity
-  why_distracting: The agent might think it needs to run e2e simtests to verify the
-    VM changes, but the prompt explicitly specifies that unit tests in `function_arg_tests.rs`
-    are sufficient for this PR.
+  why_distracting: The config instructs running the entire test suite using cargo
+    nextest or simtest, which takes over 10 minutes. The task instruction provides
+    a specific, fast cargo test command for the exact tests needed.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 30-31
-hierarchy_analysis: The root `CLAUDE.md` provides global testing commands (`cargo
-  nextest run`, `cargo simtest`), but the prompt acts as a local override by providing
-  a specific `cargo test` command for the `move-vm-runtime` crate. The agent must
-  prioritize the prompt's localized testing instructions over the global repository
-  defaults to avoid massive test execution times.
+    lines: 31-35
+- rule: Run `./scripts/lint.sh` or `cargo fmt --all -- --check` and `cargo xclippy`
+    before commit
+  collision_type: scope_ambiguity
+  why_distracting: The config suggests running global linting and formatting checks.
+    In a large codebase, this might surface unrelated issues or take a long time,
+    distracting the agent from the specific bug fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 49-53
+hierarchy_analysis: The hierarchy is flat with only root-level AGENTS.md and CLAUDE.md
+  files. The task instruction provides specific testing commands that conflict with
+  the global testing commands in CLAUDE.md.
 version: '2.0'
 source:
   repo: MystenLabs/sui.git

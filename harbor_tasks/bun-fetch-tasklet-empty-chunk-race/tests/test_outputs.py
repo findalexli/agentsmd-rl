@@ -231,3 +231,86 @@ def test_repo_prettier():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+
+def test_repo_fetch_body_stream():
+    """Repo's fetch body stream tests pass (pass_to_pass).
+
+    Runs bun test on test/js/web/fetch/body-stream.test.ts.
+    This validates body streaming functionality in FetchTasklet.zig.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/web/fetch/body-stream.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fetch body stream test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_fetch_response():
+    """Repo's fetch response tests pass (pass_to_pass).
+
+    Runs bun test on test/js/web/fetch/response.test.ts.
+    This validates Response body handling that uses FetchTasklet.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/web/fetch/response.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fetch response test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_fetch_body():
+    """Repo's fetch body tests pass (pass_to_pass).
+
+    Runs bun test on test/js/web/fetch/body.test.ts.
+    This validates Request/Response body mixin functionality.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/web/fetch/body.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fetch body test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_fetch_body_clone():
+    """Repo's fetch body clone tests pass (pass_to_pass).
+
+    Runs bun test on test/js/web/fetch/body-clone.test.ts.
+    This validates body cloning functionality which is related to
+    streaming and the FetchTasklet response handling.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/web/fetch/body-clone.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fetch body clone test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_fetch_stream_fast_path():
+    """Repo's fetch stream fast path tests pass (pass_to_pass).
+
+    Runs bun test on test/js/web/fetch/stream-fast-path.test.ts.
+    This validates byte blob loading and streaming fast paths
+    related to body handling in FetchTasklet.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/js/web/fetch/stream-fast-path.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fetch stream fast path test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

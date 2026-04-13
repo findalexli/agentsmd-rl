@@ -10,34 +10,26 @@ checks:
   origin: static
   description: Modified files must exist and retain core structure (TCP class, listen
     method, EXPECTED_VIOLATIONS)
-- id: test_repo_tcp_wrap_imports
+- id: test_repo_deno_lint_tcp_wrap
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: tcp_wrap.ts must import from _listen.ts (ceilPowOf2 used
-    by listen path)'
-- id: test_repo_listen_module_exports
+  description: 'Repo CI: deno lint on tcp_wrap.ts passes'
+- id: test_repo_deno_lint_with_plugin
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: _listen.ts must export ceilPowOf2 and backoff constants'
-- id: test_repo_lint_plugin_structure
+  description: 'Repo CI: deno lint with custom plugin on tcp_wrap.ts runs (no-deno-api-in-polyfills)'
+- id: test_repo_lint_expected_violations_count
+  type: pass_to_pass
+  origin: static
+  description: 'Repo CI: lint plugin EXPECTED_VIOLATIONS has tcp_wrap.ts entry at 3 (base commit)'
+- id: test_repo_deno_lint_plugin
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: lint plugin must have valid EXPECTED_VIOLATIONS structure'
-- id: test_repo_tcp_wrap_violation_count
+  description: 'Repo CI: deno lint on lint plugin passes'
+- id: test_repo_lint_js
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: tcp_wrap.ts Deno.* usage count must match EXPECTED_VIOLATIONS
-    (base: 3, post-fix: 0)'
-- id: test_repo_tcp_wrap_core_imports
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI: tcp_wrap.ts must have required ext:core/ops and ext:deno_node
-    imports'
-- id: test_repo_listen_module_structure
-  type: pass_to_pass
-  origin: repo_tests
-  description: 'Repo CI: _listen.ts must export ceilPowOf2 with correct signature
-    and backoff constants'
+  description: 'Repo CI: tools/lint.js --js passes (full JS linting)'
 - id: test_repo_git_base_commit
   type: pass_to_pass
   origin: repo_tests
@@ -68,6 +60,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo CI: grep verify _listen.ts exports ceilPowOf2 and backoff constants'
+- id: test_repo_listen_module_exports
+  type: pass_to_pass
+  origin: static
+  description: '_listen.ts exports ceilPowOf2 and backoff constants used by tcp_wrap.ts'
+- id: test_repo_lint_plugin_structure
+  type: pass_to_pass
+  origin: static
+  description: Lint plugin has valid EXPECTED_VIOLATIONS structure
+- id: test_repo_tcp_wrap_violation_count
+  type: pass_to_pass
+  origin: static
+  description: tcp_wrap.ts has Deno.* usages matching EXPECTED_VIOLATIONS count
+- id: test_repo_tcp_wrap_core_imports
+  type: pass_to_pass
+  origin: static
+  description: tcp_wrap.ts has required core imports
+- id: test_repo_listen_module_structure
+  type: pass_to_pass
+  origin: static
+  description: _listen.ts exports have correct function signatures
 - id: legacy_listen_branch_removed
   type: fail_to_pass
   origin: pr_diff
@@ -88,47 +100,29 @@ checks:
   description: Imports only used by dead legacy code (delay, INITIAL_ACCEPT_BACKOFF_DELAY,
     MAX_ACCEPT_BACKOFF_DELAY) must be removed
 rubric:
-- rule: Before committing, run tools/format.js to format code, and tools/lint.js --js
-    for JS/TS changes
+- rule: Code changes must satisfy all fail-to-pass tests (legacy_listen_branch_removed,
+    dead_legacy_methods_removed, lint_violations_updated, unused_imports_cleaned).
   source:
-    path: CLAUDE.md
-    lines: 21-26
+    path: tests/test_outputs.py
+    lines: 331-423
     commit: ad725eea313df6204d342d84ace4af1b11cc341f
-- rule: Keep changes minimal. Do not do drive-by changes in a PR.
-  source:
-    path: CLAUDE.md
-    lines: 34-36
-    commit: ad725eea313df6204d342d84ace4af1b11cc341f
-- rule: 'Internal symbols in JS (ext/node/polyfills/) use the k prefix convention:
-    kIpc, kSerialization, etc. Flag deviations.'
-  source:
-    path: .github/copilot-instructions.md
-    lines: 165-166
-    commit: ad725eea313df6204d342d84ace4af1b11cc341f
-- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
-    --js` and fix any lint errors before committing
-  source:
-    path: CLAUDE.md
-    lines: 25-26
-  evidence: The gold solution removes unused imports (`delay`, `INITIAL_ACCEPT_BACKOFF_DELAY`,
-    `MAX_ACCEPT_BACKOFF_DELAY`) which would otherwise trigger unused import lint errors
-    after the dead code is removed.
-  category: tooling
+  evidence: The gold solution passes all 4 fail-to-pass tests which verify the dead
+    code removal, import cleanup, and lint plugin update
+  category: test_verified
+  test_ids:
+  - legacy_listen_branch_removed
+  - dead_legacy_methods_removed
+  - lint_violations_updated
+  - unused_imports_cleaned
 distractors:
-- rule: Keep your changes minimal, don't do drive-by changes in a PR. If you need
-    to make a change that is not directly related to the PR, create a separate PR
-    for it.
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
   collision_type: scope_ambiguity
-  why_distracting: An agent might interpret updating the lint plugin configuration
-    in `tools/lint_plugins/no_deno_api_in_polyfills.ts` as a 'drive-by change' because
-    it is outside the primary `ext/node/` directory being modified. However, the prompt
-    explicitly requires removing the lint violation entry since the underlying `Deno.listen`
-    API usage is being removed.
-  severity: high
+  why_distracting: The agent might interpret 'keep changes minimal' as a reason to
+    leave the unused imports or the lint plugin violation entry untouched, which would
+    fail the explicit prompt requirements.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 33-35
-hierarchy_analysis: The single `CLAUDE.md` file provides general repository guidelines.
-  The instruction to avoid 'drive-by changes' conflicts with the specific PR requirement
-  to update a lint plugin configuration file in a separate directory. The explicit
-  PR instructions must override the general guideline to keep changes strictly localized.
+    lines: 28-31
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  containing generic repository guidelines.

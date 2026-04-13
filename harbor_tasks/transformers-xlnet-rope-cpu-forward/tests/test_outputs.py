@@ -222,6 +222,36 @@ def test_repo_ruff_format():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_ruff_check_modeling_xlnet():
+    """Ruff lint check passes on the modified modeling_xlnet.py file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/src/transformers/models/xlnet/modeling_xlnet.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on modeling_xlnet.py failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_modeling_xlnet():
+    """Ruff format check passes on the modified modeling_xlnet.py file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/src/transformers/models/xlnet/modeling_xlnet.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on modeling_xlnet.py failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's custom init isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/utils/custom_init_isort.py", "--check_only"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Custom init isort check failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_xlnet_ast_parses():
     """XLNet modeling file parses as valid Python (pass_to_pass)."""
     code = f"""

@@ -14,6 +14,7 @@ from pathlib import Path
 REPO = "/workspace/next.js"
 HANDLER = f"{REPO}/packages/next/src/server/route-modules/pages/pages-handler.ts"
 SEND_PAYLOAD = f"{REPO}/packages/next/src/server/send-payload.ts"
+RENDER_RESULT = f"{REPO}/packages/next/src/server/render-result.ts"
 
 
 def _strip_comments(code: str) -> str:
@@ -174,6 +175,79 @@ def test_handler_not_stub():
     assert len(code_lines) > 100, f"Too few code lines: {len(code_lines)} (expected >100)"
 
 
+# [static] pass_to_pass
+def test_handler_structure():
+    """Handler file structure and exports are intact (static check).
+    Uses file content analysis to verify the handler has the expected structure."""
+    text = Path(HANDLER).read_text()
+
+    checks = [
+        ("getHandler export", r"export\s+const\s+getHandler"),
+        ("RenderResult usage", r"new\s+RenderResult"),
+        ("isNextDataRequest check", r"isNextDataRequest"),
+        ("sendRenderResult call", r"sendRenderResult"),
+        ("CachedRouteKind.PAGES", r"CachedRouteKind\.PAGES"),
+        ("error handling", r"catch\s*\("),
+    ]
+
+    passed = 0
+    for name, pattern in checks:
+        if re.search(pattern, text):
+            passed += 1
+
+    assert passed >= 5, f"Handler structure checks failed: only {passed}/{len(checks)} passed"
+
+
+# [static] pass_to_pass
+def test_send_payload_structure():
+    """send-payload.ts retains isDynamic -> Content-Length + ETag chain (static check).
+    Verifies the core header-setting logic is preserved."""
+    text = Path(SEND_PAYLOAD).read_text()
+
+    # Remove comments for analysis
+    code = re.sub(r"//.*$", "", text, flags=re.MULTILINE)
+    code = re.sub(r"/\*[\s\S]*?\*/", "", code)
+
+    required = [
+        ("isDynamic check", r"isDynamic"),
+        ("Content-Length header", r"Content-Length"),
+        ("ETag header", r"ETag"),
+        ("generateETag function", r"generateETag"),
+    ]
+
+    passed = 0
+    for name, pattern in required:
+        if re.search(pattern, code):
+            passed += 1
+
+    assert passed >= 4, f"Send-payload header chain check failed: only {passed}/{len(required)} passed"
+
+
+# [static] pass_to_pass
+def test_render_result_structure():
+    """RenderResult class structure is intact (static check).
+    Verifies the isDynamic mechanism is preserved."""
+    text = Path(RENDER_RESULT).read_text()
+
+    # Remove comments for analysis
+    code = re.sub(r"//.*$", "", text, flags=re.MULTILINE)
+    code = re.sub(r"/\*[\s\S]*?\*/", "", code)
+
+    required = [
+        ("isDynamic getter", r"get\s+isDynamic\s*\(\)"),
+        ("toUnchunkedString method", r"toUnchunkedString"),
+        ("string type check", r"typeof.*string"),
+        ("RenderResult class", r"class\s+RenderResult"),
+    ]
+
+    passed = 0
+    for name, pattern in required:
+        if re.search(pattern, code):
+            passed += 1
+
+    assert passed >= 4, f"RenderResult structure check failed: only {passed}/{len(required)} passed"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — CI/CD regression checks using real commands
 # ---------------------------------------------------------------------------
@@ -201,14 +275,25 @@ def test_repo_prettier_send_payload():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_prettier_render_result():
+    """Repo CI: render-result.ts follows Prettier formatting (pass_to_pass).
+    Verifies the RenderResult class maintains consistent code style."""
+    result = subprocess.run(
+        ["prettier", "--check", RENDER_RESULT],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Prettier check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_render_result_mechanism():
-    """Repo CI: RenderResult isDynamic mechanism is preserved (pass_to_pass).
-    Behavioral test of the core mechanism the fix relies on."""
+    """Repo CI: RenderResult isDynamic mechanism is preserved and functional (pass_to_pass).
+    Behavioral test of the core mechanism the fix relies on - uses Node.js to verify."""
     result = subprocess.run(
         ["node", "-e", r"""
 const assert = require('assert');
 
-// Simulate the RenderResult isDynamic mechanism
+// Simulate the RenderResult isDynamic mechanism from render-result.ts
 class MockRenderResult {
   constructor(response) {
     this.response = response;
@@ -217,30 +302,38 @@ class MockRenderResult {
     return typeof this.response !== 'string';
   }
   toUnchunkedString() {
+    if (this.response === null) return '';
     if (typeof this.response !== 'string') {
-      throw new Error('Cannot convert dynamic response to string');
+      throw new Error('dynamic responses cannot be unchunked');
     }
     return this.response;
   }
 }
 
-// Test: string input -> isDynamic = false
-const stringResult = new MockRenderResult('test content');
-assert.strictEqual(stringResult.isDynamic, false, 'String should not be dynamic');
-assert.strictEqual(stringResult.toUnchunkedString(), 'test content');
+// Test: string input -> isDynamic = false (this is what the fix enables)
+const stringPayload = JSON.stringify({ page: '/test', props: { x: 1 } });
+const stringResult = new MockRenderResult(stringPayload);
+assert.strictEqual(stringResult.isDynamic, false, 'String payload should not be dynamic');
+assert.strictEqual(stringResult.toUnchunkedString(), stringPayload);
 
-// Test: Buffer input -> isDynamic = true
-const bufferResult = new MockRenderResult(Buffer.from('test content'));
+// Test: Buffer input -> isDynamic = true (this was the bug pattern)
+const bufferPayload = Buffer.from(stringPayload);
+const bufferResult = new MockRenderResult(bufferPayload);
 assert.strictEqual(bufferResult.isDynamic, true, 'Buffer should be dynamic');
 
 try {
   bufferResult.toUnchunkedString();
   assert.fail('Should throw for dynamic response');
 } catch (e) {
-  assert.ok(e.message.includes('dynamic') || e.message.includes('Cannot convert'));
+  assert.ok(e.message.includes('dynamic'));
 }
 
-console.log('PASS: RenderResult mechanism intact');
+// Test: null input -> isDynamic = true (null is not a string)
+const nullResult = new MockRenderResult(null);
+assert.strictEqual(nullResult.isDynamic, true, 'Null should be dynamic');
+assert.strictEqual(nullResult.toUnchunkedString(), '');
+
+console.log('PASS: RenderResult mechanism intact - strings enable Content-Length/ETag headers');
 """],
         capture_output=True, text=True, timeout=30,
     )
@@ -248,134 +341,388 @@ console.log('PASS: RenderResult mechanism intact');
 
 
 # [repo_tests] pass_to_pass
-def test_repo_handler_structure():
-    """Repo CI: Handler file structure and exports are intact (pass_to_pass).
-    Uses Node.js to verify the handler has the expected structure."""
+def test_repo_send_payload_header_chain():
+    """Repo CI: send-payload.ts retains isDynamic -> Content-Length + ETag chain (pass_to_pass).
+    Verifies the core header-setting logic is preserved using Node.js."""
     result = subprocess.run(
         ["node", "-e", f"""
 const fs = require('fs');
-const handler = fs.readFileSync('{HANDLER}', 'utf8');
+const content = fs.readFileSync('{SEND_PAYLOAD}', 'utf8');
 
-const checks = [
-  {{ name: 'getHandler export', pattern: /export\\s+const\\s+getHandler/ }},
-  {{ name: 'RenderResult usage', pattern: /new\\s+RenderResult/ }},
-  {{ name: 'isNextDataRequest check', pattern: /isNextDataRequest/ }},
-  {{ name: 'sendRenderResult call', pattern: /sendRenderResult/ }},
-  {{ name: 'CachedRouteKind.PAGES', pattern: /CachedRouteKind\\.PAGES/ }},
-  {{ name: 'error handling', pattern: /catch\\s*\\(/ }},
-];
+// Remove comments for analysis
+const code = content.replace(/\\/\\/.*$/gm, '').replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');
 
-let passed = 0;
-for (const check of checks) {{
-  if (check.pattern.test(handler)) {{
-    console.log('PASS:', check.name);
-    passed++;
-  }} else {{
-    console.log('FAIL:', check.name);
-  }}
-}}
-
-console.log(`${{passed}}/${{checks.length}} checks passed`);
-process.exit(passed === checks.length ? 0 : 1);
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert result.returncode == 0, f"Handler structure check failed:\n{result.stdout}\n{result.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_send_payload_structure():
-    """Repo CI: send-payload.ts exports and logic are intact (pass_to_pass).
-    Uses Node.js to verify the payload sending logic is preserved."""
-    result = subprocess.run(
-        ["node", "-e", f"""
-const fs = require('fs');
-const payload = fs.readFileSync('{SEND_PAYLOAD}', 'utf8');
-
-const checks = [
-  {{ name: 'sendRenderResult export', pattern: /export\\s+async\\s+function\\s+sendRenderResult/ }},
-  {{ name: 'sendEtagResponse export', pattern: /export\\s+function\\s+sendEtagResponse/ }},
+// Check for required header chain elements
+const required = [
   {{ name: 'isDynamic check', pattern: /isDynamic/ }},
   {{ name: 'Content-Length header', pattern: /Content-Length/ }},
-  {{ name: 'generateETag usage', pattern: /generateETag/ }},
+  {{ name: 'ETag header', pattern: /ETag/ }},
+  {{ name: 'generateETag function', pattern: /generateETag/ }},
 ];
 
 let passed = 0;
-for (const check of checks) {{
-  if (check.pattern.test(payload)) {{
-    console.log('PASS:', check.name);
+for (const check of required) {{
+  if (check.pattern.test(code)) {{
     passed++;
   }} else {{
-    console.log('FAIL:', check.name);
+    console.log('MISSING:', check.name);
   }}
 }}
 
-console.log(`${{passed}}/${{checks.length}} checks passed`);
-process.exit(passed === checks.length ? 0 : 1);
+console.log(`${{passed}}/${{required.length}} header chain checks passed`);
+process.exit(passed === required.length ? 0 : 1);
 """],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert result.returncode == 0, f"Send-payload structure check failed:\n{result.stdout}\n{result.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_node_syntax_check():
-    """Repo CI: Handler and send-payload have valid syntax (pass_to_pass).
-    Uses Node.js to verify the files have valid syntax structure."""
-    result = subprocess.run(
-        ["node", "-e", f"""
-const fs = require('fs');
-
-const files = [
-  '{HANDLER}',
-  '{SEND_PAYLOAD}'
-];
-
-for (const file of files) {{
-  const content = fs.readFileSync(file, 'utf8');
-
-  // Check for valid UTF-8 (no replacement chars)
-  if (content.includes('\\uFFFD')) {{
-    console.error('Invalid UTF-8 in', file);
-    process.exit(1);
-  }}
-
-  // Check for basic structure (balanced braces - basic check)
-  const openBraces = (content.match(/{{/g) || []).length;
-  const closeBraces = (content.match(/}}/g) || []).length;
-  if (Math.abs(openBraces - closeBraces) > 5) {{
-    console.error('Unbalanced braces in', file, ':', openBraces, 'vs', closeBraces);
-    process.exit(1);
-  }}
-}}
-
-console.log('PASS: All files have valid syntax structure');
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert result.returncode == 0, f"Syntax check failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Send-payload header chain check failed:\n{result.stdout}\n{result.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_package_json_scripts():
-    """Repo CI: package.json has required scripts (pass_to_pass).
-    Verifies the repo maintains standard npm scripts for CI/CD."""
-    pkg_path = Path(REPO) / "package.json"
-    assert pkg_path.exists(), "package.json not found"
+    """Repo CI: package.json maintains required npm scripts for CI/CD (pass_to_pass).
+    Verifies the repo maintains standard npm scripts using Node.js."""
+    result = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const path = '{REPO}/package.json';
 
-    import json
-    pkg = json.loads(pkg_path.read_text())
+if (!fs.existsSync(path)) {{
+  console.error('package.json not found');
+  process.exit(1);
+}}
 
-    # Check for required script categories
-    scripts = pkg.get("scripts", {})
+const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+const scripts = pkg.scripts || {{}};
 
-    # Build scripts
-    assert "build" in scripts, "Missing build script"
+// Check for required script categories
+let failed = 0;
 
-    # Test scripts (at least one should exist)
-    test_scripts = [s for s in scripts.keys() if s.startswith("test")]
-    assert test_scripts, "Missing test scripts"
+// Build scripts
+if (!scripts.build) {{
+  console.log('MISSING: build script');
+  failed++;
+}} else {{
+  console.log('PASS: build script exists');
+}}
 
-    # Lint/typecheck scripts
-    lint_related = [s for s in scripts.keys() if "lint" in s or "type" in s]
-    assert lint_related, "Missing lint or typecheck scripts"
+// Test scripts
+const testScripts = Object.keys(scripts).filter(s => s.startsWith('test'));
+if (testScripts.length === 0) {{
+  console.log('MISSING: test scripts');
+  failed++;
+}} else {{
+  console.log('PASS: test scripts exist:', testScripts.slice(0, 3).join(', '));
+}}
+
+// Lint/typecheck scripts
+const lintRelated = Object.keys(scripts).filter(s => s.includes('lint') || s.includes('type'));
+if (lintRelated.length === 0) {{
+  console.log('MISSING: lint/typecheck scripts');
+  failed++;
+}} else {{
+  console.log('PASS: lint/type scripts exist:', lintRelated.slice(0, 3).join(', '));
+}}
+
+console.log(failed > 0 ? `FAILED: ${{failed}} checks` : 'PASS: All package.json checks');
+process.exit(failed > 0 ? 1 : 0);
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Package.json scripts check failed:\n{result.stdout}\n{result.stderr}"
+
+# [repo_tests] pass_to_pass
+def test_repo_render_result_source_mechanism():
+    """Repo CI: RenderResult source code contains correct isDynamic mechanism (pass_to_pass).
+    Verifies the actual source file (not a mock) contains the isDynamic logic."""
+    result = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+
+const RENDER_RESULT_PATH = '/workspace/next.js/packages/next/src/server/render-result.ts';
+const SEND_PAYLOAD_PATH = '/workspace/next.js/packages/next/src/server/send-payload.ts';
+
+// Read the actual source files
+const renderResultCode = fs.readFileSync(RENDER_RESULT_PATH, 'utf8');
+const sendPayloadCode = fs.readFileSync(SEND_PAYLOAD_PATH, 'utf8');
+
+// Remove comments for analysis
+const codeWithoutComments = renderResultCode.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+let passed = 0;
+let failed = 0;
+
+// Check RenderResult for isDynamic getter
+if (/get\s+isDynamic\s*\(\)/.test(codeWithoutComments)) {
+  console.log('PASS: isDynamic getter found in RenderResult');
+  passed++;
+} else {
+  console.log('FAIL: isDynamic getter not found in RenderResult');
+  failed++;
+}
+
+// Check for typeof string check
+if (/typeof.*string/.test(codeWithoutComments)) {
+  console.log('PASS: typeof string check found');
+  passed++;
+} else {
+  console.log('FAIL: typeof string check not found');
+  failed++;
+}
+
+// Check RenderResult class definition
+if (/class\s+RenderResult/.test(codeWithoutComments)) {
+  console.log('PASS: RenderResult class definition found');
+  passed++;
+} else {
+  console.log('FAIL: RenderResult class definition not found');
+  failed++;
+}
+
+// Check toUnchunkedString method
+if (/toUnchunkedString/.test(codeWithoutComments)) {
+  console.log('PASS: toUnchunkedString method found');
+  passed++;
+} else {
+  console.log('FAIL: toUnchunkedString method not found');
+  failed++;
+}
+
+// Check send-payload.ts for header chain
+const sendCodeClean = sendPayloadCode.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+if (/isDynamic/.test(sendCodeClean)) {
+  console.log('PASS: isDynamic check found in send-payload.ts');
+  passed++;
+} else {
+  console.log('FAIL: isDynamic check not found in send-payload.ts');
+  failed++;
+}
+
+if (/Content-Length/.test(sendCodeClean)) {
+  console.log('PASS: Content-Length header found in send-payload.ts');
+  passed++;
+} else {
+  console.log('FAIL: Content-Length header not found in send-payload.ts');
+  failed++;
+}
+
+if (/ETag/.test(sendCodeClean)) {
+  console.log('PASS: ETag header found in send-payload.ts');
+  passed++;
+} else {
+  console.log('FAIL: ETag header not found in send-payload.ts');
+  failed++;
+}
+
+if (/generateETag/.test(sendCodeClean)) {
+  console.log('PASS: generateETag function found in send-payload.ts');
+  passed++;
+} else {
+  console.log('FAIL: generateETag function not found in send-payload.ts');
+  failed++;
+}
+
+console.log(`\nResults: ${passed} passed, ${failed} failed`);
+process.exit(failed > 0 ? 1 : 0);
+"""],
+        capture_output=True, text=True, timeout=30, cwd="/workspace/next.js",
+    )
+    assert result.returncode == 0, f"RenderResult source mechanism check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pages_handler_source_structure():
+    """Repo CI: pages-handler.ts source contains expected structure for data responses (pass_to_pass).
+    Verifies the handler file contains the expected code patterns for the PR fix."""
+    result = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+
+const HANDLER_PATH = '/workspace/next.js/packages/next/src/server/route-modules/pages/pages-handler.ts';
+const code = fs.readFileSync(HANDLER_PATH, 'utf8');
+
+// Remove comments for analysis
+const cleanCode = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+let passed = 0;
+let failed = 0;
+
+// Check for getHandler export
+if (/export\s+(const|async function|function)\s+getHandler/.test(code)) {
+  console.log('PASS: getHandler export found');
+  passed++;
+} else {
+  console.log('FAIL: getHandler export not found');
+  failed++;
+}
+
+// Check for RenderResult usage
+if (/new\s+RenderResult/.test(code)) {
+  console.log('PASS: RenderResult instantiation found');
+  passed++;
+} else {
+  console.log('FAIL: RenderResult instantiation not found');
+  failed++;
+}
+
+// Check for isNextDataRequest handling
+if (/isNextDataRequest/.test(code)) {
+  console.log('PASS: isNextDataRequest check found');
+  passed++;
+} else {
+  console.log('FAIL: isNextDataRequest check not found');
+  failed++;
+}
+
+// Check for sendRenderResult call
+if (/sendRenderResult/.test(code)) {
+  console.log('PASS: sendRenderResult call found');
+  passed++;
+} else {
+  console.log('FAIL: sendRenderResult call not found');
+  failed++;
+}
+
+// Check for JSON.stringify (used for data responses)
+if (/JSON\.stringify/.test(code)) {
+  console.log('PASS: JSON.stringify found (for data responses)');
+  passed++;
+} else {
+  console.log('FAIL: JSON.stringify not found');
+  failed++;
+}
+
+// Check for CachedRouteKind.PAGES
+if (/CachedRouteKind/.test(code)) {
+  console.log('PASS: CachedRouteKind found');
+  passed++;
+} else {
+  console.log('FAIL: CachedRouteKind not found');
+  failed++;
+}
+
+// Check for generateEtags
+if (/generateEtags/.test(code)) {
+  console.log('PASS: generateEtags found');
+  passed++;
+} else {
+  console.log('FAIL: generateEtags not found');
+  failed++;
+}
+
+console.log(`\nResults: ${passed} passed, ${failed} failed`);
+process.exit(failed > 0 ? 1 : 0);
+"""],
+        capture_output=True, text=True, timeout=30, cwd="/workspace/next.js",
+    )
+    assert result.returncode == 0, f"Pages handler source structure check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_valid():
+    """Repo CI: TypeScript files have valid syntax (pass_to_pass).
+    Verifies the modified TypeScript files can be parsed successfully."""
+    result = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+
+// Simple TypeScript syntax check - verify files are valid by checking balanced braces
+function checkTypeScriptSyntax(filePath, name) {
+  const code = fs.readFileSync(filePath, 'utf8');
+
+  let braceCount = 0;
+  let parenCount = 0;
+  let bracketCount = 0;
+  let inString = false;
+  let stringChar = null;
+  let inComment = false;
+  let commentType = null;
+
+  for (let i = 0; i < code.length; i++) {
+    const char = code[i];
+    const nextChar = code[i + 1];
+
+    // Handle comments
+    if (!inString && !inComment) {
+      if (char === '/' && nextChar === '/') {
+        inComment = true;
+        commentType = 'line';
+        i++;
+        continue;
+      }
+      if (char === '/' && nextChar === '*') {
+        inComment = true;
+        commentType = 'block';
+        i++;
+        continue;
+      }
+    } else if (inComment && commentType === 'line' && char === '\n') {
+      inComment = false;
+      commentType = null;
+      continue;
+    } else if (inComment && commentType === 'block' && char === '*' && nextChar === '/') {
+      inComment = false;
+      commentType = null;
+      i++;
+      continue;
+    }
+
+    if (inComment) continue;
+
+    // Handle strings
+    if (!inString && (char === '"' || char === "'" || char === '`')) {
+      inString = true;
+      stringChar = char;
+      continue;
+    }
+    if (inString && char === stringChar && code[i-1] !== '\\') {
+      inString = false;
+      stringChar = null;
+      continue;
+    }
+
+    if (inString) continue;
+
+    // Count braces
+    if (char === '{') braceCount++;
+    if (char === '}') braceCount--;
+    if (char === '(') parenCount++;
+    if (char === ')') parenCount--;
+    if (char === '[') bracketCount++;
+    if (char === ']') bracketCount--;
+
+    // Early exit on clear mismatches
+    if (braceCount < 0 || parenCount < 0 || bracketCount < 0) {
+      return { valid: false, error: `Negative count at position ${i}` };
+    }
+  }
+
+  if (braceCount !== 0) return { valid: false, error: `Unbalanced braces: ${braceCount}` };
+  if (parenCount !== 0) return { valid: false, error: `Unbalanced parentheses: ${parenCount}` };
+  if (bracketCount !== 0) return { valid: false, error: `Unbalanced brackets: ${bracketCount}` };
+
+  return { valid: true };
+}
+
+const files = [
+  { path: '/workspace/next.js/packages/next/src/server/route-modules/pages/pages-handler.ts', name: 'pages-handler.ts' },
+  { path: '/workspace/next.js/packages/next/src/server/send-payload.ts', name: 'send-payload.ts' },
+  { path: '/workspace/next.js/packages/next/src/server/render-result.ts', name: 'render-result.ts' },
+];
+
+let failed = 0;
+for (const file of files) {
+  const result = checkTypeScriptSyntax(file.path, file.name);
+  if (result.valid) {
+    console.log(`PASS: ${file.name} has valid syntax`);
+  } else {
+    console.log(`FAIL: ${file.name} - ${result.error}`);
+    failed++;
+  }
+}
+
+process.exit(failed > 0 ? 1 : 0);
+"""],
+        capture_output=True, text=True, timeout=30, cwd="/workspace/next.js",
+    )
+    assert result.returncode == 0, f"TypeScript syntax check failed:\n{result.stdout}\n{result.stderr}"

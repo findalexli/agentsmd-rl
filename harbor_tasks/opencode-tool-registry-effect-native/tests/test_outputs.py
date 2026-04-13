@@ -33,8 +33,8 @@ def _strip_comments(code: str) -> str:
     """Remove single-line comments, block comments, and string literals."""
     s = re.sub(r"//[^\n]*", "", code)
     s = re.sub(r"/\*.*?\*/", "", s, flags=re.DOTALL)
-    s = re.sub(r'"[^"]*"', '""', s)
     s = re.sub(r"'[^']*'", "''", s)
+    s = re.sub(r'"[^"]*"', '""', s)
     s = re.sub(r"`[^`]*`", "``", s)
     return s
 
@@ -47,7 +47,7 @@ def _strip_comments(code: str) -> str:
 # [pr_diff] fail_to_pass
 def test_no_facade_in_state_init():
     """Module-level Config/Plugin facades must not be called in InstanceState.make."""
-    r = _run_node(r"""
+    r = _run_node("""
 import { readFileSync } from 'fs';
 
 const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
@@ -76,7 +76,7 @@ for (const facade of facades) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -100,14 +100,14 @@ if (/\ball\s*=\s*Effect\.fn\b/.test(code) || /\ball\s*=\s*Effect\.gen\b/.test(co
   process.exit(1);
 }
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_effect_concurrency():
     """Promise.all replaced with Effect.forEach or Effect.all for concurrent tool init."""
-    r = _run_node(r"""
+    r = _run_node("""
 import { readFileSync } from 'fs';
 
 const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
@@ -124,14 +124,14 @@ if (!code.includes('Effect.forEach') && !/Effect\.all\s*\(/.test(code)) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_services_yielded_in_layer():
     """Config.Service and Plugin.Service must be obtained via Effect dependency graph."""
-    r = _run_node(r"""
+    r = _run_node("""
 import { readFileSync } from 'fs';
 
 const code = readFileSync('packages/opencode/src/tool/registry.ts', 'utf-8');
@@ -151,17 +151,23 @@ if (makeIdx === -1) {
 // The region between Layer.effect and InstanceState.make must yield both services
 const preamble = code.slice(layerIdx, makeIdx);
 
-for (const svc of ['Config.Service', 'Plugin.Service']) {
-  const pattern = new RegExp('yield\\s*\\*\\s*' + svc.replace('.', '\\.'));
-  if (!pattern.test(preamble)) {
-    console.error('FAIL: ' + svc + ' not yielded in layer generator before InstanceState.make');
-    process.exit(1);
-  }
+// Check for yield* Config.Service and yield* Plugin.Service patterns
+const hasConfigService = /yield\*\s*Config\.Service/.test(preamble);
+const hasPluginService = /yield\*\s*Plugin\.Service/.test(preamble);
+
+if (!hasConfigService) {
+  console.error('FAIL: Config.Service not yielded in layer generator before InstanceState.make');
+  process.exit(1);
+}
+
+if (!hasPluginService) {
+  console.error('FAIL: Plugin.Service not yielded in layer generator before InstanceState.make');
+  process.exit(1);
 }
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -181,7 +187,7 @@ if (!/\bexport\s+(const|let|var)\s+defaultLayer\b/.test(code) &&
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -207,7 +213,7 @@ if (!code.includes('Config.defaultLayer') || !code.includes('Plugin.defaultLayer
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -240,7 +246,7 @@ def test_public_facades_exported():
 # ---------------------------------------------------------------------------
 
 
-# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:21 @ d2bfa92
+# [agent_config] fail_to_pass — added by fix (not present in base)
 def test_effect_fn_usage():
     """Service methods should use Effect.fn for named/traced effects (>= 3 uses)."""
     code = _strip_comments(REGISTRY.read_text())
@@ -248,7 +254,7 @@ def test_effect_fn_usage():
     assert count >= 3, f"Effect.fn used only {count} times (expected >= 3)"
 
 
-# [agent_config] pass_to_pass — packages/opencode/AGENTS.md:21 @ d2bfa92
+# [agent_config] fail_to_pass — added by fix (not present in base)
 def test_effect_fn_untraced_usage():
     """Effect.fnUntraced must be used for internal/anonymous helper effects."""
     code = _strip_comments(REGISTRY.read_text())
@@ -283,21 +289,22 @@ def test_not_stub():
 
 # [repo_tests] pass_to_pass
 def test_repo_typecheck():
-    """Repo's TypeScript typecheck passes (bun turbo typecheck)."""
-    script = """export PATH="$HOME/.bun/bin:$PATH"
+    """Repo's TypeScript typecheck passes (bunx turbo typecheck)."""
+    script = """export HOME=/root
+export PATH=\"/root/.bun/bin:$PATH\"
 if ! command -v bun &>/dev/null; then
   apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
   curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
 fi
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH=\"/root/.bun/bin:$PATH\"
 cd /workspace/opencode && bun install 2>&1 | tail -5
-bun turbo typecheck 2>&1
+bunx turbo typecheck 2>&1
 """
     r = subprocess.run(
         ["bash", "-c", script],
         capture_output=True,
         text=True,
-        timeout=180,
+        timeout=300,
         cwd=REPO,
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
@@ -306,20 +313,21 @@ bun turbo typecheck 2>&1
 # [repo_tests] pass_to_pass
 def test_repo_tool_registry_tests():
     """Tool registry tests pass (bun test test/tool/registry.test.ts)."""
-    script = """export PATH="$HOME/.bun/bin:$PATH"
+    script = """export HOME=/root
+export PATH=\"/root/.bun/bin:$PATH\"
 if ! command -v bun &>/dev/null; then
   apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
   curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
 fi
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH=\"/root/.bun/bin:$PATH\"
 cd /workspace/opencode && bun install 2>&1 | tail -5
-bun --cwd packages/opencode test --timeout 30000 test/tool/registry.test.ts 2>&1
+cd packages/opencode && bun test --timeout 30000 test/tool/registry.test.ts 2>&1
 """
     r = subprocess.run(
         ["bash", "-c", script],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
     assert r.returncode == 0, f"Tool registry tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
@@ -327,21 +335,22 @@ bun --cwd packages/opencode test --timeout 30000 test/tool/registry.test.ts 2>&1
 
 # [repo_tests] pass_to_pass
 def test_repo_opencode_typecheck():
-    """Opencode package typecheck passes (bun turbo typecheck --filter opencode)."""
-    script = """export PATH="$HOME/.bun/bin:$PATH"
+    """Opencode package typecheck passes (bunx turbo typecheck --filter=opencode)."""
+    script = """export HOME=/root
+export PATH=\"/root/.bun/bin:$PATH\"
 if ! command -v bun &>/dev/null; then
   apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
   curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
 fi
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH=\"/root/.bun/bin:$PATH\"
 cd /workspace/opencode && bun install 2>&1 | tail -5
-bun turbo typecheck --filter opencode 2>&1
+bunx turbo typecheck --filter=opencode 2>&1
 """
     r = subprocess.run(
         ["bash", "-c", script],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
     assert r.returncode == 0, f"Opencode typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
@@ -350,12 +359,13 @@ bun turbo typecheck --filter opencode 2>&1
 # [repo_tests] pass_to_pass
 def test_repo_effect_tests():
     """Effect-related tests pass (bun test test/effect/)."""
-    script = """export PATH="$HOME/.bun/bin:$PATH"
+    script = """export HOME=/root
+export PATH=\"/root/.bun/bin:$PATH\"
 if ! command -v bun &>/dev/null; then
   apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
   curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
 fi
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH=\"/root/.bun/bin:$PATH\"
 cd /workspace/opencode && bun install 2>&1 | tail -5
 cd packages/opencode && bun test --timeout 30000 test/effect/ 2>&1
 """
@@ -372,12 +382,13 @@ cd packages/opencode && bun test --timeout 30000 test/effect/ 2>&1
 # [repo_tests] pass_to_pass
 def test_repo_plugin_tests():
     """Plugin tests pass (bun test test/plugin/)."""
-    script = """export PATH="$HOME/.bun/bin:$PATH"
+    script = """export HOME=/root
+export PATH=\"/root/.bun/bin:$PATH\"
 if ! command -v bun &>/dev/null; then
   apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
   curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
 fi
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH=\"/root/.bun/bin:$PATH\"
 cd /workspace/opencode && bun install 2>&1 | tail -5
 cd packages/opencode && bun test --timeout 30000 test/plugin/ 2>&1
 """
@@ -389,3 +400,5 @@ cd packages/opencode && bun test --timeout 30000 test/plugin/ 2>&1
         cwd=REPO,
     )
     assert r.returncode == 0, f"Plugin tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+

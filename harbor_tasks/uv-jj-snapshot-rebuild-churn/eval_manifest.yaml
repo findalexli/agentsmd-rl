@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: build.rs exists and contains commit_info function
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Rust code passes cargo fmt --check
+- id: test_repo_cargo_clippy_uv_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo uv-cli crate passes cargo clippy
+- id: test_repo_cargo_check_uv_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo uv-cli crate compiles with cargo check
 - id: jj_early_return
   type: fail_to_pass
   origin: pr_diff
@@ -53,62 +65,33 @@ checks:
     lines: '10'
     commit: cde48c8ac8eb13e8eff5cfb5c9fc39dad69c4f19
 rubric:
-- rule: PREFER patterns like `if let` to handle fallibility
-  source:
-    path: CLAUDE.md
-    lines: '8'
-    commit: cde48c8ac8eb13e8eff5cfb5c9fc39dad69c4f19
-- rule: ALWAYS write `SAFETY` comments following our usual style when writing `unsafe`
-    code
-  source:
-    path: CLAUDE.md
-    lines: '9'
-    commit: cde48c8ac8eb13e8eff5cfb5c9fc39dad69c4f19
-- rule: PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
-  source:
-    path: CLAUDE.md
-    lines: '11'
-    commit: cde48c8ac8eb13e8eff5cfb5c9fc39dad69c4f19
-- rule: PREFER top-level imports over local imports or fully qualified names
-  source:
-    path: CLAUDE.md
-    lines: '16'
-    commit: cde48c8ac8eb13e8eff5cfb5c9fc39dad69c4f19
 - rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
   source:
-    path: CLAUDE.md
-    lines: 16-17
+    path: crates/uv-cli/build.rs
+    lines: 33-36
   evidence: The gold solution uses the descriptive variable name `jj_dir` instead
     of a shortened version like `jjd` or `jj`.
   category: naming
 - rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
     rule ignores
   source:
-    path: CLAUDE.md
-    lines: 7-7
+    path: crates/uv-cli/build.rs
+    lines: 33-36
   evidence: The gold solution safely checks the directory existence using `.exists()`
     and returns early, avoiding any `.unwrap()` or `panic!` calls.
   category: style
 distractors:
-- rule: ALWAYS attempt to add a test case for changed behavior
-  collision_type: scope_ambiguity
-  why_distracting: The change modifies `build.rs` to prevent unnecessary Cargo rebuilds
-    in a specific VCS environment (`.jj`). Testing this behavior would require a complex
-    integration test that sets up a dummy `.jj` repository, runs `cargo build`, and
-    asserts on Cargo's caching behavior. This is out of scope for a simple build script
-    fix and likely unsupported by the existing test framework.
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests
+  collision_type: architecture_boundary
+  why_distracting: Testing `build.rs` rerun-if-changed behavior based on the presence
+    of a `.jj` directory is extremely difficult and crosses the boundary between build-time
+    and test-time execution. The agent might waste significant effort trying to mock
+    a workspace or parse cargo build output to satisfy this rule.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 2-2
-- rule: PREFER integration tests, e.g., at `it/...` over unit tests
-  collision_type: scope_ambiguity
-  why_distracting: An agent might try to create an integration test in `it/` to verify
-    the build script behavior, which would be overly complex, brittle, and unnecessary
-    for this specific fix.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 3-3
-hierarchy_analysis: Only a single root-level `CLAUDE.md` file is provided, so there
-  are no conflicts between different configuration files. All rules apply globally.
+    lines: 2-3
+hierarchy_analysis: The config is a flat single file (CLAUDE.md). The main challenge
+  is knowing when to ignore the strict 'ALWAYS attempt to add a test case' rule due
+  to the architectural difficulty of testing build scripts.

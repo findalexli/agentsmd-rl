@@ -74,27 +74,31 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Security linting (bandit) passes on modified file
+- id: test_repo_lintrunner_flake8
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lintrunner FLAKE8 check passes on modified file
+- id: test_repo_lintrunner_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lintrunner RUFF check passes on modified file
+- id: test_repo_lintrunner_tabs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lintrunner TABS check passes on modified file (no tabs)
+- id: test_repo_lintrunner_spaces
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lintrunner SPACES check passes on modified file (no trailing spaces)
+- id: test_repo_lintrunner_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lintrunner NEWLINE check passes on modified file (proper newlines)
 rubric:
-- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
-  source:
-    path: CLAUDE.md
-    lines: '48'
-    commit: bac7b59c6fe3241bb6d6cca89cb4bf1da0662788
-- rule: If uncertain, choose the simpler, more concise implementation.
-  source:
-    path: CLAUDE.md
-    lines: '62'
-    commit: bac7b59c6fe3241bb6d6cca89cb4bf1da0662788
 - rule: Match existing code style and architectural patterns.
   source:
     path: CLAUDE.md
     lines: '57'
-    commit: bac7b59c6fe3241bb6d6cca89cb4bf1da0662788
-- rule: Comments should be useful — only for non-obvious global context that can't
-    be inferred locally.
-  source:
-    path: CLAUDE.md
-    lines: 49-50
     commit: bac7b59c6fe3241bb6d6cca89cb4bf1da0662788
 - rule: No over-engineering — only requested changes are made; no speculative features.
   source:
@@ -111,40 +115,36 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 34-37
-  evidence: 'The gold solution adds a concise, 2-line comment explaining that unfusing
+    commit: bac7b59c6fe3241bb6d6cca89cb4bf1da0662788
+  evidence: The gold solution adds a concise, 2-line comment explaining that unfusing
     introduces truncation that compounds through deep models and causes accuracy failures.
-    This perfectly aligns with the rule to '
+    This perfectly aligns with the rule to document non-obvious global context.
   category: style
 distractors:
-- rule: When working on a bug, first create a standalone file that reproduces the
-    bug and verify it fails in the expected way.
+- rule: When you are working on a bug, first create a standalone file that reproduces
+    the bug... Once the change is passing, find an appropriate test file to add the
+    test to
   collision_type: scope_ambiguity
-  why_distracting: The bug involves a compounding accuracy regression (RMSE > 3.0x)
-    specifically observed on Whisper (openai/whisper-tiny) running on an H100 GPU.
-    Instructing the agent to first create a standalone reproduction file is highly
-    distracting because reproducing a deep model's compounding floating-point truncation
-    error on specific hardware is extremely difficult and time-consuming for an agent
-    environment, likely leading to wasted effort or hallucinated reproduction scripts.
+  why_distracting: The bug specifically mentions compounding accuracy regressions
+    on Whisper with bfloat16 on an H100 GPU. An agent attempting to write a standalone
+    reproducer or unit test for this will likely fail and waste significant time,
+    as the environment lacks the specific hardware and downloading/running a full
+    Whisper model is out of scope for a simple unit test.
   severity: high
   source:
     path: AGENTS.md
-    lines: 2-6
-- rule: Use our test class and test runner... To test Tensor equality, use assertEqual.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a standard unit test using `assertEqual`
-    to verify the fix. However, the issue is a subtle numerical precision degradation
-    that only exceeds thresholds after compounding through multiple layers (e.g.,
-    8 attention layers). A simple unit test checking tensor equality would likely
-    fail to capture the essence of the bug, and writing a full model-level test is
-    out of scope for this PR.
+    lines: 3-6
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: An agent might strictly follow this rule and omit the explanatory
+    comment about deep models and truncation, leaving the early return for bf16/fp16
+    without context. This conflicts with the need to document non-obvious global context.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 13-22
-hierarchy_analysis: The config hierarchy consists of CLAUDE.md and AGENTS.md at the
-  root level. There are no direct conflicts between the files, but both heavily emphasize
-  testing and reproduction (AGENTS.md requires a standalone repro, CLAUDE.md dictates
-  the test framework). In the context of this specific issue (a hardware-specific,
-  deep-model compounding accuracy regression), these testing rules act as strong distractors
-  because a minimal, targeted fix to the compiler pass is required without the overhead
-  of a complex model-level reproduction.
+    lines: 46-46
+hierarchy_analysis: The configuration is flat (Level 0 only) across two files (`AGENTS.md`
+  and `CLAUDE.md`). The primary conflict is internal to `CLAUDE.md` regarding commenting
+  style (minimize comments vs. provide global context), and a situational conflict
+  with `AGENTS.md` regarding the feasibility of writing a reproducer for a hardware-specific,
+  model-scale accuracy regression.

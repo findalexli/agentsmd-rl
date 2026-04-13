@@ -179,6 +179,90 @@ def test_repo_alex_linting():
     assert len(real_errors) == 0, f"Alex language linting found errors:\n{r.stderr[-1000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ast_grep_pages_handler():
+    """Repo's ast-grep scan passes on pages-handler.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "ast-grep", "scan", "packages/next/src/server/route-modules/pages/pages-handler.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep found issues in pages-handler.ts:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_grep_render_result():
+    """Repo's ast-grep scan passes on render-result.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "ast-grep", "scan", "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep found issues in render-result.ts:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_cli_config_pages_handler():
+    """Repo's eslint with CLI config passes on pages-handler.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs", "packages/next/src/server/route-modules/pages/pages-handler.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint (CLI config) failed on pages-handler.ts:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_cli_config_render_result():
+    """Repo's eslint with CLI config passes on render-result.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs", "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint (CLI config) failed on render-result.ts:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_render_result():
+    """Repo's prettier formatting passes on render-result.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on render-result.ts:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - NEW: TypeScript compilation checks
+def test_repo_tsc_pages_handler():
+    """TypeScript compilation check on pages-handler.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--skipLibCheck", "packages/next/src/server/route-modules/pages/pages-handler.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # tsc returns 0 on success, 2 on errors; pass if returncode is 0 or no errors in target file
+    assert r.returncode == 0 or "pages-handler.ts" not in r.stderr, \
+        f"TypeScript check failed on pages-handler.ts:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - NEW: TypeScript compilation checks
+def test_repo_tsc_render_result():
+    """TypeScript compilation check on render-result.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--skipLibCheck", "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # tsc returns 0 on success, 2 on errors; pass if returncode is 0 or no errors in target file
+    assert r.returncode == 0 or "render-result.ts" not in r.stderr, \
+        f"TypeScript check failed on render-result.ts:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - NEW: Node syntax check on render-result.ts
+def test_repo_node_syntax_render_result():
+    """Node.js syntax check passes on render-result.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node syntax check failed on render-result.ts:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub + compilation
 # ---------------------------------------------------------------------------

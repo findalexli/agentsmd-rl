@@ -158,3 +158,29 @@ def test_repo_biome_lint_passes():
         capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"Biome lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_button_demo_tests_pass():
+    """Repo's Button component demo tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--testPathPatterns=button/__tests__/demo", "--maxWorkers=1", "--silent"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env={
+            **os.environ,
+            "CI": "true",
+            "SKIP_SEMANTIC": "1"
+        }
+    )
+    assert r.returncode == 0, f"Button demo tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tag_demo_tests_pass():
+    """Repo's Tag component demo tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--testPathPatterns=tag/__tests__/demo", "--maxWorkers=1", "--silent"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env={
+            **os.environ,
+            "CI": "true",
+            "SKIP_SEMANTIC": "1"
+        }
+    )
+    assert r.returncode == 0, f"Tag demo tests failed:\n{r.stderr[-500:]}"

@@ -196,8 +196,15 @@ def test_query_gates_with_enabled():
 # [repo_tests] pass_to_pass
 def test_repo_unit_tests():
     """Studio unit tests pass (pass_to_pass)."""
+    # First install dependencies at root
     r = subprocess.run(
-        ["bash", "-c", "corepack enable && cd /workspace/supabase/apps/studio && NODE_OPTIONS='--max-old-space-size=3072' pnpm run test:ci"],
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    # Run tests
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/supabase/apps/studio && NODE_OPTIONS='--max-old-space-size=3072' pnpm run test:ci"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
@@ -206,8 +213,50 @@ def test_repo_unit_tests():
 # [repo_tests] pass_to_pass
 def test_repo_lint():
     """Studio ESLint passes (pass_to_pass)."""
+    # First install dependencies at root (idempotent if already installed)
     r = subprocess.run(
-        ["bash", "-c", "corepack enable && cd /workspace/supabase/apps/studio && pnpm run lint"],
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    # Run lint
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/supabase/apps/studio && pnpm run lint"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_ratchet():
+    """Studio ESLint ratchet check passes (pass_to_pass)."""
+    # First install dependencies at root (idempotent if already installed)
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    # Run lint ratchet
+    r = subprocess.run(
+        ["bash", "-c", "pnpm --filter studio run lint:ratchet"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint ratchet failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo Prettier formatting check passes (pass_to_pass)."""
+    # First install dependencies at root (idempotent if already installed)
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    # Run prettier check
+    r = subprocess.run(
+        ["bash", "-c", "pnpm test:prettier"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+

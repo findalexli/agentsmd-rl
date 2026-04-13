@@ -359,3 +359,24 @@ def test_buffer_alloc_convention():
     assert has_buffer or has_uint8, (
         "No Buffer.alloc or Uint8Array found for large repetitive strings"
     )
+
+
+# [repo_tests] pass_to_pass — repo banned words check
+# This test verifies the repo's banned words policy (internal testing convention)
+def test_repo_banned_words():
+    """Repo's banned words test passes (pass_to_pass).
+
+    CI: bun test test/internal/ban-words.test.ts
+    This test ensures no banned words are used in test files.
+    """
+    import subprocess
+    # Install bun first
+    subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["bun", "test", "test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Banned words test failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

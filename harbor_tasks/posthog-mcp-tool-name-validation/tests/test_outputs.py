@@ -106,6 +106,16 @@ def test_repo_build():
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
+def test_repo_format():
+    """MCP package formatting and linting passes (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "format"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests

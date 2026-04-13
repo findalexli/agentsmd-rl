@@ -172,7 +172,8 @@ def test_shim_cpp_context_forwarded():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — backward compatibility + anti-stub
+# Pass-to-pass — backward compatibility + anti-stub (origin: static)
+# These tests read file content to verify structure
 # ---------------------------------------------------------------------------
 
 def test_repo_git_clean():
@@ -216,74 +217,6 @@ def test_repo_header_structure():
         has_pragma = "#pragma once" in content
         assert has_guard or has_pragma, (
             f"{path.name} missing include guards or #pragma once"
-        )
-
-
-def test_no_deleter_overload_preserved():
-    """The no-deleter from_blob overload still exists for backward compatibility."""
-    src = OPS_H.read_text()
-
-    # Count from_blob definitions - there should be at least 2 (with deleter + without)
-    from_blob_defs = re.findall(
-        r'(?:inline\s+)?(?:\w+::)*\w+\s+from_blob\s*\(', src
-    )
-    assert len(from_blob_defs) >= 2, (
-        f"Expected >= 2 from_blob overloads, found {len(from_blob_defs)}"
-    )
-
-    # Check for aoti_torch_create_tensor_from_blob (used by no-deleter path)
-    assert 'aoti_torch_create_tensor_from_blob' in src, (
-        "Original no-deleter path using aoti_torch_create_tensor_from_blob was removed"
-    )
-
-
-def test_files_not_stubbed():
-    """Modified files have real implementation, not stubs."""
-    for path, min_lines, markers in [
-        (OPS_H, 100, ["TORCH_ERROR_CODE_CHECK", "AtenTensorHandle"]),
-        (SHIM_CPP, 100, ["AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE"]),
-        (SHIM_H, 50, []),
-    ]:
-        text = path.read_text()
-        lines = text.strip().splitlines()
-        assert len(lines) >= min_lines, f"{path.name} too short ({len(lines)} lines)"
-        for m in markers:
-            assert m in text, f"{path.name} missing {m}"
-
-
-def test_shim_cpp_null_callback_guard():
-    """shim_common.cpp still guards against nullptr callback (backward compat)."""
-    src = SHIM_CPP.read_text()
-
-    # Find the torch_from_blob function and check it guards deleter_callback != nullptr
-    funcs = re.split(r'(?=AOTI_TORCH_EXPORT\s+AOTITorchError)', src)
-    found = False
-    for block in funcs:
-        if 'torch_from_blob' in block and 'for_blob' in block:
-            if re.search(r'if\s*\(\s*\w+\s*!=\s*nullptr\s*\)', block):
-                found = True
-                break
-    assert found, "shim_common.cpp missing nullptr guard for deleter callback"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass — CI/CD repo tests (origin: repo_tests)
-# ---------------------------------------------------------------------------
-
-def test_repo_cpp_syntax_check():
-    """C++ header files can be preprocessed without syntax errors (pass_to_pass)."""
-    # Use gcc -E to verify the header can be preprocessed
-    # This catches basic syntax errors without requiring full compilation
-    r = subprocess.run(
-        ["gcc", "-E", "-dM", str(SHIM_H)],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    # If it fails, verify it's due to missing includes, not syntax errors
-    if r.returncode != 0:
-        # Allow "No such file or directory" errors but not syntax errors
-        stderr_lower = r.stderr.lower()
-        assert "expected" not in stderr_lower and "syntax" not in stderr_lower, (
-            f"shim.h has syntax errors:\n{r.stderr[:500]}"
         )
 
 
@@ -338,6 +271,58 @@ def test_repo_file_structure():
     )
 
 
+def test_no_deleter_overload_preserved():
+    """The no-deleter from_blob overload still exists for backward compatibility."""
+    src = OPS_H.read_text()
+
+    # Count from_blob definitions - there should be at least 2 (with deleter + without)
+    from_blob_defs = re.findall(
+        r'(?:inline\s+)?(?:\w+::)*\w+\s+from_blob\s*\(', src
+    )
+    assert len(from_blob_defs) >= 2, (
+        f"Expected >= 2 from_blob overloads, found {len(from_blob_defs)}"
+    )
+
+    # Check for aoti_torch_create_tensor_from_blob (used by no-deleter path)
+    assert 'aoti_torch_create_tensor_from_blob' in src, (
+        "Original no-deleter path using aoti_torch_create_tensor_from_blob was removed"
+    )
+
+
+def test_files_not_stubbed():
+    """Modified files have real implementation, not stubs."""
+    for path, min_lines, markers in [
+        (OPS_H, 100, ["TORCH_ERROR_CODE_CHECK", "AtenTensorHandle"]),
+        (SHIM_CPP, 100, ["AOTI_TORCH_CONVERT_EXCEPTION_TO_ERROR_CODE"]),
+        (SHIM_H, 50, []),
+    ]:
+        text = path.read_text()
+        lines = text.strip().splitlines()
+        assert len(lines) >= min_lines, f"{path.name} too short ({len(lines)} lines)"
+        for m in markers:
+            assert m in text, f"{path.name} missing {m}"
+
+
+def test_shim_cpp_null_callback_guard():
+    """shim_common.cpp still guards against nullptr callback (backward compat)."""
+    src = SHIM_CPP.read_text()
+
+    # Find the torch_from_blob function and check it guards deleter_callback != nullptr
+    funcs = re.split(r'(?=AOTI_TORCH_EXPORT\s+AOTITorchError)', src)
+    found = False
+    for block in funcs:
+        if 'torch_from_blob' in block and 'for_blob' in block:
+            if re.search(r'if\s*\(\s*\w+\s*!=\s*nullptr\s*\)', block):
+                found = True
+                break
+    assert found, "shim_common.cpp missing nullptr guard for deleter callback"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — CI/CD repo tests (origin: repo_tests)
+# These use subprocess.run() to execute actual CI commands
+# ---------------------------------------------------------------------------
+
 def test_repo_git_history():
     """Repo has expected git history and structure (pass_to_pass)."""
     # Check git log works (repo has history)
@@ -347,3 +332,74 @@ def test_repo_git_history():
     )
     assert r.returncode == 0, f"git log failed: {r.stderr}"
     assert len(r.stdout.strip()) > 0, "git log returned empty"
+
+
+def test_repo_ci_scripts_syntax():
+    """CI scripts have valid Python syntax (pass_to_pass)."""
+    # Check Python syntax of CI scripts that exist in the repo
+    ci_scripts = [
+        ".github/scripts/collect_ciflow_labels.py",
+        ".github/scripts/ensure_actions_will_cancel.py",
+    ]
+    for script in ci_scripts:
+        script_path = Path(REPO) / script
+        if script_path.exists():
+            r = subprocess.run(
+                ["python3", "-m", "py_compile", str(script_path)],
+                capture_output=True, text=True, timeout=30, cwd=REPO,
+            )
+            assert r.returncode == 0, f"{script} has Python syntax errors: {r.stderr}"
+
+
+def test_github_scripts_syntax():
+    """All .github/scripts Python files have valid syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / ".github/scripts"
+    python_files = list(scripts_dir.glob("*.py"))
+    assert len(python_files) > 0, "No Python scripts found in .github/scripts"
+
+    failed = []
+    for script_path in python_files:
+        if script_path.name.startswith("test_"):
+            continue  # Skip test files, just check source files
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(script_path)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        if r.returncode != 0:
+            failed.append(f"{script_path.name}: {r.stderr[:200]}")
+
+    assert len(failed) == 0, f"Scripts with syntax errors: {failed}"
+
+
+def test_repo_shell_scripts_syntax():
+    """Shell scripts in .github/scripts have valid syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / ".github/scripts"
+    shell_scripts = [
+        "lintrunner.sh",
+        "pr-sanity-check.sh",
+        "report_git_status.sh",
+    ]
+
+    for script_name in shell_scripts:
+        script_path = scripts_dir / script_name
+        if script_path.exists():
+            r = subprocess.run(
+                ["bash", "-n", str(script_path)],
+                capture_output=True, text=True, timeout=30, cwd=REPO,
+            )
+            assert r.returncode == 0, (
+                f"{script_name} has shell syntax errors: {r.stderr}"
+            )
+
+
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml has valid TOML syntax (pass_to_pass)."""
+    import tomllib
+    pyproject_path = Path(REPO) / "pyproject.toml"
+    assert pyproject_path.exists(), "pyproject.toml does not exist"
+
+    content = pyproject_path.read_text()
+    try:
+        tomllib.loads(content)
+    except Exception as e:
+        assert False, f"pyproject.toml has invalid TOML syntax: {e}"

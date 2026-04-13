@@ -64,6 +64,90 @@ def test_repo_clippy():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """ty_python_semantic library unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--no-fail-fast"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Unit tests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_class_mdtests():
+    """Class-related mdtests pass — covers static_literal.rs call site (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "--", "mdtest::class"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Class mdtests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_enum_mdtests():
+    """Enum-related mdtests pass — covers enums.rs call site (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "--", "mdtest::enums"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Enum mdtests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_corpus_tests():
+    """Corpus tests (no-panic tests on real-world code) pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "corpus"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Corpus tests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_db_unit_tests():
+    """ruff_db library unit tests pass — foundational crate for ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_db", "--lib", "--no-fail-fast"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"ruff_db unit tests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ty_unit_tests():
+    """ty library unit tests pass — consumer of ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty", "--lib", "--no-fail-fast"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"ty unit tests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — method rename and logic restructure
 # ---------------------------------------------------------------------------

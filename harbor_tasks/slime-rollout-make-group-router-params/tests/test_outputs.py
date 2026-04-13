@@ -318,6 +318,74 @@ def test_repo_setup_py_valid():
     assert r.returncode == 0, f"setup.py is invalid:\n{r.stderr}"
 
 
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on rollout.py (pass_to_pass).
+    Note: B023 (loop variable binding) is ignored as it's the specific bug being fixed."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "slime/ray/rollout.py", "--line-length=320", "--ignore=B023"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_black_check():
+    """Repo's black format check passes on rollout.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "black", "--check", "slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_isort_check():
+    """Repo's isort check passes on rollout.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "isort", "--check", "slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass)."""
+    # Install dependencies required for plugin contract tests
+    deps = "numpy packaging pytest pyyaml omegaconf tqdm httpx pybase64 pylatexenc sympy aiohttp"
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install"] + deps.split() + ["-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/plugin_contracts/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"plugin contract tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_yamllint():
+    """Repo's YAML workflow files pass yamllint (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "yamllint", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "yamllint", "-d", "relaxed", ".github/workflows/pre-commit.yml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yamllint failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass — regression checks
 # ---------------------------------------------------------------------------

@@ -95,6 +95,38 @@ def test_c3_lint_format():
     assert r.returncode == 0, f"C3 format check failed:\n{r.stderr[-500:]}"
 
 
+def test_c3_build():
+    """C3 package builds successfully (pass_to_pass)."""
+    # First ensure pnpm is available
+    r = run_in_repo(["npm", "install", "-g", "pnpm@10.33.0"])
+    if r.returncode != 0:
+        pass  # pnpm might already be installed
+
+    # Install dependencies
+    r = run_in_repo(["pnpm", "install", "--frozen-lockfile"])
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run build via turbo
+    r = run_in_repo(["pnpm", "turbo", "build", "--filter=create-cloudflare"], timeout=180)
+    assert r.returncode == 0, f"C3 build failed:\n{r.stderr[-500:]}"
+
+
+def test_c3_type_tests():
+    """C3 package test files typecheck passes (pass_to_pass)."""
+    # First ensure pnpm is available
+    r = run_in_repo(["npm", "install", "-g", "pnpm@10.33.0"])
+    if r.returncode != 0:
+        pass  # pnpm might already be installed
+
+    # Install dependencies
+    r = run_in_repo(["pnpm", "install", "--frozen-lockfile"])
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run type:tests via turbo (type checks test files)
+    r = run_in_repo(["pnpm", "turbo", "type:tests", "--filter=create-cloudflare"], timeout=180)
+    assert r.returncode == 0, f"C3 type:tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — eslint-disable comment cleanup
 # ---------------------------------------------------------------------------
@@ -250,7 +282,7 @@ def test_type_only_vitest_import():
 
         # Should NOT have a value import of expect from vitest
         value_import = re.search(
-            r'^import\s+\{[^}]*\bexpect\b[^}]*\}\s+from\s+["\']vitest["\']',
+            r'^import\s+\{[^}]*\bexpect\b[^}]*\}\s+from\s+["\x27]vitest["\x27]',
             content,
             re.MULTILINE,
         )
@@ -261,7 +293,7 @@ def test_type_only_vitest_import():
 
         # Should have a type-only import from vitest (ExpectStatic or similar)
         type_import = re.search(
-            r'^import\s+type\s+\{[^}]+\}\s+from\s+["\']vitest["\']',
+            r'^import\s+type\s+\{[^}]+\}\s+from\s+["\x27]vitest["\x27]',
             content,
             re.MULTILINE,
         )
@@ -272,7 +304,7 @@ def test_type_only_vitest_import():
     # mocks.ts should not import expect from vitest at all
     mocks_content = Path(MOCKS).read_text()
     expect_import = re.search(
-        r'^import\s+\{[^}]*\bexpect\b[^}]*\}\s+from\s+["\']vitest["\']',
+        r'^import\s+\{[^}]*\bexpect\b[^}]*\}\s+from\s+["\x27]vitest["\x27]',
         mocks_content,
         re.MULTILINE,
     )

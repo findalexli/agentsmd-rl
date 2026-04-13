@@ -63,10 +63,55 @@ def test_repo_format_check():
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
-def test_bookstore_unit_tests():
-    """Bookstore demo unit tests pass (pass_to_pass)."""
-    r = _pnpm_cmd(["--filter", "bookstore-demo", "test"], timeout=120)
-    assert r.returncode == 0, f"Bookstore tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+def test_bookstore_database_tests():
+    """Bookstore database setup tests pass (pass_to_pass)."""
+    # Run database setup tests individually to avoid DB state conflicts
+    subprocess.run(["rm", "-f", str(BOOKSTORE / "data" / "bookstore.db")], check=False)
+    r = subprocess.run(
+        ["pnpm", "exec", "tsx", "--test", "app/data/setup.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(BOOKSTORE),
+    )
+    assert r.returncode == 0, f"Database setup tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_bookstore_router_tests():
+    """Bookstore router tests pass (pass_to_pass)."""
+    subprocess.run(["rm", "-f", str(BOOKSTORE / "data" / "bookstore.db")], check=False)
+    r = subprocess.run(
+        ["pnpm", "exec", "tsx", "--test", "app/router.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(BOOKSTORE),
+    )
+    assert r.returncode == 0, f"Router tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_bookstore_account_tests():
+    """Bookstore account handler tests pass (pass_to_pass)."""
+    subprocess.run(["rm", "-f", str(BOOKSTORE / "data" / "bookstore.db")], check=False)
+    r = subprocess.run(
+        ["pnpm", "exec", "tsx", "--test", "app/account.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(BOOKSTORE),
+    )
+    assert r.returncode == 0, f"Account tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_bookstore_books_tests():
+    """Bookstore books handler tests pass (pass_to_pass)."""
+    subprocess.run(["rm", "-f", str(BOOKSTORE / "data" / "bookstore.db")], check=False)
+    r = subprocess.run(
+        ["pnpm", "exec", "tsx", "--test", "app/books.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(BOOKSTORE),
+    )
+    assert r.returncode == 0, f"Books tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_bookstore_auth_tests():
+    """Bookstore auth handler tests pass (pass_to_pass)."""
+    subprocess.run(["rm", "-f", str(BOOKSTORE / "data" / "bookstore.db")], check=False)
+    r = subprocess.run(
+        ["pnpm", "exec", "tsx", "--test", "app/auth.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(BOOKSTORE),
+    )
+    assert r.returncode == 0, f"Auth tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
 def test_syntax_check():

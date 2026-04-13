@@ -251,6 +251,15 @@ def test_repo_cargo_check_workspace_lib():
     )
     assert r.returncode == 0, f"cargo check --workspace --lib failed:\n{r.stderr[-500:]}"
 
+
+def test_repo_cargo_clippy_all_targets():
+    """Repo must pass clippy on all targets (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--all-targets", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy --all-targets failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + syntax checks
 # ---------------------------------------------------------------------------

@@ -1,18 +1,39 @@
-FROM python:3.12-slim
+FROM python:3.10-slim
+
+WORKDIR /workspace/gradio
 
 # Install git and dependencies
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
 
-# Create logs directory
+# Clone gradio repo at the base commit (parent of 9953db9)
+# This is the commit BEFORE the fix for filename sanitization
+RUN git clone https://github.com/gradio-app/gradio.git /workspace/gradio && \
+    cd /workspace/gradio && \
+    git checkout a35a24149fd5ef56d3faa3e1475b1f3cc6416cf6
+
+# Install gradio dependencies
+RUN pip install --no-cache-dir \
+    numpy \
+    pillow \
+    pandas \
+    requests \
+    fastapi \
+    pydantic \
+    typing-extensions \
+    aiofiles \
+    httpx \
+    websockets \
+    pytest \
+    pytest-asyncio \
+    ruff
+
+# Install the gradio_client from source
+RUN pip install -e /workspace/gradio/client/python
+
+# Install the main gradio package in development mode
+RUN pip install -e /workspace/gradio
+
+# Create test directories
 RUN mkdir -p /logs/verifier
 
-# Clone the repository at base commit
-WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/All-Hands-AI/OpenHands.git && \
-    cd OpenHands && \
-    git checkout 3268c299459b690337c89f858671329fd99f9b48
-
-# Install minimal Python dependencies for testing
-RUN pip install pytest pyyaml sqlalchemy alembic
-
-WORKDIR /workspace/OpenHands
+WORKDIR /workspace/gradio

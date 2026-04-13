@@ -122,6 +122,19 @@ def test_check_doc_toc():
     assert r.returncode == 0, f"check_doc_toc failed:\n{r.stderr or r.stdout}"
 
 
+# [repo_tests] pass_to_pass
+def test_deps_table():
+    """Repo's dependency versions table is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "deps_table"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"deps_table check failed:\n{r.stderr or r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests: setup.py / dependency
 # ---------------------------------------------------------------------------

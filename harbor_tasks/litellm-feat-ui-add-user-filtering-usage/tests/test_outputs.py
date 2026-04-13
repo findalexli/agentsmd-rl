@@ -159,3 +159,121 @@ def test_repo_usage_view_select_tests():
     assert r.returncode == 0, f"UsageViewSelect tests failed:\n{r.stderr[-500:]}"
 
 
+
+
+def test_repo_usage_page_view_tests():
+    """Repo's UsagePageView component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/UsagePageView.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"UsagePageView tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_key_model_usage_view_tests():
+    """Repo's KeyModelUsageView component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/KeyModelUsageView.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"KeyModelUsageView tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_usage_ai_chat_panel_tests():
+    """Repo's UsageAIChatPanel component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/UsageAIChatPanel.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"UsageAIChatPanel tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_entity_usage_spend_by_provider_tests():
+    """Repo's EntityUsage SpendByProvider tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/EntityUsage/SpendByProvider.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"SpendByProvider tests failed:\n{r.stderr[-500:]}"
+def test_repo_entity_usage_export_utils_tests():
+    """Repo's EntityUsageExport utils tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/EntityUsageExport/utils.test.ts"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"EntityUsageExport utils tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_entity_usage_export_modal_tests():
+    """Repo's EntityUsageExport modal tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/EntityUsageExport/EntityUsageExportModal.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"EntityUsageExportModal tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_usage_value_formatters_tests():
+    """Repo's UsagePage value formatters tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/utils/value_formatters.test.ts"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"value_formatters tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_endpoint_usage_tests():
+    """Repo's EndpointUsage component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/EndpointUsage/EndpointUsage.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"EndpointUsage tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_top_key_view_tests():
+    """Repo's TopKeyView component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/EntityUsage/TopKeyView.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"TopKeyView tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_top_model_view_tests():
+    """Repo's TopModelView component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/EntityUsage/TopModelView.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"TopModelView tests failed:\n{r.stderr[-500:]}"

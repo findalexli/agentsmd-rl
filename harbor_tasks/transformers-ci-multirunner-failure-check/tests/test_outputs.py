@@ -545,3 +545,153 @@ def test_script_has_expected_functions():
 
     for func in expected:
         assert func in functions, f"Expected function '{func}' not found in check_bad_commit.py"
+
+
+# [repo_tests] pass_to_pass - CI: check_bad_commit.py can be imported as module
+def test_check_bad_commit_importable():
+    """check_bad_commit.py can be imported as a Python module (pass_to_pass).
+
+    Validates that the script is a valid Python module that can be imported
+    without errors. This catches import-time issues like missing dependencies
+    or circular imports.
+    """
+    import sys
+    result = subprocess.run(
+        [sys.executable, "-c", "from utils.check_bad_commit import find_bad_commit, get_commit_info; print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Failed to import check_bad_commit module: {result.stderr}"
+    assert "OK" in result.stdout, f"Import test did not complete: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI: workflow has required jobs
+def test_workflow_has_required_jobs():
+    """check_failed_tests.yml has required CI jobs (pass_to_pass).
+
+    Validates that the workflow defines the expected jobs for the CI pipeline.
+    """
+    with open(WORKFLOW) as f:
+        wf = yaml.safe_load(f)
+
+    jobs = wf.get("jobs", {})
+
+    # Check for expected job names
+    job_names = list(jobs.keys())
+    assert any("check_new_failures" in name for name in job_names), (
+        f"Missing check_new_failures job in workflow. Found: {job_names}"
+    )
+    assert any("process_new_failures" in name for name in job_names), (
+        f"Missing process_new_failures job in workflow. Found: {job_names}"
+    )
+
+
+# [repo_tests] pass_to_pass - CI: utils module scripts are valid Python
+def test_utils_scripts_py_compile():
+    """CI utils scripts compile without syntax errors (pass_to_pass).
+
+    Validates that key utility scripts used in CI are syntactically valid Python.
+    """
+    scripts = [
+        f"{REPO}/utils/check_bad_commit.py",
+        f"{REPO}/utils/checkers.py",
+    ]
+
+    import py_compile
+    for script in scripts:
+        try:
+            py_compile.compile(script, doraise=True)
+        except py_compile.PyCompileError as e:
+            assert False, f"Syntax error in {script}: {e}"
+
+
+# [repo_tests] pass_to_pass - CI: checkers.py has valid structure
+def test_checkers_py_valid():
+    """utils/checkers.py has valid CHECKERS configuration (pass_to_pass).
+
+    Validates that the checkers.py script can be imported and has expected structure.
+    Per CI: checkers.py is the unified runner for repo checks.
+    """
+    result = subprocess.run(
+        ["python3", "-c", "from utils.checkers import CHECKERS; print('CHECKERS:', len(CHECKERS))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Failed to import checkers module: {result.stderr}"
+    assert "CHECKERS:" in result.stdout, f"Unexpected output: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI: check_bad_commit.py argparse help works
+def test_check_bad_commit_cli_help():
+    """check_bad_commit.py CLI --help works (pass_to_pass).
+
+    Validates that the script's argument parser is correctly configured.
+    Per CI: CLI scripts should have working --help.
+    """
+    result = subprocess.run(
+        ["python3", "utils/check_bad_commit.py", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"CLI --help failed: {result.stderr}"
+    assert "--start_commit" in result.stdout, f"Missing --start_commit in help: {result.stdout}"
+    assert "--end_commit" in result.stdout, f"Missing --end_commit in help: {result.stdout}"
+    assert "--output_file" in result.stdout, f"Missing --output_file in help: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI: workflow YAML validation
+def test_workflow_yaml_no_duplicates():
+    """check_failed_tests.yml has no duplicate keys (pass_to_pass).
+
+    Validates that the workflow YAML loads without duplicate key errors.
+    Per CI: GitHub Actions workflows must be valid YAML.
+    """
+    result = subprocess.run(
+        ["python3", "-c",
+         "import yaml; yaml.safe_load(open('.github/workflows/check_failed_tests.yml')); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"YAML validation failed: {result.stderr}"
+    assert "OK" in result.stdout, f"Unexpected output: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI: script has no critical import errors
+def test_check_bad_commit_no_critical_import_errors():
+    """check_bad_commit.py has no critical import-time errors (pass_to_pass).
+
+    Validates that importing the module doesn't fail due to syntax errors,
+    circular imports, or other import-time issues.
+    """
+    result = subprocess.run(
+        ["python3", "-c",
+         "from utils.check_bad_commit import find_bad_commit, get_commit_info; print('Import OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Import failed: {result.stderr}"
+    assert "Import OK" in result.stdout, f"Unexpected output: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI: repo structure allows check_bad_commit imports
+def test_repo_structure_imports():
+    """Repo structure allows importing utils modules (pass_to_pass).
+
+    Validates that the PYTHONPATH is correctly set up for utils imports.
+    """
+    result = subprocess.run(
+        ["python3", "-c",
+         "import sys; sys.path.insert(0, 'src'); from utils.check_bad_commit import find_bad_commit; print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Import with src path failed: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI: checkers.py CLI help works
+def test_checkers_cli_help():
+    """checkers.py CLI --help works (pass_to_pass).
+
+    Validates that the checkers.py script has a working CLI interface.
+    Per Makefile: checkers.py is the unified runner for style/quality checks.
+    """
+    result = subprocess.run(
+        ["python3", "utils/checkers.py", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"checkers.py --help failed: {result.stderr}"
+    assert "checkers" in result.stdout, f"Missing expected content in help: {result.stdout}"

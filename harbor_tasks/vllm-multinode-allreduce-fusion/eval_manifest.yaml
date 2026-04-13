@@ -20,7 +20,7 @@ checks:
   description: Repo's mypy typecheck passes on modified files
 - id: repo_python_syntax
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Python syntax validation via AST on modified files
 - id: repo_clang_format_check
   type: pass_to_pass
@@ -34,6 +34,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python files don't use tab characters for indentation
+- id: test_repo_spdx_headers
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files have SPDX license headers
+- id: test_repo_no_merge_conflicts
+  type: pass_to_pass
+  origin: static
+  description: No merge conflict markers in modified files
 - id: default_backend_is_auto
   type: fail_to_pass
   origin: pr_diff
@@ -74,37 +82,32 @@ distractors:
 - rule: Pure code-agent PRs are not allowed. A human submitter must understand and
     defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The rule explicitly forbids 'pure code-agent PRs' and requires
-    a human submitter. An autonomous agent might read this and refuse to complete
-    the task, believing it is violating repository policy by acting alone.
+  why_distracting: The agent might refuse to solve the issue because it is an AI and
+    the instructions explicitly forbid pure code-agent PRs.
   severity: high
   source:
     path: AGENTS.md
-    lines: 30-33
+    lines: 25-26
+- rule: 'Before proposing a PR, run these checks: gh issue view <issue_number> ...
+    gh pr list ...'
+  collision_type: would_cause_bug
+  why_distracting: The agent might attempt to run `gh` commands to check for duplicate
+    PRs, which will likely fail in an unauthenticated sandbox and distract from fixing
+    the code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-12
 - rule: Never use system python3 or bare pip/pip install. All Python commands must
     go through uv and .venv/bin/python.
-  collision_type: meta_confusion
-  why_distracting: The rule mandates using `uv` and `.venv/bin/python` instead of
-    system `python3`. The agent might waste time trying to install `uv`, set up a
-    virtual environment, or refuse to run basic Python scripts (like the patch script
-    in the gold solution) using system Python.
-  severity: medium
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to install `uv` and create a virtual environment
+    to run tests or linters, which is unnecessary for generating the patch and might
+    fail in the test environment.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 42-43
-- rule: Before proposing a PR, run duplicate-work checks using `gh issue view` and
-    `gh pr list`.
-  collision_type: meta_confusion
-  why_distracting: The rule requires running `gh` CLI commands to check for duplicate
-    issues and PRs before proposing a change. The agent might attempt to run these
-    commands in the evaluation sandbox, which will fail due to lack of authentication
-    or network access, distracting it from fixing the bug.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 10-14
-hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
-  containing strict workflow and contribution policies. There are no coding style
-  or architectural guidelines provided. The rules are heavily focused on human contributors
-  (e.g., prohibiting pure code-agent PRs, requiring specific local environment setups
-  like `uv`, and mandating GitHub CLI checks).
+    lines: 40-41
+hierarchy_analysis: The config hierarchy consists of a single AGENTS.md file (referenced
+  by CLAUDE.md) containing generic workflow and contribution guidelines. There are
+  no code-specific rules relevant to the task.

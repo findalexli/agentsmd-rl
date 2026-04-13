@@ -132,27 +132,23 @@ rubric:
 distractors:
 - rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
     listed owner explicitly asked for the change or is already reviewing it with you.
-  collision_type: meta_confusion
-  why_distracting: The bug explicitly describes a security vulnerability (API credential
-    injection). An agent might interpret `src/infra/dotenv.ts` as a restricted security
-    surface and refuse to implement the fix without a simulated CODEOWNERS review,
-    halting progress.
+  collision_type: scope_ambiguity
+  why_distracting: The task involves fixing a security vulnerability (credential injection).
+    The agent might refuse to edit the file, citing the rule against editing security-focused
+    CODEOWNERS files without explicit owner permission.
   severity: high
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 5-5
-- rule: 'Messaging channels: always consider all built-in + extension channels when
-    refactoring shared logic...'
+- rule: '`src/gateway/protocol/*` = typed Gateway control-plane and node wire protocol'
   collision_type: architecture_boundary
-  why_distracting: The bug mentions gateway authentication and OAuth tokens. The agent
-    might overcomplicate the fix by trying to implement credential filtering at the
-    channel or gateway protocol level (`src/channels/` or `src/gateway/protocol/`)
-    instead of simply blocking the environment variables at the dotenv loading level
-    as requested.
+  why_distracting: The task mentions blocking 'Gateway authentication secrets'. The
+    agent might try to implement the blocking logic in `src/gateway/protocol/*` instead
+    of the centralized dotenv loader in `src/infra/dotenv.ts`.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 16-20
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical rules. The agent
-  should follow the architectural boundaries defined in the root config, specifically
-  keeping infrastructure changes in `src/infra`.'
+    path: AGENTS.md
+    lines: 28-28
+hierarchy_analysis: The config hierarchy consists of `AGENTS.md` and `CLAUDE.md` at
+  the root level, which contain identical rules. There is no deep hierarchy or conflicting
+  rules between files.

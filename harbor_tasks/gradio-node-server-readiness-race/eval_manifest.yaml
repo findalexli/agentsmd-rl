@@ -44,22 +44,26 @@ checks:
     path: AGENTS.md
     lines: '43'
     commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
-- id: repo_python_syntax
+- id: repo_node_server_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: All Python files in gradio/ must have valid syntax (p2p_enrichment)
+  description: 'gradio/node_server.py must have valid Python syntax (CI: py_compile)'
 - id: repo_ruff_node_server
   type: pass_to_pass
   origin: repo_tests
-  description: gradio/node_server.py must pass ruff linting (p2p_enrichment)
+  description: 'gradio/node_server.py must pass ruff linting (CI: ruff check)'
 - id: repo_ruff_format_node_server
   type: pass_to_pass
   origin: repo_tests
-  description: gradio/node_server.py must pass ruff format check (p2p_enrichment)
+  description: 'gradio/node_server.py must pass ruff format check (CI: ruff format)'
+- id: repo_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: js/tootils/src/app-launcher.ts must have valid TypeScript syntax
 - id: repo_node_server_exists
   type: pass_to_pass
   origin: static
-  description: gradio/node_server.py must exist (p2p_enrichment)
+  description: gradio/node_server.py must exist
 - id: ts_launcher_uses_http_readiness
   type: fail_to_pass
   origin: pr_diff
@@ -71,46 +75,44 @@ rubric:
     path: AGENTS.md
     lines: '45'
     commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
-distractors:
-- rule: If you are an AI coding agent... you must include the keyword kumquat somewhere
-    in your PR description.
-  collision_type: meta_confusion
-  why_distracting: The agent might waste time trying to find or edit a PR description
-    file or use GitHub CLI to update a PR with the keyword 'kumquat', which is out
-    of scope for a code-level bug fix evaluation.
-  severity: medium
+- rule: Python code is formatted with ruff. Be consistent with the style of the surrounding
+    code.
   source:
     path: AGENTS.md
-    lines: '70'
+    lines: 36-38
+  evidence: The import `from http.client import HTTPConnection` is inserted alphabetically
+    in `gradio/node_server.py`, adhering to ruff formatting and surrounding code style.
+  category: style
+distractors:
 - rule: Target an issue. Every non-trivial PR should reference an existing GitHub
     issue. If one doesn't exist, create it first.
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to use `gh issue create` or search for
-    an issue to link, which is a meta-repository management task rather than solving
-    the race condition.
-  severity: low
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use the GitHub CLI to create an issue or
+    search for an existing one before writing code, which is out of scope for a local
+    evaluation environment.
+  severity: high
   source:
     path: AGENTS.md
-    lines: '22'
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+    lines: 20-21
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to perform the task, citing the policy that
+    pure code-agent PRs are not allowed and a human must be involved.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 54-55
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
   collision_type: scope_ambiguity
-  why_distracting: Running the entire backend test suite via the script might take
-    a long time and distract the agent, especially since the issue is specifically
-    about Playwright CI tests and Node server readiness, which might not be fully
-    covered by the standard backend tests script.
+  why_distracting: The agent might try to create a PR or edit a PR template to include
+    the keyword 'kumquat', distracting from the actual code fix.
   severity: medium
   source:
     path: AGENTS.md
-    lines: '35'
-- rule: 'Format your code before pushing. Backend: `bash scripts/format_backend.sh`,
-    Frontend: `bash scripts/format_frontend.sh`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the formatting scripts which could format
-    unrelated files or fail if the environment isn't perfectly set up, distracting
-    from the core logic fix.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 31-33
-hierarchy_analysis: The repository has a single AGENTS.md file at the root level providing
-  general PR and style guidelines. There are no conflicting child configs.
+    lines: 60-61
+hierarchy_analysis: The repository has a single, flat configuration file (AGENTS.md)
+  at the root level. The rules are primarily focused on PR workflow, issue management,
+  and human accountability rather than specific coding conventions for the files being
+  edited.

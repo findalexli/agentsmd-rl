@@ -41,42 +41,51 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's unit tests pass (pnpm test:run)
+- id: repo_client_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client tests pass (pnpm --filter @gradio/client test)
 rubric:
-- rule: Be consistent with the style of the surrounding code. Follow patterns in neighboring
-    files.
+- rule: Code change removes $inspect debug call from MountComponents.svelte before
+    committing.
+  reference: The $inspect(node) debug call is removed from MountComponents.svelte.
+  category: correctness
+- rule: Code change fixes the umount typo to unmount in type definitions.
+  reference: The umount typo is corrected to unmount in the runtime type definition
+    in MountCustomComponent.svelte.
+  category: correctness
+- rule: Code change uses Svelte 5 runes consistently ($effect with cleanup return
+    instead of onDestroy).
+  reference: The gold solution uses Svelte 5 runes ($effect with return cleanup) instead
+    of onDestroy.
+  category: style
+- rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: 4a0fe6e5aec1df710bd843f2f328d43fb7cfa7ef
-- rule: Frontend code is formatted with `prettier`.
-  source:
-    path: AGENTS.md
-    lines: 42-42
-  evidence: The modified Svelte files maintain proper indentation and spacing, such
-    as the formatting of the `_runtime.mount` call and its options object, adhering
-    to Prettier standards.
+    lines: 38-38
+  evidence: The gold solution uses Svelte 5 runes (`$effect`, `$derived`, `$props`)
+    and standard Svelte syntax, matching the existing component style.
   category: style
 distractors:
-- rule: Be consistent with the style of the surrounding code.
-  collision_type: would_cause_bug
-  why_distracting: The existing code uses `onDestroy` for cleanup. If an agent tries
-    to be consistent with this surrounding style, it might keep `onDestroy` instead
-    of returning a cleanup function directly from the `$effect` block, which is the
-    correct Svelte 5 pattern needed to properly unmount the old component instance
-    before mounting the new one.
-  severity: high
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to modify the `.github/PULL_REQUEST_TEMPLATE.md`
+    file directly to add a description and AI disclosure, misunderstanding the instruction
+    as a directive to edit the template file rather than use it during PR creation.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 43-43
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: scope_ambiguity
-  why_distracting: The issue is entirely within the frontend Svelte code (`js/core/src/`).
-    Running backend tests as suggested by the general PR rules would waste time and
-    compute resources, as no Python code was modified.
-  severity: low
+    lines: 19-22
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to write a script to interact with the GitHub
+    API to create an issue, or halt the task asking for an issue number, which is
+    out of scope for the evaluation environment.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 28-28
-hierarchy_analysis: Only the root `AGENTS.md` file is present, so there are no conflicts
-  between different configuration files. The primary challenge is interpreting general
-  repository rules in the context of a specific frontend Svelte 5 reactivity bug.
+    lines: 17-17
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  It contains generic repository guidelines and PR instructions. No deep hierarchy
+  or conflicts exist.

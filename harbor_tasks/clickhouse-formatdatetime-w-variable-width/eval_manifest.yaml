@@ -41,6 +41,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's CMakeLists.txt has valid syntax and structure
+- id: test_repo_style_shell_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shell scripts have valid syntax
+- id: test_repo_style_python_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python CI scripts have valid syntax
+- id: test_repo_git_history
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git history is accessible
 - id: test_w_removed_from_m_is_month_name_array
   type: fail_to_pass
   description: '''W'' removed from variable_width_formatter_M_is_month_name array'
@@ -59,9 +71,13 @@ rubric:
     path: docs/en/development/style.md
     lines: 11-14
     commit: 61a4296fdce9d13cafb931cf73e4490b6d2bb315
-- rule: Use comments to explain invariants, not narrate code. Add comments for all
-    non-trivial parts of code.
+- rule: Use comments to explain invariants, not narrate code. For focused bug fixes,
+    ensure the change is clear and follows the existing code patterns.
   source:
     path: docs/en/development/style.md
     lines: 253-261
     commit: 61a4296fdce9d13cafb931cf73e4490b6d2bb315
+- id: test_repo_shellcheck_ci_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI shell scripts pass shellcheck validation

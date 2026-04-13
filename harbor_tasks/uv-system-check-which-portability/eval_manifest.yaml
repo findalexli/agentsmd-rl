@@ -47,6 +47,22 @@ checks:
     path: CLAUDE.md
     lines: '16'
     commit: cedae1aa42c0f1ff59b4e4f988659c52d467d585
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on the modified file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on the modified file
+- id: test_repo_pyflakes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyflakes linter passes on the modified file
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes validation
 rubric:
 - rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
     `requires_python` instead of `rp`
@@ -55,26 +71,25 @@ rubric:
     lines: 17-18
     commit: cedae1aa42c0f1ff59b4e4f988659c52d467d585
 distractors:
+- rule: When making changes for Windows from Unix, use `cargo xwin clippy` to check
+    compilation
+  collision_type: scope_ambiguity
+  why_distracting: The PR makes changes to support Windows, but the file being edited
+    is a Python script. Running `cargo xwin clippy` is for Rust code and is irrelevant
+    here, potentially wasting time or causing confusion.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 4-4
 - rule: ALWAYS attempt to add a test case for changed behavior
   collision_type: meta_confusion
   why_distracting: The file being modified (`scripts/check_system_python.py`) is itself
-    a testing/checking script. Attempting to add a test case for a test script would
-    lead to meta-level confusion and wasted effort.
+    a test/check script. Attempting to add a test case for a test script is unnecessary
+    and would lead to meta-level confusion.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 2-2
-- rule: When making changes for Windows from Unix, use `cargo xwin clippy` to check
-    compilation
-  collision_type: scope_ambiguity
-  why_distracting: The PR explicitly addresses a Windows-specific bug, which might
-    trigger this rule. However, the fix is entirely in a Python script, making Rust
-    compilation checks (`cargo xwin clippy`) irrelevant.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 4-4
-hierarchy_analysis: Only one config file (`CLAUDE.md`) is present, which primarily
-  contains Rust-specific guidelines. Since the target file is a Python script, many
-  of these rules are out of scope, requiring the agent to correctly identify the language
-  boundary.
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md`. The rules
+  are predominantly Rust-specific, whereas the target file for this task is a Python
+  script, meaning most rules naturally do not apply.

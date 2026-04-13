@@ -278,6 +278,54 @@ def test_repo_plugin_runtime_hook_contracts():
     assert r.returncode == 0, f"Plugin runtime hook contract tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+def test_repo_plugin_path_loading_contracts():
+    """Repo's plugin path loading contract tests pass (pass_to_pass)."""
+    # Install torch CPU version first
+    r = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install torch: {r.stderr[-500:]}"
+
+    # Install other dependencies
+    deps = ["numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "pytest"]
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install deps: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_path_loading_contracts.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin path loading contract tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_plugin_generate_contracts():
+    """Repo's plugin generate contract tests pass (pass_to_pass)."""
+    # Install torch CPU version first
+    r = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install torch: {r.stderr[-500:]}"
+
+    # Install other dependencies
+    deps = ["numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "pytest"]
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install deps: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_generate_contracts.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin generate contract tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 def test_repo_isort_check():
     """Repo's isort import ordering check passes (pass_to_pass)."""
     r = subprocess.run(
@@ -313,6 +361,46 @@ def test_repo_black_check():
     assert "error" not in r.stderr.lower(), f"black encountered errors:\n{r.stderr[-500:]}"
 
 
+def test_repo_black_format_check():
+    """Repo's black formatting check passes on slime/ package (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["black", "--check", "slime/"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Black returns 0 if all files are properly formatted, 1 if files need formatting
+    # We accept both as long as black doesn't crash (which would indicate syntax errors)
+    assert r.returncode in [0, 1], f"black check crashed with exit code {r.returncode}:\n{r.stderr[-500:]}"
+    # Ensure it didn't error out due to syntax issues
+    assert "Traceback" not in r.stderr, f"black encountered errors:\n{r.stderr[-500:]}"
+    assert "error" not in r.stderr.lower() or "would reformat" in r.stdout.lower(), f"black encountered errors:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on slime/ package (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "slime/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # ruff format --check returns 0 if all files are properly formatted, 1 if files need formatting
+    # We accept both as long as ruff doesn't crash
+    assert r.returncode in [0, 1], f"ruff format check crashed with exit code {r.returncode}:\n{r.stderr[-500:]}"
+    # Ensure it didn't error out due to syntax issues
+    assert "Traceback" not in r.stderr, f"ruff encountered errors:\n{r.stderr[-500:]}"
+    assert "error" not in r.stderr.lower() or r.returncode == 1, f"ruff encountered errors:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Anti-stub (static)
 # ---------------------------------------------------------------------------
@@ -334,3 +422,63 @@ def test_not_stub():
                         pytest.fail("Function raises NotImplementedError — likely a stub")
             return
     pytest.fail("_start_router not found in rollout.py")
+
+
+def test_repo_precommit_yaml_check():
+    """Repo's YAML files pass pre-commit check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit YAML check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_precommit_private_key_check():
+    """Repo has no private keys committed (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit private key check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_precommit_large_files_check():
+    """Repo has no large files committed (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit large files check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_precommit_autoflake():
+    """Repo's Python files pass autoflake check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "autoflake", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit autoflake check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

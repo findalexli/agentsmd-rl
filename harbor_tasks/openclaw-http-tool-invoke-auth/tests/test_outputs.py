@@ -239,6 +239,16 @@ def test_existing_deny_entries_preserved():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_check():
+    """Repo's full CI check (pnpm check) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CI check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_lint():
     """Repo's oxlint (pnpm lint) passes (pass_to_pass)."""
     r = subprocess.run(
@@ -277,6 +287,40 @@ def test_repo_typecheck():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"TypeScript type check failed:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_method_scopes_unit():
+    """Repo's method-scopes unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.gateway.config.ts", "src/gateway/method-scopes.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"method-scopes unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_auth_helpers_unit():
+    """Repo's http-auth-helpers unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.gateway.config.ts", "src/gateway/http-auth-helpers.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"http-auth-helpers unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tools_invoke_http_unit():
+    """Repo's tools-invoke-http unit tests pass (pass_to_pass)."""
+    # Exclude test that expects gateway.tools.allow to bypass owner-only restriction,
+    # since the security fix requires owner-only tools to be filtered for HTTP surface.
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.gateway.config.ts",
+         "src/gateway/tools-invoke-http.test.ts",
+         "-t", "^(?!.*allows gateway tool via HTTP when explicitly enabled)"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tools-invoke-http unit tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -40,18 +40,35 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax is valid for all modified files
+- id: test_repo_spdx_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's SPDX license headers check passes on modified files
+- id: test_repo_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's forbidden imports check passes on worker files
+- id: test_repo_boolean_context_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's boolean context manager check passes on modified files
+- id: test_repo_init_lazy_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's root init lazy imports check passes
+- id: test_repo_no_torch_cuda_calls
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's torch.cuda API prevention check passes on worker files
+- id: test_repo_attention_backend_docs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's attention backend documentation is up to date
+- id: test_repo_yaml_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML workflow files have valid syntax
 rubric:
-- rule: All Python commands must go through `uv` and `.venv/bin/python`. Never use
-    system `python3` or bare `pip`.
-  source:
-    path: AGENTS.md
-    lines: '34'
-    commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
-- rule: Run pre-commit linters (ruff, mypy) on modified files to ensure code quality.
-  source:
-    path: AGENTS.md
-    lines: 71-79
-    commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
 - rule: When modifying imports, ensure all references are updated consistently across
     the codebase.
   source:
@@ -59,13 +76,12 @@ rubric:
     lines: 15-19
     commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
 distractors:
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
-    one mutable default, etc.). Mechanical cleanups are acceptable only when bundled
-    with substantive work.
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits (single
+    typo, isolated style change, one mutable default, etc.).'
   collision_type: scope_ambiguity
-  why_distracting: The agent might refuse to fix the import paths, misclassifying
-    the change as a 'tiny edit' or 'mechanical cleanup', even though it resolves a
-    critical ModuleNotFoundError at runtime.
+  why_distracting: The agent might misclassify fixing an import path as a 'tiny edit'
+    or 'single typo' and refuse to fix the ModuleNotFoundError, thinking it is low-value
+    busywork.
   severity: high
   source:
     path: AGENTS.md
@@ -73,12 +89,12 @@ distractors:
 - rule: Pure code-agent PRs are not allowed. A human submitter must understand and
     defend the change end-to-end.
   collision_type: meta_confusion
-  why_distracting: The agent might refuse to generate the fix entirely, stating that
-    'Pure code-agent PRs are not allowed', misunderstanding its role as an AI assistant
-    generating a patch for a human submitter.
+  why_distracting: The agent might refuse to complete the task entirely because it
+    is an AI agent and the instructions explicitly forbid pure code-agent PRs.
   severity: high
   source:
     path: AGENTS.md
     lines: 22-23
-hierarchy_analysis: The AGENTS.md file provides high-level contribution guidelines.
-  There are no deeper domain-specific files provided that override these rules.
+hierarchy_analysis: The configuration is essentially a flat single file. `CLAUDE.md`
+  merely redirects to `AGENTS.md`, which contains generic repository contribution
+  guidelines rather than specific coding standards.

@@ -60,28 +60,14 @@ rubric:
     path: CLAUDE.md
     lines: 29-41
     commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
-  reference: '## Graphite Stack Safety Rules:
-
-
-    - Graphite force-pushes everything - old commits only recoverable via reflog
-
-    -
-    Never have uncommitted changes when switching branches - they get lost during restack
-
-    -
-    Never use `git stash` with Graphite - causes conflicts when `gt modify` restacks
-
-    -
-    Never use `git checkout HEAD -- <file>` after editing - silently restores unfixed
-    version
-
-    - Always use `gt checkout` (not `git checkout`) to switch branches'
+  reference: Graphite Stack Safety Rules with guidelines for gt commands including warnings about force-pushes, uncommitted changes, git stash, git checkout, and gt checkout usage
 - rule: CLAUDE.md must document pnpm-based testing commands including pnpm test-dev-turbo
     and pnpm test-start-turbo
   source:
     path: CLAUDE.md
     lines: 102-126
     commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  reference: Testing commands section with pnpm test-dev-turbo, pnpm test-start-turbo, pnpm test-unit
 - rule: .gitignore must be updated to ignore Claude Code local settings (.claude/settings.local.json,
     .claude/plans/, .claude/todos.json, CLAUDE.local.md)
   source:
@@ -96,7 +82,7 @@ rubric:
     path: .alexignore
     lines: 4-5
     commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
-  reference: ".claude/\nCLAUDE.md"
+  reference: ".claude/ directory and CLAUDE.md file ignored"
 - rule: .claude/commands/ci-failures.md must include instructions for analyzing CI failures
     using gh api (not gh run view --log) with pagination handling for >100 jobs
   source:

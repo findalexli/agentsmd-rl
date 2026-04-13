@@ -148,6 +148,18 @@ def test_repo_lint_eslint():
     assert result.returncode == 0, f"ESLint failed:\n{result.stderr[-500:]}"
 
 
+def test_repo_format_biome():
+    """Repo's Biome formatting passes on table files (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "biome", "format", "components/table/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Biome format check failed:\n{result.stderr[-500:]}"
+
+
 def test_repo_table_tests():
     """Repo's Table component unit tests pass (pass_to_pass)."""
     result = subprocess.run(
@@ -218,6 +230,18 @@ def test_repo_table_pagination_tests():
         timeout=180,
     )
     assert result.returncode == 0, f"Table pagination tests failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_table_all_tests():
+    """All Table component tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "components/table", "--maxWorkers=2", "--testTimeout=30000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"All Table tests failed:\n{result.stderr[-500:]}"
 
 
 # ============================================================================

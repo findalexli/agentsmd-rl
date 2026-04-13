@@ -125,7 +125,7 @@ def test_repo_lint():
     """Repo's PHP PSR-12 linting passes (pass_to_pass)."""
     # First ensure dependencies are installed
     r = subprocess.run(
-        ["composer", "install", "--no-interaction"],
+        ["composer", "install", "--no-interaction", "--ignore-platform-reqs"],
         capture_output=True, text=True, timeout=300, cwd=str(REPO_ROOT)
     )
     if r.returncode != 0:
@@ -143,7 +143,7 @@ def test_repo_check():
     """Repo's PHP static analysis passes (pass_to_pass)."""
     # First ensure dependencies are installed
     r = subprocess.run(
-        ["composer", "install", "--no-interaction"],
+        ["composer", "install", "--no-interaction", "--ignore-platform-reqs"],
         capture_output=True, text=True, timeout=300, cwd=str(REPO_ROOT)
     )
     if r.returncode != 0:

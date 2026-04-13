@@ -63,6 +63,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: wkBrowser.ts has expected structure
+- id: repo_npm_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo builds successfully with npm run build
+- id: repo_npm_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo DEPS check passes with npm run check-deps
+- id: repo_npm_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package lint passes with npm run lint-packages
+- id: repo_npm_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_browsers_json_strict
+  type: pass_to_pass
+  origin: repo_tests
+  description: browsers.json has valid webkit entry with browserVersion, revision,
+    and title
+- id: repo_device_descriptors_strict
+  type: pass_to_pass
+  origin: repo_tests
+  description: deviceDescriptorsSource.json has webkit devices with valid userAgent
+    containing Safari
+- id: repo_release_notes_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Release notes files have valid markdown frontmatter structure
+- id: repo_skill_md_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid frontmatter with name, description, and skill links
+- id: repo_wkbrowser_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: wkBrowser.ts has valid TypeScript class structure and BROWSER_VERSION
+    format
 rubric:
 - rule: The skill document should explain how to find the latest stable Safari version
     (not Technology Preview)
@@ -73,16 +111,25 @@ rubric:
 - rule: 'Commit message should follow the repo convention: label(scope): description'
   source:
     path: CLAUDE.md
-    lines: 73-82
+    lines: 101
     commit: 3aba395f2d151d2345de3182b8b3e9564507c9e5
+  evidence: 'The gold solution commit is ''chore(webkit): update Safari version to
+    26.4'''
 - rule: Always run `flint` before committing. Do not use individual lint commands
     separately.
   source:
-    path: CLAUDE.md
-    lines: 45-51
+    path: .claude/skills/playwright-dev/webkit-safari-version.md
+    lines: 1-22
   evidence: The gold solution explicitly includes `npm run flint` in the newly created
-    skill document (`webkit-safari-version.md`) as the correct command to run after
-    updating the version, adhering to the rule to
+    skill document as the correct command to run after updating the version
+  category: tooling
+- rule: Run `npm run flint` to execute all lint checks and generate files (types,
+    channels, etc.) before committing.
+  source:
+    path: .claude/skills/playwright-dev/webkit-safari-version.md
+    lines: 1-22
+  evidence: The gold solution includes `npm run flint` in the newly created skill
+    document as the command to run afterwards to update generated files
   category: tooling
 config_edits:
 - path: .claude/skills/playwright-dev/webkit-safari-version.md
@@ -104,31 +151,29 @@ config_edits:
   gold_added: '>26.4<'
   gold_removed: ''
 distractors:
-- rule: Assume watch is running and code is up to date. Generated files (types, channels,
-    validators) are produced by watch automatically.
-  collision_type: scope_ambiguity
-  why_distracting: The rule states that generated files are produced by watch automatically.
-    An agent might incorrectly assume that `deviceDescriptorsSource.json` or `browsers.json`
-    are generated automatically by the watch process and skip updating them manually,
-    or it might omit the `npm run flint` step from the skill doc assuming watch handles
+- rule: Assume watch is running and code is up to date. Generated files are produced
+    by watch automatically.
+  collision_type: rule_conflict
+  why_distracting: The config states that watch mode automatically produces generated
+    files. An agent might rely on this and fail to document `npm run flint` as the
+    required post-update command in the skill doc, assuming the watch script handles
     everything.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 41-43
-- rule: '`docs/src/` | API documentation — source of truth for public TypeScript types'
-  collision_type: meta_confusion
-  why_distracting: The rule states that `docs/src/` is the source of truth for public
-    TypeScript types. An agent might get confused and try to update TypeScript types
-    or constants in `docs/src/` instead of treating `wkBrowser.ts` as the source of
-    truth for the browser version as instructed by the prompt.
+    lines: 45-47
+- rule: '`docs/src/` is the source of truth for public TypeScript types.'
+  collision_type: scope_ambiguity
+  why_distracting: The config designates `docs/src/` as the source of truth for public
+    TypeScript types. An agent might mistakenly attempt to update API documentation
+    or type definitions in `docs/src/api/` instead of strictly updating the release
+    notes as requested.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 30-31
-hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
-  The primary challenge is distinguishing between manual source-of-truth updates (like
-  `wkBrowser.ts` and `deviceDescriptorsSource.json`) and generated files, especially
-  since the config mentions that watch mode automatically produces generated files.
-  The agent must correctly synthesize the prompt's explicit instructions about the
-  source of truth with the config's tooling commands (`npm run flint`).
+    lines: 32-33
+hierarchy_analysis: The task relies on a single root `CLAUDE.md` file, but requires
+  the agent to synthesize its tooling commands (`npm run flint`) into a new meta-instruction
+  file (`.claude/skills/playwright-dev/webkit-safari-version.md`). The agent must
+  resolve the tension between 'watch automatically generates files' and 'always run
+  flint before committing' to correctly document the update process.

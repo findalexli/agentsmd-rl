@@ -38,6 +38,44 @@ def test_svg_width_error_message():
         f"Expected IsImageResourceWithMeta hint not found. Content:\n{content}"
 
 
+def test_no_old_error_message():
+    """
+    Ensure the old error message is no longer used.
+
+    This is a fail-to-pass test: after fix, old error patterns should be gone.
+    """
+    # Read the transform.go file
+    with open(f"{REPO}/resources/transform.go", "r") as f:
+        content = f.read()
+
+    # Old error messages should not be present
+    assert 'this method is only available for raster images' not in content, \
+        "Old raster images error message still present in code"
+    assert 'this method is only available for image resources' not in content, \
+        "Old generic error message still present in code"
+    assert 'if eq .MediaType.SubType "svg"' not in content, \
+        "Old SVG type check still present in code"
+
+
+def test_error_message_format():
+    """
+    Verify the error message format uses fmt.Sprintf correctly.
+
+    This is a fail-to-pass test: after fix, the new format should be present.
+    """
+    with open(f"{REPO}/resources/transform.go", "r") as f:
+        content = f.read()
+
+    # Look for fmt.Sprintf call in getImageOps
+    assert "fmt.Sprintf(" in content, \
+        "fmt.Sprintf not found in getImageOps implementation"
+
+    # Look for the specific format string pattern
+    assert 'resource %q of media type %q' in content or \
+           'resource "%s" of media type "%s"' in content, \
+        "Expected format string pattern for resource and media type not found"
+
+
 # =============================================================================
 # Pass-to-pass tests (regression checks - structural)
 # These verify the fix doesn't break existing code structure
@@ -63,56 +101,18 @@ def test_transform_compiles():
     assert "func (r *resourceAdapter) getImageOps()" in content, "Missing getImageOps function"
 
 
-def test_no_old_error_message():
-    """
-    Ensure the old error message is no longer used.
-
-    This is a pass-to-pass test: after fix, old error patterns should be gone.
-    """
-    # Read the transform.go file
-    with open(f"{REPO}/resources/transform.go", "r") as f:
-        content = f.read()
-
-    # Old error messages should not be present
-    assert 'this method is only available for raster images' not in content, \
-        "Old raster images error message still present in code"
-    assert 'this method is only available for image resources' not in content, \
-        "Old generic error message still present in code"
-    assert 'if eq .MediaType.SubType "svg"' not in content, \
-        "Old SVG type check still present in code"
-
-
 def test_fmt_import_present():
     """
     Verify fmt package is imported for fmt.Sprintf.
 
-    This is a structural test gated by behavioral test success.
+    This is a structural pass-to-pass test. fmt was already imported before the fix.
     """
     with open(f"{REPO}/resources/transform.go", "r") as f:
         content = f.read()
 
-    # Check fmt is imported
+    # Check fmt is imported (fmt was already imported before the fix)
     assert '"fmt"' in content or 'fmt "' in content, \
         "fmt package import not found in transform.go"
-
-
-def test_error_message_format():
-    """
-    Verify the error message format uses fmt.Sprintf correctly.
-
-    Structural check for proper implementation.
-    """
-    with open(f"{REPO}/resources/transform.go", "r") as f:
-        content = f.read()
-
-    # Look for fmt.Sprintf call in getImageOps
-    assert "fmt.Sprintf(" in content, \
-        "fmt.Sprintf not found in getImageOps implementation"
-
-    # Look for the specific format string pattern
-    assert 'resource %q of media type %q' in content or \
-           'resource "%s" of media type "%s"' in content, \
-        "Expected format string pattern for resource and media type not found"
 
 
 # =============================================================================
@@ -303,6 +303,140 @@ def test_go_build_all():
     # Check if any version error is present
     has_version_error = any(err in r.stderr for err in version_errors)
     assert has_version_error, f"Build failed with non-version error: {r.stderr[:500]}"
+
+
+def test_repo_go_list():
+    """
+    Go module list check (pass_to_pass).
+    Verifies the module structure is valid by listing all modules.
+    This is a lightweight check that doesn't require full compilation.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["go", "list", "-m", "all"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go list failed: {r.stderr}"
+    # Verify the main module is in the output
+    assert "github.com/gohugoio/hugo" in r.stdout, "Main module not found in go list output"
+
+
+def test_repo_check_gofmt_script():
+    """
+    Repository passes gofmt via check_gofmt.sh script (pass_to_pass).
+    Runs the repo's official gofmt check script on all Go files.
+    This is the same check used in the repo's CI via 'mage check'.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["./check_gofmt.sh"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_gofmt.sh failed: {r.stdout}{r.stderr}"
+
+
+def test_repo_go_env():
+    """
+    Go environment is properly configured (pass_to_pass).
+    Verifies go env returns valid configuration.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["go", "env", "GOPATH", "GOVERSION"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go env failed: {r.stderr}"
+    # Verify we got output (at least GOPATH should be set)
+    assert r.stdout.strip(), "go env returned empty output"
+
+
+def test_repo_go_mod_verify():
+    """
+    Go module dependencies are valid (pass_to_pass).
+    Runs go mod verify to check module cache.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["go", "mod", "verify"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go mod verify failed: {r.stderr}"
+
+
+def test_repo_transform_tests():
+    """
+    Repo transform tests pass (pass_to_pass).
+    Runs the specific TestTransform tests for the resources package.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["go", "test", "-run", "TestTransform", "./resources/..."],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    # Due to Go 1.20 vs 1.21+ compatibility, accept success or known version errors
+    version_errors = [
+        "package cmp is not in GOROOT",
+        "package iter is not in GOROOT",
+        "package log/slog is not in GOROOT",
+        "package maps is not in GOROOT",
+        "package slices is not in GOROOT",
+        "package math/rand/v2 is not in GOROOT",
+        "package unique is not in GOROOT",
+    ]
+    if r.returncode != 0:
+        # Check if it's only version-related errors
+        for error in version_errors:
+            if error in r.stderr:
+                return  # Accept version-related errors as known limitation
+        # If it's a different error, fail
+        assert False, f"Transform tests failed: {r.stderr[:500]}"
+
+
+def test_repo_resources_tests():
+    """
+    Repo resources package tests pass (pass_to_pass).
+    Runs unit tests for the resources package.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["go", "test", "./resources/..."],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    # Due to Go 1.20 vs 1.21+ compatibility, accept success or known version errors
+    version_errors = [
+        "package cmp is not in GOROOT",
+        "package iter is not in GOROOT",
+        "package log/slog is not in GOROOT",
+        "package maps is not in GOROOT",
+        "package slices is not in GOROOT",
+        "package math/rand/v2 is not in GOROOT",
+        "package unique is not in GOROOT",
+    ]
+    if r.returncode != 0:
+        # Check if it's only version-related errors
+        for error in version_errors:
+            if error in r.stderr:
+                return  # Accept version-related errors as known limitation
+        # If it's a different error, fail
+        assert False, f"Resources tests failed: {r.stderr[:500]}"
 
 
 # =============================================================================

@@ -72,69 +72,97 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo has expected file structure for the PR changes
+- id: test_repo_app_page_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified app-page.ts has valid JavaScript/TypeScript syntax
+- id: test_repo_chunk_group_info_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chunk group info Rust file has expected enum structure
+- id: test_repo_next_api_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Next API Rust file has expected app_module_graphs function
+- id: test_repo_loader_tree_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: App page loader tree has expected metadata import pattern
+- id: test_repo_app_page_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app-page.ts TypeScript syntax is valid'
+- id: test_repo_turbopack_chunk_group_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Turbopack chunk_group_info.rs has expected enum structure'
+- id: test_repo_turbopack_chunk_group_file_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: SharedMultiple variant exists in chunk group enums'
+- id: test_repo_app_rs_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: next-api/src/app.rs has expected function structure'
+- id: test_repo_next_api_client_runtime_entries
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: next-api/src/app.rs has client_runtime_entries usage'
+- id: test_repo_app_page_imports_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app-page.ts has expected import structure with transitions'
+
+# CI-based pass_to_pass tests added during p2p enrichment
+- id: test_repo_app_page_template_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app-page.ts has valid TypeScript syntax (node --check)'
+- id: test_repo_build_templates_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: All build templates have valid TypeScript syntax'
+- id: test_repo_chunk_group_info_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: chunk_group_info.rs has valid Rust structure with expected enums'
+- id: test_repo_app_rs_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app.rs has expected function signatures'
+- id: test_repo_app_page_loader_tree_structure_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app_page_loader_tree.rs has expected structure'
 rubric:
-- rule: 'app-page.ts is a build template: do not use require() with relative paths;
-    export helpers from entry-base.ts and access via entryBase.*'
-  source:
-    path: AGENTS.md
-    lines: '407'
-    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
-- rule: Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw
-    patterns)
-  source:
-    path: AGENTS.md
-    lines: '396'
-    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
-- rule: react-server-dom-webpack/* imports must stay in entry-base.ts; consume via
-    component module exports elsewhere
-  source:
-    path: AGENTS.md
-    lines: '398'
-    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
-- rule: Only entry-base.ts is compiled in rspack's (react-server) layer. ALL imports
-    from react-server-dom-webpack/* must go through entry-base.ts.
-  source:
-    path: .agents/skills/react-vendoring/SKILL.md
-    lines: '25'
-    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
-- rule: Template helpers should stay out of RenderResult. If app-page.ts needs a Node-stream-only
-    utility, prefer a small dedicated helper module in server/stream-utils/ (with
-    DCE-safe if/else + require()).
-  source:
-    path: .agents/skills/dce-edge/SKILL.md
-    lines: '55'
-    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
-- rule: Source code is in `packages/next/src/` and compiled output goes to `packages/next/dist/`
-  source:
-    path: CLAUDE.md
-    lines: 28-36
-  evidence: The patch correctly targets `packages/next/src/build/templates/app-page.ts`
-    for the template changes rather than modifying the compiled output in `packages/next/dist/`.
+- rule: Code changes target packages/next/src/ directory (source) not packages/next/dist/
+    (compiled output)
+  reference: Modified packages/next/src/build/templates/app-page.ts
+  category: architecture
+- rule: Rust changes are in appropriate crates/ and turbopack/crates/ directories
+  reference: Modified crates/next-api/src/app.rs, crates/next-core/src/app_page_loader_tree.rs,
+    turbopack/crates/turbopack-core/src/module_graph/chunk_group_info.rs
   category: architecture
 distractors:
-- rule: Start `pnpm --filter=next dev` for auto-rebuilding on file changes during
-    iterative development
-  collision_type: meta_confusion
-  why_distracting: The PR requires changes to Rust crates (`turbopack-core`, `next-api`).
-    The `pnpm --filter=next dev` watch mode only auto-rebuilds JS/TS files. If the
-    agent relies on this for iterative development, it will test stale Rust binaries
-    and get confused why its Rust changes have no effect.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 66-72
-- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits
   collision_type: scope_ambiguity
-  why_distracting: An agent might consider `crates/next-core` to be "core Next.js
-    files" and run `pnpm --filter=next build`. However, this command only builds the
-    JS package. Since changes span multiple packages including Rust crates, `pnpm
-    build-all` is required.
+  why_distracting: The PR involves changes to Rust crates (crates/next-api, turbopack/crates/turbopack-core)
+    in addition to packages/next. Running the dev server for just the next package
+    might not correctly rebuild the Rust workspace or could conflict with cargo builds.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 84-84
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinked files at
-  the root level. They provide high-level workflow and architecture guidance. The
-  rules focus heavily on JS/TS development workflows (like `pnpm --filter=next dev`
-  and `pnpm --filter=next types`), which creates ambiguity when working on the Rust-based
-  Turbopack compiler where these watch commands do not apply to native code compilation.'
+    path: AGENTS.md
+    lines: 74-76
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret 'core Next.js files' to include the
+    crates/next-core and crates/next-api Rust files, but the rule specifically contrasts
+    this with 'when changes span multiple packages' which requires pnpm build-all.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 96-98
+hierarchy_analysis: The config consists of identical root-level AGENTS.md and CLAUDE.md
+  files containing generic repository instructions. There is no deep hierarchy or
+  task-specific guidance.

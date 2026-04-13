@@ -73,6 +73,21 @@ checks:
   origin: repo_tests
   description: Modified source files are tracked by git and have valid content, verified
     via git ls-files subprocess.run()
+- id: repo_oxlint_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts pass oxlint linting, matching CI lint workflow that runs
+    oxlint on TypeScript files
+- id: repo_shellcheck_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: run-clang-format.sh passes shellcheck linting (severity=error only)
+    via subprocess.run()
+- id: repo_editorconfig_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files comply with EditorConfig rules (charset, trailing whitespace,
+    final newline) via editorconfig-checker subprocess.run()
 rubric:
 - rule: When dep sub-builds rewrite forwarding headers as undeclared side effects,
     dep outputs (lib*.a) must use implicit dependencies (|), not order-only (||),
@@ -102,8 +117,8 @@ rubric:
     path: scripts/build/compile.ts
     lines: 140-164
     commit: c721d357ad9ed04017bb24d21decf5739dba3911
-- rule: Idempotent. Run `bun run build` over and over — that's it. Same inputs produce
-    the same `build.ninja`, ninja sees nothing changed, exits immediately.
+- rule: Idempotent. Run  over and over — that's it. Same inputs produce the same ,
+    ninja sees nothing changed, exits immediately.
   source:
     path: scripts/build/CLAUDE.md
     lines: 5-6
@@ -111,33 +126,45 @@ rubric:
     using implicit dependencies for dep outputs ensures the build doesn't lag one
     build behind, fixing the spurious relink and resto
   category: architecture
+- rule: Idempotent. Run  over and over... ninja sees nothing changed, exits immediately.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 4-10
+  evidence: The gold solution fixes the spurious relink issue, ensuring that running
+    the build twice does nothing, which aligns with the stated goal of idempotency.
+  category: architecture
+- rule: Keep build system documentation synchronized with the actual ninja dependency
+    graph implementation.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 74-82
+  evidence: The gold solution updates the documentation in CLAUDE.md to explain that
+    PCH, cc, and no-PCH cxx use implicit deps for dep outputs, rather than order-only.
+  category: documentation
 distractors:
-- rule: Explicit over implicit. Every decision traceable to a line of code you can
-    grep for.
+- rule: '**cxx needs order-only dep on **, not implicit. Depfile tracks actual header
+    deps. Implicit would recompile every  when changes'
   collision_type: meta_confusion
-  why_distracting: The PR requires changing dependencies from `orderOnlyInputs` to
-    `implicitInputs`. An agent might misinterpret the 'Explicit over implicit' design
-    principle as a directive to avoid Ninja's `implicitInputs` or to try to make all
-    dependencies `explicitInputs` (`$in`), which would break the build command lines
-    since these are headers/libraries, not primary source files.
+  why_distracting: The agent might read this rule and refuse to implement the requested
+    change (using implicit dependencies for cxx), thinking it violates the established
+    build system design. The agent must realize the instruction supersedes this rule
+    and that it needs to update the rule itself.
   severity: high
   source:
     path: scripts/build/CLAUDE.md
-    lines: 12-13
-- rule: First-class support for deps with their own build systems. Vendored deps keep
-    their native cmake/cargo — we don't rewrite their build into our graph.
-  collision_type: architecture_boundary
-  why_distracting: The issue mentions WebKit rewriting forwarding headers as undeclared
-    side effects. An agent might try to fix this by modifying the WebKit sub-build
-    integration or trying to track the headers explicitly in our graph, violating
-    the rule to let vendored deps keep their native build systems. The correct fix
-    is to use the library output as an implicit invalidation signal.
-  severity: medium
+    lines: 227-229
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    .
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a JavaScript test for this build
+    system change in the test/ directory, but build system dependency graph changes
+    cannot be tested via the standard JS test runner.
+  severity: low
   source:
-    path: scripts/build/CLAUDE.md
-    lines: 25-26
-hierarchy_analysis: The config hierarchy provides high-level build instructions in
-  the root `CLAUDE.md` and `AGENTS.md`, but the most relevant rules are in `scripts/build/CLAUDE.md`
-  which governs the build system architecture. The agent must carefully distinguish
-  between general design principles ('Explicit over implicit') and specific Ninja
-  terminology ('implicit inputs').
+    path: AGENTS.md
+    lines: 45-46
+hierarchy_analysis: The agent must navigate a highly meta-referential situation where
+  the PR instructions require modifying the very config file () that dictates the
+  rules for the build system. The agent must recognize that the PR instruction overrides
+  the existing rule in the config file, and update the config file to reflect the
+  new architectural decision.

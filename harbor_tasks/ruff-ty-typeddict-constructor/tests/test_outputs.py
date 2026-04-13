@@ -330,6 +330,18 @@ def test_repo_check_ty_python_semantic():
     assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
 
 
+
+# [repo_tests] pass_to_pass — cargo doc
+def test_repo_doc_ty_python_semantic():
+    """Repo's documentation builds without warnings for ty_python_semantic (pass_to_pass)."""
+    env = os.environ.copy()
+    env["RUSTDOCFLAGS"] = "-D warnings"
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Documentation build failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

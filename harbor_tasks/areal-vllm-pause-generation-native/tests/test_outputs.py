@@ -396,6 +396,24 @@ def test_repo_ruff_lint():
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+def test_repo_import_sorting():
+    """Repo's Python imports are properly sorted (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select", "I", FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import sorting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_py_compile():
+    """Modified file compiles to bytecode successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", FILE],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stderr[-500:]}"
+
+
 def test_repo_ruff_format():
     """Repo's Python formatting passes (pass_to_pass)."""
     r = subprocess.run(

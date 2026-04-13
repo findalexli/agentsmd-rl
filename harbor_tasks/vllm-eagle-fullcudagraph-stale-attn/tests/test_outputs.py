@@ -311,7 +311,7 @@ def test_no_wildcard_imports():
 # ---------------------------------------------------------------------------
 
 def test_repo_ruff_check():
-    """Repo's ruff linter passes on modified file (pass_to_pass)."""
+    """Repo ruff linter passes on modified file (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff", "--quiet"],
         capture_output=True,
@@ -329,6 +329,46 @@ def test_repo_ruff_check():
         cwd=REPO,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Repo ruff format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_typos():
+    """Repo typos checker passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "typos", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["typos", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"typos check failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_repo_py_compile():
@@ -353,3 +393,65 @@ def test_repo_ast_parse():
         cwd=REPO,
     )
     assert r.returncode == 0, f"AST parse failed:\n{r.stderr}"
+
+
+def test_repo_mypy():
+    """Repo mypy type checker passes on modified file (pass_to_pass)."""
+    # Install mypy and dependencies
+    r = subprocess.run(
+        ["pip", "install", "mypy", "pydantic", "regex", "types-setuptools",
+         "types-PyYAML", "types-requests", "types-torch", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["python", "tools/pre_commit/mypy.py", "0", "3.10", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"mypy check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_spdx_header():
+    """Modified file has SPDX license header (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_spdx_header.py", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_forbidden_imports():
+    """Modified file has no forbidden imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_forbidden_imports.py", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stdout}\n{r.stderr}"

@@ -71,40 +71,45 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Documentation TOC check passes
+- id: test_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo inits check passes
+- id: test_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dummies check passes
+- id: test_check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo doctest list check passes
+- id: test_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changed file passes ruff format check
 distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to fail-closed and not produce PR-ready
+    output if coordination evidence is missing. Since the benchmark prompt does not
+    provide this evidence, an agent strictly following this rule would refuse to generate
+    the code fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 46-48
 - rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
     one mutable default argument, etc.).
-  collision_type: meta_confusion
-  why_distracting: The fix involves changing `is not None` to truthiness checks and
-    fixing a type hint, which superficially looks like a 'tiny edit' or 'lint cleanup'.
-    An agent might refuse to proceed based on the 'fail-closed' policy, failing to
-    realize this is a critical bug fix for TP/PP conditional logic.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 35-37
-- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
-    do not proceed to PR-ready output.'
-  collision_type: meta_confusion
-  why_distracting: In an evaluation setting, the agent is expected to provide the
-    code fix directly. If it strictly follows the 'fail-closed' policy requiring coordination
-    evidence or issue approval links, it will refuse to output the fix and instead
-    return an explanation of missing approvals, failing the benchmark.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 50-53
-- rule: Avoid direct inheritance between model-specific files in `src/transformers/models/`
-    and use `# Copied from` or `modular_<name>.py` mechanisms.
-  collision_type: architecture_boundary
-  why_distracting: The agent might hesitate to modify `PreTrainedModel` in `modeling_utils.py`
-    fearing it needs to update copies or modular files. However, `modeling_utils.py`
-    is a core utility file outside of `src/transformers/models/`, so the copy mechanisms
-    don't apply to it.
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids one-off PRs for tiny edits. The agent might misclassify
+    this localized bug fix (changing truthiness checks and a type hint) as a 'tiny
+    edit' and refuse to complete the task.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 55-60
-hierarchy_analysis: The AGENTS.md file contains strict meta-rules about PR submission,
-  coordination, and avoiding low-value busywork. Since this is an evaluation environment,
-  these meta-rules conflict with the agent's goal of generating a code fix.
+    lines: 28-30
+hierarchy_analysis: The configuration is flat, consisting of a single `AGENTS.md`
+  file referenced by `CLAUDE.md`. The primary challenge is navigating meta-instructions
+  that instruct the agent to refuse work without human coordination, which conflicts
+  with the benchmark's requirement to autonomously generate a patch.
+rubric: []

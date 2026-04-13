@@ -66,6 +66,79 @@ def test_repo_black_format():
     assert r.returncode == 0, f"Black format check failed:\n{r.stdout}{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """isort import ordering check on kda_backend.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["isort", "--check-only", TARGET_REL],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """codespell spelling check on kda_backend.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "codespell", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc", TARGET_REL],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_structure():
+    """AST structure check - file must be parseable and have expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c",
+         f"import ast; tree = ast.parse(open('{TARGET}').read()); "
+         f"classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]; "
+         f"assert 'KDAKernelDispatcher' in classes, 'KDAKernelDispatcher class missing'; "
+         f"print('AST structure OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST structure check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_not_empty():
+    """File must have substantial content (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c",
+         f"src = open('{TARGET}').read(); "
+         f"lines = src.strip().splitlines(); "
+         f"assert len(lines) >= 20, f'Too few lines: {{len(lines)}}'; "
+         f"assert 'class KDAKernelDispatcher' in src, 'KDAKernelDispatcher class not found'; "
+         f"print('File has expected content')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"File content check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_wildcard_imports():
+    """File should not use wildcard imports (repo code style check) (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c",
+         "import ast; "
+         f"tree = ast.parse(open('{TARGET}').read()); "
+         "wildcard_imports = [(n.lineno, alias.name) for n in ast.walk(tree) "
+         "if isinstance(n, ast.ImportFrom) for alias in n.names if alias.name == '*']; "
+         "assert not wildcard_imports, f'Wildcard imports found: {wildcard_imports}'; "
+         "print('No wildcard imports')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Wildcard import check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------

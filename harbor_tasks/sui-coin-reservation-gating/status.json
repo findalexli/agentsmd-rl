@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T14:49:26.762075",
-  "total_time": 1275.72,
-  "sandbox_id": "i45w2qga3ilk6uhz7w2th",
+  "validated_at": "2026-04-12T05:00:59.252379",
+  "total_time": 3085.63,
+  "sandbox_id": "ikvrdn6ifkccq6gu9g6mc",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 13.17,
+      "time": 1286.68,
       "notes": ""
     },
     "improve": {
@@ -28,25 +27,22 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All checks passed: Docker build OK, NOP test reward=0 (fail_to_pass tests correctly detect missing protocol gating), Gold test reward=1 (all 5 tests pass after fix), Rubric judge ICR=1.0",
+      "notes": "Fixed rubric rules source paths to point to actual code files instead of CLAUDE.md. Fixed judge.py to handle code-based rubric rules by: 1) adding extract_all_hunks() to extract code file changes, 2) checking if source is a code file to use full diff instead of just config hunks, 3) increasing the agent_edit limit from 500 to 2000 chars for code files so multiple tests in the same file are visible.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.64
+      "time": 963.72
     },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
       "backend": "fireworks",
-      "time": 0.14,
-      "notes": "ICR=1.00"
-    },
-    "rubric_enrichment": {
-      "status": "error",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1.62,
-      "notes": ""
+      "time": 24.64,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
@@ -55,24 +51,16 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 14055.44,
-      "at": "2026-04-09T13:06:07.982567"
+      "time": 4306.1,
+      "at": "2026-04-12T04:05:08.887464"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1275.44,
-      "at": "2026-04-09T14:49:26.586507"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1275.72,
-      "at": "2026-04-09T14:49:26.762075"
+      "time": 3085.63,
+      "at": "2026-04-12T05:00:59.252379"
     }
   ]
 }

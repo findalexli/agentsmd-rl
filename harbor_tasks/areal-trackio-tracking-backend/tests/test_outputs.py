@@ -657,3 +657,62 @@ def test_repo_newline_at_eof():
         content = Path(f"{REPO}/{fname}").read_text()
         if content and not content.endswith("\n"):
             raise AssertionError(f"Missing newline at end of {fname}")
+
+
+def test_repo_py_compile():
+    """Modified Python files compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "areal/api/cli_args.py",
+         "areal/utils/logging.py", "areal/utils/stats_logger.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\\n{r.stderr}"
+
+
+def test_repo_toml_valid():
+    """pyproject.toml is syntactically valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import tomllib; tomllib.load(open(\"pyproject.toml\", \"rb\"))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\\n{r.stderr}"
+
+
+def test_repo_docs_cli_syntax():
+    """docs/generate_cli_docs.py has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "docs/generate_cli_docs.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI docs script syntax failed:\\n{r.stderr}"
+
+
+def test_repo_ast_parse_cli_args():
+    """areal/api/cli_args.py has valid AST structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import ast; ast.parse(open(\"areal/api/cli_args.py\").read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed for cli_args.py:\\n{r.stderr}"
+
+
+def test_repo_ast_parse_stats_logger():
+    """areal/utils/stats_logger.py has valid AST structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import ast; ast.parse(open(\"areal/utils/stats_logger.py\").read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed for stats_logger.py:\\n{r.stderr}"
+
+
+def test_repo_ast_parse_logging():
+    """areal/utils/logging.py has valid AST structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import ast; ast.parse(open(\"areal/utils/logging.py\").read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed for logging.py:\\n{r.stderr}"

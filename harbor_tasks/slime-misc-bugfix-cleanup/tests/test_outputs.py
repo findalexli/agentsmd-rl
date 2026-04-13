@@ -127,6 +127,55 @@ def test_repo_autoflake():
     assert r.returncode == 0, f"autoflake check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_check_yaml():
+    """Repo's YAML files must be valid (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "pyyaml", "--quiet"],
+        capture_output=True, timeout=60,
+    )
+    import yaml
+    yaml_files = [
+        f"{REPO}/.pre-commit-config.yaml",
+    ]
+    # Check actual YAML workflow files
+    workflow_dir = Path(f"{REPO}/.github/workflows")
+    if workflow_dir.exists():
+        yaml_files.extend(workflow_dir.glob("*.yml"))
+        yaml_files.extend(workflow_dir.glob("*.yaml"))
+
+    for path in yaml_files:
+        if Path(path).exists():
+            with open(path) as f:
+                yaml.safe_load(f.read())
+
+
+def test_check_case_conflict():
+    """Repo must not have case-conflicting filenames (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && find . -path './.git' -prune -o -type f -print | sort -f | uniq -di | head -5"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    conflicts = r.stdout.strip()
+    assert conflicts == "", f"Case conflicts found:\n{conflicts}"
+
+
+def test_detect_private_key():
+    """Repo must not contain private keys (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "grep", "-r", "-l",
+            r"BEGIN OPENSSH PRIVATE KEY\|BEGIN RSA PRIVATE KEY\|BEGIN DSA PRIVATE KEY\|BEGIN EC PRIVATE KEY\|BEGIN PGP PRIVATE KEY\|BEGIN PRIVATE KEY",
+            f"{REPO}",
+            "--include=*.py", "--include=*.txt", "--include=*.md",
+            "--include=*.yaml", "--include=*.yml", "--include=*.json",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # grep returns 0 if found, 1 if not found (which is what we want)
+    found_keys = r.stdout.strip()
+    assert r.returncode == 1 or found_keys == "", f"Potential private keys found:\n{found_keys}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------

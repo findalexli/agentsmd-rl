@@ -393,11 +393,11 @@ def test_no_es_module_imports():
 
 
 # ---------------------------------------------------------------------------
-# Repo CI/CD pass_to_pass gates — verified working on base commit
-# These ensure the fix doesn't break existing repo conventions
+# Repo CI/CD pass_to_pass gates — STATIC checks (file reading, not subprocess)
+# These use origin: static in eval_manifest.yaml
 # ---------------------------------------------------------------------------
 
-# [repo_ci] pass_to_pass — from .github/workflows/lint.yml (adapted)
+# [static] pass_to_pass — adapted from ban-words.test.ts
 def test_repo_no_strict_equality_undefined():
     """Repo JS convention: Prefer strict equality (===/!==) over loose (==/!=) for undefined.
 
@@ -423,7 +423,7 @@ def test_repo_no_strict_equality_undefined():
         )
 
 
-# [repo_ci] pass_to_pass — from .github/workflows/format.yml (prettier check)
+# [static] pass_to_pass — from .github/workflows/format.yml (prettier check)
 def test_repo_basic_prettier_format():
     """Repo convention: No trailing whitespace, consistent indentation.
 
@@ -438,7 +438,7 @@ def test_repo_basic_prettier_format():
             assert False, f"Line {i} has trailing whitespace — violates repo formatting convention"
 
 
-# [repo_ci] pass_to_pass — from package.json typecheck (partial)
+# [static] pass_to_pass — from package.json typecheck (partial)
 def test_repo_ts_no_bare_intrinsics():
     """TypeScript sanity: Bun $-intrinsics should not appear in final output.
 
@@ -457,7 +457,7 @@ def test_repo_ts_no_bare_intrinsics():
     )
 
 
-# [repo_ci] pass_to_pass — from .github/workflows/lint.yml (oxlint)
+# [static] pass_to_pass — from .github/workflows/lint.yml (oxlint)
 def test_repo_no_debug_log_statements():
     """Lint convention: No debug log statements left in production code.
 
@@ -480,57 +480,7 @@ def test_repo_no_debug_log_statements():
             )
 
 
-# ---------------------------------------------------------------------------
-# Repo CI/CD pass_to_pass gates — ACTUAL CI COMMANDS (verified working)
-# These run real commands from the repo's CI pipeline
-# ---------------------------------------------------------------------------
-
-# [repo_ci] pass_to_pass — from .github/workflows/lint.yml
-def test_repo_oxlint_assert():
-    """Repo's oxlint passes on assert.ts (pass_to_pass).
-
-    Runs actual oxlint CLI on src/js/node/assert.ts to verify no lint errors.
-    This is the same lint check used in the repo's CI pipeline.
-    """
-    r = subprocess.run(
-        ["npx", "oxlint", "--format=unix", str(ASSERT_FILE)],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    # oxlint returns 0 on success, non-zero if errors found
-    # Warnings don't cause non-zero exit by default, only errors
-    if r.returncode != 0:
-        err_output = r.stdout[-500:] if r.stdout else r.stderr[-500:] if r.stderr else "unknown error"
-        assert False, f"oxlint found errors in assert.ts:\n{err_output}"
-
-
-# [repo_ci] pass_to_pass — from .github/workflows/format.yml
-def test_repo_prettier_assert():
-    """Repo's prettier formatting check passes on assert.ts (pass_to_pass).
-
-    Runs prettier --check to verify the file follows repo formatting conventions.
-    This matches the format check from the repo's autofix.ci workflow.
-    """
-    r = subprocess.run(
-        ["npx", "prettier", "--check", str(ASSERT_FILE)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    # prettier --check exits 0 if file is properly formatted
-    if r.returncode != 0:
-        err_output = r.stderr[-500:] if r.stderr else r.stdout[-500:] if r.stdout else "formatting error"
-        assert False, (
-            f"Prettier check failed for assert.ts — file does not match repo formatting conventions.\n"
-            f"Error: {err_output}\n"
-            f"Hint: Run 'npx prettier --write src/js/node/assert.ts' to fix."
-        )
-
-
-# [repo_ci] pass_to_pass — from .github/workflows/lint.yml (ban-words adapted)
+# [static] pass_to_pass — adapted from ban-words.test.ts
 def test_repo_no_loose_undefined_equality():
     """Repo convention: No loose equality comparisons with undefined (pass_to_pass).
 
@@ -564,3 +514,160 @@ def test_repo_no_loose_undefined_equality():
                     f"Found banned pattern {description} at position {idx}: ...{context}... "
                     f"(from ban-words convention)"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ACTUAL CI COMMANDS (verified working)
+# These run real commands from the repo's CI pipeline via subprocess.run()
+# origin: repo_tests in eval_manifest.yaml
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — from .github/workflows/lint.yml
+def test_repo_oxlint_assert():
+    """Repo's oxlint passes on assert.ts (pass_to_pass).
+
+    Runs actual oxlint CLI on src/js/node/assert.ts to verify no lint errors.
+    This is the same lint check used in the repo's CI pipeline.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", str(ASSERT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # oxlint returns 0 on success, non-zero if errors found
+    # Warnings don't cause non-zero exit by default, only errors
+    if r.returncode != 0:
+        err_output = r.stdout[-500:] if r.stdout else r.stderr[-500:] if r.stderr else "unknown error"
+        assert False, f"oxlint found errors in assert.ts:\n{err_output}"
+
+
+# [repo_tests] pass_to_pass — from .github/workflows/format.yml
+def test_repo_prettier_assert():
+    """Repo's prettier formatting check passes on assert.ts (pass_to_pass).
+
+    Runs prettier --check to verify the file follows repo formatting conventions.
+    This matches the format check from the repo's autofix.ci workflow.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(ASSERT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # prettier --check exits 0 if file is properly formatted
+    if r.returncode != 0:
+        err_output = r.stderr[-500:] if r.stderr else r.stdout[-500:] if r.stdout else "formatting error"
+        assert False, (
+            f"Prettier check failed for assert.ts — file does not match repo formatting conventions.\n"
+            f"Error: {err_output}\n"
+            f"Hint: Run 'npx prettier --write src/js/node/assert.ts' to fix."
+        )
+
+
+
+# [repo_tests] pass_to_pass — node.js structural syntax check for TypeScript
+def test_repo_node_syntax_check():
+    """assert.ts has balanced braces/parens - structural syntax check (pass_to_pass).
+
+    Uses Node.js to verify basic TypeScript file structure (balanced brackets, etc).
+    This is a lightweight check that doesn't require full TypeScript parsing.
+    """
+    r = subprocess.run(
+        [
+            "node",
+            "-e",
+            """
+const fs = require('fs');
+const src = fs.readFileSync(process.argv[1], 'utf8');
+// Check for balanced braces, parens, and brackets (ignoring strings/comments)
+let brace = 0, paren = 0, bracket = 0;
+let inString = false, stringChar = null, escaped = false;
+let inLineComment = false, inBlockComment = false;
+for (let i = 0; i < src.length; i++) {
+    const c = src[i], next = src[i+1] || '';
+    if (!inString && !inBlockComment && c === '/' && next === '/') { inLineComment = true; i++; continue; }
+    if (inLineComment && c === '\\n') { inLineComment = false; continue; }
+    if (inLineComment) continue;
+    if (!inString && !inLineComment && c === '/' && next === '*') { inBlockComment = true; i++; continue; }
+    if (inBlockComment && c === '*' && next === '/') { inBlockComment = false; i++; continue; }
+    if (inBlockComment) continue;
+    if (!inString && (c === "'" || c === '"' || c === '`')) { inString = true; stringChar = c; continue; }
+    if (inString) { if (escaped) { escaped = false; continue; } if (c === '\\\\') { escaped = true; continue; } if (c === stringChar) { inString = false; stringChar = null; } continue; }
+    if (c === '{') brace++; else if (c === '}') brace--; else if (c === '(') paren++; else if (c === ')') paren--; else if (c === '[') bracket++; else if (c === ']') bracket--;
+    if (brace < 0 || paren < 0 || bracket < 0) { console.error('Syntax error: unexpected closing at position', i); process.exit(1); }
+}
+if (brace !== 0 || paren !== 0 || bracket !== 0) { console.error('Syntax error: unbalanced at end'); process.exit(1); }
+console.log('OK: Syntax check passed');
+""",
+            str(ASSERT_FILE),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - EditorConfig compliance check (from .editorconfig)
+def test_repo_editorconfig_assert():
+    """Repo's EditorConfig conventions are followed (pass_to_pass).
+
+    Checks that assert.ts follows the repo's .editorconfig rules:
+    - utf-8 encoding
+    - lf line endings (no CRLF)
+    - final newline at end of file
+    - no trailing whitespace
+    This is the same type of check used in CI to enforce formatting standards.
+    """
+    r = subprocess.run(
+        [
+            "python3",
+            "-c",
+            """
+import sys
+path = sys.argv[1]
+with open(path, 'rb') as f:
+    content = f.read()
+
+# Check UTF-8 encoding (no invalid sequences)
+try:
+    content.decode('utf-8')
+except UnicodeDecodeError:
+    print('FAIL: File is not valid UTF-8')
+    sys.exit(1)
+
+# Check for CRLF line endings
+if b'\\r\\n' in content:
+    print('FAIL: File contains CRLF line endings, use LF only')
+    sys.exit(1)
+
+# Check for final newline
+if content and not content.endswith(b'\\n'):
+    print('FAIL: File must end with a newline')
+    sys.exit(1)
+
+# Check for trailing whitespace on lines
+text = content.decode('utf-8')
+lines = text.split('\\n')
+for i, line in enumerate(lines, 1):
+    # Skip the last empty line after final newline
+    if i == len(lines) and not line:
+        continue
+    if line != line.rstrip():
+        print(f'FAIL: Line {i} has trailing whitespace')
+        sys.exit(1)
+
+print('OK: EditorConfig check passed')
+""",
+            str(ASSERT_FILE),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"EditorConfig check failed:\n{r.stderr or r.stdout}"

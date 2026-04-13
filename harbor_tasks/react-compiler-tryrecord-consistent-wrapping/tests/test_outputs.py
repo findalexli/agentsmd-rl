@@ -224,7 +224,7 @@ def test_repo_lint():
         ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/compiler",
     )
-    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_typecheck():
@@ -239,19 +239,36 @@ def test_repo_typecheck():
         ["yarn", "tsc", "--noEmit", "-p", "packages/babel-plugin-react-compiler/tsconfig.json"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/compiler",
     )
-    assert r.returncode == 0, f"TypeScript typecheck failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_jest_unit():
-    """Repo s Jest unit tests pass on babel-plugin-react-compiler (pass_to_pass)."""
+    """Repo's Jest unit tests pass on babel-plugin-react-compiler (pass_to_pass)."""
     # Install dependencies first
     r = subprocess.run(
         ["yarn", "install", "--frozen-lockfile"],
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
     )
     assert r.returncode == 0, f"yarn install failed:\n{r.stderr[-500:]}"
+    # Run a subset of Jest tests (quick unit tests only)
     r = subprocess.run(
         ["yarn", "workspace", "babel-plugin-react-compiler", "jest", "--testPathPattern=DisjointSet-test|Result-test|envConfig-test|parseConfigPragma-test|Logger-test", "--maxWorkers=1"],
         capture_output=True, text=True, timeout=180, cwd=f"{REPO}/compiler",
     )
-    assert r.returncode == 0, f"Jest unit tests failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Jest unit tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_build():
+    """Repo's build passes on babel-plugin-react-compiler (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"yarn install failed:\n{r.stderr[-500:]}"
+    # Run the build for babel-plugin-react-compiler
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "build"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

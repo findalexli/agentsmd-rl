@@ -91,31 +91,44 @@ rubric:
     stdio inheritance within the `ext/io/lib.rs` and `ext/process/lib.rs` files, correctly
     placing native system access logic in the
   category: architecture
+- rule: Extensions providing native functionality to JS (like filesystem operations)
+    are located in the `ext/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 54-58
+  evidence: 'The gold solution modifies files in the `ext/` directory (`ext/io/lib.rs`,
+    `ext/process/lib.rs`, `ext/node/polyfills/internal/child_process.ts`) to implement
+    the native file descriptor functionality, '
+  category: architecture
+- rule: Extensions providing native functionality to JS are located in the ext/ directory.
+  source:
+    path: CLAUDE.md
+    lines: '58'
+  evidence: The gold solution modifies ext/io/lib.rs and ext/process/lib.rs to implement
+    the native file descriptor handling for child processes, aligning with the architectural
+    guideline that native extensions l
+  category: architecture
+- rule: The `ext/` directory contains extensions providing native functionality to
+    JavaScript (e.g., system access, filesystem operations).
+  source:
+    path: CLAUDE.md
+    lines: 54-56
+  evidence: The gold solution implements the native file descriptor handling and OS-level
+    duplication logic within the `ext/` directory (`ext/io/lib.rs`, `ext/process/lib.rs`),
+    aligning with the architectural gui
+  category: architecture
 distractors:
-- rule: '`tests/unit/` - Unit tests'
-  collision_type: architecture_boundary
-  why_distracting: The config states that unit tests belong in `tests/unit/`. However,
-    the PR instructions explicitly require adding the test to `tests/unit_node/child_process_test.ts`.
-    An agent strictly following the directory structure in the config might try to
-    create or move the test to `tests/unit/`, violating the PR's specific requirements
-    for Node.js compatibility tests.
+- rule: Unit tests should be placed in the `tests/unit/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The config states that unit tests belong in `tests/unit/`. An agent
+    might try to create a new test file there, but the problem description explicitly
+    requires adding the test to `tests/unit_node/child_process_test.ts` because it
+    specifically tests Node.js compatibility polyfills.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 64-64
-- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
-    --js`
-  collision_type: scope_ambiguity
-  why_distracting: The rule specifies running `tools/lint.js --js` if only non-Rust
-    code was changed. Since the agent is modifying both TypeScript (`child_process.ts`)
-    and Rust (`lib.rs`) files, it might get confused about which linting command to
-    run or attempt to run the JS-only linter, missing Rust linting errors.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 25-26
-hierarchy_analysis: The `CLAUDE.md` file provides general repository guidelines. There
-  is a conflict between the general directory structure outlined in `CLAUDE.md` (which
-  specifies `tests/unit/` for unit tests) and the specific PR instructions (which
-  require modifying `tests/unit_node/`). The PR-specific instructions must override
-  the general repository documentation.
+    lines: 61-61
+hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`) containing
+  high-level repository guidelines. The primary interaction is a slight scope ambiguity
+  where the general directory structure documented in the config (`tests/unit/`) conflicts
+  with the specific instructions in the prompt (`tests/unit_node/`).

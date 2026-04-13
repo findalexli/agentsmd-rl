@@ -25,6 +25,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: PEP 613 type alias mdtests pass - related to PR
+- id: test_repo_mdtest_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full ty_python_semantic mdtest suite passes
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic library unit tests pass
+- id: test_repo_cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic documentation builds without errors
 - id: literal_negative_float_invalid
   type: fail_to_pass
   origin: pr_diff
@@ -89,16 +101,6 @@ rubric:
     and `var1` to the existing `literal.md` and `pep613_type_aliases.md` files rather
     than creating new markdown test files.
   category: testing
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
-  source:
-    path: AGENTS.md
-    lines: 59-59
-  evidence: The gold solution removes the custom `alias_syntax_validation` function
-    and instead reuses the existing `infer_type_expression` infrastructure to validate
-    PEP-613 type alias right-hand sides.
-  category: architecture
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   source:
@@ -108,26 +110,26 @@ rubric:
     diagnostics are correctly emitted for non-integer unary expressions and invalid
     type alias assignments.
   category: testing
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: 63-64
+  evidence: The gold solution removes the ad-hoc `alias_syntax_validation` function
+    and reuses the existing `infer_type_expression` infrastructure to validate PEP-613
+    type aliases.
+  category: architecture
 distractors:
 - rule: Avoid writing significant amounts of new code.
-  collision_type: scope_ambiguity
+  collision_type: architecture_boundary
   why_distracting: The rule to 'Avoid writing significant amounts of new code' might
-    discourage the agent from creating the necessary new `pep_613_alias.rs` module
-    in the `post_inference` directory, leading them to cram the logic into `builder.rs`
-    or an existing post-inference pass despite the problem statement's suggestion.
+    discourage the agent from creating the new `pep_613_alias.rs` module, leading
+    it to cram the validation logic into `builder.rs` or an existing post-inference
+    module despite the task instruction suggesting a new module.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 59-59
-- rule: Reproducing and minimizing ty ecosystem changes using setup_primer_project.py
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to use the `setup_primer_project.py` script
-    to reproduce the issue, but this is a specific unit-level bug in type expression
-    validation, not an ecosystem-wide regression. Attempting to minimize an ecosystem
-    project would be a massive waste of time and compute.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 36-43
-hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
-  All rules reside in `AGENTS.md` and apply uniformly to the repository.
+    lines: 59-60
+hierarchy_analysis: The configuration is a flat, single-file structure where `CLAUDE.md`
+  simply includes `AGENTS.md`. The rules are straightforward and apply globally to
+  the repository.

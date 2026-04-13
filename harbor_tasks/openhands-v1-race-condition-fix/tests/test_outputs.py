@@ -48,6 +48,42 @@ def test_repo_tests_relevant():
     assert r.returncode == 0, f"Relevant tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
+def test_repo_tests_v1_conversation_service():
+    """Tests for V1 conversation service pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/api/v1-conversation-service.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"V1 conversation service tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_settings_related():
+    """Tests for settings-related hooks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/hooks/mutation/use-save-settings.test.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Settings-related tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_all_mutation_hooks():
+    """All mutation hook tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/hooks/mutation/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mutation hook tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_all_query_hooks():
+    """All query hook tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/hooks/query/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Query hook tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 # =============================================================================
 # Fail-to-Pass Tests (verify the fix)
 # =============================================================================
@@ -232,3 +268,39 @@ def test_repo_translation_completeness():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Translation completeness check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_organization_scoped_queries():
+    """Tests for organization-scoped query hooks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/hooks/query/organization-scoped-queries.test.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Organization-scoped query tests failed:{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_tests_new_conversation_command():
+    """Tests for use-new-conversation-command hook pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/hooks/mutation/use-new-conversation-command.test.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"New conversation command tests failed:{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check():
+    """Prettier formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/**/*.{ts,tsx}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_tests_all_api():
+    """All API service tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "--run", "__tests__/api/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"API tests failed:{r.stdout[-1000:]}{r.stderr[-500:]}"

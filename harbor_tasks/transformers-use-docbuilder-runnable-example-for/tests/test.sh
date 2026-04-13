@@ -19,6 +19,18 @@ if ! command -v ruff &>/dev/null; then
         pip3 install -q --break-system-packages ruff 2>/dev/null
 fi
 
+# Install setuptools if not available (needed for setup.py checks)
+if ! python3 -c "import setuptools" 2>/dev/null; then
+    python3 -m pip install -q setuptools 2>/dev/null || \
+        pip3 install -q --break-system-packages setuptools 2>/dev/null
+fi
+
+# Install pyyaml if not available (needed for check_doc_toc)
+if ! python3 -c "import yaml" 2>/dev/null; then
+    python3 -m pip install -q pyyaml 2>/dev/null || \
+        pip3 install -q --break-system-packages pyyaml 2>/dev/null
+fi
+
 # Install transformers in editable mode for tests that need it
 if ! python3 -c "import transformers" 2>/dev/null; then
     cd /workspace/transformers && python3 -m pip install -q -e . 2>/dev/null || \

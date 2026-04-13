@@ -40,8 +40,8 @@ checks:
   description: WebKit dependency forwards PGO flags via CMAKE_C/CXX_FLAGS
 - id: existing_tests_pass
   type: pass_to_pass
-  origin: repo_tests
-  description: Upstream build script tests still pass
+  origin: static
+  description: Upstream build script structure intact (key exports present)
 - id: typescript_syntax_node_check
   type: pass_to_pass
   origin: repo_tests
@@ -58,70 +58,51 @@ checks:
   type: pass_to_pass
   origin: static
   description: resolveConfig has real PGO validation logic, not placeholder
-rubric:
-- rule: Explicit over implicit. All config decisions traceable to a line of code.
-    No hidden defaults, no order-dependent global state. Use flat Config struct with
-    values computed once in resolveConfig().
-  source:
-    path: scripts/build/CLAUDE.md
-    lines: 15-19
-    commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
-- rule: Add compiler flags as entries in flat tables with when predicates. Each flag
-    has a when predicate and desc. Related flags live adjacent so coupling is visible.
-  source:
-    path: scripts/build/CLAUDE.md
-    lines: 116-123
-    commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
-- rule: Follow existing code style - check neighboring files for patterns.
-  source:
-    path: CLAUDE.md
-    lines: '507'
-    commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
-- rule: One flat Config struct. All derived values computed once in resolveConfig().
-  source:
-    path: scripts/build/CLAUDE.md
-    lines: 18-20
-  evidence: The gold solution adds `pgoGenerate` and `pgoUse` to the single `Config`
-    and `PartialConfig` interfaces, and resolves their absolute paths and mutual exclusivity
-    exactly once inside the `resolveConfig
-  category: architecture
-- rule: One flat table per flag category. Each flag has a when predicate and a desc.
-  source:
-    path: scripts/build/CLAUDE.md
-    lines: 21-22
-  evidence: The gold solution adds the PGO compiler and linker flags to the centralized
-    `globalFlags` and `linkerFlags` arrays in `scripts/build/flags.ts` rather than
-    scattering them across different configuratio
-  category: architecture
 distractors:
 - rule: nested-cmake — invoke the dep's own cmake configure + build as ninja edges.
-    Flags forwarded via -DCMAKE_C_FLAGS
+    Flags forwarded via `-DCMAKE_C_FLAGS`
   collision_type: architecture_boundary
-  why_distracting: The rule states that for nested-cmake dependencies, flags are forwarded
-    via `-DCMAKE_C_FLAGS`. An agent might try to implement PGO flag forwarding globally
-    for all cmake dependencies in `source.ts`. However, WebKit specifically clears
-    global dependency flags to avoid conflicts with its own optimizations, requiring
-    the PGO flags to be explicitly appended to `optFlags` within `scripts/build/deps/webkit.ts`
-    instead.
+  why_distracting: The agent might assume PGO flags added to the global flags table
+    will automatically be forwarded to WebKit via `CMAKE_C_FLAGS`, but WebKit's cmake
+    configuration clears global flags, requiring explicit forwarding in `webkit.ts`.
   severity: high
   source:
     path: scripts/build/CLAUDE.md
-    lines: 31-33
-- rule: Build flags (e.g. --asan=off) go before the exec args; see scripts/build.ts
-    header for the full arg routing rules.
+    lines: 32-34
+- rule: 'The smell: if configure code calls `spawnSync` to compile something... Make
+    it a build edge — `n.rule()` + `n.build()`.'
   collision_type: scope_ambiguity
-  why_distracting: The rule mentions that build flags go before exec args and points
-    to the `scripts/build.ts` header for full arg routing rules. An agent might get
-    distracted trying to implement complex argument routing logic or modifying the
-    header documentation, when all that is actually required is adding the new keys
-    to the `parseArgs` allowed keys array.
+  why_distracting: The agent might try to add a ninja rule to run `llvm-profdata merge`
+    to generate the `.profdata` file as a build edge, but the instruction only asks
+    to accept the `--pgo-use=<file.profdata>` flag and forward it.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 26-27
-hierarchy_analysis: The repository has a root `CLAUDE.md` (and identical `AGENTS.md`)
-  focusing on high-level build commands and testing, and a specialized `scripts/build/CLAUDE.md`
-  focusing on the architecture of the TypeScript build system itself. For this task,
-  the specialized build system rules in `scripts/build/CLAUDE.md` take precedence,
-  as the PR involves modifying the core configuration and flag resolution mechanisms
-  of the build system.
+    path: scripts/build/CLAUDE.md
+    lines: 44-45
+hierarchy_analysis: The task requires understanding the build system architecture
+  described in `scripts/build/CLAUDE.md`. The agent must navigate the `Config` struct,
+  the flag tables, and the dependency-specific overrides (WebKit). The instructions
+  in `scripts/build/CLAUDE.md` provide the architectural principles (flat config,
+  explicit over implicit) that guide the implementation, while the agent must also
+  recognize the boundary where global flags do not automatically apply to nested cmake
+  dependencies.
+rubric:
+- rule: One flat Config struct. All derived booleans computed once in resolveConfig().
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 18-20
+  evidence: Adds `pgoGenerate` and `pgoUse` to the `Config` and `PartialConfig` interfaces,
+    and resolves their absolute paths centrally in `resolveConfig()`, keeping the
+    configuration flat.
+  category: architecture
+  verification: llm_judge
+- rule: First-class support for deps with their own build systems. Vendored deps keep
+    their native cmake/cargo... Flags forwarded via -DCMAKE_C_FLAGS
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 31-33
+  evidence: Explicitly forwards `-fprofile-generate` and `-fprofile-use` to WebKit's
+    `optFlags` in `scripts/build/deps/webkit.ts` to ensure the nested CMake build
+    receives the PGO instructions.
+  category: architecture
+  verification: llm_judge

@@ -85,27 +85,26 @@ rubric:
     path: .claude/rules/code-style.md
     lines: 5-8
     commit: 933218365af85d5488a554367d9fbe5071442b49
-distractors:
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The agent might interpret this bug fix as requiring a new test.
-    However, testing MegatronEngine initialization requires distributed GPU environments,
-    and writing a mock test for this specific context manager scope would be overly
-    complex and unnecessary for a simple indentation fix.
-  severity: high
+- rule: Follow existing code patterns in the same module.
   source:
-    path: CLAUDE.md
-    lines: 49-49
-- rule: Integration tests require multi-node hardware -- explain skips explicitly.
+    path: AGENTS.md
+    lines: 27-27
+  evidence: The gold solution correctly indents the `with self.device:` block without
+    altering the underlying logic or introducing new patterns, adhering to the existing
+    structure of the `initialize` method.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write an integration test for tree training
-    and then explicitly skip it due to the lack of multi-node hardware, adding unnecessary
-    boilerplate and test files for a simple scope fix.
+  why_distracting: The rule asks to 'Add tests for new functionality'. An agent might
+    interpret this bug fix as requiring a new test. However, testing MegatronEngine
+    initialization requires multi-node hardware (as stated elsewhere in the config),
+    so attempting to write and run a test would lead to wasted effort and environment
+    failures.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 25-25
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` emphasize adding tests and note
-  the difficulty of integration tests (requiring multi-node hardware). For a simple
-  bug fix involving context manager scope, the instruction to 'Add tests' conflicts
-  with the practical reality of the test environment constraints, making it a distractor.
+    lines: 32-32
+hierarchy_analysis: The repository contains two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`) that provide overlapping, consistent guidelines. There is no deep
+  hierarchy or conflict between the files themselves.

@@ -204,6 +204,45 @@ def test_cargo_test_doc():
     )
 
 
+def test_cargo_check_all_targets():
+    """Crate must compile with all targets (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic", "--all-targets"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo check --all-targets failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
+def test_cargo_clippy_all_targets():
+    """Crate must pass clippy lints for all targets (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--all-targets", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo clippy --all-targets failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
+def test_cargo_test_mdtest():
+    """Crate mdtest tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"cargo test --test mdtest failed:\n{r.stderr.decode()[-500:]}\n{r.stdout.decode()[-500:]}"
+    )
+
+
 def test_qualified_fields_not_pub():
     """DisplaySettings.qualified and qualified_type_aliases fields must be private."""
     src = _read_display_rs()

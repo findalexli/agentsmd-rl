@@ -152,6 +152,76 @@ def test_repo_black():
     assert r.returncode == 0, f"black check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass - repo CI check: codespell (spelling)
+def test_repo_codespell():
+    """Repo CI: codespell passes (spell checking)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "codespell", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["codespell", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - repo CI check: pre-commit check-ast
+def test_repo_precommit_ast():
+    """Repo CI: pre-commit check-ast hook passes (Python AST validation)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-ast", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-ast failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - repo CI check: pre-commit trailing-whitespace
+def test_repo_precommit_whitespace():
+    """Repo CI: pre-commit trailing-whitespace hook passes."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit trailing-whitespace failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - repo CI check: pre-commit end-of-file-fixer
+def test_repo_precommit_eof():
+    """Repo CI: pre-commit end-of-file-fixer hook passes."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit end-of-file-fixer failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - repo CI check: pre-commit debug-statements
+def test_repo_precommit_debug():
+    """Repo CI: pre-commit debug-statements hook passes (no pdb/breakpoint)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit debug-statements failed:\n{r.stdout}\n{r.stderr}"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # -----------------------------------------------------------------------------

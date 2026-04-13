@@ -157,6 +157,22 @@ def test_cargo_doc():
     assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-1000:]}"
 
 
+def test_cargo_clippy():
+    """P2P: Code passes clippy lints for sui-indexer-alt-graphql (pass_to_pass).
+
+    This is the standard clippy check that runs in CI for the package.
+    Uses cargo clippy -p sui-indexer-alt-graphql.
+    """
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "sui-indexer-alt-graphql"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-2000:]}"
+
+
 def test_doc_tests():
     """P2P: Doc tests pass for sui-indexer-alt-graphql package.
 

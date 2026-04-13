@@ -341,3 +341,17 @@ def test_repo_format_modified_files():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_bundler_controller():
+    """BundleController unit tests pass (pass_to_pass). Tests the bundler logic
+    that was modified to remove duplicate error logging."""
+    _setup_repo()
+    r = subprocess.run(
+        ["pnpm", "vitest", "run",
+         "src/__tests__/api/startDevWorker/BundleController.test.ts",
+         "--reporter=verbose"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/wrangler",
+    )
+    assert r.returncode == 0, f"BundleController tests failed:\n{r.stderr[-500:]}"

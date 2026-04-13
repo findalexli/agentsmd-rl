@@ -53,48 +53,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Crate documentation tests must pass
+- id: cargo_check_all_targets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must compile with all targets (lib, tests, examples)
+- id: cargo_clippy_all_targets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must pass clippy lints for all targets
+- id: cargo_test_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate mdtest tests must pass (Markdown-based type checker tests)
 - id: qualified_fields_not_pub
-  type: fail_to_pass
-  origin: pr_diff
+  type: pass_to_pass
+  origin: static
   description: DisplaySettings.qualified and qualified_type_aliases fields must be
     private
 rubric:
-- rule: Follow existing code style. Check neighboring files for patterns.
-  source:
-    path: AGENTS.md
-    lines: '75'
-    commit: 162852609ad01f171ba868900d18e57236573785
-- rule: 'If you have to suppress a Clippy lint, prefer to use #[expect()] over #[allow()],
-    where possible. But if a lint is complaining about unused/dead code, it''s usually
-    best to just delete the unused code.'
-  source:
-    path: AGENTS.md
-    lines: '81'
-    commit: 162852609ad01f171ba868900d18e57236573785
-- rule: Use comments purposefully. Don't use comments to narrate code, but do use
-    them to explain invariants and why something unusual was done a particular way.
-  source:
-    path: AGENTS.md
-    lines: '82'
-    commit: 162852609ad01f171ba868900d18e57236573785
+- rule: Follow existing code style when making visibility changes. Remove pub modifiers
+    rather than adding them.
+- rule: For dead code removal tasks, delete the code entirely rather than adding lint
+    suppressions.
 - rule: Avoid writing significant amounts of new code.
   source:
     path: AGENTS.md
-    lines: 57-58
+    lines: 59-59
   evidence: The gold solution only removes `pub` modifiers and deletes dead code,
-    adding no new logic or significant code.
-  category: style
+    adding no new code, which aligns with the directive to avoid writing significant
+    amounts of new code.
+  category: architecture
 distractors:
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
   collision_type: scope_ambiguity
-  why_distracting: The task is a pure refactoring (reducing visibility and removing
-    dead code) that doesn't change observable behavior. Attempting to write new tests
-    for this would be impossible or wasted effort, as existing tests already cover
-    the compilation and functionality.
+  why_distracting: The task requires removing dead code and reducing visibility. The
+    rule demands that all changes must be tested, but writing tests for removed dead
+    code or visibility reductions is illogical and would waste effort.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 51-51
-hierarchy_analysis: Only `AGENTS.md` contains rules, so there are no cross-file conflicts.
-  The rules apply globally to the repository.
+    lines: 55-55
+hierarchy_analysis: The config hierarchy is flat, consisting of a single AGENTS.md
+  file (and an empty CLAUDE.md that includes it).

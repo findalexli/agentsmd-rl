@@ -129,10 +129,11 @@ def test_repo_typecheck():
 def test_repo_oxlint_scripts():
     """Repo's oxlint check on scripts passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bunx", "oxlint", "--format=github", "scripts/buildkite-failures.ts"],
+        ["bunx", "oxlint", "scripts/buildkite-failures.ts"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"oxlint check failed:\n{r.stderr[-500:]}"
+    # oxlint returns 0 if no errors (warnings are OK)
+    assert r.returncode == 0, f"oxlint check failed with errors:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -143,3 +144,13 @@ def test_repo_prettier_scripts():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bun_build():
+    """Repo's bun build on scripts/buildkite-failures.ts succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "scripts/buildkite-failures.ts", "--target", "bun", "--outfile", "/tmp/buildkite-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun build failed:\n{r.stderr[-500:]}"

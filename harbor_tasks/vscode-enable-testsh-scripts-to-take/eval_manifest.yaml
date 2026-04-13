@@ -13,6 +13,38 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo test/unit/node/index.js must parse without syntax errors
+- id: test_repo_unit_renderer_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test/unit/electron/renderer.js must parse without syntax errors
+- id: test_repo_unit_preload_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test/unit/electron/preload.js must parse without syntax errors
+- id: test_repo_unit_reporter_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test/unit/reporter.js must parse without syntax errors
+- id: test_repo_test_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo scripts/test.sh must have valid shell syntax
+- id: test_repo_all_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .sh files in scripts/ must have valid shell syntax
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json must be valid JSON
+- id: test_repo_product_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo product.json must be valid JSON
+- id: test_repo_git_sanity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repo must have at least one commit
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -99,14 +131,37 @@ rubric:
     bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'
-- rule: '`test/`: Integration tests and test infrastructure'
+- rule: Document new CLI options using the established `#### [Option] - [Description]`
+    heading format and provide concrete usage examples.
   source:
-    path: .github/copilot-instructions.md
-    lines: 11-11
-  evidence: The gold solution modifies `test/unit/electron/index.js` to update the
-    test runner CLI arguments, aligning with the architectural definition that the
-    `test/` folder contains test infrastructure.
-  category: architecture
+    path: .github/skills/unit-tests/SKILL.md
+    lines: 29-49
+  evidence: The gold solution adds a new `#### Bare file paths - Run tests from specific
+    files` heading that perfectly matches the existing `#### `--run <file>` - Run
+    tests from a specific file` heading format, a
+  category: documentation
+- rule: Cross-platform compatibility - Abstractions separate platform-specific code
+  source:
+    path: .github/skills/unit-tests/SKILL.md
+    lines: 29-45
+  reference: 'Both platform examples present:
+
+    ```bash
+
+    ./scripts/test.sh src/vs/editor/test/common/model.test.ts
+
+    ```
+
+
+    ```bat
+
+    .\scripts\test.bat src\vs\editor\test\common\model.test.ts
+
+    ```'
+  evidence: The gold solution provides examples for both macOS/Linux (`./scripts/test.sh`)
+    and Windows (`.\scripts\test.bat`) when documenting the new bare file path feature
+    in SKILL.md.
+  category: documentation
 config_edits:
 - path: .github/skills/unit-tests/SKILL.md
   tier: 1
@@ -153,31 +208,31 @@ config_edits:
     instead. See the `integration-tests` skill for details on filtering and running
     specific integration test files.'
 distractors:
-- rule: If the tool is not available... run `npm run compile-check-ts-native` after
-    making changes to type-check the main VS Code sources
+- rule: Integration tests (files ending in .integrationTest.ts...) are not run by
+    scripts/test.sh
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs to run `npm run compile-check-ts-native` for
-    changes under `src/`. An agent might mistakenly apply this to validate changes
-    in `test/unit/electron/index.js`, but this file is outside `src/` and is plain
-    JavaScript, so the TypeScript compiler check would not validate it and would waste
-    time.
+  why_distracting: The agent might try to explicitly filter out `.integrationTest.ts`
+    files when parsing bare file arguments in `index.js`. However, the instruction
+    simply says to treat bare `.ts` and `.js` files as `--run` values, and adding
+    explicit exclusion logic would overcomplicate the argument parsing and potentially
+    conflict with downstream test resolution.
+  severity: high
+  source:
+    path: .github/skills/unit-tests/SKILL.md
+    lines: 83-85
+- rule: Run `npm run compile-check-ts-native` after making changes to type-check the
+    main VS Code sources
+  collision_type: scope_ambiguity
+  why_distracting: The agent is editing `test/unit/electron/index.js`, which is a
+    plain JavaScript file. Attempting to run TypeScript compilation checks for this
+    change is unnecessary and could lead to confusion if the agent expects TS validation.
   severity: medium
   source:
     path: .github/copilot-instructions.md
-    lines: 45-46
-- rule: 'MANDATORY: Always check for compilation errors before running any tests or
-    validation scripts, or declaring work complete'
-  collision_type: scope_ambiguity
-  why_distracting: The rule mandates checking for compilation errors before declaring
-    work complete. Since the modified file `test/unit/electron/index.js` is a JavaScript
-    file, it does not undergo TypeScript compilation. An agent might waste time trying
-    to compile it or running full project compilation unnecessarily.
-  severity: medium
-  source:
-    path: .github/copilot-instructions.md
-    lines: 38-38
-hierarchy_analysis: The config hierarchy is simple, with `AGENTS.md` providing no
-  specific rules and `.github/copilot-instructions.md` providing general architectural
-  and validation guidelines. The validation guidelines are heavily focused on TypeScript
-  compilation, which creates ambiguity for this specific PR since it modifies a plain
-  JavaScript file in the test infrastructure.
+    lines: 48-55
+hierarchy_analysis: The task involves a flat but meta-referential config hierarchy.
+  The agent must edit its own skill documentation (`SKILL.md`) while adhering to general
+  project instructions in `copilot-instructions.md`. The primary challenge is correctly
+  updating the skill file without being distracted by existing rules in the skill
+  file itself (like integration test exclusions) that don't apply to the specific
+  argument parsing logic being added.

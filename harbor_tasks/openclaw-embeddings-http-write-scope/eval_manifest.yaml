@@ -108,33 +108,34 @@ rubric:
     (`src/gateway/embeddings-http.ts`), adhering to the project structure guidelines
     for source code.
   category: architecture
-distractors:
-- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
-    listed owner explicitly asked for the change or is already reviewing it with you.
-    Treat those paths as restricted surfaces, not drive-by cleanup.
-  collision_type: scope_ambiguity
-  why_distracting: The issue involves fixing an authorization bypass (missing operator
-    write scope), which is inherently security-related. An agent might incorrectly
-    assume `src/gateway/embeddings-http.ts` is covered by security-focused CODEOWNERS
-    rules and refuse to apply the fix without explicit owner approval, halting progress.
-  severity: high
+- rule: 'Source code: src/'
   source:
-    path: CLAUDE.md
-    lines: 5-5
-- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
-    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
-    core `src/**` directly.'
-  collision_type: architecture_boundary
-  why_distracting: The agent might misinterpret `src/gateway/embeddings-http.ts` as
-    extension production code rather than core code, leading it to incorrectly restrict
-    its imports to `openclaw/plugin-sdk/*` or avoid modifying the core gateway logic
-    directly.
+    path: AGENTS.md
+    lines: 7-7
+  evidence: The gold solution modifies a file in the src/ directory (src/gateway/embeddings-http.ts),
+    adhering to the project structure guidelines.
+  category: architecture
+distractors:
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change or is already reviewing it with you.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume that `src/gateway/embeddings-http.ts` (which
+    handles authorization and scopes) is a security-focused file and refuse to edit
+    it without explicit owner permission, halting the task.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 14-14
-hierarchy_analysis: The configuration hierarchy consists of `CLAUDE.md` and `AGENTS.md`
-  at the root level, which contain identical rules. There are no conflicts between
-  the files, but the rules heavily emphasize architecture boundaries and security
-  restrictions which can cause hesitation when modifying core gateway authorization
-  logic.
+    path: AGENTS.md
+    lines: 6-6
+- rule: 'Tests: colocated *.test.ts.'
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly asks to update `src/gateway/embeddings-http.test.ts`,
+    and the config reinforces colocated tests. However, the gold solution completely
+    omits the test updates, so an agent following the prompt and config would generate
+    a diff that fails strict comparison against the incomplete gold solution.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-10
+hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no deep hierarchy, and the rules are generic repository
+  guidelines that do not conflict with each other.

@@ -290,3 +290,91 @@ def test_repo_gradio_version():
     )
     assert r.returncode == 0, f"Gradio version check failed:\n{r.stderr}"
     assert len(r.stdout.strip()) > 0, "Gradio version is empty"
+
+
+# [repo_tests] pass_to_pass — from test/test_component_props.py (CI tests)
+def test_repo_component_props():
+    """Component props tests pass (repo CI) — tests component property handling."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_component_props.py", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Component props tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from test/test_blocks.py config tests (CI)
+def test_repo_blocks_load_config():
+    """Blocks load from config test passes (repo CI test-python.yml)."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_blocks.py::TestBlocksMethods::test_load_from_config", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Blocks load config test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from test/test_blocks.py partial fn config tests (CI)
+def test_repo_blocks_partial_config():
+    """Blocks partial function in config test passes (repo CI test-python.yml)."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_blocks.py::TestBlocksMethods::test_partial_fn_in_config", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Blocks partial config test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from client/python/test (CI test-python.yml)
+def test_repo_client_documentation():
+    """Client documentation tests pass (repo CI test-python.yml)."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "client/python/test/test_documentation.py", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Client documentation tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from test/components/test_button.py (CI)
+def test_repo_button_component():
+    """Button component tests pass (repo CI test-python.yml)."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_button.py", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Button component tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — function types documented from test_blocks.py (CI)
+def test_repo_function_types_documented():
+    """Function types documented in config test passes (repo CI)."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_blocks.py::TestBlocksMethods::test_function_types_documented_in_config", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Function types documented test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from test/test_events.py clear event test (CI)
+def test_repo_events_clear():
+    """Event clear test passes (repo CI) — tests basic event system."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_events.py::TestEvent::test_clear_event", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Event clear test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from test/test_events.py consecutive events (CI)
+def test_repo_events_consecutive():
+    """Event consecutive/chaining test passes (repo CI test-python.yml)."""
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_events.py::TestEvent::test_consecutive_events", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Event consecutive test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

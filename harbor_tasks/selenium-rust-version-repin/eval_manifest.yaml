@@ -74,25 +74,44 @@ checks:
   type: pass_to_pass
   origin: static
   description: rust.rake references Cargo.toml for version updates
-rubric:
-- rule: Comments should explain why, not what. Prefer well-named methods over comments
-    that narrate code.
-  source:
-    path: AGENTS.md
-    lines: '70'
-    commit: 2fed1c09849431329f3e414479c627d652424f4e
-- rule: After making changes to high-risk areas (dependency updates, repin flows),
-    call out the risk areas touched and note any cross-binding impact.
-  source:
-    path: AGENTS.md
-    lines: 76-79, 82-84
-    commit: 2fed1c09849431329f3e414479c627d652424f4e
-- rule: When modifying Rake tasks that invoke other tasks, use reenable before invoke
-    to ensure idempotent execution within the same Ruby process.
-  source:
-    path: AGENTS.md
-    lines: 17-18, 76-79
-    commit: 2fed1c09849431329f3e414479c627d652424f4e
+- id: test_pre_release_workflow_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pre-release workflow YAML is valid (python3 yaml validation)
+- id: test_rakefile_valid_ruby_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Main Rakefile has valid Ruby syntax (ruby -c)
+- id: test_bazel_analyze_rust_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel can analyze Rust target without building (bazel build --nobuild)
+- id: test_bazel_query_rust_targets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel can query all Rust targets (bazel query //rust/...)
+# Enrichment: Additional p2p tests using repo CI commands
+- id: test_ruby_syntax_bazel_rake
+  type: pass_to_pass
+  origin: repo_tests
+  description: bazel.rake has valid Ruby syntax (ruby -c)
+- id: test_bazel_analyze_rust_library
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel can analyze Rust library target (bazel build --nobuild //rust:selenium_manager)
+- id: test_rust_cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.toml has valid TOML syntax (python3 tomllib check)
+- id: test_bazel_query_rust_library_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel can query Rust library target (bazel query //rust:selenium_manager)
+- id: test_bazel_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel version command works (bazel version)
+rubric: []
 version: '2.0'
 source:
   repo: SeleniumHQ/selenium

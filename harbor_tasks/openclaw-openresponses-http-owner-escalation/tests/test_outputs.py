@@ -316,11 +316,23 @@ console.log(anyFound ? 'FOUND_ANY' : 'OK');
 # [agent_config] fail_to_pass — CLAUDE.md:152 @ 1a75906
 def test_no_sentinel_default():
     """senderIsOwner must not use a silent sentinel default like ?? true or ?? false."""
-    src = _read_src()
+    result = _node(_PREAMBLE + _FIND_HELPER + """
+if (!helperFunc) { console.log('NO_FUNC'); process.exit(0); }
 
-# ---------------------------------------------------------------------------
-# Enriched pass-to-pass tests - CI/CD gates
-# ---------------------------------------------------------------------------
+let sentinelFound = false;
+function walk(node) {
+    // Check for ?? true or ?? false patterns
+    if (ts.isBinaryExpression(node) && node.operatorToken?.kind === ts.SyntaxKind.QuestionQuestionToken) {
+        if (node.right.kind === ts.SyntaxKind.TrueKeyword || node.right.kind === ts.SyntaxKind.FalseKeyword) {
+            sentinelFound = true;
+        }
+    }
+    ts.forEachChild(node, walk);
+}
+walk(helperFunc);
+console.log(sentinelFound ? 'SENTINEL' : 'OK');
+""")
+    assert result == "OK", f"Silent sentinel default found (?? true/false) ({result})"
 
 
 # ---------------------------------------------------------------------------
@@ -370,3 +382,208 @@ def test_repo_prompt_tests():
     if "No test files found" in combined or "did not export any tests" in combined:
         return
     assert r.returncode == 0, f"Prompt tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ingress_owner_lint():
+    """Ingress agent owner context lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint:agent:ingress-owner"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ingress owner lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_auth_tests():
+    """Repo's auth tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/auth.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Auth tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_auth_helpers_tests():
+    """Repo's HTTP auth helpers tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/http-auth-helpers.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"HTTP auth helpers tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_endpoint_helpers_tests():
+    """Repo's HTTP endpoint helpers tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/http-endpoint-helpers.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"HTTP endpoint helpers tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_common_tests():
+    """Repo's HTTP common utils tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/http-common.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"HTTP common tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_method_scopes_tests():
+    """Repo's method scopes tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/method-scopes.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Method scopes tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_auth_mode_policy_tests():
+    """Repo's auth mode policy tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/auth-mode-policy.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Auth mode policy tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_utils_request_context_tests():
+    """Repo's HTTP utils request context tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/http-utils.request-context.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"HTTP utils request context tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_http_utils_model_override_tests():
+    """Repo's HTTP utils model override tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/http-utils.model-override.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"HTTP utils model override tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_role_policy_tests():
+    """Repo's role policy tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/role-policy.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Role policy tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_origin_check_tests():
+    """Repo's origin check tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/origin-check.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Origin check tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_probe_auth_tests():
+    """Repo's probe auth tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/probe-auth.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Probe auth tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_input_allowlist_tests():
+    """Repo's input allowlist tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/input-allowlist.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Input allowlist tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_connection_auth_tests():
+    """Repo's connection auth tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/connection-auth.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Connection auth tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_credentials_tests():
+    """Repo's credentials tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/credentials.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Credentials tests failed:\n{combined[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gateway_misc_tests():
+    """Repo's gateway misc tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/gateway-misc.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    if "No test files found" in combined or "did not export any tests" in combined:
+        return
+    assert r.returncode == 0, f"Gateway misc tests failed:\n{combined[-1000:]}"

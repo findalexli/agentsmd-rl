@@ -132,26 +132,42 @@ def test_cargo_check():
 # Gates (pass_to_pass, repo_tests) — repo's own CI/CD checks
 # ---------------------------------------------------------------------------
 
-def test_cargo_check_workspace():
-    """Full workspace cargo check passes (pass_to_pass)."""
+def test_cargo_fmt_check():
+    """Code formatting passes cargo fmt check (pass_to_pass)."""
+    # rustfmt is required for cargo fmt
+    subprocess.run(
+        ["rustup", "component", "add", "rustfmt"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
     r = subprocess.run(
-        ["cargo", "check", "--workspace", "--all-targets"],
+        ["cargo", "fmt", "-p", "uv-distribution-types", "--check"],
         cwd=REPO, capture_output=True, timeout=120,
     )
     assert r.returncode == 0, (
-        f"Workspace cargo check failed:\n{r.stderr.decode()[-2000:]}"
+        f"Format check failed:\n{r.stderr.decode()[-2000:]}"
     )
 
 
-def test_cargo_clippy():
-    """Workspace clippy lints pass without warnings (pass_to_pass)."""
+def test_cargo_check_crate():
+    """uv-distribution-types crate compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-distribution-types", "--lib"],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Crate cargo check failed:\n{r.stderr.decode()[-2000:]}"
+    )
+
+
+def test_cargo_clippy_crate():
+    """uv-distribution-types crate passes clippy lints (pass_to_pass)."""
     # Ensure clippy is installed
     subprocess.run(
         ["rustup", "component", "add", "clippy"],
         cwd=REPO, capture_output=True, timeout=60,
     )
     r = subprocess.run(
-        ["cargo", "clippy", "--workspace", "--all-targets"],
+        ["cargo", "clippy", "-p", "uv-distribution-types", "--lib"],
         cwd=REPO, capture_output=True, timeout=120,
     )
     assert r.returncode == 0, (

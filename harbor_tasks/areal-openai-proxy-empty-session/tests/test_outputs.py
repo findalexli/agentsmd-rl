@@ -202,6 +202,60 @@ def test_repo_pytest_available():
     assert r.returncode == 0, f"pytest check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - from .github/workflows/format-check.yml (targeted)
+def test_repo_ruff_lint_proxy():
+    """Repo's Python linting passes for proxy module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "areal/experimental/openai/proxy/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/format-check.yml (targeted)
+def test_repo_ruff_format_proxy():
+    """Repo's Python code formatting passes for proxy module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/experimental/openai/proxy/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - syntax check for server module
+def test_repo_server_syntax():
+    """Proxy server module compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/areal/experimental/openai/proxy/server.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"server.py syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from CI install-test (pyproject.toml validation)
+def test_repo_pyproject_valid():
+    """pyproject.toml is valid TOML and has required project section (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import tomllib; f=open('pyproject.toml', 'rb'); d=tomllib.load(f); "
+         "assert 'project' in d and 'name' in d['project'], 'Missing [project] name'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------

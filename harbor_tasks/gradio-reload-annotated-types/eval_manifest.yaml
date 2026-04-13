@@ -16,7 +16,7 @@ checks:
 - id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Rep's ruff lint check passes on modified files (utils.py, skills.py)
+  description: Repo's ruff lint check passes on modified files (utils.py, skills.py)
 - id: watchfn_no_future_annotations_flag
   type: fail_to_pass
   origin: pr_diff
@@ -69,27 +69,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's utils URL validation tests pass (test/test_utils.py::TestValidateURL)
-rubric:
-- rule: Be consistent with the style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: '45'
-    commit: c4986883b267570d76b442899c6fc09d14e3e222
+- id: test_repo_utils_delete_none
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils delete_none tests pass (test/test_utils.py::TestDeleteNone)
+- id: test_repo_utils_safe_deepcopy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils safe_deepcopy tests pass (test/test_utils.py::TestSafeDeepCopy)
+- id: test_repo_utils_unhashable_key_dict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils unhashable key dict tests pass (test/test_utils.py::TestUnhashableKeyDict)
+- id: test_repo_utils_sanitize_for_csv
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils sanitize_for_csv tests pass (test/test_utils.py::TestSanitizeForCSV)
+- id: test_repo_skills_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's skills module imports without errors
 distractors:
-- rule: Python code is formatted with `ruff`.
-  collision_type: would_cause_bug
-  why_distracting: The rule specifies that Python code is formatted with `ruff`. Modern
-    Python formatting and linting rules (which `ruff` often enforces) typically encourage
-    using `from __future__ import annotations` to avoid manual stringified forward
-    references. An agent might be tempted to re-add the import to satisfy modern typing
-    conventions or run a formatter that auto-fixes it, which would reintroduce the
-    exact bug this PR is trying to fix (stringifying annotations in exec'd user code
-    during hot reload).
-  severity: high
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
+  collision_type: meta_confusion
+  why_distracting: The rule instructs contributors to fill out the PR template and
+    disclose AI usage. An agent might attempt to create or modify `.github/PULL_REQUEST_TEMPLATE.md`
+    or write a PR description, which is out of scope for this code-level fix.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 36-36
-hierarchy_analysis: Only a single root-level config file (`AGENTS.md`) is present,
-  so there are no hierarchical conflicts. The primary challenge is balancing the general
-  instruction to use `ruff` for formatting against the specific technical requirement
-  to avoid `from __future__ import annotations` in this particular file.
+    lines: 20-24
+hierarchy_analysis: The repository contains a single, flat `AGENTS.md` file at the
+  root level with generic contribution guidelines.
+rubric:
+- rule: Python code is formatted with `ruff` and should be consistent with the style
+    of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 36-38
+  evidence: The gold solution correctly formats the `cast` import and its usage in
+    `gradio/cli/commands/skills.py` without introducing any style violations, adhering
+    to the surrounding code style.
+  category: style
+  verification: llm_judge

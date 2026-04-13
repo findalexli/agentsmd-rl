@@ -1,92 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: sgl-project/sglang
   pr: 22150
   base_commit: df9c831ab80c78495142b4dbcb1dfa537c9e1c73
   merge_commit: 3a4f4cbc525b9106bb57a69b96420c545a90f7ae
-
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Test file must parse without errors"
-
-  - id: test_repo_python_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python syntax check passes (py_compile)"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes (F401, F821)"
-
-  - id: test_repo_black_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's black formatting check passes"
-
-  - id: test_repo_codespell_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's codespell check passes"
-
-  - id: test_repo_isort_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's isort import sorting check passes"
-
-  - id: test_repo_toml_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TOML files are valid"
-
-  - id: test_repo_yaml_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's YAML files are valid"
-
-  - id: transfer_engine_flag_hardcoded_false
-    type: fail_to_pass
-    origin: pr_diff
-    description: "remote_instance_weight_loader_start_seed_via_transfer_engine must be hardcoded to False, not conditional on backend"
-
-  - id: fixme_comment_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FIXME comment about random behavior must be added before random.choice calls"
-
-  - id: no_conditional_transfer_engine_expression
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The conditional expression checking backend == 'transfer_engine' must be removed from Engine init"
-
-  - id: file_structure_intact
-    type: pass_to_pass
-    origin: static
-    description: "The test file should still have expected structure with key imports and functions"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "The fix hardcodes False for the parameter and removes conditional logic"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Test file must parse without errors
+- id: test_repo_python_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python syntax check passes (py_compile)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes (F401, F821)
+- id: test_repo_black_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's black formatting check passes
+- id: test_repo_codespell_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's codespell check passes
+- id: test_repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort import sorting check passes
+- id: test_repo_toml_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TOML files are valid
+- id: test_repo_yaml_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files are valid
+- id: test_repo_precommit_ast_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python AST check passes via pre-commit
+- id: test_repo_precommit_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no debug statements
+- id: test_repo_precommit_symlinks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no broken symlinks
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no trailing whitespace
+- id: test_repo_precommit_end_of_file_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has proper end-of-file newlines
+- id: test_repo_precommit_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files pass pre-commit check
+- id: test_repo_precommit_check_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TOML files pass pre-commit check
+- id: test_repo_precommit_check_merge_conflict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no merge conflict markers
+- id: transfer_engine_flag_hardcoded_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: remote_instance_weight_loader_start_seed_via_transfer_engine must be
+    hardcoded to False, not conditional on backend
+- id: fixme_comment_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: FIXME comment about random behavior must be added before random.choice
+    calls
+- id: no_conditional_transfer_engine_expression
+  type: fail_to_pass
+  origin: pr_diff
+  description: The conditional expression checking backend == 'transfer_engine' must
+    be removed from Engine init
+- id: file_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: The test file should still have expected structure with key imports
+    and functions
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: The fix hardcodes False for the parameter and removes conditional logic
 rubric:
-  - rule: "Always use CustomTestCase — never raw unittest.TestCase. It ensures tearDownClass runs even when setUpClass fails, preventing resource leaks in CI."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "12"
-      commit: "df9c831ab80c78495142b4dbcb1dfa537c9e1c73"
-
-  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources (e.g., cls.process) that setUpClass may not have finished allocating."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "13"
-      commit: "df9c831ab80c78495142b4dbcb1dfa537c9e1c73"
-
-  - rule: "Use comments to explain invariants, technical debt, or non-obvious behavior — not just to narrate what the code does."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "177"
-      commit: "df9c831ab80c78495142b4dbcb1dfa537c9e1c73"
+- rule: Test-only code fixes require no agent configuration changes when the existing
+    conventions are followed
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    commit: df9c831ab80c78495142b4dbcb1dfa537c9e1c73
+  reference: ''
+- id: test_repo_precommit_check_added_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no large files added

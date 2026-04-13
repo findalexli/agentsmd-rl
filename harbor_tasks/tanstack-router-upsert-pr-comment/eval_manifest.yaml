@@ -43,6 +43,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's scripts follow Prettier formatting rules
+- id: repo_all_scripts_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .mjs files in scripts/ directory have valid Node.js syntax
 rubric:
 - rule: Use Node.js built-in modules with the 'node:' prefix (e.g., 'node:fs', 'node:path',
     'node:util').
@@ -64,27 +68,28 @@ rubric:
 distractors:
 - rule: TypeScript strict mode with extensive type safety
   collision_type: rule_conflict
-  why_distracting: The PR explicitly requests a `.mjs` file (`upsert-pr-comment.mjs`),
-    which is a JavaScript module. Applying the TypeScript rule would lead the agent
-    to create a `.ts` file instead, violating the PR requirements.
+  why_distracting: The task explicitly requires creating a `.mjs` (JavaScript) file.
+    An agent following the 'TypeScript strict mode' rule might erroneously create
+    a `.ts` file or attempt to add complex JSDoc typings, conflicting with the simple
+    ES module script requirement.
   severity: high
   source:
     path: AGENTS.md
-    lines: 20-20
+    lines: 14-15
 - rule: 'Critical: Always run unit and type tests during development - do not proceed
     if they fail'
   collision_type: scope_ambiguity
-  why_distracting: The PR is for a simple utility script in the `scripts/` directory.
-    The agent might waste time trying to write unit tests for this script or get stuck
-    trying to run the test suite for a standalone script that isn't integrated into
-    the main testing graph.
+  why_distracting: This is a standalone utility script for CI benchmarks. An agent
+    strictly following the testing instructions might waste time trying to write Nx-compatible
+    unit tests for this script or get stuck running the entire monorepo test suite.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 53-53
-hierarchy_analysis: Only AGENTS.md is present. The rules in AGENTS.md are heavily
-  focused on the core library (TypeScript, Nx, testing), which creates scope ambiguity
-  when the agent is asked to write a standalone Node.js script in the scripts/ directory.
+    lines: 45-46
+hierarchy_analysis: The repository has a single root-level AGENTS.md file. The rules
+  within it are heavily tailored towards the main TanStack Router packages (TypeScript,
+  Nx, React/Solid). The agent must recognize that these global application-level rules
+  do not apply to standalone utility scripts in the `scripts/` directory.
 version: '2.0'
 source:
   repo: TanStack/router

@@ -56,58 +56,50 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo oxlint config file is valid JSONC
+- id: test_repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on target file
+- id: test_repo_prettier_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier config file is valid JSON
+- id: test_repo_gitattributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo .gitattributes file exists and has basic patterns
 rubric:
-- rule: Follow existing code style. Check neighboring files for patterns.
-  source:
-    path: CLAUDE.md
-    lines: '139'
-    commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
-- rule: Avoid dynamic import & require. Only use dynamic import or require when specifically
-    testing dynamic import behavior. Otherwise, always use module-scope import statements.
+- rule: Prefer async/await over callbacks.
   source:
     path: test/CLAUDE.md
-    lines: 156-175
-    commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
-- rule: Prefer async/await over callbacks. When callbacks must be used and it's just
-    a single callback, use Promise.withResolvers.
-  source:
-    path: test/CLAUDE.md
-    lines: 102-110
-    commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
-- rule: Modify existing files in appropriate directories (like `test/integration/`
-    for end-to-end tests) when fixing issues without a specific issue number.
-  source:
-    path: CLAUDE.md
-    lines: 30-36
-  evidence: The fix is applied directly to the existing integration test utility `test/integration/next-pages/test/dev-server-puppeteer.ts`
-    rather than creating a new test file.
-  category: architecture
+    lines: 100-101
+  evidence: The gold solution uses `await new Promise(r => setTimeout(r, 3000));`
+    for the retry delay, adhering to the preference for async/await over callbacks.
+  category: style
+  verification: llm_judge
 distractors:
-- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
-  collision_type: scope_ambiguity
-  why_distracting: The rule strictly forbids setting timeouts on tests because Bun
-    has its own timeouts. However, the gold solution changes Puppeteer's `timeout`
-    and `protocolTimeout` from 0 (infinite) to 30_000 and 60_000. An agent following
-    this rule might leave them at 0 or remove them, causing the CI to hang indefinitely
-    when Puppeteer fails to launch.
+- rule: Unless explicitly asked, never wait for time to pass in tests. Always wait
+    for the condition to be met instead of waiting for an arbitrary amount of time.
+  collision_type: rule_conflict
+  why_distracting: The rule forbids waiting for time to pass in tests, but the PR
+    instruction explicitly requires increasing the retry delay (using setTimeout)
+    to handle transient macOS launch issues.
   severity: high
   source:
-    path: test/CLAUDE.md
-    lines: 101-102
-- rule: never wait for time to pass in tests. Always wait for the condition to be
-    met instead of waiting for an arbitrary amount of time.
-  collision_type: scope_ambiguity
-  why_distracting: The rule forbids waiting for time to pass in tests, but the gold
-    solution explicitly increases a `setTimeout` from 1000ms to 3000ms. An agent might
-    try to implement complex polling instead of a simple retry delay, overcomplicating
-    the Puppeteer launch retry logic.
-  severity: medium
+    path: test/AGENTS.md
+    lines: 16-18
+- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly forbids setting timeouts on tests, marking
+    it as CRITICAL. However, the PR instruction specifically identifies infinite timeouts
+    (0) in Puppeteer launch options as a bug that causes indefinite hangs, requiring
+    the agent to set explicit timeouts.
+  severity: high
   source:
-    path: test/CLAUDE.md
-    lines: 15-16
-hierarchy_analysis: The hierarchy includes root `CLAUDE.md` and `test/CLAUDE.md`.
-  The rules in `test/CLAUDE.md` are highly specific to Bun's test runner (`bun:test`),
-  but this specific file (`dev-server-puppeteer.ts`) is a Puppeteer script used within
-  the integration tests. The agent must distinguish between Bun test runner configuration
-  (where timeouts are forbidden) and external tool configuration like Puppeteer (where
-  timeouts are necessary to prevent hangs).
+    path: test/AGENTS.md
+    lines: 108-110
+hierarchy_analysis: The repository contains strict testing guidelines in `test/AGENTS.md`
+  that forbid setting timeouts and waiting for time to pass. However, this specific
+  PR is about fixing a Puppeteer browser launch issue where infinite timeouts cause
+  hangs and short retry delays cause flakiness. The agent must recognize that the
+  specific PR instructions override the general 'CRITICAL' testing rules.

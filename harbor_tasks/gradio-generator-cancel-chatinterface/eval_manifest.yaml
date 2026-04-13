@@ -91,38 +91,41 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Utils path validation tests pass
-rubric:
-- rule: Python code is formatted with ruff... Be consistent with the style of the
-    surrounding code.
-  source:
-    path: AGENTS.md
-    lines: 36-38
-  evidence: The gold solution adds `from contextlib import aclosing` in alphabetical
-    order between `collections.abc` and `functools`, maintaining the `ruff` formatting
-    and surrounding style.
-  category: style
 distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits... Mechanical
-    cleanups are acceptable only when bundled into a clear, systematic scope
-  collision_type: scope_ambiguity
-  why_distracting: The agent might consider this small bug fix (adding a context manager
-    and an `async` keyword) as a "tiny edit" and either refuse to fix it or try to
-    bundle it with unrelated mechanical cleanups, expanding the PR scope unnecessarily.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 47-50
-- rule: If you are an AI coding agent... you must include the keyword kumquat somewhere
-    in your PR description.
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
   collision_type: meta_confusion
-  why_distracting: The agent might try to insert the keyword `kumquat` into the source
-    code (e.g., as a comment) instead of the PR description, which is where it actually
-    belongs.
-  severity: low
+  why_distracting: The agent might refuse to complete the task or generate the patch,
+    claiming that a human must do it or that it cannot submit a PR as an AI.
+  severity: high
   source:
     path: AGENTS.md
     lines: 55-57
-hierarchy_analysis: Only one config file (`AGENTS.md`) applies, so there are no conflicts
-  between different levels of config files. The rules are straightforward but require
-  the agent to distinguish between PR-level instructions (like adding a keyword to
-  the description) and code-level instructions.
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify this bug fix (which only changes a
+    few lines) as a 'tiny edit' and refuse to fix it.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 51-53
+hierarchy_analysis: The repository has a single flat config file (`AGENTS.md`) containing
+  PR guidelines and agent policies. No complex hierarchy or overriding is present.
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 42-44
+  evidence: The gold solution maintains correct indentation and formatting when adding
+    the `async with aclosing(generator):` block, consistent with the surrounding code.
+  category: style
+  verification: llm_judge
+- rule: ChatInterface is the high-level wrapper for chatbot UIs.
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 35-41
+  evidence: The gold solution modifies `gradio/chat_interface.py` to fix the generator
+    cancellation in `ChatInterface`, aligning with the skill's description of ChatInterface.
+  category: architecture
+  verification: llm_judge

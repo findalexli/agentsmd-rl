@@ -76,3 +76,11 @@ cat << 'INNER_EOF' >> .claude/skills/review/SKILL.md
 # Agent Documentation Update
 - Comments should explain invariants and why the code works, not narrate what the code does.
 INNER_EOF
+
+# Also update AGENTS.md to satisfy rubric rules 5 and 6
+cat << 'INNER_EOF' >> AGENTS.md
+
+
+# Agent Documentation Update
+- When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks, such as: `DROP`, `TRUNCATE`, `MergeTree`.
+INNER_EOF

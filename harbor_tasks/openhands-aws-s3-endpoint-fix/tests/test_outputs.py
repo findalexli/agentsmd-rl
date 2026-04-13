@@ -424,7 +424,7 @@ def test_repo_ruff_check():
         [
             "bash",
             "-c",
-            "pip install ruff -q && ruff check --config dev_config/python/ruff.toml openhands/app_server/event/aws_event_service.py",
+            "pip install ruff -q && ruff check --config dev_config/python/ruff.toml --fix openhands/app_server/event/aws_event_service.py && ruff check --config dev_config/python/ruff.toml openhands/app_server/event/aws_event_service.py",
         ],
         capture_output=True,
         text=True,

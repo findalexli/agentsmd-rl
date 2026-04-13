@@ -73,57 +73,48 @@ checks:
   description: Repo's cargo test --locked --lib passes for deno_permissions package
     (matches actual CI)
 rubric:
-- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+- rule: Keep your changes minimal - only modify runtime/permissions/lib.rs without
+    touching unrelated files like cli/args/flags.rs.
   source:
-    path: CLAUDE.md
-    lines: '39'
-    commit: 7c57830506e4ded88a7bfee2a03a5e0530787fbe
-- rule: Match existing patterns in the codebase. When suggesting changes to a function,
-    look for similar functions nearby that solve analogous problems.
+    path: runtime/permissions/lib.rs
+  reference: The gold solution modifies only runtime/permissions/lib.rs (130 lines
+    changed) with 113 insertions and 17 deletions, without touching unrelated files.
+- rule: Match existing patterns - add comparison_path() function adjacent to the PathDescriptor
+    and PathQueryDescriptor structs, following the existing pattern.
   source:
-    path: .github/copilot-instructions.md
-    lines: 308-315
-    commit: 7c57830506e4ded88a7bfee2a03a5e0530787fbe
-- rule: tests/specs/ - Integration tests (spec tests)
+    path: runtime/permissions/lib.rs
+  reference: The gold solution adds comparison_path() function as a module-level helper
+    function in runtime/permissions/lib.rs, placed between the PathQueryDescriptor
+    impl block and the PathDescriptor struct, following the existing pattern of helper
+    functions located near the types that use them.
+- rule: Place integration tests (spec tests) in the `tests/specs/` directory.
   source:
-    path: CLAUDE.md
-    lines: 68-68
-  evidence: 'The gold solution places the new test files (`__test__.jsonc` and `main.ts`)
-    in the `tests/specs/permission/path_case_insensitive/` directory, correctly identifying
-    it as the location for integration '
+    path: tests/specs/permission/path_case_insensitive/__test__.jsonc
+  reference: 'The gold solution creates __test__.jsonc with {"if": "windows", "args":
+    "run -A main.ts"} in tests/specs/permission/path_case_insensitive/ directory.'
   category: testing
+- rule: Modify runtime/permissions/lib.rs for filesystem permission path comparison,
+    following the architectural guidance that the deno_runtime crate handles system
+    access.
+  source:
+    path: runtime/permissions/lib.rs
+  reference: The gold solution modifies only runtime/permissions/lib.rs in the deno_runtime
+    crate to implement case-insensitive path comparison for Windows, adding cmp_path
+    fields to PathDescriptor and PathQueryDescriptor structs, and updating all comparison
+    logic (PartialEq, Hash, starts_with, cmp_allow_allow, cmp_allow_deny) to use cmp_path
+    instead of path. This aligns with the architectural guidance that the runtime
+    crate handles system-level access control.
+  category: architecture
 distractors:
-- rule: The extensions themselves are in the `ext/` directory, and provide system
-    access to JavaScript – for instance filesystem operations and networking.
+- rule: Flag parsing is in `cli/args/flags.rs`.
   collision_type: architecture_boundary
-  why_distracting: The rule states that extensions providing system access (like filesystem
-    operations) are in the `ext/` directory. An agent might mistakenly try to implement
-    the path permission case-insensitivity logic in `ext/fs` or similar, but the core
-    permission descriptor logic actually resides in `runtime/permissions/lib.rs`.
-  severity: high
+  why_distracting: The issue explicitly mentions `--allow-read` and `--deny-read`
+    flags, which might lead the agent to modify `cli/args/flags.rs` based on this
+    rule. However, the core path comparison logic resides in the runtime permissions
+    module, not the CLI flag parser.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 59-61
-- rule: Open a pull request (PR) against the main branch on GitHub.
-  collision_type: meta_confusion
-  why_distracting: The agent is operating in an environment where it needs to generate
-    a patch or edit files directly to solve the issue. Instructing it to open a pull
-    request on GitHub is meta-instructional and irrelevant to the coding task.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 28-28
-- rule: Create as many commits as you need, all of them get squashed when the PR is
-    merged, so there is no need to rewrite history.
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to generate git commit commands or split
-    its output into multiple logical commits, which is unnecessary and unsupported
-    in the evaluation environment.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 39-41
-hierarchy_analysis: The configuration consists of a single `CLAUDE.md` file at the
-  root level. There are no conflicting child configurations. The primary challenge
-  is distinguishing between high-level architectural descriptions (which can be misleading
-  for core runtime modifications) and actionable development guidelines.
+    lines: 53-54
+hierarchy_analysis: The configuration consists of a single root-level CLAUDE.md file
+  providing high-level architectural guidance and standard development workflows.

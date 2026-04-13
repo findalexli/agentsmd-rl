@@ -301,7 +301,56 @@ def test_player_not_stub():
 # Repo CI/CD pass-to-pass tests - Real CI commands via subprocess.run()
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass - package.json validity via Python subprocess
+# [repo_tests] pass_to_pass - Audio shared components valid Svelte structure
+def test_audio_shared_svelte_valid():
+    """Audio shared Svelte components must have valid TypeScript and structure (pass_to_pass)."""
+    shared_dir = Path(REPO) / "js" / "audio" / "shared"
+
+    check_script = """
+import re
+import sys
+from pathlib import Path
+
+shared_dir = Path('SHARED_DIR')
+svelte_files = list(shared_dir.glob('*.svelte'))
+
+if len(svelte_files) == 0:
+    print('INVALID: No .svelte files found in shared/')
+    sys.exit(1)
+
+for svelte_file in svelte_files:
+    content = svelte_file.read_text()
+    # Must have TypeScript script tag
+    if '<script lang="ts">' not in content:
+        print('INVALID:', svelte_file.name, 'must use TypeScript (<script lang="ts">)')
+        sys.exit(1)
+    # Must have closing script tag
+    if '</script>' not in content:
+        print('INVALID:', svelte_file.name, 'missing </script>')
+        sys.exit(1)
+    # Check balanced braces in script section
+    script_match = re.search(r'<script[^>]*>(.*?)</script>', content, re.DOTALL)
+    if script_match:
+        script_content = script_match.group(1)
+        open_braces = script_content.count('{')
+        close_braces = script_content.count('}')
+        if open_braces != close_braces:
+            print('INVALID:', svelte_file.name, 'unbalanced braces')
+            sys.exit(1)
+        # Must have at least some function/variable definition
+        if 'function' not in script_content and '=>' not in script_content and 'let ' not in script_content:
+            print('INVALID:', svelte_file.name, 'appears to be empty/stub')
+            sys.exit(1)
+
+print('VALID:', len(svelte_files), 'Svelte files validated')
+""".replace('SHARED_DIR', str(shared_dir))
+
+    r = _run_python_check(check_script, timeout=30)
+    assert r.returncode == 0, f"Shared Svelte check failed: {r.stdout.strip()} {r.stderr.strip()}"
+    assert "VALID" in r.stdout
+
+
+# [repo_tests] pass_to_pass - Audio package.json validity via Python subprocess
 def test_audio_package_json_valid():
     """Audio package.json must be valid JSON with required fields (pass_to_pass)."""
     pkg_file = Path(REPO) / "js" / "audio" / "package.json"
@@ -415,7 +464,7 @@ if not index_file.exists():
 
 content = index_file.read_text()
 # Check for export statements
-exports = re.findall(r'export\\s+\\{([^}]+)\\}|export\\s+\\*\\s+from\\s+[\\'\"]([^\\'\"]+)[\\'\"]|export\\s+\\{[^}]*\\}\\s+from\\s+[\\'\"]([^\\'\"]+)[\\'\"]', content)
+exports = re.findall(r'export\\s+\\{([^}]+)\\}|export\\s+\\*\\s+from\\s+[\\\'\"]([^\\\'\"]+)[\\\'\"]|export\\s+\\{[^}]*\\}\\s+from\\s+[\\\'\"]([^\\\'\"]+)[\\\'\"]', content)
 if len(exports) == 0:
     print('INVALID: shared/index.ts must have exports')
     sys.exit(1)
@@ -588,7 +637,7 @@ if not index_svelte.exists():
 
 content = index_svelte.read_text()
 # Check for script tag with TypeScript
-if '<script lang=\"ts\">' not in content:
+if '<script lang="ts">' not in content:
     print('INVALID: Index.svelte must have TypeScript script tag')
     sys.exit(1)
 
@@ -719,3 +768,101 @@ print('VALID')
     r = _run_python_check(check_script, timeout=30)
     assert r.returncode == 0, f"Player Svelte 5 check failed: {r.stdout.strip()} {r.stderr.strip()}"
     assert "VALID" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests - Real CI commands via subprocess.run()
+# These tests run actual CI commands from the repository's test suite
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - Python audio component tests (real CI command)
+def test_repo_python_audio_duration():
+    """Python audio component duration validator test passes (pass_to_pass).
+
+    Runs the actual pytest CI command for the audio duration validator test.
+    This is a real CI test from test/components/test_audio.py.
+    Installs required dependencies before running.
+    """
+    # Install required dependencies first
+    deps = subprocess.run(
+        ["pip", "install", "-q", "gradio_client", "numpy", "pytest-asyncio", "aiohttp", "fastapi", "pydantic", "pillow", "anyio"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Install gradio and gradio_client in editable mode
+    subprocess.run(["pip", "install", "-q", "-e", "."], capture_output=True, cwd=REPO, timeout=180)
+    subprocess.run(["pip", "install", "-q", "-e", "client/python"], capture_output=True, cwd=REPO, timeout=180)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_audio.py::test_duration_validator", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python audio duration test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Python audio component core functions (real CI command)
+def test_repo_python_audio_component():
+    """Python audio component core functions test passes (pass_to_pass).
+
+    Runs pytest for TestAudio::test_component_functions from the repo's CI suite.
+    Installs required dependencies before running.
+    """
+    # Install required dependencies first
+    deps = subprocess.run(
+        ["pip", "install", "-q", "gradio_client", "numpy", "pytest-asyncio", "aiohttp", "fastapi", "pydantic", "pillow", "anyio"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Install gradio and gradio_client in editable mode
+    subprocess.run(["pip", "install", "-q", "-e", "."], capture_output=True, cwd=REPO, timeout=180)
+    subprocess.run(["pip", "install", "-q", "-e", "client/python"], capture_output=True, cwd=REPO, timeout=180)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_audio.py::TestAudio::test_component_functions", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python audio component test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Python audio default value postprocess (real CI command)
+def test_repo_python_audio_default_value():
+    """Python audio default value postprocess test passes (pass_to_pass).
+
+    Runs pytest for TestAudio::test_default_value_postprocess from the repo's CI suite.
+    Installs required dependencies before running.
+    """
+    # Install required dependencies first
+    deps = subprocess.run(
+        ["pip", "install", "-q", "gradio_client", "numpy", "pytest-asyncio", "aiohttp", "fastapi", "pydantic", "pillow", "anyio"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Install gradio and gradio_client in editable mode
+    subprocess.run(["pip", "install", "-q", "-e", "."], capture_output=True, cwd=REPO, timeout=180)
+    subprocess.run(["pip", "install", "-q", "-e", "client/python"], capture_output=True, cwd=REPO, timeout=180)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_audio.py::TestAudio::test_default_value_postprocess", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python audio default value test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Python audio HTTP URL postprocess (real CI command)
+def test_repo_python_audio_http_url():
+    """Python audio HTTP URL postprocess test passes (pass_to_pass).
+
+    Runs pytest for TestAudio::test_postprocess_http_url_like from the repo's CI suite.
+    Installs required dependencies before running.
+    """
+    # Install required dependencies first
+    deps = subprocess.run(
+        ["pip", "install", "-q", "gradio_client", "numpy", "pytest-asyncio", "aiohttp", "fastapi", "pydantic", "pillow", "anyio"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Install gradio and gradio_client in editable mode
+    subprocess.run(["pip", "install", "-q", "-e", "."], capture_output=True, cwd=REPO, timeout=180)
+    subprocess.run(["pip", "install", "-q", "-e", "client/python"], capture_output=True, cwd=REPO, timeout=180)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_audio.py::TestAudio::test_postprocess_http_url_like", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python audio HTTP URL test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

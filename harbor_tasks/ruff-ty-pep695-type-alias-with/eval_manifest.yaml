@@ -59,72 +59,66 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Markdown tests for with/sync module pass
+- id: cargo_test_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for ty_python_semantic library pass
+- id: cargo_doc_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation builds for ty_python_semantic pass
+- id: cargo_check_ty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check for ty binary crate passes
 rubric:
-- rule: Follow existing code style. Check neighboring files for patterns.
+- rule: Code changes should be minimal and follow existing patterns. Avoid unnecessary
+    new code when existing mechanisms can be reused.
   source:
-    path: AGENTS.md
-    lines: '30'
+    path: crates/ty_python_semantic/src/types.rs
     commit: 2f839db9e4045e93de0ef6b67a62cb9fc31fe373
-- rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
-  source:
-    path: AGENTS.md
-    lines: '34'
-    commit: 2f839db9e4045e93de0ef6b67a62cb9fc31fe373
-- rule: Try hard to avoid patterns that require panic!, unreachable!, or .unwrap().
-    Instead, try to encode those constraints in the type system.
-  source:
-    path: AGENTS.md
-    lines: '33'
-    commit: 2f839db9e4045e93de0ef6b67a62cb9fc31fe373
-- rule: All changes must be tested. If you're not testing your changes, you're not
-    done.
-  source:
-    path: AGENTS.md
-    lines: 63-63
-  evidence: The gold solution adds new test cases in `crates/ty_python_semantic/resources/mdtest/with/sync.md`
-    to verify that type aliases correctly resolve context manager behavior.
-  category: testing
+  reference: Type::TypeAlias(alias) => alias.value_type(db).member_lookup_with_policy(db,
+    name, policy)
+  category: architecture
 - rule: Look to see if your tests could go in an existing file before adding a new
     file for your tests.
   source:
     path: AGENTS.md
-    lines: 64-64
-  evidence: Instead of creating a new markdown test file for type aliases in `with`
-    statements, the gold solution appends the new test cases to the existing `sync.md`
-    file.
+    lines: 48-49
+  evidence: The gold solution appends the new test cases for type aliases to the existing
+    `crates/ty_python_semantic/resources/mdtest/with/sync.md` file rather than creating
+    a new dedicated test file.
   category: testing
 - rule: Avoid writing significant amounts of new code. This is often a sign that we're
     missing an existing method or mechanism that could help solve the problem.
   source:
     path: AGENTS.md
-    lines: 69-69
-  evidence: The gold solution fixes the bug by simply reordering an existing match
-    arm (`Type::TypeAlias(alias)`) to be evaluated before the `no_instance_fallback`
-    arm, rather than writing new logic to resolve co
+    lines: 54-55
+  evidence: The fix in `types.rs` introduces zero new logic, simply reordering the
+    existing `Type::TypeAlias` match arm to be evaluated before the fallback arm.
   category: architecture
 distractors:
-- rule: Reproducing and minimizing ty ecosystem changes using `scripts/setup_primer_project.py`.
+- rule: 'If asked to reproduce changes in the ty ecosystem, use this script to clone
+    the project to some directory and install its dependencies into `.venv`: `uv run
+    scripts/setup_primer_project.py <project-name> <some-temp-dir>`'
   collision_type: scope_ambiguity
-  why_distracting: The issue description already provides a minimal, self-contained
-    Python snippet that reproduces the bug. Attempting to use `scripts/setup_primer_project.py`
-    to clone an ecosystem project and minimize it would be a massive waste of time
-    and context window.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 46-55
-- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
-    the `ty` GitHub label.
-  collision_type: meta_confusion
-  why_distracting: The agent is tasked with fixing the code and generating a patch,
-    not creating a GitHub Pull Request. Trying to set PR titles or labels via CLI
-    or API would fail or waste effort.
+  why_distracting: The agent might mistakenly believe it needs to test this type checker
+    change against the broader ecosystem using the primer script, wasting time and
+    context window, when local mdtests are sufficient for this bug.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 57-59
-hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply delegating
-  to `AGENTS.md`. All rules are contained within `AGENTS.md`, so there are no conflicts
-  between different levels of the hierarchy.
+    lines: 35-38
+- rule: Don't be afraid to write code that's more verbose or requires largeish refactors
+    if it enables you to avoid these unsafe calls.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to refactor the type resolution logic or
+    `member_lookup_with_policy` to explicitly handle type aliases in a more complex
+    way, ignoring the instruction's hint that only the match arm order needs to change.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 56-57
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  The rules provide essential workflow commands for the custom `mdtest` framework
+  but do not contain deep hierarchical overrides.

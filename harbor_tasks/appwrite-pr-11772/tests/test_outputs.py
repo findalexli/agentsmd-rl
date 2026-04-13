@@ -249,6 +249,66 @@ def test_composer_analyze():
     assert result.returncode == 0, f"composer analyze failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
 
 
+def test_repo_composer_lint_all():
+    """Full repo passes composer lint (Pint/PSR-12 check) (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"composer lint (full repo) failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
+def test_repo_composer_analyze_all():
+    """Full repo passes composer analyze (PHPStan) (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "analyze"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"composer analyze (full repo) failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
+def test_unit_tests_collections():
+    """Unit tests for Collections pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["php", "vendor/bin/phpunit", "tests/unit", "--filter", "Collection", "--no-coverage"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Unit tests for Collections failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
+def test_unit_tests_platform():
+    """Unit tests for Platform modules pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["php", "vendor/bin/phpunit", "tests/unit", "--filter", "Platform", "--no-coverage"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Unit tests for Platform failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
+def test_unit_tests_database():
+    """Unit tests for Database components pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["php", "vendor/bin/phpunit", "tests/unit", "--filter", "Database", "--no-coverage"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Unit tests for Database failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
 # =============================================================================
 # PASS-TO-PASS TESTS - Static file validation (origin: static)
 # These validate file structure without running CI commands

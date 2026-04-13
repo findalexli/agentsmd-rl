@@ -256,5 +256,33 @@ class TestPassToPassRepoTests:
         assert result.returncode == 0, f"Broad unit tests failed:\n{result.stderr[-500:]}"
 
 
+
+
+class TestAdditionalPassToPass:
+    """Additional pass-to-pass tests for CI/CD commands."""
+
+    def test_repo_ruff_lint_app_conversation(self):
+        """Ruff linting passes on app_conversation module (pass_to_pass).
+
+        Verifies the modified code follows linting standards.
+        Scoped to app_conversation directory with ASYNC240 ignored
+        (pre-existing issue in repo base commit).
+        """
+        import subprocess
+        import sys
+        REPO = '/workspace/openhands'
+        sys.path.insert(0, REPO)
+        subprocess.run(['pip', 'install', '-q', 'ruff'], check=True, capture_output=True)
+        result = subprocess.run(
+            ['ruff', 'check', '--config', 'dev_config/python/ruff.toml', '--ignore', 'ASYNC240', 'openhands/app_server/app_conversation/'],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        print(result.stdout[-1000:] if len(result.stdout) > 1000 else result.stdout)
+        print(result.stderr[-500:] if len(result.stderr) > 500 else result.stderr)
+        assert result.returncode == 0, f"Ruff lint check failed:\n{result.stderr[-500:]}"
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

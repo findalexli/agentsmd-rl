@@ -359,3 +359,127 @@ def test_repo_delete_old_branches_tests():
         env=env,
     )
     assert r.returncode == 0, f"delete_old_branches tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_trymerge_tests():
+    """Repo's trymerge tests pass (pass_to_pass).
+
+    Runs lightweight tests from .github/scripts/ that test merge logic.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_trymerge.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"trymerge tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tryrebase_tests():
+    """Repo's tryrebase tests pass (pass_to_pass).
+
+    Runs lightweight tests from .github/scripts/ that test rebase logic.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_tryrebase.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"tryrebase tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_filter_test_configs_tests():
+    """Repo's filter_test_configs tests pass (pass_to_pass).
+
+    Runs lightweight tests from .github/scripts/ that test CI config filtering.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_filter_test_configs.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"filter_test_configs tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_collect_env():
+    """Repo's collect_env.py works (pass_to_pass).
+
+    Verifies that the environment collection script runs without errors.
+    """
+    r = subprocess.run(
+        ["python3", "torch/utils/collect_env.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"collect_env.py failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_no_nonbreaking_spaces():
+    """Repo has no non-breaking spaces in source files (pass_to_pass).
+
+    CI quick-check: Ensure no non-breaking spaces (U+00A0) in source files.
+    """
+    r = subprocess.run(
+        ["bash", "-c", "(! git --no-pager grep -In \"$(printf '\\xC2\\xA0')\" -- . 2>/dev/null || (echo 'Found non-breaking spaces'; false))"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Non-breaking spaces check failed:\n{r.stdout[-500:]}"
+
+
+def test_repo_codegen_tests():
+    """Repo's codegen tests pass (pass_to_pass).
+
+    Runs lightweight tests from tools/test/ that test code generation logic.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_codegen.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"codegen tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_test_selections_tests():
+    """Repo's test_selections tests pass (pass_to_pass).
+
+    Runs lightweight tests from tools/test/ that test CI test selection logic.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pyyaml", "typing_extensions", "sh", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_test_selections.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"test_selections tests failed:\n{r.stderr[-500:]}"

@@ -63,7 +63,7 @@ def _extract_and_exec(
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -75,7 +75,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -92,14 +92,14 @@ def test_content_hash():
     ]:
         assert _content_hash(text, rules) == _content_hash(text, rules)
 
-    # Different text → different hash
+    # Different text -> different hash
     h1 = _content_hash("hello world", {"ruleA", "ruleB"})
     h2 = _content_hash("goodbye world", {"ruleA", "ruleB"})
     h3 = _content_hash("hello world!", {"ruleA", "ruleB"})
     assert h1 != h2, "Different text must produce different hash"
     assert h1 != h3, "Even small text changes must produce different hash"
 
-    # Different rules → different hash
+    # Different rules -> different hash
     h4 = _content_hash("hello world", {"ruleA", "ruleC"})
     h5 = _content_hash("hello world", {"ruleA"})
     assert h1 != h4, "Different rules must produce different hash"
@@ -237,7 +237,7 @@ def test_check_repo_runs_linter():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
+# Pass-to-pass (pr_diff) -- regression checks
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -314,7 +314,7 @@ def test_pr_checks_docs_reference_typing():
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — .ai/AGENTS.md:2 @ aa1c36f1a9f454e69c4eac83071ced235942c7ed
+# [agent_config] pass_to_pass -- .ai/AGENTS.md:2 @ aa1c36f1a9f454e69c4eac83071ced235942c7ed
 def test_ruff_lint():
     """ruff lint passes on the modified linter file."""
     r = subprocess.run(
@@ -324,7 +324,7 @@ def test_ruff_lint():
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:185-186 @ aa1c36f1a9f454e69c4eac83071ced235942c7ed
+# [agent_config] pass_to_pass -- .ai/skills/add-or-fix-type-checking/SKILL.md:185-186 @ aa1c36f1a9f454e69c4eac83071ced235942c7ed
 def test_no_bare_type_ignore():
     """No bare '# type: ignore' without specific error code in modified file."""
     import re
@@ -337,7 +337,7 @@ def test_no_bare_type_ignore():
     )
 
 # ---------------------------------------------------------------------------
-# Repo-derived (repo_tests) — actual CI commands
+# Repo-derived (repo_tests) -- actual CI commands
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -387,3 +387,70 @@ def test_repo_make_check_repo_dryrun():
     assert "check_modeling_structure" in output, (
         "check-repo target must invoke check_modeling_structure"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check passes on the modified linter file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", LINTER],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_linter_runs_on_models():
+    """Model structure linter runs successfully on all modeling files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", f"{REPO}/utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    # Linter returns 0 if no violations, 1 if violations found - both are "success" for running
+    assert r.returncode in [0, 1], f"Linter failed to run: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_make_style_dryrun():
+    """Makefile 'style' target exists and references expected commands (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "-n", "style"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"make -n style failed:\n{r.stderr}"
+    output = r.stdout + r.stderr
+    assert "ruff" in output, "style target must invoke ruff"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_linter_core_trf001():
+    """Core TRF001 rule functionality works via direct import (pass_to_pass)."""
+    # Avoid f-string issues by constructing code as a raw string with format
+    code_script = '''
+import sys
+sys.path.insert(0, "'''+REPO+'''/utils")
+import check_modeling_structure as cms
+from pathlib import Path
+
+# Test TRF001 - valid case
+source = """class FooPreTrainedModel(PreTrainedModel):
+    config_class = FooConfig"""
+file_path = Path("src/transformers/models/foo/modeling_foo.py")
+violations = cms.analyze_file(file_path, source, enabled_rules={cms.TRF001})
+trf001 = [v for v in violations if v.rule_id == cms.TRF001]
+assert trf001 == [], f"Expected no TRF001 violations, got {trf001}"
+
+# Test TRF001 - invalid case
+source2 = """class FooPreTrainedModel(PreTrainedModel):
+    config_class = BarConfig"""
+violations2 = cms.analyze_file(file_path, source2, enabled_rules={cms.TRF001})
+trf001_invalid = [v for v in violations2 if v.rule_id == cms.TRF001]
+assert len(trf001_invalid) == 1, f"Expected 1 TRF001 violation, got {len(trf001_invalid)}"
+
+print("TRF001 core functionality: PASSED")
+'''
+    r = subprocess.run(
+        ["python3", "-c", code_script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TRF001 test failed:\n{r.stderr}"

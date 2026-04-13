@@ -123,6 +123,23 @@ def test_repo_workers_editor_shared_build():
     assert r.returncode == 0, f"Workers-editor-shared build failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Vite-plugin package builds
+def test_repo_vite_plugin_build():
+    """Vite-plugin package builds successfully (pass_to_pass).
+
+    This builds the @cloudflare/vite-plugin dependency, which is used
+    by the workers-playground package. The plugin must compile correctly
+    for the workers-playground to build and function properly.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm run build --filter=@cloudflare/vite-plugin 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Vite-plugin build failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

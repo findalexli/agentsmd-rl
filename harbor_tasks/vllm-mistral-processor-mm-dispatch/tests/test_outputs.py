@@ -146,6 +146,24 @@ def test_repo_check_init_lazy_imports():
     assert r.returncode == 0, f"Init lazy imports check failed:\n{r.stderr}"
 
 
+def test_repo_boolean_context_manager():
+    """Repo's boolean context manager check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_boolean_context_manager.py"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stderr}"
+
+
+def test_repo_validate_config():
+    """Repo's config validation check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "tools/pre_commit/validate_config.py"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config validation check failed:\n{r.stderr}"
+
+
 def test_get_hf_processor_preserved():
     """get_hf_processor must exist in both pixtral and voxtral model files."""
     for path in [PIXTRAL_MODEL, VOXTRAL_MODEL]:

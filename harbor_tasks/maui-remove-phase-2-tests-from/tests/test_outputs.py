@@ -183,3 +183,88 @@ def test_repo_scripts_loadable():
             capture_output=True, text=True, timeout=30,
         )
         assert r.returncode == 0, f"PowerShell script {script_rel} is not loadable: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_all_ai_summary_scripts_parse():
+    """All ai-summary-comment PowerShell scripts parse without errors (pass_to_pass)."""
+    scripts = [
+        ".github/skills/ai-summary-comment/scripts/post-ai-summary-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-pr-finalize-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-try-fix-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-verify-tests-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-write-tests-comment.ps1",
+    ]
+    for script_rel in scripts:
+        script_path = Path(REPO) / script_rel
+        r = subprocess.run(
+            ["pwsh", "-Command",
+             f"[System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw '{script_path}'), [ref]$null) | Out-Null; if ($?) {{ exit 0 }} else {{ exit 1 }}"],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"PowerShell script {script_rel} has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_all_ai_summary_scripts_loadable():
+    """All ai-summary-comment PowerShell scripts are loadable by Get-Command (pass_to_pass)."""
+    scripts = [
+        ".github/skills/ai-summary-comment/scripts/post-ai-summary-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-pr-finalize-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-try-fix-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-verify-tests-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-write-tests-comment.ps1",
+    ]
+    for script_rel in scripts:
+        script_path = Path(REPO) / script_rel
+        r = subprocess.run(
+            ["pwsh", "-Command", f"Get-Command '{script_path}'"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"PowerShell script {script_rel} is not loadable: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_core_powershell_scripts_loadable():
+    """Core PR workflow PowerShell scripts are loadable by Get-Command (pass_to_pass)."""
+    scripts = [
+        ".github/scripts/Review-PR.ps1",
+        ".github/scripts/BuildAndRunSandbox.ps1",
+        ".github/scripts/EstablishBrokenBaseline.ps1",
+        ".github/scripts/MergeBranchAndCreatePR.ps1",
+    ]
+    for script_rel in scripts:
+        script_path = Path(REPO) / script_rel
+        r = subprocess.run(
+            ["pwsh", "-Command", f"Get-Command '{script_path}'"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"PowerShell script {script_rel} is not loadable: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_verify_tests_script_loadable():
+    """Verify-tests-fail PowerShell script is loadable by Get-Command (pass_to_pass)."""
+    script_path = Path(REPO) / ".github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1"
+    r = subprocess.run(
+        ["pwsh", "-Command", f"Get-Command '{script_path}'"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"verify-tests-fail.ps1 is not loadable: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_issue_triage_scripts_loadable():
+    """Issue triage PowerShell scripts are loadable by Get-Command (pass_to_pass)."""
+    scripts = [
+        ".github/skills/issue-triage/scripts/init-triage-session.ps1",
+        ".github/skills/issue-triage/scripts/query-issues.ps1",
+        ".github/skills/issue-triage/scripts/record-triage.ps1",
+    ]
+    for script_rel in scripts:
+        script_path = Path(REPO) / script_rel
+        r = subprocess.run(
+            ["pwsh", "-Command", f"Get-Command '{script_path}'"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"PowerShell script {script_rel} is not loadable: {r.stderr}"

@@ -319,3 +319,109 @@ def test_circular_deps_check():
     assert result.returncode == 0, (
         f"Circular deps check failed:\n{result.stderr[-1000:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_yaml_syntax_valid():
+    """YAML configuration files have valid syntax (pass_to_pass)."""
+    yaml_files = list(Path(REPO).rglob("*.yml")) + list(Path(REPO).rglob("*.yaml"))
+    # Filter out node_modules and dist directories
+    yaml_files = [
+        f for f in yaml_files
+        if "node_modules" not in str(f) and "/dist/" not in str(f) and "/.yarn/" not in str(f)
+    ]
+
+    assert len(yaml_files) > 0, "Should find YAML files in the repo"
+
+    # Use Python's yaml parser
+    try:
+        import yaml
+        for yaml_file in yaml_files:
+            try:
+                content = yaml_file.read_text()
+                yaml.safe_load(content)
+            except yaml.YAMLError as e:
+                pytest.fail(f"YAML syntax error in {yaml_file}: {e}")
+    except ImportError:
+        # Fallback: try to install pyyaml
+        subprocess.run(
+            ["pip", "install", "-q", "pyyaml"],
+            capture_output=True, timeout=30,
+        )
+        import yaml
+        for yaml_file in yaml_files:
+            try:
+                content = yaml_file.read_text()
+                yaml.safe_load(content)
+            except yaml.YAMLError as e:
+                pytest.fail(f"YAML syntax error in {yaml_file}: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_json_files_valid():
+    """Key JSON configuration files have valid syntax (pass_to_pass)."""
+    import json
+
+    # Only check specific known-good JSON config files (not JSON5 with comments)
+    json_files = [
+        Path(REPO) / "package.json",
+        Path(REPO) / "renovate.json",
+    ]
+
+    # Filter to only existing files
+    json_files = [f for f in json_files if f.exists()]
+
+    assert len(json_files) > 0, "Should find JSON files to validate"
+
+    for json_file in json_files:
+        try:
+            content = json_file.read_text()
+            json.loads(content)
+        except json.JSONDecodeError as e:
+            pytest.fail(f"JSON syntax error in {json_file}: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_pullapprove_yml_valid():
+    """PullApprove configuration has valid YAML syntax (pass_to_pass)."""
+    pullapprove_path = Path(REPO) / ".pullapprove.yml"
+    assert pullapprove_path.exists(), "PullApprove config should exist"
+
+    try:
+        import yaml
+        content = pullapprove_path.read_text()
+        config = yaml.safe_load(content)
+        assert config is not None, "PullApprove YAML should parse to non-None"
+        assert "version" in config, "PullApprove config should have version field"
+    except ImportError:
+        # If yaml not available, just check file is readable text
+        content = pullapprove_path.read_text()
+        assert "version:" in content, "PullApprove config should contain version field"
+    except yaml.YAMLError as e:
+        pytest.fail(f"PullApprove YAML is invalid: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_gitattributes_valid():
+    """Git attributes file exists and has valid format (pass_to_pass)."""
+    gitattributes_path = Path(REPO) / ".gitattributes"
+    assert gitattributes_path.exists(), ".gitattributes file should exist"
+
+    content = gitattributes_path.read_text()
+    # Basic check: should have at least one pattern and attribute
+    lines = [line.strip() for line in content.split("\n") if line.strip() and not line.startswith("#")]
+    assert len(lines) > 0, ".gitattributes should have at least one non-comment line"
+
+
+# [repo_tests] pass_to_pass
+def test_editorconfig_valid():
+    """EditorConfig file exists and follows specification (pass_to_pass)."""
+    editorconfig_path = Path(REPO) / ".editorconfig"
+    assert editorconfig_path.exists(), ".editorconfig file should exist"
+
+    content = editorconfig_path.read_text()
+    # Should have a root = true declaration
+    assert "root" in content, ".editorconfig should specify root"
+
+    # Should have at least one section
+    assert "[" in content, ".editorconfig should have at least one section pattern"

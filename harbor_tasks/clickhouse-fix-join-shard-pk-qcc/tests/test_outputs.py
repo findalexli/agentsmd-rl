@@ -79,15 +79,11 @@ def test_contiguous_index_assignment():
 
 def test_file_syntax_valid():
     """
-    Pass-to-pass: Verify the C++ file compiles without syntax errors.
+    Pass-to-pass: Verify the C++ file has valid syntax (balanced braces, parentheses).
 
-    Run clang syntax check on the modified file.
+    Static check for basic syntax validity using character counting.
     """
     filepath = os.path.join(REPO, TARGET_FILE)
-
-    # Use clang to check syntax only (don't compile fully)
-    # We need to find the right include paths - use a simpler approach
-    # Just check for balanced braces and basic syntax
 
     with open(filepath, 'r') as f:
         content = f.read()
@@ -148,7 +144,25 @@ def test_code_structure_intact():
         "JoinsAndSourcesWithCommonPrimaryKeyPrefix struct reference missing"
 
 
-def test_file_is_valid_cpp():
+def test_repo_git_status():
+    """
+    Pass-to-pass: Verify the repository has a clean git status (repo CI check).
+
+    Uses git status to check that the sparse checkout is valid and
+    the repository is in a consistent state.
+    """
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+
+    # The sparse checkout should have no uncommitted changes on base commit
+    # Any output would indicate untracked or modified files (which is unexpected)
+    # Note: In sparse checkout, git status may show some limitations but should work
+
+
+def test_repo_file_type():
     """
     Pass-to-pass: Verify target file is a valid C++ source file (repo CI check).
 
@@ -171,6 +185,28 @@ def test_file_is_valid_cpp():
         f"File not recognized as ASCII text: {r.stdout}"
 
 
+def test_repo_git_log():
+    """
+    Pass-to-pass: Verify git log is accessible and shows expected commit (repo CI check).
+
+    Uses git log to check that we can access the repository history.
+    This validates the git metadata is intact.
+    """
+    r = subprocess.run(
+        ["git", "log", "-1", "--oneline"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed: {r.stderr}"
+
+    # Should have at least one commit (the sparse checkout commit)
+    assert r.stdout.strip(), "git log returned empty output"
+
+    # Verify we can see the commit hash format
+    # Format should be "<hash> <message>"
+    assert re.match(r'^[a-f0-9]+\s+', r.stdout), \
+        f"Unexpected git log format: {r.stdout}"
+
+
 def test_no_trailing_whitespace():
     """
     Pass-to-pass: Verify no trailing whitespace in modified file (repo style check).
@@ -183,16 +219,6 @@ def test_no_trailing_whitespace():
     with open(filepath, 'r') as f:
         lines = f.readlines()
 
-    violations = []
-    for i, line in enumerate(lines, 1):
-        # Check for trailing whitespace (excluding newline)
-        if line.rstrip() != line.rstrip('\n').rstrip('\r'):
-            # Actually check: if the line has trailing whitespace before newline
-            stripped = line.rstrip('\n').rstrip('\r')
-            if stripped != line.rstrip('\n').rstrip('\r').rstrip():
-                violations.append(f"Line {i}: {repr(line)}")
-
-    # More accurate check for trailing whitespace
     violations = []
     for i, line in enumerate(lines, 1):
         # Remove newline characters for checking
@@ -227,3 +253,235 @@ def test_no_tabs_for_indentation():
     assert not lines_with_tabs, \
         f"Found tabs for indentation on lines: {lines_with_tabs[:10]}" + \
         ("..." if len(lines_with_tabs) > 10 else "")
+
+
+def test_file_has_pragma_once_in_headers():
+    """
+    Pass-to-pass: Verify header files have #pragma once (repo style check).
+
+    ClickHouse CI checks that every header file has #pragma once in first line.
+    This test verifies the convention is followed.
+    """
+    # Find all .h files in the same directory as the target file
+    import glob
+    header_dir = os.path.join(REPO, "src/Processors/QueryPlan/Optimizations")
+    header_files = glob.glob(os.path.join(header_dir, "*.h"))
+
+    for header_file in header_files:
+        with open(header_file, 'r') as f:
+            first_line = f.readline().strip()
+        assert first_line == '#pragma once', \
+            f"File {header_file} must have '#pragma once' in first line, got: {first_line}"
+
+
+def test_no_duplicate_includes():
+    """
+    Pass-to-pass: Verify no duplicate #include statements (repo style check).
+
+    ClickHouse CI checks for duplicate includes. This test verifies
+    the modified file doesn't have duplicate includes.
+    """
+    filepath = os.path.join(REPO, TARGET_FILE)
+
+    with open(filepath, 'r') as f:
+        includes = []
+        for line in f:
+            if re.match(r'^#include ', line):
+                includes.append(line.strip())
+
+    # Check for duplicates
+    seen = set()
+    duplicates = []
+    for inc in includes:
+        if inc in seen:
+            duplicates.append(inc)
+        seen.add(inc)
+
+    assert not duplicates, \
+        f"Found duplicate includes: {duplicates[:5]}"
+
+
+def test_repo_no_bom():
+    """
+    Pass-to-pass: Verify no UTF-8 BOM in source files (repo CI check).
+
+    ClickHouse CI checks that source files do not have UTF-8 BOM markers.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         f"find {REPO}/src/Processors/QueryPlan/Optimizations -name '*.cpp' -o -name '*.h' | xargs grep -l -F $(printf '\\xEF\\xBB\\xBF') 2>/dev/null || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found files with UTF-8 BOM: {r.stdout.strip()[:200]}"
+
+
+def test_repo_no_conflict_markers():
+    """
+    Pass-to-pass: Verify no git conflict markers (repo CI check).
+
+    ClickHouse CI checks for leftover conflict markers from merges.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         f"grep -P '^(<<<<<<<|=======|>>>>>>>)' {REPO}/{TARGET_FILE} 2>/dev/null || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found conflict markers: {r.stdout.strip()[:200]}"
+
+
+def test_repo_no_dos_newlines():
+    """
+    Pass-to-pass: Verify no DOS/Windows newlines (repo CI check).
+
+    ClickHouse CI checks that files use Unix newlines (LF), not CRLF.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         f"grep -l -P '\\r$' {REPO}/{TARGET_FILE} 2>/dev/null || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", "Found DOS/Windows newlines (CRLF) in file"
+
+
+def test_repo_brace_balance():
+    """
+    Pass-to-pass: Verify C++ file has balanced braces (repo CI check).
+
+    ClickHouse style check verifies balanced braces and parentheses.
+    """
+    cmd = f"""open=$(grep -o '{{' {REPO}/{TARGET_FILE} | wc -l); close=$(grep -o '}}' {REPO}/{TARGET_FILE} | wc -l); if [ "$open" -eq "$close" ]; then exit 0; else echo "Unbalanced: $open != $close"; exit 1; fi"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unbalanced braces: {r.stderr or r.stdout}"
+
+
+def test_repo_paren_balance():
+    """
+    Pass-to-pass: Verify C++ file has balanced parentheses (repo CI check).
+
+    ClickHouse style check verifies balanced parentheses.
+    """
+    cmd = f"""open=$(grep -o '(' {REPO}/{TARGET_FILE} | wc -l); close=$(grep -o ')' {REPO}/{TARGET_FILE} | wc -l); if [ "$open" -eq "$close" ]; then exit 0; else echo "Unbalanced: $open != $close"; exit 1; fi"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unbalanced parentheses: {r.stderr or r.stdout}"
+
+
+def test_repo_no_std_stringstream():
+    """
+    Pass-to-pass: Verify no std::stringstream usage (repo CI check).
+
+    ClickHouse CI forbids std::stringstream in favor of WriteBufferFromOwnString.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         f"grep -P 'std::[io]?stringstream' {REPO}/{TARGET_FILE} 2>/dev/null || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found std::stringstream usage: {r.stdout.strip()[:200]}"
+
+
+def test_repo_clang_syntax_check():
+    """
+    Pass-to-pass: Verify C++ file compiles with clang -fsyntax-only (repo CI check).
+
+    ClickHouse CI uses clang for compilation. This test validates that the
+    modified file has valid C++ syntax that can be parsed by clang.
+    """
+    filepath = os.path.join(REPO, TARGET_FILE)
+
+    # Run clang in syntax-check only mode with minimal includes
+    # We use -fsyntax-only to just check syntax without generating code
+    r = subprocess.run(
+        ["clang", "-fsyntax-only", "-std=c++20", "-c", filepath],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    # Allow for missing includes - we're only checking basic syntax
+    # Exit code 0 means syntax is valid
+    # Some errors about missing headers are OK for syntax-only check
+    syntax_errors = [line for line in r.stderr.split("\n")
+                     if "error:" in line and "file not found" not in line and "fatal error" not in line]
+
+    assert len(syntax_errors) == 0, \
+        f"C++ syntax errors found:\n{r.stderr[:1000]}"
+
+
+def test_repo_header_pragma_check():
+    """
+    Pass-to-pass: Verify all header files have #pragma once (repo CI check).
+
+    ClickHouse CI requires every header file to have #pragma once in the first line.
+    """
+    header_dir = os.path.join(REPO, "src/Processors/QueryPlan/Optimizations")
+
+    # Get list of header files
+    r = subprocess.run(
+        ["find", header_dir, "-name", "*.h"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    if r.returncode != 0 or not r.stdout.strip():
+        # No header files found, skip
+        return
+
+    header_files = [f for f in r.stdout.strip().split("\n") if f]
+
+    violations = []
+    for header_file in header_files:
+        r_head = subprocess.run(
+            ["head", "-1", header_file],
+            capture_output=True, text=True, timeout=10
+        )
+        if r_head.returncode == 0 and r_head.stdout.strip() != "#pragma once":
+            violations.append(os.path.basename(header_file))
+
+    assert not violations, \
+        f"Files missing #pragma once in first line: {violations}"
+
+
+def test_repo_include_style_check():
+    """
+    Pass-to-pass: Verify #include <...> style is used (repo CI check).
+
+    ClickHouse CI checks that includes use angle brackets <> not quotes ""
+    for non-generated files (except for specific config headers).
+    """
+    filepath = os.path.join(REPO, TARGET_FILE)
+
+    # Check for quoted includes (excluding allowed exceptions)
+    r = subprocess.run(
+        ["bash", "-c",
+         f"grep -P '#include[\\s]*\"' {filepath} | grep -v 'config.h' | grep -v 'config_tools.h' || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    # Filter out empty lines and comments
+    violations = [line for line in r.stdout.split("\n")
+                  if line.strip() and not line.strip().startswith("//")]
+
+    assert len(violations) == 0, \
+        f"Found includes with quotes instead of angle brackets: {violations[:5]}"
+
+
+def test_repo_no_cyrillic_chars():
+    """
+    Pass-to-pass: Verify no Cyrillic characters mixed with Latin (repo CI check).
+
+    ClickHouse CI checks for accidental Cyrillic characters in the source code.
+    """
+    filepath = os.path.join(REPO, TARGET_FILE)
+
+    # Check for Cyrillic characters adjacent to Latin
+    r = subprocess.run(
+        ["bash", "-c",
+         f"grep -P '[a-zA-Z][а-яА-ЯёЁ]|[а-яА-ЯёЁ][a-zA-Z]' {filepath} || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+
+    assert r.stdout.strip() == "", \
+        f"Found Cyrillic characters mixed with Latin: {r.stdout.strip()[:200]}"

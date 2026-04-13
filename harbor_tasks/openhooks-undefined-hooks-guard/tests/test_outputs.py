@@ -203,3 +203,22 @@ def test_translation_completeness():
 
     if result.returncode != 0:
         raise AssertionError(f"Translation check failed:\n{result.stderr[-500:]}")
+
+
+def test_repo_build_passes():
+    """
+    Pass-to-pass: Frontend build should succeed.
+
+    CI command from fe-unit-tests.yml: `npm run build`
+    Build is required to ensure production bundle compiles correctly.
+    """
+    result = subprocess.run(
+        ["npm", "run", "build"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(f"Build failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}")

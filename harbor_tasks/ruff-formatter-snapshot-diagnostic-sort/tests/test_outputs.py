@@ -176,6 +176,21 @@ def test_repo_cargo_clippy():
     assert r.returncode == 0, f"Cargo clippy failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — cargo fmt check on formatter
+def test_repo_cargo_fmt():
+    """Repo's cargo fmt check passes on formatter crate (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["cargo", "fmt", "--check", "-p", "ruff_python_formatter"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

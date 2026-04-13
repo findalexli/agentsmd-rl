@@ -279,3 +279,81 @@ def test_repo_py_compile_managers():
             cwd=REPO,
         )
         assert r.returncode == 0, f"Syntax error in {py_file}:\n{r.stderr}"
+
+
+def test_repo_isort_tokenizer_manager():
+    """Tokenizer manager passes isort import sorting checks (pass_to_pass)."""
+    import subprocess
+    import sys
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["isort", "--check", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_ast():
+    """Tokenizer manager passes pre-commit AST check (pass_to_pass)."""
+    import subprocess
+    import sys
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-ast", "--files", FILE],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit AST check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_debug_statements():
+    """Tokenizer manager has no debug statements (pass_to_pass)."""
+    import subprocess
+    import sys
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pre-commit", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", FILE],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Debug statements check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_all_managers():
+    """All manager files pass ruff syntax checks (pass_to_pass)."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    managers_dir = f"{REPO}/python/sglang/srt/managers/"
+    r = subprocess.run(
+        ["ruff", "check", managers_dir, "--select=E9,W1"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on managers failed:\n{r.stdout}\n{r.stderr}"

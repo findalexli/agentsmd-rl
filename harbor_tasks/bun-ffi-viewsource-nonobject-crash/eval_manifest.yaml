@@ -111,48 +111,99 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: FFI test files have valid structure (verified via Node.js)
+- id: test_repo_bunfig_valid_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo bunfig.toml is valid and readable (subprocess python3 read check)
+- id: test_repo_flake_lock_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo flake.lock is valid JSON (verified via Node.js subprocess)
+- id: test_oxlint_internal_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Internal test files pass oxlint (npx oxlint test/internal/ban-words.test.ts)
+- id: test_prettier_package_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package files pass prettier formatting (npx prettier --check package.json)
+- id: test_repo_meta_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo meta.json is valid JSON (verified via Node.js subprocess)
+- id: test_repo_prettier_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: README.md passes prettier formatting (npx prettier --check README.md)
+- id: test_repo_prettier_contributing
+  type: pass_to_pass
+  origin: repo_tests
+  description: CONTRIBUTING.md passes prettier formatting (npx prettier --check CONTRIBUTING.md)
+- id: test_oxlint_ffi_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI test files pass oxlint (npx oxlint test/js/bun/ffi/*.test.ts)
+- id: test_oxlint_bun_apis
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun API source files pass oxlint (npx oxlint src/js/bun/sqlite.ts sql.ts)
+- id: test_node_compat_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js compatibility files pass oxlint (npx oxlint src/js/node/fs.ts)
 rubric:
 - rule: In Zig code, be careful with allocators and use defer for cleanup where applicable.
   source:
-    path: AGENTS.md
-    lines: '232'
+    path: src/bun.js/api/ffi.zig
+    lines: 960-1201
     commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+  reference: "The gold solution adds arg_types cleanup loops in three error-return\
+    \ paths:\nfor (symbols.values()) |*function_| {\n    function_.arg_types.deinit(allocator);\n\
+    }\nThis properly deinitializes the arg_types array before clearAndFree in error\
+    \ paths.\n"
 - rule: Always use `bun.*` APIs instead of `std.*`
   source:
-    path: src/CLAUDE.md
-    lines: 15-16
-  evidence: When deinitializing the `arg_types` array to fix the memory leak, the
+    path: src/bun.js/api/ffi.zig
+    lines: 1055-1058
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+  reference: 'When deinitializing the `arg_types` array to fix the memory leak, the
+
     gold solution uses `bun.default_allocator` (or the locally available `allocator`
+
     alias) rather than introducing a `std` allocator.
-  category: style
-distractors:
-- rule: Use `bun.sys.open` for system calls instead of `std.posix.open`
-  collision_type: scope_ambiguity
-  why_distracting: The issue mentions fixing error-return paths in `open`, `print`,
-    and `linkSymbols`. These refer to the JavaScript FFI API methods implemented in
-    Zig (e.g., `Bun.FFI.open`), not system-level file operations. An agent might mistakenly
-    think it needs to refactor these functions to use `bun.sys.open` or apply system
-    call error handling patterns (`Maybe(T)`), which would be completely wrong for
-    JS API bindings.
-  severity: high
+
+    '
+- rule: Always use `bun.*` APIs instead of `std.*`.
   source:
-    path: src/CLAUDE.md
-    lines: 36-45
-- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    path: src/AGENTS.md
+    lines: 18-20
+  evidence: 'The gold solution uses `bun.default_allocator` to deinitialize `arg_types`
+    in one of the functions, adhering to the convention of using Bun''s specific APIs
+    and allocators rather than standard library '
+  category: tooling
+distractors:
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
     in the test output.
-  collision_type: meta_confusion
-  why_distracting: The issue explicitly describes a bug where the code 'causes a debug
-    assertion failure (crash)' and 'leading to a panic on non-object inputs'. An agent
-    might read this rule and either avoid writing a test altogether, or get confused
-    about how to test a fix for a panic. The correct approach is to test that a `TypeError`
-    is thrown, but the strong wording against testing for panics creates meta-level
-    confusion.
+  collision_type: scope_ambiguity
+  why_distracting: The issue explicitly describes a bug where the program crashes
+    (panics) instead of throwing a TypeError. An agent might be tempted to write a
+    test that simply checks that no panic occurs when passing a non-object, but the
+    rule strictly forbids writing tests that check for 'no panic'. The agent must
+    instead test for the specific TypeError.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 65-66
-hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` focusing on testing/building,
-  and `src/CLAUDE.md` focusing on Zig conventions and system calls. The rules are
-  complementary and accumulate cleanly. The main conflicts arise from terminology
-  in the issue description ('open', 'panic') colliding with specific rules in the
-  config (`bun.sys.open`, 'never test for no panic').
+    path: AGENTS.md
+    lines: 68-69
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: architecture_boundary
+  why_distracting: The agent needs to fix memory leaks by deinitializing `arg_types`.
+    It might try to import and use standard Zig allocators (like `std.heap.page_allocator`)
+    to manage this memory, but it must use the existing `allocator` or `bun.default_allocator`
+    as per the codebase conventions.
+  severity: low
+  source:
+    path: src/AGENTS.md
+    lines: 15-16
+hierarchy_analysis: The configuration hierarchy consists of a root-level file (`AGENTS.md`/`CLAUDE.md`)
+  focusing on testing and build commands, and a source-level file (`src/AGENTS.md`/`src/CLAUDE.md`)
+  focusing on Zig-specific conventions. They are complementary rather than conflicting.

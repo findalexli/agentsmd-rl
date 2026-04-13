@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import os
 from pathlib import Path
 
 REPO = "/workspace/playwright"
@@ -56,6 +57,28 @@ def test_repo_lint_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"lint_tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_generate_channels():
+    """Repo's channel generation script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_modified():
+    """ESLint passes on modified testCaseView.tsx file (pass_to_pass)."""
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=2048"
+    r = subprocess.run(
+        ["npx", "eslint", "packages/html-reporter/src/testCaseView.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

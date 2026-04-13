@@ -68,10 +68,10 @@ def _run_cargo_test(test_name, timeout=300):
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — compilation check
+# Gates (pass_to_pass, repo_tests) — compilation check
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_crate_compiles():
     """The uv-platform-tags crate must compile without errors."""
     r = subprocess.run(
@@ -160,4 +160,16 @@ def test_uv_platform_tags_cargo_fmt():
     )
     assert r.returncode == 0, (
         f"cargo fmt check failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_doc_build():
+    """Documentation builds successfully for uv-platform-tags crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "--package", "uv-platform-tags"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Documentation build failed:\n{r.stderr[-500:]}"
     )

@@ -17,6 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI prettier check passes on modified SQL files
+- id: test_repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repo is clean at base commit
+- id: test_repo_oxlint_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI oxlint passes on all src/js files
+- id: test_ts_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: TypeScript files have valid syntax (no unclosed quotes/template literals)
 - id: undefined_filtering_behavior
   type: fail_to_pass
   origin: pr_diff
@@ -33,64 +45,53 @@ checks:
   description: test/CLAUDE.md updated with guidance to prefer .toEqual over many .toBe
     assertions for nested objects
 rubric:
-- rule: test/CLAUDE.md contains a 'Nested/complex object equality' section with .toEqual
-    guidance and both BAD and GOOD code examples
-- rule: 'Modules are NOT ES modules: use string literal require() only'
+- rule: Gold solution adds buildDefinedColumnsAndQuery function to shared.ts and exports
+    it
+- rule: Gold solution imports buildDefinedColumnsAndQuery in mysql.ts, postgres.ts,
+    and sqlite.ts using require()
+- rule: Gold solution updates test/CLAUDE.md with Nested/complex object equality section
+- rule: 'Modules are NOT ES modules: use String literal require() only'
   source:
     path: src/js/CLAUDE.md
-    lines: 16-20
-  evidence: The gold solution uses `const { ..., buildDefinedColumnsAndQuery } = require("internal/sql/shared");`
-    instead of ES module imports to load the extracted shared logic.
-  category: style
+    lines: 14-23
+  evidence: The gold solution imports the newly extracted `buildDefinedColumnsAndQuery`
+    function using `require("internal/sql/shared")` rather than an ES6 import.
+  category: architecture
 config_edits:
 - path: test/CLAUDE.md
   tier: 1
   gold_added: "const { promise, resolve, reject } = Promise.withResolvers<void>();\
     \ // Can specify any type here for resolution value\n### Nested/complex object\
-    \ equality\n\nPrefer usage of `.toEqual` rather than many `.toBe` assertions for\
-    \ nested or complex objects.\n\n<example>\n\nBAD (try to avoid doing this):\n\n\
-    \ ```ts\nexpect(result).toHaveLength(3);\nexpect(result[0].optional).toBe(null);\n\
-    expect(result[1].optional).toBe(\"middle-value\"); // CRITICAL: middle item's\
-    \ value must be preserved\nexpect(result[2].optional).toBe(null);\n```\n\n**GOOD\
-    \ (always prefer this):**\n\n```ts\nexpect(result).toEqual([\n  { optional: null\
-    \ },\n  { optional: \"middle-value\" }, // CRITICAL: middle item's value must\
-    \ be preserved\n  { optional: null },\n]);\n```\n\n</example>"
+    \ equality\n\nPrefer usage of .toEqual rather than many .toBe assertions for nested\
+    \ or complex objects.\n\n<example>\n\nBAD (try to avoid doing this):\n\n```ts\n\
+    expect(result).toHaveLength(3);\nexpect(result[0].optional).toBe(null);\nexpect(result[1].optional).toBe(\"\
+    middle-value\"); // CRITICAL: middle item's value must be preserved\nexpect(result[2].optional).toBe(null);\n\
+    ```\n\n**GOOD (always prefer this):**\n\n```ts\nexpect(result).toEqual([\n  {\
+    \ optional: null },\n  { optional: \"middle-value\" }, // CRITICAL: middle item's\
+    \ value must be preserved\n  { optional: null },\n]);\n```\n\n</example>"
   gold_removed: const { promise, resolve, reject } = Promise.withResolvers();
 distractors:
-- rule: Zig syntax reminders and conventions
+- rule: Private fields are fully supported in Zig with the `#` prefix.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to implement the SQL logic in Zig because the
-    root config mentions Bun is primarily written in Zig and this file provides Zig
-    conventions. However, the SQL query builder is implemented entirely in JS builtins,
-    making Zig rules irrelevant here.
+  why_distracting: The agent is modifying `.ts` files in `src/js/internal/sql/`. Although
+    these are in the `src/` directory, they are JavaScript builtins compiled to C++
+    headers, not Zig files. Attempting to apply Zig syntax (like `#` for private fields)
+    would cause syntax errors.
   severity: high
   source:
     path: src/CLAUDE.md
-    lines: 2-12
-- rule: Use .$call and .$apply, never .call or .apply
+    lines: 3-12
+- rule: Export via `export default {}`
   collision_type: scope_ambiguity
-  why_distracting: The rule strictly forbids `.call` and `.apply` to prevent user
-    tampering. An agent might incorrectly assume this applies to `.bind` as well,
-    avoiding `this.escapeIdentifier.bind(this)` (which the gold solution uses) and
-    writing convoluted workarounds like arrow functions or searching for a non-existent
-    `.$bind`.
+  why_distracting: The agent is modifying existing files like `mysql.ts` which define
+    classes (e.g., `MySQLAdapter`). Refactoring these files to use `export default
+    {}` to satisfy this rule would break the existing structure and internal module
+    registry.
   severity: medium
   source:
     path: src/js/CLAUDE.md
-    lines: 43-52
-- rule: Spawning Bun in tests using bunExe and bunEnv
-  collision_type: meta_confusion
-  why_distracting: The testing guide heavily emphasizes using `Bun.spawn` with `bunExe`
-    and `bunEnv` for tests. An agent might try to write a complex multi-process test
-    for this SQL helper fix, whereas testing the `sql()` template tag behavior only
-    requires a simple in-process unit test.
-  severity: medium
-  source:
-    path: test/CLAUDE.md
-    lines: 23-27
-hierarchy_analysis: The repository has a deep configuration hierarchy. The root CLAUDE.md
-  provides general build instructions, while src/CLAUDE.md and src/js/CLAUDE.md provide
-  language-specific rules. Since the files being edited are in src/js/internal/sql/,
-  the rules in src/js/CLAUDE.md take precedence. The agent must recognize that despite
-  Bun being primarily a Zig project, this specific subsystem is implemented in JavaScript
-  and follows the JS builtins rules.
+    lines: 72-76
+hierarchy_analysis: The config hierarchy is deep (root -> src -> src/js). The agent
+  must navigate past the Zig-focused rules in `src/CLAUDE.md` and apply the highly
+  specific JavaScript Builtin rules from `src/js/CLAUDE.md` (such as using `require`
+  instead of `import` in TypeScript files).

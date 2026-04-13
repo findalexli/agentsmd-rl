@@ -217,6 +217,31 @@ def test_repo_git_status_clean():
     assert not modified_or_staged, f"Repo has unexpected modifications: {modified_or_staged}"
 
 
+# [repo_tests] pass_to_pass -- validate HEAD commit exists
+def test_repo_git_commit_verified():
+    """HEAD commit must be valid and resolvable (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git rev-parse failed: {r.stderr}"
+    head_commit = r.stdout.strip()
+    assert len(head_commit) == 40, f"HEAD commit hash should be 40 chars, got: {len(head_commit)}"
+
+
+# [repo_tests] pass_to_pass -- validate Maps source files are tracked
+def test_repo_maps_source_files_tracked():
+    """Maps source files must be tracked in git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-tree", "-r", "HEAD", "--name-only"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-tree failed: {r.stderr}"
+    # Verify at least some Maps source files are tracked
+    maps_files = [line for line in r.stdout.splitlines() if "src/Controls/Maps" in line and line.endswith(".cs")]
+    assert len(maps_files) >= 5, f"Expected at least 5 Maps .cs files tracked, found {len(maps_files)}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- csproj packaging tests (subprocess)
 # ---------------------------------------------------------------------------
@@ -385,3 +410,64 @@ def test_readme_follows_doc_patterns():
         "README should have subsections (## headings)"
     assert "UseMauiMaps" in content or "UseMaui" in content, \
         "README should show MAUI initialization pattern (UseMauiMaps)"
+
+
+# ---------------------------------------------------------------------------
+# Additional Repo CI Gates (pass_to_pass, repo_tests)
+# These are mentioned in eval_manifest.yaml but were missing from tests.
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass -- validate csproj XML is parseable with Python
+def test_repo_csproj_xml_valid_python():
+    """Maps Controls.Maps.csproj must be parseable as XML using Python (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import xml.etree.ElementTree as ET; tree = ET.parse('{REPO}/src/Controls/Maps/src/Controls.Maps.csproj'); print(tree.getroot().tag)"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"XML parsing failed: {r.stderr}"
+    assert "Project" in r.stdout, "Root element should be Project"
+
+
+# [repo_tests] pass_to_pass -- validate PublicAPI.Shipped.txt for Android is tracked
+def test_repo_public_api_android_tracked():
+    """PublicAPI.Shipped.txt for Android must be tracked by git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", "src/Controls/Maps/src/PublicAPI/net-android/PublicAPI.Shipped.txt"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+    assert r.stdout.strip(), "PublicAPI.Shipped.txt for Android not tracked by git"
+
+
+# [repo_tests] pass_to_pass -- validate PublicAPI.Shipped.txt for iOS is tracked
+def test_repo_public_api_ios_tracked():
+    """PublicAPI.Shipped.txt for iOS must be tracked by git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", "src/Controls/Maps/src/PublicAPI/net-ios/PublicAPI.Shipped.txt"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+    assert r.stdout.strip(), "PublicAPI.Shipped.txt for iOS not tracked by git"
+
+
+# [repo_tests] pass_to_pass -- validate base commit exists in git history
+def test_repo_git_log_has_commit():
+    """Repo must have expected base commit 1789d47 in history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-n", "100"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git log failed: {r.stderr}"
+    assert "1789d47" in r.stdout, "Base commit 1789d47932dd78983d7c68101f154f372f60e151 not found in git history"
+
+
+# [repo_tests] pass_to_pass -- validate git config is set
+def test_repo_git_config_set():
+    """Repo must have git config user email set (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "config", "user.email"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git config failed: {r.stderr}"
+    assert r.stdout.strip(), "Git user email not configured"

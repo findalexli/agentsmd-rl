@@ -66,6 +66,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Bun shell output tests pass (CI/CD test)
+- id: test_repo_shell_brace_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell brace expansion tests pass (CI/CD test)
+- id: test_repo_shell_exec_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell exec tests pass (CI/CD test)
+- id: test_repo_shell_file_io_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell file I/O redirection tests pass (CI/CD test)
+- id: test_repo_shell_env_positionals_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell environment positionals tests pass (CI/CD test)
+- id: test_repo_shell_assignments_pipeline_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell assignments in pipeline tests pass (CI/CD test)
+- id: test_repo_shell_lazy_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell lazy evaluation tests pass (CI/CD test)
 rubric:
 - rule: 'shell.zig: Add jsobjs_len field to Lexer struct and jsobjs_len parameter
     to new() function for bounds checking'
@@ -108,44 +132,46 @@ rubric:
     `globalObject.throw("Invalid JS object reference in shell", .{})` in both `Builtin.zig`
     and `Cmd.zig`.
   category: style
-distractors:
-- rule: 'Private fields are fully supported in Zig with the `#` prefix. `struct {
-    #foo: u32 };` makes a struct with a private field named `#foo`.'
-  collision_type: meta_confusion
-  why_distracting: The agent is adding a new internal field `jsobjs_len` to the `Lexer`
-    struct for bounds validation. It might be tempted to name it `#jsobjs_len` to
-    make it private. However, this field needs to be initialized in the `new` function
-    and copied to sublexers, and mixing `#` fields with regular fields like `string_refs`
-    in this struct would be inconsistent and potentially cause compilation issues.
-  severity: medium
+- rule: Decl literals in Zig are recommended.
   source:
     path: src/CLAUDE.md
-    lines: 4-5
+    lines: 6-7
+  evidence: The gold solution uses anonymous struct literals like `.{}` and `.{ .Blob
+    = blob }` when calling `throw` and `extractBlob`, adhering to the recommendation
+    for decl literals.
+  category: style
 - rule: Always use `bun.*` APIs instead of `std.*`.
+  source:
+    path: src/CLAUDE.md
+    lines: 14-15
+  evidence: The gold solution maintains the use of `[]bun.String` in the `new` function
+    signature rather than converting to a standard library string type, adhering to
+    the preference for Bun APIs.
+  category: architecture
+distractors:
+- rule: Private fields are fully supported in Zig with the `#` prefix.
   collision_type: would_cause_bug
-  why_distracting: The agent needs to fix the bounds check `idx >= std.math.maxInt(u32)`.
-    Seeing the rule to avoid `std.*`, the agent might mistakenly think the bug is
-    merely the usage of `std.math` and try to replace it with a `bun` equivalent or
-    hardcoded max integer, failing to realize the logic itself must change to check
-    the actual array length.
+  why_distracting: The agent might try to declare `#jsobjs_len` as a private field
+    in the Lexer struct. While supported by Bun's custom Zig fork, using it here would
+    require updating all access sites (like `self.jsobjs_len`) and could cause compilation
+    errors if the field needs to be accessed from other files like `interpreter.zig`.
   severity: high
   source:
     path: src/CLAUDE.md
-    lines: 15-16
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    `test/regression/issue/${issueNumber}.test.ts`.
-  collision_type: rule_conflict
-  why_distracting: The prompt describes a bug but provides no issue number. An agent
-    might try to create a test file with a fake issue number (e.g., `issue/9999.test.ts`),
-    which explicitly violates the instruction to ensure the issue number is REAL and
-    not a placeholder.
+    lines: 4-5
+- rule: Tests use Bun's Jest-compatible test runner with proper test fixtures. For
+    multi-file tests, prefer tempDir and Bun.spawn.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write extensive shell interpolation
+    tests using `Bun.spawn` and `tempDir`, expanding the scope of the PR unnecessarily
+    when the core task is to fix the runtime implementation.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 25-26
-hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` focusing on testing
-  and build commands, and a `src/CLAUDE.md` focusing on Zig conventions and Bun-specific
-  APIs. The agent must navigate the testing rules by realizing that without an issue
-  number, it shouldn't create a regression test with a placeholder. It must also apply
-  Zig conventions carefully, avoiding the temptation to use the `#` private field
-  feature for a simple struct property that needs to be initialized publicly.
+    path: AGENTS.md
+    lines: 43-46
+hierarchy_analysis: The config hierarchy includes root-level `AGENTS.md`/`CLAUDE.md`
+  and `src/`-level overrides. The `src/CLAUDE.md` provides specific Zig conventions
+  (like the `#` private field syntax and `bun.*` API preference) that apply directly
+  to the files being edited. The agent must weigh the Zig-specific rules against the
+    existing code patterns while ignoring the test-writing guidelines from the root
+  config.

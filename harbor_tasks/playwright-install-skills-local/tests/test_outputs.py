@@ -118,6 +118,32 @@ def test_repo_test_types():
     assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - Lint code snippets in docs
+def test_repo_lint_code_snippets():
+    """Repo's documentation code snippet linting passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["node", "utils/doclint/linting-code-snippets/cli.js", "--js-only"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Code snippet linting failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Generate channels check
+def test_repo_generate_channels():
+    """Repo's channel generation check passes (pass_to_pass).
+
+    This validates that the protocol channel definitions are consistent
+    and can be regenerated without errors.
+    """
+    _npm_install()
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Generate channels failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavior tests
 # ---------------------------------------------------------------------------

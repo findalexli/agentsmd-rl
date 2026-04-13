@@ -180,13 +180,14 @@ def test_repo_filledbutton_scss_syntax():
     assert r.returncode == 0, f"FilledButton.scss has SCSS syntax errors"
 
 
-def test_repo_clipboard_test_syntax():
-    """Repo's clipboard.test.ts has valid TypeScript syntax (pass_to_pass).
 
-    Uses prettier --parser typescript to validate the file can be parsed.
-    This catches syntax errors without requiring full type checking.
+def test_repo_charts_test_syntax():
+    """Repo's charts.test.ts has valid TypeScript syntax (pass_to_pass).
+
+    Uses prettier --parser typescript to validate the test file can be parsed.
+    This is a repo CI gate - the test file must be syntactically valid.
     """
-    test_file = REPO / "packages" / "excalidraw" / "clipboard.test.ts"
+    test_file = REPO / "packages" / "excalidraw" / "charts.test.ts"
     r = subprocess.run(
         ["npx", "prettier", "--no-config", "--parser", "typescript", str(test_file)],
         capture_output=True,
@@ -194,7 +195,24 @@ def test_repo_clipboard_test_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"clipboard.test.ts has TypeScript syntax errors"
+    assert r.returncode == 0, f"charts.test.ts has TypeScript syntax errors"
+
+
+def test_repo_utils_test_syntax():
+    """Repo's utils.test.ts has valid TypeScript syntax (pass_to_pass).
+
+    Uses prettier --parser typescript to validate the test file can be parsed.
+    This is a repo CI gate - the test file must be syntactically valid.
+    """
+    test_file = REPO / "packages" / "common" / "src" / "utils.test.ts"
+    r = subprocess.run(
+        ["npx", "prettier", "--no-config", "--parser", "typescript", str(test_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"utils.test.ts has TypeScript syntax errors"
 
 
 def test_repo_constants_ts_syntax():
@@ -212,6 +230,169 @@ def test_repo_constants_ts_syntax():
         cwd=REPO,
     )
     assert r.returncode == 0, f"constants.ts has TypeScript syntax errors"
+
+
+def test_repo_clipboard_return_placement():
+    """Repo's clipboard.ts has correct return statement placement (pass_to_pass).
+
+    Uses Node.js to parse and verify that return statements are correctly
+    placed inside the if (clipboardEvent) block and after writeText.
+    This is a repo CI gate - the control flow must be correct.
+    """
+    script = """
+    const fs = require('fs');
+    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/clipboard.ts', 'utf8');
+
+    // Find the copyTextToSystemClipboard function
+    const funcMatch = content.match(/export const copyTextToSystemClipboard[\\s\\S]*?^};/m);
+    if (!funcMatch) {
+        console.error('Function not found');
+        process.exit(1);
+    }
+    const funcBody = funcMatch[0];
+
+    // Check for the correct return placement inside if (clipboardEvent) block
+    // Look for: if (clipboardEvent) { ... return; } catch
+    const clipboardEventPattern = /if \\(clipboardEvent\\) \\{[\\s\\S]*?return;[\\s\\S]*?\\}[\\s\\S]*?\\} catch/;
+    if (!clipboardEventPattern.test(funcBody)) {
+        console.error('Missing return inside if (clipboardEvent) block');
+        process.exit(1);
+    }
+
+    // Check for return after successful navigator.clipboard.writeText
+    const writeTextPattern = /await navigator\\.clipboard\\.writeText[\\s\\S]*?return;/;
+    if (!writeTextPattern.test(funcBody)) {
+        console.error('Missing return after navigator.clipboard.writeText');
+        process.exit(1);
+    }
+
+    console.log('Clipboard return placement verified');
+    process.exit(0);
+    """
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"clipboard.ts return placement check failed: {r.stderr}"
+
+
+def test_repo_clipboard_const_variable():
+    """Repo's clipboard.ts uses const for plainTextEntry (pass_to_pass).
+
+    Uses Node.js to verify that plainTextEntry is declared as const,
+    not let, ensuring the variable is not reassigned.
+    This is a repo CI gate for code quality.
+    """
+    script = """
+    const fs = require('fs');
+    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/clipboard.ts', 'utf8');
+
+    // Find the copyTextToSystemClipboard function
+    const funcMatch = content.match(/export const copyTextToSystemClipboard[\\s\\S]*?^};/m);
+    if (!funcMatch) {
+        console.error('Function not found');
+        process.exit(1);
+    }
+    const funcBody = funcMatch[0];
+
+    // Check for const plainTextEntry
+    if (!funcBody.includes('const plainTextEntry')) {
+        console.error('plainTextEntry should be declared as const');
+        process.exit(1);
+    }
+
+    // Check there's no let plainTextEntry
+    if (funcBody.includes('let plainTextEntry')) {
+        console.error('plainTextEntry should not be declared as let');
+        process.exit(1);
+    }
+
+    console.log('Clipboard const declaration verified');
+    process.exit(0);
+    """
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"clipboard.ts const variable check failed: {r.stderr}"
+
+
+def test_repo_filledbutton_scss_structure():
+    """Repo's FilledButton.scss has correct structure for success states (pass_to_pass).
+
+    Uses Node.js to verify that the SCSS file has the correct structure
+    with background-color defined for loading/success states.
+    This is a repo CI gate - the styles must be properly structured.
+    """
+    script = """
+    const fs = require('fs');
+    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/components/FilledButton.scss', 'utf8');
+
+    // Check for the loading/success state selector
+    if (!content.includes('&.ExcButton--status-loading') ||
+        !content.includes('&.ExcButton--status-success')) {
+        console.error('Missing loading/success state selectors');
+        process.exit(1);
+    }
+
+    // Check for background-color: var(--color-success)
+    const blockPattern = /&\\.ExcButton--status-loading,[\\s\\n]*&\\.ExcButton--status-success \\{[\\s\\S]*?background-color:\\s*var\\(--color-success\\)/;
+    if (!blockPattern.test(content)) {
+        console.error('Missing background-color: var(--color-success) in loading/success block');
+        process.exit(1);
+    }
+
+    console.log('FilledButton.scss structure verified');
+    process.exit(0);
+    """
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"FilledButton.scss structure check failed: {r.stderr}"
+
+
+def test_repo_clipboard_no_redundant_undefined():
+    """Repo's clipboard.ts has no redundant undefined assignment (pass_to_pass).
+
+    Uses Node.js to verify that plainTextEntry is not set to undefined
+    after writeText (the old pattern that should be removed).
+    This is a repo CI gate - the code should use return instead.
+    """
+    script = """
+    const fs = require('fs');
+    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/clipboard.ts', 'utf8');
+
+    // Find the copyTextToSystemClipboard function
+    const funcMatch = content.match(/export const copyTextToSystemClipboard[\\s\\S]*?^};/m);
+    if (!funcMatch) {
+        console.error('Function not found');
+        process.exit(1);
+    }
+    const funcBody = funcMatch[0];
+
+    // Check that there's no plainTextEntry = undefined
+    if (funcBody.includes('plainTextEntry = undefined')) {
+        console.error('Should not set plainTextEntry to undefined - use return instead');
+        process.exit(1);
+    }
+
+    console.log('Clipboard no redundant undefined assignment verified');
+    process.exit(0);
+    """
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"clipboard.ts no-redundant-undefined check failed: {r.stderr}"
 
 
 if __name__ == "__main__":

@@ -228,3 +228,86 @@ console.log('OK');
         capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_import_validation():
+    """TypeScript files have valid import/export structure (repo CI check)."""
+    # Check buildImage.ts for valid ESM-style imports (the repo uses type: "module")
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const src = fs.readFileSync('{REPO}/packages/cli-v3/src/deploy/buildImage.ts', 'utf8');
+// Check for ESM imports (repo uses ES modules)
+const importMatches = src.match(/import\\s+.*\\s+from\\s+["'][^"']+["']/g);
+if (!importMatches) throw new Error('No ESM imports found');
+// Check for export keyword (ESM exports)
+if (!src.includes('export ')) throw new Error('No exports found');
+// Verify no CommonJS module.exports (repo uses ESM)
+if (src.includes('module.exports')) {{
+  throw new Error('CommonJS module.exports found in ESM file');
+}}
+console.log('ESM structure OK');
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ESM import validation failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_webapp_code_patterns():
+    """Webapp route has expected code patterns for env handling (repo CI check)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const src = fs.readFileSync('{REPO}/apps/webapp/app/routes/api.v1.projects.$projectRef.$env.ts', 'utf8');
+// Check for Remix loader export pattern
+if (!src.includes('export async function loader')) {{
+  throw new Error('Missing Remix loader export');
+}}
+// Check for env.server import (secure env handling pattern)
+if (!src.includes('env.server')) {{
+  throw new Error('Missing env.server import (security pattern)');
+}}
+// Check for APP_ORIGIN (the value being modified in the PR)
+if (!src.includes('APP_ORIGIN')) {{
+  throw new Error('Missing APP_ORIGIN reference');
+}}
+// Verify loader uses json() response helper
+if (!src.includes('return json(')) {{
+  throw new Error('Missing json() response pattern');
+}}
+console.log('Webapp patterns OK');
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Webapp code pattern check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_validation():
+    """Package.json files for modified packages are valid JSON with required fields."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+// Check webapp package.json
+const webappPkg = JSON.parse(fs.readFileSync('{REPO}/apps/webapp/package.json', 'utf8'));
+if (!webappPkg.scripts || !webappPkg.scripts.typecheck) {{
+  throw new Error('webapp missing typecheck script');
+}}
+if (!webappPkg.scripts || !webappPkg.scripts.lint) {{
+  throw new Error('webapp missing lint script');
+}}
+// Check cli-v3 package.json
+const cliPkg = JSON.parse(fs.readFileSync('{REPO}/packages/cli-v3/package.json', 'utf8'));
+if (!cliPkg.name) {{
+  throw new Error('cli-v3 missing name field');
+}}
+if (cliPkg.type !== 'module') {{
+  throw new Error('cli-v3 should use ESM (type: module)');
+}}
+console.log('Package.json validation OK');
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Package.json validation failed: {r.stderr}"

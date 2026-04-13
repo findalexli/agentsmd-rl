@@ -54,32 +54,49 @@ checks:
   origin: pr_diff
   description: When translate returns the same string (no translation), original label
     preserved
+- id: test_repo_vitest_i18n
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo i18n unit tests pass - vitest on js/core/src/i18n.test.ts
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo client package builds - pnpm --filter @gradio/client build
+- id: test_repo_client_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo client node tests pass - pnpm test:node in client/js
 rubric:
-- rule: Be consistent with the style of the surrounding code.
+- rule: Frontend code is formatted with prettier. Be consistent with the style of
+    the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: 9487b60670f6532eaccb3251d15f5505fa23d4e3
+    lines: 45-46
+  evidence: The patch maintains the existing indentation and formatting style of the
+    TypeScript file, consistent with Prettier formatting.
+  category: style
+  verification: llm_judge
 distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits
+- rule: 'Repository Structure: `gradio/components/` — all Gradio components'
+  collision_type: architecture_boundary
+  why_distracting: The issue explicitly mentions a 'Gradio component's label prop',
+    which could mislead the agent to search for and edit Python files in `gradio/components/`
+    instead of the actual frontend translation logic in `js/core/src/gradio_helper.ts`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-8
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The bug fix requires a very small, one-line change (adding a `typeof`
-    check). An agent might misinterpret this as a 'tiny edit' or 'low-value busywork'
-    and either refuse to fix it or attempt to bundle it with unrelated mechanical
-    cleanups, expanding the PR scope unnecessarily.
+  why_distracting: The bug fix requires only a small 1-line logic change. The agent
+    might misinterpret this as a 'tiny edit' and either refuse to fix it or try to
+    bundle it with unrelated mechanical cleanups.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 50-52
-- rule: Tests must pass. Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: architecture_boundary
-  why_distracting: The rule explicitly instructs to run backend tests locally (`bash
-    scripts/run_backend_tests.sh`) to ensure tests pass. Since the change is entirely
-    in the frontend TypeScript code (`js/core/src/gradio_helper.ts`), running backend
-    tests is irrelevant and wastes time/resources.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 27-28
-hierarchy_analysis: Only `AGENTS.md` is provided, so there are no conflicts between
-  multiple config files. The rules apply globally across the repository.
+    lines: 48-49
+hierarchy_analysis: The config is a flat single file (`AGENTS.md`). The agent must
+  use the repository structure guide to correctly locate the frontend code (`js/`)
+  instead of the backend components (`gradio/components/`), despite the issue mentioning
+  'Gradio component'.

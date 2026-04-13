@@ -211,6 +211,60 @@ def test_p2p_repo_build():
     assert r.returncode == 0, f"Build verification failed:\n{r.stderr[-500:]}"
 
 
+def test_p2p_repo_unit_tests_router():
+    """Repo's Router unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:unit", "--", "--run", "tests/router.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests (router) failed:\n{r.stderr[-500:]}"
+
+
+def test_p2p_repo_unit_tests_link():
+    """Repo's Link component unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:unit", "--", "--run", "tests/link.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests (link) failed:\n{r.stderr[-500:]}"
+
+
+def test_p2p_repo_unit_tests_navigate():
+    """Repo's navigate unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:unit", "--", "--run", "tests/navigate.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests (navigate) failed:\n{r.stderr[-500:]}"
+
+
+def test_p2p_repo_unit_tests_redirect():
+    """Repo's redirect unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:unit", "--", "--run", "tests/redirect.test.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests (redirect) failed:\n{r.stderr[-500:]}"
+
+
+def test_p2p_solid_router_eslint():
+    """Repo's solid-router ESLint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/solid-router:test:eslint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"solid-router ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_p2p_solid_router_unit_tests():
+    """Repo's solid-router unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/solid-router:test:unit", "--", "--run"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"solid-router unit tests failed:\n{r.stderr[-500:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))

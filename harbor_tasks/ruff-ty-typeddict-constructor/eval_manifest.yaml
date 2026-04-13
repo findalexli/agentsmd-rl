@@ -41,6 +41,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's type check passes for ty_python_semantic --all-targets
+- id: test_repo_doc_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation builds without warnings for ty_python_semantic
 - id: no_panic_unwrap_in_modified_functions
   type: pass_to_pass
   origin: agent_config
@@ -92,21 +96,26 @@ rubric:
     1 && let ast::Expr::Dict(di...` in `builder.rs` to concisely check the argument
     length and destructure the dictionary expression.
   category: style
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+  source:
+    path: AGENTS.md
+    lines: 60-62
+  evidence: The gold solution uses `.unwrap_or_else(|| self.infer_expression(expr,
+    tcx))` in `get_or_infer_expression` instead of using `.unwrap()`.
+  category: style
 distractors:
 - rule: Avoid writing significant amounts of new code. This is often a sign that we're
-    missing an existing method or mechanism that could help solve the problem. Look
-    for existing utilities first.
+    missing an existing method or mechanism that could help solve the problem.
   collision_type: scope_ambiguity
-  why_distracting: The PR requires adding a new, dedicated method `infer_typed_dict_constructor_values`
-    to handle the complex validation logic for TypedDict constructors. An agent strictly
-    following the rule to 'avoid writing significant amounts of new code' might try
-    to shoehorn this logic into existing general call inference methods, which would
-    likely fail to handle the specific edge cases of TypedDicts (like mixed dict +
-    keyword args) or result in overly complex, tangled code.
+  why_distracting: The rule advises avoiding significant amounts of new code and looking
+    for existing utilities. An agent might misinterpret this and try to hack the existing
+    `infer_call_arguments` or `infer_expression` methods to handle TypedDicts, rather
+    than correctly introducing the dedicated `infer_typed_dict_constructor_values`
+    method needed for this complex validation.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 68-68
-hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
-  included via `CLAUDE.md`. There are no hierarchical conflicts, as all rules are
-  defined at the same level.
+    lines: 58-59
+hierarchy_analysis: The configuration hierarchy is flat. `CLAUDE.md` simply references
+  `AGENTS.md` using an `@` include, meaning all rules are evaluated at the same level
+  without any overriding child configurations.

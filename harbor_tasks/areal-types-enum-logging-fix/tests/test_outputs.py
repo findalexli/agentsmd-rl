@@ -38,10 +38,7 @@ def _mock_and_exec_clevr():
 
 
 def _extract_enum_classes():
-    """Extract ApiType and InputName enum classes from types.py (avoids torch/openai imports).
-
-    AST-only because: types.py imports torch and openai at module level.
-    """
+    """Extract ApiType and InputName enum classes from types.py (avoids torch/openai imports)."""
     src = Path(TYPES_PY).read_text()
     tree = ast.parse(src)
     lines = src.splitlines(keepends=True)
@@ -66,10 +63,6 @@ def _extract_enum_classes():
     return ns
 
 
-# ---------------------------------------------------------------------------
-# Gate (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files must parse without syntax errors."""
@@ -77,10 +70,6 @@ def test_syntax_check():
         src = Path(path).read_text()
         compile(src, path, "exec")
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
-# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_reward_fn_returns_float():
@@ -105,7 +94,6 @@ def test_reward_fn_returns_float():
 # [pr_diff] fail_to_pass
 def test_enum_classes_str_compatible():
     """ApiType and InputName must be str-compatible Enum subclasses with correct values."""
-    # AST-only because: types.py imports torch and openai at module level
     from enum import Enum
 
     ns = _extract_enum_classes()
@@ -128,7 +116,6 @@ def test_enum_classes_str_compatible():
     assert "messages" in input_values, 'InputName missing "messages" value'
     assert "input_data" in input_values, 'InputName missing "input_data" value'
 
-    # str-compatible means == comparison with raw strings works
     for member in ApiType:
         assert member == member.value, f'ApiType.{member.name} != "{member.value}"'
     for member in InputName:
@@ -138,7 +125,6 @@ def test_enum_classes_str_compatible():
 # [pr_diff] fail_to_pass
 def test_properties_use_enum_types():
     """api_type and input_name_for_logging properties must return enum instances, not bare strings."""
-    # AST-only because: types.py imports torch and openai at module level
     src = Path(TYPES_PY).read_text()
     tree = ast.parse(src)
 
@@ -170,7 +156,6 @@ def test_properties_use_enum_types():
 # [pr_diff] fail_to_pass
 def test_no_bare_print_uses_logger():
     """clevr_count_70k.py must not use bare print(); must use logger instead."""
-    # AST-only because: checking for absence of print() requires full-file AST scan
     src = Path(CLEVR_PY).read_text()
     tree = ast.parse(src)
 
@@ -196,7 +181,6 @@ def test_no_bare_print_uses_logger():
 # [pr_diff] fail_to_pass
 def test_log_message_space_fix():
     """Warning message in to_tensor_dict must not have 'properly.Ignoring' (missing space)."""
-    # AST-only because: to_tensor_dict requires torch tensors to execute
     src = Path(TYPES_PY).read_text()
     tree = ast.parse(src)
 
@@ -207,28 +191,21 @@ def test_log_message_space_fix():
             break
     assert func_node is not None, "to_tensor_dict method not found in types.py"
 
-    # Collect all string literal fragments within the method
     warning_strings = []
     for node in ast.walk(func_node):
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
             warning_strings.append(node.value)
 
     joined = "".join(warning_strings)
-    # The bug: adjacent f-strings produce "properly.Ignoring" with no space
     assert "properly.I" not in joined, (
         "missing space after 'properly.' in to_tensor_dict warning message"
     )
-    # Positive check: "properly." must be followed by a space
     if "properly." in joined:
         idx = joined.index("properly.") + len("properly.")
         assert idx < len(joined) and joined[idx] == " ", (
             "no space after 'properly.' in warning message"
         )
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) -- regression tests
-# ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
 def test_extract_answer_works():
@@ -260,14 +237,9 @@ def test_reward_fn_edge_cases():
     assert r == 0 or r == 0.0, f"no solution should return 0, got {r!r}"
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass -- AGENTS.md:30 @ 4f5a294
+# [agent_config] pass_to_pass
 def test_no_wildcard_imports():
     """Modified files must not use wildcard imports (from x import *)."""
-    # AST-only because: structural check for import style
     for path in [TYPES_PY, CLEVR_PY]:
         src = Path(path).read_text()
         tree = ast.parse(src)
@@ -280,10 +252,9 @@ def test_no_wildcard_imports():
                         )
 
 
-# [agent_config] fail_to_pass -- AGENTS.md:99 @ 4f5a294
+# [agent_config] fail_to_pass
 def test_reward_fn_has_return_annotation():
     """clevr_count_70k_reward_fn must have an explicit -> float return type annotation."""
-    # AST-only because: checking annotation presence, not runtime behavior
     tree = ast.parse(Path(CLEVR_PY).read_text())
 
     fn_node = None
@@ -302,10 +273,9 @@ def test_reward_fn_has_return_annotation():
     )
 
 
-# [agent_config] fail_to_pass -- AGENTS.md:99 @ 4f5a294
+# [agent_config] fail_to_pass
 def test_properties_annotated_with_enum_types():
     """api_type and input_name_for_logging properties must be annotated with enum types, not str."""
-    # AST-only because: types.py imports torch and openai at module level
     src = Path(TYPES_PY).read_text()
     tree = ast.parse(src)
 
@@ -334,10 +304,9 @@ def test_properties_annotated_with_enum_types():
         )
 
 
-# [agent_config] fail_to_pass -- AGENTS.md:89-91 @ 4f5a294
+# [agent_config] fail_to_pass
 def test_reward_uses_areal_logging():
     """clevr_count_70k.py must import logging from areal.utils, not stdlib."""
-    # AST-only because: checking import source module paths
     src = Path(CLEVR_PY).read_text()
     tree = ast.parse(src)
 
@@ -362,10 +331,9 @@ def test_reward_uses_areal_logging():
     )
 
 
-# [agent_config] fail_to_pass -- AGENTS.md:89 @ 4f5a294
+# [agent_config] fail_to_pass
 def test_logger_pascalcase_name():
     """getLogger in clevr_count_70k.py must use a PascalCase descriptive name."""
-    # AST-only because: checking string argument convention
     tree = ast.parse(Path(CLEVR_PY).read_text())
 
     found = False
@@ -389,17 +357,19 @@ def test_logger_pascalcase_name():
     assert found, "no getLogger call with string argument found in clevr_count_70k.py"
 
 
-# ---------------------------------------------------------------------------
-# Repo CI/CD pass_to_pass tests (added during p2p_enrichment)
-# These verify the repo's own CI checks pass on base commit and after fix.
-# ---------------------------------------------------------------------------
+def _install_precommit():
+    """Install pre-commit if needed."""
+    subprocess.run(
+        ["pip", "install", "pre-commit", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
 
-# [repo_ci] pass_to_pass
+
+# [repo_tests] pass_to_pass
 def test_repo_py_compile():
-    """Modified Python files compile without syntax errors (pass_to_pass).
-
-    Mirrors the repo's pre-commit check for Python file validity.
-    """
+    """Modified Python files compile without syntax errors (pass_to_pass)."""
     for path in [TYPES_PY, CLEVR_PY]:
         r = subprocess.run(
             ["python", "-m", "py_compile", path],
@@ -410,20 +380,15 @@ def test_repo_py_compile():
         assert r.returncode == 0, f"py_compile failed for {path}:\n{r.stderr}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_ruff_check():
-    """Modified Python files pass ruff linting (pass_to_pass).
-
-    Mirrors the repo's ruff pre-commit hook check.
-    """
-    r = subprocess.run(
+    """Modified Python files pass ruff linting (pass_to_pass)."""
+    subprocess.run(
         ["pip", "install", "ruff==0.14.9", "--quiet"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    # Install might fail if already installed or network issues; ignore
-
     r = subprocess.run(
         ["ruff", "check", TYPES_PY, CLEVR_PY],
         capture_output=True,
@@ -433,70 +398,139 @@ def test_repo_ruff_check():
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_ruff_format():
-    """Modified Python files are properly formatted (pass_to_pass).
-
-    Mirrors the repo's ruff format pre-commit hook check.
-    """
-    r = subprocess.run(
+    """Modified Python files are properly formatted (pass_to_pass)."""
+    subprocess.run(
         ["pip", "install", "ruff==0.14.9", "--quiet"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    # Install might fail if already installed; ignore
-
     r = subprocess.run(
         ["ruff", "format", "--check", TYPES_PY, CLEVR_PY],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert r.returncode == 0, f"ruff format check failed (files need formatting):\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_ruff_check_fix():
-    """Modified Python files have no auto-fixable lint issues (pass_to_pass).
-
-    Mirrors the repo's ruff pre-commit hook check with --fix flag.
-    """
-    r = subprocess.run(
+    """Modified Python files have no auto-fixable lint issues (pass_to_pass)."""
+    subprocess.run(
         ["pip", "install", "ruff==0.14.9", "--quiet"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    # Install might fail if already installed or network issues; ignore
-
     r = subprocess.run(
         ["ruff", "check", "--fix", TYPES_PY, CLEVR_PY],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert r.returncode == 0, f"ruff check --fix failed:\\n{r.stdout}\\n{r.stderr}"
+    assert r.returncode == 0, f"ruff check --fix failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_import_sorting():
-    """Modified Python files follow isort conventions via ruff (pass_to_pass).
-
-    Mirrors the repo's ruff isort check (part of pre-commit I rules).
-    """
-    r = subprocess.run(
+    """Modified Python files follow isort conventions via ruff (pass_to_pass)."""
+    subprocess.run(
         ["pip", "install", "ruff==0.14.9", "--quiet"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    # Install might fail if already installed or network issues; ignore
-
     r = subprocess.run(
         ["ruff", "check", "--select", "I", TYPES_PY, CLEVR_PY],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert r.returncode == 0, f"ruff import sorting check failed:\\n{r.stdout}\\n{r.stderr}"
+    assert r.returncode == 0, f"ruff import sorting check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_eof():
+    """Modified Python files pass end-of-file-fixer pre-commit hook (pass_to_pass)."""
+    _install_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"end-of-file-fixer failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_trailing_whitespace():
+    """Modified Python files pass trailing-whitespace pre-commit hook (pass_to_pass)."""
+    _install_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"trailing-whitespace check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_ruff_format():
+    """Modified Python files pass ruff-format pre-commit hook (pass_to_pass)."""
+    _install_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "ruff-format", "--files", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff-format pre-commit hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_ruff():
+    """Modified Python files pass ruff lint pre-commit hook (pass_to_pass)."""
+    _install_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "ruff", "--files", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff lint pre-commit hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_check_large_files():
+    """Modified Python files pass check-added-large-files pre-commit hook (pass_to_pass)."""
+    _install_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--files", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-added-large-files hook failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_detect_private_key():
+    """Modified Python files pass detect-private-key pre-commit hook (pass_to_pass)."""
+    _install_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--files", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"detect-private-key hook failed:\n{r.stdout}\n{r.stderr}"

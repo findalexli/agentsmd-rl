@@ -79,7 +79,7 @@ def test_drain_reconnect_exhausted_returns_stop():
     has_bug = re.search(bug_pattern, src[cb_start:cb_start+1500]) is not None
 
     assert not has_bug, (
-        "Bug still present - 'lifecycleStopping && event.type === \"reconnect-exhausted\"' should be removed. "
+        "Bug still present - 'lifecycleStopping && event.type == \"reconnect-exhausted\"' should be removed. "
         "The fix should handle reconnect-exhausted unconditionally."
     )
 
@@ -223,8 +223,8 @@ def test_no_prototype_mutation():
 def test_no_mixed_dynamic_static_imports():
     """Must not mix await import() and static import for the same module."""
     src = _read_target()
-    static_modules = set(re.findall(r'from\s+["\']([^"\']+)["\']', src))
-    dynamic_modules = set(re.findall(r'await\s+import\s*\(\s*["\']([^"\']+)["\']\s*\)', src))
+    static_modules = set(re.findall(r'from\s+["\'"]([^"\'"]+)["\'"]', src))
+    dynamic_modules = set(re.findall(r'await\s+import\s*\(\s*["\'"]([^"\'"]+)["\'"]\s*\)', src))
     overlap = static_modules & dynamic_modules
     assert not overlap, (
         f"Mixed dynamic and static imports for: {overlap} — "
@@ -236,7 +236,7 @@ def test_no_mixed_dynamic_static_imports():
 def test_no_relative_imports_escaping_extension():
     """Relative imports must not resolve outside the extension package root."""
     src = _read_target()
-    escaping = re.findall(r'from\s+["\'](\.\.\/\.\.\/\.\.\/\.\.[^"\']*)["\']', src)
+    escaping = re.findall(r'from\s+["\'"](\.\.\/\.\.\/\.\.\/\.\.[^"\'"]*)["\'"]', src)
     assert not escaping, (
         f"Relative imports escape extension root: {escaping} — "
         "use openclaw/plugin-sdk/* for cross-package imports"
@@ -247,7 +247,7 @@ def test_no_relative_imports_escaping_extension():
 def test_no_direct_plugin_sdk_relative():
     """Must not reach into src/plugin-sdk/ by relative path."""
     src = _read_target()
-    assert not re.search(r'from\s+["\'][^"\']*src/plugin-sdk/', src), (
+    assert not re.search(r'from\s+["\'"][^"\'"]*src/plugin-sdk/', src), (
         "Found direct relative import into src/plugin-sdk/ — "
         "use openclaw/plugin-sdk/<subpath> instead"
     )
@@ -257,25 +257,22 @@ def test_no_direct_plugin_sdk_relative():
 # Repo CI/CD pass-to-pass gates — verify repo's own tests pass on base commit
 # ---------------------------------------------------------------------------
 
-# NOTE: This test is skipped because the repo's own test expects the old buggy
-# behavior. The test was written to verify that reconnect-exhausted throws an
-# error, but the fix changes this behavior to handle it gracefully. The
-# fail-to-pass tests above verify the fix is correct.
 # [repo_tests] pass_to_pass
-def SKIP_test_repo_discord_provider_lifecycle_tests():
-    """Discord provider lifecycle tests must pass (repo's own tests).
-
-    SKIPPED: The repo's test 'does not suppress reconnect-exhausted already
-    queued before shutdown' expects the old buggy behavior (throwing an error).
-    After the fix, reconnect-exhausted is handled gracefully. This is verified by
-    the fail-to-pass tests above.
-    """
-    pass
+def test_repo_discord_provider_lifecycle_tests():
+    """Discord provider lifecycle tests must pass (repo's own tests) (pass_to_pass)."""
+    _ensure_pnpm_deps()
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.config.ts",
+         "extensions/discord/src/monitor/provider.lifecycle.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+        env={**os.environ, "OPENCLAW_TEST_WORKERS": "1", "OPENCLAW_TEST_MAX_OLD_SPACE_SIZE_MB": "2048"},
+    )
+    assert r.returncode == 0, f"Discord provider lifecycle tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_discord_syntax_valid():
-    """Discord extension TypeScript files must have valid syntax (Node.js parse check)."""
+    """Discord extension TypeScript files must have valid syntax (Node.js parse check) (pass_to_pass)."""
     target_file = Path(TARGET)
     assert target_file.exists(), f"Target file not found: {TARGET}"
 
@@ -305,7 +302,7 @@ def test_repo_discord_syntax_valid():
 
 # [repo_tests] pass_to_pass
 def test_repo_discord_lint_clean():
-    """Discord extension target file must pass oxlint (repo's linter)."""
+    """Discord extension target file must pass oxlint (repo's linter) (pass_to_pass)."""
     _ensure_pnpm_deps()
     r = subprocess.run(
         ["pnpm", "exec", "oxlint", "--config", ".oxlintrc.json", TARGET],
@@ -315,8 +312,32 @@ def test_repo_discord_lint_clean():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_discord_format_clean():
+    """Discord extension target file must be correctly formatted (oxfmt) (pass_to_pass)."""
+    _ensure_pnpm_deps()
+    r = subprocess.run(
+        ["pnpm", "exec", "oxfmt", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxfmt format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_discord_provider_allowlist_tests():
+    """Discord provider allowlist tests must pass (repo's own tests) (pass_to_pass)."""
+    _ensure_pnpm_deps()
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.config.ts",
+         "extensions/discord/src/monitor/provider.allowlist.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "OPENCLAW_TEST_WORKERS": "1", "OPENCLAW_TEST_MAX_OLD_SPACE_SIZE_MB": "2048"},
+    )
+    assert r.returncode == 0, f"Discord provider allowlist tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_unit_test_harness():
-    """Repo unit test framework (vitest) must work for basic test."""
+    """Repo unit test framework (vitest) must work for basic test (pass_to_pass)."""
     _ensure_pnpm_deps()
     r = subprocess.run(
         ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
@@ -327,17 +348,13 @@ def test_repo_unit_test_harness():
 
 
 # [repo_tests] pass_to_pass
-def SKIP_test_repo_discord_provider_lifecycle():
-    """SKIPPED - Discord provider lifecycle test expects old buggy behavior.
-
-    The repo's test 'does not suppress reconnect-exhausted already queued before shutdown'
-    expects the old buggy behavior (throwing an error). After the fix, reconnect-exhausted
-    is handled gracefully. The fail-to-pass tests verify the fix is correct.
-    """
+def test_repo_discord_gateway_supervisor_tests():
+    """Discord gateway supervisor tests must pass (repo's own tests) (pass_to_pass)."""
     _ensure_pnpm_deps()
     r = subprocess.run(
         ["pnpm", "exec", "vitest", "run", "--config", "vitest.config.ts",
-         "extensions/discord/src/monitor/provider.lifecycle.test.ts"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
+         "extensions/discord/src/monitor/gateway-supervisor.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "OPENCLAW_TEST_WORKERS": "1", "OPENCLAW_TEST_MAX_OLD_SPACE_SIZE_MB": "2048"},
     )
-    assert r.returncode == 0, f"Discord provider lifecycle tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Discord gateway supervisor tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

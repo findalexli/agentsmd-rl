@@ -84,25 +84,34 @@ def test_repo_python_ast():
         assert r.returncode == 0, f"AST check failed for {path}: {r.stderr}"
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_no_trailing_whitespace():
-    """Modified files have no trailing whitespace (static check)."""
-    for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
-        content = Path(path).read_text()
-        lines = content.splitlines()
-        for i, line in enumerate(lines, 1):
-            assert not line.endswith(" "), f"{path}:{i} has trailing whitespace"
-            assert not line.endswith("\t"), f"{path}:{i} has trailing tabs"
+    """Repo CI: Modified files have no trailing whitespace (pre-commit trailing-whitespace hook)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", CTX_MGR, FLASH_BE, PCG_RUN],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_no_debug_statements():
-    """Modified files have no debug statements (static check)."""
-    debug_patterns = ["import pdb", "from pdb import", "breakpoint()", "pdb.set_trace"]
-    for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
-        content = Path(path).read_text()
-        for pattern in debug_patterns:
-            assert pattern not in content, f"{path} contains debug statement: {pattern}"
+    """Repo CI: Modified files have no debug statements (pre-commit debug-statements hook)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr}"
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", CTX_MGR, FLASH_BE, PCG_RUN],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Debug statements check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -151,6 +160,65 @@ def test_repo_black():
 
 
 # ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_check_yaml():
+    """Repo CI: YAML syntax validation passes (check-yaml pre-commit hook)."""
+    r = subprocess.run(
+        ['pip', 'install', 'pre-commit', '--quiet'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f'Failed to install pre-commit: {r.stderr}'
+    r = subprocess.run(
+        ['pre-commit', 'run', 'check-yaml', '--all-files'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f'YAML check failed: {r.stdout}{r.stderr}'
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_toml():
+    """Repo CI: TOML syntax validation passes (check-toml pre-commit hook)."""
+    r = subprocess.run(
+        ['pip', 'install', 'pre-commit', '--quiet'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f'Failed to install pre-commit: {r.stderr}'
+    r = subprocess.run(
+        ['pre-commit', 'run', 'check-toml', '--all-files'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f'TOML check failed: {r.stdout}{r.stderr}'
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_merge_conflict():
+    """Repo CI: No merge conflict markers present (check-merge-conflict pre-commit hook)."""
+    r = subprocess.run(
+        ['pip', 'install', 'pre-commit', '--quiet'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f'Failed to install pre-commit: {r.stderr}'
+    r = subprocess.run(
+        ['pre-commit', 'run', 'check-merge-conflict', '--all-files'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f'Merge conflict check failed: {r.stdout}{r.stderr}'
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo CI: Codespell passes on modified files (no common typos)."""
+    r = subprocess.run(
+        ['pip', 'install', 'codespell', '--quiet'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f'Failed to install codespell: {r.stderr}'
+    r = subprocess.run(
+        ['codespell', '--config', f'{REPO}/.codespellrc', CTX_MGR, FLASH_BE, PCG_RUN],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f'Codespell check failed: {r.stdout}{r.stderr}'
+
 # Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -323,7 +391,7 @@ def test_call_begin_forward_pcg_padding():
 # ---------------------------------------------------------------------------
 
 
-# [pr_diff] pass_to_pass
+# [static] pass_to_pass
 def test_existing_context_manager_api():
     """Original ForwardContext attributes and context manager preserved."""
     r = _run_ctx_mgr_test(

@@ -37,6 +37,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Jest tests for babel-plugin-react-compiler pass
+- id: test_repo_compiler_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type check for babel-plugin-react-compiler passes
+- id: test_repo_compiler_unit_parseconfig
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit test for parseConfigPragma passes
+- id: test_repo_compiler_unit_logger
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit test for Logger passes
+- id: test_repo_eslint_plugin_jest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jest tests for eslint-plugin-react-compiler pass
 - id: validation_preserves_ref_lvalue_branch
   type: pass_to_pass
   origin: static
@@ -78,6 +94,39 @@ rubric:
     `error.validate-mutate-ref-arg-in-render.expect.md`), which are the expected outputs
     generated and updated by running the `yarn s
   category: testing
+- rule: React Compiler has its own instructions in the `/compiler/` directory, separate
+    from the root React project.
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution adds the linting and formatting documentation specifically
+    to `compiler/CLAUDE.md` and explicitly notes that the prettier command must be
+    run 'from the react root directory, not comp
+  category: documentation
+- rule: Respect the monorepo boundary between React (root) and React Compiler (/compiler/).
+  source:
+    path: CLAUDE.md
+    lines: 5-8
+  evidence: The formatting command added to compiler/CLAUDE.md explicitly notes to
+    run `yarn prettier-all` 'from the react root directory, not compiler/', respecting
+    the monorepo boundary defined in the root conf
+  category: tooling
+- rule: Use the AliasingEffects system (`instr.effects`) to describe data flow and
+    operations.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 85-90
+  evidence: The gold solution accesses `instr.effects` to determine the validation
+    logic, aligning with the documented AliasingEffects system.
+  category: architecture
+- rule: Update the knowledge base document (`compiler/CLAUDE.md`) when new commands
+    or instructions need to be recorded.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-91
+  evidence: The gold solution directly edits `compiler/CLAUDE.md` to add linting and
+    formatting commands as requested by the prompt.
+  category: documentation
 config_edits:
 - path: compiler/CLAUDE.md
   tier: 1
@@ -105,29 +154,27 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: This repository uses Sapling (`sl`) for version control.
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to use Sapling (`sl`) commands to manage
-    files or commit changes, but the evaluation environment uses standard `git` (as
-    seen in the gold solution's `git apply`). Attempting to use `sl` will likely fail
-    or waste steps.
-  severity: high
-  source:
-    path: compiler/CLAUDE.md
-    lines: 50-63
-- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
   collision_type: scope_ambiguity
-  why_distracting: The root config strictly separates React and React Compiler directories.
-    An agent might assume formatting commands should be restricted to the `/compiler/`
-    directory, but the gold solution explicitly documents running `yarn prettier-all`
-    from the React root directory.
+  why_distracting: The config states 'you MUST read the documentation about that pass
+    in compiler/packages/babel-plugin-react-compiler/docs/passes/'. An agent might
+    waste time trying to read or update documentation for `ValidateNoRefAccessInRender`
+    in that directory, which is out of scope for this PR.
   severity: medium
   source:
-    path: CLAUDE.md
+    path: compiler/CLAUDE.md
     lines: 6-8
-hierarchy_analysis: 'The hierarchy clearly separates the React core (root `CLAUDE.md`)
-  from the React Compiler (`compiler/CLAUDE.md`). The compiler has its own specific
-  testing (`yarn snap`) and architecture (HIR, AliasingEffects) which override or
-  supplement the root. However, there is a scope ambiguity regarding formatting: while
-  the compiler has its own linting command, formatting (`yarn prettier-all`) must
-  be run from the root directory, crossing the boundary established in the root config.'
+- rule: This repository uses Sapling (`sl`) for version control.
+  collision_type: meta_confusion
+  why_distracting: The config instructs the use of Sapling (`sl`) for version control.
+    An agent might try to use `sl commit` or `sl addremove` to save its work, which
+    could fail or cause confusion in a standard git-based evaluation environment.
+  severity: low
+  source:
+    path: compiler/CLAUDE.md
+    lines: 46-61
+hierarchy_analysis: The workspace uses a two-level hierarchy where the root `CLAUDE.md`
+  explicitly delegates React Compiler instructions to `compiler/CLAUDE.md`. The agent
+  must navigate to the child config to understand the AliasingEffects architecture,
+  and uniquely, must also edit this child config file as part of the task requirements.

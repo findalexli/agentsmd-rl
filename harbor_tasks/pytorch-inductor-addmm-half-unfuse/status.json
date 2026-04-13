@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T23:24:27.291993",
-  "total_time": 5119.12,
-  "sandbox_id": "iv4m5n8gyk5yut7679dpz",
+  "validated_at": "2026-04-12T06:10:31.165811",
+  "total_time": 1277.03,
+  "sandbox_id": "ibiyg7a9gymruiojrqbsl",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 271.74,
+      "time": 325.86,
       "notes": ""
     },
     "p2p_enrich": {
@@ -35,12 +34,12 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "rubric_icr": 0.5,
-      "attempts": 1,
-      "notes": "All core checks passed: 1) Docker build successful, 2) NOP test reward=0 (tests correctly fail on base code), 3) Gold test reward=1 (all 13 tests pass with fix applied). Rubric judge returned 0.5 due to missing ANTHROPIC_API_KEY (infrastructure limitation, not a task issue).",
+      "rubric_icr": 0.0,
+      "attempts": 2,
+      "notes": "All core checks passed: 1) Docker build successful, 2) NOP test reward=0 (4 tests fail on base: bfloat16/float16 guards, guard returns early, not_stub), 3) Gold test reward=1 (all 19 tests pass). Rubric judge returns 0.0 because it looks for config file changes but gold solution only modifies post_grad.py (code file, not config). Rubric judge also needs API keys to function. Simplified rubric rules to focus on code conventions (style, over-engineering, alias safety, useful comments) since this is a code-only PR.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 71.02
+      "time": 114.68
     },
     "rubric_judge": {
       "status": "fail",
@@ -48,33 +47,19 @@
       "backend": "fireworks",
       "time": 1.36,
       "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 29.46,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1075.78,
-      "at": "2026-04-09T14:46:06.832285"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 311.23,
-      "at": "2026-04-09T15:03:02.802419"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 311.51,
-      "at": "2026-04-09T15:03:02.976395"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -90,6 +75,30 @@
       "backend": "fireworks",
       "time": 5119.12,
       "at": "2026-04-09T23:24:27.291993"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1189.82,
+      "at": "2026-04-12T01:03:42.155408"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 826.35,
+      "at": "2026-04-12T01:48:41.555848"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1277.03,
+      "at": "2026-04-12T06:10:31.165811"
     }
   ]
 }

@@ -14,9 +14,9 @@ from pathlib import Path
 import pytest
 
 # Add enterprise directory to path
-REPO = Path("/workspace/OpenHands/enterprise")
-sys.path.insert(0, str(REPO))
-sys.path.insert(0, str(REPO.parent))  # For openhands imports
+REPO = Path("/workspace/OpenHands")
+sys.path.insert(0, str(REPO / "enterprise"))
+sys.path.insert(0, str(REPO))  # For openhands imports
 
 def get_logger_output():
     """Helper to capture logger output and return parsed JSON."""
@@ -133,7 +133,7 @@ def test_code_syntax_valid():
     """Pass-to-pass: Modified file must have valid Python syntax."""
     import ast
 
-    logger_file = REPO / "server" / "logger.py"
+    logger_file = REPO / "enterprise" / "server" / "logger.py"
     source = logger_file.read_text()
 
     try:
@@ -159,7 +159,7 @@ def test_logger_json_formatter_imports():
 # functionality.
 # ============================================================================
 
-REPO_ROOT = Path("/workspace/OpenHands")
+REPO_ROOT = REPO
 ENTERPRISE_DIR = REPO_ROOT / "enterprise"
 
 
@@ -210,6 +210,89 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_logger_unit_tests():
+    """Repo's logger unit tests pass (pass_to_pass).
+
+    These tests cover the server/logger.py module that the fix modifies,
+    ensuring existing logging functionality isn't broken.
+
+    Note: The unit tests check for exact output equality. The fix adds new
+    fields (module, funcName, lineno), so we need to update the assertions
+    to expect these fields when running on fixed code.
+    """
+    import re
+
+    test_file = ENTERPRISE_DIR / "tests/unit/test_logger.py"
+    content = test_file.read_text()
+
+    # Check if fix is applied by looking at the formatter format string
+    logger_file = ENTERPRISE_DIR / "server/logger.py"
+    logger_content = logger_file.read_text()
+    fix_applied = "%(module)s%(funcName)s%(lineno)d" in logger_content
+
+    if fix_applied:
+        # Fix is applied - update assertions to expect new fields
+        # For test_info - replace exact equality with field checks
+        content = re.sub(
+            r"assert output == \{\n            'message': 'Test message',\n            'severity': 'INFO',\n            'ts': FROZEN_TIMESTAMP,\n        \}",
+            """assert output['message'] == 'Test message'
+        assert output['severity'] == 'INFO'
+        assert output['ts'] == FROZEN_TIMESTAMP
+        assert 'module' in output
+        assert 'funcName' in output
+        assert 'lineno' in output""",
+            content
+        )
+
+        # For test_error - replace exact equality with field checks
+        content = re.sub(
+            r"assert output == \{\n            'message': 'Test message',\n            'severity': 'ERROR',\n            'ts': FROZEN_TIMESTAMP,\n        \}",
+            """assert output['message'] == 'Test message'
+        assert output['severity'] == 'ERROR'
+        assert output['ts'] == FROZEN_TIMESTAMP
+        assert 'module' in output
+        assert 'funcName' in output
+        assert 'lineno' in output""",
+            content
+        )
+
+        # For test_extra_fields - replace exact equality with field checks
+        content = re.sub(
+            r"assert output == \{\n            'key': '\.\.val\.\.',\n            'message': 'Test message',\n            'severity': 'INFO',\n            'ts': FROZEN_TIMESTAMP,\n        \}",
+            """assert output['key'] == '..val..'
+        assert output['message'] == 'Test message'
+        assert output['severity'] == 'INFO'
+        assert output['ts'] == FROZEN_TIMESTAMP
+        assert 'module' in output
+        assert 'funcName' in output
+        assert 'lineno' in output""",
+            content
+        )
+
+        # For test_filtering - replace exact equality with field checks
+        content = re.sub(
+            r"assert output == \{\n            'message': 'The secret key was \*\*\*\*\*\*',\n            'severity': 'INFO',\n            'ts': FROZEN_TIMESTAMP,\n        \}",
+            """assert output['message'] == 'The secret key was ******'
+        assert output['severity'] == 'INFO'
+        assert output['ts'] == FROZEN_TIMESTAMP
+        assert 'module' in output
+        assert 'funcName' in output
+        assert 'lineno' in output""",
+            content
+        )
+
+        test_file.write_text(content)
+
+    r = subprocess.run(
+        ["poetry", "run", "pytest", "tests/unit/test_logger.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=ENTERPRISE_DIR,
+    )
+    assert r.returncode == 0, f"Logger unit tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-1000:]}"
+
+
 def test_repo_pyproject_valid():
     """Repo's pyproject.toml is valid (pass_to_pass)."""
     import tomllib
@@ -221,3 +304,21 @@ def test_repo_pyproject_valid():
         tomllib.loads(content)
     except Exception as e:
         pytest.fail(f"Invalid pyproject.toml: {e}")
+
+
+def test_repo_mypy_logger():
+    """Repo's mypy type checking passes on server/logger.py (pass_to_pass).
+
+    Verifies that the modified logger module has valid type annotations
+    and passes mypy type checking.
+    """
+    r = subprocess.run(
+        ["poetry", "run", "mypy",
+         "--config-file", "dev_config/python/mypy.ini",
+         "server/logger.py"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=ENTERPRISE_DIR,
+    )
+    assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout}\n{r.stderr}"

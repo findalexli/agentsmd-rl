@@ -199,6 +199,47 @@ def test_repo_zig_ast_check_unbounded_queue():
     assert result.returncode == 0, f"zig ast-check failed on unbounded_queue.zig:\n{result.stderr}"
 
 
+# === NEW CI/CD PASS-TO-PASS TESTS ===
+
+
+def test_repo_zig_syntax_valid_threadpool():
+    """ThreadPool.zig has valid Zig syntax (pass_to_pass)."""
+    result = subprocess.run(
+        ["zig", "fmt", "--check", str(THREADPOOL_PATH)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"Zig syntax check failed on ThreadPool.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_main():
+    """Main bun.zig passes AST check (pass_to_pass)."""
+    main_path = REPO / "src/bun.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(main_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on bun.zig:\n{result.stderr}"
+
+
+def test_repo_zig_ast_check_cli():
+    """CLI module passes AST check (pass_to_pass)."""
+    cli_path = REPO / "src/cli.zig"
+    result = subprocess.run(
+        ["zig", "ast-check", str(cli_path)],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"zig ast-check failed on cli.zig:\n{result.stderr}"
+
+
 def test_warm_uses_target_not_delta():
     """warm() compares against target (min(count, max_threads)) not delta."""
     content = THREADPOOL_PATH.read_text()

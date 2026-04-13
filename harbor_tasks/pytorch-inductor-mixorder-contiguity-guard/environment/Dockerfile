@@ -12,6 +12,9 @@ RUN git init /workspace && \
     git fetch --depth=1 origin 63fcbe1040ffef63e82abd4e66da1d7554d23aa4 && \
     git checkout FETCH_HEAD
 
+# Install Python dependencies for CI scripts
+RUN pip install --no-cache-dir pyyaml
+
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace

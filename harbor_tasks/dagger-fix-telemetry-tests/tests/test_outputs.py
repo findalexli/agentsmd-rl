@@ -134,6 +134,58 @@ def test_repo_go_test_compile_idtui():
     assert r.returncode == 0, f"go test compile for dagql/idtui failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - Repo CI/CD: unit tests for dagql/idtui (TestCursorBuffer)
+def test_repo_unit_test_cursor_buffer():
+    """Repo's TestCursorBuffer unit test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "test", "-v", "-run", "TestCursorBuffer", "./dagql/idtui"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TestCursorBuffer failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI/CD: unit tests for multiprefixw package
+def test_repo_unit_test_prefixw():
+    """Repo's multiprefixw unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "test", "-v", "-run", "TestPrefixedWriter", "./dagql/idtui/multiprefixw"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TestPrefixedWriter tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI/CD: go build for multiprefixw subpackage
+def test_repo_build_multiprefixw():
+    """Repo's go build ./dagql/idtui/multiprefixw passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "build", "./dagql/idtui/multiprefixw"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go build ./dagql/idtui/multiprefixw failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI/CD: go vet for multiprefixw subpackage
+def test_repo_vet_multiprefixw():
+    """Repo's go vet ./dagql/idtui/multiprefixw passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "vet", "./dagql/idtui/multiprefixw"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go vet ./dagql/idtui/multiprefixw failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

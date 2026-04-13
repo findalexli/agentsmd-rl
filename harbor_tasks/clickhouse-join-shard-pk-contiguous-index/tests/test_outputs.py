@@ -127,7 +127,8 @@ def test_allman_brace_style():
     content = TARGET_FILE.read_text()
 
     # Check the for loop has opening brace on new line (Allman style)
-    # Pattern: for (...)\n    {
+    # Pattern: for (...)
+    #     {
     allman_pattern = r"for\s*\([^)]+\)\s*\n\s*\{"
     assert re.search(allman_pattern, content), \
         "Fix should follow Allman brace style (opening brace on new line)"
@@ -267,3 +268,96 @@ def test_repo_shell_scripts_syntax():
         capture_output=True, text=True, timeout=120, cwd=str(REPO)
     )
     assert r.returncode == 0, f'Bash syntax check failed:\n{r.stderr[:500]}'
+
+
+def test_repo_style_check_scripts_syntax():
+    """
+    Pass-to-pass: Verify CI style check scripts have valid syntax (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['bash', '-n', f'{REPO}/ci/jobs/scripts/check_style/check_cpp.sh'],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'check_cpp.sh syntax check failed:\n{r.stderr[:500]}'
+
+
+def test_repo_various_checks_script_syntax():
+    """
+    Pass-to-pass: Verify various_checks.sh script has valid syntax (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['bash', '-n', f'{REPO}/ci/jobs/scripts/check_style/various_checks.sh'],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'various_checks.sh syntax check failed:\n{r.stderr[:500]}'
+
+
+def test_repo_submodules_check_script_syntax():
+    """
+    Pass-to-pass: Verify check_submodules.sh script has valid syntax (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['bash', '-n', f'{REPO}/ci/jobs/scripts/check_style/check_submodules.sh'],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'check_submodules.sh syntax check failed:\n{r.stderr[:500]}'
+
+
+def test_repo_check_style_py_syntax():
+    """
+    Pass-to-pass: Verify check_style.py compiles without syntax errors (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['python3', '-m', 'py_compile', f'{REPO}/ci/jobs/check_style.py'],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'check_style.py syntax check failed:\n{r.stderr[:500]}'
+
+
+def test_repo_cpp_code_style_check():
+    """
+    Pass-to-pass: Run ClickHouse C++ style check on the codebase (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['bash', f'{REPO}/ci/jobs/scripts/check_style/check_cpp.sh'],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO)
+    )
+    # Script returns 0 even if style issues found - it just outputs warnings
+    # Check that it runs without crashing (not return code 127 or similar)
+    assert r.returncode == 0, f'C++ style check script failed to run:\n{r.stderr[:500]}'
+
+
+def test_repo_submodules_check():
+    """
+    Pass-to-pass: Run ClickHouse submodules check script (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['bash', f'{REPO}/ci/jobs/scripts/check_style/check_submodules.sh'],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'Submodules check script failed:\n{r.stderr[:500]}'
+
+
+def test_repo_ci_jobs_scripts_syntax():
+    """
+    Pass-to-pass: Verify all CI job scripts have valid syntax (pass_to_pass).
+    """
+    import glob
+    scripts = glob.glob(f'{REPO}/ci/jobs/scripts/check_style/*.sh')
+    for script in scripts:
+        r = subprocess.run(
+            ['bash', '-n', script],
+            capture_output=True, text=True, timeout=120, cwd=str(REPO)
+        )
+        assert r.returncode == 0, f'Script syntax error in {script}:\n{r.stderr[:500]}'
+
+
+def test_repo_git_whitespace_check():
+    """
+    Pass-to-pass: Run git whitespace check on the repo (pass_to_pass).
+    """
+    r = subprocess.run(
+        ['git', 'diff', '--check'],
+        capture_output=True, text=True, timeout=60, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'Git whitespace check failed:\n{r.stderr[:500]}'

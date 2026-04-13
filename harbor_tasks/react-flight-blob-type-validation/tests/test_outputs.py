@@ -134,6 +134,94 @@ def test_repo_flow():
     assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_version_check():
+    """Repo's version consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flags():
+    """Repo's feature flags validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Feature flags check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_react_flight_server():
+    """ReactFlightServer tests pass (pass_to_pass) - related to modified ReactFlightReplyServer module."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightServer-test",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightServer tests failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_react_flight():
+    """ReactFlight tests pass (pass_to_pass) - related to Flight protocol."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlight-test",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlight tests failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_react_flight_reply_iterable():
+    """Iterable reply serialization works (pass_to_pass) - related to decodeReply."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightDOMReply-test",
+            "--testNamePattern", "can pass an iterable",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Iterable reply test failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_react_flight_reply_bigint():
+    """BigInt reply serialization works (pass_to_pass) - related to decodeReply."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightDOMReply-test",
+            "--testNamePattern", "can pass a BigInt",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"BigInt reply test failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_react_flight_reply_date():
+    """Date reply serialization works (pass_to_pass) - related to decodeReply."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightDOMReply-test",
+            "--testNamePattern", "can pass a Date",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Date reply test failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from .claude/skills/
 # ---------------------------------------------------------------------------

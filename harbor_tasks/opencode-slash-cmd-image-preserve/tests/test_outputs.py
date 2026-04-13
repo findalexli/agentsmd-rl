@@ -47,7 +47,7 @@ while (i < src.length) {
   const ch = src[i];
   if (ch === "'" || ch === '"' || ch === "`") {
     const q = ch; i++;
-    while (i < src.length) { if (src[i] === "\\\\") i++; else if (src[i] === q) break; i++; }
+    while (i < src.length) { if (src[i] === '\\\\') i++; else if (src[i] === q) break; i++; }
   } else if (ch === "{") depth++;
   else if (ch === "}") { depth--; if (depth === 0) break; }
   i++;
@@ -246,6 +246,189 @@ def test_repo_unit_tests_prompt_input():
         cwd=f"{REPO}/packages/app",
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass — attachments tests (image handling)
+def test_repo_attachments_test():
+    """Repo's attachments tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/attachments.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Attachments tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — build request parts tests (attachment handling in requests)
+def test_repo_build_request_parts_test():
+    """Repo's build-request-parts tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/build-request-parts.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Build request parts tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — command context tests (slash command functionality)
+def test_repo_command_test():
+    """Repo's command context tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/context/command.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Command tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — utils prompt tests (prompt restoration)
+def test_repo_utils_prompt_test():
+    """Repo's utils/prompt tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/utils/prompt.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Utils prompt tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — editor-dom tests (text editing operations)
+def test_repo_editor_dom_test():
+    """Repo's editor-dom tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/editor-dom.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Editor-dom tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — history tests (prompt history navigation)
+def test_repo_history_test():
+    """Repo's history tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/history.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"History tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — submit tests (prompt submission handling)
+
+
+# [repo_tests] pass_to_pass — editor-dom tests (text editing operations)
+def test_repo_editor_dom_test():
+    """Repo editor-dom tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/editor-dom.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Editor-dom tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — history tests (prompt history navigation)
+def test_repo_history_test():
+    """Repo history tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/history.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"History tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — submit tests (prompt submission handling)
+def test_repo_submit_test():
+    """Repo submit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/submit.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Submit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — placeholder tests (prompt placeholder behavior)
+def test_repo_placeholder_test():
+    """Repo placeholder tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/placeholder.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Placeholder tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — command-keybind tests (command keybinding parsing)
+def test_repo_command_keybind_test():
+    """Repo command-keybind tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/context/command-keybind.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Command-keybind tests failed:\n{r.stderr[-500:]}"
+    """Repo's submit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/submit.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Submit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — placeholder tests (prompt placeholder behavior)
+def test_repo_placeholder_test():
+    """Repo's placeholder tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/components/prompt-input/placeholder.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Placeholder tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — command-keybind tests (command keybinding parsing)
+def test_repo_command_keybind_test():
+    """Repo's command-keybind tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src/context/command-keybind.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Command-keybind tests failed:\n{r.stderr[-500:]}"
+
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests

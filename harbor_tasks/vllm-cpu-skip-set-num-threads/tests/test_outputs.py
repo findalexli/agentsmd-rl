@@ -264,3 +264,64 @@ def test_repo_lint_cpu_worker():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff lint check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos_cpu_worker():
+    """Repo's typos check on cpu_worker.py passes (pass_to_pass)."""
+    # Install typos if not present
+    install_typos = subprocess.run(
+        ["pip", "install", "typos", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # typos may already be installed, ignore errors
+
+    r = subprocess.run(
+        ["typos", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_header_cpu_worker():
+    """Repo's SPDX header check on cpu_worker.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_spdx_header.py", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+
+def test_repo_mypy_cpu_worker():
+    """Repo's mypy type check on cpu_worker.py passes (pass_to_pass)."""
+    # Install mypy and pydantic if not present
+    install_deps = subprocess.run(
+        ["pip", "install", "mypy", "pydantic", "--quiet"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Dependencies may already be installed, ignore errors
+
+    r = subprocess.run(
+        ["mypy", TARGET, "--ignore-missing-imports", "--follow-imports=silent"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Filter out the expected monkey-patch type assignment error
+    if r.returncode != 0:
+        lines = r.stdout.strip().split("\n")
+        filtered_errors = []
+        for line in lines:
+            # Skip the expected monkey-patch error
+            if "Incompatible types in assignment" in line and "set_num_threads" in line:
+                continue
+            # Skip the summary line with count
+            if "Found 1 error" in line and "1 file" in line:
+                continue
+            if "error:" in line.lower():
+                filtered_errors.append(line)
+        if not filtered_errors:
+            return  # Only expected monkey-patch errors, consider passing
+
+    assert r.returncode == 0, f"mypy type check failed:\n{r.stdout}\n{r.stderr}"

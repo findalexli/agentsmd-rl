@@ -202,6 +202,100 @@ console.log(JSON.stringify(results));
         assert r["ok"], f"format_color({r['color']!r}, {r['mode']!r}) = {r['result']!r}, expected {r['expected']!r}"
 
 
+# [repo_tests] pass_to_pass
+def test_colorpicker_directory_structure():
+    """Colorpicker shared directory has required files (pass_to_pass)."""
+    script = r"""
+const fs = require('fs');
+const path = require('path');
+
+const sharedDir = '/workspace/gradio/js/colorpicker/shared';
+const requiredFiles = ['utils.ts', 'Colorpicker.svelte', 'events.ts'];
+
+// Check all required files exist
+for (const file of requiredFiles) {
+    const filePath = path.join(sharedDir, file);
+    if (!fs.existsSync(filePath)) {
+        console.error('Missing file: ' + file);
+        process.exit(1);
+    }
+}
+
+// Check utils.ts has expected exports
+const utilsPath = path.join(sharedDir, 'utils.ts');
+const utilsContent = fs.readFileSync(utilsPath, 'utf8');
+
+const requiredExports = ['hsva_to_rgba', 'format_color'];
+for (const exp of requiredExports) {
+    if (!utilsContent.includes('export function ' + exp)) {
+        console.error('Missing export: ' + exp);
+        process.exit(1);
+    }
+}
+
+// Check Colorpicker.svelte has proper structure
+const sveltePath = path.join(sharedDir, 'Colorpicker.svelte');
+const svelteContent = fs.readFileSync(sveltePath, 'utf8');
+
+if (!svelteContent.includes('import { BlockTitle }') && !svelteContent.includes('@gradio/atoms')) {
+    console.error('Missing BlockTitle import');
+    process.exit(1);
+}
+
+if (!svelteContent.includes('bind:value')) {
+    console.error('Missing bind:value directive');
+    process.exit(1);
+}
+
+console.log('All colorpicker files have valid structure');
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Colorpicker file structure check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_events_ts_exports():
+    """Events.ts file exists and exports click_outside handler (pass_to_pass)."""
+    script = r"""
+const fs = require('fs');
+
+const eventsPath = '/workspace/gradio/js/colorpicker/shared/events.ts';
+const content = fs.readFileSync(eventsPath, 'utf8');
+
+// Check for click_outside export
+if (!content.includes('click_outside') || !content.includes('export')) {
+    console.error('Missing click_outside export');
+    process.exit(1);
+}
+
+// Check for TypeScript type annotations (inline types in function signature)
+if (!content.includes(': Node') && !content.includes(': MouseEvent')) {
+    console.error('Missing TypeScript type annotations');
+    process.exit(1);
+}
+
+// Check for function parameters and return type annotations
+if (!content.includes('(arg: MouseEvent)') && !content.includes(': void')) {
+    console.error('Missing function type annotations');
+    process.exit(1);
+}
+
+console.log('events.ts has valid structure');
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Events.ts structure check failed: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------

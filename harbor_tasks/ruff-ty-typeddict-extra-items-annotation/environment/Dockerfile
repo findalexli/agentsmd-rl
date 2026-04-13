@@ -22,8 +22,5 @@ RUN rustup toolchain install 1.94 && rustup default 1.94
 # Pre-fetch cargo deps for faster agent builds
 RUN cargo fetch
 
-# Pre-build at base commit so agent changes only need incremental recompile
-RUN CARGO_PROFILE_DEV_OPT_LEVEL=1 cargo build --bin ty 2>&1 || true
-
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

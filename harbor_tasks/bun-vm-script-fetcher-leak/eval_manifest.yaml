@@ -34,92 +34,94 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Must include Weak.h or WeakInlines.h header
-- id: class_extends_script_fetcher
+- id: clang_format_check
   type: pass_to_pass
   origin: repo_tests
+  description: Header must pass clang-format validation (CI check)
+- id: cpp_header_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ header must have valid syntax (gcc -fsyntax-only)
+- id: git_tracks_header_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header file must be tracked in git
+- id: class_extends_script_fetcher
+  type: pass_to_pass
+  origin: static
   description: Class must still extend JSC::ScriptFetcher
 - id: dynamic_import_callback_preserved
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: dynamicImportCallback() method must still exist
 - id: m_owner_field_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: m_owner field must not be deleted entirely
 - id: nodevm_headers_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Related NodeVM header files must exist (NodeVM.h, NodeVMScript.h, NodeVMSourceTextModule.h)
 - id: header_guard_present
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: NodeVMScriptFetcher.h must have proper header guard
 - id: cpp_syntax_balanced_braces
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: NodeVMScriptFetcher.h must have balanced braces and parentheses
 rubric:
-- rule: Do not write flaky tests. Unless explicitly asked, never wait for time to
-    pass in tests. Always wait for the condition to be met instead of waiting for
-    an arbitrary amount of time.
+- rule: Include necessary headers for new types used (e.g., Weak.h when using JSC::Weak).
   source:
-    path: test/CLAUDE.md
-    lines: '21'
-    commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
-- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
-    in the test output. These tests will never fail in CI.
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '1-10'
+  reference: >
+    Solution adds include statements for JavaScriptCore/Weak.h and WeakInlines.h
+    to provide the JSC::Weak type used in the m_owner field declaration.
+- rule: Use proper WebKit GC types (Weak<T>) for back-references to prevent GC cycles.
   source:
-    path: CLAUDE.md
-    lines: '99'
-    commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '45-60'
+  reference: >
+    m_owner field changed from Strong to Weak type to break the GC reference cycle
+    between NodeVMScript and its ScriptFetcher.
 - rule: Follow existing code style — check neighboring files for patterns.
   source:
-    path: CLAUDE.md
-    lines: '228'
-    commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '1-72'
+  reference: >
+    Solution follows Bun's C++ style with proper indentation, WebKit JSC naming
+    conventions, and includes a detailed comment explaining the Weak usage rationale.
 - rule: Use C++ for JavaScriptCore integration, powered by WebKit's JavaScriptCore
     engine.
   source:
-    path: CLAUDE.md
-    lines: 1-2
-  evidence: The gold solution correctly modifies the C++ header `NodeVMScriptFetcher.h`
-    using WebKit's JavaScriptCore APIs (`JSC::Weak`, `JSC::JSCell`, `JSC::JSValue`)
-    to fix the memory leak, aligning with the ar
-  category: architecture
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '1-72'
+  reference: >
+    NodeVMScriptFetcher.h uses JSC::Weak, JSC::JSCell, JSC::JSValue, and
+    includes JavaScriptCore/Weak.h headers for proper WebKit JSC integration.
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`.
-  collision_type: scope_ambiguity
-  why_distracting: This rule strictly forbids using `std.*` in favor of `bun.*` APIs.
-    However, this applies exclusively to Zig code. The agent is editing a C++ file
-    where the C++ standard library (`std::`) is perfectly valid and necessary. Applying
-    this rule to C++ would cause severe confusion or invalid code.
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: architecture_boundary
+  why_distracting: The agent is editing a C++ header file (`NodeVMScriptFetcher.h`)
+    for JSC bindings, but this rule dictates using Zig-specific `bun.*` APIs instead
+    of Zig's `std.*`. Applying Zig rules to C++ code would cause compilation errors.
   severity: high
   source:
-    path: src/CLAUDE.md
-    lines: 14-16
-- rule: If a test is for a specific numbered GitHub Issue, place it in `test/regression/issue/`.
-    Ensure the issue number is REAL and not a placeholder!
-  collision_type: rule_conflict
-  why_distracting: The prompt explicitly requests a regression test but does not provide
-    a GitHub issue number. The agent might conflict over whether to invent a placeholder
-    issue number to use the `test/regression/issue/` directory (violating the 'not
-    a placeholder' rule) or place it elsewhere.
+    path: src/AGENTS.md
+    lines: 15-25
+- rule: 'Test Organization: Place tests in test/regression/issue/ or specific directories
+    like test/js/node/'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly asks for a regression test, and the config
+    dictates where to place it (e.g., `test/js/node/`). However, the gold solution
+    completely omits the test. An agent following the instructions and config to write
+    a test would generate a diff that diverges from the gold solution.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 23-24
-- rule: Private fields are fully supported in Zig with the `#` prefix.
-  collision_type: scope_ambiguity
-  why_distracting: The agent is modifying a C++ class. Attempting to apply this Zig-specific
-    syntax (`#` prefix) for private fields in C++ instead of the `private:` access
-    specifier would result in compilation errors.
-  severity: high
-  source:
-    path: src/CLAUDE.md
-    lines: 4-5
-hierarchy_analysis: The root `CLAUDE.md` provides general architectural guidelines,
-  while `src/CLAUDE.md` provides highly specific Zig conventions. Because the target
-  file is C++ (`.h`), the Zig-specific rules in `src/CLAUDE.md` act as dangerous distractors.
-  The agent must recognize the language boundary and ignore `src/CLAUDE.md`'s strict
-  `std.*` prohibition and syntax rules, relying instead on the root's architectural
-  context for C++/JSC integration.
+    path: AGENTS.md
+    lines: 25-35
+hierarchy_analysis: The hierarchy applies Zig-specific rules at the `src/` level,
+  but the agent must recognize that these rules do not apply to C++ files within the
+  same directory tree. The root config provides testing rules that conflict with the
+  gold solution's omission of a test.

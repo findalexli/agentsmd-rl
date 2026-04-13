@@ -21,6 +21,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's prettier formatting passes on workflow.md
+- id: test_repo_prettier_check_local_repro
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on local-repro.md
+- id: test_repo_prettier_check_workflow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on workflow.md
 - id: test_repo_node_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -29,6 +37,47 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: scripts/pr-status.js loads as a module without syntax errors
+- id: test_repo_markdown_files_valid
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md and workflow.md are valid UTF-8 markdown files
+- id: test_repo_pr_status_exports
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js exports key functions (replyToThread, resolveThread, generateThreadMd,
+    main)
+- id: test_repo_prettier_check_agents_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on .agents/skills/pr-status-triage/
+- id: test_repo_node_acorn_parse
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js is parseable by Node.js parser
+- id: test_repo_markdown_links_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid markdown links
+- id: test_repo_markdown_links_workflow
+  type: pass_to_pass
+  origin: repo_tests
+  description: workflow.md has valid markdown links
+- id: test_repo_markdown_links_local_repro
+  type: pass_to_pass
+  origin: repo_tests
+  description: local-repro.md has valid markdown links
+- id: test_repo_alex_lint_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md passes alex linting for insensitive language
+- id: test_repo_alex_lint_workflow
+  type: pass_to_pass
+  origin: repo_tests
+  description: workflow.md passes alex linting for insensitive language
+- id: test_repo_alex_lint_local_repro
+  type: pass_to_pass
+  origin: repo_tests
+  description: local-repro.md passes alex linting for insensitive language
 - id: syntax_valid
   type: pass_to_pass
   origin: static
@@ -87,69 +136,62 @@ rubric:
 - rule: When modifying skill documentation, update both SKILL.md (quick commands reference)
     and workflow.md (detailed procedures) consistently
   source:
-    path: .agents/skills/authoring-skills/SKILL.md
-    lines: 106-113
+    path: .agents/skills/pr-status-triage/workflow.md
+    lines: 29-46
     commit: fea754747872122d167dd8bf1fc5581044e50521
 - rule: When adding a new CLI subcommand for skill tools, the documentation must include
     ready-to-use command templates with correct arguments in SKILL.md quick commands
     section
   source:
-    path: .agents/skills/authoring-skills/SKILL.md
-    lines: 79-86
+    path: .agents/skills/pr-status-triage/SKILL.md
+    lines: 34-40
     commit: fea754747872122d167dd8bf1fc5581044e50521
 - rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations
     when the REST endpoint has more predictable behavior (e.g. always publishes immediately
     vs attaching to pending reviews)
   source:
-    path: .agents/skills/pr-status-triage/SKILL.md
-    lines: 6-7
+    path: scripts/pr-status.js
+    lines: 253-285
     commit: fea754747872122d167dd8bf1fc5581044e50521
 - rule: Build and maintenance scripts are located in the `scripts/` directory.
   source:
-    path: CLAUDE.md
-    lines: 14-23
+    path: scripts/pr-status.js
+    lines: 1-50
   evidence: The gold solution modifies `scripts/pr-status.js` to add the new command,
     aligning with the documented codebase structure that designates the `scripts/`
     directory for maintenance scripts.
   category: architecture
-config_edits:
-- path: .agents/skills/pr-status-triage/SKILL.md
-  tier: 1
-  gold_added: "6. After addressing review comments, reply to the thread describing\
-    \ what was done, then resolve it. Use `reply-and-resolve-thread` to do both in\
-    \ one step, or use `reply-thread` + `resolve-thread` separately. See `thread-N.md`\
-    \ files for ready-to-use commands.\n\n  Thread interaction:\n\n  ```bash\n  node\
-    \ scripts/pr-status.js reply-thread <threadNodeId> \"<body>\"           # reply\
-    \ to a review thread\n  node scripts/pr-status.js resolve-thread <threadNodeId>\
-    \                  # resolve a review thread\n  node scripts/pr-status.js reply-and-resolve-thread\
-    \ <threadNodeId> \"<body>\"  # reply and resolve in one step\n  ```\n"
-  gold_removed: '6. After addressing review comments, reply to the thread describing
-    what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
-
-    '
+- rule: scripts/ directory is used for build and maintenance scripts
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: The gold solution correctly locates and modifies the pr-status script
+    in the scripts/ directory, aligning with the documented codebase structure.
+  category: architecture
 distractors:
-- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
-    edits to Next.js source or integration tests.
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
   collision_type: scope_ambiguity
-  why_distracting: The rule mandates starting `pnpm --filter=next dev` when changing
-    Next.js source. An agent might misinterpret `scripts/pr-status.js` as Next.js
-    source and start the dev server, which is unnecessary for a standalone maintenance
-    script and wastes time.
+  why_distracting: The rule mandates starting the Next.js dev server when changing
+    source code. An agent might mistakenly apply this to `scripts/pr-status.js`,
+    wasting time starting a dev server that is irrelevant to a standalone Node script.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 60-62
+- rule: 'Always run a full bootstrap build after switching branches: git checkout
+    <branch> \n pnpm build-all'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires running a full bootstrap build (`pnpm build-all`)
+    after switching branches. An agent might run this heavy command before editing
+    the script, which is unnecessary since the script doesn't depend on the compiled
+    Next.js packages.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 68-70
-- rule: Use full `pnpm build-all` before CI push or when changes span multiple packages.
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests running `pnpm build-all` when changes span multiple
-    packages. An agent might trigger a full build after modifying the script and markdown
-    files, which is completely unnecessary since these files are not part of the compiled
-    Next.js output.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 86-88
-hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
-  at the root level. The rules are heavily focused on the core Next.js framework development
-  (e.g., `packages/next/src/`), which creates scope ambiguity when agents work on
-  standalone maintenance scripts in the `scripts/` directory or agent skill documentation.
+    path: AGENTS.md
+    lines: 82-85
+hierarchy_analysis: The root AGENTS.md provides instructions for Next.js core development.
+  However, the task involves modifying a standalone script (`scripts/pr-status.js`)
+  and agent skill documentation (`.agents/skills/`). The agent must recognize that
+  the scope of the root config (Next.js source) does not apply here, and avoid running
+  heavy build commands or dev servers.

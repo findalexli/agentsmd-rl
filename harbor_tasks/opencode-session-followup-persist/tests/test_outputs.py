@@ -340,3 +340,14 @@ def test_repo_app_unit_tests():
         capture_output=True, text=True, timeout=180, cwd=app_dir,
     )
     assert r.returncode == 0, f"App unit tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_persist_unit_tests():
+    """Repo's persist utility unit tests pass (pass_to_pass)."""
+    app_dir = Path(REPO) / "packages" / "app"
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null && curl -fsSL https://bun.sh/install | bash 2>/dev/null && export PATH=\"/root/.bun/bin:\$PATH\" && bun install 2>&1 >/dev/null && bun test --preload ./happydom.ts ./src/utils/persist.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=app_dir,
+    )
+    assert r.returncode == 0, f"Persist utility tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"

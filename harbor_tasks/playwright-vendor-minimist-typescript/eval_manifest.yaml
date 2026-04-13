@@ -88,10 +88,10 @@ rubric:
 - rule: Import boundaries are enforced via DEPS.list files
   source:
     path: CLAUDE.md
-    lines: 62-64
-  evidence: The gold solution updates `packages/playwright-core/src/tools/cli-client/DEPS.list`
-    to add `./minimist.ts` under `[program.ts]` and `[session.ts]`, and creates a
-    new `[minimist.ts]` section to satisfy
+    lines: 90-95
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: The gold solution updates DEPS.list to declare `./minimist.ts` as an allowed
+    import for program.ts and session.ts, and creates a new `[minimist.ts]` section
   category: architecture
 config_edits:
 - path: CLAUDE.md
@@ -99,26 +99,25 @@ config_edits:
   gold_added: Never add "Generated with" in commit message.
   gold_removed: ''
 distractors:
-- rule: Test placement decision rule based on browser/page fixtures
+- rule: Generated files (types, channels, validators) are produced by watch automatically.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to write tests for the new `minimist.ts` file
-    and place them in `tests/library/` or `tests/page/` based on this rule. However,
-    this is a CLI utility that doesn't use browser fixtures, so these test directories
-    are inappropriate and no tests were requested.
+  why_distracting: The rule states that generated files (types, channels) are produced
+    by watch automatically. An agent might incorrectly assume it doesn't need to manually
+    define and export the MinimistArgs type in the vendored file, relying on auto-generation
+    instead.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 58-60
-- rule: Always run flint before committing
-  collision_type: meta_confusion
-  why_distracting: The agent might include `npm run flint` in the bash script to verify
-    the DEPS.list changes before 'committing', which could be slow or fail on unrelated
-    issues in the monorepo, whereas the gold solution just applies the patch.
+    lines: 50-52
+- rule: Do not use `tsc --noEmit` or individual lint commands separately.
+  collision_type: rule_conflict
+  why_distracting: The agent might want to run `tsc` or `eslint` on the newly created
+    minimist.ts file to ensure it is correct, but the rule strictly forbids individual
+    lint commands, requiring the full `flint` suite instead.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 38-40
-hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
-  The instructions clearly specify the DEPS system which is critical for adding new
-  files and imports. The agent must recognize that adding `minimist.ts` requires updating
-  the local `DEPS.list` file in the `cli-client` directory.
+    lines: 58-60
+hierarchy_analysis: The repository uses a single CLAUDE.md file at the root, but it
+  enforces a distributed architecture rule (DEPS.list files in subdirectories). The
+  agent must apply the root-level DEPS concept to the specific cli-client subdirectory.

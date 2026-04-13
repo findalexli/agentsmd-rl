@@ -81,41 +81,48 @@ rubric:
   evidence: The newly added code and documentation examples omit semicolons (e.g.,
     `await handle.update()`) and use single quotes.
   category: style
-distractors:
-- rule: '`handle.update(task?)` Schedules a component update. Optionally accepts a
-    task to run after the update completes.'
-  collision_type: meta_confusion
-  why_distracting: The config file documents the old behavior of `handle.update(task?)`.
-    An agent might be confused whether to follow the config file's API definition
-    as a strict rule or follow the prompt's instruction to change the API and update
-    this exact documentation file.
-  severity: high
-  source:
-    path: packages/component/AGENTS.md
-    lines: 154-156
-- rule: 'Updating changes: If iterating on an unpublished change with a change file,
-    update it in place rather than creating a new one.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might search for an existing unpublished change file
-    to modify instead of creating a new one, wasting time or incorrectly modifying
-    an unrelated changeset.
-  severity: low
+- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md
+    files.'
   source:
     path: AGENTS.md
-    lines: 35-36
-- rule: 'Functions: For callback-based APIs... prefer arrow functions over `function`
-    expressions.'
-  collision_type: rule_conflict
-  why_distracting: The agent might try to use arrow functions for the `submit` or
-    `click` handlers because they are callback-based APIs, conflicting with the more
-    specific rule to use shorthand method syntax for object literals.
+    lines: 36-37
+  evidence: Creates packages/component/.changes/minor.handle-update-promise.md following
+    the specified naming convention
+  category: documentation
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: AGENTS.md
+    lines: 23-23
+  evidence: The cascading update guard in scheduler.ts requires a counter to track
+    infinite loops, which is declared using `let` instead of `var` or `const` at the
+    local scope.
+  category: style
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports)'
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  evidence: When updating the Handle interface in component.ts to return Promise<AbortSignal>,
+    any new type imports use the `import type` syntax.
+  category: style
+- rule: 'Variables: Prefer let for locals, const only at module scope; never use var'
+  source:
+    path: AGENTS.md
+    lines: 24-24
+  evidence: The gold solution checks for the presence of MAX_CASCADING_UPDATES in
+    scheduler.ts, which aligns with the rule to use const for module-scoped variables.
+  category: style
+distractors:
+- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].short-description.md
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires creating a .changes file for modifications. Since
+    this is a breaking API change, the agent might create a changeset file, but the
+    task instructions do not request this, potentially leading to out-of-scope file
+    creation.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 18-20
-hierarchy_analysis: The root `AGENTS.md` provides general monorepo guidelines (changesets,
-  formatting, object methods). The `packages/component/AGENTS.md` provides component-specific
-  API documentation. A critical meta-conflict arises because the task requires modifying
-  the very API documented in `packages/component/AGENTS.md`. The agent must recognize
-  that the prompt's instructions to change the API override the existing documentation
-  in the Level 2 config file, and that the config file itself is a target for modification.
+    lines: 45-45
+hierarchy_analysis: The config is a single AGENTS.md file. The primary challenge is
+  that the task requires editing this exact file, creating a meta-referential loop.

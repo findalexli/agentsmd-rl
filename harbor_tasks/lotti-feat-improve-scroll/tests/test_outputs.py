@@ -168,11 +168,7 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_sliver_panel_not_stub():
     """Sliver panel has real build logic, not just a placeholder."""
     src = TASKS_PANEL.read_text()
@@ -182,3 +178,263 @@ def test_sliver_panel_not_stub():
         "Sliver panel must have an itemBuilder or delegate for rendering items"
     assert "TaskSummaryRow" in src, \
         "Sliver panel must render TaskSummaryRow widgets"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Python matrix provisioner syntax is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/tools/matrix_provisioner/provision.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_lint():
+    """Python matrix provisioner passes flake8 linting (pass_to_pass)."""
+    # Install tools first
+    r = subprocess.run(
+        ["pip3", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["flake8", f"{REPO}/tools/matrix_provisioner/provision.py"],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/tools/matrix_provisioner",
+    )
+    assert r.returncode == 0, f"flake8 linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_format():
+    """Python matrix provisioner passes black format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["black", "--check", f"{REPO}/tools/matrix_provisioner/provision.py", "--line-length=100"],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/tools/matrix_provisioner",
+    )
+    assert r.returncode == 0, f"black format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_isort():
+    """Python matrix provisioner passes isort import sorting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["isort", "--check-only", f"{REPO}/tools/matrix_provisioner/provision.py"],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/tools/matrix_provisioner",
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_unit_tests():
+    """Python matrix provisioner unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "pytest", "pytest-asyncio", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Install dependencies first
+    r = subprocess.run(
+        ["pip3", "install", "-r", f"{REPO}/tools/matrix_provisioner/requirements.txt", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["pytest", f"{REPO}/tools/matrix_provisioner/tests/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/tools/matrix_provisioner",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """pubspec.yaml is valid YAML (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    code = """
+import yaml
+import sys
+try:
+    with open('/workspace/lotti/pubspec.yaml', 'r') as f:
+        yaml.safe_load(f)
+    print('PASS')
+except Exception as e:
+    sys.exit(f'YAML parse error: {e}')
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_project_structure():
+    """Modified files exist in correct locations (pass_to_pass)."""
+    required_paths = [
+        f"{REPO}/lib/features/projects/ui/widgets/project_mobile_detail_content.dart",
+        f"{REPO}/lib/features/projects/ui/widgets/project_tasks_panel.dart",
+        f"{REPO}/lib/features/projects/README.md",
+    ]
+    for path in required_paths:
+        r = subprocess.run(
+            ["test", "-f", path],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"Required file missing: {path}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dart_analysis_options():
+    """analysis_options.yaml is valid YAML with expected sections (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    code = """
+import yaml
+import sys
+try:
+    with open('/workspace/lotti/analysis_options.yaml', 'r') as f:
+        data = yaml.safe_load(f)
+    assert 'include' in data, "Missing 'include' key"
+    assert 'linter' in data or 'analyzer' in data, "Missing analyzer config"
+    print('PASS')
+except Exception as e:
+    sys.exit(f'analysis_options.yaml error: {e}')
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"analysis_options validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - NEW: Dart detail content syntax check
+def test_repo_dart_detail_content_syntax():
+    """Modified Dart file project_mobile_detail_content.dart has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+src = open('{REPO}/lib/features/projects/ui/widgets/project_mobile_detail_content.dart').read()
+
+# Check balanced braces
+if src.count("{{") != src.count("}}"):
+    sys.exit("Unbalanced braces")
+
+# Check balanced parentheses
+if src.count("(") != src.count(")"):
+    sys.exit("Unbalanced parentheses")
+
+# Check balanced brackets
+if src.count("[") != src.count("]"):
+    sys.exit("Unbalanced brackets")
+
+# Verify no unterminated string literals (basic check)
+lines = src.split('\\n')
+for i, line in enumerate(lines, 1):
+    # Skip comments and lines with escaped quotes
+    if '//' in line:
+        line = line[:line.index('//')]
+    single_quotes = line.count("'") - line.count("\\'")
+    double_quotes = line.count('"') - line.count('\\"')
+    if single_quotes % 2 != 0 or double_quotes % 2 != 0:
+        # Could be multi-line string, skip
+        pass
+
+print('PASS')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dart syntax check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - NEW: Dart tasks panel syntax check
+def test_repo_dart_tasks_panel_syntax():
+    """Modified Dart file project_tasks_panel.dart has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+src = open('{REPO}/lib/features/projects/ui/widgets/project_tasks_panel.dart').read()
+
+# Check balanced braces
+if src.count("{{") != src.count("}}"):
+    sys.exit("Unbalanced braces")
+
+# Check balanced parentheses
+if src.count("(") != src.count(")"):
+    sys.exit("Unbalanced parentheses")
+
+# Check balanced brackets
+if src.count("[") != src.count("]"):
+    sys.exit("Unbalanced brackets")
+
+print('PASS')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dart syntax check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - NEW: pubspec.yaml structure validation
+def test_repo_pubspec_valid():
+    """pubspec.yaml has valid structure with required fields (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    code = """
+import yaml
+import sys
+try:
+    with open('/workspace/lotti/pubspec.yaml', 'r') as f:
+        data = yaml.safe_load(f)
+    assert 'name' in data, "Missing 'name' field"
+    assert 'version' in data, "Missing 'version' field"
+    assert 'environment' in data, "Missing 'environment' section"
+    assert 'dependencies' in data, "Missing 'dependencies' section"
+    print('PASS')
+except Exception as e:
+    sys.exit(f'pubspec.yaml error: {e}')
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pubspec validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - NEW: Matrix provisioner Makefile test
+def test_repo_matrix_provisioner_make_test():
+    """Matrix provisioner tests pass via Makefile (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["pip3", "install", "pytest", "pytest-asyncio", "flake8", "black", "isort", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pip3", "install", "-r", f"{REPO}/tools/matrix_provisioner/requirements.txt", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["make", "test"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/tools/matrix_provisioner",
+    )
+    assert r.returncode == 0, f"Make test failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"

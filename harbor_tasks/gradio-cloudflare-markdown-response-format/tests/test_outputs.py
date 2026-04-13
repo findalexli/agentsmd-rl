@@ -356,3 +356,22 @@ console.log('PASS');
     out = r.stdout[-500:] if r.stdout else ""
     assert r.returncode == 0, f"TypeScript syntax check failed:\n{err}"
     assert "PASS" in r.stdout, f"Expected PASS in output, got:\n{out}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_node_tests():
+    """@gradio/client node tests pass (pass_to_pass)."""
+    _setup_pnpm()
+    # Build client first (required for tests)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+    # Run node-based tests (no browser needed)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test:node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client node tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

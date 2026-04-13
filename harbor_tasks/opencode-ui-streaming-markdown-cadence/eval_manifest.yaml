@@ -9,6 +9,21 @@ checks:
   type: pass_to_pass
   origin: static
   description: message-part.tsx exists with PART_MAPPING and createSignal markers
+- id: test_repo_tsgo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes using repo's tsgo on packages/ui
+  notes: Runs npx tsgo --noEmit in packages/ui directory (CI typecheck equivalent)
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting passes using repo's prettier config
+  notes: Runs npx prettier --check on message-part.tsx (CI lint equivalent)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for UI package pass using bun test
+  notes: Runs bun test in packages/ui directory (CI test equivalent)
 - id: throttle_interval_reduced
   type: fail_to_pass
   origin: pr_diff
@@ -136,34 +151,27 @@ rubric:
     { ...; return }` statements to handle edge cases (like `!live?.()` or text shrinking)
     instead of using `if/else` blocks.
   category: style
-- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
-    unless necessary
-  source:
-    path: AGENTS.md
-    lines: 16-16
-  evidence: Variables like `shown` and `end` are declared without explicit type annotations
-    (`let shown = getValue()`), relying on inference from the assigned values.
-  category: style
 distractors:
-- rule: Prefer functional array methods (flatMap, filter, map) over for loops
-  collision_type: rule_conflict
-  why_distracting: The `next` function uses a `for` loop to scan ahead in the string
-    for a snap point (`for (let i = end; i < max; i++)`). An agent strictly following
-    this rule might try to convert the string to an array and use `.findIndex()`,
-    which would create unnecessary allocations and overhead in a hot rendering path.
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: would_cause_bug
+  why_distracting: The pacing algorithm inherently requires tracking mutable state
+    (`shown` text and `timeout` handle) across asynchronous `setTimeout` callbacks.
+    Attempting to strictly avoid `let` and reassignment here would force the agent
+    into unnatural recursive patterns or cause bugs in the pacing logic.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 17-17
-- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
-  collision_type: rule_conflict
-  why_distracting: The pacing logic inherently requires mutable state across asynchronous
-    callbacks and reactive effects (`let shown`, `let timeout`). An agent trying to
-    avoid `let` and reassignment might attempt to use complex recursive functional
-    patterns or unnecessary SolidJS signals, complicating the implementation.
-  severity: high
+    lines: 56-67
+- rule: Keep things in one function unless composable or reusable
+  collision_type: scope_ambiguity
+  why_distracting: The pacing logic involves calculating step sizes and finding snap
+    boundaries. Extracting `step` and `next` as helper functions keeps `createPacedValue`
+    readable. An agent strictly following 'keep things in one function' might inline
+    these, bloating the main function unnecessarily.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 54-63
-hierarchy_analysis: Only one config file (`AGENTS.md`) is present, so there are no
-  inter-file conflicts. The rules are applied globally across the repository.
+    lines: 10-11
+hierarchy_analysis: The configuration is a flat, single-file (`AGENTS.md`) setup containing
+  generic style guidelines. There is no complex inheritance or overriding between
+  multiple config files.

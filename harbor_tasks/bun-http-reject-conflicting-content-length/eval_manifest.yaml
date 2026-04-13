@@ -76,22 +76,6 @@ rubric:
     here too\n# (defaults to the current branch''s PR).\nbun run pr:comments --json
     | jq ''.[] | select(.user == "Jarred-Sumner")''\nbun run pr:comments --json |
     jq ''[.[] | select(.resolved == false)]''   # still open\n```'
-- rule: If no valid issue number is provided, place tests in the appropriate category
-    folder (e.g., `test/js/bun/` for HTTP tests).
-  source:
-    path: CLAUDE.md
-    lines: 46-48
-  evidence: The test is placed in `test/js/bun/http/request-smuggling.test.ts` rather
-    than an issue-specific folder, correctly categorizing it as a Bun-specific HTTP
-    API test.
-  category: testing
-- rule: 'Never use hardcoded port numbers; always use `port: 0` to get a random port.'
-  source:
-    path: test/CLAUDE.md
-    lines: 18-19
-  evidence: 'The HTTP request smuggling test starts a server and must use `port: 0`
-    instead of a hardcoded port to avoid port collisions during test execution.'
-  category: testing
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -148,38 +132,17 @@ config_edits:
   gold_removed: ''
 distractors:
 - rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    `test/regression/issue/${issueNumber}.test.ts`.
-  collision_type: meta_confusion
-  why_distracting: The prompt mentions RFC 9112 and PR 28838 (in the documentation
-    example). An agent might mistakenly treat these numbers as the GitHub issue number
-    for the bug and try to create `test/regression/issue/9112.test.ts` or `test/regression/issue/28838.test.ts`.
+    test/regression/issue/${issueNumber}.test.ts. Ensure the issue number is REAL
+    and not a placeholder!
+  collision_type: scope_ambiguity
+  why_distracting: The instruction mentions RFC 9112 and a specific bug, but no GitHub
+    issue number. An agent might try to create a regression test in `test/regression/issue/`
+    with a fake or placeholder issue number, which explicitly violates the rule.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 43-44
-- rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
-  collision_type: architecture_boundary
-  why_distracting: The rule instructs using `bunExe` and `bunEnv` when spawning Bun
-    processes in tests. An agent might think it needs to spawn a separate Bun process
-    to test the HTTP server, but HTTP server tests can and should be run in-process
-    using `Bun.serve()` and standard clients or raw sockets.
-  severity: medium
-  source:
-    path: test/CLAUDE.md
-    lines: 24-25
-- rule: When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`.
-  collision_type: scope_ambiguity
-  why_distracting: If the agent mistakenly decides to spawn a process for the test,
-    it might also create a fixture file ending in `-fixture.ts`. This is unnecessary
-    for a simple HTTP server test which should run in-process.
-  severity: low
-  source:
-    path: test/CLAUDE.md
-    lines: 44-45
-hierarchy_analysis: '`CLAUDE.md` and `test/CLAUDE.md` provide complementary testing
-  guidelines. `CLAUDE.md` focuses on test file placement (e.g., `test/js/bun/` vs
-  `test/regression/issue/`), while `test/CLAUDE.md` provides deeper, file-level implementation
-  details (e.g., `port: 0`, avoiding `bunExe` when unnecessary). The agent must synthesize
-  both levels to correctly place and implement the `request-smuggling.test.ts` file
-  without falling into the trap of treating RFC numbers as issue numbers or overcomplicating
-  the test with process spawning.'
+    lines: 37-38
+hierarchy_analysis: The repository contains duplicate config files (`AGENTS.md` and
+  `CLAUDE.md`) at both the root and `test/` directories. The agent must synthesize
+  the root-level test placement rules with the `test/`-level execution and style rules
+  (e.g., no hardcoded ports, using `bun:test`).

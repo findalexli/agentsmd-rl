@@ -67,6 +67,40 @@ def test_repo_prettier():
     assert r.returncode == 0, f"Prettier check failed: {r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_git_status():
+    """Git repo is clean at base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint_full():
+    """Repo's oxlint passes on all src/js (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", "src/js"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    # oxlint may have warnings but should not have errors (correctness=error)
+    # Exit code 0 means no errors found
+    assert r.returncode == 0, f"oxlint failed with errors: {r.stdout[-1000:]} {r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
+def test_ts_syntax_valid():
+    """TypeScript files are readable and non-empty (pass_to_pass)."""
+    for filepath in [SHARED_TS, SQLITE_TS, MYSQL_TS, POSTGRES_TS]:
+        p = Path(filepath)
+        assert p.exists(), f"{filepath} does not exist"
+        text = p.read_text()
+        # Basic sanity check: file has content and typical TS keywords
+        assert len(text) > 100, f"{filepath} appears too small"
+        assert "import" in text or "export" in text or "function" in text, f"{filepath} missing expected TypeScript keywords"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -10,6 +10,9 @@ RUN apt-get update && \
         pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pytest for testing
+RUN pip3 install pytest --break-system-packages
+
 # Clone repo at base commit (6a928b02f4de1efc633a8fae0331cd1fa821950e)
 RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
     cd /workspace/playwright && \

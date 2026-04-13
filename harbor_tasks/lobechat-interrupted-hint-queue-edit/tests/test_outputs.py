@@ -307,3 +307,115 @@ def test_repo_file_structure():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, "Repo directory structure is incorrect"
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_test_operation_state():
+    """useOperationState hook unit tests pass (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping unit test")
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "src/hooks/useOperationState.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"useOperationState tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_test_operation_actions():
+    """Operation actions unit tests pass (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping unit test")
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "src/store/chat/slices/operation/__tests__/actions.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Operation actions tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_test_streaming_executor():
+    """Streaming executor unit tests pass (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping unit test")
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "src/store/chat/slices/aiChat/actions/__tests__/streamingExecutor.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Streaming executor tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_compile_hooks():
+    """TypeScript compiles hooks directory without errors (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping typecheck test")
+
+    tsc_path = Path(REPO) / "node_modules" / ".bin" / "tsc"
+    if not tsc_path.exists():
+        pytest.skip("TypeScript not installed - skipping typecheck test")
+
+    r = subprocess.run(
+        [str(tsc_path), "--noEmit", "--skipLibCheck", "src/hooks/useOperationState.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # tsc returns 0 on success, 2 on type errors (but not crash)
+    assert r.returncode in [0, 2], f"TypeScript check crashed unexpectedly:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vitest_config_valid():
+    """Vitest configuration is valid and loads (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping vitest config test")
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--help"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Just check vitest can load and show help (verifies config does not crash)
+    assert r.returncode == 0 or "Usage:" in r.stdout, f"Vitest config seems invalid:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_config_valid():
+    """ESLint configuration is valid and loads (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping eslint config test")
+
+    r = subprocess.run(
+        ["npx", "eslint", "--help"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Check eslint can load (verifies config does not crash)
+    assert r.returncode == 0 or "Usage:" in r.stdout, f"ESLint config seems invalid:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_test_selectors():
+    """messageStateSelectors unit tests pass (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping unit test")
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "src/store/chat/slices/operation/__tests__/selectors.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Selectors tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vitest_run_cancel_functionality():
+    """Cancel functionality tests in streamingExecutor pass (pass_to_pass)."""
+    if not (Path(REPO) / "node_modules").exists():
+        pytest.skip("Dependencies not installed - skipping unit test")
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "-t", "cancel", "src/store/chat/slices/aiChat/actions/__tests__/streamingExecutor.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cancel functionality tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

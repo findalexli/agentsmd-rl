@@ -56,7 +56,7 @@ def test_waspc_package_json_files_valid():
     r = subprocess.run(
         [
             "bash", "-c",
-            "find waspc/data/packages -name 'package.json' -exec python3 -c 'import json,sys; json.load(open(sys.argv[1]))' {} \; -print 2>&1 | head -20"
+            "find waspc/data/packages -name 'package.json' -exec python3 -c 'import json,sys; json.load(open(sys.argv[1]))' {} \\; -print 2>&1 | head -20"
         ],
         capture_output=True,
         text=True,
@@ -95,38 +95,40 @@ def test_run_script_executes():
 def test_run_script_has_ormolu_commands():
     """waspc/run contains ormolu formatting commands (pass_to_pass)."""
     r = subprocess.run(
-        ["grep", "check:ormolu\\|format:ormolu", "run"],
+        ["grep", "ormolu:check\\|ormolu:format\\|check:ormolu\\|format:ormolu", "run"],
         capture_output=True,
         text=True,
         timeout=10,
         cwd=WASPC_DIR,
     )
-    # Should find ormolu commands in the run script
-    assert "check:ormolu" in r.stdout or "format:ormolu" in r.stdout, "run script should have ormolu commands"
+    # Should find ormolu commands in the run script (base commit has old names, PR renames to new format)
+    assert "ormolu:check" in r.stdout or "ormolu:format" in r.stdout or "check:ormolu" in r.stdout or "format:ormolu" in r.stdout, "run script should have ormolu commands"
 
 
 def test_run_script_has_prettier_commands():
     """waspc/run contains prettier formatting commands (pass_to_pass)."""
     r = subprocess.run(
-        ["grep", "check:prettier\\|format:prettier", "run"],
+        ["grep", "prettier:check\\|prettier:format\\|check:prettier\\|format:prettier", "run"],
         capture_output=True,
         text=True,
         timeout=10,
         cwd=WASPC_DIR,
     )
-    assert "check:prettier" in r.stdout or "format:prettier" in r.stdout, "run script should have prettier commands"
+    # Base commit has old names (prettier:check, prettier:format), PR renames to new format (check:prettier, format:prettier)
+    assert "prettier:check" in r.stdout or "prettier:format" in r.stdout or "check:prettier" in r.stdout or "format:prettier" in r.stdout, "run script should have prettier commands"
 
 
 def test_run_script_has_cabal_gild_commands():
     """waspc/run contains cabal-gild formatting commands (pass_to_pass)."""
     r = subprocess.run(
-        ["grep", "check:cabal\\|format:cabal\\|cabal-gild", "run"],
+        ["grep", "cabal-gild:check\\|cabal-gild:format\\|check:cabal\\|format:cabal", "run"],
         capture_output=True,
         text=True,
         timeout=10,
         cwd=WASPC_DIR,
     )
-    assert "cabal-gild" in r.stdout, "run script should have cabal-gild commands"
+    # Base commit has old names (cabal-gild:check, cabal-gild:format), PR renames to new format (check:cabal, format:cabal)
+    assert "cabal-gild:check" in r.stdout or "cabal-gild:format" in r.stdout or "check:cabal" in r.stdout or "format:cabal" in r.stdout, "run script should have cabal-gild commands"
 
 
 def test_package_json_has_prettier_scripts():

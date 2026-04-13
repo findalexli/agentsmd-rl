@@ -153,6 +153,34 @@ print(f'All TOML files valid')
     assert r.returncode == 0, f"TOML validation failed:\n{r.stderr}\n{r.stdout}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_example_configs_syntax():
+    """All example TOML configs have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import os
+import sys
+import tomllib
+errors = []
+for root, dirs, files in os.walk('{REPO}/examples'):
+    for f in files:
+        if f.endswith('.toml'):
+            path = os.path.join(root, f)
+            try:
+                with open(path, 'rb') as fp:
+                    tomllib.load(fp)
+            except Exception as e:
+                errors.append(f'{{path}}: {{e}}')
+if errors:
+    print('Example config TOML errors:', errors)
+    sys.exit(1)
+print('All example TOML configs valid')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Example configs TOML validation failed:\n{r.stderr}\n{r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -364,6 +392,106 @@ def test_hybrid_cp_guarded_by_cp_enabled():
         "setup_hybrid_cp() is not guarded by a cp_enabled check — "
         "it must only run when context parallelism is enabled"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI-derived pass_to_pass tests (enriched)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_all():
+    """Repo's entire src/ passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/src", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_all():
+    """Repo's entire src/ passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/src", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_syntax():
+    """Repo's pyproject.toml has valid TOML syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import tomllib
+with open('/workspace/pyproject.toml', 'rb') as f:
+    tomllib.load(f)
+print('pyproject.toml is valid TOML')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml TOML validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_configs_dir_toml_syntax():
+    """All TOML files in configs/ directory have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import os
+import sys
+import tomllib
+errors = []
+for root, dirs, files in os.walk('/workspace/configs'):
+    for f in files:
+        if f.endswith('.toml'):
+            path = os.path.join(root, f)
+            try:
+                with open(path, 'rb') as fp:
+                    tomllib.load(fp)
+            except Exception as e:
+                errors.append(f'{path}: {e}')
+if errors:
+    print('Config TOML errors:', errors)
+    sys.exit(1)
+print('All config TOML files valid')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Configs TOML validation failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_entrypoint_sft_import():
+    """SFT entrypoint module can be imported (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, '/workspace/src')
+# Test that the entrypoint module can be imported
+try:
+    from prime_rl.entrypoints.sft import main
+    print('SFT entrypoint import OK')
+except ImportError as e:
+    print(f'Import error: {e}')
+    # Some imports may fail due to missing deps, but module should parse
+    import ast
+    with open('/workspace/src/prime_rl/entrypoints/sft.py') as f:
+        ast.parse(f.read())
+    print('SFT entrypoint parses OK (import may need runtime deps)')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Either import succeeds or at least parses
+    assert r.returncode == 0, f"SFT entrypoint check failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

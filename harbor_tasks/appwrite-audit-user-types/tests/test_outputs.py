@@ -203,7 +203,7 @@ def test_php_syntax_valid():
 def test_repo_phplint():
     """Repo's PHP files pass syntax check (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "find app src -name '*.php' -exec php -l {} \\; 2>&1 | grep -E '(error|Error|FAIL)' || echo 'OK'"],
+        ["bash", "-c", "find app src -name '*.php' -exec php -l {} + 2>&1 | grep -E '(error|Error|FAIL)' || echo 'OK'"],
         capture_output=True, text=True, timeout=60, cwd=REPO_PATH,
     )
     assert "OK" in r.stdout or r.returncode == 0, f"PHP lint failed:\n{r.stdout[-500:]}"
@@ -232,16 +232,39 @@ def test_repo_phpstan_modified():
         assert r.returncode == 0, f"PHPStan check failed for {dir_path}:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-if __name__ == "__main__":
-    # Run all tests
-    import pytest
-    exit_code = pytest.main([__file__, "-v"])
-    try:
-        import os
-        os.makedirs("/logs/verifier", exist_ok=True)
-        with open("/logs/verifier/reward.txt", "w") as f:
-            f.write("1" if exit_code == 0 else "0")
-    except Exception as e:
-        print(f"Failed to write reward.txt: {e}")
-    sys.exit(exit_code)
+def test_repo_composer_validate():
+    """Repo's composer.json passes schema validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["composer", "validate", "--strict"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Composer validation failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
+
+
+
+def test_repo_unit_detector():
+    """Repo's Detector unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["php", "vendor/bin/phpunit", "tests/unit/Detector/", "--no-progress"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Detector unit tests failed:\\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_unit_event():
+    """Repo's Event unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["php", "vendor/bin/phpunit", "tests/unit/Event/", "--no-progress"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Event unit tests failed:\\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_unit_filter():
+    """Repo's Filter unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["php", "vendor/bin/phpunit", "tests/unit/Filter/", "--no-progress"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Filter unit tests failed:\\n{r.stdout[-500:]}{r.stderr[-500:]}"

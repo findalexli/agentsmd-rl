@@ -449,3 +449,216 @@ def test_repo_test_methods_exist():
     # Check for stream context manager test (relevant to our PR)
     stream_tests = [m for m in test_methods if 'stream' in m.lower() and 'context' in m.lower()]
     assert len(stream_tests) > 0, f"No stream context manager tests found. Methods: {test_methods[:10]}..."
+
+# ---------------------------------------------------------------------------
+# CI-derived pass-to-pass (repo_tests) -- actual subprocess commands from CI
+# ---------------------------------------------------------------------------
+
+
+def test_repo_kernel_launch_check():
+    """CUDA kernel launch check passes (from CI quick-checks) (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "torch/testing/_internal/check_kernel_launches.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Kernel launch check failed:" + chr(10) + r.stderr[-500:]
+
+
+def test_repo_no_nonbreaking_spaces():
+    """No non-breaking spaces in source files (from CI quick-checks) (pass_to_pass)."""
+    # Check for non-breaking spaces using git ls-files
+    r = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git ls-files failed: {r.stderr}"
+    # Check each file for non-breaking spaces
+    nbsp = bytes([0xC2, 0xA0]).decode("utf-8")
+    files_with_nbsp = []
+    for filepath in r.stdout.strip().splitlines()[:100]:  # Check first 100 files
+        if not filepath:
+            continue
+        try:
+            with open(f"{REPO}/{filepath}", "rb") as f:
+                fc = f.read()
+                if nbsp.encode("utf-8") in fc:
+                    files_with_nbsp.append(filepath)
+        except Exception:
+            continue
+    assert len(files_with_nbsp) == 0, f"Files with non-breaking spaces: {files_with_nbsp[:5]}"
+
+
+def test_repo_valid_filenames():
+    """Cross-OS compatible filenames (from CI quick-checks) (pass_to_pass)."""
+    import re as re_module
+    r = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to list files: {r.stderr}"
+    # Check for invalid characters in filenames
+    invalid_pattern = re_module.compile(r"[<>:\"|?*]|[ .]$")
+    bad_files = [line for line in r.stdout.splitlines() if invalid_pattern.search(line)]
+    assert len(bad_files) == 0, f"Invalid filenames found: {bad_files[:5]}"
+
+
+def test_repo_no_versionless_shebangs():
+    """No versionless Python shebangs (from CI quick-checks) (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "grep", "-l", "^#!", "--", "."],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Find files with shebangs
+    versionless = []
+    for filepath in r.stdout.strip().splitlines():
+        if not filepath:
+            continue
+        try:
+            with open(f"{REPO}/{filepath}", "r", encoding="utf-8", errors="ignore") as f:
+                first_line = f.readline()
+                if first_line.startswith("#!") and first_line.rstrip() == "#!python":
+                    versionless.append(filepath)
+        except Exception:
+            continue
+    assert len(versionless) == 0, f"Files with versionless shebangs: {versionless[:5]}"
+
+
+def test_repo_flake8_syntax():
+    """Python files pass flake8 syntax check (E901, E902) (pass_to_pass)."""
+    # Install flake8 if needed
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Run flake8 on the test file to check for syntax errors only
+    r = subprocess.run(
+        ["flake8", "--select=E901,E902", f"{REPO}/test/test_accelerator.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    msg = "Flake8 syntax check failed:" + chr(10) + r.stdout[-500:] + chr(10) + r.stderr[-500:]
+    assert r.returncode == 0, msg
+
+
+def test_repo_ciflow_tags_valid():
+    """CI flow tags validation passes (from CI quick-checks) (pass_to_pass)."""
+    # Install pyyaml if needed
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", ".github/scripts/collect_ciflow_labels.py", "--validate-tags"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CIFlow tags validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_actions_will_cancel():
+    """GitHub Actions workflow cancellation check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", ".github/scripts/ensure_actions_will_cancel.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Actions will cancel check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_docstring_linter():
+    """Docstring linter tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_docstring_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Docstring linter tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_header_only_linter():
+    """Header-only linter tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_header_only_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Header-only linter tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_gitutils():
+    """Git utilities tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_gitutils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Gitutils tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_set_linter():
+    """Set linter tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_set_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Set linter tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_stable_shim_usage_linter():
+    """Stable shim usage linter tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_stable_shim_usage_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Stable shim usage linter tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_stable_shim_version_linter():
+    """Stable shim version linter tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_stable_shim_version_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Stable shim version linter tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_gb_registry_linter():
+    """Graph break registry linter tests pass (from CI test-tools) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tools/test/test_gb_registry_linter.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**subprocess.os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"GB registry linter tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

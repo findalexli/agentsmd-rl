@@ -95,6 +95,85 @@ def test_repo_workflow_yaml_validates():
                 raise AssertionError(f"Workflow YAML {wf_path} is invalid: {e}")
 
 
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_syntax():
+    """Shell script syntax check for CI scripts (pass_to_pass)."""
+    scripts = [
+        ".github/scripts/verify-new-snapshots.sh",
+        ".github/scripts/count-snapshot-changes.sh",
+    ]
+    for script_path in scripts:
+        full_path = Path(REPO) / script_path
+        if full_path.exists():
+            r = subprocess.run(
+                ["bash", "-n", str(full_path)],
+                capture_output=True, text=True, timeout=10,
+            )
+            assert r.returncode == 0, f"Bash syntax error in {script_path}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_playwright_package_json():
+    """Playwright package.json is valid JSON (pass_to_pass)."""
+    import json
+
+    pkg_path = Path(REPO) / "playwright" / "package.json"
+    assert pkg_path.exists(), "Playwright package.json does not exist"
+    r = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{pkg_path}')); print('JSON valid')"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Invalid JSON in playwright/package.json:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_verify_new_snapshots_syntax():
+    """Shell script syntax check for verify-new-snapshots.sh (pass_to_pass)."""
+    script = Path(REPO) / ".github" / "scripts" / "verify-new-snapshots.sh"
+    assert script.exists(), "verify-new-snapshots.sh does not exist"
+    r = subprocess.run(
+        ["bash", "-n", str(script)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Bash syntax error in verify-new-snapshots.sh:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_count_snapshot_changes_syntax():
+    """Shell script syntax check for count-snapshot-changes.sh (pass_to_pass)."""
+    script = Path(REPO) / ".github" / "scripts" / "count-snapshot-changes.sh"
+    assert script.exists(), "count-snapshot-changes.sh does not exist"
+    r = subprocess.run(
+        ["bash", "-n", str(script)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Bash syntax error in count-snapshot-changes.sh:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trigger_vercel_preview_syntax():
+    """Shell script syntax check for trigger-vercel-preview.sh (pass_to_pass)."""
+    script = Path(REPO) / ".github" / "scripts" / "trigger-vercel-preview.sh"
+    assert script.exists(), "trigger-vercel-preview.sh does not exist"
+    r = subprocess.run(
+        ["bash", "-n", str(script)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Bash syntax error in trigger-vercel-preview.sh:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_optimize_test_durations_syntax():
+    """Python syntax check for optimize_test_durations.py (pass_to_pass)."""
+    script = Path(REPO) / ".github" / "scripts" / "optimize_test_durations.py"
+    assert script.exists(), "optimize_test_durations.py does not exist"
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(script)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Python syntax error in optimize_test_durations.py:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

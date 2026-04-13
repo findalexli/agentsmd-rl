@@ -290,3 +290,19 @@ def test_repo_lint_ast_grep():
     )
     assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
+
+# [repo_tests] pass_to_pass
+def test_repo_compiler_fixtures():
+    """Repo's compiler fixtures type-check passes (pass_to_pass).
+
+    Verifies that TypeScript fixtures for the SWC compiler transforms
+    are syntactically valid and type-check correctly.
+    """
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run check-compiler-fixtures"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-compiler-fixtures failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

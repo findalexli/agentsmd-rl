@@ -65,6 +65,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - zig ast-check on unbounded_queue.zig passes
+- id: test_repo_zig_syntax_valid_threadpool
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ThreadPool.zig has valid Zig syntax
+- id: test_repo_zig_ast_check_main
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Main bun.zig passes AST check
+- id: test_repo_zig_ast_check_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - CLI module (cli.zig) passes AST check
 - id: warm_uses_target_not_delta
   type: fail_to_pass
   origin: pr_diff
@@ -87,49 +99,30 @@ checks:
   origin: pr_diff
   description: After successful spawn, sync is updated to new_sync for correct state
     tracking
-rubric:
-- rule: Follow existing code style - check neighboring files for patterns
-  source:
-    path: CLAUDE.md
-    lines: '198'
-    commit: 49221ca7440128b32222aefd0df53c359b3fd5fd
-- rule: Never use @import() inline inside of functions. Always put imports at the
-    bottom of the file or containing struct.
-  source:
-    path: src/CLAUDE.md
-    lines: 9-11
-    commit: 49221ca7440128b32222aefd0df53c359b3fd5fd
-- rule: Always use bun.* APIs instead of std.* for system calls, file operations,
-    and strings
-  source:
-    path: src/CLAUDE.md
-    lines: 14-34
-    commit: 49221ca7440128b32222aefd0df53c359b3fd5fd
+rubric: []
 distractors:
-- rule: Always use `bun.*` APIs instead of `std.*`
+- rule: Always use `bun.*` APIs instead of `std.*`.
   collision_type: scope_ambiguity
-  why_distracting: The rule explicitly commands 'Always use bun.* APIs instead of
-    std.*'. Since the code being modified relies on `std.Thread.spawn` and `std.Thread.SpawnConfig`,
-    an agent might incorrectly attempt to refactor these to use `bun.*` equivalents
-    (like `bun.spawnSync`, which is for processes, or a fabricated `bun.Thread`),
+  why_distracting: The rule strongly mandates 'Always use bun.* APIs instead of std.*'.
+    An agent might incorrectly attempt to replace the existing `std.Thread.spawn`
+    and `std.Thread.SpawnConfig` calls with non-existent `bun.Thread` equivalents,
     which would cause compilation errors.
   severity: high
   source:
-    path: src/CLAUDE.md
-    lines: 15-17
-- rule: Test Organization and Writing Tests guidelines
+    path: src/AGENTS.md
+    lines: 16-20
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead [to add tests].
   collision_type: rule_conflict
-  why_distracting: The config file provides extensive instructions on how and where
-    to write tests (e.g., `test/regression/issue/...`). However, the task instructions
-    explicitly state 'Do NOT modify any test files.' An agent might get confused and
-    try to add a test file anyway to comply with the testing guidelines.
-  severity: medium
+  why_distracting: The config provides detailed instructions on where and how to write
+    tests for bug fixes (e.g., `test/js/bun/`), but the task instruction explicitly
+    forbids modifying any test files.
+  severity: high
   source:
-    path: CLAUDE.md
-    lines: 41-76
-hierarchy_analysis: The hierarchy consists of root-level testing/building guidelines
-  and src-level Zig conventions. The most significant conflict arises from the src-level
-  rule 'Always use bun.* APIs instead of std.*', which is intended for OS/file operations
-  but is stated absolutely, conflicting with the legitimate use of `std.Thread` in
-  the target file. Additionally, the root-level testing guidelines conflict with the
-  task-specific instruction to not modify test files.
+    path: AGENTS.md
+    lines: 45-55
+hierarchy_analysis: The repository has identical `AGENTS.md` and `CLAUDE.md` files
+  at both the root and `src/` levels. The root level focuses on building and testing,
+  while the `src/` level focuses on Zig conventions. The agent must apply the `src/`
+  level Zig conventions while ignoring the root level testing instructions due to
+  the prompt's explicit override.

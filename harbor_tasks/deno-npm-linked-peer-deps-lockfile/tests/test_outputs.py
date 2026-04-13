@@ -218,3 +218,55 @@ def test_deno_npm_all_features():
         f"Check all-features failed:\nstdout:\n{r.stdout[-1500:]}\n"
         f"stderr:\n{r.stderr[-1500:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_cache():
+    """deno_npm_cache library tests pass (related crate pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_npm_cache", "--lib", "--locked"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"deno_npm_cache tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npmrc():
+    """deno_npmrc library tests pass (related crate pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_npmrc", "--lib", "--locked"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"deno_npmrc tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_installer():
+    """deno_npm_installer library tests pass (related crate pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_npm_installer", "--lib", "--locked"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"deno_npm_installer tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_package_json():
+    """deno_package_json library tests pass (related crate pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_package_json", "--lib", "--locked"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"deno_package_json tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )

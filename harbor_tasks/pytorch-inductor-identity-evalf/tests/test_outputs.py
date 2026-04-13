@@ -199,58 +199,89 @@ def test_repo_flake8_syntax():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     r = subprocess.run(
-        ["flake8", TARGET, "--select=E9,F63,F7,F82", "--show-source"],
+        ["python3", "-m", "flake8", TARGET, "--select=E9,F63,F7,F82", "--show-source"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Flake8 syntax check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_pydocstyle_module():
-    """Module has docstring and valid Python structure (pass_to_pass)."""
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
-
-    # Check module parses and has some content
-    assert len(tree.body) > 0, "Module body is empty"
-
-    # Verify Identity class exists and has expected basic methods
-    identity_class = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "Identity":
-            identity_class = node
-            break
-
-    assert identity_class is not None, "Identity class not found"
-
-    # Verify basic methods exist (these exist on both base and gold)
-    methods = {
-        n.name for n in ast.walk(identity_class)
-        if isinstance(n, ast.FunctionDef)
-    }
-    assert "__int__" in methods, "Identity missing __int__"
-    assert "__float__" in methods, "Identity missing __float__"
-    assert "_eval_expand_identity" in methods, "Identity missing expand"
+def test_repo_py_compile():
+    """Target file compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compile failed:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_imports_clean():
-    """File has no unresolved import errors at AST level (pass_to_pass)."""
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
+def test_repo_test_sympy_utils_syntax():
+    """Test file for sympy utils compiles without errors (pass_to_pass)."""
+    test_file = f"{REPO}/test/test_sympy_utils.py"
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", test_file],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test file compile failed:\n{r.stderr}"
 
-    # Check for invalid imports at syntax level
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                assert alias.name != "*" or node.lineno > 0, "Invalid import detected"
-        elif isinstance(node, ast.ImportFrom):
-            # Module should be resolvable
-            if node.module:
-                # These are valid imports in the context
-                valid_prefixes = ("sympy", "torch", "typing", "functools")
-                if node.module.startswith(valid_prefixes):
-                    continue
+
+# [repo_tests] pass_to_pass
+def test_repo_identity_class_ast():
+    """Identity class AST structure is valid (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"""
+import ast
+source = open('{TARGET}').read()
+tree = ast.parse(source)
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'Identity':
+        methods = {{n.name for n in ast.walk(node) if isinstance(n, ast.FunctionDef)}}
+        assert '__int__' in methods, 'Missing __int__'
+        assert '__float__' in methods, 'Missing __float__'
+        assert '_eval_expand_identity' in methods, 'Missing _eval_expand_identity'
+        print('OK')
+        break
+else:
+    raise RuntimeError('Identity class not found')
+"""
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST check failed:\n{r.stderr}"
+    assert "OK" in r.stdout, f"Expected OK in output, got: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sympy_functions_imports():
+    """Target file imports are valid Python (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"""
+import ast
+source = open('{TARGET}').read()
+tree = ast.parse(source)
+errors = []
+for node in ast.walk(tree):
+    if isinstance(node, ast.Import):
+        for alias in node.names:
+            if alias.name == '*':
+                errors.append(f"Star import at line {{node.lineno}}")
+    elif isinstance(node, ast.ImportFrom):
+        if node.module and node.level != 0:
+            # Check relative imports are valid
+            pass
+if errors:
+    raise AssertionError('Import errors: ' + '; '.join(errors))
+print('Imports OK')
+"""
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import check failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

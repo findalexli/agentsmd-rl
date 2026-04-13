@@ -49,29 +49,121 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Existing explanatory plugin session-start hook executes successfully
+- id: test_repo_python_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in the repo have valid syntax
+- id: test_repo_security_hook_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Security guidance hook can be imported without errors
+- id: test_repo_all_plugins_have_valid_name
+  type: pass_to_pass
+  origin: repo_tests
+  description: All plugins have plugin.json with required 'name' field
+- id: test_repo_all_hooks_json_have_hooks_field
+  type: pass_to_pass
+  origin: repo_tests
+  description: All hooks.json files have required 'hooks' wrapper field
+- id: test_repo_all_shell_scripts_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in plugins hooks-handlers are executable
+- id: test_repo_all_plugins_have_claude_plugin_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: All plugins have .claude-plugin directory with plugin.json
+- id: test_repo_all_plugin_json_required_fields
+  type: pass_to_pass
+  origin: repo_tests
+  description: All plugin.json files have required fields (name, version, description, author.name)
+- id: test_repo_security_hook_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Security guidance hook can run without errors when given valid input
 rubric:
-- rule: Hook command paths must use ${CLAUDE_PLUGIN_ROOT} for portability instead of hardcoded or relative paths
+- rule: Hook command paths must use ${CLAUDE_PLUGIN_ROOT} for portability instead
+    of hardcoded or relative paths
   source:
-    path: plugins/plugin-dev/skills/hook-development/SKILL.md
-    lines: 331-338
+    path: plugins/learning-output-style/hooks/hooks.json
+    lines: 1-46
     commit: ae411f846195b38c8bec88914dd06132e00eadf8
-- rule: SessionStart hook scripts must output valid JSON with hookSpecificOutput.hookEventName set to 'SessionStart' and hookSpecificOutput.additionalContext containing the instructions
+  reference: |
+    {
+      "description": "Learning mode hook that adds interactive learning instructions",
+      "hooks": {
+        "SessionStart": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh"
+              }
+            ]
+          }
+        ]
+      }
+    }
+- rule: SessionStart hook scripts must output valid JSON with hookSpecificOutput.hookEventName
+    set to 'SessionStart' and hookSpecificOutput.additionalContext containing the
+    instructions
   source:
-    path: plugins/plugin-dev/skills/hook-development/SKILL.md
-    lines: 238-257, 278-288
+    path: plugins/learning-output-style/hooks-handlers/session-start.sh
+    lines: 1-66
     commit: ae411f846195b38c8bec88914dd06132e00eadf8
-- rule: "Plugin hooks.json must use the wrapper format with a \"hooks\" field containing the event definitions (e.g., {\"hooks\": {\"SessionStart\": [...]}})"
+  reference: |
+    #!/bin/bash
+    cat << 'EOF'
+    {
+      "hookSpecificOutput": {
+        "hookEventName": "SessionStart",
+        "additionalContext": "You are in 'learning' output style mode..."
+      }
+    }
+    EOF
+- rule: 'Plugin hooks.json must use the wrapper format with a "hooks" field containing
+    the event definitions (e.g., {"hooks": {"SessionStart": [...]}})'
   source:
-    path: plugins/plugin-dev/skills/hook-development/SKILL.md
-    lines: 62-99
+    path: plugins/learning-output-style/hooks/hooks.json
+    lines: 1-46
     commit: ae411f846195b38c8bec88914dd06132e00eadf8
-- rule: "Plugin manifest (plugin.json) must include required fields: name, version, description, and author (with name and email)"
+  reference: |
+    {
+      "description": "Learning mode hook that adds interactive learning instructions",
+      "hooks": {
+        "SessionStart": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh"
+              }
+            ]
+          }
+        ]
+      }
+    }
+- rule: 'Plugin manifest (plugin.json) must include required fields: name, version,
+    description, and author (with name and email)'
   source:
-    path: plugins/plugin-dev/skills/plugin-structure/SKILL.md
-    lines: 46-81
+    path: plugins/learning-output-style/.claude-plugin/plugin.json
+    lines: 1-28
     commit: ae411f846195b38c8bec88914dd06132e00eadf8
+  reference: |
+    {
+      "name": "learning-output-style",
+      "version": "1.0.0",
+      "description": "Interactive learning mode that requests meaningful code contributions at decision points (mimics the unshipped Learning output style)",
+      "author": {
+        "name": "Boris Cherny",
+        "email": "boris@anthropic.com"
+      }
+    }
 - rule: Hook handler scripts must be executable (chmod +x) to run as command hooks
   source:
-    path: plugins/plugin-dev/skills/hook-development/SKILL.md
-    lines: 42-59
+    path: plugins/learning-output-style/hooks-handlers/session-start.sh
+    lines: 1-66
     commit: ae411f846195b38c8bec88914dd06132e00eadf8
+  reference: |
+    #!/bin/bash
+    chmod +x plugins/learning-output-style/hooks-handlers/session-start.sh

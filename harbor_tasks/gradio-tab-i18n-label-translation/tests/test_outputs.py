@@ -46,6 +46,37 @@ def test_repo_core_tests():
     )
     assert r.returncode == 0, f"Core tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-1000:]}"
 
+
+def test_repo_full_test_run():
+    """Repo's full test suite passes (pass_to_pass)."""
+    # Build client dependency first
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+    # Run full test suite as configured in CI (pnpm test:run)
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test run failed:\n{r.stderr[-500:]}\n{r.stdout[-1500:]}"
+
+
+def test_repo_client_tests():
+    """Repo's @gradio/client tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed:\n{r.stderr[-500:]}\n{r.stdout[-1000:]}"
+
+
+# Note: lint and ts:check are commented out in the repo's CI workflow
+# (tests-js.yml lines 57-60) and fail at the base commit, so they are
+# excluded from p2p tests. The tests above cover the active CI checks.
+
 # ---------------------------------------------------------------------------
 # Helper: extract _gather_initial_tabs from source, strip TS types, run in Node
 # ---------------------------------------------------------------------------

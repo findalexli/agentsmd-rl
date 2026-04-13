@@ -3,22 +3,21 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T15:04:51.488998",
-  "total_time": 420.03,
-  "sandbox_id": "ierk0rvfszu0cxug17tq1",
+  "validated_at": "2026-04-12T04:13:10.088153",
+  "total_time": 1564.25,
+  "sandbox_id": "injgns3pmxr2onj54rond",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. NOP reward=0 confirms fail-to-pass tests correctly detect bugs. Gold reward=1 confirms gold fix resolves all issues. 5 fail-to-pass tests: constructor_none_prompt_data, len_returns_zero_when_dataset_none, load_no_crash_when_dataset_none_shuffle_true, router_disables_health_check, get_samples_when_dataset_none. 5 pass-to-pass tests: syntax_check, test_repo_ruff, len_returns_correct_count_with_dataset, constructor_with_prompt_data_creates_dataset, load_calls_shuffle_when_dataset_exists.",
+      "notes": "Validation passed. Docker build OK. NOP reward=0 confirms fail-to-pass tests correctly detect bugs. Gold reward=1 confirms all 15 tests pass after fix. Rubric judge has a known issue: it filters out .py files but the rubric rule checks rollout.py (a .py file). The rule is already tested by test_router_disables_health_check in the pytest suite.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.85
+      "time": 249.38
     },
     "rubric_judge": {
       "status": "pass",
@@ -28,10 +27,10 @@
       "notes": "ICR=1.00"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 94.33,
+      "time": 537.97,
       "notes": ""
     },
     "improve": {
@@ -40,25 +39,19 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8274.59,
-      "at": "2026-04-09T05:07:50.786504"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1275.63,
-      "at": "2026-04-09T14:49:26.768148"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -82,6 +75,22 @@
       "backend": "fireworks",
       "time": 420.03,
       "at": "2026-04-09T15:04:51.488998"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1792.79,
+      "at": "2026-04-12T03:02:27.915401"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1564.25,
+      "at": "2026-04-12T04:13:10.088153"
     }
   ]
 }

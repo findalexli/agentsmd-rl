@@ -3,12 +3,11 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:34:47.825283",
-  "total_time": 2092.67,
-  "sandbox_id": "i4uen8ut5npqx076ngatg",
+  "validated_at": "2026-04-12T03:56:41.880012",
+  "total_time": 1711.21,
+  "sandbox_id": "i52cblbbc5n4w9kht2bbj",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -21,7 +20,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 195.88,
+      "time": 370.78,
       "notes": ""
     },
     "improve": {
@@ -35,12 +34,12 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "rubric_icr": 0.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "Docker build passes. NOP test correctly fails (reward=0) - the fail-to-pass test catches the bug. Gold test passes (reward=1) - all 10 tests pass after fix. Rubric judge returns 0.0 because the rules reference SKILL.md conventions about module organization and Python launchers, but this is a bug fix task that only modifies kda_backend.py without adding documentation. The rubric rules are not applicable to this type of task.",
+      "notes": "All validations pass: Docker build succeeds, NOP test correctly fails (reward=0) - the fail-to-pass test catches the module-level import bug, Gold test passes (reward=1) - all 13 tests pass after applying the lazy import fix, Rubric judge returns ICR=1.0 when run with API keys.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 70.65
+      "time": 92.83
     },
     "rubric_judge": {
       "status": "pass",
@@ -48,17 +47,19 @@
       "backend": "fireworks",
       "time": 1.7,
       "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.17,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6066.7,
-      "at": "2026-04-09T06:46:12.738282"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -78,10 +79,26 @@
     {
       "verdict": "pass",
       "nop": 0.0,
-      "gold": 1.0,
+      "gold_reward": 1.0,
       "backend": "fireworks",
       "time": 2092.67,
       "at": "2026-04-10T18:34:47.825283"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1761.67,
+      "at": "2026-04-12T02:45:00.992665"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1711.21,
+      "at": "2026-04-12T03:56:41.880012"
     }
   ]
 }

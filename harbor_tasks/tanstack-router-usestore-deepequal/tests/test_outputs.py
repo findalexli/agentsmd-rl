@@ -72,18 +72,18 @@ def test_use_tags_use_store_calls_have_deep_equal():
     # Find the useTags function and check useStore calls within it
     use_tags_match = re.search(r'export const useTags = \(\) => \{', content)
     assert use_tags_match, "Could not find useTags function"
-    
+
     use_tags_start = use_tags_match.end()
     # Find the return statement at the end of useTags (uniqBy call)
     return_match = re.search(r'return uniqBy\(\s*\[', content[use_tags_start:])
     assert return_match, "Could not find return uniqBy in useTags"
     use_tags_section = content[use_tags_start:use_tags_start + return_match.start()]
-    
+
     # Verify there are exactly 5 useStore calls in useTags function
     # Pattern matches: const varName = useStore( OR const varName: Type = useStore(
     use_store_calls = re.findall(r'const \w+(?::[^=]+)? = useStore\(', use_tags_section)
     assert len(use_store_calls) == 5, f"Expected 5 useStore calls in useTags, found {len(use_store_calls)}"
-    
+
     # Simple check: count occurrences of "deepEqual," in the useTags section
     # Each useStore call in useTags should have deepEqual as the third argument
     deep_equal_count = use_tags_section.count("deepEqual,")
@@ -152,6 +152,36 @@ def test_p2p_react_router_test_build():
     )
     assert result.returncode == 0, (
         f"Build validation failed:\nstdout: {result.stdout[-2000:]}\nstderr: {result.stderr[-500:]}"
+    )
+
+
+def test_p2p_prettier_check():
+    """Repo's Prettier formatting check passes (pass_to_pass).
+
+    Command: pnpm prettier --experimental-cli --check 'packages/react-router/src/**/*.tsx'
+    Discovered from: prettier.config.js and CI workflow
+    """
+    result = run_repo_command(
+        ["pnpm", "prettier", "--experimental-cli", "--check", "packages/react-router/src/**/*.tsx"],
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"Prettier check failed:\nstdout: {result.stdout[-2000:]}\nstderr: {result.stderr[-500:]}"
+    )
+
+
+def test_p2p_docs_links():
+    """Repo's documentation link verification passes (pass_to_pass).
+
+    Command: pnpm test:docs
+    Discovered from: package.json test:docs script
+    """
+    result = run_repo_command(
+        ["pnpm", "test:docs"],
+        timeout=120,
+    )
+    assert result.returncode == 0, (
+        f"Docs link check failed:\nstdout: {result.stdout[-2000:]}\nstderr: {result.stderr[-500:]}"
     )
 
 

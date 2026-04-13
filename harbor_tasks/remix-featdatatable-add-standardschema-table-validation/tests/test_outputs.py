@@ -20,15 +20,10 @@ AGENTS_MD = f"{REPO}/AGENTS.md"
 README_MD = f"{REPO}/packages/data-table/README.md"
 
 
-# ---------------------------------------------------------------------------
-# Helpers — install workspace deps and run TypeScript via Node
-# ---------------------------------------------------------------------------
-
 _DEPS_INSTALLED = False
 
 
 def _ensure_deps():
-    """Install pnpm workspace deps for data-table (once per session)."""
     global _DEPS_INSTALLED
     if _DEPS_INSTALLED:
         return
@@ -52,7 +47,6 @@ def _ensure_deps():
 
 
 def _run_ts(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Write a .mts file into the repo root and execute it with Node."""
     _ensure_deps()
     script = Path(REPO) / "_eval_test.mts"
     script.write_text(code)
@@ -65,121 +59,99 @@ def _run_ts(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — basic file sanity
-# ---------------------------------------------------------------------------
-
-
 def test_syntax_check():
-    """Modified TypeScript files must be valid (no obvious syntax errors)."""
     for path in [TABLE_TS, DATABASE_TS, INDEX_TS]:
         src = Path(path).read_text()
         assert len(src.strip()) > 0, f"{path} is empty"
         assert src.count("{") == src.count("}"), f"{path} has unbalanced braces"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# ---------------------------------------------------------------------------
-
-
 def test_standard_schema_validation():
-    """createTable produces Standard Schema-compatible tables: parseSafe works."""
     r = _run_ts("""
-import { createTable } from './packages/data-table/src/lib/table.ts'
-import { number, string, parseSafe } from '@remix-run/data-schema'
+import { createTable } from "./packages/data-table/src/lib/table.ts"
+import { number, string, parseSafe } from "./packages/data-schema/src/index.ts"
 
 let users = createTable({
-  name: 'eval_users',
+  name: "eval_users",
   columns: { id: number(), email: string() },
 })
 
-// Table must expose ~standard with version, vendor, validate
-let std = users['~standard']
-if (!std || std.version !== 1 || typeof std.validate !== 'function') {
-  console.error('FAIL: table missing ~standard property')
+let std = users["~standard"]
+if (!std || std.version !== 1 || typeof std.validate !== "function") {
+  console.error("FAIL: table missing ~standard property")
   process.exit(1)
 }
 
-// Partial input accepted
 let partial = parseSafe(users, { id: 42 })
 if (!partial.success) {
-  console.error('FAIL: partial input rejected')
+  console.error("FAIL: partial input rejected")
   process.exit(1)
 }
 
-// Unknown columns rejected
-let unknown = parseSafe(users, { id: 1, bogus: 'nope' })
+let unknown = parseSafe(users, { id: 1, bogus: "nope" })
 if (unknown.success) {
-  console.error('FAIL: unknown column was accepted')
+  console.error("FAIL: unknown column was accepted")
   process.exit(1)
 }
 
-// Invalid column value rejected
-let invalid = parseSafe(users, { id: 'not-a-number' })
+let invalid = parseSafe(users, { id: "not-a-number" })
 if (invalid.success) {
-  console.error('FAIL: invalid value was accepted')
+  console.error("FAIL: invalid value was accepted")
   process.exit(1)
 }
 
-console.log('PASS')
+console.log("PASS")
 """)
     assert r.returncode == 0, f"Standard Schema test failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
 def test_validate_partial_row_exported():
-    """validatePartialRow is exported from table.ts and callable."""
     r = _run_ts("""
-import { validatePartialRow, createTable } from './packages/data-table/src/lib/table.ts'
-import { number, string } from '@remix-run/data-schema'
+import { validatePartialRow, createTable } from "./packages/data-table/src/lib/table.ts"
+import { number, string } from "./packages/data-schema/src/index.ts"
 
-if (typeof validatePartialRow !== 'function') {
-  console.error('FAIL: validatePartialRow not exported')
+if (typeof validatePartialRow !== "function") {
+  console.error("FAIL: validatePartialRow not exported")
   process.exit(1)
 }
 
 let users = createTable({
-  name: 'eval_users',
+  name: "eval_users",
   columns: { id: number(), email: string() },
 })
 
 let ok = validatePartialRow(users, { id: 1 })
-if ('issues' in ok) {
-  console.error('FAIL: valid input rejected')
+if ("issues" in ok) {
+  console.error("FAIL: valid input rejected")
   process.exit(1)
 }
 
-let bad = validatePartialRow(users, { id: 1, extra: 'x' })
-if (!('issues' in bad)) {
-  console.error('FAIL: unknown column accepted')
+let bad = validatePartialRow(users, { id: 1, extra: "x" })
+if (!("issues" in bad)) {
+  console.error("FAIL: unknown column accepted")
   process.exit(1)
 }
 
-console.log('PASS')
+console.log("PASS")
 """)
     assert r.returncode == 0, f"validatePartialRow test failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — structural checks
-# ---------------------------------------------------------------------------
-
-
 def test_write_path_uses_shared_validator():
-    """database.ts imports validatePartialRow from table.ts for write validation."""
     src = Path(DATABASE_TS).read_text()
-    assert re.search(
-        r"import.*validatePartialRow.*from\s+['\"]\.\/table", src, re.DOTALL
-    ), "database.ts must import validatePartialRow from './table'"
+    # Check for import of validatePartialRow from ./table (handles multi-line imports)
+    assert "validatePartialRow" in src and "from './table.ts'" in src, (
+        "database.ts must import validatePartialRow from './table.ts'"
+    )
+    # Check for function call
     assert re.search(
         r"validatePartialRow\s*\(", src
     ), "database.ts must call validatePartialRow"
 
 
 def test_dataschema_type_removed_from_exports():
-    """DataSchema type must NOT be re-exported from data-table index.ts."""
     src = Path(INDEX_TS).read_text()
     export_lines = [line for line in src.splitlines() if "export" in line]
     for line in export_lines:
@@ -189,10 +161,9 @@ def test_dataschema_type_removed_from_exports():
 
 
 def test_timestamp_schema_uses_create_schema():
-    """timestampSchema uses createSchema from data-schema instead of inline ~standard."""
     src = Path(TABLE_TS).read_text()
     assert re.search(
-        r"import.*createSchema.*from\s+['\"]@remix-run/data-schema['\"]",
+        r"import.*createSchema.*from\s+[\'\"]@remix-run/data-schema[\'\"]",
         src, re.DOTALL,
     ), "table.ts must import createSchema from @remix-run/data-schema"
     match = re.search(
@@ -204,19 +175,13 @@ def test_timestamp_schema_uses_create_schema():
     )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/doc update checks
-# ---------------------------------------------------------------------------
-
-
 def test_agents_md_cross_package_rule():
-    """AGENTS.md documents cross-package boundary rule about re-exports."""
     content = Path(AGENTS_MD).read_text().lower()
     assert "cross-package" in content, (
         "AGENTS.md must document a cross-package boundary rule"
     )
     has_reexport_rule = (
-        ("avoid" in content or "don't" in content or "do not" in content)
+        ("avoid" in content or "don\'t" in content or "do not" in content)
         and "re-export" in content
     )
     has_import_directly = "import" in content and "directly" in content
@@ -226,7 +191,6 @@ def test_agents_md_cross_package_rule():
 
 
 def test_readme_data_validation():
-    """README documents data validation and Standard Schema compatibility."""
     content = Path(README_MD).read_text().lower()
     assert "standard schema" in content, (
         "README must mention Standard Schema compatibility"
@@ -242,13 +206,7 @@ def test_readme_data_validation():
     )
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression
-# ---------------------------------------------------------------------------
-
-
 def test_table_still_exports_core_api():
-    """Core table API (createTable, hasMany, etc.) must remain exported."""
     src = Path(TABLE_TS).read_text()
     for fn in ["createTable", "hasMany", "hasOne", "belongsTo"]:
         assert re.search(rf"export\s+function\s+{fn}", src), (
@@ -256,13 +214,7 @@ def test_table_still_exports_core_api():
         )
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI gates
-# ---------------------------------------------------------------------------
-
-
 def test_repo_lint():
-    """Repo passes ESLint checks (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm lint"],
         capture_output=True, text=True, timeout=300,
@@ -271,7 +223,6 @@ def test_repo_lint():
 
 
 def test_repo_format_check():
-    """Repo passes Prettier format check (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm format:check"],
         capture_output=True, text=True, timeout=300,
@@ -280,7 +231,6 @@ def test_repo_format_check():
 
 
 def test_repo_changes_validate():
-    """Repo change files are valid (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm changes:validate"],
         capture_output=True, text=True, timeout=300,
@@ -289,7 +239,6 @@ def test_repo_changes_validate():
 
 
 def test_repo_data_table_typecheck():
-    """Data-table package typechecks successfully (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm --filter @remix-run/data-table typecheck"],
         capture_output=True, text=True, timeout=300,
@@ -298,7 +247,6 @@ def test_repo_data_table_typecheck():
 
 
 def test_repo_data_table_unit_tests():
-    """Data-table table.test.ts unit tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix/packages/data-table && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test src/lib/table.test.ts"],
         capture_output=True, text=True, timeout=120,
@@ -307,7 +255,6 @@ def test_repo_data_table_unit_tests():
 
 
 def test_repo_data_table_inflection_tests():
-    """Data-table inflection.test.ts unit tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix/packages/data-table && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test src/lib/inflection.test.ts"],
         capture_output=True, text=True, timeout=120,
@@ -316,7 +263,6 @@ def test_repo_data_table_inflection_tests():
 
 
 def test_repo_data_table_operators_tests():
-    """Data-table operators.test.ts unit tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix/packages/data-table && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test src/lib/operators.test.ts"],
         capture_output=True, text=True, timeout=120,
@@ -325,7 +271,6 @@ def test_repo_data_table_operators_tests():
 
 
 def test_repo_data_schema_unit_tests():
-    """Data-schema unit tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/remix/packages/data-schema && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test"],
         capture_output=True, text=True, timeout=120,

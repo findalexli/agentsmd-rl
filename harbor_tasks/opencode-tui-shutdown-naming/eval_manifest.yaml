@@ -9,6 +9,15 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: TypeScript files parse correctly using Bun transpiler
+- id: test_repo_unit_tests_relevant
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for utilities pass (lightweight subset covering modified
+    code)
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier code formatting check passes on modified files
 - id: syntax_valid
   type: pass_to_pass
   origin: static
@@ -88,10 +97,9 @@ rubric:
 - rule: Avoid `else` statements. Prefer early returns.
   source:
     path: AGENTS.md
-    lines: 61-62
-  evidence: The gold solution uses multiple `if` statements with early returns in
-    the newly extracted `input()` and `target()` functions instead of using `else`
-    blocks.
+    lines: 64-65
+  evidence: The newly extracted `input()` function uses multiple early returns (`if
+    (!value) return piped`, `if (!piped) return value`) instead of `else` blocks.
   category: style
 config_edits:
 - path: AGENTS.md
@@ -119,39 +127,30 @@ config_edits:
     `workerPath`.'
   gold_removed: ''
 distractors:
-- rule: Keep things in one function unless composable or reusable
-  collision_type: rule_conflict
-  why_distracting: The PR instructions explicitly require extracting the inline logic
-    for resolving the worker path and building the prompt string into standalone helper
-    functions (`target` and `input`) for clarity. Following the general rule to keep
-    things in one function would lead the agent to ignore this instruction.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 11-12
 - rule: Avoid `try`/`catch` where possible
   collision_type: rule_conflict
-  why_distracting: The PR instructions explicitly require using a `try/finally` block
-    around the TUI invocation to guarantee cleanup runs. Following the general rule
-    to avoid `try`/`catch` would lead the agent to omit the necessary `try/finally`
-    block.
+  why_distracting: The PR instruction explicitly requires adding a `try/finally` block
+    around the TUI invocation to guarantee cleanup. An agent strictly following the
+    style guide might attempt to avoid `try/finally` or refactor existing `try/catch`
+    blocks, violating the explicit PR requirement.
   severity: high
   source:
     path: AGENTS.md
-    lines: 12-13
-- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+    lines: 11-11
+- rule: Keep things in one function unless composable or reusable / Reduce total variable
+    count by inlining when a value is only used once.
   collision_type: rule_conflict
-  why_distracting: The PR requires making the shutdown idempotent, which is most simply
-    implemented using a mutable state flag like `let stopped = false` (as verified
-    by the gold solution's grep check). Forcing `const` and avoiding reassignment
-    would make implementing this stateful idempotency awkward or require unnecessary
-    refactoring.
-  severity: medium
+  why_distracting: The PR instruction explicitly asks to extract inline logic into
+    standalone helper functions (`target` and `input`). The style guide tells the
+    agent to keep things in one function and inline single-use values, which directly
+    conflicts with the extraction requirement.
+  severity: high
   source:
     path: AGENTS.md
-    lines: 51-52
-hierarchy_analysis: The root `AGENTS.md` provides general style guidelines that directly
-  conflict with the specific PR instructions for this task. The agent must recognize
-  that explicit PR requirements (extracting functions, using try/finally, implementing
-  stateful idempotency) override the general heuristics (keeping logic in one function,
-  avoiding try/catch, preferring const).
+    lines: 10-10
+hierarchy_analysis: The agent must navigate a moderate hierarchy (root `AGENTS.md`
+  and package-level `AGENTS.md`). The task is highly meta-referential because the
+  agent is instructed to modify the root `AGENTS.md` to strengthen the very naming
+  rules it is supposed to follow. The agent must also recognize that specific PR instructions
+  (extracting helpers, using try/finally) override the general style guide rules (inlining,
+  avoiding try/catch).

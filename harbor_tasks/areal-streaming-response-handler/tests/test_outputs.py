@@ -383,9 +383,9 @@ def test_repo_mdformat():
         assert r.returncode == 0, f"mdformat check failed:\n{r.stdout}{r.stderr}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_yaml_check():
-    """Repo's YAML files pass basic syntax check (pass_to_pass)."""
+# [static] pass_to_pass
+def test_no_yaml_syntax_errors():
+    """Repo's YAML files have valid syntax (pass_to_pass)."""
     subprocess.run(
         ["pip", "install", "pyyaml", "-q"],
         capture_output=True,
@@ -405,9 +405,9 @@ def test_repo_yaml_check():
     assert not errors, f"YAML syntax errors:\n" + "\n".join(errors)
 
 
-# [repo_tests] pass_to_pass
-def test_repo_json_check():
-    """Repo's JSON files pass syntax check (pass_to_pass)."""
+# [static] pass_to_pass
+def test_no_json_syntax_errors():
+    """Repo's JSON files have valid syntax (pass_to_pass)."""
     json_files = list(Path(REPO).rglob("*.json"))
     errors = []
     for f in json_files[:15]:
@@ -418,8 +418,8 @@ def test_repo_json_check():
     assert not errors, f"JSON syntax errors:\n" + "\n".join(errors)
 
 
-# [repo_tests] pass_to_pass
-def test_repo_trailing_whitespace():
+# [static] pass_to_pass
+def test_no_trailing_whitespace():
     """Repo's Python files have no trailing whitespace (pass_to_pass)."""
     py_files = list(Path(REPO).rglob("*.py"))[:20]
     errors = []
@@ -433,8 +433,8 @@ def test_repo_trailing_whitespace():
     assert not errors, f"Trailing whitespace found in:\n" + "\n".join(errors[:5])
 
 
-# [repo_tests] pass_to_pass
-def test_repo_eof_newline():
+# [static] pass_to_pass
+def test_eof_newline():
     """Repo's Python files end with newline (pass_to_pass)."""
     py_files = list(Path(REPO).rglob("*.py"))[:20]
     errors = []
@@ -443,3 +443,58 @@ def test_repo_eof_newline():
         if content and not content.endswith("\n"):
             errors.append(str(f))
     assert not errors, f"Missing EOF newline in:\n" + "\n".join(errors[:5])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_file_syntax():
+    """Test file for proxy_rollout_server is valid Python syntax (pass_to_pass)."""
+    test_file = Path(REPO) / "tests/experimental/openai/test_proxy_rollout_server.py"
+    r = subprocess.run(
+        ["python", "-m", "py_compile", str(test_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Test file syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Target file is valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_functions_exist():
+    """Test file for proxy_rollout_server contains test functions (pass_to_pass)."""
+    test_file = Path(REPO) / "tests/experimental/openai/test_proxy_rollout_server.py"
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"""
+import ast
+code = open('{test_file}').read()
+tree = ast.parse(code)
+test_count = 0
+for node in ast.walk(tree):
+    if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith('test_'):
+        test_count += 1
+    elif isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+        test_count += 1
+print(f'Found {{test_count}} test functions')
+assert test_count >= 10, f'Expected at least 10 test functions, found {{test_count}}'
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test function count check failed:\n{r.stderr}"

@@ -77,6 +77,36 @@ def test_mdtest_with_sync():
     assert r.returncode == 0, f"mdtest for with/sync failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_cargo_test_lib():
+    """Unit tests for ty_python_semantic library pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test --lib failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_doc_ty_python_semantic():
+    """Documentation builds for ty_python_semantic pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "ty_python_semantic", "--no-deps"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_ty():
+    """Cargo check for ty binary crate passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p ty failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — file existence and basic integrity
 # ---------------------------------------------------------------------------

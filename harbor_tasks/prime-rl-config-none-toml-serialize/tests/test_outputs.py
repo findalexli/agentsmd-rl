@@ -62,6 +62,27 @@ def test_repo_config_module_imports():
     assert "Config imports OK" in r.stdout
 
 
+# [repo_tests] pass_to_pass - BaseConfig._none_str_to_none feature works
+def test_repo_config_none_str_to_none():
+    """BaseConfig._none_str_to_none converts 'None' strings to None values (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "from prime_rl.utils.config import BaseConfig; import tomllib, tempfile, os; "
+            "content = b'value = \"None\"\\n'; "
+            "f = tempfile.NamedTemporaryFile(delete=False, suffix='.toml'); "
+            "f.write(content); f.close(); "
+            "loaded = BaseConfig._none_str_to_none(tomllib.load(open(f.name, 'rb'))); "
+            "assert loaded.get('value') is None, f'Expected None, got {loaded.get(\"value\")}'; "
+            "os.unlink(f.name); "
+            "print('_none_str_to_none OK')",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"_none_str_to_none test failed:\n{r.stderr[-500:]}"
+    assert "_none_str_to_none OK" in r.stdout
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files (config.py, all entrypoints) must parse without errors."""

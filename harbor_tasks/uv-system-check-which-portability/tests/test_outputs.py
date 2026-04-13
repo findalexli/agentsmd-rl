@@ -9,9 +9,11 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import importlib.util
+import subprocess
 from pathlib import Path
 
-TARGET = "/repos/uv/scripts/check_system_python.py"
+REPO = "/repos/uv"
+TARGET = f"{REPO}/scripts/check_system_python.py"
 
 
 # ---------------------------------------------------------------------------
@@ -253,6 +255,98 @@ def test_not_stub():
             )
             return
     assert False, "install_package function not found in AST"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI tooling checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on the modified file (pass_to_pass)."""
+    # Install ruff first
+    install = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert install.returncode == 0, f"Failed to install ruff: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on the modified file (pass_to_pass)."""
+    # Install ruff first
+    install = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert install.returncode == 0, f"Failed to install ruff: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--diff", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # ruff format --diff exits 0 if already formatted, 1 if changes needed
+    assert r.returncode == 0, f"Ruff format check failed (file needs formatting):\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyflakes():
+    """Repo's pyflakes linter passes on the modified file (pass_to_pass)."""
+    # Install pyflakes first
+    install = subprocess.run(
+        ["pip", "install", "pyflakes", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert install.returncode == 0, f"Failed to install pyflakes: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pyflakes", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pyflakes check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validate_pyproject():
+    """Repo's pyproject.toml is valid (pass_to_pass)."""
+    # Install validate-pyproject first
+    install = subprocess.run(
+        ["pip", "install", "validate-pyproject", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert install.returncode == 0, f"Failed to install validate-pyproject: {install.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["validate-pyproject", f"{REPO}/pyproject.toml"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"validate-pyproject failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

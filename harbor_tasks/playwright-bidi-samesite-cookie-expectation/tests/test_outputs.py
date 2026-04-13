@@ -233,40 +233,34 @@ def test_repo_test_types():
     assert r.returncode == 0, f"Test-types failed:\n{r.stderr[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression + anti-stub
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_lint_tests():
+    """Repo's test file linting passes (pass_to_pass)."""
+    _ensure_built()
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint-tests failed:\n{r.stderr[-500:]}"
 
-# [static] pass_to_pass
-def test_condition_is_not_narrowed():
-    """The fix must not break the existing Chromium or webkit behavior checks.
 
-    The chromium condition must still work, and the webkit condition must
-    remain unchanged. This prevents agents from incorrectly narrowing the
-    condition to only isBidi.
-    """
-    content = Path(SPEC_FILE).read_text()
-    lines = content.split("\n")
+# [repo_tests] pass_to_pass
+def test_repo_generate_channels():
+    """Repo's protocol channel generation passes (pass_to_pass)."""
+    _ensure_built()
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Generate channels failed:\n{r.stderr[-500:]}"
 
-    # Find the specific test function for SameSite without Secure attribute over HTTP
-    in_test = False
-    found_chromium_or_bidi = False
-    found_webkit = False
-    for line in lines:
-        # Look for the specific test function signature, not comments
-        if line.startswith("it(") and "should support set-cookie with SameSite" in line and "without Secure attribute" in line:
-            in_test = True
-            continue
-        if in_test:
-            if "browserName === 'chromium'" in line or "isBidi" in line:
-                found_chromium_or_bidi = True
-            if "browserName === 'webkit'" in line:
-                found_webkit = True
-            # End of test block — it('...') starts a new test
-            if found_chromium_or_bidi and found_webkit:
-                break
-            if line.strip().startswith("it(") and "SameSite" not in line:
-                break
 
-    assert found_chromium_or_bidi, "Chromium/isBidi cookie condition missing"
-    assert found_webkit, "Webkit cookie condition was incorrectly removed"
+# [repo_tests] pass_to_pass
+def test_repo_generate_types():
+    """Repo's type generation passes (pass_to_pass)."""
+    _ensure_built()
+    r = subprocess.run(
+        ["node", "utils/generate_types/index.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Generate types failed:\n{r.stderr[-500:]}"

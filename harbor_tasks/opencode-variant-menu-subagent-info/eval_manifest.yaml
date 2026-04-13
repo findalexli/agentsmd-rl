@@ -33,6 +33,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: CLI keybind-plugin unit tests pass via bun test
+- id: test_repo_session_compaction_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session compaction unit tests pass via bun test
+- id: test_repo_tui_transcript_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI transcript unit tests pass via bun test
+- id: test_repo_tui_theme_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI theme-store unit tests pass via bun test
+- id: test_repo_server_session_select_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server session-select unit tests pass via bun test
+- id: test_repo_server_global_session_list_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server global-session-list unit tests pass via bun test
 - id: files_exist_and_not_truncated
   type: pass_to_pass
   origin: static
@@ -121,49 +141,36 @@ rubric:
     explicit return type, relying on TypeScript to infer the `{ label: string, index:
     number, total: number }` shape.'
   category: style
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 18-31
+  evidence: In `subagent-footer.tsx`, the gold solution uses single-word variable
+    names like `s`, `label`, `siblings`, and `index` to adhere to the naming enforcement
+    rule.
+  category: naming
 distractors:
 - rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   collision_type: scope_ambiguity
-  why_distracting: The existing `cycleSession` logic uses `let next` and reassigns
-    it for bounds checking. Refactoring this to `const` with ternaries just to satisfy
-    the style rule would expand the scope of a simple 1-character bugfix (`+` to `-`)
-    and risk introducing new bugs.
+  why_distracting: The existing `cycleSession` logic uses `let next = ...` and reassigns
+    it if it goes out of bounds. An agent strictly following 'Prefer const over let'
+    might try to refactor this into a complex ternary or modulo expression, which
+    is out of scope for a simple direction inversion and risks introducing bugs.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 61-71
-- rule: Use single word names by default for new locals, params, and helper functions.
-  collision_type: rule_conflict
-  why_distracting: The gold solution introduces `subagentInfo` and `agentMatch`. Forcing
-    these to be single words like `info` or `match` would reduce clarity, as `info`
-    is too generic and `match` might shadow or be ambiguous. The rule allows multi-word
-    when ambiguous, but an agent might over-correct.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 24-36
-- rule: Use `Effect.gen(function* () { ... })` for composition.
-  collision_type: architecture_boundary
-  why_distracting: The files being edited are SolidJS UI components for the TUI. Applying
-    Effect rules like `Effect.gen` or `Effect.cached` here would completely break
-    the SolidJS reactivity model and cross the boundary between the frontend UI and
-    backend services.
-  severity: high
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 14-19
-- rule: Reduce total variable count by inlining when a value is only used once.
-  collision_type: would_cause_bug
-  why_distracting: If an agent tries to inline `agentMatch` (the regex match result)
-    to avoid creating a variable, it would have to run the regex twice (once for the
-    condition, once to extract the capture group), which is inefficient and bad practice.
+    lines: 70-79
+- rule: Avoid using the `any` type
+  collision_type: scope_ambiguity
+  why_distracting: 'The `ToolTitle` component contains `when: any`. An agent might
+    try to fix this type violation by replacing `any` with a proper type, missing
+    the fact that the component is entirely unreferenced and should just be deleted
+    as per the hint.'
   severity: medium
   source:
     path: AGENTS.md
-    lines: 38-49
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines,
-  while `packages/opencode/AGENTS.md` provides highly specific rules for Effect and
-  Drizzle. Since this PR modifies SolidJS TUI components, the Effect and Drizzle rules
-  in the package-level config are entirely irrelevant and represent an architecture
-  boundary. The agent must recognize that UI code follows the general TS/SolidJS patterns
-  rather than the backend Effect patterns.
+    lines: 13-14
+hierarchy_analysis: The agent must apply general TypeScript/SolidJS style rules from
+  the root `AGENTS.md` (Level 0) while ignoring the Effect and Database specific rules
+  in `packages/opencode/AGENTS.md` (Level 2) since this is a TUI React/Solid component
+  task.

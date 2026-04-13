@@ -50,6 +50,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All fetch-router package tests pass via pnpm
+- id: test_fetch_router_app_storage_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-router app-storage tests pass
+- id: test_fetch_router_middleware_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-router middleware tests pass
+- id: test_fetch_router_route_map_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-router route-map tests pass
 rubric:
 - rule: Documentation files are updated consistently when code is removed
   source:
@@ -96,15 +108,15 @@ config_edits:
     handles, correlation IDs, and per-request feature flag"
 distractors:
 - rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].*.md`'
-  collision_type: meta_confusion
-  why_distracting: The rule requires creating a `.changes` file for new changes. An
-    agent might create a new patch or minor changeset file to document the removal
-    of `router.run()`. However, since the feature was never released, the correct
-    action is to delete the existing unreleased changeset, not add a new one to document
-    the removal.
-  severity: high
+  collision_type: rule_conflict
+  why_distracting: The agent might create a new change file to document the removal
+    of `router.run()`, but since the feature was never released, the correct action
+    is to delete the unreleased change file without creating a new one.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 41-42
-hierarchy_analysis: Only the root `AGENTS.md` config file is provided, so there are
-  no hierarchy conflicts. The rules apply globally across the monorepo.
+    lines: 43-44
+hierarchy_analysis: The configuration is a single flat file (`AGENTS.md`). The primary
+  conflict arises from the general rule to create change files for modifications,
+  which conflicts with the specific task instruction to clean up an unreleased change
+  file for a feature that is being removed before release.

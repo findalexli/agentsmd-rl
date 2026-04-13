@@ -19,9 +19,10 @@ RUN git clone --filter=blob:none https://github.com/MystenLabs/sui.git && \
     cd sui && \
     git checkout fbb6960c6225c2a4406cd336a0899b54e53e4787
 
-# Install Rust toolchain used by the repo
+# Install Rust toolchain used by the repo and add clippy
 WORKDIR /workspace/sui
-RUN rustup update
+RUN rustup update && \
+    rustup component add clippy rustfmt
 
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier

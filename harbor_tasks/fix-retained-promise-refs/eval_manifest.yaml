@@ -88,21 +88,34 @@ rubric:
   evidence: The gold solution script executes exactly one Nx command (`pnpm nx run
     @tanstack/router-core:build`) at the end of the script.
   category: tooling
+- rule: Always prefer `pnpm nx ...` over `npx nx ...`.
+  source:
+    path: AGENTS.md
+    lines: 43-44
+  evidence: The gold solution rebuilds the package using `pnpm nx run @tanstack/router-core:build`
+    instead of using `npx nx` or a direct script.
+  category: tooling
 distractors:
-- rule: Always run unit and type tests during development - do not proceed if they
-    fail
+- rule: 'Target specific packages: `pnpm nx run @tanstack/react-router:test:unit`'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the full test suite (`pnpm test:unit`,
-    `pnpm test:types`) or targeted Nx test commands inside the solution script. While
-    the prompt mentions these in the testing instructions, the gold solution script
-    only runs the build command. Adding test commands to the evaluation script might
-    cause timeouts or unrelated failures in a sandbox environment.
+  why_distracting: The config provides examples for testing `@tanstack/react-router`,
+    but the changes are in `@tanstack/router-core`. An agent might blindly copy the
+    example commands and test the wrong package.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 46-46
-hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines. The agent
-  must balance the strict testing requirements with the practical scope of a patch
-  script, adhering to the tooling preferences (pnpm nx) without over-complicating
-  the execution environment.
+    lines: 23-24
+- rule: 'Efficient targeted testing workflow: 1. Affected only: `pnpm nx affected
+    --target=test:unit`'
+  collision_type: rule_conflict
+  why_distracting: The config suggests using `nx affected` for an efficient workflow,
+    but the task instructions explicitly require running tests for the specific `@tanstack/router-core`
+    package. Using `affected` might run unnecessary tests or fail in a detached sandbox
+    state.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 56-57
+hierarchy_analysis: The config is a single flat file (AGENTS.md) containing general
+  project guidelines and testing commands. There is no complex hierarchy.
 version: '2.0'

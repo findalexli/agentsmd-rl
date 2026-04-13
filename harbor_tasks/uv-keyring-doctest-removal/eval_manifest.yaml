@@ -7,20 +7,36 @@ source:
 checks:
 - id: uv_keyring_cargo_check
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: uv-keyring crate compiles with cargo check
 - id: uv_keyring_cargo_clippy
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: uv-keyring crate passes clippy linting
 - id: cargo_fmt_check
   type: pass_to_pass
-  origin: pr_diff
+  origin: repo_tests
   description: Workspace code is formatted correctly
 - id: cargo_toml_valid
   type: pass_to_pass
   origin: static
-  description: Cargo.toml must remain valid TOML
+  description: Workspace Cargo.toml must remain valid TOML
+- id: uv_keyring_cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-keyring Cargo.toml must remain valid TOML
+- id: cargo_lock_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.lock must remain valid TOML
+- id: uv_keyring_mock_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-keyring mock tests pass
+- id: cargo_check_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check --locked passes (verifies Cargo.lock is up to date)
 - id: readme_exists_with_docs
   type: pass_to_pass
   origin: static
@@ -42,31 +58,32 @@ rubric:
 - rule: PREFER [`TypeName`] references when writing Rust doc comments
   source:
     path: AGENTS.md
-    lines: '20'
-    commit: 84a854c169ef8acdcc90692e40f6f540be74b956
+    lines: 19-20
+  evidence: In `crates/uv-keyring/src/mock.rs`, the gold solution replaces a broken
+    code block with prose that uses `[`TypeName`]` references like `[`set_default_credential_builder`](crate::set_default_credential_builder)`
+    and `[`default_credential_builder`]`.
+  category: documentation
+  verification: llm_judge
 distractors:
 - rule: ALWAYS attempt to add a test case for changed behavior
   collision_type: scope_ambiguity
-  why_distracting: The PR is specifically about fixing broken doctests (which are
-    themselves tests) and documentation examples. There is no new runtime behavior
-    being added or changed, so attempting to add a new test case would be wasted effort
-    and a misunderstanding of the task's scope.
+  why_distracting: The task is to fix broken doctests. The agent might think it needs
+    to add new tests to cover the `mock.rs` functionality since it removed the doctest,
+    but the task is strictly about fixing compilation errors.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 2-2
+    lines: 2-3
 - rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
     --precise` to make lockfile changes
-  collision_type: rule_conflict
-  why_distracting: The gold solution removes the `doc-comment` dependency entirely,
-    which naturally results in `Cargo.lock` updates. An agent might misinterpret this
-    rule and either try to use `cargo update --precise` (which is for version bumps,
-    not removals) or avoid committing the `Cargo.lock` changes altogether.
-  severity: medium
+  collision_type: meta_confusion
+  why_distracting: The agent needs to remove `doc-comment` from `Cargo.toml` and `Cargo.lock`.
+    The rule about `cargo update --precise` applies to updating dependencies, not
+    removing them, but the agent might misinterpret this as a restriction on modifying
+    `Cargo.lock` directly or running `cargo remove`.
+  severity: low
   source:
     path: AGENTS.md
     lines: 13-14
-hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
-  referenced by `CLAUDE.md`. There are no hierarchical conflicts, but the agent must
-  carefully interpret the scope of general rules (like adding tests or updating lockfiles)
-  when performing a documentation and dependency-removal task.
+hierarchy_analysis: The configuration is a flat single file (`AGENTS.md` included
+  via `CLAUDE.md`). The task is to fix broken doctests and documentation.

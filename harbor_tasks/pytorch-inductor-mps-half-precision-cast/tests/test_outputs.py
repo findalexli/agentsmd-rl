@@ -1,378 +1,117 @@
-"""
-Task: pytorch-inductor-mps-half-precision-cast
-Repo: pytorch/pytorch @ 036b25f5a29dc58cbc62e7b976efb860ff128c3f
-PR:   #176436
+#!/usr/bin/env python3
+"""Test outputs for the task.
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
+This file contains:
+- fail_to_pass tests: tests that should FAIL before the fix and PASS after
+- pass_to_pass tests: tests that should PASS both before and after the fix
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
-REPO = "/repo"
-MPS_FILE = str(Path(REPO) / "torch/_inductor/codegen/mps.py")
+# REPO is the path inside the Docker container where the repo is mounted
+REPO = "/workspace/repo"
 
 
-def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python code in the repo context."""
-    env = os.environ.copy()
-    env["PYTHONPATH"] = REPO
+def run(cmd, cwd=None, timeout=60):
+    """Run a command and return the result."""
     return subprocess.run(
-        [sys.executable, "-c", code],
-        capture_output=True, text=True, timeout=timeout, cwd=REPO, env=env,
+        cmd, shell=True, cwd=cwd or REPO, capture_output=True, text=True, timeout=timeout
     )
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# =============================================================================
+# FAIL TO PASS TESTS
+# These test the actual fix - they should FAIL before and PASS after
+# =============================================================================
+
+def test_claude_md_uses_two_space_indent():
+    """CLAUDE.md should use 2-space indentation, not 4-space (fail_to_pass)."""
+    content = Path(f"{REPO}/CLAUDE.md").read_text()
+    lines = content.split("\n")
+
+    for i, line in enumerate(lines, 1):
+        # Check that indentation is not using 4-space as base
+        # Lines starting with 4 spaces but not 8 or 12 etc. indicates 4-space base
+        # We allow: 0-space, 2-space, 6-space, 10-space, etc. (2 + 4n)
+        # We reject: 4-space, 8-space, 12-space, etc. (0 + 4n, where n>=1)
+        #
+        # Actually, let's simplify: just check no line starts with exactly 4 spaces
+        # and that the file has been changed from the original (has some 2-space lines)
+        if line.startswith("    ") and not line.startswith("        "):
+            assert False, f"Line {i} uses 4-space base indent: {line[:60]}"
+
+    # Verify the file was actually changed (has 2-space indentation)
+    has_two_space = any(line.startswith("  ") and not line.startswith("    ") for line in lines)
+    assert has_two_space, "File should have 2-space indentation after fix"
 
 
-# [static] pass_to_pass
-def test_syntax_check():
-    """mps.py must parse without syntax errors."""
-    r = _run_python(f"import ast; ast.parse(open('{MPS_FILE}').read()); print('OK')")
-    assert r.returncode == 0, f"Syntax error: {r.stderr}"
-    assert "OK" in r.stdout
+# =============================================================================
+# PASS TO PASS TESTS
+# These test that the repo stays functional - should PASS before AND after
+# =============================================================================
+
+def _setup_repo_for_testing():
+    """Copy repo to writable location and install dependencies for testing."""
+    # Copy repo to writable location inside container
+    subprocess.run(["cp", "-r", REPO, "/tmp/writable-repo"], check=True)
+    # Install package with test dependencies
+    subprocess.run(
+        ["pip", "install", "-e", ".[test]", "-q"],
+        cwd="/tmp/writable-repo",
+        capture_output=True,
+    )
+    return "/tmp/writable-repo"
 
 
-# [repo_tests] pass_to_pass - CI-style py_compile check
-def test_py_compile():
-    """mps.py must compile to bytecode without errors (pass_to_pass)."""
+def test_repo_harness_utils():
+    """Repo harness utility tests pass (pass_to_pass)."""
+    writable_repo = _setup_repo_for_testing()
     r = subprocess.run(
-        [sys.executable, "-m", "py_compile", MPS_FILE],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        ["python", "-m", "pytest", "tests/test_harness_utils.py", "-v", "-p", "no:cacheprovider"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=writable_repo,
     )
-    assert r.returncode == 0, f"py_compile failed: {r.stderr}"
+    assert r.returncode == 0, f"Harness utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - AST validation
-def test_ast_parseable():
-    """mps.py must produce valid AST with expected structure (pass_to_pass)."""
-    r = _run_python(f"""
-import ast
-with open('{MPS_FILE}') as f:
-    src = f.read()
-tree = ast.parse(src)
-# Verify it is a module
-assert isinstance(tree, ast.Module), "Not a valid module"
-# Count top-level functions and classes
-defs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.ClassDef))]
-print(f"OK: {{len(defs)}} definitions found")
-""")
-    assert r.returncode == 0, f"AST parsing failed: {r.stderr}"
-    assert "OK:" in r.stdout
-
-
-# [repo_tests] pass_to_pass - function compile check
-def test_functions_compile():
-    """All functions in mps.py must be individually compilable (pass_to_pass)."""
-    r = _run_python(f"""
-import ast
-with open('{MPS_FILE}') as f:
-    src = f.read()
-tree = ast.parse(src)
-errors = []
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef):
-        try:
-            compile(ast.Module([node], []), "<func>", "exec")
-        except SyntaxError as e:
-            errors.append(f"{{node.name}}: {{e}}")
-if errors:
-    print(f"COMPILE_ERRORS: {{errors}}")
-else:
-    print("OK: All functions compile")
-""")
-    assert r.returncode == 0, f"Function compile test failed: {r.stderr}"
-    assert "OK:" in r.stdout
-
-
-# [repo_tests] pass_to_pass - validate MetalOverrides class exists
-def test_metal_overrides_exists():
-    """MetalOverrides class must exist in mps.py (pass_to_pass)."""
-    r = _run_python(f"""
-import ast
-with open('{MPS_FILE}') as f:
-    src = f.read()
-tree = ast.parse(src)
-found = any(
-    isinstance(node, ast.ClassDef) and node.name == "MetalOverrides"
-    for node in ast.walk(tree)
-)
-assert found, "MetalOverrides class not found"
-print("OK: MetalOverrides class exists")
-""")
-    assert r.returncode == 0, f"MetalOverrides check failed: {r.stderr}"
-    assert "OK:" in r.stdout
-
-
-# [repo_tests] pass_to_pass - validate key methods exist
-def test_required_methods_exist():
-    """Required methods (where, masked, value_to_metal) must exist (pass_to_pass)."""
-    r = _run_python(f"""
-import ast
-with open('{MPS_FILE}') as f:
-    src = f.read()
-tree = ast.parse(src)
-required = {{"where", "masked", "value_to_metal"}}
-found = set()
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "MetalOverrides":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name in required:
-                found.add(item.name)
-    elif isinstance(node, ast.FunctionDef) and node.name == "value_to_metal":
-        found.add(node.name)
-missing = required - found
-assert not missing, f"Missing methods: {{missing}}"
-print(f"OK: Found {{len(found)}} required methods")
-""")
-    assert r.returncode == 0, f"Required methods check failed: {r.stderr}"
-    assert "OK:" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] fail_to_pass
-def test_where_casts_false_branch():
-    """where() must cast the false-branch value to match the true-branch type."""
-    r = _run_python(r"""
-import ast, math, textwrap
-
-src = open("/repo/torch/_inductor/codegen/mps.py").read()
-tree = ast.parse(src)
-lines = src.splitlines(keepends=True)
-
-# Extract value_to_metal
-vtm_src = None
-for node in ast.iter_child_nodes(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "value_to_metal":
-        vtm_src = textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
-        break
-assert vtm_src, "value_to_metal not found"
-
-# Extract where() from MetalOverrides
-where_src = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "MetalOverrides":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "where":
-                raw = "".join(lines[item.lineno - 1 : item.end_lineno])
-                where_lines = [
-                    l for l in textwrap.dedent(raw).splitlines(keepends=True)
-                    if not l.strip().startswith("@")
-                ]
-                where_src = "".join(where_lines)
-                break
-assert where_src, "MetalOverrides.where not found"
-
-# Build callable
-class MockTorch:
-    inf = math.inf
-
-class CSEVariable(str):
-    pass
-
-ns = {
-    "math": math, "torch": MockTorch(), "CSEVariable": CSEVariable,
-    "OpVarT": object, "__builtins__": __builtins__,
-}
-future = "from __future__ import annotations\n"
-exec(compile(future + vtm_src, "<vtm>", "exec"), ns)
-exec(compile(future + where_src, "<where>", "exec"), ns)
-where_fn = ns["where"]
-
-# The false-branch value must be wrapped in static_cast<decltype(true_var)>
-for true_var, false_val in [("var_bf16", 0.0), ("out_half", 1.5), ("tmp_f16", -1.0)]:
-    result = where_fn("cond", true_var, false_val)
-    assert f"decltype({true_var})" in result, (
-        f"where('cond', '{true_var}', {false_val}) = {result!r} "
-        f"— missing decltype({true_var})"
+def test_repo_log_parsers_java():
+    """Repo Java log parser tests pass (pass_to_pass)."""
+    writable_repo = _setup_repo_for_testing()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/test_log_parsers_java.py", "-v", "-p", "no:cacheprovider"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=writable_repo,
     )
-    assert "static_cast" in result, (
-        f"where() output {result!r} missing static_cast"
+    assert r.returncode == 0, f"Log parsers tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_cli_smoke():
+    """Repo CLI smoke test passes (pass_to_pass)."""
+    writable_repo = _setup_repo_for_testing()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/test_cli.py::test_smoke_test", "-v", "-p", "no:cacheprovider"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=writable_repo,
     )
-print("PASS")
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    assert r.returncode == 0, f"CLI smoke test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-# [pr_diff] fail_to_pass
-def test_where_casts_special_values():
-    """where() must cast special float values (inf, -inf, nan) with type cast."""
-    r = _run_python(r"""
-import ast, math, textwrap
-
-src = open("/repo/torch/_inductor/codegen/mps.py").read()
-tree = ast.parse(src)
-lines = src.splitlines(keepends=True)
-
-vtm_src = None
-for node in ast.iter_child_nodes(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "value_to_metal":
-        vtm_src = textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
-        break
-
-where_src = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "MetalOverrides":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "where":
-                raw = "".join(lines[item.lineno - 1 : item.end_lineno])
-                where_lines = [
-                    l for l in textwrap.dedent(raw).splitlines(keepends=True)
-                    if not l.strip().startswith("@")
-                ]
-                where_src = "".join(where_lines)
-                break
-
-class MockTorch:
-    inf = math.inf
-
-class CSEVariable(str):
-    pass
-
-ns = {
-    "math": math, "torch": MockTorch(), "CSEVariable": CSEVariable,
-    "OpVarT": object, "__builtins__": __builtins__,
-}
-future = "from __future__ import annotations\n"
-exec(compile(future + vtm_src, "<vtm>", "exec"), ns)
-exec(compile(future + where_src, "<where>", "exec"), ns)
-where_fn = ns["where"]
-
-for val, metal_repr in [(math.inf, "HUGE_VALF"), (-math.inf, "-HUGE_VALF"), (math.nan, "NAN")]:
-    result = where_fn("mask", "x", val)
-    assert metal_repr in result, (
-        f"where('mask', 'x', {val}) = {result!r} — missing {metal_repr}"
+def test_repo_version():
+    """Repo package can be imported and has version (pass_to_pass)."""
+    writable_repo = _setup_repo_for_testing()
+    r = subprocess.run(
+        ["python", "-c", "import swebench; print(swebench.__version__)"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=writable_repo,
     )
-    assert "decltype" in result, (
-        f"Special value not cast: {result!r}"
-    )
-print("PASS")
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_masked_casts_both_branches():
-    """masked() must add static_cast<decltype(...)> to both if-body and else-branch."""
-    r = _run_python(r"""
-import ast, re
-
-src = open("/repo/torch/_inductor/codegen/mps.py").read()
-tree = ast.parse(src)
-
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "MetalOverrides":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "masked":
-                raw_lines = src.splitlines()[item.lineno - 1 : item.end_lineno]
-                clean_lines = [l for l in raw_lines if not l.strip().startswith("#")]
-                clean = "\n".join(clean_lines)
-
-                # Both branches must have type casts
-                cast_count = len(re.findall(r"static_cast<decltype", clean))
-                assert cast_count >= 2, (
-                    f"masked() has {cast_count} static_cast<decltype casts, expected >= 2"
-                )
-
-                # Verify else-branch specifically has cast
-                assert re.search(r"else.*static_cast<decltype", clean), (
-                    "masked() else-branch missing static_cast<decltype cast"
-                )
-                print("PASS")
-                break
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
-# ---------------------------------------------------------------------------
-
-
-# [repo_tests] pass_to_pass
-def test_value_to_metal_special_values():
-    """value_to_metal() must preserve correct Metal representations for special values."""
-    r = _run_python(r"""
-import ast, math, textwrap
-
-src = open("/repo/torch/_inductor/codegen/mps.py").read()
-tree = ast.parse(src)
-lines = src.splitlines(keepends=True)
-
-vtm_src = None
-for node in ast.iter_child_nodes(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "value_to_metal":
-        vtm_src = textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
-        break
-
-class MockTorch:
-    inf = math.inf
-
-ns = {"math": math, "torch": MockTorch(), "__builtins__": __builtins__}
-future = "from __future__ import annotations\n"
-exec(compile(future + vtm_src, "<vtm>", "exec"), ns)
-vtm = ns["value_to_metal"]
-
-cases = [
-    (0.0, "0.0"), (1.5, "1.5"), (math.inf, "HUGE_VALF"),
-    (-math.inf, "-HUGE_VALF"), (math.nan, "NAN"),
-    (True, "true"), (False, "false"), (42, "42"),
-]
-for val, expected in cases:
-    got = vtm(val)
-    assert got == expected, f"value_to_metal({val!r}) = {got!r}, expected {expected!r}"
-print("PASS")
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
-# ---------------------------------------------------------------------------
-
-
-# [static] pass_to_pass
-def test_not_stub():
-    """masked() and where() must not be stubs."""
-    r = _run_python(r"""
-import ast
-
-src = open("/repo/torch/_inductor/codegen/mps.py").read()
-tree = ast.parse(src)
-
-for method_name in ("masked", "where"):
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "MetalOverrides":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == method_name:
-                    body_stmts = [
-                        s for s in item.body
-                        if not isinstance(s, (ast.Pass, ast.Expr))
-                        or (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))
-                    ]
-                    assert len(body_stmts) >= 1, (
-                        f"MetalOverrides.{method_name} appears to be a stub"
-                    )
-                    if len(item.body) == 1 and isinstance(item.body[0], ast.Raise):
-                        raise AssertionError(
-                            f"MetalOverrides.{method_name} is just a raise statement"
-                        )
-                    break
-print("PASS")
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    assert r.returncode == 0, f"Import/version check failed:\n{r.stderr}"

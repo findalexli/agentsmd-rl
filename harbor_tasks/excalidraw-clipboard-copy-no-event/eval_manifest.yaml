@@ -69,8 +69,19 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
-- id: repo-clipboard-test-syntax
-  description: 'The clipboard.test.ts file must have valid TypeScript syntax that
+- id: repo-charts-test-syntax
+  description: 'The charts.test.ts file must have valid TypeScript syntax that
+    can be parsed.
+
+    Uses prettier --parser typescript to validate without requiring full type check.
+
+    This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-utils-test-syntax
+  description: 'The utils.test.ts file must have valid TypeScript syntax that
     can be parsed.
 
     Uses prettier --parser typescript to validate without requiring full type check.
@@ -91,26 +102,49 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
+- id: repo-clipboard-return-placement
+  description: 'The clipboard.ts file must have correct return statement placement
+    inside the if (clipboardEvent) block and after navigator.clipboard.writeText.
+
+    Uses Node.js to verify the control flow structure. This is a pass_to_pass check
+    from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-clipboard-const-variable
+  description: 'The clipboard.ts file must declare plainTextEntry as const, not let.
+
+    Uses Node.js to verify the variable declaration. This is a pass_to_pass check
+    for code quality from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-filledbutton-scss-structure
+  description: 'The FilledButton.scss file must have correct structure for loading/success
+    states with background-color: var(--color-success).
+
+    Uses Node.js to verify the SCSS structure. This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-clipboard-no-redundant-undefined
+  description: 'The clipboard.ts file must not contain the redundant plainTextEntry = undefined
+    assignment after writeText.
+
+    Uses Node.js to verify the code pattern. This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - source:
     path: CLAUDE.md
-    lines: Clipboard operations must have fallbacks
-  rule: Document clipboard fallback architecture
-- rule: 'Package Development: Work in `packages/*` for editor features'
-  source:
-    path: CLAUDE.md
-    lines: '14'
-  evidence: The gold solution modifies `packages/excalidraw/clipboard.ts` and `packages/excalidraw/components/FilledButton.scss`,
-    correctly identifying clipboard logic and button styling as editor features within
-  category: architecture
-- rule: TypeScript throughout with strict configuration
-  source:
-    path: CLAUDE.md
-    lines: '34'
-  evidence: The gold solution changes `let plainTextEntry` to `const plainTextEntry`
-    after removing the reassignment (`plainTextEntry = undefined;`), adhering to strict
-    TypeScript and linting standards.
-  category: style
+  reference: "### Clipboard\n- Clipboard operations must have fallbacks (event.clipboardData -> navigator.clipboard -> execCommand)"
+  rule: Document clipboard fallback architecture in CLAUDE.md
+  category: documentation
 distractors:
 - rule: 'App Development: Work in `excalidraw-app/` for app-specific features'
   collision_type: architecture_boundary

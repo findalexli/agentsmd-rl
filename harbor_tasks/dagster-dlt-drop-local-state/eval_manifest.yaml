@@ -11,6 +11,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: dagster-dlt test suite passes
+- id: test_repo_dagster_dlt_core_pipeline
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dlt core pipeline test passes
 - id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
@@ -19,61 +23,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff format check on dagster-dlt passes
-- id: test_repo_pyright
-  type: pass_to_pass
-  origin: repo_tests
-  description: Pyright type check on dagster-dlt passes
 - id: test_repo_dagster_core_imports
   type: pass_to_pass
   origin: repo_tests
   description: Dagster core and dagster-dlt can be imported without errors
+- id: test_repo_dagster_dlt_resource_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: DagsterDltResource and related classes can be imported
 rubric:
-- rule: Use comments to explain invariants, design decisions, and WHY code exists,
-    not just narrate WHAT the code does.
-  source:
-    path: .claude/coding_conventions.md
-    lines: 1-10
-    commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
-- rule: Follow Google-style docstrings for public functions and classes. Include Args,
-    Returns, and Raises sections where applicable.
-  source:
-    path: .claude/coding_conventions.md
-    lines: 320-322
-    commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
 - rule: 'Python: Core framework in `python_modules/dagster/`, libraries in `python_modules/libraries/`'
   source:
     path: CLAUDE.md
     lines: 40-41
-  evidence: The gold solution modifies `python_modules/libraries/dagster-dlt/dagster_dlt/resource.py`,
+    commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+  reference: The gold solution modifies `python_modules/libraries/dagster-dlt/dagster_dlt/resource.py`,
     correctly locating the `dagster-dlt` integration in the libraries directory rather
     than the core framework.
   category: architecture
-distractors:
-- rule: 'pytest python_modules/dagster/dagster_tests/  # Run core tests'
-  collision_type: scope_ambiguity
-  why_distracting: The rule suggests running core tests (`pytest python_modules/dagster/dagster_tests/`),
-    but the modified code is in a library (`dagster-dlt`). Running core tests would
-    waste time and compute resources; the agent should only run the specific library's
-    tests.
-  severity: medium
+- rule: Python libraries are located in python_modules/libraries/
   source:
     path: CLAUDE.md
-    lines: 23-24
-- rule: ALWAYS check this before writing data structures - use @record instead of
-    @dataclass.
+    lines: 46-47
+  evidence: The patch modifies `python_modules/libraries/dagster-dlt/dagster_dlt/resource.py`,
+    correctly locating the library code in the `libraries` directory as specified
+    by the architecture guidelines.
+  category: architecture
+distractors:
+- rule: use @record instead of @dataclass for data structures
   collision_type: scope_ambiguity
-  why_distracting: The rule emphasizes using `@record` instead of `@dataclass` for
-    data structures. An agent might get distracted looking for data structures to
-    refactor or define, but this PR only requires adding procedural logic (method
-    calls) to an existing function.
+  why_distracting: The rule instructs to use `@record` instead of `@dataclass` for
+    data structures, which might prompt an agent to look up data structure conventions.
+    However, this task only involves modifying procedural logic in an existing method,
+    making data structure rules irrelevant.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 8-9
-hierarchy_analysis: The config file `CLAUDE.md` provides general repository guidelines.
-  The distinction between core framework and libraries is clear, but test commands
-  are overly focused on the core framework, which could mislead an agent working on
-  a specific library like `dagster-dlt`.
+    lines: 10-11
+hierarchy_analysis: The configuration consists of a single flat file (`CLAUDE.md`)
+  at the root level containing generic repository guidelines. There are no hierarchical
+  overrides or conflicts.
 version: '2.0'
 source:
   repo: dagster-io/dagster

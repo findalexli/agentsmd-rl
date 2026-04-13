@@ -200,18 +200,6 @@ def test_parse_multiplexed_stream_uses_read_fully():
             "skipBytes should be replaced with readFully in parseMultiplexedStream"
 
 
-def test_docker_session_compiles():
-    """DockerSession and related classes compile successfully (pass-to-pass)."""
-    result = subprocess.run(
-        ["bazel", "build", "//java/src/org/openqa/selenium/grid/node/docker/..."],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=300
-    )
-    assert result.returncode == 0, f"Compilation failed:\n{result.stderr[-1000:]}"
-
-
 def test_docker_session_unit_tests_exist():
     """DockerSessionTest.java exists with comprehensive tests (pass-to-pass)."""
     test_path = f"{REPO}/java/test/org/openqa/selenium/grid/node/docker/DockerSessionTest.java"
@@ -235,7 +223,7 @@ def test_docker_session_unit_tests_exist():
 
 
 def test_bazel_build_targets_include_new_deps():
-    """BUILD.bazel files include new dependencies (pass-to-pass)."""
+    """BUILD.bazel files include new dependencies (fail-to-pass)."""
     # Check docker test BUILD file has new deps
     docker_build_path = f"{REPO}/java/test/org/openqa/selenium/grid/node/docker/BUILD.bazel"
     with open(docker_build_path, 'r') as f:
@@ -247,22 +235,10 @@ def test_bazel_build_targets_include_new_deps():
         "BUILD.bazel missing //java/src/org/openqa/selenium/remote dependency"
 
 
-def test_docker_library_compiles():
-    """Docker library compiles with all changes (pass-to-pass)."""
-    result = subprocess.run(
-        ["bazel", "build", "//java/src/org/openqa/selenium/grid/node/docker"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=300
-    )
-    assert result.returncode == 0, f"Docker library compilation failed:\n{result.stderr[-1000:]}"
-
-
-def test_repo_bazel_build_docker_targets():
-    """Repo's Bazel docker targets build successfully (pass_to_pass)."""
+def test_repo_bazel_build_all_docker():
+    """Repo's Bazel docker library and grid targets build successfully (pass_to_pass)."""
     r = subprocess.run(
-        ["bazel", "build", "//java/src/org/openqa/selenium/grid/node/docker/..."],
+        ["bazel", "build", "//java/src/org/openqa/selenium/grid/node/docker/...", "//java/src/org/openqa/selenium/docker/..."],
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Bazel docker targets build failed:\n{r.stderr[-500:]}"

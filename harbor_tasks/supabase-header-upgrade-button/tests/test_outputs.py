@@ -446,3 +446,15 @@ def test_repo_instrumentation_client():
         cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"Instrumentation client tests failed:\n{r.stderr[-500:]}"
+
+def test_repo_floating_mobile_toolbar():
+    """Repo's FloatingMobileToolbar utils tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "FloatingMobileToolbar.utils"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"FloatingMobileToolbar tests failed:\n{r.stderr[-500:]}"
+

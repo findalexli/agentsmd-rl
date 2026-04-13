@@ -11,7 +11,7 @@ checks:
   description: justfile is parseable and retains existing recipes
 - id: test_justfile_valid_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: justfile has valid structure with balanced braces
 - id: test_existing_skills_intact
   type: pass_to_pass
@@ -19,15 +19,15 @@ checks:
   description: Other existing skill files remain present
 - id: test_skill_files_valid_frontmatter
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All skill files have valid YAML frontmatter with required fields
 - id: test_readme_valid_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Skills README.md has required sections and valid table formatting
 - id: test_cargo_toml_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Cargo.toml has valid workspace structure and dependencies
 - id: test_justfile_new_changeset_empty_recipe
   type: fail_to_pass
@@ -109,272 +109,181 @@ rubric:
 - rule: 'Changeset change types: patch for bug fixes, minor for new features (targets
     next), major for breaking changes (targets next).'
   source:
-    path: AGENTS.md
-    lines: 76-78
-  evidence: The gold solution's new `.claude/skills/changeset/SKILL.md` file explicitly
-    lists `patch`, `minor`, and `major` change types, specifying that `minor` and
-    `major` must target the `next` branch, matchin
+    path: .claude/skills/changeset/SKILL.md
+    lines: 45-50
+  reference: |
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+    - `major` — Breaking user API changes. PR must target the `next` branch.
   category: documentation
 - rule: 'Bug fix changesets must start with `Fixed [#NUMBER](issue link): ...`'
   source:
-    path: AGENTS.md
-    lines: 81-81
-  evidence: 'The gold solution''s new `.claude/skills/changeset/SKILL.md` file includes
-    the exact format `Fixed [#4444](https://github.com/biomejs/biome/issues/4444):
-    ...` under the ''Bug Fixes'' section.'
+    path: .claude/skills/changeset/SKILL.md
+    lines: 75-82
+  reference: |
+    ### Bug Fixes
+
+    Start with a link to the issue:
+
+    ```markdown
+    Fixed [#4444](https://github.com/biomejs/biome/issues/4444): [`useOptionalChain`](https://biomejs.dev/linter/rules/use-optional-chain/) now detects negated logical OR chains.
+    ```
+  category: documentation
+- rule: Document the correct change types and their target branches (main vs next).
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 45-50
+  reference: |
+    ## Choose the Correct Change Type
+
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+    - `major` — Breaking user API changes. PR must target the `next` branch.
+  category: documentation
+- rule: Document the requirement to disclose AI assistance in pull requests.
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 16-20
+  reference: |
+    ## AI Assistance Disclosure
+
+    If AI was used in any capacity to produce the PR, **you must disclose it** in
+    the PR description.
+  category: documentation
+- rule: Document the requirement to write concise PR summaries and reject verbose
+    ones.
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 100-110
+  reference: |
+    Keep it brief. Examples:
+
+    - "Added new tests from the bug report."
+    - "Extended existing snapshot tests to cover the new edge case."
+  category: documentation
+- rule: Changeset guidelines (types, formatting, user-facing requirement) must be
+    accurately documented for agents.
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 1-50
+  reference: |
+    ## Purpose
+
+    Use this skill when a PR introduces user-facing changes that require a changeset.
+
+    ## Create a Changeset
+
+    **Do not create changeset files manually.** Use:
+
+    ```shell
+    just new-changeset-empty
+    ```
+
+    ## Choose the Correct Change Type
+
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+  category: documentation
+- rule: AI assistance must be disclosed in pull requests.
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 16-20
+  reference: |
+    ## AI Assistance Disclosure
+
+    If AI was used in any capacity to produce the PR, **you must disclose it** in
+    the PR description.
   category: documentation
 config_edits:
 - path: .claude/skills/README.md
   tier: 2
-  gold_added: ' \*\*\[testing-codegen\](\.\'
+  gold_added: |
+    | **[changeset](./changeset/SKILL.md)** | Create and write proper changesets for the CHANGELOG | Any agent |
+    | **[pull-request](./pull-request/SKILL.md)** | Create PRs with proper titles, descriptions, and branch targeting | Any agent |
   gold_removed: ''
 - path: .claude/skills/changeset/SKILL.md
   tier: 1
-  gold_added: '---
-
-    name: changeset
-
-    description: Guide for creating and writing proper changesets for Biome PRs. Use
-    when a PR introduces user-visible changes (bug fixes, new features, rule changes,
-    formatter changes, parser changes) that need a changeset entry for the CHANGELOG.
-    Trigger when creating changesets, writing changeset descriptions, or choosing
-    the correct change type.
-
-    compatibility: Designed for coding agents working on the Biome codebase (github.com/biomejs/biome).
-
+  gold_added: |
     ---
-
+    name: changeset
+    description: Guide for creating and writing proper changesets for Biome PRs.
+    compatibility: Designed for coding agents working on the Biome codebase.
+    ---
 
     ## Purpose
 
-
     Use this skill when a PR introduces user-facing changes that require a changeset.
-    Changesets drive CHANGELOG generation and release automation. Internal-only changes
-    (refactors with no user-visible effect) do not need changesets.
-
 
     ## Create a Changeset
 
-
     **Do not create changeset files manually.** Use:
 
-
     ```shell
-
     just new-changeset-empty
-
     ```
-
-
-    The command will create an empty file `.changeset/`. Edit it directly to add detail.
-
-
-    > Requires `pnpm` — run `pnpm i` from repo root first.
-
 
     ## Choose the Correct Change Type
 
-
     - `patch` — Bug fixes.
-
     - `minor` — New features. PR must target the `next` branch.
-
-    - `major` — Breaking user API changes. PR must target the `next` branch. These
-    are rare and strictly controlled.
-
-
-    Refer to the [versioning page](https://biomejs.dev/internals/versioning/) when
-    unsure.
-
-
-    ## Changeset Format
-
-
-    ```markdown
-
-    ---
-
-    "@biomejs/biome": patch
-
-    ---
-
-
-    Description here.
-
-    ```
-
-
-    If you need headers inside the description, use `####` or `#####` only. Other
-    header levels break the CHANGELOG tooling.
-
-
-    ## Writing Guidelines
-
-
-    ### General Rules
-
-
-    - Write about **user-facing changes only**. No changeset needed for pure refactoring.
-    Describe how the change affects the user.
-
-    - Be **concise and clear** — 1 to 3 sentences. Longer entries signal to users
-    that the change deserves attention.
-
-    - **Past tense** for what you did: "Added", "Fixed", "Changed".
-
-    - **Present tense** for Biome behavior: "Biome now supports...", "The rule now
-    detects...".
-
-    - End every sentence with a **full stop** (`.`).
-
-
-    ### Bug F'
+    - `major` — Breaking user API changes. PR must target the `next` branch.
   gold_removed: ''
 - path: .claude/skills/pull-request/SKILL.md
   tier: 1
-  gold_added: '---
-
-    name: pull-request
-
-    description: Guide for creating proper pull requests for the Biome project. Use
-    when opening a PR, writing a PR description, choosing the correct target branch,
-    or filling out the PR template. Trigger when creating PRs, writing PR summaries,
-    or preparing code for review.
-
-    compatibility: Designed for coding agents working on the Biome codebase (github.com/biomejs/biome).
-
+  gold_added: |
     ---
-
+    name: pull-request
+    description: Guide for creating proper pull requests for the Biome project.
+    compatibility: Designed for coding agents working on the Biome codebase.
+    ---
 
     ## Purpose
 
-
-    Use this skill when creating a pull request for the Biome repository. It covers
-    branch targeting, title formatting, the PR template, and AI disclosure requirements.
-
+    Use this skill when creating a pull request for the Biome repository.
 
     ## AI Assistance Disclosure
 
-
     If AI was used in any capacity to produce the PR, **you must disclose it** in
-    the PR description. Examples:
-
-
-    > This PR was written primarily by Claude Code.
-
-    >
-
-    > I consulted ChatGPT to understand the codebase but the solution was fully authored
-    manually by myself.
-
-
-    This is mandatory. It helps reviewers apply appropriate scrutiny.
-
+    the PR description.
 
     ## Choose the Target Branch
 
-
     | Change type | Target branch |
-
     | --- | --- |
-
     | Bug fix (code or docs) | `main` |
-
     | New **nursery** rule | `main` |
-
-    | Rule promotion from nursery | `next` |
-
-    | New feature (user-facing) | `next` |
-
-    | New feature (internal only) | `main` |
-
 
     ## PR Title
 
-
     Use **conventional commit format**. The title becomes the squash-merge commit
     message.
-
-
-    ```
-
-    <type>(<scope>): <short description>
-
-    ```
-
-
-    Supported prefixes:
-
-
-    - `feat:` — new feature
-
-    - `fix:` — bugfix
-
-    - `docs:` — documentation update
-
-    - `refactor:` — code refactor (no behavior change)
-
-    - `test:` — test update
-
-    - `chore:` — housekeeping
-
-    - `perf:` — performance improvement
-
-    - `ci:` — CI change
-
-    - `build:` — build system or dependency change
-
-    - `revert:` — revert a previous change
-
-
-    Examples:
-
-
-    ```
-
-    feat(css): add noDuplicateSelectors rule
-
-    fix(linter): handle edge case in useOptionalChain
-
-    docs: update contributing guide
-
-    refactor(parser): simplify HTML attribute parsing
-
-    ```
-
-
-    The CI runs [action-semantic-pull-request](https://github.com/amannn/action-semantic-pull-request)
-    to validate the'
   gold_removed: ''
 - path: .claude/skills/testing-codegen/SKILL.md
   tier: 1
-  gold_added: '- Changeset guide: \`..'
+  gold_added: '- Changeset guide: `../changeset/SKILL.md`'
   gold_removed: ''
 distractors:
-- rule: Create a file in `.changeset/` directory with a unique filename and front
-    matter.
-  collision_type: rule_conflict
-  why_distracting: The agent might copy the instruction to manually create a file
-    in the `.changeset/` directory into the new changeset skill. However, the task
-    explicitly requires adding a `just new-changeset-empty` command and instructing
-    agents to use that instead of manual file creation.
+- rule: Create a changeset for user-facing changes, assume YES if unsure.
+  collision_type: meta_confusion
+  why_distracting: The rule states 'If UNSURE -> Assume YES and create changeset'.
+    An agent might blindly create a `.changeset/*.md` file for this PR. However, this
+    PR only updates agent skills and internal documentation, which is explicitly 'NOT
+    User-Facing' (lines 85-89) and does not require a changeset.
   severity: high
   source:
     path: AGENTS.md
-    lines: 66-68
-- rule: Before opening a PR, verify if a changeset is needed. If UNSURE, assume YES
-    and create a changeset.
+    lines: 68-75
+- rule: Always follow the structure in .github/PULL_REQUEST_TEMPLATE.md.
   collision_type: meta_confusion
-  why_distracting: The agent might attempt to create a changeset for this PR itself,
-    following the 'If UNSURE -> Assume YES' rule. However, this PR only updates internal
-    agent skills and documentation, which falls under 'NOT User-Facing' and should
-    not have a changeset.
+  why_distracting: The rule emphasizes following the structure in `.github/PULL_REQUEST_TEMPLATE.md`.
+    An agent might mistakenly try to modify the actual PR template file or create
+    a dummy PR description file, rather than creating the requested `.claude/skills/pull-request/SKILL.md`
+    documentation.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 41-46
-hierarchy_analysis: The `AGENTS.md` file contains detailed instructions on changesets
-  and PRs that the agent needs to extract and formalize into dedicated skill files.
-  However, there is a direct conflict between the existing `AGENTS.md` instruction
-  to manually create changeset files and the task's requirement to use a new `just
-  new-changeset-empty` command. The task instructions override the existing documentation.
+    lines: 18-20
+hierarchy_analysis: The agent must read Level 0 guidelines (AGENTS.md, CLAUDE.md)
+  and synthesize them into Level 1/2 skill files (.claude/skills/*). It must understand
+  that it is writing instructions for future agents, not executing the instructions
+  for the current PR.

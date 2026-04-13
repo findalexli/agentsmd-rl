@@ -166,6 +166,145 @@ def test_repo_no_stubbed_files():
     assert r.returncode == 0, f"File size check failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # First install ruff and tomli (needed for ruff config)
+    r = subprocess.run(
+        ["pip", "install", "ruff", "tomli", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+    # Then run ruff check
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check",
+         "src/prime_rl/configs/trainer.py",
+         "src/prime_rl/configs/rl.py",
+         "src/prime_rl/trainer/parallel_dims.py",
+         "src/prime_rl/trainer/sft/train.py",
+         "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_toml_configs_valid():
+    """All TOML config files parse without errors (pass_to_pass)."""
+    toml_script = '''
+import tomli
+import os
+import sys
+
+errors = []
+for root, dirs, files in os.walk("configs"):
+    for f in files:
+        if f.endswith(".toml"):
+            p = os.path.join(root, f)
+            try:
+                with open(p, "rb") as fp:
+                    tomli.load(fp)
+            except Exception as e:
+                errors.append(f"{p}: {e}")
+
+print(f"Checked TOML files, errors: {len(errors)}")
+for e in errors[:3]:
+    print(e)
+if errors:
+    sys.exit(1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", toml_script],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_parallel_dims_imports():
+    """ParallelDims module has valid Python imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; tree = ast.parse(open('src/prime_rl/trainer/parallel_dims.py').read()); " +
+         "imports = [(n.module, [a.name for a in n.names]) for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.module]; " +
+         "print(f'Found {len(imports)} import statements'); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check",
+         "src/prime_rl/configs/trainer.py",
+         "src/prime_rl/configs/rl.py",
+         "src/prime_rl/trainer/parallel_dims.py",
+         "src/prime_rl/trainer/sft/train.py",
+         "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trainer_config_no_syntax_errors():
+    """Trainer config has valid Python syntax and imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; tree = ast.parse(open('src/prime_rl/configs/trainer.py').read()); " +
+         "classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]; " +
+         "assert 'ModelConfig' in classes, 'ModelConfig not found'; " +
+         "assert 'TrainerConfig' in classes, 'TrainerConfig not found'; " +
+         "print('OK: Found', len(classes), 'classes')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trainer config check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rl_config_valid():
+    """RL config module has valid structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; tree = ast.parse(open('src/prime_rl/configs/rl.py').read()); " +
+         "funcs = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]; " +
+         "assert 'auto_setup_deployment' in funcs, 'auto_setup_deployment not found'; " +
+         "print('OK: Found', len(funcs), 'functions')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"RL config check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sft_train_valid():
+    """SFT train module has valid structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; tree = ast.parse(open('src/prime_rl/trainer/sft/train.py').read()); " +
+         "funcs = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]; " +
+         "assert 'train' in funcs, 'train function not found'; " +
+         "print('OK: Found', len(funcs), 'functions')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SFT train check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_configs_dir_readable():
+    """Configs directory exists and contains TOML files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import os; files = list(os.walk('configs')); " +
+         "toml_count = sum([len([f for f in filenames if f.endswith('.toml')]) for _, _, filenames in files]); " +
+         "assert toml_count > 0, 'No TOML files found in configs'; " +
+         "print(f'OK: Found {toml_count} TOML config files')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Configs dir check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

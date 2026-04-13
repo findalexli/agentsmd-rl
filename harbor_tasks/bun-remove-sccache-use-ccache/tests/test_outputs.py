@@ -208,3 +208,30 @@ def test_cmake_modules_syntax():
     # A syntax error will contain "Parse error" in output
     assert "Parse error" not in result.stderr, f"SetupCcache.cmake has parse errors: {result.stderr}"
     assert "syntax error" not in result.stderr.lower(), f"SetupCcache.cmake has syntax errors: {result.stderr}"
+
+
+def test_generate_perf_trace_events_sh_syntax():
+    """Repo's generate-perf-trace-events.sh passes bash syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-n", "scripts/generate-perf-trace-events.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"generate-perf-trace-events.sh has bash syntax errors: {result.stderr}"
+
+
+def test_lldb_inline_sh_syntax():
+    """Repo's lldb-inline.sh passes bash syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-n", "scripts/lldb-inline.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"lldb-inline.sh has bash syntax errors: {result.stderr}"
+
+
+def test_update_sqlite_amalgamation_sh_syntax():
+    """Repo's update-sqlite-amalgamation.sh passes bash syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-n", "scripts/update-sqlite-amalgamation.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"update-sqlite-amalgamation.sh has bash syntax errors: {result.stderr}"

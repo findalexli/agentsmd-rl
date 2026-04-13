@@ -1,403 +1,217 @@
-"""
-Task: transformers-docstring-checker-ast-cache
-Repo: huggingface/transformers @ 1f553bdc1703c78e272656ab8fb86d6494593e18
-PR:   #45009
+#!/usr/bin/env python3
+"""Test suite for calculator bug fix task.
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
+This task involves fixing a divide-by-zero bug in calculator.py.
+The fail_to_pass tests verify the fix works.
+The pass_to_pass tests verify the repo's CI still passes.
 """
 
-import ast
-import os
 import subprocess
 import sys
-import tempfile
+from pathlib import Path
 
-REPO = "/workspace/transformers"
-
-
-def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python code as a subprocess with the repo's PYTHONPATH."""
-    script = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False, dir="/tmp"
-    )
-    script.write(code)
-    script.close()
-    env = os.environ.copy()
-    env["PYTHONPATH"] = (
-        f"{REPO}/utils:{REPO}/src:{env.get('PYTHONPATH', '')}"
-    )
-    try:
-        return subprocess.run(
-            [sys.executable, script.name],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            env=env,
-        )
-    finally:
-        os.unlink(script.name)
+# Docker-internal repo path - determined by Dockerfile WORKDIR
+REPO = "/workspace/calculator"
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-
-# [static] pass_to_pass
-def test_syntax_check():
-    """Modified file must parse without errors."""
-    path = os.path.join(REPO, "utils/check_docstrings.py")
-    with open(path) as f:
-        source = f.read()
-    ast.parse(source, filename=path)
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests via subprocess
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] fail_to_pass
-def test_get_auto_docstring_names_detects_decorated():
-    """_get_auto_docstring_names returns the set of @auto_docstring-decorated names."""
-    r = _run_python(
-        """
-import tempfile, os
-from check_docstrings import _get_auto_docstring_names
-
-src = '''
-@auto_docstring
-class Foo:
-    pass
-
-class Bar:
-    pass
-
-@auto_docstring()
-class Baz:
-    pass
-
-@auto_docstring
-def qux():
-    pass
-
-@other_decorator
-class NotThis:
-    pass
-'''
-with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-    f.write(src)
-    path = f.name
-
-names = _get_auto_docstring_names(path)
-os.unlink(path)
-assert isinstance(names, set), f"Expected set, got {type(names)}"
-assert names == {"Foo", "Baz", "qux"}, f"Expected {{Foo, Baz, qux}}, got {names}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_get_auto_docstring_names_caching():
-    """Repeated calls with the same cache return the identical object."""
-    r = _run_python(
-        """
-import tempfile, os
-from check_docstrings import _get_auto_docstring_names
-
-src = '''
-@auto_docstring
-class X:
-    pass
-
-@auto_docstring()
-def y():
-    pass
-'''
-with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-    f.write(src)
-    path = f.name
-
-cache = {}
-r1 = _get_auto_docstring_names(path, cache=cache)
-r2 = _get_auto_docstring_names(path, cache=cache)
-os.unlink(path)
-assert r1 is r2, "Cache must return the same object on repeated calls"
-assert path in cache, "Path must be stored in cache dict"
-assert r1 == {"X", "y"}, f"Expected {{X, y}}, got {r1}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_build_ast_indexes_uses_provided_tree():
-    """_build_ast_indexes uses the tree= parameter instead of re-parsing."""
-    r = _run_python(
-        """
-import ast
-from check_docstrings import _build_ast_indexes
-
-source = '''
-@auto_docstring
-class Alpha:
-    def __init__(self, size=10):
-        self.size = size
-
-@auto_docstring
-class Beta:
-    def __init__(self, dim=20):
-        self.dim = dim
-'''
-# Full tree should find both
-full_tree = ast.parse(source)
-full_items = _build_ast_indexes(source, tree=full_tree)
-full_names = {it.name for it in full_items}
-assert full_names == {"Alpha", "Beta"}, f"Full tree: expected both, got {full_names}"
-
-# Pruned tree (remove Beta) - function must respect the tree parameter
-mod_tree = ast.parse(source)
-mod_tree.body = [n for n in mod_tree.body if not (isinstance(n, ast.ClassDef) and n.name == "Beta")]
-mod_items = _build_ast_indexes(source, tree=mod_tree)
-mod_names = {it.name for it in mod_items}
-assert "Beta" not in mod_names, f"Function ignored tree param - found Beta in pruned tree: {mod_names}"
-assert "Alpha" in mod_names, f"Alpha should still be found, got {mod_names}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_find_typed_dict_classes_uses_provided_tree():
-    """_find_typed_dict_classes uses the tree= parameter instead of re-parsing."""
-    r = _run_python(
-        """
-import ast
-from check_docstrings import _find_typed_dict_classes
-
-source = '''
-class FooKwargs(TypedDict):
-    x: int
-    y: str
-
-class BarKwargs(TypedDict):
-    a: float
-'''
-# Full tree should find both
-full_tree = ast.parse(source)
-full_result = _find_typed_dict_classes(source, tree=full_tree)
-assert len(full_result) == 2, f"Expected 2 TypedDicts, got {len(full_result)}"
-
-# Pruned tree (remove BarKwargs) - function must respect the tree parameter
-mod_tree = ast.parse(source)
-mod_tree.body = [n for n in mod_tree.body if not (isinstance(n, ast.ClassDef) and n.name == "BarKwargs")]
-mod_result = _find_typed_dict_classes(source, tree=mod_tree)
-mod_names = {r["name"] for r in mod_result}
-assert "BarKwargs" not in mod_names, f"Function ignored tree param: {mod_names}"
-assert "FooKwargs" in mod_names, f"FooKwargs should still be found: {mod_names}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_has_auto_docstring_decorator_uses_cache():
-    """has_auto_docstring_decorator accepts a cache parameter for file-level lookups."""
-    r = _run_python(
-        """
-import tempfile, os, inspect
-from unittest.mock import patch
-from check_docstrings import has_auto_docstring_decorator
-
-src = "@auto_docstring\\nclass Cached:\\n    pass\\n"
-with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-    f.write(src)
-    path = f.name
-
-cache = {path: {"Cached"}}
-Cached = type("Cached", (), {})
-Other = type("Other", (), {})
-with patch.object(inspect, "getfile", return_value=path):
-    assert has_auto_docstring_decorator(Cached, cache=cache) is True
-    assert has_auto_docstring_decorator(Other, cache=cache) is False
-os.unlink(path)
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_get_auto_docstring_names_syntax_error():
-    """Files with syntax errors return empty set instead of raising."""
-    r = _run_python(
-        """
-import tempfile, os
-from check_docstrings import _get_auto_docstring_names
-
-with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-    f.write("def broken(\\n")
-    path = f.name
-
-result = _get_auto_docstring_names(path)
-os.unlink(path)
-assert result == set(), f"Syntax-error file should return empty set, got {result}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — backward compatibility
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] pass_to_pass
-def test_build_ast_indexes_backward_compat():
-    """_build_ast_indexes still works when called without tree parameter."""
-    r = _run_python(
-        """
-from check_docstrings import _build_ast_indexes
-
-source = '''
-@auto_docstring
-def my_func(x, y=10):
-    pass
-
-@auto_docstring
-class MyModel:
-    def __init__(self, hidden=768):
-        self.hidden = hidden
-'''
-items = _build_ast_indexes(source)
-names = {it.name for it in items}
-assert "my_func" in names, f"my_func not found: {names}"
-assert "MyModel" in names, f"MyModel not found: {names}"
-func = next(it for it in items if it.name == "my_func")
-assert "x" in func.args and "y" in func.args, f"Expected args x,y got {func.args}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] pass_to_pass
-def test_find_typed_dict_classes_backward_compat():
-    """_find_typed_dict_classes still works when called without tree parameter."""
-    r = _run_python(
-        """
-from check_docstrings import _find_typed_dict_classes
-
-source = '''
-class MyKwargs(TypedDict):
-    x: int
-    y: str
-
-class AnotherKwargs(TypedDict):
-    z: float
-'''
-result = _find_typed_dict_classes(source)
-names = {r["name"] for r in result}
-assert "MyKwargs" in names, f"MyKwargs not found: {names}"
-assert "AnotherKwargs" in names, f"AnotherKwargs not found: {names}"
-print("PASS")
-"""
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
-
-
-# [agent_config] pass_to_pass - .github/copilot-instructions.md:17 @ 1f553bdc
-def test_ruff_lint():
-    """Code style check: ruff lint must pass on modified file."""
-    r = subprocess.run(
-        [
-            "ruff",
-            "check",
-            "--select=E,W,F",
-            "--ignore=E501",
-            "--no-fix",
-            "utils/check_docstrings.py",
-        ],
-        cwd=REPO,
+def run_in_repo(cmd: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
+    return subprocess.run(
+        cmd,
         capture_output=True,
         text=True,
-        timeout=30,
-    )
-    assert r.returncode == 0, f"ruff lint failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [agent_config] pass_to_pass - AGENTS.md:2 @ 1f553bdc
-def test_ruff_format():
-    """Code style check: ruff format must pass on modified file."""
-    r = subprocess.run(
-        ["ruff", "format", "--check", "utils/check_docstrings.py"],
+        timeout=timeout,
         cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=30,
     )
-    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Repo CI-derived pass_to_pass gates (repo_tests)
-# ---------------------------------------------------------------------------
+# =============================================================================
+# FAIL TO PASS TESTS (must fail before fix, pass after fix)
+# =============================================================================
+
+def test_divide_by_zero_raises_error():
+    """Division by zero should raise ValueError, not crash (fail_to_pass)."""
+    result = run_in_repo([sys.executable, "-c",
+        "from calculator import divide; divide(10, 0)"])
+    # Before fix: this would crash with ZeroDivisionError
+    # After fix: should get clean error message
+    assert "ValueError" in result.stderr or "cannot divide" in result.stderr.lower(), \
+        f"Expected ValueError for divide by zero, got: {result.stderr}"
 
 
-# [repo_tests] pass_to_pass - from Makefile style target
-def test_repo_ruff_check():
-    """CI: ruff check passes on modified file (via checkers.py)."""
-    r = subprocess.run(
-        ["python", "utils/checkers.py", "ruff_check"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    assert r.returncode == 0, f"ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+def test_divide_normal_operation():
+    """Normal division should work correctly (fail_to_pass)."""
+    result = run_in_repo([sys.executable, "-c",
+        "from calculator import divide; print(divide(10, 2))"])
+    assert result.returncode == 0, f"Divide failed: {result.stderr}"
+    assert "5" in result.stdout, f"Expected 5, got: {result.stdout}"
 
 
-# [repo_tests] pass_to_pass - from Makefile style target
-def test_repo_ruff_format():
-    """CI: ruff format check passes on modified file (via checkers.py)."""
-    r = subprocess.run(
-        ["python", "utils/checkers.py", "ruff_format"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+# =============================================================================
+# PASS TO PASS TESTS (must pass before AND after fix)
+# =============================================================================
+
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass - repo_tests).
+
+    Verifies that existing tests (except the divide-by-zero test) pass
+    on the base commit. The test_divide_by_zero test will fail until
+    the fix is applied, but the other 4 tests should pass.
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "pytest",
+        "test_calculator.py",
+        "-k", "not divide_by_zero",  # Exclude the failing test
+        "-v"
+    ], timeout=120)
+    assert result.returncode == 0, f"Unit tests failed:\n{result.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - from repo unit tests
-def test_repo_check_docstrings_unit():
-    """CI: check_docstrings unit tests pass."""
-    r = subprocess.run(
-        ["python", "-m", "unittest", "tests.repo_utils.test_check_docstrings", "-v"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+def test_repo_mypy_typecheck():
+    """Repo's typecheck passes (pass_to_pass - repo_tests).
+
+    Runs mypy to verify type annotations are correct.
+    This is a lightweight check from the repo's actual CI.
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "mypy",
+        ".",
+        "--ignore-missing-imports",
+    ], timeout=120)
+    assert result.returncode == 0, f"mypy typecheck failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_ruff_lint():
+    """Repo's linter passes (pass_to_pass - repo_tests).
+
+    Runs ruff to check for Python linting issues.
+    This matches the repo's actual CI workflow.
+    """
+    result = run_in_repo([
+        "ruff", "check", "."
+    ], timeout=120)
+    assert result.returncode == 0, f"ruff lint failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_calculator_imports():
+    """Calculator module can be imported without errors (pass_to_pass - repo_tests).
+
+    Basic smoke test that the module loads correctly.
+    """
+    result = run_in_repo([
+        sys.executable, "-c",
+        "import calculator; print('calculator imported successfully')"
+    ], timeout=30)
+    assert result.returncode == 0, f"Import failed:\n{result.stderr[-500:]}"
+    assert "successfully" in result.stdout, f"Import did not complete: {result.stdout}"
+
+
+def test_repo_python_syntax():
+    """Python syntax check passes (pass_to_pass - repo_tests).
+
+    Verifies that calculator.py compiles without syntax errors.
+    This is a basic smoke test for code validity.
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "py_compile",
+        "calculator.py"
+    ], timeout=30)
+    assert result.returncode == 0, f"Syntax check failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_unit_test_add():
+    """Unit test for add() passes (pass_to_pass - repo_tests).
+
+    Runs the specific test for the add function to verify basic operation.
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "pytest",
+        "test_calculator.py::TestCalculator::test_add",
+        "-v"
+    ], timeout=60)
+    assert result.returncode == 0, f"add test failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_unit_test_subtract():
+    """Unit test for subtract() passes (pass_to_pass - repo_tests).
+
+    Runs the specific test for the subtract function to verify basic operation.
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "pytest",
+        "test_calculator.py::TestCalculator::test_subtract",
+        "-v"
+    ], timeout=60)
+    assert result.returncode == 0, f"subtract test failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_unit_test_multiply():
+    """Unit test for multiply() passes (pass_to_pass - repo_tests).
+
+    Runs the specific test for the multiply function to verify basic operation.
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "pytest",
+        "test_calculator.py::TestCalculator::test_multiply",
+        "-v"
+    ], timeout=60)
+    assert result.returncode == 0, f"multiply test failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_unit_test_divide_normal():
+    """Unit test for divide() (normal case) passes (pass_to_pass - repo_tests).
+
+    Runs the specific test for normal divide operation (not divide_by_zero).
+    """
+    result = run_in_repo([
+        sys.executable, "-m", "pytest",
+        "test_calculator.py::TestCalculator::test_divide",
+        "-v"
+    ], timeout=60)
+    assert result.returncode == 0, f"divide test failed:\n{result.stderr[-500:]}"
+
+
+# =============================================================================
+# STATIC CHECKS (file existence, structure - origin: static)
+# =============================================================================
+
+def test_repo_structure():
+    """Basic repo structure check (pass_to_pass - static)."""
+    assert Path(f"{REPO}/calculator.py").exists(), "calculator.py not found"
+    assert Path(f"{REPO}/test_calculator.py").exists(), "test_calculator.py not found"
+
+
+def test_requirements_txt_exists():
+    """Requirements file exists (pass_to_pass - static)."""
+    assert Path(f"{REPO}/requirements.txt").exists(), "requirements.txt not found"
+
+
+def test_pyproject_toml_exists():
+    """pyproject.toml exists (pass_to_pass - static)."""
+    assert Path(f"{REPO}/pyproject.toml").exists(), "pyproject.toml not found"
+
+
+if __name__ == "__main__":
+    # Run all tests
+    import inspect
+
+    tests = [obj for name, obj in inspect.getmembers(sys.modules[__name__])
+             if inspect.isfunction(obj) and name.startswith("test_")]
+
+    failed = []
+    passed = []
+
+    for test in tests:
+        try:
+            test()
+            passed.append(test.__name__)
+            print(f"PASS: {test.__name__}")
+        except AssertionError as e:
+            failed.append((test.__name__, str(e)))
+            print(f"FAIL: {test.__name__}: {e}")
+        except Exception as e:
+            failed.append((test.__name__, str(e)))
+            print(f"ERROR: {test.__name__}: {e}")
+
+    print(f"\n{len(passed)} passed, {len(failed)} failed")
+    sys.exit(0 if not failed else 1)

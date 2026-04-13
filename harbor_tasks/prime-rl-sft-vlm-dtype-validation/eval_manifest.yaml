@@ -33,6 +33,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: ModelConfig can be instantiated for various model types
+- id: test_repo_unit_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit config tests pass
 - id: modelconfig_vlm_default_dtypes
   type: fail_to_pass
   origin: pr_diff
@@ -115,28 +119,23 @@ rubric:
     referencing its previous location.
   category: style
 distractors:
-- rule: Explicit is better than implicit.
-  collision_type: architecture_boundary
-  why_distracting: An agent might interpret 'Explicit is better than implicit' as
-    a directive to explicitly pass a flag like `is_sft=True` or `context='sft'` to
-    `ModelConfig` to bypass the validation, rather than cleanly moving the validation
-    up to `TrainerConfig` where it naturally only applies to RL.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: '15'
-- rule: Errors should never pass silently.
-  collision_type: scope_ambiguity
-  why_distracting: The issue states that the dtype constraint should be removed for
-    SFT. An agent following 'Errors should never pass silently' might worry that removing
-    the validation from `ModelConfig` will cause SFT to fail silently with wrong dtypes,
-    leading them to add complex conditional validations or warnings instead of simply
-    removing the constraint for SFT.
+- rule: Errors should never pass silently. Unless explicitly silenced.
+  collision_type: would_cause_bug
+  why_distracting: The agent might interpret 'Unless explicitly silenced' as permission
+    to catch and silence the ValueError in SFTConfig, rather than fixing the root
+    cause by moving the validator to TrainerConfig.
   severity: medium
   source:
     path: AGENTS.md
-    lines: '23'
-hierarchy_analysis: The config hierarchy is flat with only `AGENTS.md` containing
-  rules (included via `CLAUDE.md`). The rules are mostly general Python guidelines
-  (Zen of Python) and style preferences. There are no conflicting rules within the
-  hierarchy itself.
+    lines: 18-19
+- rule: Flat is better than nested.
+  collision_type: architecture_boundary
+  why_distracting: The agent might avoid moving the validator to TrainerConfig because
+    it requires nested attribute access (self.model.name, self.model.optimization_dtype),
+    and instead try to keep it in ModelConfig with an injected 'is_rl' flag.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 12-12
+hierarchy_analysis: The config hierarchy is flat, consisting only of AGENTS.md (included
+  via CLAUDE.md). The rules are generic Python guidelines that apply globally.

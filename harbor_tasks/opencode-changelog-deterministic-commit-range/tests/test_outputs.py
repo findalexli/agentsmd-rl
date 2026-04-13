@@ -236,7 +236,7 @@ def test_repo_typecheck():
         ["bun", "typecheck"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Typecheck failed:\\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -246,4 +246,24 @@ def test_repo_prettier_check():
         ["bun", "prettier", "--check", "script/changelog.ts", "script/version.ts"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Prettier check failed:\\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_changelog():
+    """Repo's TypeScript changelog.ts builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "./script/changelog.ts", "--target=bun", "--outdir=/tmp/dist"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_version():
+    """Repo's TypeScript version.ts builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "./script/version.ts", "--target=bun", "--outdir=/tmp/dist"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

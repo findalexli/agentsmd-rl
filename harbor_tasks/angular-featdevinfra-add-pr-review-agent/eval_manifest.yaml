@@ -57,6 +57,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: No circular dependencies in packages
+- id: yaml_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML configuration files have valid syntax
+- id: json_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key JSON configuration files have valid syntax
+- id: pullapprove_yml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: PullApprove configuration has valid YAML syntax
+- id: gitattributes_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git attributes file exists and has valid format
+- id: editorconfig_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: EditorConfig file exists and follows specification
 rubric:
 - rule: The PR review guidelines should be consistent with the tone and thoroughness
     of existing Angular contributing docs
@@ -159,40 +179,28 @@ config_edits:
 distractors:
 - rule: Use `pnpm bazel test //target` to run tests.
   collision_type: meta_confusion
-  why_distracting: 'The rule instructs to use `pnpm bazel test //target` to run tests.
-    An agent might include this instruction in the PR review skill or attempt to run
-    tests locally to verify the PR. However, the gold solution explicitly dictates:
-    ''Do NOT run tests locally as part of your review process. CI handles this automatically''.'
+  why_distracting: The agent is authoring a SKILL.md file that provides instructions
+    for a PR Review agent. It might read the AGENTS.md rule 'Use pnpm bazel test //target'
+    and embed it into the PR review guidelines, instructing the reviewer agent to
+    run tests locally. However, as the gold solution shows, reviewer agents should
+    rely on CI rather than running tests locally. The agent must distinguish between
+    its own execution environment rules and the rules it writes for the reviewer persona.
   severity: high
   source:
     path: AGENTS.md
-    lines: 9-10
-- rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
+    lines: 12-13
+- rule: 'Testing: Zoneless & Async-First... ALWAYS use the ''Act, Wait, Assert'' pattern.'
   collision_type: scope_ambiguity
-  why_distracting: The rule says to use the `gh` CLI for managing pull requests. An
-    agent might instruct the reviewer to use `gh` CLI for reviewing, or try to use
-    it directly. However, the prompt requires creating custom helper bash scripts
-    under `scripts/` for PR review operations (fetching, staging, replying) and the
-    gold solution directs users to use 'GitHub MCP or available scripts'.
+  why_distracting: The agent might think it needs to write tests for the new PR review
+    skill or its helper bash scripts using Angular's testing utilities (fixture.whenStable(),
+    useAutoTick()). This would lead to hallucinated TypeScript tests for bash scripts
+    or markdown files, completely misunderstanding the scope of the Angular testing
+    rules.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 29-30
-- rule: 'Testing: Zoneless & Async-First. Do NOT use fixture.detectChanges(). ALWAYS
-    use the ''Act, Wait, Assert'' pattern.'
-  collision_type: meta_confusion
-  why_distracting: The rule provides detailed instructions for writing Zoneless &
-    Async-First tests (e.g., using `fixture.whenStable()`, `useAutoTick()`). An agent
-    might copy these specific testing implementation details into the general PR review
-    SKILL.md. However, the PR review skill is meant to be high-level guidelines, and
-    implementation-specific details are too granular for the general review checklist.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 16-27
-hierarchy_analysis: 'The configuration consists of a single root file (`AGENTS.md`).
-  The primary challenge is meta-level: the agent is tasked with writing a guide (a
-  skill) for *other* agents. It must distinguish between rules that apply to its own
-  behavior (e.g., how to write the bash script) and rules that should be embedded
-  into the skill it is generating. The testing rules in `AGENTS.md` apply to writing
-  tests, not to reviewing PRs (where CI handles tests).'
+    lines: 19-32
+hierarchy_analysis: 'The config consists of a single AGENTS.md file at the root. The
+  challenge is not navigating a deep hierarchy, but rather understanding the meta-referential
+  nature of the task: the agent is governed by AGENTS.md while simultaneously authoring
+  a new set of agent instructions (SKILL.md).'

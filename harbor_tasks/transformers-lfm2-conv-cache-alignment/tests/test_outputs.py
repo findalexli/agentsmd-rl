@@ -456,3 +456,42 @@ def test_check_doctest_list():
     assert result.returncode == 0, (
         f"check_doctest_list failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_imports_lfm2():
+    """Lfm2 modules can be imported without errors (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "python", "-c",
+            "from transformers.models.lfm2.modeling_lfm2 import Lfm2ForCausalLM, Lfm2Model, Lfm2HybridConvCache; "
+            "from transformers.models.lfm2.configuration_lfm2 import Lfm2Config; "
+            "from transformers.models.lfm2.modular_lfm2 import Lfm2HybridConvCache as ModularCache; "
+            "print('All lfm2 imports OK')",
+        ],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"lfm2 import test failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_imports_lfm2_moe():
+    """Lfm2_moe modules can be imported without errors (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "python", "-c",
+            "from transformers.models.lfm2_moe.modeling_lfm2_moe import Lfm2MoeForCausalLM, Lfm2MoeModel, Lfm2MoeHybridConvCache; "
+            "from transformers.models.lfm2_moe.configuration_lfm2_moe import Lfm2MoeConfig; "
+            "print('All lfm2_moe imports OK')",
+        ],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"lfm2_moe import test failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )

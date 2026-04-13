@@ -105,6 +105,54 @@ checks:
     description: "CI permissions file must be sorted (repo CI check)"
     command: "python3 .github/update_ci_permission.py --sort-only"
 
+  - id: test_repo_merge_conflict
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not contain merge conflict markers"
+    command: "pre-commit run check-merge-conflict --all-files"
+
+  - id: test_repo_private_key
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not contain private keys"
+    command: "pre-commit run detect-private-key --all-files"
+
+  - id: test_repo_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TOML files must be valid"
+    command: "pre-commit run check-toml --all-files"
+
+  - id: test_repo_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not have trailing whitespace"
+    command: "pre-commit run trailing-whitespace --all-files"
+
+  - id: test_repo_shebang_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Scripts with shebangs must be executable"
+    command: "pre-commit run check-shebang-scripts-are-executable --all-files"
+  - id: test_repo_yaml_valid_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All YAML files must be valid"
+    command: "pre-commit run check-yaml --all-files"
+
+  - id: test_repo_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not contain debug statements"
+    command: "pre-commit run debug-statements --all-files"
+
+  - id: test_repo_end_of_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Files must end with exactly one newline"
+    command: "pre-commit run end-of-file-fixer --all-files"
+
+
 rubric:
   - rule: "Always inherit from CustomTestCase, never raw unittest.TestCase"
     source:

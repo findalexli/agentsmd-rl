@@ -106,6 +106,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo session system tests pass
+- id: test_repo_compaction_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo session compaction tests (getUsage) pass
 rubric:
 - rule: Reduce total variable count by inlining when a value is only used once
   source:
@@ -128,40 +132,44 @@ rubric:
     path: AGENTS.md
     lines: '16'
     commit: 5c15755a10fecf15630232c478302a766d295012
-- rule: Keep things in one function unless composable or reusable
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
   source:
     path: AGENTS.md
-    lines: 13-14
-  evidence: The gold solution removes the `iife` (Immediately Invoked Function Expression)
-    wrapper used to calculate `total`, moving the simplified assignment directly into
-    the main function body.
+    lines: 71-80
+  evidence: Declares `total` as a `const` rather than using `let` with conditional
+    reassignment after removing the `iife` block.
+  category: style
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: 75-84
+  evidence: The gold solution declares the new simplified total calculation using
+    `const` (`const total = input.usage.totalTokens`) rather than `let`.
   category: style
 distractors:
-- rule: Use single word names by default for new locals, params, and helper functions.
+- rule: Prefer single word names for variables and functions. Before finishing edits,
+    review touched lines and shorten newly introduced identifiers where possible.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to rename `adjustedInputTokens` to a single
-    word like `adjusted` or `input` to comply with the strict naming rule. However,
-    this variable already exists and its name is highly descriptive for the domain
-    logic; renaming it would cause unnecessary churn and potentially break downstream
-    object shorthand assignments.
+  why_distracting: The rule mandates single-word variable names and explicitly instructs
+    the agent to 'review touched lines and shorten newly introduced identifiers'.
+    An agent might aggressively rename `adjustedInputTokens`, `cacheReadInputTokens`,
+    or `cacheWriteInputTokens` to single words (e.g., `adjusted`, `read`, `write`),
+    which would cause unnecessary diff churn and potentially break downstream references.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 28-48
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The rule instructs to reduce variable count by inlining values
+    used only once. An agent might try to inline `adjustedInputTokens` or `total`
+    directly into the return object. However, keeping them as named variables maintains
+    readability and consistency with the surrounding code structure, which the gold
+    solution preserves.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 28-32
-- rule: Use `Effect.gen(function* () { ... })` for composition and `Effect.fn` for
-    named/traced effects.
-  collision_type: architecture_boundary
-  why_distracting: The file imports `Effect` and is part of the `opencode` package
-    which has strict Effect rules. An agent might see these rules and try to refactor
-    the `getUsage` function to use `Effect.gen` or `Effect.fnUntraced`. However, `getUsage`
-    is a synchronous utility function, and effectifying it would break downstream
-    consumers that expect a synchronous return value.
-  severity: high
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 15-18
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style and naming
-  conventions, while `packages/opencode/AGENTS.md` introduces strict Effect-specific
-  patterns. The Effect rules are highly prescriptive but only apply to code that is
-  already within the Effect ecosystem. Agents must be careful not to apply Effect
-  wrappers to pure synchronous functions just because the file imports Effect utilities.
+    lines: 54-63
+hierarchy_analysis: The configuration is a flat, single-file `AGENTS.md` at the root
+  level. The agent must apply these general style guidelines to a specific bug fix
+  without over-applying them to existing code (e.g., renaming variables out of scope).

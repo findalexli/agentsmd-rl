@@ -7,7 +7,7 @@ source:
 checks:
 - id: crate_compiles
   type: pass_to_pass
-  origin: static
+  origin: repo_tests
   description: The uv-platform-tags crate must compile without errors
 - id: abi3t_tags_for_lower_versions
   type: fail_to_pass
@@ -33,6 +33,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Rustfmt check passes for uv-platform-tags crate
+- id: doc_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation builds successfully for uv-platform-tags crate
 rubric:
 - rule: ALWAYS attempt to add a test case for changed behavior
   source:
@@ -52,16 +56,17 @@ rubric:
     commit: b7d5faf568b30c86daf7503f8518e11cbfeeaa81
 distractors:
 - rule: PREFER integration tests, e.g., at `it/...` over unit tests
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to create a new integration test in `it/...`
-    to verify the tag generation. However, platform tag generation is already comprehensively
-    tested via unit tests in `crates/uv-platform-tags/src/tags.rs`. Updating the existing
-    unit test is the correct and sufficient approach here.
+  collision_type: rule_conflict
+  why_distracting: The rule instructs the agent to prefer integration tests in `it/...`
+    over unit tests. However, platform tag generation is already comprehensively tested
+    via inline snapshot unit tests in `tags.rs`. Attempting to create a new integration
+    test for this specific tag generation logic would be misplaced and ignore the
+    existing testing architecture.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 3-3
-hierarchy_analysis: The configuration consists of a single `CLAUDE.md` file at the
-  root level. There are no hierarchical conflicts, but there is a scope ambiguity
-  regarding testing preferences (integration vs. unit tests) that must be evaluated
-  based on the specific subsystem being modified.
+hierarchy_analysis: 'The config hierarchy is a flat single file (`CLAUDE.md`). The
+  primary conflict is internal to this file: the agent must balance the instruction
+  to add tests and prefer integration tests against the existing codebase pattern
+  of using inline snapshot unit tests for platform tags.'

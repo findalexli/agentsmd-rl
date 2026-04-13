@@ -60,53 +60,51 @@ checks:
   command: ruff format --check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py
 - id: test_repo_trailing_whitespace
   type: pass_to_pass
-  origin: repo_tests
-  description: Modified files have no trailing whitespace (CI check from pre-commit)
-  command: pre-commit hook trailing-whitespace (simulated)
+  origin: static
+  description: Modified files have no trailing whitespace (file content check)
 - id: test_repo_end_of_file_newline
   type: pass_to_pass
-  origin: repo_tests
-  description: Modified files end with a newline (CI check from pre-commit)
-  command: pre-commit hook end-of-file-fixer (simulated)
+  origin: static
+  description: Modified files end with a newline (file content check)
 rubric:
-- rule: Follow existing code patterns in the same module
-  source:
-    path: CLAUDE.md
-    lines: '76'
-    commit: 1927decc369d30df0037854b5d58ec7a9ca2a3b7
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   source:
     path: AGENTS.md
     lines: '80'
     commit: 1927decc369d30df0037854b5d58ec7a9ca2a3b7
-- rule: 'Logging: never `print`'
+- rule: Never use print statements - use existing logger instead
   source:
     path: AGENTS.md
     lines: 43-45
-  evidence: The gold solution uses `logger.info` and `logger.warning` to log the LoRA
-    name update and missing adapter warning, avoiding the use of `print`.
+  evidence: The gold solution uses logger.info and logger.warning from the existing logger instance rather than print statements.
   category: style
-distractors:
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to write a unit test for this bug fix. However,
-    testing XCCL weight updates and vLLM server state requires multi-node hardware
-    or complex mocking, and this is a bug fix, not new functionality. Attempting to
-    write a test would likely lead to wasted effort or broken test code.
-  severity: high
+- rule: No hardcoded secrets, paths, or endpoints
   source:
-    path: CLAUDE.md
-    lines: '54'
-- rule: Register new loggers with color in `areal/utils/logging.py`
+    path: AGENTS.md
+    lines: '24'
+  evidence: The gold solution dynamically retrieves the models object via raw_request.app.state.openai_serving_models instead of hardcoding a global state reference.
+  category: architecture
+distractors:
+- rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might think it needs to create and register a new logger
-    with color in `areal/utils/logging.py` for the registry update, but it should
-    just use the existing `logger` already instantiated in the file.
+  why_distracting: The agent might attempt to add tests for the XCCL LoRA update endpoint.
+    However, testing distributed XCCL updates requires multi-node hardware (as noted
+    in the integration test rule) or complex mocking of the vLLM engine and FastAPI
+    state, which is out of scope for this bug fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '32'
+- rule: Register new loggers with color in `areal/utils/logging.py`.
+  collision_type: rule_conflict
+  why_distracting: Because the agent is adding new log statements for the registry
+    update, it might try to register a new logger in `areal/utils/logging.py` following
+    this rule. However, it should just use the existing `logger` in `areal_vllm_server.py`.
   severity: low
   source:
     path: AGENTS.md
-    lines: 43-45
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are both Level 0 and contain largely
-  overlapping rules. `AGENTS.md` provides more specific details on logging and performance,
-  while `CLAUDE.md` provides more project context. There are no direct conflicts between
-  the two files.'
+    lines: 61-62
+hierarchy_analysis: The rules in `AGENTS.md` and `CLAUDE.md` are largely identical
+  and flat. The agent must balance the general instruction to 'Add tests' against
+  the specific constraint that 'Integration tests require multi-node hardware', ultimately
+  deciding to skip test creation for this distributed communication bug fix.

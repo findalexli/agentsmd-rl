@@ -88,6 +88,61 @@ print("OK")
     assert r.returncode == 0 and "OK" in r.stdout, f"Import parsing failed: {r.stderr}"
 
 
+# [repo_tests] pass_to_pass - repo CI py_compile
+def test_p2p_repo_py_compile():
+    """Repo test file must compile via py_compile (CI/CD build gate)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - repo CI lint: Owner label check
+def test_p2p_repo_owner_label():
+    """Repo test file must have valid # Owner(s): label (CI linting gate)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import re; import sys; content=open('{TARGET}').read(); match=re.search(r'#\\s*Owner\\(s\\):\\s*\\[([^\\]]+)\\]', content); sys.exit(0 if (match and 'module: unknown' not in match.group(1)) else 1)"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Owner label check failed: file must have '# Owner(s): [module: fx]' or similar"
+
+
+# [repo_tests] pass_to_pass - repo CI lint: run_tests pattern check
+def test_p2p_repo_has_main_run_tests():
+    """Repo test file must have 'if __name__ == __main__: run_tests()' (CI linting gate)."""
+    code = f'''
+import ast
+import sys
+tree = ast.parse(open("{TARGET}").read())
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.If):
+        test = node.test
+        if (isinstance(test, ast.Compare)
+                and isinstance(test.left, ast.Name)
+                and test.left.id == "__name__"
+                and len(test.ops) == 1
+                and isinstance(test.ops[0], ast.Eq)
+                and len(test.comparators) == 1
+                and isinstance(test.comparators[0], ast.Constant)
+                and test.comparators[0].value == "__main__"):
+            for stmt in ast.walk(node):
+                if (isinstance(stmt, ast.Call)
+                        and isinstance(stmt.func, ast.Name)
+                        and stmt.func.id == "run_tests"):
+                    found = True
+                    break
+sys.exit(0 if found else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"run_tests pattern check failed: file must end with 'if __name__ == \"__main__\": run_tests()'"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------

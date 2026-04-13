@@ -126,8 +126,7 @@ def test_node_syntax_valid():
     """
     result = subprocess.run(
         ["node", "--check", str(SCRIPT_PATH)],
-        capture_output=True,
-        text=True, cwd=REPO,
+        capture_output=True, text=True, cwd=REPO,
     )
     assert result.returncode == 0, \
         f"Script has syntax errors: {result.stderr}"
@@ -149,6 +148,51 @@ def test_repo_eslint():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_prettier_scripts_dir():
+    """Repo's Prettier check passes on all scripts in scripts/ directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/scripts/*.mjs"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check on scripts dir failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_eslint_scripts_dir():
+    """Repo's ESLint check passes on all scripts in scripts/ directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", f"{REPO}/scripts/*.mjs"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on scripts dir failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_node_check_scripts():
+    """Repo's Node.js syntax check passes on all scripts in scripts/ directory (pass_to_pass)."""
+    scripts = [
+        "scripts/create-github-release.mjs",
+        "scripts/update-example-deps.mjs",
+        "scripts/cleanup-empty-packages.mjs",
+        "scripts/llms-generate.mjs",
+    ]
+    for script in scripts:
+        script_path = REPO / script
+        if script_path.exists():
+            r = subprocess.run(
+                ["node", "--check", str(script_path)],
+                capture_output=True, text=True, cwd=REPO,
+            )
+            assert r.returncode == 0, f"Node syntax check failed for {script}:\n{r.stderr}"
+
+
+def test_repo_node_check_modified_script():
+    """Repo's Node.js syntax check passes on the modified release script (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", str(SCRIPT_PATH)],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node syntax check failed:\n{r.stderr}"
 
 
 if __name__ == "__main__":

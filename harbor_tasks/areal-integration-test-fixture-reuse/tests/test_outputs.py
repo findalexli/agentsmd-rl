@@ -595,3 +595,71 @@ def test_repo_json_files_valid():
                 json.loads(path.read_text())
             except json.JSONDecodeError as e:
                 assert False, f"{fpath}: Invalid JSON - {e}"
+
+
+def test_repo_trailing_whitespace():
+    """No trailing whitespace in test files (pass_to_pass).
+
+    Matches pre-commit trailing-whitespace hook. Uses pure Python file analysis
+    since the Docker environment doesn't have pre-commit installed.
+    """
+    for fpath in ALL_FILES:
+        content = Path(fpath).read_text()
+        lines = content.splitlines()
+        for i, line in enumerate(lines, 1):
+            # Check for trailing whitespace (spaces/tabs at end of line)
+            if line != line.rstrip():
+                assert False, f"{fpath}:{i}: Trailing whitespace found"
+
+
+def test_repo_end_of_file_newline():
+    """Test files end with single newline (pass_to_pass).
+
+    Matches pre-commit end-of-file-fixer hook. Files must end with exactly
+    one newline character, not more, not less.
+    """
+    for fpath in ALL_FILES:
+        content = Path(fpath).read_bytes()
+        if not content:
+            continue
+        # Check file ends with newline
+        if not content.endswith(b'\n'):
+            assert False, f"{fpath}: File does not end with newline"
+        # Check no multiple newlines at end
+        if content.endswith(b'\n\n'):
+            assert False, f"{fpath}: File ends with multiple newlines"
+
+
+def test_repo_no_tabs():
+    """No tab characters in test files (pass_to_pass).
+
+    Matches ruff W191 (tab-indentation) check. Uses pure Python file analysis
+    since the Docker environment doesn't have ruff installed.
+    """
+    for fpath in ALL_FILES:
+        content = Path(fpath).read_text()
+        lines = content.splitlines()
+        for i, line in enumerate(lines, 1):
+            if '\t' in line:
+                assert False, f"{fpath}:{i}: Tab character found (use spaces instead)"
+
+
+def test_repo_no_merge_conflict_markers():
+    """No merge conflict markers in test files (pass_to_pass).
+
+    Standard pre-commit check for git merge conflict artifacts like:
+    - <<<<<<< HEAD
+    - =======
+    - >>>>>>> branch
+
+    Only checks for markers at the start of lines (not in comments/headers).
+    """
+    for fpath in ALL_FILES:
+        content = Path(fpath).read_text()
+        lines = content.splitlines()
+        markers = ['<<<<<<< ', '=======', '>>>>>>> ']
+        for i, line in enumerate(lines, 1):
+            stripped = line.lstrip()
+            for marker in markers:
+                if stripped.startswith(marker):
+                    assert False, f"{fpath}:{i}: Merge conflict marker found: {marker}"

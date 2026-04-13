@@ -63,59 +63,59 @@ checks:
 - id: repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Modified files pass ruff lint check
+  description: Modified files pass ruff lint check (CI command)
 - id: repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
-  description: Modified files pass ruff format check
+  description: Modified files pass ruff format check (CI command)
 - id: repo_network_functions
   type: pass_to_pass
   origin: repo_tests
-  description: Network module functions work correctly (is_port_free, find_free_ports,
-    gethostname)
-- id: repo_trainer_structure
+  description: Network socket functions work correctly (subprocess-based CI test)
+- id: repo_trainer_exit_ast
   type: pass_to_pass
   origin: repo_tests
-  description: Trainer files have valid class structure with __exit__ methods
+  description: Trainer __exit__ methods have correct AST structure (subprocess-based
+    CI test)
+- id: repo_eof_newline
+  type: pass_to_pass
+  origin: static
+  description: Modified files end with newline (pre-commit style check)
+- id: repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: Modified files have no trailing whitespace (pre-commit style check)
 rubric:
-- rule: Follow existing code patterns in the same module
-  source:
-    path: CLAUDE.md
-    lines: 76-76
-  evidence: The gold solution modifies the `__exit__` methods to `return False` instead
-    of `raise exc_value`, cleanly integrating with the existing `if exc_type is not
-    None:` block and `logger.error` call without
-  category: style
-- rule: Never hardcode secrets, paths, or endpoints
-  source:
-    path: CLAUDE.md
-    lines: 90-90
-  evidence: The gold solution maintains the dynamic port binding `sock.bind(("", port))`
-    in `is_port_free` and does not introduce any hardcoded IP addresses or specific
-    ports when fixing the socket leak.
-  category: architecture
-distractors:
-- rule: Add tests for new functionality
-  collision_type: scope_ambiguity
-  why_distracting: The PR is fixing bugs in existing functionality (socket leak, traceback
-    propagation), not adding new functionality. Attempting to add tests for `is_port_free`
-    could lead to flaky network tests, and testing `__exit__` traceback propagation
-    is complex and unnecessary for this specific fix.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 77-77
-- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names'
-  collision_type: would_cause_bug
-  why_distracting: An agent might see the `except OSError:` block in `is_port_free`
-    and decide to add a logger to log the exception. However, `is_port_free` is designed
-    to return `False` when a port is in use, so logging an error here would spam the
-    logs with false positives during normal operation.
-  severity: high
+- rule: Follow existing code patterns in the same module.
   source:
     path: AGENTS.md
-    lines: 89-91
-hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain overlapping rules regarding
-  code patterns and testing. AGENTS.md provides more specific guidance on logging
-  and environment setup. The rules are consistent across the hierarchy, with AGENTS.md
-  acting as a more detailed operational guide.
+    lines: 24-25
+  evidence: The gold solution fixes the bugs using standard Python constructs (adding
+    a `finally` block and returning `False` in `__exit__`) without introducing new
+    dependencies, wildcard imports, or deviating from the existing module structure.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the bug fixes as requiring new unit tests
+    to prevent regressions, leading to unnecessary test file creation that is out
+    of scope for this specific PR.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-31
+- rule: 'Logging: areal.utils.logging.getLogger(name) with PascalCase names... Per-rank
+    format: [{Component} Rank {N}].'
+  collision_type: scope_ambiguity
+  why_distracting: The agent sees an existing `logger.error` statement in the `__exit__`
+    methods being modified and might attempt to refactor it to strictly follow the
+    `[{Component} Rank {N}]` format specified in the config, expanding the PR scope
+    unnecessarily.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 68-70
+hierarchy_analysis: The repository uses two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`) that contain overlapping general guidelines. There is no deep hierarchy
+  or overriding behavior required.

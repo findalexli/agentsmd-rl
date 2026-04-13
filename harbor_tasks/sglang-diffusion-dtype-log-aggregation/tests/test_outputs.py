@@ -339,6 +339,86 @@ def test_repo_isort():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_precommit_ast():
+    """Repo's pre-commit check-ast hook passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-ast", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit check-ast failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_debug_statements():
+    """Repo's pre-commit debug-statements hook passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit debug-statements failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_trailing_whitespace():
+    """Repo's pre-commit trailing-whitespace hook passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit trailing-whitespace failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_eof_fixer():
+    """Repo's pre-commit end-of-file-fixer hook passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit end-of-file-fixer failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_merge_conflict():
+    """Repo's pre-commit check-merge-conflict hook passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-merge-conflict", "--files", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit check-merge-conflict failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_function_signatures_preserved():
     """Core function signatures must remain unchanged."""
     tree, _ = _parse_tree()

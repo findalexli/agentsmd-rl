@@ -290,7 +290,7 @@ def test_single_segment_suppression_preserved():
         "    media_text_stripped: media?.text === undefined,\n"
         "    media_url_kept: media?.mediaUrl === 'https://example.com/image.png',\n"
         "    multi_media_passed: multiMedia !== undefined,\n"
-        "    multi_media_text_stripped: multiMedia?.text === undefined,\n"
+        "    multi_media_text_stripped: multiMedia?.text === undefined\n"
         "}));\n"
     )
     assert results["text_suppressed"], "Text-only payload was not suppressed"
@@ -505,7 +505,7 @@ def test_repo_import_validity():
                 # Check for unresolved relative imports that go too far up
                 # Extensions should not reach outside their package
                 for match in re.finditer(
-                    r'''from\s+['"](\.\./[^'"]+)['"]''', content
+                    r'''from\s+['\"](\.\./[^'\"]+)['\"]''', content
                 ):
                     specifier = match.group(1)
                     resolved = os.path.normpath(os.path.join(file_dir, specifier))
@@ -688,3 +688,209 @@ def test_repo_git_valid():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Git repository is corrupted:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check: build docs list script works
+def test_repo_build_docs_list():
+    """Docs list generation script works (pass_to_pass).
+
+    Runs the build-docs-list.mjs script which generates documentation metadata.
+    Mirrors CI docs-metadata generation step.
+    """
+    r = subprocess.run(
+        ["node", "scripts/build-docs-list.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"build-docs-list.mjs failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check: build stamp script works
+def test_repo_build_stamp():
+    """Build stamp generation script works (pass_to_pass).
+
+    Runs the build-stamp.mjs script which generates build metadata.
+    Mirrors CI build-stamp generation step.
+    """
+    r = subprocess.run(
+        ["node", "scripts/build-stamp.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"build-stamp.mjs failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check: related streaming-message module TypeScript parsing
+def test_repo_streaming_message_typescript_parse():
+    """streaming-message.ts (TeamsHttpStream dependency) is valid TypeScript (pass_to_pass).
+
+    Validates the streaming-message.ts module that TeamsHttpStream is imported from.
+    This file is critical for the reply-stream-controller fix to work.
+    Mirrors CI TypeScript checks.
+    """
+    streaming_msg_path = os.path.join(REPO, "extensions/msteams/src/streaming-message.ts")
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
+        input=Path(streaming_msg_path).read_text(),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"streaming-message.ts has TypeScript syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD check: reply-dispatcher module TypeScript parsing
+def test_repo_reply_dispatcher_typescript_parse():
+    """reply-dispatcher.ts (consumer of stream controller) is valid TypeScript (pass_to_pass).
+
+    Validates the reply-dispatcher.ts module that uses createTeamsReplyStreamController.
+    This file exercises the stream controller and must remain compatible.
+    Mirrors CI TypeScript checks.
+    """
+    dispatcher_path = os.path.join(REPO, "extensions/msteams/src/reply-dispatcher.ts")
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
+        input=Path(dispatcher_path).read_text(),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"reply-dispatcher.ts has TypeScript syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD check: reply-dispatcher test TypeScript parsing
+def test_repo_reply_dispatcher_test_typescript_parse():
+    """reply-dispatcher.test.ts is valid TypeScript (pass_to_pass).
+
+    Validates the reply-dispatcher.test.ts test file which mocks the streaming module.
+    Test files must be syntactically valid to run in CI.
+    Mirrors CI TypeScript checks for test files.
+    """
+    test_path = os.path.join(REPO, "extensions/msteams/src/reply-dispatcher.test.ts")
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
+        input=Path(test_path).read_text(),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"reply-dispatcher.test.ts has TypeScript syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD check: msteams extension package.json validity
+def test_repo_msteams_package_json_valid():
+    """msteams extension package.json is valid JSON (pass_to_pass).
+
+    Validates the extensions/msteams/package.json file is parseable JSON.
+    CI checks validate plugin metadata for all extensions.
+    """
+    pkg_path = os.path.join(REPO, "extensions/msteams/package.json")
+    r = subprocess.run(
+        ["python3", "-c", "import json; json.load(open(\"" + pkg_path + "\")); print(\"OK\")"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"msteams package.json is not valid JSON:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check: msteams extension exports valid index.ts
+def test_repo_msteams_index_typescript_parse():
+    """msteams extension index.ts is valid TypeScript (pass_to_pass).
+
+    Validates the main entry point of the msteams extension can be parsed.
+    Mirrors CI TypeScript checks for extension entry points.
+    """
+    index_path = os.path.join(REPO, "extensions/msteams/src/index.ts")
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
+        input=Path(index_path).read_text(),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"msteams index.ts has TypeScript syntax errors:\n{r.stderr[-500:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Additional CI/CD pass-to-pass tests (enrichment)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI lint check: oxlint on msteams extension
+def test_repo_oxlint_msteams():
+    """Oxlint passes on msteams extension files (pass_to_pass).
+
+    Runs the repo's linter (oxlint) on the msteams extension source files.
+    Mirrors the CI lint check without requiring full node_modules.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "extensions/msteams/src/reply-stream-controller.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint found issues:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI format check: oxfmt on target file
+def test_repo_oxfmt_msteams_target():
+    """Oxfmt format check passes on target file (pass_to_pass).
+
+    Verifies the target file follows the repo's formatting standards.
+    Mirrors the CI format check using oxfmt --check.
+    """
+    r = subprocess.run(
+        ["npx", "oxfmt", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxfmt format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI check: docs link audit
+def test_repo_docs_link_audit():
+    """Docs link audit passes (pass_to_pass).
+
+    Runs the docs-link-audit.mjs script which validates internal documentation links.
+    Mirrors CI docs validation.
+    """
+    r = subprocess.run(
+        ["node", "scripts/docs-link-audit.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"docs-link-audit failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI check: no conflict markers in repo (official script)
+def test_repo_no_conflict_markers_ci():
+    """No unresolved merge conflict markers in repo (pass_to_pass).
+
+    Runs the official CI script check-no-conflict-markers.mjs that validates
+    no Git merge conflict markers remain in the codebase.
+    """
+    r = subprocess.run(
+        ["node", "scripts/check-no-conflict-markers.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers found:\n{r.stderr[-500:]}"

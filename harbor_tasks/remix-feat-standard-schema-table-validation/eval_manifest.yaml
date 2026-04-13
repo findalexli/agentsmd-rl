@@ -56,6 +56,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Data-schema checks tests pass
+- id: test_repo_data_schema_parse_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema parse tests pass
+- id: test_repo_data_schema_lazy_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema lazy tests pass
+- id: test_repo_data_schema_coerce_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema coerce tests pass
+- id: test_repo_data_schema_pipe_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema pipe tests pass
+- id: test_repo_data_schema_variant_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema variant tests pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on data-table and data-schema packages
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes on data-table and data-schema packages
+- id: test_repo_data_table_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-table TypeScript typecheck passes
+- id: test_repo_data_schema_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema TypeScript typecheck passes
 rubric:
 - rule: Config updates should be consistent with the style of existing AGENTS.md and
     README.md content
@@ -70,6 +106,14 @@ rubric:
     lines: 38-39
   evidence: The gold solution creates `packages/data-table/.changes/minor.table-standard-schema.md`
     to document the new Standard Schema compatibility and validation behavior.
+  category: tooling
+- rule: Create `packages/*/.changes/[major|minor|patch].short-description.md` files
+    when adding changes.
+  source:
+    path: AGENTS.md
+    lines: 40-41
+  evidence: The gold solution creates a new change file at `packages/data-table/.changes/minor.table-standard-schema.md`
+    to document the Standard Schema compatibility changes.
   category: tooling
 config_edits:
 - path: AGENTS.md
@@ -128,31 +172,20 @@ config_edits:
     - `createMany` -> `WriteResult` by default, rows when `returnRows: true` (RETURNING
     adapters only)'
 distractors:
-- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
-    `src` that defines the public API by re-exporting from within `src/lib`'
-  collision_type: architecture_boundary
-  why_distracting: The agent might interpret 'defines the public API by re-exporting'
-    as a mandate to continue re-exporting `DataSchema` (or `Schema`) from `data-schema`
-    so that consumers can import everything from `data-table`. This directly conflicts
-    with the PR's explicit instruction to remove the cross-package re-export.
+- rule: All `exports` in `package.json` have a dedicated file in `src` that defines
+    the public API by re-exporting from within `src/lib`
+  collision_type: rule_conflict
+  why_distracting: The existing rule mandates re-exporting from `src/lib` to define
+    the public API. The task requires removing the `DataSchema` re-export because
+    it originates from a different package. An agent might misinterpret the existing
+    rule as requiring all exposed types to be re-exported locally, conflicting with
+    the new cross-package boundary rule it is supposed to implement.
   severity: high
   source:
     path: AGENTS.md
-    lines: 18-18
-- rule: 'Generics: Use descriptive lowercase names for type parameters (e.g., `source`,
-    `method`, `pattern`) instead of single uppercase letters like `T`, `P`, or `K`'
-  collision_type: would_cause_bug
-  why_distracting: When implementing the Standard Schema `~standard` property and
-    types, the agent might try to strictly enforce lowercase generic names (e.g.,
-    renaming `T` or `Input`/`Output` to `input`/`output`). This could break compatibility
-    with the external `StandardSchemaV1` interface which expects specific type parameter
-    structures.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 25-25
-hierarchy_analysis: The root `AGENTS.md` file contains general architectural guidelines
-  that conflict with the specific cross-package boundary changes requested in this
-  PR. The PR explicitly updates `AGENTS.md` to clarify this boundary, meaning the
-  agent must prioritize the PR instructions over the existing (and now outdated) interpretation
-  of the 'Package exports' rule.
+    lines: 18-19
+hierarchy_analysis: 'The configuration is a flat single file (`AGENTS.md`), but the
+  task introduces a meta-referential dynamic: the agent must modify the config file
+  itself to codify a new architectural rule. The agent must synthesize the new rule
+  from the PR instructions and place it logically among the existing architecture
+  guidelines.'

@@ -48,7 +48,7 @@ def test_syntax_check():
         ["python3", "-c", f"import py_compile; py_compile.compile(\"{ANALYZE_CI}\", doraise=True)"],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Syntax error:\n{r.stderr}"
+    assert r.returncode == 0, f"Syntax error:\\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +168,58 @@ def test_repo_ruff_check_analyze_ci():
         ["python3", "-m", "ruff", "check", str(ANALYZE_CI)],
         capture_output=True, text=True, timeout=60,
     )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Ruff check failed:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_all_commands():
+    """Ruff linting passes on all command files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.15.2", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    cmds_dir = Path(REPO) / ".claude/skills/src/skills/commands"
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", str(cmds_dir)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on commands:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_github_module():
+    """Ruff linting passes on github module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.15.2", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    github_dir = Path(REPO) / ".claude/skills/src/skills/github"
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", str(github_dir)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on github module:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check():
+    """Ruff format check passes on all skills files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.15.2", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    skills_dir = Path(REPO) / ".claude/skills/src/skills"
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", str(skills_dir)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\\n{r.stdout}\\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -184,12 +235,108 @@ def test_repo_clint_tests():
         ["python3", "-m", "pytest", "tests/", "-v", "--tb=short"],
         capture_output=True, text=True, timeout=300, cwd=f"{REPO}/dev/clint",
     )
-    assert r.returncode == 0, f"Clint tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Clint tests failed:\\n{r.stdout[-1000:]}\\n{r.stderr[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass — regression checks
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_mlflow_typo_check():
+    """MLflow typo checker passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", f"{REPO}/dev/mlflow-typo.sh", str(ANALYZE_CI)],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Typo check failed for analyze_ci.py:\\n{r.stdout}\\n{r.stderr}"
+
+    r = subprocess.run(
+        ["bash", f"{REPO}/dev/mlflow-typo.sh", str(SKILL_MD)],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Typo check failed for SKILL.md:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_check_all_commands():
+    """All command files parse without syntax errors (pass_to_pass)."""
+    cmds_dir = Path(REPO) / ".claude/skills/src/skills/commands"
+    for py_file in cmds_dir.glob("*.py"):
+        if py_file.name == "__init__.py":
+            continue
+        r = subprocess.run(
+            ["python3", "-c", f"import py_compile; py_compile.compile('{py_file}', doraise=True)"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Syntax error in {py_file.name}:\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_check_github_module():
+    """All github module files parse without syntax errors (pass_to_pass)."""
+    github_dir = Path(REPO) / ".claude/skills/src/skills/github"
+    for py_file in github_dir.glob("*.py"):
+        r = subprocess.run(
+            ["python3", "-c", f"import py_compile; py_compile.compile('{py_file}', doraise=True)"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Syntax error in {py_file.name}:\\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_analyze_ci_patterns_valid():
+    """Regex patterns in analyze_ci.py are valid and compile (pass_to_pass)."""
+    source = ANALYZE_CI.read_text()
+    tree = ast.parse(source)
+    patterns = {}
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and isinstance(node.value, ast.Call)
+            and len(node.value.args) >= 1
+        ):
+            name = node.targets[0].id
+            if name.endswith("_PATTERN"):
+                arg = node.value.args[0]
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                    patterns[name] = arg.value
+
+    # Verify key patterns exist and compile
+    required_patterns = ["PR_URL_PATTERN", "JOB_URL_PATTERN"]
+    for pat_name in required_patterns:
+        assert pat_name in patterns, f"Required pattern {pat_name} not found"
+        # Verify it compiles as valid regex
+        try:
+            re.compile(patterns[pat_name])
+        except re.error as e:
+            raise AssertionError(f"Invalid regex in {pat_name}: {e}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_skill_md_frontmatter_valid():
+    """SKILL.md has valid YAML frontmatter with required fields (pass_to_pass)."""
+    content = SKILL_MD.read_text()
+
+    # Check frontmatter delimiters
+    assert content.startswith("---"), "SKILL.md must start with --- frontmarker"
+
+    # Extract frontmatter
+    parts = content.split("---", 2)
+    assert len(parts) >= 3, "SKILL.md must have complete frontmatter (--- ... ---)"
+
+    # Parse key-value pairs
+    required_fields = ["name", "description"]
+    frontmatter = parts[1].strip()
+    assert frontmatter, "Frontmatter should not be empty"
+    found_fields = {}
+    for line in frontmatter.split("\n"):
+        if ":" in line:
+            key, val = line.split(":", 1)
+            found_fields[key.strip()] = val.strip()
+
+    for field in required_fields:
+        assert field in found_fields, f"Frontmatter missing required field: {field}"
+
+
 
 # [static] pass_to_pass
 def test_existing_patterns_intact():

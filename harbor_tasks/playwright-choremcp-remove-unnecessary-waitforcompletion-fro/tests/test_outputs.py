@@ -306,6 +306,33 @@ def test_repo_build():
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_check_deps():
+    """Repo's dependency checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_generate_channels():
+    """Repo's channel generation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_generate_injected():
+    """Repo's injected script generation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_injected.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_injected failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

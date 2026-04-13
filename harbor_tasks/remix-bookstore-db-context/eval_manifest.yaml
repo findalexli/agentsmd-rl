@@ -36,6 +36,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Bookstore account handler tests pass
+- id: repo_data_table_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-table package unit tests pass (relevant to Database context changes)
 - id: database_middleware_context_api
   type: fail_to_pass
   origin: pr_diff
@@ -86,6 +90,13 @@ rubric:
   evidence: The newly added statements like `let db = get(Database)` omit semicolons
     at the end of the line.
   category: style
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  evidence: The gold solution uses `let db = get(Database)` instead of `const` when
+    assigning the local variable in `demos/bookstore/app/account.tsx`.
+  category: style
 config_edits:
 - path: demos/bookstore/README.md
   tier: 2
@@ -101,31 +112,25 @@ config_edits:
     - [`app/middleware/database.ts`](app/middleware/database.ts) attaches `context.db`
     for every request so route actions can query tables directly without AsyncLocalStorage.'
 distractors:
-- rule: 'Documentation imports/install: In package READMEs... installation instructions
-    should always include `npm i remix`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent is instructed to update the README and might see this
-    rule, prompting it to add `npm i remix` installation instructions to `demos/bookstore/README.md`.
-    However, this rule specifically applies to *package* READMEs, whereas this is
-    a demo application that already has its own specific setup instructions.
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports)'
+  collision_type: would_cause_bug
+  why_distracting: The agent might assume `Database` is a type and import it using
+    `import type { Database }`, but it is used as a value key for the context `get(Database)`.
+    Importing it as a type would cause a runtime/build error.
   severity: high
   source:
     path: AGENTS.md
-    lines: 17-17
-- rule: 'write-readme: Write or rewrite package README files in the style used by
-    the Remix repository.'
+    lines: 26-26
+- rule: 'Documentation imports/install: In package READMEs... installation instructions
+    should always include `npm i remix`'
   collision_type: scope_ambiguity
-  why_distracting: The agent might invoke the `write-readme` skill to handle the requested
-    README updates. However, this skill is explicitly tailored for *package* READMEs
-    and might overwrite the demo's specific documentation structure with a standard
-    package template, causing unnecessary and incorrect changes.
+  why_distracting: The agent might try to inject `npm i remix` installation instructions
+    into the bookstore demo README.md, but this rule applies to package READMEs, not
+    demo READMEs, and the instruction only asks to update the database context pattern.
   severity: medium
   source:
-    path: .agents/skills/write-readme
-    lines: 1-2
-hierarchy_analysis: The repository uses a flat configuration in `AGENTS.md` with supplementary
-  skills. The primary tension in this task arises from rules and skills targeting
-  'READMEs'. These guidelines are implicitly scoped to `packages/*` but might be mistakenly
-  applied to `demos/*`. The agent must distinguish between package documentation and
-  demo documentation to avoid applying package-specific boilerplate to the bookstore
-  demo.
+    path: AGENTS.md
+    lines: 22-22
+hierarchy_analysis: The configuration is flat, relying entirely on a single `AGENTS.md`
+  file at the root. The agent must apply these global rules to a specific demo application
+  context.

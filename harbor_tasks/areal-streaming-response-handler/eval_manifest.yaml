@@ -55,22 +55,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's markdown files pass mdformat check
-- id: test_repo_yaml_check
+- id: test_no_yaml_syntax_errors
+  type: pass_to_pass
+  origin: static
+  description: Repo YAML files have valid syntax
+- id: test_no_json_syntax_errors
+  type: pass_to_pass
+  origin: static
+  description: Repo JSON files have valid syntax
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: Repo Python files have no trailing whitespace
+- id: test_eof_newline
+  type: pass_to_pass
+  origin: static
+  description: Repo Python files end with newline
+- id: test_repo_test_file_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's YAML files pass syntax check
-- id: test_repo_json_check
+  description: Test file for proxy_rollout_server passes Python syntax check via py_compile
+- id: test_repo_python_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's JSON files pass syntax check
-- id: test_repo_trailing_whitespace
+  description: Target file passes Python syntax check via py_compile
+- id: test_repo_test_functions_exist
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's Python files have no trailing whitespace
-- id: test_repo_eof_newline
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's Python files end with newline
+  description: Test file for proxy_rollout_server contains at least 10 test functions
 rubric:
 - rule: Follow existing code patterns in the same module.
   source:
@@ -107,28 +119,45 @@ rubric:
     {e}")` to log the exception during streaming setup, adhering to the rule to never
     use `print`.'
   category: style
+- rule: never print
+  source:
+    path: AGENTS.md
+    lines: 68-69
+  evidence: 'The gold solution uses `logger.error(f"Error setting up streaming response:
+    {e}")` in the exception handler instead of using `print()`.'
+  category: style
 distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The prompt asks to fix a specific bug in the proxy server. Attempting
-    to add tests for this FastAPI endpoint would require setting up complex mocks
-    for the OpenAI client and AsyncGenerators, which is out of scope for this specific
-    bug fix PR and not present in the gold solution.
+  why_distracting: The agent might attempt to write new unit or integration tests
+    for the streaming branch. However, this is a bug fix for an existing proxy server
+    endpoint, and testing it might require complex async/mock setups or multi-node
+    hardware (as warned elsewhere in the config). The gold solution correctly scopes
+    the fix to just the server code.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 25-25
-- rule: Register new loggers with color in `areal/utils/logging.py`.
+    lines: 28-28
+- rule: 'Ask first before: ... Deleting or renaming public APIs.'
+  collision_type: rule_conflict
+  why_distracting: The agent is modifying the return type signature of the `chat_completions`
+    endpoint (from `ChatCompletion` to `ChatCompletion | StreamingResponse`) and setting
+    `response_model=None`. It might interpret this as changing a public API and pause
+    to ask the user for permission, wasting a turn.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 32-35
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names... Register
+    new loggers with color in `areal/utils/logging.py`.'
   collision_type: scope_ambiguity
-  why_distracting: The agent might see the need to log an error in the new streaming
-    branch and think it needs to create a new PascalCase logger and register it in
-    `areal/utils/logging.py`. However, it should just reuse the existing `logger`
-    already instantiated in the module.
+  why_distracting: The agent might try to register a new logger in `areal/utils/logging.py`
+    for the streaming component or change the logger instantiation to match the PascalCase/Rank
+    format, but it should just use the already configured `logger` in the file.
   severity: low
   source:
     path: AGENTS.md
-    lines: 47-48
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain overlapping rules (e.g.,
-  'Add tests for new functionality', 'never print'). `AGENTS.md` provides more specific
-  details on logging registration. The rules are consistent across both files, acting
-  accumulatively without direct conflicts.
+    lines: 68-70
+hierarchy_analysis: The repository contains two similar root-level instruction files
+  (`AGENTS.md` and `CLAUDE.md`) that provide overlapping, generic guidelines. There
+  are no deep module-specific configs overriding them.

@@ -25,6 +25,11 @@ checks:
   origin: repo_tests
   description: Repo's unit tests pass
   command: pnpm test:run
+- id: test_repo_core_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's js/core tests pass - directly tests the modified init.svelte.ts
+  command: pnpm vitest run --config .config/vitest.config.ts js/core
 - id: test_file_exists_with_apptree
   type: pass_to_pass
   origin: static
@@ -91,29 +96,26 @@ rubric:
     lines: '44'
     commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
 distractors:
-- rule: '`gradio/` — Python source for the Gradio library (backend)'
-  collision_type: architecture_boundary
-  why_distracting: The reproduction code is written in Python, which might lead an
-    agent to try fixing the bug in the Python backend (`gradio/` or `gradio/components/`)
-    by delaying the load event. However, the root cause is a frontend reactivity issue
-    in Svelte 5, so the fix must be in the `js/` directory.
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to modify the `.github/PULL_REQUEST_TEMPLATE.md`
+    file directly to add PR details, misunderstanding that this is a code-level bug
+    fix task, not a PR creation task.
   severity: high
   source:
     path: AGENTS.md
-    lines: 7-8
-- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
-  collision_type: scope_ambiguity
-  why_distracting: The rule states that each component is in its own subdirectory.
-    Since the bug involves `gr.Tab` and `gr.Textbox`, an agent might try to fix the
-    issue by modifying the specific component files (e.g., `js/tab/` or `js/textbox/`).
-    However, the root cause is in the core state management (`js/core/src/init.svelte.ts`),
-    not the individual components.
+    lines: 21-24
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use the GitHub CLI to create an issue or
+    search for one, which is out of scope for the evaluation environment and wastes
+    effort.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 12-12
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root. The
-  primary challenge for an agent is correctly identifying the architectural boundary
-  (frontend core vs. frontend components vs. Python backend) since the reproduction
-  is in Python but the bug is in the Svelte core state management.
+    lines: 19-20
+hierarchy_analysis: The config hierarchy is flat, consisting of a single `AGENTS.md`
+  file at the root. The agent must distinguish between code-level instructions (style,
+  formatting) and repository workflow instructions (PR creation, issue targeting)
+  which are out of scope for the immediate bug fix.

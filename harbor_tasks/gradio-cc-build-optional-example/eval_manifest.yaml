@@ -33,7 +33,7 @@ checks:
 - id: test_repo_format_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's Prettier format check passes
+  description: Repos Prettier format check passes
 - id: test_repo_preview_build
   type: pass_to_pass
   origin: repo_tests
@@ -51,43 +51,32 @@ checks:
   origin: repo_tests
   description: Modified build.ts has valid Node.js syntax
 rubric:
-- rule: Be consistent with the style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: '45'
-    commit: d815881739689f45f5387ea52cc92e2cddf8adcf
-- rule: Frontend code is formatted with `prettier`. Be consistent with the style of
+- rule: Frontend code is formatted with prettier. Be consistent with the style of
     the surrounding code.
   source:
     path: AGENTS.md
-    lines: 41-43
-  evidence: 'The gold solution maintains the existing indentation style (using tabs)
-    and array structure, seamlessly integrating the conditional spread syntax `...(pkg.exports["./example"]
-    ? [...] : [])` without d'
+    lines: 38-40
+  evidence: The patch maintains the existing formatting style (using tabs for indentation)
+    consistent with the frontend Prettier configuration and surrounding code.
   category: style
 distractors:
-- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
-    one mutable default argument, etc.).
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
   collision_type: scope_ambiguity
-  why_distracting: The fix for this crash is very small (modifying a single array
-    element construction). An agent might misinterpret this critical bug fix as a
-    'tiny edit' or 'low-value busywork' and either refuse to generate the fix or attempt
-    to bundle it with unrelated mechanical cleanups.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 53-55
-- rule: Tests must pass. Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: architecture_boundary
-  why_distracting: The modified file `js/preview/src/build.ts` is part of the frontend/Node.js
-    build pipeline. Instructing the agent to run backend tests (`bash scripts/run_backend_tests.sh`)
-    for a frontend build script change crosses architectural boundaries and would
-    waste time or cause confusion if backend tests fail for unrelated reasons.
-  severity: medium
+  why_distracting: The agent might try to run Python backend tests for a change that
+    only affects the Node.js frontend build pipeline, wasting time on irrelevant test
+    suites.
+  severity: low
   source:
     path: AGENTS.md
     lines: 28-29
-hierarchy_analysis: The repository has a single root-level `AGENTS.md` file. The rules
-  are generally broad and PR-focused. The main conflict arises from the definition
-  of 'tiny edits' versus critical but small bug fixes, and the blanket instruction
-  to run backend tests which does not apply to this frontend TypeScript change.
+- rule: Write comprehensive, behaviour-driven unit tests for Gradio frontend Svelte
+    components using Vitest browser mode, Playwright...
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to write a browser-based or Svelte component
+    test for `build.ts`, which is actually a Node.js CLI build script, not a UI component.
+  severity: medium
+  source:
+    path: .claude/skills/frontend-unit-testing
+    lines: 1-2
+hierarchy_analysis: The config hierarchy is flat, consisting of a single AGENTS.md
+  file and some skill descriptions. There are no conflicts between config files.

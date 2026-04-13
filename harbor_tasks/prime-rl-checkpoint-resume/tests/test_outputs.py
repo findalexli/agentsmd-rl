@@ -81,6 +81,74 @@ def test_repo_unit_eval_config():
     assert r.returncode == 0, f"Eval config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
+def test_repo_unit_training_env():
+    """Repo's unit tests for training env pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/training/test_env.py -v --tb=short 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Training env unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_training_logger():
+    """Repo's unit tests for training logger pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/training/test_logger.py -v --tb=short 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Training logger unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_training_world():
+    """Repo's unit tests for training world pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/training/test_world.py -v --tb=short 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Training world unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_inference_config():
+    """Repo's unit tests for inference config pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli wandb aiohttp"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/inference/test_config.py -v --tb=short 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Inference config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_all_cpu():
+    """All CPU-compatible unit tests pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli numpy torch transformers wandb aiohttp"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest tests/unit "
+        f"-v --tb=short -m 'not gpu' "
+        f"--ignore=tests/unit/utils/test_monitor.py "
+        f"--ignore=tests/unit/training/test_loss.py "
+        f"--ignore=tests/unit/training/test_model.py 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 def test_import_training_modules():
     """Training and orchestrator modules can be imported (pass_to_pass)."""
     deps = "loguru datasets pydantic-settings typer pyyaml tomli"

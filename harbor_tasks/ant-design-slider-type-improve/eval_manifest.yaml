@@ -47,6 +47,26 @@ checks:
     errors
   type: pass_to_pass
   origin: repo_tests
+- id: repo_node_tests
+  description: The repository's Node.js tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_type_tests
+  description: The repository's slider TypeScript type tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_semantic_tests
+  description: The repository's slider semantic tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_a11y_tests
+  description: The repository's slider accessibility tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_tooltip_tests
+  description: The repository's slider tooltip tests pass
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: Never use `any` type - define precise types instead. Use proper type assertions
     that maintain type safety.
@@ -80,9 +100,9 @@ distractors:
   collision_type: scope_ambiguity
   why_distracting: The agent might try to document this TypeScript fix in the changelog
     files. However, fixing internal types is an internal refactoring imperceptible
-    to users ('用户无感知的改动'), so it should not be added to the changelog. Modifying the
-    changelog would be wasted effort and violate the instruction to only modify the
-    component file.
+    to users ('用户无感知的改动'), so it should not be added to the changelog. Modifying
+    the changelog would be wasted effort and violate the instruction to only modify
+    the component file.
   severity: medium
   source:
     path: CLAUDE.md
@@ -97,7 +117,7 @@ distractors:
     path: CLAUDE.md
     lines: 28-33
 hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
-  and provide project-wide guidelines. The rules are heavily focused on PRs, changelogs,
+  and provide project-wide guidelines. The commands are heavily focused on PRs, changelogs,
   demos, and tests, with minimal specific guidance for internal component implementation
   other than using TypeScript. Agents must be careful to correctly scope the demo/test
   import rules and changelog rules so they do not misapply them to internal component

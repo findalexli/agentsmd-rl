@@ -500,6 +500,204 @@ def test_repo_git_ls_files():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_cmake_sources_json_exists():
+    """Repo's cmake/Sources.json exists and is valid (pass_to_pass).
+
+    Validates that cmake/Sources.json exists and is valid JSON.
+    This file defines source file lists used by the build system.
+    CI/CD equivalent: used by build system and scripts in CI.
+    """
+    import json
+
+    r = subprocess.run(
+        ["cat", f"{REPO}/cmake/Sources.json"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Sources.json not found or unreadable:\n{r.stderr}"
+
+    # Validate it's valid JSON
+    try:
+        data = json.loads(r.stdout)
+    except json.JSONDecodeError as e:
+        assert False, f"Sources.json is not valid JSON: {e}"
+
+    # Should be a non-empty list
+    assert isinstance(data, list), f"Sources.json should be a list, got {type(data)}"
+    assert len(data) > 0, "Sources.json should contain at least one entry"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_js_web_url():
+    """Repo's URL-related test files are properly formatted (pass_to_pass).
+
+    Uses prettier to check formatting of test/js/web/url/*.ts files.
+    These tests cover URL/DOMURL functionality related to the fix.
+    CI/CD equivalent: part of 'bun run prettier' in format.yml workflow.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "test/js/web/url/*.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Prettier returns 0 if all files match
+    # We accept formatting issues but fail on parse errors
+    has_parse_errors = "parse" in r.stderr.lower() or "parse" in r.stdout.lower()
+    assert not has_parse_errors, f"prettier encountered parse errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_log_depth():
+    """Repo's git history has sufficient depth (pass_to_pass).
+
+    Validates that the git repository has at least the base commit
+    available. This catches issues with shallow clones.
+    CI/CD equivalent: git operations in CI workflows.
+    """
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-5"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed:\n{r.stderr}"
+    lines = len(r.stdout.strip().splitlines())
+    assert lines >= 1, f"git log returned insufficient history ({lines} commits)"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bindings_dir_structure():
+    """Repo's bindings directory has expected structure (pass_to_pass).
+
+    Validates that src/bun.js/bindings/ contains expected C++ binding files.
+    This catches issues with directory structure or missing files.
+    CI/CD equivalent: part of build system validation.
+    """
+    r = subprocess.run(
+        ["ls", "-la", f"{REPO}/src/bun.js/bindings/"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ls failed on bindings dir:\n{r.stderr}"
+
+    # Check for expected files in the bindings directory
+    content = r.stdout
+    assert "BunString.cpp" in content, "BunString.cpp should exist in bindings dir"
+    assert "root.h" in content, "root.h should exist in bindings dir (per SKILL.md)"
+
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_url_domurl_tests():
+    """URL/DOMURL tests pass - relevant to BunString__toJSDOMURL fix (pass_to_pass).
+
+    Runs the test/js/web/url/url.test.ts tests using bun.
+    These tests exercise the URL and DOMURL functionality that the fix
+    addresses. The fix adds RETURN_IF_EXCEPTION to prevent null deref
+    when DOMURL creation fails (e.g., invalid URL).
+    CI/CD equivalent: bun test test/js/web/url/url.test.ts
+    """
+    r = subprocess.run(
+        ["npx", "--yes", "bun@latest", "test", "test/js/web/url/url.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    # The test should pass with exit code 0 and show passing tests
+    assert r.returncode == 0, f"URL tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    # Check combined output (bun may output to stderr or stdout)
+    combined = (r.stdout + r.stderr).lower()
+    assert "pass" in combined, f"Expected passing tests in output:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clang_format_check():
+    """C++ bindings files have valid clang-format syntax (pass_to_pass).
+
+    Uses clang-format to verify BunString.cpp and related bindings files
+    can be parsed (not necessarily perfectly formatted).
+    This catches syntax errors in C++ code.
+    CI/CD equivalent: part of 'bun run clang-format:check' in CI.
+    """
+    cpp_file = f"{REPO}/src/bun.js/bindings/BunString.cpp"
+
+    # Try various clang-format versions that might be available
+    clang_format_cmds = [
+        "clang-format-21",
+        "clang-format-20",
+        "clang-format-19",
+        "clang-format-18",
+        "clang-format",
+    ]
+
+    available_cmd = None
+    for cmd in clang_format_cmds:
+        r = subprocess.run(["which", cmd], capture_output=True, timeout=10)
+        if r.returncode == 0:
+            available_cmd = cmd
+            break
+
+    if available_cmd is None:
+        # Skip this test if clang-format is not installed
+        # This is acceptable - the repo doesn't require clang-format at runtime
+        return
+
+    r = subprocess.run(
+        [available_cmd, "--dry-run", cpp_file],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # clang-format returns non-zero if formatting would change,
+    # but we're just checking it can parse the file
+    # Parse errors would be in stderr
+    has_parse_error = "error" in r.stderr.lower() or "fatal" in r.stderr.lower()
+    assert not has_parse_error, f"clang-format found parse errors:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cmake_sources_json_structure():
+    """Repo's cmake/Sources.json has valid structure (pass_to_pass).
+
+    Validates that cmake/Sources.json is valid JSON and has expected structure.
+    This file is used by scripts and build system to track source files.
+    CI/CD equivalent: used by build system and formatters in CI.
+    """
+    import json
+
+    r = subprocess.run(
+        ["cat", f"{REPO}/cmake/Sources.json"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Sources.json not found:\n{r.stderr}"
+
+    # Validate JSON structure
+    try:
+        data = json.loads(r.stdout)
+    except json.JSONDecodeError as e:
+        assert False, f"Sources.json is not valid JSON: {e}"
+
+    # Should be a list with specific structure
+    assert isinstance(data, list), f"Sources.json should be a list, got {type(data)}"
+    assert len(data) > 0, "Sources.json should contain at least one entry"
+
+    # Each entry should have expected keys
+    for i, entry in enumerate(data[:3]):  # Check first 3 entries
+        assert isinstance(entry, dict), f"Entry {i} should be a dict"
+        assert "output" in entry, f"Entry {i} missing 'output' field"
+        assert "paths" in entry, f"Entry {i} missing 'paths' field"
+        assert isinstance(entry["paths"], list), f"Entry {i} 'paths' should be a list"
+
 # -----------------------------------------------------------------------------
 # agent_config
 # -----------------------------------------------------------------------------

@@ -417,3 +417,31 @@ def test_repo_executor_fallback():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, "Executor-fallback tests failed:\n" + r.stderr[-1000:]
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo format check passes (pass_to_pass).
+
+    Runs pnpm format to verify code formatting adheres to the repo's
+    style guidelines (oxfmt --check).
+    """
+    r = subprocess.run(
+        ["pnpm", "format"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, "Format check failed:\n" + r.stderr[-1000:]
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_no_conflict_markers():
+    """Repo conflict marker check passes (pass_to_pass).
+
+    Runs pnpm check:no-conflict-markers to verify no Git conflict
+    markers were accidentally left in the code.
+    """
+    r = subprocess.run(
+        ["pnpm", "check:no-conflict-markers"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, "Conflict markers check failed:\n" + r.stderr[-500:]

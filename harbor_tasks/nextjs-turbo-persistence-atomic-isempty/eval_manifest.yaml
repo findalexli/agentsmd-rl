@@ -25,6 +25,15 @@ checks:
   type: pass_to_pass
   origin: static
   description: Source files are valid UTF-8 encoding
+- id: test_repo_rust_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Rust source files have valid syntax structure (balanced braces, valid
+    strings)
+- id: test_repo_imports_structure
+  type: pass_to_pass
+  origin: static
+  description: Rust imports follow standard structure with std imports present
 - id: test_repo_git_valid
   type: pass_to_pass
   origin: repo_tests
@@ -42,45 +51,28 @@ checks:
   origin: pr_diff
   description: AtomicBool is updated at both meta_files mutation points (load_directory
     and commit)
-rubric:
-- rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt
-  source:
-    path: CLAUDE.md
-    lines: '422'
-    commit: e513488d0d3bc19ae9b16b08ef43add7e4faab7c
 distractors:
-- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
-    edits to Next.js source.
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
   collision_type: scope_ambiguity
   why_distracting: The agent is modifying a Rust crate (`turbo-persistence`), not
-    Next.js JS source or integration tests. Running `pnpm --filter=next dev` is for
-    JS iterative development and won't help with testing a Rust-level lock contention
-    fix, which should be tested via `cargo test` in the specific crate.
+    the Next.js JS/TS framework source. Running the Next.js dev server is unnecessary
+    for a Rust-only lock contention fix and would waste time.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 64-72
-- rule: Run tests fast using NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<mode> pnpm testheadless
+    path: AGENTS.md
+    lines: 79-81
+- rule: 'For type errors only: Use `pnpm --filter=next types` instead of `pnpm --filter=next
+    build`'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run tests using `pnpm testheadless` which
-    is specifically for Next.js integration tests (`test/path/to/test.ts`), whereas
-    the changes are in a Rust crate and should be tested with `cargo test`.
-  severity: medium
+  why_distracting: This command checks TypeScript types, but the agent is working
+    on Rust code where `cargo check` or `cargo clippy` is needed. Running the TS typechecker
+    will not help validate the Rust changes.
+  severity: low
   source:
-    path: CLAUDE.md
-    lines: 74-79
-- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to use `pnpm --filter=next build` to compile
-    their changes, but since they are editing a Rust crate (`turbopack/crates/turbo-persistence`),
-    they need to use `pnpm build-all` or `cargo build` to compile the Rust code.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 84-86
-hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
-  and provide general Next.js development guidelines. However, they are heavily skewed
-  towards JavaScript/TypeScript development in the `packages/next` directory. For
-  a Rust-based PR in `turbopack/crates/turbo-persistence`, many of the build and test
-  commands provided in the root config are inapplicable and could mislead the agent
-  into using JS-specific tooling instead of Cargo.
+    path: AGENTS.md
+    lines: 96-97
+hierarchy_analysis: The configuration consists of a single flat set of rules at the
+  repository root (`AGENTS.md` and `CLAUDE.md` are identical). The rules are heavily
+  biased towards the JavaScript/TypeScript parts of the Next.js monorepo, offering
+  no specific guidance for the Rust (`turbopack`/`crates`) ecosystem.

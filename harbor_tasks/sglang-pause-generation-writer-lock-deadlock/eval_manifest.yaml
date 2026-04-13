@@ -3,7 +3,7 @@ version: "2.0"
 source:
   repo: "sgl-project/sglang"
   pr: 22290
-  base_commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"
+  base_commit: "8c3d80eabec2d2a41ccff4d15bfc81e59d24fbe"
   merge_commit: "6c2a759a04232ef4cb0c845528d75516ddbd9fe2"
 
 checks:
@@ -42,6 +42,31 @@ checks:
     origin: repo_tests
     description: "Repo's pre-commit check-ast hook passes on modified file"
 
+  - id: test_repo_precommit_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit debug-statements hook passes on modified file"
+
+  - id: test_repo_precommit_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit trailing-whitespace hook passes on modified file"
+
+  - id: test_repo_precommit_end_of_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit end-of-file-fixer hook passes on modified file"
+
+  - id: test_repo_precommit_check_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit check-yaml hook passes on config files"
+
+  - id: test_repo_precommit_check_toml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit check-toml hook passes on pyproject.toml"
+
   - id: update_weights_from_ipc_uses_pause_check
     type: fail_to_pass
     origin: pr_diff
@@ -61,22 +86,3 @@ checks:
     type: pass_to_pass
     origin: static
     description: "Function maintains proper async structure and exception handling"
-
-rubric:
-  - rule: "Add a short trailing comment explaining why that header is included (for example `// For TensorMatcher, SymbolicSize, SymbolicDevice`). This matches the current JIT kernel style and keeps include usage self-documenting."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "29-30"
-      commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"
-
-  - rule: "Use comments to explain invariants and the reasoning behind non-obvious logic, not to narrate what the code does. Explanatory comments should answer 'why' rather than 'what'."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "297-298"
-      commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"
-
-  - rule: "Follow existing code patterns and conventions in neighboring functions. When fixing a bug or adding a feature, check similar functions in the same file for established patterns (e.g., conditional lock acquisition, nullcontext usage, error handling)."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "1-4"
-      commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"

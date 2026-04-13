@@ -321,22 +321,20 @@ def test_action_file_references_valid():
 def test_repo_ruff_check():
     """Repo's Python linter passes (pass_to_pass)."""
     # First ensure ruff is installed
-    r = subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, text=True, timeout=60)
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, text=True, timeout=60)
     # Then run ruff check on the core Python directories
     r = subprocess.run(
-        ["python", "-m", "ruff", "check", "gradio", "test", "client/python/gradio_client"],
+        ["python", "-m", "ruff", "check", "gradio", "test", "client/python/gradio_client", "--exit-zero"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    # ruff check returns 0 if no issues found, 1 if issues found
-    # We accept both - the test verifies the command runs successfully
-    assert r.returncode in (0, 1), f"ruff check failed with unexpected error:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"ruff check failed with error:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format_check():
     """Repo's Python format check passes (pass_to_pass)."""
     # First ensure ruff is installed
-    r = subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, text=True, timeout=60)
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, text=True, timeout=60)
     # Then run ruff format check on the core Python directories
     r = subprocess.run(
         ["python", "-m", "ruff", "format", "--check", "gradio", "test", "client/python/gradio_client"],
@@ -345,3 +343,61 @@ def test_repo_ruff_format_check():
     # ruff format --check returns 0 if all formatted, 1 if reformatting needed
     # We accept both - the test verifies the command runs successfully
     assert r.returncode in (0, 1), f"ruff format check failed with unexpected error:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_textbox_tests():
+    """Textbox component tests pass (pass_to_pass)."""
+    # First install gradio and pytest-asyncio
+    subprocess.run(["pip", "install", "-e", ".", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
+    subprocess.run(["pip", "install", "pytest-asyncio", "-q"], capture_output=True, text=True, timeout=60)
+    # Run the textbox component tests
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_textbox.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Textbox tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """action.yml YAML is valid and parseable (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import yaml; yaml.safe_load(open('/workspace/gradio/.github/actions/install-all-deps/action.yml')); print('YAML valid')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_valid():
+    """All shell scripts in repo have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", 'for f in /workspace/gradio/scripts/*.sh; do bash -n "$f" || exit 1; done && echo "All shell scripts valid"'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell script validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json files are valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import json; json.load(open('/workspace/gradio/package.json')); print('package.json valid')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "toml", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "-c", "import toml; toml.load('/workspace/gradio/pyproject.toml'); print('pyproject.toml valid')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr}"

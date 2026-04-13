@@ -254,3 +254,35 @@ def test_bazel_query_json_targets():
     assert "JsonTest" in result.stdout, "Query should include JsonTest target"
     assert "JsonInputTest" in result.stdout, "Query should include JsonInputTest target"
     assert "JsonOutputTest" in result.stdout, "Query should include JsonOutputTest target"
+
+
+def test_bazel_build_spotbugs():
+    """Pass-to-pass test: bazel build of json spotbugs targets should succeed."""
+    result = subprocess.run(
+        ["bazel", "build", "//java/test/org/openqa/selenium/json:JsonTest-spotbugs"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, (
+        f"Bazel build of json spotbugs should succeed.\n"
+        f"STDERR: {result.stderr[-1000:]}"
+    )
+
+
+def test_bazel_smalltests_build():
+    """Pass-to-pass test: bazel build of SmallTests aggregate target should succeed."""
+    result = subprocess.run(
+        ["bazel", "build", "//java/test/org/openqa/selenium/json:SmallTests"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, (
+        f"Bazel build of SmallTests should succeed.\n"
+        f"STDERR: {result.stderr[-1000:]}"
+    )

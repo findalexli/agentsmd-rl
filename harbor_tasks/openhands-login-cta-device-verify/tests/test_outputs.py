@@ -162,6 +162,19 @@ def test_repo_tests_login_cta():
     assert result.returncode == 0, f"LoginCTA/device-verify tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
 
 
+def test_repo_prettier_format():
+    """Frontend code formatting should follow Prettier rules (pass_to_pass)."""
+    # Check Prettier formatting on source files
+    result = subprocess.run(
+        ["npx", "prettier", "--check", "src/**/*.{ts,tsx}"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Prettier format check failed:\n{result.stderr[-1000:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

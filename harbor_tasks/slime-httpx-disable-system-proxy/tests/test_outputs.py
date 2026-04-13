@@ -155,17 +155,16 @@ def test_ray_actor_trust_env_disabled():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI gates
+# Pass-to-pass (pre_commit) — pre-commit hooks from the repo
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_repo_ruff_lint():
-    """Repo passes ruff linting (pass_to_pass)."""
+# [pre_commit] pass_to_pass
+def test_pre_commit_ruff():
+    """Repo passes ruff linting (pre-commit hook)."""
     r = subprocess.run(
         ["pip", "install", "ruff", "-q"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # Installation may fail without network, that's ok - test is skipped
     if r.returncode != 0:
         pytest.skip("Could not install ruff (no network)")
 
@@ -176,19 +175,9 @@ def test_repo_ruff_lint():
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_compileall():
-    """All Python modules compile without syntax errors (pass_to_pass)."""
-    r = subprocess.run(
-        ["python3", "-m", "compileall", "slime/utils/"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Compileall failed:\n{r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_black_format():
-    """Modified file passes black format check (pass_to_pass)."""
+# [pre_commit] pass_to_pass
+def test_pre_commit_black():
+    """Modified file passes black format check (pre-commit hook)."""
     r = subprocess.run(
         ["pip", "install", "black", "-q"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -203,21 +192,69 @@ def test_repo_black_format():
     assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_mypy_typecheck():
-    """Modified file passes mypy type checking (pass_to_pass)."""
+# [pre_commit] pass_to_pass
+def test_pre_commit_isort():
+    """Modified file passes isort import format check (pre-commit hook)."""
     r = subprocess.run(
-        ["pip", "install", "mypy", "-q"],
+        ["pip", "install", "isort", "-q"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     if r.returncode != 0:
-        pytest.skip("Could not install mypy (no network)")
+        pytest.skip("Could not install isort (no network)")
 
     r = subprocess.run(
-        ["mypy", "slime/utils/http_utils.py", "--ignore-missing-imports"],
+        ["isort", "--check", "--profile=black", "slime/utils/http_utils.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Mypy type check failed:\n{r.stderr[-500:]}"
+    # First pass may fail due to formatting, but --check should pass if already formatted
+    assert r.returncode == 0, f"isort format check failed:\n{r.stderr[-500:]}"
+
+
+# [pre_commit] pass_to_pass
+def test_pre_commit_yaml():
+    """All YAML files are valid (pre-commit check-yaml hook)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        pytest.skip("Could not install pre-commit (no network)")
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Exit 0 = passed, Exit 1 = failed but may have made changes
+    # In CI mode with --all-files, it should pass if all files are valid
+    if r.returncode != 0:
+        # Check if it is a real error or just formatting issues
+        if "Failed" in r.stdout or "Failed" in r.stderr:
+            assert False, f"check-yaml found invalid YAML:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual repo CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_compileall():
+    """All Python modules compile without syntax errors."""
+    r = subprocess.run(
+        ["python3", "-m", "compileall", "slime/utils/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compileall failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_check():
+    """Modified module imports without errors."""
+    r = subprocess.run(
+        ["python3", "-c", "import slime.utils.http_utils; print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "Module import did not complete successfully"
 
 
 # ---------------------------------------------------------------------------

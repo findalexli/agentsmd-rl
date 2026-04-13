@@ -20,11 +20,11 @@ SKILL_DIR = Path(REPO) / "packages" / "playwright" / "src" / "skill"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# Gates (pass_to_pass, static) - File structure and content checks
 # ---------------------------------------------------------------------------
 
 def test_syntax_check():
-    """Modified TypeScript files exist and are non-empty."""
+    """Modified TypeScript files exist and are non-empty (pass_to_pass)."""
     files = [
         MCP_DIR / "terminal" / "program.ts",
         MCP_DIR / "terminal" / "daemon.ts",
@@ -37,10 +37,6 @@ def test_syntax_check():
         content = f.read_text()
         assert len(content) > 100, f"File suspiciously small: {f}"
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) - CI/CD gates from upstream repo
-# ---------------------------------------------------------------------------
 
 def test_all_modified_files_exist():
     """All files modified in PR exist and have valid content (pass_to_pass)."""
@@ -71,7 +67,7 @@ def test_all_modified_files_exist():
 
 
 def test_typescript_syntax_valid():
-    """All modified TypeScript files have valid syntax (pass_to_pass)."""
+    """All modified TypeScript files have valid basic syntax (pass_to_pass)."""
     ts_files = [
         MCP_DIR / "browser" / "browserContextFactory.ts",
         MCP_DIR / "browser" / "browserServerBackend.ts",
@@ -233,6 +229,10 @@ def test_modified_files_deps_updated():
     # in its DEPS. This test passes on base commit; the DEPS entry is added by the fix.
 
 
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - Real CI commands via subprocess.run()
+# ---------------------------------------------------------------------------
+
 def test_repo_node_syntax_check():
     """Node.js can parse modified TypeScript files without syntax errors (pass_to_pass)."""
     ts_files = [
@@ -338,6 +338,296 @@ console.log('PASS');
         cwd=REPO,
     )
     assert r.returncode == 0, f"MCP config validation failed:\n{r.stderr[:500]}"
+
+
+def test_repo_mcp_test_files_exist():
+    """MCP test spec files referenced in CI exist and are non-empty (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const path = require('path');
+
+const testFiles = [
+  'tests/mcp/cli-isolated.spec.ts',
+  'tests/mcp/cli-misc.spec.ts',
+  'tests/mcp/cli-session.spec.ts',
+];
+
+for (const file of testFiles) {
+  const fullPath = path.join(file);
+  if (!fs.existsSync(fullPath)) {
+    console.error(`Missing test file: ${file}`);
+    process.exit(1);
+  }
+  const content = fs.readFileSync(fullPath, 'utf8');
+  if (content.length < 100) {
+    console.error(`Test file too small: ${file}`);
+    process.exit(1);
+  }
+  // Verify it's a valid Playwright test file
+  if (!content.includes('test(') && !content.includes('test.describe')) {
+    console.error(`Not a valid Playwright test file: ${file}`);
+    process.exit(1);
+  }
+}
+console.log('PASS');
+"""],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP test files check failed:\n{r.stderr[:500]}"
+
+
+def test_repo_cli_deps_check():
+    """Repo DEPS.list checker passes for MCP terminal module (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const path = require('path');
+
+// Read DEPS.list and validate structure
+const depsPath = 'packages/playwright/src/mcp/terminal/DEPS.list';
+const content = fs.readFileSync(depsPath, 'utf8');
+
+// Check DEPS.list has proper sections for modified files
+const requiredSections = ['[daemon.ts]', '[program.ts]', '[cli.ts]'];
+for (const section of requiredSections) {
+  if (!content.includes(section)) {
+    console.error(`Missing DEPS.list section: ${section}`);
+    process.exit(1);
+  }
+}
+
+// Check that daemon.ts section has dependencies
+const daemonMatch = content.match(/\\[daemon.ts\\][\\s\\S]*?(?=\\[|$)/);
+if (!daemonMatch) {
+  console.error('Could not parse daemon.ts section');
+  process.exit(1);
+}
+
+const daemonSection = daemonMatch[0];
+const hasDeps = daemonSection.split('\\n').some(line => {
+  const trimmed = line.trim();
+  return trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('[');
+});
+
+if (!hasDeps) {
+  console.error('daemon.ts section has no dependencies');
+  process.exit(1);
+}
+
+console.log('PASS');
+"""],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"DEPS.list check failed:\n{r.stderr[:500]}"
+
+
+def test_repo_cli_help_valid():
+    """CLI help generator produces valid output structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+
+// Read helpGenerator.ts and verify it produces valid structure
+const helpGenPath = 'packages/playwright/src/mcp/terminal/helpGenerator.ts';
+const content = fs.readFileSync(helpGenPath, 'utf8');
+
+// Check for required help generation components
+const checks = [
+  ['commands import', content.includes('commands')],
+  ['generateCommandHelp function', content.includes('generateCommandHelp')],
+  ['categories defined', content.includes('categories')],
+  ['commandArgs function', content.includes('commandArgs')],
+  ['CommandArg type', content.includes('CommandArg')],
+];
+
+for (const [name, found] of checks) {
+  if (!found) {
+    console.error(`Missing: ${name}`);
+    process.exit(1);
+  }
+}
+
+// Verify categories array has expected browser sessions category
+if (!content.includes("'Browser sessions'") && !content.includes('"Browser sessions"')) {
+  console.error('Missing Browser sessions category');
+  process.exit(1);
+}
+
+console.log('PASS');
+"""],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI help check failed:\n{r.stderr[:500]}"
+
+
+def test_repo_node_npm_ci_check():
+    """Repo package.json is valid and npm can install dependencies (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci", "--dry-run"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # npm ci --dry-run returns 0 if package-lock.json is valid
+    # It may warn but should not error
+    assert r.returncode == 0, f"npm ci dry-run failed:\n{r.stderr[:500]}"
+
+
+def test_repo_eslint_mcp():
+    """ESLint passes on MCP module files (pass_to_pass)."""
+    # Install deps and build first (required for ESLint to resolve imports)
+    r = subprocess.run(
+        ["npm", "ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm run build failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=1000", "packages/playwright/src/mcp"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on MCP files:\n{r.stderr[:500]}\n{r.stdout[:500]}"
+
+
+def test_repo_lint_tests():
+    """Repo test linting passes (pass_to_pass)."""
+    # Install deps and build first
+    r = subprocess.run(
+        ["npm", "ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm run build failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-tests failed:\n{r.stderr[:500]}\n{r.stdout[:500]}"
+
+
+def test_repo_lint_packages():
+    """Repo package consistency check passes (pass_to_pass)."""
+    # Install deps and build first
+    r = subprocess.run(
+        ["npm", "ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm run build failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[:500]}\n{r.stdout[:500]}"
+
+
+def test_repo_check_deps():
+    """Repo DEPS.list check passes (pass_to_pass)."""
+    # Install deps and build first
+    r = subprocess.run(
+        ["npm", "ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm run build failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed:\n{r.stderr[:500]}\n{r.stdout[:500]}"
+
+
+def test_repo_build():
+    """Repo builds successfully without errors (pass_to_pass)."""
+    # Install deps first
+    r = subprocess.run(
+        ["npm", "ci", "--silent"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[:500]}"
+
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm run build failed:\n{r.stderr[:500]}\n{r.stdout[:500]}"
 
 
 # ---------------------------------------------------------------------------

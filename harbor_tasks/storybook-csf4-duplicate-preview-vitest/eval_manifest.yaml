@@ -79,38 +79,18 @@ rubric:
     structure.
   category: architecture
 distractors:
-- rule: 'Vitest Configuration - Workspace configuration: `./code/vitest.workspace.ts`'
+- rule: 'Vitest configuration: Workspace configuration: `./code/vitest.workspace.ts`'
   collision_type: scope_ambiguity
-  why_distracting: The issue mentions duplicate preview loading in the Vitest integration.
-    An agent might read this rule and attempt to modify the global `./code/vitest.workspace.ts`
-    configuration to deduplicate setup files, rather than fixing the root cause in
-    the Vitest plugin's internal setup file injection logic.
-  severity: high
-  source:
-    path: .cursorrules
-    lines: 21-23
-- rule: The main package is `code/core/src/`.
-  collision_type: architecture_boundary
-  why_distracting: The agent might assume the Vitest plugin is part of the core package
-    and attempt to locate or move the plugin code into `code/core/src/`, whereas it
-    actually resides in `code/addons/vitest/`.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 44-46
-- rule: 'Test Mocking Rules: Follow the spy mocking rules defined in `.cursor/rules/spy-mocking.mdc`
-    for consistent mocking patterns with Vitest.'
-  collision_type: scope_ambiguity
-  why_distracting: The PR is about fixing a bug in the Vitest plugin's setup logic.
-    An agent might get distracted by the testing rules and attempt to write new tests
-    using spy mocking, which is unnecessary for this specific fix and not present
-    in the gold solution.
+  why_distracting: The rule states that Vitest configuration is located in `code/vitest.workspace.ts`.
+    Since the issue describes a problem where the 'preview configuration file is loaded
+    twice' in Vitest, an agent might be tempted to look for or modify configuration
+    in `vitest.workspace.ts` instead of the plugin source code, despite the explicit
+    files mentioned in the prompt.
   severity: low
   source:
     path: .cursorrules
-    lines: 34-35
-hierarchy_analysis: The configuration hierarchy is straightforward. `CLAUDE.md` delegates
-  entirely to `AGENTS.md`, which provides high-level architectural guidance. `.cursorrules`
-  provides specific Vitest testing instructions. The main conflict arises from `.cursorrules`
-  pointing to global Vitest configuration files, which could mislead an agent trying
-  to fix an internal Vitest plugin bug.
+    lines: 25-27
+hierarchy_analysis: The configuration hierarchy is relatively flat, with `.cursorrules`
+  and `AGENTS.md` providing generic repository guidelines at the root level, and `CLAUDE.md`
+  simply redirecting to `AGENTS.md`. There are no conflicting instructions between
+  these files that affect this specific task.

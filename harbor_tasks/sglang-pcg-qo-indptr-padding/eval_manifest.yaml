@@ -1,104 +1,85 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21452
-  base_commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
-  merge_commit: "3ab9afd653806db57c7eb5a2217b79796faae7b5"
-
+  base_commit: efebcab43ed851405bd41cfdf206245945dbb8ee
+  merge_commit: 3ab9afd653806db57c7eb5a2217b79796faae7b5
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All three modified files parse without syntax errors"
-
-  - id: test_repo_python_ast
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: All modified files pass Python AST validation (check-ast)"
-
-  - id: test_repo_no_trailing_whitespace
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have no trailing whitespace (static check)"
-
-  - id: test_repo_no_debug_statements
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have no debug statements (static check)"
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: Ruff linter passes on modified files (F401, F821)"
-
-  - id: test_repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: Import sorting check passes on modified files"
-
-  - id: test_repo_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: Black formatting check passes on modified files"
-
-  - id: forward_context_has_num_tokens
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ForwardContext has num_tokens attribute; set_forward_context accepts num_tokens kwarg"
-
-  - id: num_tokens_propagation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "num_tokens value propagates through set_forward_context with varied inputs (42, 256, None)"
-
-  - id: replay_num_tokens_and_ordering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "replay() passes num_tokens to set_forward_context and calls init_forward_metadata inside the context block"
-
-  - id: call_begin_forward_pcg_padding
-    type: fail_to_pass
-    origin: pr_diff
-    description: "call_begin_forward extends qo_indptr/kv_indptr for PCG padding tokens with conditional guard"
-
-  - id: existing_context_manager_api
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Original ForwardContext attributes and context manager API preserved"
-
-  - id: files_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "Modified files retain expected content and minimum size"
-
-rubric:
-  - rule: "Use @debug_kernel_api decorator for custom ops and kernel entry points to enable crash debugging"
-    source:
-      path: ".claude/skills/debug-cuda-crash/SKILL.md"
-      lines: "1-30"
-      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
-
-  - rule: "Context managers modifying global state must use try/finally or yield with proper cleanup"
-    source:
-      path: ".claude/skills/debug-cuda-crash/SKILL.md"
-      lines: "233-236"
-      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
-
-  - rule: "Comments should explain invariants and design rationale, not narrate the code"
-    source:
-      path: ".claude/skills/add-sgl-kernel/SKILL.md"
-      lines: "88-91"
-      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
-
-  - rule: "Follow existing code patterns in neighboring files for consistency"
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "27-30"
-      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
-
-  - rule: "Keep Python wrappers thin; perform validation in the underlying layer"
-    source:
-      path: ".claude/skills/add-sgl-kernel/SKILL.md"
-      lines: "104-112"
-      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All three modified files parse without syntax errors
+- id: test_repo_python_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: All modified files pass Python AST validation (check-ast)'
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Modified files have no trailing whitespace (pre-commit trailing-whitespace hook)'
+- id: test_repo_no_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Modified files have no debug statements (pre-commit debug-statements hook)'
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Ruff linter passes on modified files (F401, F821)'
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Import sorting check passes on modified files'
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Black formatting check passes on modified files'
+- id: test_repo_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: YAML syntax validation passes on all files (check-yaml pre-commit
+    hook)'
+- id: test_repo_check_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: TOML syntax validation passes on all files (check-toml pre-commit
+    hook)'
+- id: test_repo_check_merge_conflict
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: No merge conflict markers present in any files (check-merge-conflict
+    pre-commit hook)'
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Codespell passes on modified files (no common typos)'
+- id: forward_context_has_num_tokens
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ForwardContext has num_tokens attribute; set_forward_context accepts num_tokens kwarg'
+- id: num_tokens_propagation
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'num_tokens value propagates through set_forward_context with varied inputs (42, 256, None)'
+- id: replay_num_tokens_and_ordering
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'replay() passes num_tokens to set_forward_context and calls init_forward_metadata inside the context block'
+- id: call_begin_forward_pcg_padding
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'call_begin_forward extends qo_indptr/kv_indptr for PCG padding tokens with conditional guard'
+- id: existing_context_manager_api
+  type: pass_to_pass
+  origin: pr_diff
+  description: Original ForwardContext attributes and context manager API preserved
+- id: files_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Modified files retain expected content and minimum size
+code_rules:
+- rule: 'Context managers modifying global state must use try/finally or yield with proper cleanup'
+  file: python/sglang/srt/compilation/piecewise_context_manager.py
+  check: try_finally_cleanup
+- rule: Comments should explain invariants and design rationale, not narrate the code
+  file: python/sglang/srt/layers/attention/flashinfer_backend.py
+  check: explanatory_comments

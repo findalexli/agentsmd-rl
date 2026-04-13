@@ -63,21 +63,17 @@ checks:
     origin: repo_tests
     description: "Repo sglang_config unit tests passing subset pass"
 
+  - id: test_repo_unit_mask_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo mask_utils unit tests pass"
+
 rubric:
-  - rule: "Follow existing code patterns in memory_utils.py. When adding new host memory keys, use the same naming convention and _byte_to_gb() helper as existing GPU memory keys."
-    source:
-      path: ".claude/skills/add-rollout-function/SKILL.md"
-      lines: "70-79"
-      commit: "887fba113b512156098509c808b7bc93a8386b47"
+  - rule: "When adding psutil import in memory_utils.py, place it after the logging import and before torch import to follow existing import ordering conventions."
+    reference: "import psutil\nimport torch"
 
-  - rule: "Maintain import ordering per repository conventions. Third-party imports (like psutil) should be grouped and ordered following the isort black profile defined in pyproject.toml."
-    source:
-      path: "pyproject.toml"
-      lines: "9-19"
-      commit: "887fba113b512156098509c808b7bc93a8386b47"
+  - rule: "When adding host memory metrics to the available_memory() return dictionary, use the _byte_to_gb() helper function (already defined in the file) to convert bytes to GB, just like the existing GPU memory keys do."
+    reference: '"host_total_GB": _byte_to_gb(vm.total)'
 
-  - rule: "Follow existing naming conventions for dictionary keys. New host memory metrics should use the same _GB suffix pattern as existing GPU memory keys (total_GB, free_GB, used_GB, etc.)."
-    source:
-      path: "slime/utils/memory_utils.py"
-      lines: "22-28"
-      commit: "887fba113b512156098509c808b7bc93a8386b47"
+  - rule: "When naming new host memory metric keys, follow the existing _GB suffix pattern used by GPU memory keys (total_GB, free_GB, used_GB, reserved_GB) and prefix with 'host_' to distinguish from GPU metrics."
+    reference: '"host_total_GB", "host_available_GB", "host_used_GB", "host_free_GB"'

@@ -25,6 +25,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax check for html.py passes
+- id: test_repo_ruff_check_on_test_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint passes on HTML test file
+- id: test_repo_ruff_format_on_test_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on HTML test file
+- id: test_repo_components_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All component files parse without syntax errors
+- id: test_repo_ruff_format_components_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on entire components directory
+- id: test_repo_gradio_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradio package imports successfully
 - id: head_param_in_init
   type: fail_to_pass
   origin: pr_diff
@@ -91,19 +111,15 @@ config_edits:
     bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
     | None = None, server_functions: list[Callable] | None = None, props: Any)`'
 distractors:
-- rule: '- `js/` — frontend code (Svelte/TypeScript), with each component in its own
-    subdirectory'
-  collision_type: architecture_boundary
-  why_distracting: The problem description states that scripts should be deduplicated
-    and injected into the `<head>`. An agent might read the repository structure and
-    attempt to implement this logic in the frontend Svelte code (`js/`). However,
-    the frontend already handles this, and the task is strictly to expose the `head`
-    parameter in the Python backend.
-  severity: high
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The rule requires AI agents to include the keyword `kumquat` in
+    the PR description. An agent might try to generate a PR description file or script
+    to create a PR, which is outside the scope of the code-patching task.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 12-12
-hierarchy_analysis: The AGENTS.md file provides high-level repository structure and
-  style guidelines. The instructions clearly scope the task to Python and Markdown
-  files, overriding any implication that frontend code needs to be modified to support
-  the new feature.
+    lines: 60-62
+hierarchy_analysis: The repository has a flat configuration structure with a single
+  `AGENTS.md` file at the root containing generic PR and formatting guidelines.

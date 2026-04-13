@@ -20,7 +20,7 @@ index 9aee9cd378f..dcd690867d0 100644
 +++ b/AGENTS.md
 @@ -23,6 +23,7 @@
  ## Code Style
- 
+
  - **Imports**: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions
 +- **One-off scripts**: Write one-off scripts in this repo as TypeScript and make them executable natively with modern Node.js (for example, executable `.ts` files)
  - **Variables**: Prefer `let` for locals, `const` only at module scope; never use `var`
@@ -355,5 +355,8 @@ PATCH_EOF
 
 git apply "$PATCH_FILE"
 rm "$PATCH_FILE"
+
+# Fix formatting for newly created files
+pnpm format skills/make-pr skills/supersede-pr 2>/dev/null || true
 
 echo "Patch applied successfully."

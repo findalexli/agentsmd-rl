@@ -13,6 +13,7 @@ source code of the target function.
 """
 
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -384,16 +385,7 @@ def test_no_banned_words_in_diff():
 REPO_SCRIPTS = Path(REPO) / "scripts"
 
 
-# [repo_tests] pass_to_pass — TypeScript typecheck
-def test_repo_typecheck():
-    """Repo's TypeScript typecheck passes (pass_to_pass)."""
-    # Note: tsc is not installed in the container, so we check tsconfig.json exists
-    # This is a lightweight check equivalent to what CI would validate
-    tsconfig_path = Path(REPO) / "tsconfig.json"
-    assert tsconfig_path.exists(), "tsconfig.json not found in repo root"
-
-
-# [repo_tests] pass_to_pass — oxlint check via npx
+# [repo_tests] pass_to_pass — oxlint check via npx (real CI command)
 def test_repo_lint():
     """Repo's JavaScript linting passes using oxlint (pass_to_pass)."""
     r = subprocess.run(
@@ -406,7 +398,21 @@ def test_repo_lint():
     assert r.returncode == 0, f"Linting failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — package.json scripts exist
+# [repo_tests] pass_to_pass — Prettier format check via npx (real CI command)
+def test_repo_prettier_check():
+    """Repo's JS/TS files are properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/js/*.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Prettier returns 0 if all files are formatted correctly
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [static] pass_to_pass — package.json structure check
 def test_repo_package_json_valid():
     """package.json is valid JSON and has required scripts (pass_to_pass)."""
     import json
@@ -421,7 +427,7 @@ def test_repo_package_json_valid():
         assert script in pkg["scripts"], f"package.json missing script: {script}"
 
 
-# [repo_tests] pass_to_pass — CLAUDE.md exists and has content
+# [static] pass_to_pass — CLAUDE.md exists and has content
 def test_repo_claude_md_exists():
     """CLAUDE.md documentation file exists and has content (pass_to_pass)."""
     claude_md = Path(REPO) / "src" / "CLAUDE.md"
@@ -432,7 +438,7 @@ def test_repo_claude_md_exists():
     assert "Zig" in content, "CLAUDE.md missing Zig section"
 
 
-# [repo_tests] pass_to_pass — Zig file syntax check (basic)
+# [static] pass_to_pass — Zig file syntax check (basic)
 def test_repo_zig_file_exists():
     """VirtualMachine.zig file exists and is readable (pass_to_pass)."""
     vm_zig = Path(REPO) / "src" / "bun.js" / "VirtualMachine.zig"
@@ -443,7 +449,7 @@ def test_repo_zig_file_exists():
     assert "resolveMaybeNeedsTrailingSlash" in content, "Target function not found in VirtualMachine.zig"
 
 
-# [repo_tests] pass_to_pass — oxlint config exists
+# [static] pass_to_pass — oxlint config exists
 def test_repo_oxlint_config():
     """oxlint configuration file exists and has content (pass_to_pass)."""
     oxlint_json = Path(REPO) / "oxlint.json"
@@ -454,7 +460,7 @@ def test_repo_oxlint_config():
     assert "rules" in content, "oxlint.json missing rules section"
 
 
-# [repo_tests] pass_to_pass — Prettier config exists
+# [static] pass_to_pass — Prettier config exists
 def test_repo_prettier_config():
     """Prettier configuration exists (pass_to_pass)."""
     prettier_rc = Path(REPO) / ".prettierrc"

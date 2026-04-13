@@ -22,7 +22,7 @@ if "wp.on('remove'" in content:
     print("Patch already applied.")
     exit(0)
 
-# The new isDev block
+# The new isDev block - no escaping needed inside Python triple-quoted string
 new_block = '''  // Watch config files for changes and distDir ancestors for deletion.
   if (isDev) {
     // Note: dir is absolute and normalized (.. segments removed), absDistDir
@@ -58,16 +58,16 @@ new_block = '''  // Watch config files for changes and distDir ancestors for del
         return
       }
       Log.warn(
-        \`Found a change in \${path.basename(
+        `Found a change in ${path.basename(
           filename
         )}. Restarting the server to apply the changes...
-      \`)
+      `)
       process.exit(RESTART_EXIT_CODE)
     })
     wp.on('remove', (removedPath: string) => {
       if (dirWatchPaths.includes(removedPath)) {
         Log.error(
-          \`The directory at \\${removedPath}\ was deleted.\\n\\n\` +
+          `The directory at ${removedPath} was deleted.\\n\\n` +
             'Deleting this directory while Next.js is running can lead to ' +
             'undefined behavior. Restarting the server to recover...'
         )

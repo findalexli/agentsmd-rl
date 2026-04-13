@@ -94,31 +94,35 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's app package unit tests pass
+- id: test_repo_persist_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's persist utility unit tests pass (covers workspace-scoped persistence)
 rubric:
 - rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
   source:
-    path: AGENTS.md
+    path: packages/app/src/pages/session.tsx
     lines: '57'
     commit: 3fb60d05e555dad020d3354602affe166ef0cc22
 - rule: Reduce total variable count by inlining when a value is only used once.
   source:
-    path: AGENTS.md
+    path: packages/app/src/pages/session.tsx
     lines: '44'
     commit: 3fb60d05e555dad020d3354602affe166ef0cc22
 - rule: Keep things in one function unless composable or reusable.
   source:
-    path: AGENTS.md
+    path: packages/app/src/pages/session.tsx
     lines: '11'
     commit: 3fb60d05e555dad020d3354602affe166ef0cc22
 - rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
     unless necessary for exports or clarity.
   source:
-    path: AGENTS.md
+    path: packages/app/src/pages/session.tsx
     lines: '16'
     commit: 3fb60d05e555dad020d3354602affe166ef0cc22
 - rule: Always prefer `createStore` over multiple `createSignal` calls
   source:
-    path: packages/app/AGENTS.md
+    path: packages/app/src/pages/session.tsx
     lines: 14-16
   evidence: The gold solution wraps the existing `createStore` with `persisted` to
     persist the complex followup state, rather than breaking it down into multiple
@@ -126,7 +130,7 @@ rubric:
   category: architecture
 - rule: Avoid using the `any` type
   source:
-    path: AGENTS.md
+    path: packages/app/src/pages/session.tsx
     lines: 11-11
   evidence: The gold solution carefully defines `FollowupItem` and `FollowupEdit`
     types and passes them to `createStore` to ensure strict typing without falling
@@ -135,30 +139,30 @@ rubric:
 distractors:
 - rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
     unless necessary for exports or clarity
-  collision_type: would_cause_bug
-  why_distracting: 'The agent might try to omit the generic type parameter `<{ items:
-    ..., failed: ..., paused: ..., edit: ... }>` on `createStore` and rely on inference
-    from the initial state `{ items: {}, failed: {}, paused: {}, edit: {} }`. This
-    would infer the properties as empty objects `{}` rather than `Record<string, ...>`,
-    causing type errors when trying to assign values later.'
+  collision_type: rule_conflict
+  why_distracting: The rule instructs to 'avoid explicit type annotations or interfaces
+    unless necessary'. An agent might try to avoid defining the `FollowupItem` and
+    `FollowupEdit` types, instead keeping the inline `as Record<...>` assertions.
+    However, wrapping `createStore` with `persisted` often requires explicit generic
+    type arguments for proper inference, making explicit types necessary for clarity
+    and correctness here.
   severity: high
   source:
     path: AGENTS.md
     lines: 14-15
-- rule: Use single word names by default for new locals, params, and helper functions.
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to name the new types `Item` and `Edit` to
-    strictly follow the single-word naming rule. However, in a complex session component,
-    these names are too generic and ambiguous, so `FollowupItem` and `FollowupEdit`
-    are necessary for clarity.
+  why_distracting: The rule enforces 'single word names by default'. An agent extracting
+    the complex inline types might try to name them `Item` and `Edit` to strictly
+    follow this rule. However, in the module scope, these names are too generic and
+    ambiguous, so the multi-word names `FollowupItem` and `FollowupEdit` are required.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 27-28
-hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and naming guidelines,
-  while `packages/app/AGENTS.md` provides SolidJS-specific guidelines. The SolidJS
-  rule to use `createStore` aligns perfectly with the solution. However, the root
-  rule to rely on type inference conflicts with the need to explicitly type the `createStore`
-  generic parameter when initializing with empty objects `{}`. The agent must recognize
-  that explicit types are necessary here to prevent TypeScript errors, overriding
-  the general preference for inference.
+    lines: 20-21
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the app-specific
+  `packages/app/AGENTS.md`. The app-specific rule about `createStore` reinforces keeping
+  the existing state structure, while the root rules about naming and type inference
+  require nuanced application (knowing when to break the 'no explicit types' and 'single
+  word' rules for clarity).

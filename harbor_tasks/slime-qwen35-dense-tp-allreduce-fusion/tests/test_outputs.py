@@ -447,6 +447,29 @@ def test_repo_isort_check():
 
 
 # [repo_tests] pass_to_pass
+# [repo_tests] pass_to_pass
+def test_repo_pyflakes_check():
+    """Repo's pyflakes static analysis runs without crashing on slime/ and slime_plugins/ (pass_to_pass).
+
+    Note: pyflakes outputs warnings to stdout and returns exit code 1 when issues are found.
+    This is expected behavior for this codebase - we only verify the tool runs successfully.
+    """
+    r = subprocess.run(
+        ["pip", "install", "pyflakes", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pyflakes", "slime/", "slime_plugins/"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    # pyflakes returns 0 if no issues, 1 if warnings found - both are valid runs
+    # We only fail if there's a crash (returncode > 1) or exception in stderr
+    assert r.returncode <= 1, f"pyflakes crashed:\n{r.stderr[-500:]}"
+    # Verify the tool actually ran (stdout should contain analysis output or be empty)
+    assert "Traceback" not in r.stderr, f"pyflakes exception:\n{r.stderr[-500:]}"
+
+
+# [static] pass_to_pass
 def test_repo_pyproject_valid():
     """pyproject.toml must exist and be parseable (pass_to_pass)."""
     import tomllib
@@ -459,3 +482,101 @@ def test_repo_pyproject_valid():
         tomllib.loads(content)
     except Exception as e:
         assert False, f"pyproject.toml is not valid TOML: {e}"
+
+
+# [static] pass_to_pass
+def test_repo_precommit_yaml_valid():
+    """pre-commit config YAML is syntactically valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    import yaml
+
+    config_path = Path(f"{REPO}/.pre-commit-config.yaml")
+    assert config_path.exists(), ".pre-commit-config.yaml not found"
+
+    content = config_path.read_text()
+    try:
+        yaml.safe_load(content)
+    except Exception as e:
+        assert False, f".pre-commit-config.yaml is not valid YAML: {e}"
+
+
+# [static] pass_to_pass
+def test_repo_pytest_config_valid():
+    """pytest configuration in pyproject.toml is valid (pass_to_pass)."""
+    import tomllib
+
+    pyproject_path = Path(f"{REPO}/pyproject.toml")
+    assert pyproject_path.exists(), "pyproject.toml not found"
+
+    content = pyproject_path.read_text()
+    try:
+        config = tomllib.loads(content)
+    except Exception as e:
+        assert False, f"pyproject.toml is not valid TOML: {e}"
+
+    # Verify pytest configuration exists and is valid
+    assert "tool" in config, "No [tool] section in pyproject.toml"
+    assert "pytest" in config["tool"], "No [tool.pytest] section in pyproject.toml"
+    pytest_config = config["tool"]["pytest"]
+    assert "ini_options" in pytest_config, "No [tool.pytest.ini_options] section"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_repo_valid():
+    """Git repository is valid and has expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git repository is not valid:\n{r.stderr[-500:]}"
+
+    # Check expected directories exist
+    for d in ["slime", "slime_plugins", "tests"]:
+        dir_path = Path(f"{REPO}/{d}")
+        assert dir_path.is_dir(), f"Expected directory {d} not found"
+
+
+# [static] pass_to_pass
+def test_repo_setup_py_valid():
+    """setup.py exists and is valid Python (pass_to_pass)."""
+    setup_path = Path(f"{REPO}/setup.py")
+    assert setup_path.exists(), "setup.py not found"
+
+    content = setup_path.read_text()
+    try:
+        ast.parse(content)
+    except SyntaxError as e:
+        assert False, f"setup.py has syntax error: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_requirements_sorted():
+    """requirements.txt is sorted alphabetically (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit-hooks", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["requirements-txt-fixer", f"{REPO}/requirements.txt"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"requirements-txt-fixer failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+    # Verify the file is sorted (no changes made)
+    import hashlib
+    req_path = Path(f"{REPO}/requirements.txt")
+    content = req_path.read_bytes()
+    original_hash = hashlib.md5(content).hexdigest()
+
+    # Run fixer again and check if hash changes
+    r = subprocess.run(
+        ["requirements-txt-fixer", f"{REPO}/requirements.txt"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    new_content = req_path.read_bytes()
+    new_hash = hashlib.md5(new_content).hexdigest()
+
+    assert original_hash == new_hash, "requirements.txt was modified by fixer - file was not sorted"

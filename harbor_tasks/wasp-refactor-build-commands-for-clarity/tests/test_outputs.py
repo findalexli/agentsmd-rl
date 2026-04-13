@@ -178,7 +178,7 @@ def test_repo_run_script_bash_parse():
 
 # [repo_tests] pass_to_pass
 def test_repo_run_script_version_cmd():
-    """The waspc/run script get-waspc-version command works (pass_to_pass)."""
+    """The waspc/run script get-waspc-version command executes (pass_to_pass)."""
     r = subprocess.run(
         ["./run", "get-waspc-version"],
         cwd=f"{REPO}/waspc",
@@ -200,3 +200,98 @@ def test_repo_packages_compile_cmd_defined():
         cwd=REPO, capture_output=True, text=True, timeout=10,
     )
     assert r.returncode == 0, "WASP_PACKAGES_COMPILE must be defined in run script"
+
+
+# Additional p2p repo_tests
+
+# [repo_tests] pass_to_pass
+def test_repo_run_ps1_exists():
+    """PowerShell run script exists and is valid (pass_to_pass)."""
+    ps_script = Path(REPO) / "waspc" / "run.ps1"
+    assert ps_script.exists(), "PowerShell run script must exist"
+    content = ps_script.read_text()
+    # Basic PowerShell syntax check - look for common patterns
+    assert "param(" in content or "$Command" in content, "PowerShell script must have expected structure"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_all_cmd_defined():
+    """The BUILD_ALL_CMD command must be defined in run script (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "grep -q 'BUILD_ALL_CMD=' waspc/run"],
+        cwd=REPO, capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, "BUILD_ALL_CMD must be defined in run script"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_hs_cmd_defined():
+    """The BUILD_HS_CMD command must be defined in run script (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "grep -q 'BUILD_HS_CMD=' waspc/run"],
+        cwd=REPO, capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, "BUILD_HS_CMD must be defined in run script"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_run_script_help_works():
+    """The waspc/run script help/usage command works (pass_to_pass)."""
+    r = subprocess.run(
+        ["./run", "invalid-command-that-shows-usage"],
+        cwd=f"{REPO}/waspc",
+        capture_output=True, text=True, timeout=10,
+    )
+    # Should show usage message and exit with non-zero code
+    assert "USAGE" in r.stdout or "COMMANDS" in r.stdout, (
+        "Run script should show usage help when given invalid command"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ci_yaml_syntax():
+    """CI workflow file must have valid YAML syntax (pass_to_pass)."""
+    ci_file = Path(REPO) / ".github" / "workflows" / "ci-waspc-build.yaml"
+    # Validate YAML syntax using basic structural checks
+    content = ci_file.read_text()
+    # Basic YAML validation - check for proper indentation and structure
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import re
+with open('{ci_file}') as f:
+    content = f.read()
+# Check for tabs (not allowed in YAML)
+if '\\t' in content:
+    print("YAML contains tabs")
+    exit(1)
+# Check for basic YAML structure
+if not re.search(r'^[^#\\s].*:', content, re.MULTILINE):
+    print("No YAML keys found")
+    exit(1)
+print("Basic YAML validation passed")
+"""],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"CI workflow file must be valid YAML: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Root package.json must be valid JSON (pass_to_pass)."""
+    pkg_file = Path(REPO) / "package.json"
+    r = subprocess.run(
+        ["python3", "-c", "import json; json.load(open('" + str(pkg_file) + "'))"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"package.json must be valid JSON: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tools_script_valid():
+    """Tools directory scripts must be valid bash (pass_to_pass)."""
+    script = Path(REPO) / "waspc" / "tools" / "make_binary_package.sh"
+    r = subprocess.run(
+        ["bash", "-n", str(script)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Tools script has bash syntax errors: {r.stderr}"

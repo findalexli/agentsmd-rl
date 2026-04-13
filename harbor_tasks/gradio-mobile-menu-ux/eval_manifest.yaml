@@ -81,40 +81,37 @@ rubric:
     path: AGENTS.md
     lines: '45'
     commit: 7760161258abe6329b754dd6d2511fc3b61fed95
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  source:
+    path: AGENTS.md
+    lines: 8-12
+  evidence: The gold solution correctly targets `js/_website/src/lib/components/Header.svelte`
+    for the UI changes, aligning with the repository structure definition for frontend
+    code.
+  category: architecture
 distractors:
 - rule: Target an issue. Every non-trivial PR should reference an existing GitHub
     issue. If one doesn't exist, create it first.
   collision_type: meta_confusion
-  why_distracting: The instruction to 'create an issue first if one doesn't exist'
-    might cause the agent to attempt to use CLI tools (like `gh issue create`) to
-    interact with GitHub before writing code, which is out of scope and likely to
-    fail in an isolated coding evaluation environment.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 18-20
-- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
-  collision_type: scope_ambiguity
-  why_distracting: The instruction to run `bash scripts/format_frontend.sh` might
-    lead the agent to format the entire frontend codebase or the entire file, creating
-    a massive diff of unrelated formatting changes instead of just fixing the targeted
-    mobile menu UX.
+  why_distracting: The agent might try to use the GitHub CLI to search for or create
+    an issue, or refuse to proceed without an issue number, which is unnecessary and
+    out of scope for an isolated code evaluation environment.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 41-43
-- rule: Do not open one-off PRs for tiny edits... Mechanical cleanups are acceptable
-    only when bundled into a clear, systematic scope.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might misinterpret a targeted UX fix for the mobile menu
-    as a 'tiny edit' or 'mechanical cleanup' and either refuse to complete the task
-    or try to bundle it with unrelated changes, violating the specific scope of the
-    prompt.
-  severity: medium
+    lines: 20-21
+- rule: If you are an AI coding agent... you must include the keyword kumquat somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to create a pull request or write a PR
+    description file to include the mandatory 'kumquat' keyword, wasting time on meta-tasks
+    instead of just fixing the code.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 52-54
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level.
-  There are no conflicting child configurations, so the rules in `AGENTS.md` apply
-  globally. The main challenge is interpreting the scope of PR rules (like issue creation
-  and global formatting) within the context of an isolated coding task.
+    lines: 64-65
+hierarchy_analysis: The configuration is a single flat file (`AGENTS.md`) at the repository
+  root. It primarily contains meta-level contribution guidelines (PR templates, issue
+  linking, AI disclosure) rather than deep architectural or stylistic rules for the
+  frontend code.

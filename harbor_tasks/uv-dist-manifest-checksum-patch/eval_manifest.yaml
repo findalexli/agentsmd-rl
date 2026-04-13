@@ -52,6 +52,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo passes typos spell check
+- id: repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shell scripts pass shellcheck
+- id: repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes validation
+- id: repo_transform_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's README transform script works
 - id: top_level_imports_only
   type: fail_to_pass
   origin: agent_config
@@ -87,25 +99,28 @@ rubric:
     name `temp_manifest` rather than a shortened name like `tmp` or `man`.
   category: naming
 distractors:
-- rule: ALWAYS attempt to add a test case for changed behavior
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests, e.g., at `it/...` over unit tests
   collision_type: scope_ambiguity
-  why_distracting: The changes involve GitHub Actions workflows and a release packaging
-    script. Attempting to add a test case for these CI/CD infrastructure changes would
-    be a waste of effort as they are not part of the standard test suite.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: '2'
-- rule: PREFER integration tests, e.g., at `it/...` over unit tests
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to add an integration test in the Rust `it/...`
-    directory for the Python script. This crosses an architecture boundary, as the
-    script is a standalone utility for the release workflow, not part of the Rust
-    application.
+  why_distracting: The task involves modifying GitHub Actions workflows and adding
+    a Python release script. Attempting to add a test case for this in the Rust test
+    suite (`it/...`) would be out of scope, architecturally incorrect, and likely
+    fail.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: '3'
-hierarchy_analysis: The CLAUDE.md file provides general Rust-focused guidelines. However,
-  this PR is entirely focused on CI/CD infrastructure (GitHub Actions) and a Python
-  utility script. The Rust-specific testing and style rules do not apply here.
+    lines: 2-3
+- rule: NEVER perform builds with the release profile, unless asked or reproducing
+    performance issues
+  collision_type: rule_conflict
+  why_distracting: The task is explicitly about modifying the release workflow which
+    builds release binaries. The agent might be confused by the instruction to never
+    perform builds with the release profile, potentially avoiding testing its workflow
+    changes properly.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 5-5
+hierarchy_analysis: The configuration consists of a single flat `CLAUDE.md` file at
+  the root. The rules are heavily focused on Rust development, whereas the task requires
+  Python and YAML edits.

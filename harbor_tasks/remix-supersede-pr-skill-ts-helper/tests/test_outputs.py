@@ -35,7 +35,7 @@ def test_repo_lint():
         ["pnpm", "lint"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Lint failed:\\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -53,7 +53,7 @@ def test_repo_typecheck():
         ["pnpm", "typecheck"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Typecheck failed:\\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -71,7 +71,7 @@ def test_repo_format_check():
         ["pnpm", "format:check"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Format check failed:\\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -89,7 +89,7 @@ def test_repo_changes_validate():
         ["pnpm", "changes:validate"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Changes validate failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Changes validate failed:\\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -107,7 +107,61 @@ def test_repo_cookie_tests():
         ["pnpm", "--filter", "@remix-run/cookie", "test"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Cookie tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Cookie tests failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_tests():
+    """Repo's scripts/utils unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["node", "--test", "scripts/utils/release-pr.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Scripts tests failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_headers_tests():
+    """Repo's @remix-run/headers unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/headers", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Headers tests failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_route_pattern_tests():
+    """Repo's @remix-run/route-pattern unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/route-pattern", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Route pattern tests failed:\\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +181,7 @@ def test_syntax_check():
             capture_output=True, timeout=30,
         )
         assert r.returncode == 0, (
-            f"{ts_file.name} failed syntax check:\n"
+            f"{ts_file.name} failed syntax check:\\n"
             f"{r.stderr.decode()}"
         )
 
@@ -146,7 +200,7 @@ def test_script_shows_help():
     out = r.stdout.decode()
     assert r.returncode == 0, f"--help exited with code {r.returncode}"
     assert "close_superseded_pr" in out.lower() or "old_pr" in out.lower(), (
-        f"--help output missing usage info:\n{out}"
+        f"--help output missing usage info:\\n{out}"
     )
     assert "--repo" in out, "--help should mention --repo flag"
     assert "--dry-run" in out, "--help should mention --dry-run flag"
@@ -172,7 +226,7 @@ def test_script_rejects_non_numeric_pr():
     assert r.returncode != 0, "Script should reject non-numeric old_pr"
     stderr = r.stderr.decode()
     assert "numeric" in stderr.lower() or "number" in stderr.lower(), (
-        f"Error message should mention numeric requirement:\n{stderr}"
+        f"Error message should mention numeric requirement:\\n{stderr}"
     )
 
 
@@ -186,7 +240,7 @@ def test_script_rejects_same_pr_numbers():
     assert r.returncode != 0, "Script should reject identical PR numbers"
     stderr = r.stderr.decode()
     assert "different" in stderr.lower(), (
-        f"Error should say PRs must be different:\n{stderr}"
+        f"Error should say PRs must be different:\\n{stderr}"
     )
 
 

@@ -8,6 +8,10 @@ RUN apt-get update && \
         git curl ca-certificates python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pytest for testing
+RUN pip3 install --break-system-packages pytest pytest-json-ctrf 2>/dev/null || \
+    pip3 install pytest pytest-json-ctrf
+
 # Install pnpm
 RUN npm install -g pnpm
 

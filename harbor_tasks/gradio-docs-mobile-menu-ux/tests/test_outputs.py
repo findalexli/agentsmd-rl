@@ -108,6 +108,47 @@ def test_repo_client_build():
     assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_website_build_deps():
+    """Website package dependencies can be built (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    # Build the client package first (dependency of website)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+    # Build core package (also a dependency)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/core", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Core build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

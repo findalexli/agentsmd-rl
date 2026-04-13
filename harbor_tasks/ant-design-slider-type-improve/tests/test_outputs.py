@@ -218,6 +218,59 @@ def test_repo_tsc_slider():
     print("TypeScript compilation passed")
 
 
+def test_repo_node_tests():
+    """Repo's Node.js tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test:node"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Node tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    print("Node.js tests passed")
+
+
+def test_repo_slider_type_tests():
+    """Repo's slider type tests pass (pass_to_pass)."""
+    # Need to generate version file first (required by antd test setup)
+    subprocess.run(
+        ["npm", "run", "version"],
+        capture_output=True,
+        cwd=REPO_PATH,
+    )
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "--no-cache",
+         "--testPathPatterns=slider/__tests__/type", "--no-coverage", "--maxWorkers=2"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Slider type tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    print("Slider type tests passed")
+
+
+def test_repo_slider_semantic_tests():
+    """Repo's slider semantic tests pass (pass_to_pass)."""
+    # Need to generate version file first (required by antd test setup)
+    subprocess.run(
+        ["npm", "run", "version"],
+        capture_output=True,
+        cwd=REPO_PATH,
+    )
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "--no-cache",
+         "--testPathPatterns=slider/__tests__/semantic", "--no-coverage", "--maxWorkers=2"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Slider semantic tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    print("Slider semantic tests passed")
+
+
 if __name__ == "__main__":
     test_functions = [
         test_typescript_compilation,
@@ -230,6 +283,9 @@ if __name__ == "__main__":
         test_repo_biome_lint_slider,
         test_repo_biome_check_slider,
         test_repo_tsc_slider,
+        test_repo_node_tests,
+        test_repo_slider_type_tests,
+        test_repo_slider_semantic_tests,
     ]
 
     passed = 0

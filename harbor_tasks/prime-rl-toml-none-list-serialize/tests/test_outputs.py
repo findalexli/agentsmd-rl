@@ -316,3 +316,18 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_check():
+    """Ruff import check (I rules) passes on the modified config.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["ruff", "check", "--select", "I", "--config=pyproject.toml", "src/prime_rl/utils/config.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff import check failed:\n{r.stderr}\n{r.stdout}"

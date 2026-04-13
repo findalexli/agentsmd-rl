@@ -228,3 +228,39 @@ def test_frontend_translation_completeness():
         timeout=60,
     )
     assert result.returncode == 0, f"Translation check failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_settings_with_payment():
+    """Related settings/billing integration tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "run", "test", "--", "settings-with-payment.test.tsx", "--run"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Settings with payment tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-1000:]}"
+
+
+def test_i18n_generation():
+    """i18n translation files can be generated (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "run", "make-i18n"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"i18n generation failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_payment_form():
+    """Payment form component tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "run", "test", "--", "payment-form.test.tsx", "--run"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Payment form tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-1000:]}"

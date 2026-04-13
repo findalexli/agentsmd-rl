@@ -250,3 +250,61 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Modified file must pass ruff lint check (pass_to_pass)."""
+    # Install ruff if not present
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=120
+    )
+    # Run lint check with same config as repo's pyproject.toml:
+    # select = ["E", "W", "F", "I", "UP"], ignore = ["E501"]
+    r = subprocess.run(
+        ["ruff", "check", "--select=E,W,F,I", "--ignore=E501", f"{REPO}/areal/api/cli_args.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_hooks():
+    """Repo's pre-commit hooks must pass on all files (pass_to_pass)."""
+    # Install pre-commit
+    r = subprocess.run(
+        ["pip", "install", "-q", "pre-commit"],
+        capture_output=True, text=True, timeout=120
+    )
+    # Run pre-commit hooks, skipping generate-cli-docs which requires full package install
+    r = subprocess.run(
+        ["bash", "-c", "SKIP=generate-cli-docs pre-commit run --all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit hooks failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """YAML files must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "PyYAML"],
+        capture_output=True, text=True, timeout=120
+    )
+    # Test that pre-commit can validate YAML
+    r = subprocess.run(
+        ["bash", "-c", "pip install -q pre-commit && pre-commit run check-yaml --all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trailing_whitespace():
+    """No trailing whitespace in source files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "pip install -q pre-commit && pre-commit run trailing-whitespace --all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

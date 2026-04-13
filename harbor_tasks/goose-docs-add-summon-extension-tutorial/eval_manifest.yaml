@@ -82,30 +82,27 @@ config_edits:
     \ to load Agent Skills within sessions.\n    extensionName=\"Skills\"\n  │  ●\
     \ skills\n- [Skills Extension Documentation](/docs/mcp/skills-mcp)"
 distractors:
-- rule: 'MCP: Extensions in crates/goose-mcp/'
-  collision_type: architecture_boundary
-  why_distracting: 'The rule states ''MCP: Extensions in crates/goose-mcp/''. Since
-    the PR is about adding documentation for the Summon MCP extension, an agent might
-    mistakenly try to create or modify Rust code in `crates/goose-mcp/` instead of
-    just updating the documentation.'
-  severity: medium
+- rule: The product name 'goose' should ALWAYS be written in lowercase 'g' in all
+    documentation
+  collision_type: would_cause_bug
+  why_distracting: The strict rule to ALWAYS use lowercase 'g' for 'goose' might lead
+    the agent to incorrectly lowercase the MDX React component `GooseBuiltinInstaller`
+    to `gooseBuiltinInstaller`, which would break the import and rendering.
+  severity: high
   source:
-    path: AGENTS.md
-    lines: 47-47
+    path: documentation/AGENTS.md
+    lines: 3-16
 - rule: 'Test: When adding features, update goose-self-test.yaml, rebuild, then run
     `goose run --recipe goose-self-test.yaml` to validate'
   collision_type: scope_ambiguity
-  why_distracting: The rule requires updating `goose-self-test.yaml` when adding features.
-    An agent might interpret adding documentation for the new Summon extension as
-    'adding a feature' and attempt to modify the self-test recipe, which is out of
-    scope for a pure documentation PR.
-  severity: low
+  why_distracting: The PR adds documentation for the new Summon extension feature.
+    The agent might interpret this as 'adding features' and attempt to update `goose-self-test.yaml`
+    and rebuild, but this rule is intended for code features, not documentation updates.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 44-44
-hierarchy_analysis: The `documentation/AGENTS.md` file provides specific style guidelines
-  for documentation (lowercase 'goose'), which is highly relevant and correctly applied.
-  The root `AGENTS.md` focuses on Rust development, which is mostly irrelevant for
-  this pure documentation PR, creating potential distractions if the agent tries to
-  apply code-level rules (like testing or MCP extension locations) to documentation
-  changes.
+    lines: 47-48
+hierarchy_analysis: The repository uses a root `AGENTS.md` for general Rust/CLI development
+  and a `documentation/AGENTS.md` specifically for documentation style. The documentation
+  style guide introduces a strict lowercase 'goose' rule that must be carefully applied
+  only to prose, not to MDX component names.

@@ -15,9 +15,9 @@ index d77aa0c15..d91760c05 100644
 --- a/src/transformers/utils/generic.py
 +++ b/src/transformers/utils/generic.py
 @@ -939,6 +939,14 @@ def merge_with_config_defaults(func):
-
+ 
      return wrapper
-
+ 
 +# bc for check_model_inputs:
 +
 +
@@ -26,9 +26,12 @@ index d77aa0c15..d91760c05 100644
 +    return merge_with_config_defaults(func)
 +
 +
-
+ 
  class GeneralInterface(MutableMapping):
      """
 PATCH
 
 echo "Patch applied successfully."
+
+# Run ruff format to fix any formatting issues from the patch
+python3 -m ruff format src/transformers/utils/generic.py 2>/dev/null || true

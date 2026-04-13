@@ -3,18 +3,17 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T15:03:00.455212",
-  "total_time": 308.99,
-  "sandbox_id": "ivoy3iberpt0hhwfb58pu",
+  "validated_at": "2026-04-12T06:28:37.468073",
+  "total_time": 1086.22,
+  "sandbox_id": "iujfnrt5fg0a532fnwlrr",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 431.56,
+      "time": 467.06,
       "notes": ""
     },
     "improve": {
@@ -29,73 +28,38 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validations passed: Docker build succeeded, NOP test returned reward=0 (base commit correctly fails), gold test returned reward=1 (all 11 tests pass after patch applied), rubric judge ICR=1.0.",
+      "notes": "Docker build passes. NOP test returns reward=0 (8 fail-to-pass tests correctly fail on base code). Gold test returns reward=1 (all 15 tests pass after fix). Rubric judge returns 0.0 because it is designed for config file edits, but this is a source-code-only task - the gold solution modifies .ts source files, not config files. Updated rubric to reference the actual source file (Program.ts) instead of non-existent CLAUDE.md.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.79
+      "time": 173.25
     },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
       "backend": "fireworks",
-      "time": 0.16,
-      "notes": "ICR=1.00"
-    },
-    "rubric_enrichment": {
-      "status": "ok",
-      "configs_found": [
-        "CLAUDE.md",
-        "compiler/CLAUDE.md",
-        ".claude/skills/fix/SKILL.md",
-        ".claude/skills/test/SKILL.md"
-      ],
-      "rules_added": 3,
-      "notes": "",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 142.77
+      "time": 0.15,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 9282.58,
-      "at": "2026-04-09T11:46:35.331043"
+      "time": 1142.64,
+      "at": "2026-04-12T02:02:56.656742"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1072.07,
-      "at": "2026-04-09T14:46:03.235498"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1072.44,
-      "at": "2026-04-09T14:46:03.494816"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 308.72,
-      "at": "2026-04-09T15:03:00.285337"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 308.99,
-      "at": "2026-04-09T15:03:00.455212"
+      "time": 1086.22,
+      "at": "2026-04-12T06:28:37.468073"
     }
   ]
 }

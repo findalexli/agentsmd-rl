@@ -301,8 +301,60 @@ def test_repo_mock_module_resolve_log_tests():
     )
     assert r.returncode == 0, f"Mock module resolve log tests failed:\n{r.stderr[-500:]}"
 
+
+# [repo_tests] pass_to_pass
+def test_repo_bun_test_framework():
+    """Repo's bun:test framework core tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/bun_test.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Bun test framework tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jest_hooks():
+    """Repo's jest hooks tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/jest-hooks.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Jest hooks tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jest_each():
+    """Repo's jest-each tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/jest-each.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Jest each tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_describe_tests():
+    """Repo's describe block tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/describe.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Describe tests failed:\n{r.stderr[-500:]}"
+
+
 # Static — anti-stub
-# ---------------------------------------------------------------------------
 
 
 # [static] fail_to_pass

@@ -39,6 +39,47 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - UsageViewSelect component tests pass
+- id: test_repo_usage_page_view_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - UsagePageView component tests pass
+- id: test_repo_key_model_usage_view_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - KeyModelUsageView component tests pass
+- id: test_repo_usage_ai_chat_panel_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - UsageAIChatPanel component tests pass
+- id: test_repo_entity_usage_spend_by_provider_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - EntityUsage SpendByProvider component tests pass
+- id: test_repo_entity_usage_export_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - EntityUsageExport utils tests pass
+- id: test_repo_entity_usage_export_modal_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - EntityUsageExport modal tests pass
+- id: test_repo_usage_value_formatters_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - UsagePage value formatters tests pass
+- id: test_repo_endpoint_usage_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - EndpointUsage component tests pass
+- id: test_repo_top_key_view_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TopKeyView component tests pass
+- id: test_repo_top_model_view_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TopModelView component tests pass
+
 rubric:
 - rule: Config updates should follow the style and format of existing pitfall entries
     in AGENTS.md
@@ -51,23 +92,6 @@ rubric:
     path: AGENTS.md
     lines: 73-86
     commit: a38993b871a32090caea0941427a8bc5489a5c02
-- rule: Use Common Components as much as possible and avoid building new components
-    unless needed
-  source:
-    path: AGENTS.md
-    lines: 53-56
-  evidence: The gold solution modifies the existing `UsageExportHeader` component
-    to accept a `filterMode` prop instead of creating a new, separate header component
-    for single-select filtering.
-  category: architecture
-- rule: Type hints required for all public APIs
-  source:
-    path: CLAUDE.md
-    lines: 77-78
-  evidence: 'The gold solution updates the `UsageExportHeaderProps` TypeScript interface
-    to include the new `filterMode?: "multiple" | "single"` property, ensuring the
-    component''s API remains strictly typed.'
-  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -95,38 +119,25 @@ config_edits:
     accepts a single value, not a multi-select'
   gold_removed: ''
 distractors:
-- rule: Add at least 1 test in `tests/litellm/`
+- rule: Add at least 1 test in tests/litellm/
   collision_type: architecture_boundary
-  why_distracting: The instruction to add tests in `tests/litellm/` applies to the
-    Python backend. This PR is strictly for the React UI dashboard (`ui/litellm-dashboard`).
-    An agent might erroneously try to create Python tests for a UI feature, crossing
-    the boundary between the proxy server and the frontend.
+  why_distracting: The rule mandates adding tests in the Python backend directory
+    (tests/litellm/), but this PR is strictly for the React UI dashboard. An agent
+    might erroneously create Python tests for a Next.js feature.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 27-28
+    lines: 28-30
 - rule: Tremor is DEPRECATED, do not use Tremor components in new features/changes
   collision_type: scope_ambiguity
-  why_distracting: The agent might notice Tremor components in the existing UI files
-    being modified and attempt to refactor them to another library. While Tremor is
-    deprecated for new features, refactoring existing usages is out of scope and would
-    bloat the PR.
+  why_distracting: The agent is modifying UI components and might encounter existing
+    Tremor components. The deprecation warning might cause the agent to unnecessarily
+    refactor existing code, expanding the PR scope beyond the requested feature.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 50-51
-- rule: First test should verify the component renders successfully
-  collision_type: scope_ambiguity
-  why_distracting: The agent is adding a new entity type to an existing component's
-    tests. They do not need to write a new 'renders successfully' test for the whole
-    component, just add the specific case for the 'user' entity type. Trying to enforce
-    this rule could lead to redundant test creation.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 68-69
-hierarchy_analysis: The repository contains a clear split between the Python backend
-  (Core/Proxy) and the React UI (`ui/litellm-dashboard`). `CLAUDE.md` primarily focuses
-  on the Python backend, while `AGENTS.md` contains a specific section for UI development.
-  Agents must be careful not to apply backend testing rules (like adding tests to
-  `tests/litellm/`) to UI changes, as this crosses a major architecture boundary.
+    lines: 44-45
+hierarchy_analysis: The repository uses two root-level configuration files (AGENTS.md
+  and CLAUDE.md) that mix backend (Python) and frontend (React) guidelines. The agent
+  must filter rules based on the architecture boundary (UI vs. Backend) to avoid applying
+  Python testing rules to Next.js components.

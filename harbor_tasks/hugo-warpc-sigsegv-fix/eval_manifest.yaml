@@ -48,48 +48,51 @@ checks:
   description: Repo's staticcheck passes on warpc package (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
+- id: test_repo_check_sh
+  description: Repo's check.sh script passes on warpc package (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: 'Assume that the maintainers and readers of the code you write are Go experts:
     Don''t use comments to explain the obvious.'
   source:
-    path: AGENTS.md
-    lines: 3-4
-  evidence: 'The gold solution implements the fix by adding `if d.startErr == nil
-    { ... }` without adding any comments explaining the logic (e.g., omitting the
-    `// BUG: This is set unconditionally` comment from th'
+    path: internal/warpc/warpc.go
+    lines: 776-784
+  reference: "if d.startErr == nil {\n\t\t\td.started = true\n\t\t\td.opts.Infof(\"\
+    started dispatcher in %s\", time.Since(start))\n\t\t}"
+  evidence: The gold solution implements the fix by adding `if d.startErr == nil {
+    ... }` without adding any comments explaining the logic
   category: documentation
 - rule: Brevity is good.
   source:
-    path: AGENTS.md
-    lines: 2-2
+    path: internal/warpc/warpc.go
+    lines: 776-784
+  reference: "if d.startErr == nil {\n\t\t\td.started = true\n\t\t\td.opts.Infof(\"\
+    started dispatcher in %s\", time.Since(start))\n\t\t}"
   evidence: The gold solution makes the minimal necessary change to fix the bug by
     simply wrapping the success-dependent state updates inside an `if d.startErr ==
-    nil` block, rather than refactoring the entire `s
+    nil` block
   category: style
+- rule: Don't use comments to explain the obvious.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The gold solution adds the `if d.startErr == nil` check without adding
+    any explanatory comments, adhering to the rule against explaining the obvious,
+    even though the issue description included a comme
+  category: documentation
 distractors:
 - rule: If you need to add temporary debug printing, use `hdebug.Printf`.
   collision_type: would_cause_bug
-  why_distracting: An agent might be tempted to add `hdebug.Printf` to log the error
-    when `d.startErr != nil` (since the success case already has an `Infof` log).
-    However, as noted in the footnote, leaving `hdebug.Printf` in the final code will
-    cause the CI build to fail.
-  severity: high
+  why_distracting: The agent might be tempted to add `hdebug.Printf` to trace the
+    `startErr` or the dispatcher state during the fix, but forgetting to remove it
+    will cause the CI build to fail as explicitly warned in the footnote.
+  severity: low
   source:
     path: AGENTS.md
     lines: 7-7
-- rule: Brevity is good.
-  collision_type: scope_ambiguity
-  why_distracting: An agent might over-optimize for 'brevity' by attempting to inline
-    the assignment into the if-statement (e.g., `if d.dispatcher, d.startErr = Start[Q,
-    R](d.opts); d.startErr == nil { ... }`). While valid Go, this reduces readability
-    and deviates from the existing style of the function, which separates the assignment
-    and the subsequent logic.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 2-2
-hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
-  All rules originate from `AGENTS.md` and apply uniformly to the Go source files.
+hierarchy_analysis: The hierarchy is flat. `CLAUDE.md` simply includes `AGENTS.md`.
+  The rules are generic Go guidelines that apply uniformly.
 version: '2.0'
 source:
   repo: gohugoio/hugo

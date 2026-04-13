@@ -114,6 +114,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Schema userland tests pass (pnpm vitest run packages/effect/test/Schema/SchemaUserland.test.ts)
+- id: test_repo_docgen
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo docgen command runs without errors (pnpm docgen)
+- id: test_repo_platform_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Platform-node package tests pass (pnpm vitest run packages/platform-node/test/)
+- id: test_repo_schema_arbitrary_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Schema Arbitrary tests pass (pnpm vitest run packages/effect/test/Schema/Arbitrary/Arbitrary.test.ts)
+- id: test_repo_codegen
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo codegen command passes (pnpm codegen)
 rubric:
 - rule: Code must not import from barrel packages ('effect', '@effect/platform', '@effect/sql');
     use specific module paths like 'effect/Effect' instead
@@ -134,6 +150,21 @@ rubric:
     (such as collapsing the `packageNames` array into a single line and wrapping the
     `selector` string), which demonstrates that `pnpm '
   category: tooling
+- rule: 'Conciseness: Keep code and any wording concise and to the point.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+  evidence: The added documentation for effect v4 in `AGENTS.md` is extremely brief
+    and direct, without unnecessary elaboration.
+  category: documentation
+- rule: 'Reduce comments: Avoid comments unless absolutely required... Comments in
+    jsdocs are acceptable.'
+  source:
+    path: AGENTS.md
+    lines: 15-16
+  evidence: The gold solution updates the `@example` blocks in `packages/ai/ai/src/AiError.ts`
+    to fix import paths rather than deleting the comments entirely.
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -157,27 +188,25 @@ config_edits:
 distractors:
 - rule: 'Always run tests after making changes: `pnpm test <test_file.ts>`'
   collision_type: meta_confusion
-  why_distracting: The agent is explicitly tasked with fixing this broken test command
-    in the documentation. If the agent blindly follows this instruction to run tests
-    during its workflow, the command will fail. Furthermore, the agent might get confused
-    between following the rule as an instruction versus treating the rule itself as
-    the text to be modified.
+  why_distracting: The agent's own instruction file tells it to use `pnpm test <test_file.ts>`
+    to run tests. However, the PR prompt explicitly states this command is broken.
+    The agent must ignore its loaded instruction and fix the instruction itself rather
+    than trying to use it.
   severity: high
   source:
     path: AGENTS.md
-    lines: 20-20
+    lines: 19-20
 - rule: run the file with `node scratchpad/your-file.ts`
   collision_type: meta_confusion
-  why_distracting: The agent is tasked with fixing this exact scratchpad execution
-    command because `node` cannot run `.ts` files. If the agent attempts to use this
-    command to verify its own scratchpad scripts during the task, it will encounter
-    errors and might waste time debugging the environment instead of fixing the documentation.
+  why_distracting: The agent is instructed by its config to use `node scratchpad/your-file.ts`
+    for testing code. If the agent tries to use this to verify its changes, it will
+    fail because `node` cannot run TypeScript files. The agent must recognize this
+    rule as the bug to be fixed.
   severity: high
   source:
     path: AGENTS.md
-    lines: 42-44
-hierarchy_analysis: The `AGENTS.md` file acts as the root configuration. In this specific
-  task, the agent is asked to modify the very instructions it is supposed to follow.
-  This creates a meta-level paradox where the agent must recognize that certain rules
-  in its system prompt/instructions are intentionally flawed and are the target of
-  the fix, rather than absolute directives to be obeyed.
+    lines: 41-43
+hierarchy_analysis: The config file `AGENTS.md` is both the source of agent instructions
+  and the target file to be edited. The agent must navigate the meta-level conflict
+  of having its own operational instructions be the subject of the bug report, requiring
+  it to selectively ignore and rewrite the rules it is supposed to follow.

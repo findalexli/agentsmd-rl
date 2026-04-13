@@ -23,12 +23,12 @@ checks:
   description: Repo is at expected base commit with no uncommitted changes
 - id: repo_files_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified source files exist and are non-empty
 - id: repo_header_structure
   type: pass_to_pass
-  origin: repo_tests
-  description: 'C++ headers have valid include guards or #pragma once'
+  origin: static
+  description: C++ headers have valid include guards or #pragma once
 - id: no_deleter_overload_preserved
   type: pass_to_pass
   origin: pr_diff
@@ -40,26 +40,35 @@ checks:
 - id: shim_cpp_null_callback_guard
   type: pass_to_pass
   origin: pr_diff
-  description: shim_common.cpp still guards against nullptr callback for backward
-    compatibility
-- id: repo_cpp_syntax_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: C++ header files can be preprocessed without syntax errors
+  description: shim_common.cpp still guards against nullptr callback for backward compatibility
 - id: repo_code_formatting
   type: pass_to_pass
-  origin: repo_tests
-  description: Modified files follow basic code formatting rules (no tabs, trailing
-    whitespace, ending newline)
+  origin: static
+  description: Modified files follow basic code formatting rules (no tabs, trailing whitespace, ending newline)
 - id: repo_file_structure
   type: pass_to_pass
-  origin: repo_tests
-  description: Source files have valid internal structure (extern C guards, namespace
-    declarations, balanced braces)
+  origin: static
+  description: Source files have valid internal structure (extern C guards, namespace declarations, balanced braces)
 - id: repo_git_history
   type: pass_to_pass
   origin: repo_tests
   description: Repo has expected git history and structure
+- id: repo_ci_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI scripts have valid Python syntax (py_compile)
+- id: github_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .github/scripts Python files have valid syntax
+- id: repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in .github/scripts have valid syntax
+- id: repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml has valid TOML syntax
 rubric:
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
   source:
@@ -91,7 +100,7 @@ rubric:
   source:
     path: .claude/skills/pr-review/review-checklist.md
     lines: '12'
-    commit: 41f8e3e0381395e1669ca4bc6e36a36a7872d25cdcd
+    commit: 41f8e3e0381395e1669ca4bc6e36a7872d25cdcd
 - rule: Self-explanatory code — variable and function names convey intent; minimal
     comments needed.
   source:
@@ -111,39 +120,29 @@ rubric:
     lines: 57-58
   evidence: The gold solution adds a detailed comment in `torch/csrc/stable/c/shim.h`
     explaining how the `deleter_ctx` allows passing capturing lambdas across the C
-    ABI boundary, which provides necessary global c
+    ABI boundary, which provides necessary global context.
   category: documentation
 distractors:
 - rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
   collision_type: rule_conflict
-  why_distracting: Conflicts with CLAUDE.md which explicitly instructs to use `spin
-    lint` and `spin fixlint`. The agent might try to run `lintrunner` which might
-    not be available or the preferred tool in the current environment setup.
+  why_distracting: Conflicts with CLAUDE.md which explicitly mandates using `spin
+    lint` for linting. Following this would use the wrong linting tool.
   severity: high
   source:
     path: AGENTS.md
-    lines: '11'
-- rule: Once the change is passing, find an appropriate test file to add the test
-    to and make sure to follow local conventions on the test file.
-  collision_type: scope_ambiguity
-  why_distracting: The prompt explicitly limits the scope of the fix to three specific
-    files (`shim_common.cpp`, `shim.h`, `ops.h`). Following this rule to find and
-    modify a test file would violate the strict scope constraint.
+    lines: 11-11
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to avoid creating the `wrapped_deleter` lambda
+    in `shim_common.cpp`, but it is strictly necessary to adapt the 2-argument C callback
+    to the 1-argument `at::for_blob` deleter signature.
   severity: high
-  source:
-    path: AGENTS.md
-    lines: 4-6
-- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might omit the crucial explanation in `shim.h` about
-    how `deleter_ctx` is used to pass capturing lambdas across the C ABI boundary,
-    strictly adhering to 'minimize comments' despite the complexity of the ABI boundary.
-  severity: medium
   source:
     path: CLAUDE.md
-    lines: '56'
-hierarchy_analysis: 'The hierarchy contains a direct conflict regarding linting tools:
-  `CLAUDE.md` mandates `spin lint` while `AGENTS.md` mandates `lintrunner -a`. Additionally,
-  `AGENTS.md` instructs the agent to add tests to an appropriate test file, which
-  conflicts with the strict file scope provided in the prompt. The agent must prioritize
-  the prompt''s scope constraints over the general testing guidelines in `AGENTS.md`.'
+    lines: 49-50
+hierarchy_analysis: The workspace contains two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`) that provide conflicting instructions on linting (`lintrunner`
+  vs `spin`). The agent must resolve this conflict. Additionally, there is internal
+  tension in `CLAUDE.md` regarding comments (minimize vs useful for global context)
+  and helper functions.

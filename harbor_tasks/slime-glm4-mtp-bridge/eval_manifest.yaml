@@ -32,6 +32,11 @@ checks:
     origin: repo_tests
     description: "Repo CI: black formatting check passes on modified files"
 
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: isort import ordering check passes on modified files"
+
   - id: test_repo_mtp_bridge_mapping
     type: pass_to_pass
     origin: repo_tests
@@ -67,21 +72,4 @@ checks:
     origin: pr_diff
     description: "_weight_to_hf_format returns both base and MTP-layer names for shared weights"
 
-rubric:
-  - rule: "Follow existing code style and naming conventions. Check neighboring files for patterns."
-    source:
-      path: ".claude/skills/add-tests-and-ci/SKILL.md"
-      lines: "23-24"
-      commit: "57e76686346beeaaec4010ebefc56b9949686457"
-
-  - rule: "Run the exact existing test files you changed, if any. Avoid running repository-wide checks unless they are part of the task."
-    source:
-      path: "docs/en/developer_guide/ci.md"
-      lines: "33-35"
-      commit: "57e76686346beeaaec4010ebefc56b9949686457"
-
-  - rule: "Correctness is critically important for a training framework. All changes must be verifiable through existing tests."
-    source:
-      path: "CONTRIBUTING.md"
-      lines: "31-32"
-      commit: "57e76686346beeaaec4010ebefc56b9949686457"
+rubric: []

@@ -391,3 +391,95 @@ def test_repo_effect_namespace_intact():
     methods = ['loadGlobal', 'getGlobal', 'invalidate', 'loadFile']
     for method in methods:
         assert method in content, f'Config namespace missing method: {method}'
+
+
+# [repo_tests] pass_to_pass — Config file has balanced parentheses
+def test_repo_config_balanced_parens():
+    '''Config file must have balanced parentheses in function calls (pass_to_pass).'''
+    content = FILE.read_text()
+    # Remove content inside strings to avoid false positives
+    cleaned = re.sub(r'".*?"', '""', content)
+    cleaned = re.sub(r"'.*?'", "''", cleaned)
+    cleaned = re.sub(r"`.*?`", "``", cleaned, flags=re.DOTALL)
+    # Check balance of parentheses
+    open_parens = cleaned.count('(')
+    close_parens = cleaned.count(')')
+    assert open_parens > 50, f'Too few parentheses ({open_parens}) - file may be corrupted'
+    assert open_parens == close_parens, f'Parentheses mismatch: {open_parens} open vs {close_parens} close'
+
+
+# [repo_tests] pass_to_pass — Config file has no obvious syntax errors
+def test_repo_config_no_invalid_syntax():
+    '''Config file must not contain obvious syntax errors (pass_to_pass).'''
+    content = FILE.read_text()
+    # Check for common syntax errors that would indicate corruption
+    # Double keywords
+    assert not re.search(r'\bconst\s+const\b', content), 'Found double const keyword'
+    assert not re.search(r'\blet\s+let\b', content), 'Found double let keyword'
+    assert not re.search(r'\bfunction\s+function\b', content), 'Found double function keyword'
+    # Missing spaces that would cause parsing issues
+    assert not re.search(r'\bconst\s+const\b', content), 'Found double const keyword'
+    assert not re.search(r'\blet\s+let\b', content), 'Found double let keyword'
+
+
+# [repo_tests] pass_to_pass — Config file has balanced brackets
+def test_repo_config_balanced_brackets():
+    '''Config file must have balanced square brackets (pass_to_pass).'''
+    content = FILE.read_text()
+    # Remove string content
+    cleaned = re.sub(r'".*?"', '""', content)
+    cleaned = re.sub(r"'.*?'", "''", cleaned)
+    cleaned = re.sub(r"`.*?`", "``", cleaned, flags=re.DOTALL)
+    # Check balance
+    open_brackets = cleaned.count('[')
+    close_brackets = cleaned.count(']')
+    assert abs(open_brackets - close_brackets) < 5, (
+        f'Bracket mismatch: {open_brackets} open vs {close_brackets} close'
+    )
+
+
+# [repo_tests] pass_to_pass — Prettier formatting check
+def test_repo_prettier_formatting():
+    """Repo config file passes Prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(FILE)],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Node.js syntax validation
+def test_repo_node_syntax_validation():
+    """Config file passes Node.js-based syntax validation (pass_to_pass)."""
+    script_content = """
+const fs = require('fs');
+const filePath = '/repo/packages/opencode/src/config/config.ts';
+const content = fs.readFileSync(filePath, 'utf8');
+const errors = [];
+
+if (content.length < 50000) errors.push("File too small");
+
+const openBraces = (content.match(/\\{/g) || []).length;
+const closeBraces = (content.match(/\\}/g) || []).length;
+if (Math.abs(openBraces - closeBraces) > 10) errors.push("Brace mismatch");
+
+const openParens = (content.match(/\\(/g) || []).length;
+const closeParens = (content.match(/\\)/g) || []).length;
+if (openParens !== closeParens) errors.push("Parentheses mismatch");
+
+const backticks = (content.match(/`/g) || []).length;
+if (backticks % 2 !== 0) errors.push("Unclosed template literals");
+
+if (errors.length > 0) { console.error(errors); process.exit(1); }
+else { console.log("OK"); process.exit(0); }
+"""
+    script_path = Path(REPO) / "_syntax_validation.cjs"
+    script_path.write_text(script_content)
+    try:
+        r = subprocess.run(
+            ["node", str(script_path)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Node.js syntax validation failed:\n{r.stderr[-500:]}"
+    finally:
+        script_path.unlink(missing_ok=True)

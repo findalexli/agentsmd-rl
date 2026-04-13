@@ -473,3 +473,51 @@ def test_repo_pyproject_toml():
     project = data["project"]
     assert project.get("name") == "prime-rl", "Project name should be prime-rl"
     assert "dependencies" in project, "Missing dependencies in [project]"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_all():
+    """Repo's ruff lint check passes on entire src/ directory (pass_to_pass)."""
+    # Install ruff if not present
+    try:
+        subprocess.run(["python3", "-c", "import ruff"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(["pip3", "install", "-q", "ruff"], capture_output=True, check=False)
+
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", f"{REPO}/src", "--config", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint on src/ failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_all():
+    """Repo's ruff format check passes on entire src/ directory (pass_to_pass)."""
+    # Install ruff if not present
+    try:
+        subprocess.run(["python3", "-c", "import ruff"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(["pip3", "install", "-q", "ruff"], capture_output=True, check=False)
+
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", f"{REPO}/src", "--config", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on src/ failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tests_dir_lint():
+    """Repo's tests directory passes ruff lint (pass_to_pass)."""
+    # Install ruff if not present
+    try:
+        subprocess.run(["python3", "-c", "import ruff"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(["pip3", "install", "-q", "ruff"], capture_output=True, check=False)
+
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", f"{REPO}/tests", "--config", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint on tests/ failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

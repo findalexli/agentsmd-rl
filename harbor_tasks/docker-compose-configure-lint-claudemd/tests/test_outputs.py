@@ -67,6 +67,26 @@ def test_gofmt_check():
         assert r.stdout.strip() == "", f"File {f} is not properly formatted"
 
 
+def test_go_build():
+    """Go build compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "build", "./cmd/..."],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+        env={**os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert r.returncode == 0, f"Go build failed: {r.stderr[-500:]}"
+
+
+def test_unit_tests_compose():
+    """Unit tests for pkg/compose pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "test", "-count=1", "./pkg/compose/"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+        env={**os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert r.returncode == 0, f"Unit tests failed: {r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code style tests
 # ---------------------------------------------------------------------------

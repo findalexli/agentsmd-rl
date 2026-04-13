@@ -6,12 +6,10 @@ cd /workspace/ruff
 # Idempotent: skip if already applied
 if grep -q 'NoSupportedVersion' crates/ty_project/src/metadata/pyproject.rs 2>/dev/null; then
     echo "Patch already applied."
-    exit 0
-fi
-
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
-git apply - <<'PATCH'
+else
+    # Use --whitespace=fix if patch has trailing whitespace issues
+    # IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
+    git apply - <<'PATCH'
 diff --git a/crates/ty_project/src/metadata.rs b/crates/ty_project/src/metadata.rs
 index b4b5339ef879f..abaeb405615bf 100644
 --- a/crates/ty_project/src/metadata.rs
@@ -132,4 +130,41 @@ index ca25d05a617fb..d510309767530 100644
 
 PATCH
 
-echo "Patch applied successfully."
+    echo "Patch applied successfully."
+fi
+
+# Rebuild the ty binary so the fix is active
+echo "Rebuilding ty binary..."
+cargo build --bin ty 2>&1
+
+# Aggressive cleanup to free disk space for subsequent tests
+echo "Cleaning up build artifacts..."
+# Clean all non-essential packages that aren't needed for ty_project tests
+cargo clean -p ty_ide 2>/dev/null || true
+cargo clean -p ty_server 2>/dev/null || true
+cargo clean -p ty_vendored 2>/dev/null || true
+# Remove all zstd related build artifacts which take a lot of space
+rm -rf target/debug/build/zstd-sys-* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/zstd-sys-* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/ty_ide-* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/ty_server-* 2>/dev/null || true
+rm -rf target/debug/deps/ty_ide* 2>/dev/null || true
+rm -rf target/debug/deps/ty_server* 2>/dev/null || true
+rm -rf target/debug/deps/libty_ide* 2>/dev/null || true
+rm -rf target/debug/deps/libty_server* 2>/dev/null || true
+rm -rf target/debug/incremental/* 2>/dev/null || true
+# Remove rlib files for packages not needed for testing ty_project
+rm -rf target/debug/deps/libruff_python_parser* 2>/dev/null || true
+rm -rf target/debug/deps/libruff_db* 2>/dev/null || true
+# Clean up all rmeta files (they are just metadata for incremental compilation)
+find target/debug/deps -name "*.rmeta" -delete 2>/dev/null || true
+# Clean up any leftover build scripts
+rm -rf target/debug/.fingerprint/ruff_* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/ty_ide* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/ty_server* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/ty_vendored* 2>/dev/null || true
+rm -rf target/debug/deps/build_script_build* 2>/dev/null || true
+rm -rf target/debug/.fingerprint/ty-4faeb44c09ca2867 2>/dev/null || true
+rm -rf target/debug/ty.d 2>/dev/null || true
+
+echo "Done."

@@ -225,3 +225,70 @@ def test_repo_cargo_test_uv_cli_compile():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"uv-cli test compilation failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_uv_settings():
+    """uv-settings crate compiles successfully with cargo check (repo p2p).
+
+    The uv-settings crate is a dependency for the ToolListSettings changes.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-settings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"uv-settings cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_uv_tool():
+    """uv-tool crate compiles successfully with cargo check (repo p2p).
+
+    The uv-tool crate contains the InstalledTools type used by tool list.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv-tool"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"uv-tool cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_uv_integration_compile():
+    """uv integration tests compile successfully (repo p2p, --no-run).
+
+    This includes the tool_list integration tests which verify the tool
+    list functionality including the --exclude-newer flag.
+    """
+    r = subprocess.run(
+        ["cargo", "test", "-p", "uv", "--test", "it", "--no-run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"uv integration test compilation failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt_check():
+    """Code formatting check passes (repo p2p).
+
+    Ensures all code follows the repo's rustfmt configuration.
+    """
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clippy_uv():
+    """Clippy linting passes for uv crate (repo p2p).
+
+    The uv crate contains the main tool/list.rs and settings.rs files
+    modified by this PR. Clippy ensures code quality and style.
+    """
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "uv", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy on uv crate failed:\n{r.stderr[-1000:]}"

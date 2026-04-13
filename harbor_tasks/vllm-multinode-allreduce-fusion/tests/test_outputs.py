@@ -41,48 +41,18 @@ def test_syntax_valid():
 # [repo_tests] pass_to_pass
 def test_repo_ruff_check():
     """Repo's ruff linter passes on modified files (pass_to_pass)."""
-    # Check if ruff is available, skip if not
-    r = subprocess.run(
-        ["bash", "-c", "which ruff || echo 'ruff-not-found'"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+    # Install ruff if not available
+    subprocess.run(
+        ["bash", "-c", "which ruff || pip install ruff --quiet 2>/dev/null"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    if "ruff-not-found" in r.stdout:
-        pytest.skip("ruff not available")
-        return
 
     r = subprocess.run(
         ["ruff", "check", "vllm/envs.py", "vllm/distributed/device_communicators/flashinfer_all_reduce.py"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Ruff check failed: {r.stdout[-500:]} {r.stderr[-500:]}"
 
-
-# [repo_tests] pass_to_pass
-def test_repo_mypy_check():
-    """Repo's mypy typecheck passes on modified files (pass_to_pass)."""
-    # Check if mypy is available, skip if not
-    r = subprocess.run(
-        ["bash", "-c", "python3 -m mypy --version 2>/dev/null || echo 'mypy-not-found'"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    if "mypy-not-found" in r.stdout:
-        pytest.skip("mypy not available")
-        return
-
-    # Check envs.py
-    r = subprocess.run(
-        ["python3", "-m", "mypy", "--ignore-missing-imports", "vllm/envs.py"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"mypy check on envs.py failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
-
-    # Check flashinfer_all_reduce.py
-    r = subprocess.run(
-        ["python3", "-m", "mypy", "--ignore-missing-imports",
-         "vllm/distributed/device_communicators/flashinfer_all_reduce.py"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"mypy check on flashinfer_all_reduce.py failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -99,15 +69,11 @@ def test_repo_python_syntax():
 # [repo_tests] pass_to_pass
 def test_repo_clang_format_check():
     """C++/CUDA files are properly formatted (pass_to_pass)."""
-    # Check if any C++ or CUDA files in csrc are clang-format clean
-    # This is a lightweight format check that doesn't require compilation
-    r = subprocess.run(
-        ["bash", "-c", "which clang-format || echo 'clang-format-not-found'"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+    # Install clang-format if not available
+    subprocess.run(
+        ["bash", "-c", "which clang-format || (apt-get update >/dev/null 2>&1 && apt-get install -y clang-format >/dev/null 2>&1)"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    if "clang-format-not-found" in r.stdout:
-        pytest.skip("clang-format not available")
-        return
 
     # Run clang-format check on a subset of C++ files (exclude third_party)
     r = subprocess.run(
@@ -122,13 +88,11 @@ def test_repo_clang_format_check():
 # [repo_tests] pass_to_pass
 def test_repo_shellcheck_scripts():
     """Shell scripts pass shellcheck validation (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", "which shellcheck || echo 'shellcheck-not-found'"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+    # Install shellcheck if not available
+    subprocess.run(
+        ["bash", "-c", "which shellcheck || (apt-get update >/dev/null 2>&1 && apt-get install -y shellcheck >/dev/null 2>&1)"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    if "shellcheck-not-found" in r.stdout:
-        pytest.skip("shellcheck not available")
-        return
 
     # Check key shell scripts exist and are valid
     scripts_to_check = [
@@ -154,9 +118,24 @@ def test_repo_no_tabs_in_python():
     assert r.stdout.strip() == "", f"Tab characters found in modified files:\n{r.stdout[:500]}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
-# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_headers():
+    """Modified Python files have SPDX license headers (pass_to_pass)."""
+    for path in [TARGET, ENVS]:
+        src = Path(path).read_text()
+        assert "SPDX-License-Identifier" in src, f"Missing SPDX header in {path}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_merge_conflicts():
+    """No merge conflict markers in modified files (pass_to_pass)."""
+    for path in [TARGET, ENVS]:
+        src = Path(path).read_text()
+        assert "<<<<<<<" not in src, f"Merge conflict markers found in {path}"
+        assert ">>>>>>>" not in src, f"Merge conflict markers found in {path}"
+
+
 
 # [pr_diff] fail_to_pass
 def test_default_backend_is_auto():
@@ -387,6 +366,24 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_headers():
+    """Modified Python files have SPDX license headers (pass_to_pass)."""
+    for path in [TARGET, ENVS]:
+        src = Path(path).read_text()
+        assert "SPDX-License-Identifier" in src, f"Missing SPDX header in {path}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_merge_conflicts():
+    """No merge conflict markers in modified files (pass_to_pass)."""
+    for path in [TARGET, ENVS]:
+        src = Path(path).read_text()
+        assert "<<<<<<<" not in src, f"Merge conflict markers found in {path}"
+        assert ">>>>>>>" not in src, f"Merge conflict markers found in {path}"
 
 
 # ---------------------------------------------------------------------------

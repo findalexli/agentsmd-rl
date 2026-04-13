@@ -76,11 +76,13 @@ rubric:
     path: AGENTS.md
     lines: '45'
     commit: 380d35ae1164289c85c253eefefda6d8511e614e
+  reference: The gold solution uses tab indentation for Svelte files (matching existing code style in +page.svelte and ComponentEntry.svelte), consistent trailing whitespace handling, and follows existing import/export patterns in utils.ts.
 - rule: Frontend code is formatted with prettier.
   source:
     path: AGENTS.md
     lines: '44'
     commit: 380d35ae1164289c85c253eefefda6d8511e614e
+  reference: The gold solution adds properly formatted Svelte and TypeScript code with correct indentation, semicolons, and spacing that would pass prettier checks.
 - rule: '`guides/` — written guides and tutorials for the website'
   source:
     path: AGENTS.md
@@ -89,6 +91,7 @@ rubric:
     `guides/03_building-with-blocks/06_custom-HTML-components.md`, following the convention
     that guides and tutorials belong in the `
   category: documentation
+  reference: Added documentation to guides/03_building-with-blocks/06_custom-HTML-components.md covering push_to_hub method and authentication.
 - rule: '`js/` — frontend code (Svelte/TypeScript)'
   source:
     path: AGENTS.md
@@ -96,25 +99,35 @@ rubric:
   evidence: The gold solution modifies `.svelte` and `.ts` files within `js/_website/src/routes/custom-components/html-gallery/`
     to fix the gallery layout, adhering to the rule that frontend code is Svelte/TypeSc
   category: architecture
-distractors:
-- rule: '`js/spa/test/` — browser/Playwright tests (`*.spec.ts`)'
-  collision_type: architecture_boundary
-  why_distracting: The rule states that browser/Playwright tests are located in `js/spa/test/`.
-    An agent might try to add tests for the HTML gallery bug here, but the gallery
-    is part of the website (`js/_website/`), not the SPA (`js/spa/`). Adding tests
-    in `js/spa/test/` for website-specific pages crosses an architecture boundary.
-  severity: medium
+  reference: Modified js/_website/src/routes/custom-components/html-gallery/+page.svelte, ComponentEntry.svelte, and utils.ts to add iframe support and component rendering fixes.
+- rule: '`guides/` is for written guides and tutorials for the website.'
   source:
     path: AGENTS.md
     lines: 14-14
-- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
-  collision_type: scope_ambiguity
-  why_distracting: The rule mandates running backend tests with `bash scripts/run_backend_tests.sh`.
-    Since this PR only modifies frontend website code and markdown guides, running
-    or writing backend tests is unnecessary and wastes effort.
-  severity: low
+  evidence: The gold solution adds documentation about `push_to_hub` to `guides/03_building-with-blocks/06_custom-HTML-components.md`,
+    aligning with the directory's designated purpose for written guides.
+  category: documentation
+  reference: Added push_to_hub documentation to guides/03_building-with-blocks/06_custom-HTML-components.md, following the guides directory convention.
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use the GitHub CLI (`gh`) to create
+    an issue or search for one, wasting time and potentially failing if it lacks credentials,
+    as this is a local coding evaluation environment.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 35-35
-hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level,
-  providing high-level architectural guidance. There are no conflicting child configs.
+    lines: 19-20
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might try to edit `.github/PULL_REQUEST_TEMPLATE.md`
+    to fill it out with the PR description, misunderstanding that it should only fix
+    the code and not simulate the PR creation process.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-25
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  It contains generic repository structure and PR guidelines. No hierarchy conflicts
+  exist.

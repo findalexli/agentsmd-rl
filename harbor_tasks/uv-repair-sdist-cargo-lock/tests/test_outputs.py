@@ -253,27 +253,11 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"ruff format --diff failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — cargo shear unused dependencies check
-def test_repo_cargo_shear():
-    """No unused dependencies found in workspace (pass_to_pass)."""
-    r = subprocess.run(
-        ["cargo", "install", "cargo-shear"],
-        capture_output=True, text=True, timeout=300,
-    )
-    assert r.returncode == 0, f"Failed to install cargo-shear:\n{r.stderr[-500:]}"
-
-    r = subprocess.run(
-        ["cargo", "shear", "--deny-warnings"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"cargo shear found unused dependencies:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
 # [repo_tests] pass_to_pass — cargo deny bans check on uv-build
 def test_repo_cargo_deny_uv_build():
     """uv-build crate passes cargo deny bans check (pass_to_pass)."""
     r = subprocess.run(
-        ["cargo", "install", "cargo-deny"],
+        ["cargo", "install", "cargo-deny", "--version", "0.18.3", "--locked"],
         capture_output=True, text=True, timeout=300,
     )
     assert r.returncode == 0, f"Failed to install cargo-deny:\n{r.stderr[-500:]}"
@@ -283,3 +267,20 @@ def test_repo_cargo_deny_uv_build():
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/crates/uv-build",
     )
     assert r.returncode == 0, f"cargo deny check bans failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass — cargo shear for unused dependencies
+def test_repo_cargo_shear():
+    """No unused dependencies found via cargo-shear (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "install", "cargo-shear", "--locked"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Failed to install cargo-shear:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["cargo", "shear", "--deny-warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo shear --deny-warnings failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

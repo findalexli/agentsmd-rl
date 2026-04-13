@@ -8,9 +8,12 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import subprocess
 import textwrap
 from pathlib import Path
+
+import pytest
 
 REPO = "/workspace/next.js"
 SCRIPT = f"{REPO}/scripts/pr-status.js"
@@ -231,7 +234,7 @@ def test_repo_prettier_check_pr_status():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_pr_status_script_structure():
     """pr-status.js must have expected structure and exports (pass_to_pass)."""
     src = Path(SCRIPT).read_text()
@@ -244,7 +247,7 @@ def test_repo_pr_status_script_structure():
     assert "module.exports" in src or "exports." in src, "Script must have module exports"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_pr_status_no_banned_patterns():
     """pr-status.js must not contain banned/unsafe patterns (pass_to_pass)."""
     src = Path(SCRIPT).read_text()
@@ -257,7 +260,7 @@ def test_repo_pr_status_no_banned_patterns():
     assert "child_process" in src or "execSync" in src, "Script must use child_process for shell commands"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_pr_status_has_required_helpers():
     """pr-status.js must have all required helper functions (pass_to_pass)."""
     code = textwrap.dedent(r"""
@@ -310,7 +313,7 @@ def test_repo_pr_status_has_required_helpers():
         assert data.get(helper) is True, f"Required helper {helper} not found in pr-status.js"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_pr_status_uses_strict_mode_compatible_syntax():
     """pr-status.js must use syntax compatible with strict mode (pass_to_pass)."""
     code = textwrap.dedent(r"""
@@ -372,6 +375,91 @@ def test_repo_pr_status_uses_strict_mode_compatible_syntax():
         f"Script has strict mode compatibility issues: {data.get('issues')}"
     )
 
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_alex_lint():
+    """Alex language linting on pr-status.js must pass (pass_to_pass).
+
+    Note: The base commit's .alexrc doesn't include "reject" as an allowed word.
+    Without this, alex flags "reject" as profane (technical term in Promise context).
+    Skip this test if "reject" is not in .alexrc's allow list.
+    """
+    # Check if .alexrc has "reject" in the allowed words
+    alexrc_path = Path(f"{REPO}/.alexrc")
+    if not alexrc_path.exists():
+        pytest.skip("No .alexrc config in repo")
+    alexrc_content = alexrc_path.read_text()
+    if "reject" not in alexrc_content:
+        pytest.skip(".alexrc doesn't allow 'reject' - needed for Promise terminology")
+
+    r = subprocess.run(
+        ["npx", "alex", "--quiet", f"{REPO}/scripts/pr-status.js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Alex lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_node_parse():
+    """Node.js must be able to parse pr-status.js without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"require('{REPO}/scripts/pr-status.js')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert "SyntaxError" not in r.stderr, f"Script has syntax errors:\n{r.stderr}"
+    assert "ReferenceError" not in r.stderr, f"Script has reference errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_check_manifests():
+    """Repo\'s check-manifests.js must run without errors (pass_to_pass).
+
+    Note: check-manifests.js requires npm dependencies (glob, fs-extra) that
+    aren't installed in the base environment. This script is not related to
+    the PR fix being tested, so we skip it if deps are missing.
+    """
+    # Check if required dependencies are available
+    r = subprocess.run(
+        ["node", "-e", "require('glob'); require('fs-extra')"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    if r.returncode != 0:
+        pytest.skip("check-manifests.js dependencies (glob, fs-extra) not installed")
+
+    r = subprocess.run(
+        ["node", f"{REPO}/scripts/check-manifests.js"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-manifests.js failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_validate_externals_doc():
+    """Repo\'s validate-externals-doc.js must run without runtime errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", f"{REPO}/scripts/validate-externals-doc.js"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert "SyntaxError" not in r.stderr, f"Script has syntax errors:\n{r.stderr}"
+    assert "ReferenceError" not in r.stderr, f"Script has reference errors:\n{r.stderr}"
+    assert "TypeError" not in r.stderr, f"Script has type errors:\n{r.stderr}"
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests

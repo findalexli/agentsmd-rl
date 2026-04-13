@@ -54,6 +54,13 @@ def test_repo_eslint():
 # [repo_tests] pass_to_pass
 def test_repo_lint_packages():
     """Repo's workspace packages are consistent (pass_to_pass)."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    # Then run lint-packages
     r = subprocess.run(
         ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -64,6 +71,13 @@ def test_repo_lint_packages():
 # [repo_tests] pass_to_pass
 def test_repo_generate_channels():
     """Repo's generate_channels script runs without error (pass_to_pass)."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    # Then run generate_channels
     r = subprocess.run(
         ["node", "utils/generate_channels.js"],
         capture_output=True, text=True, timeout=300, cwd=REPO,

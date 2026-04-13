@@ -341,3 +341,41 @@ def test_repo_pytest_events():
 
     assert r.returncode == 0, \
         f"pytest events tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD unit tests for render module
+def test_repo_pytest_render():
+    """Repo's unit tests for render functionality pass (pass_to_pass).
+
+    Runs tests from test/test_blocks.py::TestRender that don't require
+    frontend templates or network access.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "pytest-asyncio", "fastapi"],
+        capture_output=True, timeout=120,
+    )
+
+    # Run render-specific tests
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "-v", "test/test_blocks.py::TestRender"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+
+    assert r.returncode == 0, \
+        f"pytest render tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Basic import check
+def test_import_gradio():
+    """Gradio imports successfully without errors (pass_to_pass).
+
+    Verifies that the package can be imported without issues, which
+    catches basic syntax errors and import problems.
+    """
+    r = subprocess.run(
+        [sys.executable, "-c", "import gradio"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    assert r.returncode == 0, \
+        f"import gradio failed:\n{r.stderr[-500:]}"

@@ -130,6 +130,126 @@ def test_repo_py_compile_vllm_inference():
     assert r.returncode == 0, f"py_compile failed for vllm_inference.py:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass - flake8 syntax validation
+def test_repo_flake8_syntax_vllm_completion():
+    """vllm_text_completion.py has no syntax errors (flake8 E9) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install flake8 failed: {r.stderr}"
+    r = subprocess.run(
+        ["flake8", "--select=E9", VLLM_COMPLETION],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake8 syntax check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - flake8 syntax validation
+def test_repo_flake8_syntax_vllm_inference():
+    """vllm_inference.py has no syntax errors (flake8 E9) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install flake8 failed: {r.stderr}"
+    r = subprocess.run(
+        ["flake8", "--select=E9", VLLM_INFERENCE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake8 syntax check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - pycodestyle blank line validation
+def test_repo_pycodestyle_blank_lines_vllm_completion():
+    """vllm_text_completion.py has correct blank lines (E3) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pycodestyle", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install pycodestyle failed: {r.stderr}"
+    r = subprocess.run(
+        ["pycodestyle", "--select=E3", VLLM_COMPLETION],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pycodestyle blank line check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - pycodestyle blank line validation
+def test_repo_pycodestyle_blank_lines_vllm_inference():
+    """vllm_inference.py has correct blank lines (E3) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pycodestyle", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install pycodestyle failed: {r.stderr}"
+    r = subprocess.run(
+        ["pycodestyle", "--select=E3", VLLM_INFERENCE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pycodestyle blank line check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - yapf format validation
+def test_repo_yapf_format_vllm_completion():
+    """vllm_text_completion.py follows yapf formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "yapf", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install yapf failed: {r.stderr}"
+    r = subprocess.run(
+        ["yapf", "--diff", VLLM_COMPLETION],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/sdks/python",
+    )
+    assert r.returncode == 0, f"yapf format check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - yapf format validation
+def test_repo_yapf_format_vllm_inference():
+    """vllm_inference.py follows yapf formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "yapf", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install yapf failed: {r.stderr}"
+    r = subprocess.run(
+        ["yapf", "--diff", VLLM_INFERENCE],
+        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/sdks/python",
+    )
+    assert r.returncode == 0, f"yapf format check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - pylint errors validation
+def test_repo_pylint_errors_vllm_completion():
+    """vllm_text_completion.py has no pylint errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pylint", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install pylint failed: {r.stderr}"
+    r = subprocess.run(
+        ["pylint", "-j2", VLLM_COMPLETION, "--errors-only"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/sdks/python",
+    )
+    assert r.returncode == 0, f"pylint errors check failed: {r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - pylint errors validation
+def test_repo_pylint_errors_vllm_inference():
+    """vllm_inference.py has no pylint errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pylint", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pip install pylint failed: {r.stderr}"
+    r = subprocess.run(
+        ["pylint", "-j2", VLLM_INFERENCE, "--errors-only"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/sdks/python",
+    )
+    assert r.returncode == 0, f"pylint errors check failed: {r.stdout}{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — vllm_text_completion: new CLI args + kwargs builder
 # ---------------------------------------------------------------------------

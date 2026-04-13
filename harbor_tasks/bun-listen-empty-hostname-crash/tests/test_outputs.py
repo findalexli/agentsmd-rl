@@ -254,6 +254,16 @@ def test_repo_bun_works():
     assert r.returncode == 0, f"Bun check failed:\n{r.stderr}"
     assert r.stdout.strip(), "Bun version not returned"
 
+
+# [repo_tests] pass_to_pass — from test/package-json-lint.test.ts
+def test_repo_package_json_lint():
+    """Repo's package.json lint passes (exact versions check)."""
+    r = subprocess.run(
+        ["bun", "test", "test/package-json-lint.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package JSON lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
 # [agent_config] pass_to_pass - AGENTS.md:99 @ 73361607d70bd77041d0fc20e45a6dbe2373a677
 def test_no_panic_absence_tests():
     """New tests don't check for absence of 'panic' or 'uncaught exception'."""

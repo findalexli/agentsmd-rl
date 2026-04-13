@@ -304,3 +304,33 @@ def test_repo_gallery_unit_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Gallery unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_client_build():
+    """Client library builds successfully (pass_to_pass)."""
+    _ensure_setup()
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_gallery_build():
+    """Gallery component builds successfully (pass_to_pass)."""
+    _ensure_setup()
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/gallery", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Gallery build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_css_generation():
+    """CSS generation from theme works (pass_to_pass)."""
+    _ensure_setup()
+    r = subprocess.run(
+        ["pnpm", "css"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CSS generation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

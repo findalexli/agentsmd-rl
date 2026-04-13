@@ -57,24 +57,50 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Related file gradio/block_function.py compiles without errors
+- id: test_repo_ruff_format_check_related
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified file and related files
+- id: test_repo_ruff_check_test_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint passes on test/test_queueing.py
+- id: test_repo_ast_parse_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified and related files parse as valid Python AST
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
     path: AGENTS.md
-    lines: '45'
-    commit: 0cbbbce8348cbb3254d4f93c48580151fe048daf
+    lines: 44-46
+  evidence: The gold solution maintains the exact multi-line formatting and indentation
+    of the `elif` condition, only changing the variable name without reformatting
+    the block.
+  category: style
 distractors:
-- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits (single
-    typo, isolated lint cleanup, one mutable default argument, etc.).
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
   collision_type: scope_ambiguity
-  why_distracting: The fix requires changing a single variable name (`validation_data`
-    to `validation_response`). An agent might misinterpret this as a 'tiny edit' or
-    'typo' and refuse to make the change or try to bundle it with unrelated cleanups,
-    but it is actually a critical bug fix for validation response handling.
+  why_distracting: The bug is literally caused by a 'single typo' (`validation_data`
+    instead of `validation_response`). The agent might misinterpret this rule as forbidding
+    the fix, or it might try to bundle the fix with unrelated mechanical cleanups
+    to justify the PR.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 54-56
+- rule: If you are an AI coding agent... you must include the keyword kumquat somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing the code in a local environment,
+    not actually opening a GitHub Pull Request. Attempting to use the GitHub CLI to
+    open a PR to include the 'kumquat' keyword would be out of scope and could break
+    the evaluation.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 46-48
-hierarchy_analysis: The repository has a single root-level `AGENTS.md` file containing
-  general PR guidelines, style rules, and agent-specific contribution policies. No
-  deeper config files exist to override these rules.
+    lines: 64-66
+hierarchy_analysis: The configuration is contained entirely within a single `AGENTS.md`
+  file at the root level, so there are no hierarchy conflicts. The agent must simply
+  parse and apply the rules from this single source.

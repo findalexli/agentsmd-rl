@@ -266,6 +266,38 @@ def test_repo_check_inits():
     assert r.returncode == 0, f"check_inits.py failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_doctest_list():
+    """Repo's check_doctest_list.py passes (pass_to_pass).
+
+    This validates that doctest lists are correctly maintained.
+    """
+    r = subprocess.run(
+        [sys.executable, "utils/check_doctest_list.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_doctest_list.py failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_sort_auto_mappings():
+    """Repo's sort_auto_mappings.py --check_only passes (pass_to_pass).
+
+    This validates that auto mappings are correctly sorted.
+    """
+    r = subprocess.run(
+        [sys.executable, "utils/sort_auto_mappings.py", "--check_only"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"sort_auto_mappings.py --check_only failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / copilot-instructions.md
 # ---------------------------------------------------------------------------

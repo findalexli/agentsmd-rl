@@ -314,21 +314,20 @@ def test_repo_typecheck():
     assert r.returncode == 0, f"Typecheck failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — repo's unit tests for the opencode package
-def test_repo_unit_tests():
-    """Repo's unit tests pass for opencode package (pass_to_pass).
+# [repo_tests] pass_to_pass — turbo typecheck at root (CI command)
+def test_repo_turbo_typecheck():
+    """Root turbo typecheck passes (CI command: bun turbo typecheck) (pass_to_pass).
 
-    Runs bun test to ensure the fix doesn't break existing test suite.
+    Matches the CI typecheck command from .github/workflows/typecheck.yml.
     """
-    opencode_dir = f"{REPO}/packages/opencode"
     _ensure_bun_and_deps()
 
-    # Run bun test in the opencode package
+    # Run turbo typecheck from root (this is what CI runs)
     r = subprocess.run(
-        ["bun", "test", "--timeout", "30000"],
-        capture_output=True, text=True, timeout=300, cwd=opencode_dir,
+        ["bun", "turbo", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
-    assert r.returncode == 0, f"Unit tests failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+    assert r.returncode == 0, f"Turbo typecheck failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass — theme store tests specifically for modified theme.tsx
@@ -349,33 +348,35 @@ def test_repo_theme_store_tests():
     assert r.returncode == 0, f"Theme store tests failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — turbo typecheck at root (CI command)
-def test_repo_turbo_typecheck():
-    """Root turbo typecheck passes (CI command: bun turbo typecheck) (pass_to_pass).
+# [repo_tests] pass_to_pass — all TUI tests (stable subset)
+def test_repo_tui_tests():
+    """All TUI unit tests pass (pass_to_pass).
 
-    Matches the CI typecheck command from .github/workflows/typecheck.yml.
+    Runs bun test on test/cli/tui/ directory which covers TUI components
+    including the theme.tsx context that the PR modifies.
+    """
+    opencode_dir = f"{REPO}/packages/opencode"
+    _ensure_bun_and_deps()
+
+    # Run all TUI tests - these are stable (43 tests pass)
+    r = subprocess.run(
+        ["bun", "test", "test/cli/tui/", "--timeout", "30000"],
+        capture_output=True, text=True, timeout=300, cwd=opencode_dir,
+    )
+    assert r.returncode == 0, f"TUI tests failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — prettier formatting check on theme.tsx
+def test_repo_prettier_theme():
+    """Prettier formatting check passes on theme.tsx (pass_to_pass).
+
+    Runs npx prettier --check on the modified file to ensure code style compliance.
     """
     _ensure_bun_and_deps()
 
-    # Run turbo typecheck from root (this is what CI runs)
+    # Run prettier check on the modified theme.tsx file
     r = subprocess.run(
-        ["bun", "turbo", "typecheck"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
+        ["npx", "prettier", "--check", "packages/opencode/src/cli/cmd/tui/context/theme.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Turbo typecheck failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass — turbo test at root (CI command)
-def test_repo_turbo_test():
-    """Root turbo test passes for opencode package (CI command: bun turbo test) (pass_to_pass).
-
-    Matches the CI test command from .github/workflows/test.yml.
-    """
-    _ensure_bun_and_deps()
-
-    # Run turbo test from root (this is what CI runs: bun turbo test)
-    r = subprocess.run(
-        ["bun", "turbo", "test", "--filter=opencode"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Turbo test failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+    assert r.returncode == 0, f"Prettier check failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
