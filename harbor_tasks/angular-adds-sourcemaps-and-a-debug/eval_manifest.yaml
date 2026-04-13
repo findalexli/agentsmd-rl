@@ -126,6 +126,40 @@ rubric:
     devtools:build:chrome:debug`) in the README.md, adhering to the repository's package
     manager standard.
   category: tooling
+- rule: Address the reader directly in documentation.
+  source:
+    path: .gemini/skills/adev-writing-guide/SKILL.md
+    lines: '22'
+  source_text: '- **Use second person ("you"):** Address the reader directly.'
+  evidence: The new `devtools/README.md` text consistently uses second person, e.g.
+    `Then go to `chrome://extensions`, enable developer mode, and click "Load unpacked"`
+    (patch lines 42-43) and `Depending on which script you want to debug, you can
+    find them in different locations.` (patch lines 50-51).
+  category: documentation_style
+  verification: llm_judge
+- rule: Put conditional clauses before the instruction they qualify.
+  source:
+    path: .gemini/skills/adev-writing-guide/SKILL.md
+    lines: '25'
+  source_text: '- **Conditional clauses first:** Place "if" or "when" clauses before
+    the instruction (e.g., "If you encounter an error, check the logs").'
+  evidence: The README addition says `Whenever you rebuild the extension, make sure
+    to reload the extension in `chrome://extensions`...` (patch lines 45-46), leading
+    with the `Whenever...` condition before the required action.
+  category: documentation_structure
+  verification: llm_judge
+- rule: Format commands, filenames, and paths in code font.
+  source:
+    path: .gemini/skills/adev-writing-guide/SKILL.md
+    lines: '38'
+  source_text: '- **Code formatting:** Use code font for code-related text (filenames,
+    variables, commands).'
+  evidence: The README additions consistently wrap code-related text in backticks,
+    including `pnpm devtools:build:chrome:debug` (patch line 39), `dist/bin/devtools/projects/shell-browser/src/prodapp`
+    (patch line 42), `chrome://extensions` (patch lines 42 and 45), and filenames
+    like `backend_bundle.js` / `content_script_bundle.js` (patch lines 58 and 63).
+  category: documentation_formatting
+  verification: llm_judge
 config_edits:
 - path: devtools/README.md
   tier: 2
@@ -184,6 +218,31 @@ distractors:
     CLI commands for the devtools build process, but devtools is built using Bazel
     and esbuild.
   severity: high
+- rule: Use sentence case for headings.
+  source:
+    path: .gemini/skills/adev-writing-guide/SKILL.md
+    lines: '32'
+  source_text: '- **Sentence case for headings:** Capitalize only the first word and
+    proper nouns in titles and headings.'
+  collision_type: rule_conflict
+  why_distracting: The patch adds new README headings, so this looks directly applicable.
+    But `devtools/README.md` already uses Title Case headings such as `## Developing
+    Locally`, `### Dev builds`, `### Running End-to-End Tests`, `### Release builds`,
+    and `#### Installation`. Importing the Adev sentence-case rule here would make
+    only the new sections inconsistent with the rest of the file.
+  severity: medium
+- rule: Use the `<docs-code>` component for advanced code block features.
+  source:
+    path: .gemini/skills/adev-writing-guide/SKILL.md
+    lines: '100'
+  source_text: 'For more advanced code block features, use the `<docs-code>` component:'
+  collision_type: architecture_boundary
+  why_distracting: This change adds command examples and debugging notes to Markdown,
+    so an agent working quickly might reach for Adev-only documentation components.
+    That would be wrong here because `devtools/README.md` is a repository README rendered
+    as plain GitHub Markdown, not through the Adev docs pipeline that understands
+    `<docs-code>`.
+  severity: medium
 hierarchy_analysis: Only the root AGENTS.md file applies to this PR. The rules are
   straightforward, though the testing guidelines are out of scope for this specific
   build configuration task.

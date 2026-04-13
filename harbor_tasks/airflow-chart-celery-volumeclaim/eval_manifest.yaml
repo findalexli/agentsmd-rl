@@ -174,6 +174,47 @@ distractors:
     new deprecation warning added in NOTES.txt, but Helm chart notes in Airflow are
     not localized.
   severity: low
+- rule: Use Cadwyn schema migration syntax for a new schema field.
+  source:
+    path: airflow-core/src/airflow/api_fastapi/execution_api/AGENTS.md
+    lines: 26-26
+  source_text: '- New schema field: `schema(Model).field("name").didnt_exist`'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff adds fields to `chart/values.schema.json`, which
+    can look like a 'schema field' change. But this rule is only for Execution API
+    versioned datamodels under `airflow-core/src/airflow/api_fastapi/execution_api/`;
+    applying it here would send work into Cadwyn version files and API migrations
+    unrelated to Helm chart config.
+  severity: medium
+- rule: When updating configuration files, keep the existing alphabetical ordering
+    in each file.
+  source:
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 36-37
+  source_text: 'Then update the following configuration files, keeping the existing
+    alphabetical
+
+    ordering in each file:'
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff edits multiple config-like files (`values.yaml`,
+    `values.schema.json`), so an agent might try to alphabetize keys. This instruction
+    is specific to locale setup files for UI translations; the chart files are organized
+    by Helm section and migration path, so forcing alphabetical reordering would add
+    churn and obscure the deprecation relationship between `workers.volumeClaimTemplates`
+    and `workers.celery.volumeClaimTemplates`.
+  severity: medium
+- rule: Add an Apache License header on all new files.
+  source:
+    path: AGENTS.md
+    lines: 96-96
+  source_text: '- Apache License header on all new files (prek enforces this).'
+  collision_type: rule_conflict
+  why_distracting: The diff adds `chart/newsfragments/62048.significant.rst`, which
+    is a one-line release-note fragment. Treating it like a source file and prepending
+    a license header would alter the fragment contents and likely leak boilerplate
+    text into rendered release notes instead of keeping the fragment as the intended
+    single user-facing sentence.
+  severity: medium
 hierarchy_analysis: The config files (`AGENTS.md` and `CLAUDE.md`) are identical and
   provide general repository commands. They do not contain specific guidance for Helm
   chart modifications, meaning the agent must rely entirely on the task instructions

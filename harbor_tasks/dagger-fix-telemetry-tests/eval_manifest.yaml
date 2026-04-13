@@ -86,6 +86,20 @@ rubric:
 
     1. From the Dagger repo root, run `dagger -c ''engine-dev | test-telemetry --update
     | export .''`'
+- rule: Add repeatable repository chores as their own checklist section with a task-specific
+    heading and a short 'Use this checklist...' intro.
+  source:
+    path: skills/dagger-chores/SKILL.md
+    lines: 28-30
+  source_text: '## Regenerate Generated Files
+
+
+    Use this checklist when asked to regenerate generated files.'
+  evidence: gold_diff.patch:29-33 adds `## Regenerate Golden Tests`, follows it with
+    `Use this checklist when asked to regenerate telemetry golden tests.`, and then
+    starts a numbered checklist step. That mirrors the existing chores-section pattern.
+  category: config_pattern
+  verification: llm_judge
 config_edits:
 - path: skills/dagger-chores/SKILL.md
   tier: 1
@@ -98,3 +112,46 @@ config_edits:
     1. From the Dagger repo root, run `dagger -c ''engine-dev | test-telemetry --update
     | export .''`'
   gold_removed: ''
+distractors:
+- rule: For shared C/Go event structs, use fixed-width integer types, fixed-size arrays,
+    and identical field order between C and Go.
+  source:
+    path: engine/ebpf/AGENTS.md
+    lines: 64-67
+  source_text: "- **Event structs must match Go exactly**:\n  - Use fixed-width integer\
+    \ types (`__u32`, `__u64`, etc.).\n  - Fixed-size arrays only; no pointers.\n\
+    \  - Keep field order identical between C and Go."
+  collision_type: architecture_boundary
+  why_distracting: The gold diff edits a Go struct-like type (`ExitError`) in `dagql/idtui/exit.go`,
+    so a quick scan could make this look like relevant struct guidance. But these
+    requirements only apply to eBPF event payloads that must match a C memory layout;
+    applying them here would cross an unrelated architecture boundary and could force
+    unnecessary API/type changes such as replacing `int` with a fixed-width type.
+  severity: medium
+- rule: Wrap `*ebpf.VerifierError` with `%+v` for verbose diagnostics.
+  source:
+    path: engine/ebpf/AGENTS.md
+    lines: 82-82
+  source_text: '- **Verifier errors**: wrap `*ebpf.VerifierError` with `%+v` for verbose
+    diagnostics.'
+  collision_type: would_cause_bug
+  why_distracting: 'The gold diff changes error-message formatting in `ExitError.Error()`,
+    so this can look like repo-wide error-formatting advice. It is not: the rule is
+    specific to eBPF verifier failures during tracer loading. Applying it here would
+    change the shape of `ExitError` messages instead of preserving the original error
+    text that the patch explicitly wants for origin parsing.'
+  severity: high
+- rule: Use GraphQL type definitions for API descriptions and Go only for implementation
+    examples.
+  source:
+    path: skills/dagger-design-proposals/SKILL.md
+    lines: 90-91
+  source_text: '- **GraphQL for APIs** - Type definitions, not Go interfaces.
+
+    - **Go for implementation** - Examples showing how modules use the API.'
+  collision_type: scope_ambiguity
+  why_distracting: 'This PR touches both Go and Markdown, so an agent reading repo
+    guidance might think it should turn the change into an API-design style document.
+    That would be the wrong scope: the diff is a runtime bugfix in `dagql/idtui/exit.go`
+    plus a chores-skill checklist entry, not an API proposal.'
+  severity: medium

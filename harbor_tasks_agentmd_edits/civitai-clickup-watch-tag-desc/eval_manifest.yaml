@@ -80,6 +80,88 @@ rubric:
     commit: 15503613a51260aff05d281110c5937163ee73fd
   reference: '| `description <task> "text"` | Update task description (markdown supported)
     |'
+- rule: Document supported ClickUp CLI actions in the skill's `### Commands` table.
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 38-41
+  source_text: '### Commands
+
+
+    | Command | Description |
+
+    |---------|-------------|'
+  evidence: The gold diff adds `watch`, `tag`, and `description` as new rows in `.claude/skills/clickup/SKILL.md`,
+    preserving the existing command-table format for newly supported CLI actions.
+  category: documentation_pattern
+  verification: llm_judge
+- rule: User-targeting ClickUp commands should resolve human-friendly user identifiers
+    such as usernames and emails.
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 51-53,117-125
+  source_text: '| `assign <task> <user>` | Assign task to a user (by name, email,
+    or ID) |
+
+    | `due <task> "date"` | Set due date (e.g., "tomorrow", "friday", "+3d") |
+
+    | `priority <task> <level>` | Set priority (urgent, high, normal, low, none) |
+
+
+    ### Assign Tasks
+
+
+    ```bash
+
+    # Assign by username
+
+    node .claude/skills/clickup/query.mjs assign 86a1b2c3d justin
+
+
+    # Assign by email
+
+    node .claude/skills/clickup/query.mjs assign 86a1b2c3d jane@example.com
+
+    ```'
+  evidence: The new `watch` command resolves `<user>` through `findUser(teamId, arg2)`
+    before posting the notification comment. The `create` path also keeps this convention
+    by resolving `--assignee` with `findUser(teamId, assigneeArg)` and adds a `me`
+    shortcut via `getUserId()` for the current authenticated user.
+  category: user_resolution
+  verification: llm_judge
+- rule: Preserve markdown support when accepting rich text for ClickUp content fields.
+  source:
+    path: .claude/skills/clickup/SKILL.md
+    lines: 44-44,191-200
+  source_text: '| `comment <url|id> "message"` | Post a comment to a task (supports
+    markdown) |
+
+
+    ### Post a Comment
+
+
+    ```bash
+
+    node .claude/skills/clickup/query.mjs comment 86a1b2c3d "Starting work on this
+    task"
+
+
+    # Multi-line comment
+
+    node .claude/skills/clickup/query.mjs comment 86a1b2c3d "Status update:
+
+    - Completed initial review
+
+    - Found 3 issues to address
+
+    - Will submit PR by EOD"
+
+    ```'
+  evidence: The new `description` feature is documented as `Update task description
+    (markdown supported)`, and the implementation uses `markdown_description` instead
+    of plain `description` in both task creation and the new `description` command
+    so ClickUp renders markdown correctly.
+  category: content_formatting
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/clickup/SKILL.md
   tier: 1
@@ -130,6 +212,41 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 23-23
+- rule: Use app-side tRPC hooks and `useCurrentUser` patterns for API/authentication
+    work.
+  source:
+    path: CLAUDE.md
+    lines: 137-149
+  source_text: '#### API Calls
+
+    ```tsx
+
+    import { trpc } from ''~/utils/trpc'';
+
+
+    const { data, isLoading } = trpc.user.getProfile.useQuery();
+
+    ```
+
+
+    #### Authentication
+
+    ```tsx
+
+    import { useCurrentUser } from ''~/hooks/useCurrentUser'';
+
+
+    const currentUser = useCurrentUser();
+
+    ```'
+  collision_type: architecture_boundary
+  why_distracting: The diff adds API work (`updateTask`, `addTag`, comment posting)
+    and current-user handling (`getUserId()` for `me`), which can superficially resemble
+    app API/auth changes. But this code lives in a standalone Node CLI skill under
+    `.claude/skills/clickup/`; replacing its direct ClickUp API helpers with React
+    hooks or tRPC client code would cross runtime boundaries and fail outside the
+    Next.js app.
+  severity: high
 hierarchy_analysis: The `CLAUDE.md` file provides global rules tailored for the main
   Civitai web application (Next.js, TypeScript, tRPC). However, the task modifies
   a standalone Claude CLI skill located in `.claude/skills/clickup/`, which uses vanilla

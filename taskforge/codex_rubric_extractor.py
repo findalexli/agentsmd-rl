@@ -229,10 +229,11 @@ def get_repo_info(task_path: Path) -> tuple[str, str]:
 
 
 def clone_or_checkout(repo: str, commit: str, cache_dir: Path) -> Path | None:
-    """Clone repo or checkout existing clone at commit."""
+    """Shallow-clone repo at specific commit. Uses git init + fetch --depth=1."""
     repo_dir = cache_dir / repo.replace("/", "_")
 
-    if repo_dir.exists():
+    if repo_dir.exists() and (repo_dir / ".git").exists():
+        # Already have a clone — try checkout, then shallow fetch if needed
         try:
             result = subprocess.run(
                 ["git", "checkout", commit],
@@ -242,10 +243,10 @@ def clone_or_checkout(repo: str, commit: str, cache_dir: Path) -> Path | None:
                 return repo_dir
         except Exception:
             pass
-        # Try fetch + checkout
+        # Fetch this specific commit (shallow)
         try:
             subprocess.run(
-                ["git", "fetch", "origin", commit],
+                ["git", "fetch", "--depth=1", "origin", commit],
                 capture_output=True, text=True, cwd=repo_dir, timeout=120,
             )
             subprocess.run(
@@ -256,25 +257,33 @@ def clone_or_checkout(repo: str, commit: str, cache_dir: Path) -> Path | None:
         except Exception:
             pass
 
-    # Fresh clone
-    if not repo_dir.exists():
-        repo_dir.mkdir(parents=True, exist_ok=True)
+    # Fresh shallow clone at specific commit
+    repo_dir.mkdir(parents=True, exist_ok=True)
     try:
         if not (repo_dir / ".git").exists():
             subprocess.run(
-                ["git", "clone", "--filter=blob:none",
-                 f"https://github.com/{repo}.git", str(repo_dir)],
-                capture_output=True, text=True, timeout=300,
+                ["git", "init", str(repo_dir)],
+                capture_output=True, text=True, timeout=10, check=True,
+            )
+            subprocess.run(
+                ["git", "remote", "add", "origin",
+                 f"https://github.com/{repo}.git"],
+                capture_output=True, text=True, cwd=repo_dir, timeout=10,
                 check=True,
             )
         subprocess.run(
+            ["git", "fetch", "--depth=1", "origin", commit],
+            capture_output=True, text=True, cwd=repo_dir, timeout=300,
+            check=True,
+        )
+        subprocess.run(
             ["git", "checkout", commit],
-            capture_output=True, text=True, cwd=repo_dir, timeout=30,
+            capture_output=True, text=True, cwd=repo_dir, timeout=60,
             check=True,
         )
         return repo_dir
     except Exception as e:
-        print(f"  Clone failed for {repo}: {e}")
+        print(f"  Clone failed for {repo}@{commit[:10]}: {e}")
         return None
 
 
@@ -335,9 +344,11 @@ def run_codex_extraction(
         prompt = CODEX_PROMPT.format(diff_path=str(diff_path), config_files_hint=hint)
 
         # Run codex exec
+        # Use read-only sandbox so Codex doesn't try to load repo's SKILL.md as its own
         cmd = [
             "codex", "exec",
-            "--full-auto",
+            "-a", "never",
+            "-s", "read-only",
             "-m", model,
             "-c", "model_reasoning_effort=\"high\"",
             "--output-schema", str(schema_path),

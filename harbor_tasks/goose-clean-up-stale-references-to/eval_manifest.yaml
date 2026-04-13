@@ -78,6 +78,40 @@ rubric:
     and `crates/goose/src/config/extensions.rs` rather than trying to update them
     or add new explanatory comment
   category: documentation
+- rule: Prefer self-documenting code over maintenance comments.
+  source:
+    path: AGENTS.md
+    lines: '88'
+  source_text: 'Comments: Write self-documenting code - prefer clear names over comments'
+  evidence: 'In `crates/goose/src/config/experiments.rs`, the diff deletes the stale
+    doc TODO `/// TODO: keep this up to date with the experimental-features.md documentation
+    page` and leaves the clearly named `ALL_EXPERIMENTS` constant and its descriptive
+    doc comment as the source of truth.'
+  category: comments
+  verification: llm_judge
+- rule: Keep comments only for non-obvious logic or rationale.
+  source:
+    path: AGENTS.md
+    lines: '90'
+  source_text: 'Comments: Only comment for complex algorithms, non-obvious business
+    logic, or "why" not "what"'
+  evidence: The patch removes a non-essential maintenance note above `ALL_EXPERIMENTS`
+    and makes the `save_extensions_map` logging change without adding explanatory
+    comments around straightforward control flow.
+  category: comments
+  verification: llm_judge
+- rule: Clean up logging and reserve logs for real error/security conditions.
+  source:
+    path: AGENTS.md
+    lines: '95'
+  source_text: 'Logging: Clean up existing logs, don''t add more unless for errors
+    or security events'
+  evidence: 'In `crates/goose/src/config/extensions.rs`, inside `if let Err(e) = config.set_param(EXTENSIONS_CONFIG_KEY,
+    &extensions)`, the diff replaces `tracing::debug!("Failed to save extensions config:
+    {}", e);` with `tracing::warn!("Failed to save extensions config: {}", e);`. That
+    is log cleanup on an actual failure path, with no extra log sites added.'
+  category: logging
+  verification: llm_judge
 distractors:
 - rule: 'Logging: Clean up existing logs, don''t add more unless for errors or security
     events'
@@ -98,6 +132,29 @@ distractors:
   source:
     path: AGENTS.md
     lines: 68-68
+- rule: Use `anyhow::Result` for fallible code.
+  source:
+    path: AGENTS.md
+    lines: '81'
+  source_text: 'Error: Use anyhow::Result'
+  collision_type: rule_conflict
+  why_distracting: 'The `extensions.rs` hunk touches an error path (`if let Err(e)
+    = config.set_param(...)`), so an agent might try to refactor `save_extensions_map`
+    to return `anyhow::Result<()>`. That would be unnecessary API churn here: the
+    function currently logs and returns `()`, and the gold diff only adjusts the severity
+    of that log.'
+  severity: medium
+- rule: Extension work belongs in `crates/goose-mcp/`.
+  source:
+    path: AGENTS.md
+    lines: '83'
+  source_text: 'MCP: Extensions in crates/goose-mcp/'
+  collision_type: architecture_boundary
+  why_distracting: The changed file is named `crates/goose/src/config/extensions.rs`,
+    so 'extensions' looks superficially like MCP work. But this patch is about core
+    config persistence for agent extensions, not MCP extension implementations. Following
+    this rule here would send the edit to the wrong crate.
+  severity: medium
 hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`).
   There are no hierarchical conflicts, but the agent must prioritize the explicit
   prompt instructions over a broad interpretation of the config rules.

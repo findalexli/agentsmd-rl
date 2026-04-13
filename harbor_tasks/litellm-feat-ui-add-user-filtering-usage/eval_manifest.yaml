@@ -79,7 +79,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI - TopModelView component tests pass
-
 rubric:
 - rule: Config updates should follow the style and format of existing pitfall entries
     in AGENTS.md
@@ -92,6 +91,19 @@ rubric:
     path: AGENTS.md
     lines: 73-86
     commit: a38993b871a32090caea0941427a8bc5489a5c02
+- rule: Avoid breaking existing APIs.
+  source:
+    path: AGENTS.md
+    lines: 172-172
+  source_text: '1. **Breaking Changes**: LiteLLM has many users - avoid breaking existing
+    APIs'
+  evidence: 'The diff keeps existing behavior opt-in safe: `UsageExportHeader` adds
+    `filterMode = "multiple"` as the default, preserves the old multi-select path
+    with `mode={filterMode === "single" ? undefined : "multiple"}`, and only switches
+    to single-select when `EntityUsage` passes `filterMode={entityType === "user"
+    ? "single" : "multiple"}`.'
+  category: backward_compatibility
+  verification: llm_judge
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -137,6 +149,24 @@ distractors:
   source:
     path: AGENTS.md
     lines: 44-45
+- rule: Place tests in backend/provider test directories like `tests/test_litellm/`,
+    `tests/llm_translation/`, `tests/proxy_unit_tests/`, or `tests/load_tests/`.
+  source:
+    path: CLAUDE.md
+    lines: 96-99
+  source_text: '- Unit tests in `tests/test_litellm/`
+
+    - Integration tests for each provider in `tests/llm_translation/`
+
+    - Proxy tests in `tests/proxy_unit_tests/`
+
+    - Load tests in `tests/load_tests/`'
+  collision_type: scope_ambiguity
+  why_distracting: 'A repo-wide feature addition often suggests adding tests under
+    the main project test directories. Here that would miss the actual surface area:
+    the gold diff changes React components in `ui/litellm-dashboard`, so the correct
+    coverage lives in the existing co-located Vitest files under the dashboard code.'
+  severity: medium
 hierarchy_analysis: The repository uses two root-level configuration files (AGENTS.md
   and CLAUDE.md) that mix backend (Python) and frontend (React) guidelines. The agent
   must filter rules based on the architecture boundary (UI vs. Backend) to avoid applying

@@ -202,6 +202,46 @@ distractors:
   source:
     path: libraries/tools/kotlin-gradle-plugin-integration-tests/AGENTS.md
     lines: 37-48
+- rule: When behavior differs between stable and latest language versions, add `//
+    LATEST_LV_DIFFERENCE` and a `.latestLV.kt` companion test file.
+  source:
+    path: compiler/fir/analysis-tests/AGENTS.md
+    lines: 60-62
+  source_text: '1. Add `// LATEST_LV_DIFFERENCE` directive to the `.kt` test file
+
+    2. Create a `.latestLV.kt` file (for diagnostics tests: `.fir.latestLV.kt` if
+    only FIR behavior differs) containing the full test with diagnostic expectations
+    for the latest LV
+
+    3. The base `.kt` file keeps expectations for the stable (default) language version'
+  collision_type: scope_ambiguity
+  why_distracting: The patch introduces explicit versioned deprecation messages like
+    `Will be removed in Kotlin 2.5.0`, which could tempt an agent to treat this as
+    a latest-language-version test split. That rule only applies to FIR analysis test
+    data under `compiler/fir/analysis-tests/testData/resolve/`, not to Compose Gradle
+    plugin source or Gradle-plugin tests.
+  severity: medium
+- rule: All concrete `KtElement` classes must be covered by tests in `compiler/testData/psi/`
+    when adding a new PSI element.
+  source:
+    path: compiler/psi/AGENTS.md
+    lines: 126-129
+  source_text: 'All concrete `KtElement` classes must be covered by tests in `compiler/testData/psi/`:
+
+    - Each test consists of a `.kt` file containing example Kotlin code and a corresponding
+    `.txt` file showing the expected PSI tree structure
+
+    - These tests serve as documentation showing which code constructs map to which
+    PSI elements
+
+    - When adding a new `KtElement` class, add corresponding test cases demonstrating
+    the syntax it represents'
+  collision_type: architecture_boundary
+  why_distracting: This PR changes Compose Gradle plugin DSL deprecations and their
+    Gradle tests, not PSI element classes. Adding PSI tree tests here would cross
+    into a different subsystem and would not validate the actual behavior changed
+    by the diff.
+  severity: low
 hierarchy_analysis: The root CLAUDE.md and AGENTS.md files delegate to non-existent
   guidelines. The integration tests AGENTS.md provides specific guidelines for writing
   new tests, which act as distractors for this simple migration task.

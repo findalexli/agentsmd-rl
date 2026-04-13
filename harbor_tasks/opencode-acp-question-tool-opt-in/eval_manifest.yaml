@@ -133,6 +133,27 @@ rubric:
     `...(question ? [QuestionTool] : [])` instead of using `let` and reassigning or
     pushing to the array.'
   category: style
+- rule: Avoid unnecessary destructuring; use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 46-46
+  source_text: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  evidence: The new condition uses `Flag.OPENCODE_CLIENT` and `Flag.OPENCODE_ENABLE_QUESTION_TOOL`
+    directly in patch line 54. The diff does not destructure `Flag` or `process.env`
+    into locals.
+  category: style
+  verification: llm_judge
+- rule: Rely on type inference when possible instead of adding explicit annotations.
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  source_text: '- Rely on type inference when possible; avoid explicit type annotations
+    or interfaces unless necessary for exports or clarity'
+  evidence: 'The added boolean exports and locals have no explicit `: boolean` annotations:
+    `export const OPENCODE_ENABLE_QUESTION_TOOL = truthy("OPENCODE_ENABLE_QUESTION_TOOL")`
+    at patch line 42 and `const question = ...` at patch line 54 both rely on inference.'
+  category: typing
+  verification: llm_judge
 config_edits:
 - path: packages/opencode/src/acp/README.md
   tier: 2
@@ -162,6 +183,44 @@ distractors:
   source:
     path: AGENTS.md
     lines: 29-37
+- rule: Inline values that are used only once to reduce variable count.
+  source:
+    path: AGENTS.md
+    lines: 33-33
+  source_text: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The new `question` variable in `registry.ts` is only consumed once,
+    so this rule looks mechanically applicable. For this change, naming the boolean
+    gate makes the new opt-in behavior readable and keeps the spread expression from
+    hiding a longer policy check.
+  severity: medium
+- rule: Follow the opencode database naming convention for tables, join columns, and
+    indexes.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 6-6
+  source_text: '- **Naming**: tables and columns use snake*case; join columns are
+    `<entity>_id`; indexes are `<table>*<column>\_idx`.'
+  collision_type: scope_ambiguity
+  why_distracting: The changed code lives under `packages/opencode`, and the diff
+    adds a new configuration symbol, which can look like a schema-related change.
+    But no SQL schema or migration files are touched, so database naming rules are
+    not the right rubric for this patch.
+  severity: low
+- rule: Use generated desktop bindings instead of package-specific manual command
+    wiring.
+  source:
+    path: packages/desktop/AGENTS.md
+    lines: 3-4
+  source_text: '- Never call `invoke` manually in this package.
+
+    - Use the generated bindings in `packages/desktop/src/bindings.ts` for core commands/events.'
+  collision_type: architecture_boundary
+  why_distracting: 'The new registry condition explicitly includes the `desktop` client,
+    so a reviewer might think the desktop package should be changed. That would cross
+    package boundaries: the behavior being modified is shared tool exposure in `packages/opencode/src/tool/registry.ts`,
+    not desktop-side command binding.'
+  severity: medium
 hierarchy_analysis: The agent must apply style rules from the root `AGENTS.md` to
   the TypeScript files being edited. The child config `packages/opencode/AGENTS.md`
   is present but focuses entirely on database guidelines, requiring the agent to filter

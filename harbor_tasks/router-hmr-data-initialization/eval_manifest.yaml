@@ -51,6 +51,26 @@ rubric:
     which aligns with the project's strict 'never cast' philosophy.
   category: style
   verification: llm_judge
+- rule: Preserve type-safe, defensive TypeScript behavior when updating internals.
+  source:
+    path: AGENTS.md
+    lines: 20-20
+  source_text: '- TypeScript strict mode with extensive type safety'
+  evidence: The diff adds `import.meta.hot.data ??= {}` before `import.meta.hot.data[%%hotDataKey%%]
+    = %%stableComponentIdent%%`, which defensively initializes optional HMR state
+    instead of assuming `data` already exists.
+  category: safety
+  verification: llm_judge
+- rule: Implement bundler/HMR transformation behavior inside the router plugin architecture.
+  source:
+    path: AGENTS.md
+    lines: 160-160
+  source_text: '- **Plugin Architecture**: Universal bundler plugins using unplugin'
+  evidence: The only changed file is `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts`,
+    and the added line is inside the plugin-generated `import.meta.hot` template.
+    The fix stays in the plugin layer rather than moving into unrelated runtime code.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: TypeScript strict mode with extensive type safety
   collision_type: architecture_boundary
@@ -93,6 +113,28 @@ distractors:
     which is part of the code-splitter plugin. The agent might mistakenly try to apply
     user-land code-splitting rules (like using `getRouteApi`) to the compiler plugin's
     source code or the generated template.
+  severity: medium
+- rule: Do not force this React-specific HMR fix into framework-agnostic shared code
+    just because the repo prefers separating core logic from framework bindings.
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '- Framework-agnostic core logic separated from React/Solid bindings'
+  collision_type: architecture_boundary
+  why_distracting: Because the target path includes `src/core`, an agent could over-apply
+    this rule and try to generalize the fix into shared compiler logic or other frameworks.
+    The gold diff correctly keeps the change scoped to a React-only split-route-components
+    plugin.
+  severity: medium
+- rule: Do not treat this as an application route-definition change under `src/routes/`.
+  source:
+    path: AGENTS.md
+    lines: 117-117
+  source_text: '- Use file-based routing in `src/routes/` directories'
+  collision_type: scope_ambiguity
+  why_distracting: The patch mentions route components and HMR for routes, so an agent
+    might mistakenly look for example app route files. The actual bug is in the internal
+    router plugin that generates HMR code, not in file-based route definitions.
   severity: medium
 hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
   containing generic monorepo boilerplate. There is no complex hierarchy or overriding

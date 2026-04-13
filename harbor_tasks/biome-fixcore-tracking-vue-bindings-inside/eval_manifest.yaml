@@ -192,6 +192,62 @@ distractors:
     to modify formatter rules for Vue/Svelte directives instead of the file handler's
     embedded JS extraction logic.
   severity: medium
+- rule: Apply parser grammar naming conventions such as `Any*`, `*List`, and `Bogus*`
+    when changing HTML syntax support.
+  source:
+    path: .claude/skills/parser-development/SKILL.md
+    lines: 58-63
+  source_text: '**Naming conventions:**
+
+    - Prefix all nodes with language name: `HtmlElement`, `CssRule`
+
+    - Unions start with `Any`: `AnyHtmlAttribute`
+
+    - Error recovery nodes use `Bogus`: `HtmlBogusAttribute`
+
+    - Lists end with `List`: `HtmlAttributeList`
+
+    - Lists are mandatory (never optional), empty by default'
+  collision_type: architecture_boundary
+  why_distracting: 'Because the patch touches `crates/biome_html_syntax`, an agent
+    might think new directive support requires grammar or generated-node changes.
+    It does not: the gold diff correctly adds an extension module over existing generated
+    syntax and leaves grammar/codegen untouched.'
+  severity: medium
+- rule: Use parser-rule mechanics like presence tests, `p.expect`, recovery sets,
+    and mandatory list creation for this change.
+  source:
+    path: .claude/skills/parser-development/SKILL.md
+    lines: 301-308
+  source_text: '- **Presence test**: Always return `Absent` if the first token doesn''t
+    match - never progress parsing before returning `Absent`
+
+    - **Required vs optional**: Use `p.expect()` for required tokens, `p.eat()` for
+    optional ones
+
+    - **Missing markers**: Use `.or_add_diagnostic()` for required nodes to add missing
+    markers and errors
+
+    - **Error recovery**: Include list terminators, separators, and statement boundaries
+    in recovery sets
+
+    - **Bogus nodes**: Check grammar for which `BOGUS_*` node types are valid in your
+    context
+
+    - **Checkpoints**: Use `p.checkpoint()` to save state and `p.rewind()` if parsing
+    fails
+
+    - **Lookahead**: Use `p.at()` to check tokens, `p.nth_at()` for lookahead beyond
+    current token
+
+    - **Lists are mandatory**: Always create list nodes even if empty - use `parse_list()`
+    not `parse_list().ok()`'
+  collision_type: scope_ambiguity
+  why_distracting: The change is in embedded-snippet extraction after HTML parsing,
+    not in tokenization or grammar production. Following parser-rule advice here would
+    send the implementation into the wrong layer and add unnecessary parser churn
+    instead of the targeted service-layer fix the gold diff makes.
+  severity: medium
 hierarchy_analysis: The config hierarchy consists of CLAUDE.md and AGENTS.md at the
   root level. Both files provide high-level contribution guidelines, but they heavily
   focus on the PR process (changesets, PR descriptions, AI disclosure). For a code-generation

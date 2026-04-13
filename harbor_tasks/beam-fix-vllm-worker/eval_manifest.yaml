@@ -61,7 +61,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: vllm_inference.py has no pylint errors
-
 - id: parse_args_default_max_num_seqs
   type: fail_to_pass
   origin: pr_diff
@@ -131,3 +130,29 @@ config_edits:
 
     `vllm_server_kwargs`, matching the pattern used in other vLLM examples.'
   gold_removed: ''
+distractors:
+- rule: Integration tests have filenames ending in `IT.java` and use `TestPipeline`.
+  source:
+    path: .agent/skills/java-development/SKILL.md
+    lines: 76-76
+  source_text: Integration tests have filenames ending in `IT.java` and use `TestPipeline`.
+  collision_type: scope_ambiguity
+  why_distracting: This sounds like a repository-wide testing convention, but it is
+    explicitly scoped to Java development. The gold diff only changes Python and Markdown
+    files under `sdks/python/...`; following the Java naming/pattern here would send
+    an agent toward the wrong language, wrong test harness, and wrong file locations.
+  severity: medium
+- rule: Use `--requirements_file=requirements.txt` or custom containers.
+  source:
+    path: .agent/skills/python-development/SKILL.md
+    lines: 161-162
+  source_text: '### Specifying Additional Dependencies
+
+    Use `--requirements_file=requirements.txt` or custom containers.'
+  collision_type: scope_ambiguity
+  why_distracting: The vLLM example already lives in an environment-heavy area, so
+    packaging guidance looks relevant. But the bug described by the gold diff is CUDA
+    OOM during vLLM engine startup on ~16GiB GPUs, not missing Python dependencies.
+    Switching focus to requirements files or container packaging would leave the needed
+    `max-num-seqs` / `gpu-memory-utilization` defaults unfixed.
+  severity: medium

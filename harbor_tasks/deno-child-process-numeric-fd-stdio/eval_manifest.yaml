@@ -117,6 +117,23 @@ rubric:
     duplication logic within the `ext/` directory (`ext/io/lib.rs`, `ext/process/lib.rs`),
     aligning with the architectural gui
   category: architecture
+- rule: Implement native runtime and system-access behavior inside `ext/` extensions.
+  source:
+    path: CLAUDE.md
+    lines: 51-54
+  source_text: 'The `deno_runtime` crate (`./runtime`) assembles the JavaScript runtime,
+
+    including all "extensions" (native functionality exposed to JavaScript). The
+
+    extensions themselves are in the `ext/` directory, and provide system access to
+
+    JavaScript – for instance filesystem operations and networking.'
+  evidence: The diff puts the child-process stdio fix in `ext/io/lib.rs`, `ext/process/lib.rs`,
+    and `ext/node/polyfills/internal/child_process.ts` rather than `cli/`. Concrete
+    examples are the new `ChildProcessStdio` struct in `ext/io/lib.rs` and the new
+    `StdioOrFd` fd-handling logic in `ext/process/lib.rs`.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: Unit tests should be placed in the `tests/unit/` directory.
   collision_type: scope_ambiguity
@@ -128,6 +145,18 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 61-61
+- rule: When adding an op, look at ops in the relevant `ext/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 338-339
+  source_text: "- Need to add an op? Look at ops in relevant `ext/` directory (e.g.,\n\
+    \  `ext/fs/lib.rs`)"
+  collision_type: meta_confusion
+  why_distracting: Because the patch changes extension behavior, this could push an
+    agent toward inventing a new JS-exposed op. The gold diff correctly avoids that
+    and extends existing stdio plumbing (`StdioOrFd`, `ChildProcessStdio`, extra stdio
+    fd handling) instead of adding a new op surface.
+  severity: low
 hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`) containing
   high-level repository guidelines. The primary interaction is a slight scope ambiguity
   where the general directory structure documented in the config (`tests/unit/`) conflicts

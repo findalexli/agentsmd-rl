@@ -209,6 +209,48 @@ rubric:
     # consistent quoting with surrounding code in various_checks.sh
 
     '
+- rule: Avoid magic constants; give important thresholds a named variable instead
+    of burying them inside logic.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 212-213
+  source_text: "- **No magic constants**\n  Avoid magic constants; represent important\
+    \ thresholds or alternative behaviors as settings with sensible defaults."
+  evidence: The patch introduces `MAX_FILE_SIZE=$((5 * 1024 * 1024))` at gold diff
+    line 13 and then passes it into `awk -v limit="$MAX_FILE_SIZE"` at line 43, instead
+    of embedding the byte threshold directly inside the pipeline.
+  category: style
+  verification: llm_judge
+- rule: Make user-facing error messages clear, specific, and actionable.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 96-99
+  source_text: '**Always check for typos and message quality:**
+
+    - Scan all changed lines for typos in comments, variable names, string literals,
+    log messages, error messages, and documentation.
+
+    - Report all typos found with suggested corrections.
+
+    - Check that error messages are clear, informative, and help the user understand
+    what went wrong and how to fix it.'
+  evidence: 'The new message at gold diff lines 45-46 says exactly what failed and
+    what to do next: `File $file is larger than 5 MB. Large files should not be committed
+    to git — download them at test time or build from source instead.`'
+  category: error_handling
+  verification: llm_judge
+- rule: Add comments around non-obvious logic that maintainers would otherwise have
+    to reverse-engineer.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 241-241
+  source_text: '- Missing or unclear comments in complex logic that future maintainers
+    must understand.'
+  evidence: 'The patch explains two subtle implementation choices with comments: GNU
+    vs BSD `stat` flag detection at gold diff lines 33-40, and the bulk `git ls-files
+    -z | xargs -0 stat` approach to avoid fork-per-file overhead at lines 41-43.'
+  category: maintainability
+  verification: llm_judge
 distractors:
 - rule: Links to ClickHouse CI should be analyzed using the tool at `.claude/tools/fetch_ci_report.js`
   collision_type: meta_confusion
@@ -231,6 +273,67 @@ distractors:
   source:
     path: AGENTS.md
     lines: 7-8
+- rule: Wrap literal names in inline code blocks when writing comments or messages.
+  source:
+    path: ./AGENTS.md
+    lines: 5-5
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: would_cause_bug
+  why_distracting: This patch adds shell comments and a runtime `echo` message, so
+    a generic agent might try to add Markdown backticks around paths or variables.
+    In shell output strings, backticks trigger command substitution, so turning `File
+    $file...` into something like ``File `$file`...`` would be incorrect and potentially
+    unsafe.
+  severity: high
+- rule: When adding tests, prefer new `tests/queries` cases and use `add-test` for
+    the prefix.
+  source:
+    path: ./AGENTS.md
+    lines: 141-143
+  source_text: 'When writing tests in tests/queries, prefer adding a new test instead
+    of extending existing ones.
+
+
+    When adding a new test, consult `./tests/queries/0_stateless/add-test` to determine
+    the correct name prefix for the new test.'
+  collision_type: architecture_boundary
+  why_distracting: The change is in `ci/jobs/scripts/check_style/various_checks.sh`,
+    adding repository-lint behavior rather than SQL runtime behavior. A `tests/queries`
+    case would not directly validate this shell-based style check and would push the
+    change into the wrong subsystem.
+  severity: medium
+- rule: Use Allman-style braces.
+  source:
+    path: ./AGENTS.md
+    lines: 145-145
+  source_text: When writing C++ code, always use Allman-style braces (opening brace
+    on a new line). This is enforced by the style check in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The edited file is a Bash script, not C++. Applying a C++ brace-style
+    rule here would be a scope mistake and would at best waste time on irrelevant
+    formatting changes.
+  severity: low
+- rule: Treat new validation/enforcement as backward-compatibility-sensitive runtime
+    behavior that may need compatibility settings.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 214-215
+  source_text: "- **Backward compatibility**\n  New versions must be configurable\
+    \ to behave like older versions via `compatibility` settings. Ensure `SettingsChangesHistory.cpp`\
+    \ is updated when settings change. **New validation / enforcement on existing\
+    \ data:** if a PR adds a check that throws at `CREATE TABLE`, query execution,\
+    \ or server startup, and that check applies to objects created before the PR,\
+    \ it is a backward-incompatibility — the constraint may be violated by legitimate\
+    \ existing setups. It should either be gated behind a setting or applied only\
+    \ to newly created objects."
+  collision_type: architecture_boundary
+  why_distracting: This diff adds a CI/repository policy check, not server runtime
+    validation. Gating the file-size check behind compatibility settings or rollout
+    controls would undermine the purpose of a style/lint script and cross an architecture
+    boundary into product-runtime concerns.
+  severity: medium
 hierarchy_analysis: The config file AGENTS.md is a flat, single file at the root.
   It contains general guidelines for documentation, commit messages, and CI analysis
   tools, none of which directly apply to the bash script logic required for this task.

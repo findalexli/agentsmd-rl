@@ -93,6 +93,20 @@ rubric:
     append the new behavior regarding `&self`/`&mut self` determining instance vs
     static methods.
   category: documentation
+- rule: Rust `#[jsg_method]` APIs should be authored in Rust `snake_case` and rely
+    on automatic JavaScript `camelCase` conversion.
+  source:
+    path: src/rust/AGENTS.md
+    lines: 28-28
+  source_text: '- **JSG resources**: must include `_state: jsg::ResourceState` field;
+    `#[jsg_method]` auto-converts `snake_case` → `camelCase`'
+  evidence: The README additions document Rust methods `parse_caa_record` and `get_name`
+    being exposed as JavaScript `parseCaaRecord` and `getName`. In the modified macro
+    code, `generate_resource_impl()` still derives the default JS name with `snake_to_camel(&rust_name.to_string())`
+    before deciding whether to emit `Member::Method` or `Member::StaticMethod`, so
+    the naming convention is preserved.
+  category: js_naming
+  verification: llm_judge
 config_edits:
 - path: src/rust/AGENTS.md
   tier: 1
@@ -149,6 +163,39 @@ distractors:
   source:
     path: src/rust/AGENTS.md
     lines: 24-25
+- rule: Use the C++ JSG macro pattern (`JSG_RESOURCE_TYPE`, `JSG_STRUCT`, `js.alloc<T>()`)
+    when modifying JavaScript APIs.
+  source:
+    path: AGENTS.md
+    lines: 233-236
+  source_text: 'C++ classes are exposed to JavaScript via JSG macros in `src/workerd/jsg/`.
+    See the comprehensive guide at `src/workerd/jsg/README.md` for details. When adding
+    or modifying JavaScript APIs, find a similar existing API and follow its pattern.
+
+
+    - `JSG_RESOURCE_TYPE` for reference types, `JSG_STRUCT` for value types
+
+    - `js.alloc<T>()` for resource allocation'
+  collision_type: architecture_boundary
+  why_distracting: The change clearly affects JS binding behavior, so this C++ JSG
+    guidance looks relevant at first glance. But the gold diff fixes Rust proc-macro
+    generation and Rust/C++ bridge plumbing in `src/rust/jsg-macros/` and `src/rust/jsg/`;
+    switching to C++ `JSG_RESOURCE_TYPE` patterns would bypass the broken Rust path
+    instead of fixing it.
+  severity: medium
+- rule: Prefer `JSG_PROTOTYPE_PROPERTY` over `JSG_INSTANCE_PROPERTY`.
+  source:
+    path: src/workerd/jsg/AGENTS.md
+    lines: 93-94
+  source_text: "10. **Prefer `JSG_PROTOTYPE_PROPERTY`** over `JSG_INSTANCE_PROPERTY`\
+    \ unless there's a\n    specific reason — instance properties break GC optimization"
+  collision_type: would_cause_bug
+  why_distracting: This rule mentions prototype placement, which is superficially
+    close to the bug being fixed. But it is specifically about properties, not method
+    registration. Applying it here would encourage keeping receiver-less `#[jsg_method]`
+    entries on the prototype instead of moving them to `Member::StaticMethod` on the
+    constructor, preserving the wrong API surface.
+  severity: high
 hierarchy_analysis: The root `AGENTS.md` provides a general directive to update `AGENTS.md`
   files with new information. The `src/rust/AGENTS.md` file contains the specific
   rule about `#[jsg_method]` that needs to be updated. The agent must navigate this

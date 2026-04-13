@@ -161,6 +161,18 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 12-13
+- rule: Prefer [`TypeName`] references when writing Rust doc comments.
+  source:
+    path: CLAUDE.md
+    lines: '19'
+  source_text: '- PREFER [`TypeName`] references when writing Rust doc comments'
+  collision_type: meta_confusion
+  why_distracting: The diff adds `///` comments on clap argument fields in `AuditArgs`
+    (patch lines 77-92). Those comments are consumed as CLI help text, not primarily
+    as Rustdoc. Inserting Rustdoc intra-doc links like [`VulnerabilityServiceFormat`]
+    here would leak markup into user-facing help output, so ignoring this convention
+    is correct for this change.
+  severity: medium
 hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md` at the repository
   root. There are no hierarchical conflicts, but the agent must apply these global
   rules appropriately to a multi-crate workspace refactoring task.

@@ -66,6 +66,19 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 3-3
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements.
+  source:
+    path: CLAUDE.md
+    lines: '11'
+  source_text: '- PREFER let chains (`if let` combined with `&&`) over nested `if
+    let` statements'
+  collision_type: scope_ambiguity
+  why_distracting: The diff edits a conditional block, so this style rule can look
+    relevant at a glance. But the changed code does not contain nested `if let` statements;
+    it changes a loop bound and keeps the existing `if variant.contains(...)` branch
+    structure. Applying this rule here would create stylistic churn without addressing
+    the abi3t behavior change.
+  severity: low
 hierarchy_analysis: 'The config hierarchy is a flat single file (`CLAUDE.md`). The
   primary conflict is internal to this file: the agent must balance the instruction
   to add tests and prefer integration tests against the existing codebase pattern

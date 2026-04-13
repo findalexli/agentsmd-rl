@@ -98,6 +98,33 @@ rubric:
     Cosmos tests on Ubuntu with Docker support (testcontainer auto-starts the emulator)
     -->`, which explains the *why* (testcontainer
   category: documentation
+- rule: Set `Test__Cosmos__SkipConnectionCheck=true` so Cosmos tests are not skipped
+    when emulator startup/connectivity is uncertain.
+  source:
+    path: .agents/skills/cosmos-provider/SKILL.md
+    lines: 32-32
+  source_text: The `Test__Cosmos__SkipConnectionCheck=true` env var is set to prevent
+    tests from being skipped when the emulator failed to start.
+  evidence: The diff adds `echo "Test__Cosmos__SkipConnectionCheck=true" >> "$GITHUB_ENV"`
+    to `.github/workflows/copilot-setup-steps.yml`, and `eng/helix.proj` appends `set
+    Test__Cosmos__SkipConnectionCheck=true` for the Windows Server 2025 Cosmos Helix
+    queue.
+  category: config pattern
+  verification: llm_judge
+- rule: When test behavior is cross-platform, verify and encode the fix for both Windows
+    and Linux/macOS paths.
+  source:
+    path: .agents/skills/testing/SKILL.md
+    lines: 73-73
+  source_text: 5. When testing cross-platform code (e.g., file paths, path separators),
+    verify the fix works on both Windows and Linux/macOS
+  evidence: 'The patch explicitly handles multiple OS environments: `eng/helix.proj`
+    removes Cosmos tests from Windows 11 queues, keeps a Windows Server 2025-specific
+    Cosmos configuration, and simplifies the Ubuntu Cosmos queue to rely on Docker
+    support; `.github/workflows/copilot-setup-steps.yml` also exports `Test__Cosmos__EmulatorType=linux`
+    for Linux-emulator runs.'
+  category: testing pattern
+  verification: llm_judge
 config_edits:
 - path: .agents/skills/cosmos-provider/SKILL.md
   tier: 1
@@ -156,6 +183,50 @@ distractors:
   source:
     path: .github/copilot-instructions.md
     lines: 24-31
+- rule: Start the Cosmos emulator from Helix `PreCommands` via `eng/testing/run-cosmos-container.ps1`
+    / `eng/testing/run-cosmos-container.sh`.
+  source:
+    path: .agents/skills/cosmos-provider/SKILL.md
+    lines: 26-30
+  source_text: 'Cosmos tests on Helix start the emulator from the work item via `PreCommands`
+    that run a Docker container using:
+
+    - `eng/testing/run-cosmos-container.ps1`
+
+    - `eng/testing/run-cosmos-container.sh`
+
+
+    These scripts can be invoked locally for testing on machines that don''t have
+    the emulator installed, but have docker available.'
+  collision_type: rule_conflict
+  why_distracting: This looks highly relevant because the diff changes the exact Cosmos-emulator
+    setup area, but the patch intentionally replaces script-driven Helix startup with
+    `TestEnvironment.InitializeAsync()` plus `Testcontainers.CosmosDb`, deletes both
+    `eng/testing/run-cosmos-container.*` files, and removes the Ubuntu `PreCommands`/`PostCommands`.
+    Following the old rule would reintroduce the obsolete startup path and fight the
+    new architecture.
+  severity: high
+- rule: For new tests, add specification tests, provider overrides, unit tests, and
+    baseline capture.
+  source:
+    path: .agents/skills/testing/SKILL.md
+    lines: 69-72
+  source_text: '1. **Specification test**: Add to `EFCore.Specification.Tests` (core)
+    or `EFCore.Relational.Specification.Tests` (relational)
+
+    2. **Provider override**: Override in `EFCore.{Provider}.FunctionalTests` with
+    `AssertSql()`
+
+    3. **Unit test**: Add to `EFCore.{Provider}.Tests`
+
+    4. Run with `EF_TEST_REWRITE_BASELINES=1` to capture initial baselines'
+  collision_type: scope_ambiguity
+  why_distracting: The diff is entirely about Cosmos test infrastructure and emulator
+    bootstrapping, not about adding a new query/update behavior that needs spec/provider/unit
+    coverage. An agent working in `test/EFCore.Cosmos.FunctionalTests/` could mistakenly
+    treat this as a 'new test' change, but doing so would add unrelated coverage and
+    not validate the actual container/bootstrap behavior being changed.
+  severity: medium
 hierarchy_analysis: The `.github/copilot-instructions.md` file provides general repository
   guidelines. However, the prompt's specific instruction to 'match the pattern already
   established for SQL Server' overrides the general instruction 'Don't copy code that

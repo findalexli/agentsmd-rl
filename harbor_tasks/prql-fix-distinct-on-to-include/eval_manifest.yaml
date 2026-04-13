@@ -97,6 +97,24 @@ rubric:
     at the bottom of `prqlc/prqlc/src/sql/gen_query.rs` using `insta::assert_snapshot!`,
     directly following the existing config'
   category: testing
+- rule: Use inline `insta` snapshot assertions for tests.
+  source:
+    path: CLAUDE.md
+    lines: 36-40
+  source_text: 'Prefer inline snapshots for almost all tests:
+
+
+    ```rust
+
+    insta::assert_snapshot!(result, @"expected output");
+
+    ```'
+  evidence: The diff adds an inline unit test `test_distinct_on_with_aggregate` in
+    `prqlc/prqlc/src/sql/gen_query.rs` that asserts with `assert_snapshot!(crate::tests::compile(query).unwrap(),
+    @r"...")`. It also updates the existing snapshot assertion in `prqlc/prqlc/tests/integration/sql.rs`
+    to match the new SQL output (`DISTINCT ON (col1) *`).
+  category: testing_pattern
+  verification: llm_judge
 config_edits:
 - path: CLAUDE.md
   tier: 1

@@ -62,6 +62,18 @@ rubric:
   rule: Maintain existing component structure and functionality
   reference: The solution keeps the same component structure, only changing the icon
     imports and usage without adding custom CSS or changing component patterns
+- rule: Follow existing patterns and reuse shared libraries/utilities instead of keeping
+    bespoke dependencies per plugin.
+  source:
+    path: .cursor/rules/dev-standard.mdc
+    lines: '119'
+  source_text: '- **Follow existing patterns**: Mimic code style, use existing libraries
+    and utilities'
+  evidence: 'Both chart plugins are updated the same way: both `package.json` files
+    remove `react-icons` (gold diff lines 5-11 and 68-75), and both TSX files switch
+    to the same `@ant-design/icons` symbols (gold diff lines 26-30 and 87-91).'
+  category: consistency_and_library_reuse
+  verification: llm_judge
 distractors:
 - rule: Use @superset-ui/core - Don't import Ant Design directly, prefer Ant Design
     component wrappers from @superset-ui/core/components
@@ -74,6 +86,46 @@ distractors:
   source:
     path: AGENTS.md
     lines: 29-30
+- rule: Do not import Ant Design directly; prefer `@superset-ui/core` component wrappers.
+  source:
+    path: AGENTS.md
+    lines: '33'
+  source_text: '- **Use @superset-ui/core** - Don''t import Ant Design directly, prefer
+    Ant Design component wrappers from @superset-ui/core/components'
+  collision_type: scope_ambiguity
+  why_distracting: This looks relevant because the patch is a frontend UI change,
+    but the change is specifically about icon imports. The gold diff intentionally
+    imports `CaretUpOutlined`, `CaretDownOutlined`, and `ColumnHeightOutlined` from
+    `@ant-design/icons` (gold diff lines 26-30 and 87-91). `@superset-ui/core/components`
+    is a wrapper layer for UI components, not an icon replacement API, so forcing
+    this rule here would create unnecessary churn or block the intended dependency
+    cleanup.
+  severity: medium
+- rule: Use functional components with hooks.
+  source:
+    path: AGENTS.md
+    lines: '79'
+  source_text: '- **Functional components** with hooks'
+  collision_type: would_cause_bug
+  why_distracting: 'One touched file is an existing class-based renderer: `export
+    class TableRenderer extends Component<` remains in the diff context (gold diff
+    line 34). Refactoring that legacy renderer to hooks just to satisfy this guideline
+    would be unrelated to the icon swap and would risk regressions in a complex table-rendering
+    path.'
+  severity: high
+- rule: Prefer antd theming tokens over legacy theming tokens.
+  source:
+    path: AGENTS.md
+    lines: '34'
+  source_text: '- **Use antd theming tokens** - Prefer antd tokens over legacy theming
+    tokens'
+  collision_type: scope_ambiguity
+  why_distracting: The patch touches icon imports and dependency cleanup, not theme
+    semantics. An agent could be tempted to rewrite theming because `supersetTheme`
+    appears in the same file context (gold diff line 21), but that would expand the
+    scope beyond the icon migration and risk visual changes unrelated to the intended
+    fix.
+  severity: low
 hierarchy_analysis: The configuration is flat, consisting of identical AGENTS.md and
   CLAUDE.md files at the root level. The primary challenge is resolving the conflict
   between the explicit PR instructions and the general repository guidelines.
