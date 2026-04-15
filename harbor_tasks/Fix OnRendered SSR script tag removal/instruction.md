@@ -1,54 +1,36 @@
-# Fix OnRendered SSR Script Tag Removal
+# Fix OnRendered SSR Script Tag
 
 ## Problem
 
-The `OnRendered` component in `@tanstack/react-router` was rendering an extra `<script>` tag as a sentinel element to track when the route subtree had finished rendering. This script tag was appearing in the server-side rendered (SSR) HTML output, causing:
+In the `@tanstack/router` repository at `/workspace/router`, the `OnRendered` component in the react-router package renders a `<script>` sentinel tag that appears in server-side rendered (SSR) HTML output. This creates unnecessary markup and can cause hydration mismatches.
 
-1. Unnecessary markup in the HTML
-2. Potential hydration mismatches
-3. Extra bytes in the response
+The current implementation renders a `<script>` element with `suppressHydrationWarning` to detect render completion. The SSR test in `Scripts.test.tsx` expects a bare `<script></script>` sentinel tag in the output.
 
-The component should use a `useLayoutEffect` hook instead to detect when rendering completes, without adding any DOM elements.
+## Required Behavior Changes
 
-## Files to Modify
+### OnRendered Component (`packages/react-router/src/Match.tsx`)
 
-- `packages/react-router/src/Match.tsx` - Main fix location
+Rewrite the `OnRendered` function so that:
 
-## What Needs to Change
+- **No script element is rendered.** The component should return null instead of rendering a `<script>` tag. After the fix, the source file must not contain both `<script` and `suppressHydrationWarning`.
 
-The `OnRendered` component currently:
-- Renders a `<script>` element with a `ref` callback
-- Uses the ref to emit the `onRendered` event when the script mounts
+- **Server-side rendering is detected.** On the server, the component should return null immediately. Use the expression `isServer ?? router.isServer` for this check.
 
-It should:
-- Return `null` (render nothing)
-- Use `useLayoutEffect` to emit the `onRendered` event after the subtree commits
-- Accept a `resetKey` prop for proper timing
-- Check if running on server and return null early
+- **Render completion is detected via layout effect.** Import `useLayoutEffect` from `'./utils'` and use it to emit the `onRendered` event after mount by calling `router.emit` with `{ type: 'onRendered', ...getLocationChangeInfo(...) }`.
 
-## Key Implementation Details
+- **Navigation changes are tracked.** Use a ref named `prevHrefRef` to store the previous href value, only emitting the event when the href actually changes.
 
-1. Import `useLayoutEffect` from `./utils`
-2. On server-side, return `null` immediately
-3. Use `useLayoutEffect` to track when the location changes
-4. Emit the `onRendered` event via `router.emit()` with type `'onRendered'`
-5. Track the previous href to avoid duplicate emissions
-6. Update the comment to reflect the new implementation approach
+- **A `resetKey` prop is accepted.** The component should accept `{ resetKey }: { resetKey: number }` and the call site `<OnRendered />` should pass `resetKey={resetKey}`. Include `resetKey` in the effect dependency array.
 
-## Testing
+### SSR Test (`packages/react-router/tests/Scripts.test.tsx`)
 
-The existing test in `packages/react-router/tests/Scripts.test.tsx` expects the SSR output to NOT contain an empty `<script></script>` tag. The test expectation was updated from:
+Remove the bare `<script></script>` sentinel from the `toEqual` assertions. The expected HTML should no longer contain this sentinel tag.
 
-```html
-<div><div data-testid="root">root</div><div data-testid="index">index</div><script></script><script src="script.js"></script>...</div>
-```
+### Solid Router Comment (`packages/solid-router/src/Match.tsx`)
 
-to:
+Update the OnRendered comment to reflect the new approach. It should indicate that the component "needs to run" or has "committed" after the route subtree, replacing the old text about "renders a dummy dom element."
 
-```html
-<div><div data-testid="root">root</div><div data-testid="index">index</div><script src="script.js"></script>...</div>
-```
+## Verification
 
-Run the unit tests with: `pnpm nx run @tanstack/react-router:test:unit -- tests/Scripts.test.tsx`
-
-Build the package with: `pnpm nx run @tanstack/react-router:build`
+- `pnpm nx run @tanstack/react-router:build` must exit with code 0
+- `pnpm nx run @tanstack/react-router:test:unit -- tests/Scripts.test.tsx` must exit with code 0

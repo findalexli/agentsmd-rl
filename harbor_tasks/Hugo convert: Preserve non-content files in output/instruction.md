@@ -21,20 +21,7 @@ After running `hugo convert toJSON -o outputdir/`, only `index.md` appears in th
 
 ## Expected Behavior
 
-All non-content files in the content tree should be preserved in the output directory, alongside the converted content files.
-
-## Relevant Files
-
-- `commands/convert.go` - Contains the convert command implementation
-  - `convertContents()` - Main conversion function
-  - `convertAndSavePage()` - Converts and saves individual pages
-
-## Hints
-
-- The fix should copy the content directory tree to the output location **before** converting content files
-- To avoid infinite recursion when the output path is inside the content tree, you'll need to skip the output directories during copy
-- Hugo has helper functions for file operations - look in `common/hugio` for `CopyDir`
-- The `hugofs.Os` filesystem abstraction is available for file operations
+All non-content files in the content tree should be preserved in the output directory, alongside the converted content files. This must work for all three conversion formats: `toJSON`, `toTOML`, and `toYAML`.
 
 ## Testing
 
@@ -42,6 +29,7 @@ Your fix should:
 1. Compile successfully: `go build -o hugo .`
 2. Pass the existing tests: `go test ./commands/...`
 3. Preserve bundle resources when running `hugo convert toJSON -o <dir>`
+4. Work with all conversion formats (toJSON, toTOML, toYAML)
 
 ## References
 
