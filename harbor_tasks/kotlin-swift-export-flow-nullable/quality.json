@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific strings like 'inner class Value(val value: T)', 'state.continuation.resume(Value(value))', 'handleActions<Value>', '__continuation(false, null)', '__continuation(true, _result.value)', 'convertBlockPtrToKotlinFunction<(kotlin.Boolean, kotlin.native.internal.NativePtr)->Unit>', '{ arg0, arg1 in', 'if arg0 {', 'continuation(.some(element))', 'continuation(.none)', and 'int32_t (^continuation)(bool, void * _Nullable )'. While instruction.md describes the general approach "
+      "reason": "Tests assert very specific literal strings not mentioned in instruction.md: 'inner class Value(val value: T)' (test_value_wrapper_class_exists), 'public suspend fun next(): Value?' (test_next_function_returns_value_type), 'state.continuation.resume(Value(value))' (test_emit_uses_value_wrapper), 'handleActions<Value>' (test_handleactions_uses_value_type), exact C header signature 'int32_t (^continuation)(bool, void * _Nullable )' (test_c_header_bool_parameter), '__continuation(false, null)' and '"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the exact implementation approach: 'Add an inner Value wrapper class', 'Change emit() to wrap values in Value(value)', 'Change next() return type from T? to Value?', 'Update the C bridge function to pass a boolean flag plus value', specific callback signatures like '(bool, void * _Nullable)', and Swift logic like 'Pass .some(element) when flag is true, .none when false'. This is a complete solution specification, not just a bug description."
+      "reason": "The instruction explicitly states the fix: 'Add an inner Value wrapper class to wrap emitted values', 'Change emit() to wrap values in Value(value) before resuming', 'Change next() return type from T? to Value?', 'Change the continuation callback signature from (void * _Nullable) to (bool, void * _Nullable)', etc. This tells the developer exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation-specific strings like 'inner class Value(val value: T)', 'handleActions<Value>' (count >= 2), '__continuation(true, _result.value)', '{ arg0, arg1 in', 'if arg0 {', 'continuation(.some(element))'. An alternative correct fix (e.g., using a sealed class Result instead of Value, using different variable names in closures, or using a different boolean-checking pattern) would fail these string-matching tests."
+      "reason": "Tests assert exact implementation strings like 'inner class Value(val value: T)', 'state.continuation.resume(Value(value))', 'handleActions<Value>', '{ arg0, arg1 in', 'if arg0 {', 'continuation(.some(element))', '__continuation(true, _result.value)'. An alternative correct fix using e.g. a sealed class, different variable names (hasValue instead of arg0), or a different wrapper pattern would fail these tests despite correctly solving the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test reads file contents and checks for literal string presence (e.g., 'assert \"inner class Value(val value: T)\" in content'). No test compiles the code, runs it, or verifies actual behavior. The only test that runs a subprocess is test_swift_format_syntax which is pass-to-pass. All behavioral verification is done via text matching."
+      "reason": "Nearly every fail-to-pass test is a string-matching test: e.g., test_value_wrapper_class_exists checks 'inner class Value(val value: T)' in content, test_next_function_returns_value_type checks 'public suspend fun next(): Value?' in content, etc. Only test_swift_format_syntax actually executes code (swift-format lint). No test compiles or runs the Kotlin/Swift code to verify behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all f2p tests are string-matching tests, an agent could simply write the exact expected strings into the files without understanding the bug. For example, writing 'inner class Value(val value: T)' somewhere in a comment would pass test_value_wrapper_class_exists. The tests don't verify the code compiles or runs correctly."
+      "reason": "Since all fail-to-pass tests are purely string-matching (e.g., assert 'inner class Value(val value: T)' in content), an agent could satisfy them by simply inserting the exact expected strings as comments or dead code into the files, without implementing any actual fix. No compilation or execution validates the code works."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace and contains solve.sh with the complete gold patch. The agent could read /solution/solve.sh (or the patch within it) to obtain the exact expected strings. Additionally, the agent could read test_outputs.py to find the exact literal strings being asserted and simply insert them into the files."
+      "reason": "The solution is in /workspace/kotlin (solve.sh applies a patch there), and the test file contains all the exact string literals that need to appear in the source files. An agent could read test_outputs.py (which is at a known location) to extract every expected string and insert them verbatim. Additionally, solution/solve.sh contains the full gold patch."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'a Flow<Elem?> that emits [Element1, null, Element2, null, Element3] should correctly produce all 5 elements when consumed from Swift via asAsyncSequence()'. This actual runtime behavior is never tested - only string patterns in source files are checked."
+      "reason": "Instruction.md states the expected behavior: 'a Flow<Elem?> that emits [Element1, null, Element2, null, Element3] should correctly produce all 5 elements (including the nulls) when consumed from Swift via asAsyncSequence()'. No test actually verifies this runtime behavior \u2014 tests only check for string patterns in source files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_value_wrapper_class_exists, test_c_header_bool_parameter), have docstrings indicating FAIL-TO-PASS vs PASS-TO-PASS, and each tests a distinct aspect of the fix."
+      "reason": "Tests are well-named (test_value_wrapper_class_exists, test_next_function_returns_value_type, etc.), have docstrings indicating FAIL-TO-PASS vs PASS-TO-PASS, and include descriptive assertion messages."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying source code files, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests appear consistent and correctly spelled."
+      "reason": "File paths, variable names, and commands in the instruction appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact class names ('Value'), exact method signatures ('suspend fun next(): Value?'), exact callback signatures ('(bool, void * _Nullable)'), and exact Swift patterns ('.some(element)', '.none'). This goes far beyond identifying the buggy area and specifies the exact implementation."
+      "reason": "The instruction specifies exact implementation details: 'Add an inner Value wrapper class', 'Change emit() to wrap values in Value(value)', 'Change next() return type from T? to Value?', specific callback signature changes. This goes well beyond identifying the buggy file/module and provides the exact solution approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

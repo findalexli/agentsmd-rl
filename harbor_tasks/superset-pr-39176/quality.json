@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: the file path 'superset/utils/webdriver.py' (test_syntax_valid, etc.), the class name 'WebDriverPlaywright' (test_get_screenshot_method_exists), the method 'get_screenshot' (same test), the exact regex pattern 'except PlaywrightTimeout:' followed by 'raise' (test_playwright_timeout_raises_exception), the requirement for 'logger.exception' in the PlaywrightError handler (test_playwright_error_handling_preserved), the misleading commen"
+      "reason": "Tests assert specific details not mentioned in instruction.md: the file path 'superset/utils/webdriver.py' is never named; the class 'WebDriverPlaywright' is never named; the exact misleading comment phrases 'raise again for the finally block' and 'but handled above' are never mentioned; 'logger.exception' is not explicitly required (only 'error logging'); tests check for 'abc' import which instruction doesn't mention; ruff linting/formatting checks are not mentioned. The agent cannot discover t"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (timeout exceptions swallowed, stuck in WORKING state) and the expected behavior (exceptions must propagate, use logger.exception for other errors), but does not specify the exact code change like 'replace pass with raise on line 390'."
+      "reason": "instruction.md describes symptoms and expected behavior (timeout exceptions must propagate, not be silently swallowed) but does not specify exact line numbers, the exact change from 'pass' to 'raise', or the specific file path. A developer must still locate the code and determine the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_playwright_timeout_raises_exception uses a strict regex 'except\\s+PlaywrightTimeout\\s*:\\s*\\n\\s*raise\\b' requiring exactly 'raise' on the line after 'except PlaywrightTimeout:'. An alternative fix like re-raising with 'raise PlaywrightTimeout(...)' or wrapping in a new exception, or adding a logging statement before 'raise', would fail this regex. Also test_no_misleading_comment checks for exact phrases that a developer might rewrite differently rather than simply delete."
+      "reason": "test_playwright_timeout_raises_exception uses regex 'except\\s+PlaywrightTimeout\\s*:\\s*\\n\\s*raise\\b' requiring exactly 'raise' on the line immediately after the except clause. An alternative correct fix like logging before raising, or re-raising with 'raise e', or wrapping in a new exception would fail this regex test. test_no_misleading_comment checks for exact phrase removal which is gold-specific."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all tests are text/regex/AST inspection of the source file (e.g., test_outer_playwright_timeout_not_swallowed does regex on file content, test_playwright_timeout_raises_exception does regex, test_no_misleading_comment checks string presence). The only execution-based tests are ruff and py_compile which verify syntax/formatting, not bug-fix behavior. No test imports or calls get_screenshot() to verify runtime behavior."
+      "reason": "The fail-to-pass tests (test_outer_playwright_timeout_not_swallowed, test_playwright_timeout_raises_exception, test_no_misleading_comment) are ALL purely text/regex based checks on file content ('assert 'phrase' not in content', regex matching). None of them import or call the actual code to verify runtime behavior. The pass-to-pass tests include subprocess calls (ruff, py_compile) but the core behavioral tests are text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_outer_playwright_timeout_not_swallowed, test_playwright_timeout_raises_exception, test_no_misleading_comment) check for specific patterns that would not be present in the original buggy code. A stub/no-op would not satisfy these since the original file has 'pass' after 'except PlaywrightTimeout:' and the misleading comment."
+      "reason": "The f2p tests check for specific patterns: test_playwright_timeout_raises_exception requires 'except PlaywrightTimeout:\\n  raise' pattern which won't exist in unmodified code (which has 'pass'); test_no_misleading_comment checks that misleading comment text is removed. A stub/no-op wouldn't satisfy these since the original file contains the buggy patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/superset (the solve.sh contains the full patch inline). The agent could read solution/solve.sh if it exists in the container, or could grep for the gold patch content. The Dockerfile doesn't remove the solution directory, and tests don't guard against this."
+      "reason": "The solution file exists at /workspace/superset relative path and solve.sh is in solution/solve.sh. The agent could potentially read the gold patch from solution/solve.sh if it exists in the container, or grep for test fixtures. The Dockerfile doesn't show any mechanism to remove or protect the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's explicit requirements are covered: timeout exceptions propagate (test_playwright_timeout_raises_exception), other Playwright errors use logger.exception (test_playwright_error_handling_preserved), valid imports from logging and abc (test_webdriver_imports_valid), and misleading comments removed (test_no_misleading_comment)."
+      "reason": "All three requirements from instruction.md are tested: timeout exceptions propagating (test_playwright_timeout_raises_exception), logger.exception for other errors (test_playwright_error_handling_preserved), and valid imports from logging and abc (test_webdriver_imports_valid)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, organized by concern (syntax, behavior, imports, linting), and clearly labeled as pass-to-pass or fail-to-pass in their docstrings."
+      "reason": "Tests are well-named, each has a docstring explaining its purpose, and they are clearly categorized as 'pass-to-pass' or 'fail-to-pass' in comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a code bugfix, not production of structured data like JSON/CSV/API/DB schemas."
+      "reason": "This task involves fixing a bug in Python source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction does not name the exact buggy file or line number. It describes the bug in terms of symptoms and the get_screenshot() method behavior without pinpointing the specific file path or line."
+      "reason": "instruction.md describes the bug in terms of symptoms and behavior (get_screenshot returns None, timeout not propagated) without naming the exact file path, line number, or specifying 'change pass to raise'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only bugfix task, not a config-edit task."
+      "reason": "This is a code-only bug fix task, not a config-edit task."
     }
   },
   "tier_a_fails": [

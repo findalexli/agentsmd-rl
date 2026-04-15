@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific strings not mentioned in instruction.md: 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->', 'is FirTypeOperatorCall if condition.isArgumentWhenSubject() ->', the helper method signature 'private fun FirCall.isArgumentWhenSubject(): Boolean', 'argument.unwrapSmartcastExpression() is FirWhenSubjectExpression', the test data file path 'falsePositiveDuplicateCodition.kt', the directive '// ISSUE: KT-85244', and '// RUN_PIPELINE_TILL: BACKEND'. None of th"
+      "reason": "Tests assert on specific strings like 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->', the exact helper method signature 'private fun FirCall.isArgumentWhenSubject(): Boolean', 'argument.unwrapSmartcastExpression() is FirWhenSubjectExpression', the test data file path 'falsePositiveDuplicateCodition.kt' (with typo), and directives like '// ISSUE: KT-85244' and '// RUN_PIPELINE_TILL: BACKEND'. None of these specific strings, the issue number KT-85244, the test data filename, "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly says 'Modify the checker so that it only considers a condition as a potential duplicate if it's actually checking the when subject' and 'Guard conditions using else if that check other variables should be excluded from duplicate detection' \u2014 this describes exactly WHAT to change, not just what's broken."
+      "reason": "instruction.md explicitly states the fix strategy: 'Modify the checker so that it only considers a condition as a potential duplicate if it's actually checking the when subject' and 'Guard conditions using else if that check other variables should be excluded from duplicate detection.' This tells the agent exactly WHAT to change rather than just describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details: specific guard condition syntax ('is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->'), exact helper method name and signature ('private fun FirCall.isArgumentWhenSubject(): Boolean'), exact implementation ('argument.unwrapSmartcastExpression() is FirWhenSubjectExpression'), and that old patterns must be removed. An alternative correct fix (e.g., using a different method name, inline check, or different approach) would fail."
+      "reason": "Tests assert exact implementation details: the specific guard syntax 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->', the exact helper method name 'isArgumentWhenSubject', its exact signature 'private fun FirCall.isArgumentWhenSubject(): Boolean', and its exact implementation pattern. An alternative correct fix (e.g., using a different method name, checking inside the branch body with a different pattern, or using a local function) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the file content and checks for string patterns (e.g., 'assert equality_guard in content', 'assert re.search(method_pattern, content)'). No test compiles the code, runs the checker, or executes any behavior. This is purely text matching."
+      "reason": "Every test function reads the file content and does string/regex matching (e.g., 'assert equality_guard in content', 'assert re.search(method_pattern, content)'). No test compiles or executes the Kotlin code, runs the checker, or verifies actual behavior. This is purely text-based assertion."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply writes the expected strings into the checker file (without any real logic) would pass all tests, since tests only check for string presence/absence in file content, not actual compilation or runtime behavior."
+      "reason": "A stub that simply writes the exact expected strings into the checker file (without understanding the bug) would pass all tests, since they only check for string presence/absence in the file content. No behavioral execution occurs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/kotlin (same repo the agent works in). The agent could read solution/solve.sh if accessible, or simply grep the test file at tests/test_outputs.py to discover the exact strings expected (e.g., 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->') and write them verbatim."
+      "reason": "The solution is in /workspace/kotlin as a git apply patch in solve.sh. The agent could read the solution file at solution/solve.sh (or its contents if accessible in the container), see the exact patch, and apply it verbatim. Additionally, the tests only check string patterns, so the agent could grep test files for expected strings and insert them."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md says 'Actual duplicate conditions on the same subject should still be detected correctly' but no test verifies this regression behavior. Also, instruction says 'The FIR checkers module should compile without errors' but no compilation test exists."
+      "reason": "instruction.md says 'Actual duplicate conditions on the same subject should still be detected correctly' and 'The FIR checkers module should compile without errors', but no test verifies that real duplicates are still caught or that the module compiles."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_guard_condition_fix_behavior, test_helper_method_behaviorally_correct, etc.) with docstrings explaining their purpose."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies (e.g., test_guard_condition_fix_behavior, test_helper_method_behaviorally_correct, test_old_unguarded_pattern_removed)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task involves modifying a Kotlin source file, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "The test data filename is 'falsePositiveDuplicateCodition.kt' \u2014 'Codition' is a typo for 'Condition'. This appears consistently in tests and solution but is still a typo."
+      "reason": "The test data filename is 'falsePositiveDuplicateCodition.kt' \u2014 'Codition' is a typo for 'Condition'. This appears in both the test assertions and the solution patch."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction.md names the file to modify (FirWhenConditionChecker.kt) which is reasonable since the task domain makes it obvious. It doesn't specify exact line numbers or the precise code changes needed."
+      "reason": "instruction.md names the specific file (FirWhenConditionChecker.kt), but this is reasonable since the task domain (fixing a specific checker) makes the file obvious. It doesn't specify exact line numbers or the precise code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying Kotlin source files, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [

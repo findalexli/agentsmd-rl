@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path `airflow-core/src/airflow/ui/src/layouts/Details/Gantt/utils.ts`, the function `createChartOptions`, the library `dayjs`, and the concept of converting date strings to timestamps. The tests check for `dayjs(item.x[0]).valueOf()` and `dayjs(item.x[1]).valueOf()` patterns \u2014 while the exact syntax isn't spelled out, the instruction mentions dayjs, valueOf-style timestamp conversion, and the specific file/function, giving enough for a competent developer to discov"
+      "reason": "The instruction names the file path `airflow-core/src/airflow/ui/src/layouts/Details/Gantt/utils.ts`, the function `createChartOptions`, the fields `item.x[0]` and `item.x[1]`, and mentions `dayjs` as available. The tests check for these exact elements. The ISO date format examples and the `new Date().getTime()` vs `dayjs().valueOf()` distinction are discoverable from the instruction's description of the bug and technical context."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (new Date fails on certain ISO strings, dayjs is available) and where to look, but does not say 'replace new Date(item.x[1]).getTime() with dayjs(item.x[1]).valueOf()' or specify exact lines. A developer must still reason about the fix."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The `dayjs` library is available in this codebase for date handling' and describes how `item.x[0]` and `item.x[1]` date strings need to be converted to timestamps. Combined with 'date parsing happens for two fields' and the bug description about `new Date()` returning NaN, this heavily implies the exact fix (replace `new Date(item.x[...]).getTime()` with `dayjs(item.x[...]).valueOf()`). However, the instruction doesn't explicitly say 'replace X with Y' - it des"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like `dayjs(item.x[1]).valueOf()` and `dayjs(item.x[0]).valueOf()` with specific counts (>=2 each). An alternative correct fix using e.g. `dayjs(item.x[1] ?? '').valueOf()`, `dayjs(item.x[1]).toDate().getTime()`, `Number(dayjs(item.x[1]))`, or extracting to a helper function would fail these string-matching tests despite being functionally correct."
+      "reason": "Tests assert exact string matches like `dayjs(item.x[1]).valueOf()` and `dayjs(item.x[0]).valueOf()` in the source file. Alternative correct fixes such as `dayjs(item.x[1] ?? '').valueOf()`, `dayjs(item.x[1]).toDate().getTime()`, `Number(dayjs(item.x[1]))`, `+dayjs(item.x[1])`, or `Date.parse(item.x[1])` would all fail the tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three f2p tests (test_dayjs_used_for_date_parsing, test_no_nan_for_iso_dates, test_scale_min_max_not_nan) all primarily use `assert 'dayjs(item.x[1]).valueOf()' in content` \u2014 pure text matching on the source file. test_no_nan_for_iso_dates runs a Node script but that script also just reads the file and checks string content (`content.includes('dayjs(item.x[1]).valueOf()')`). No test actually imports/calls createChartOptions or tests its runtime behavior."
+      "reason": "The three fail-to-pass tests (test_dayjs_used_for_date_parsing, test_no_nan_for_iso_dates, test_scale_min_max_not_nan) are primarily string-matching tests that check for exact substrings in the source file using patterns like `'dayjs(item.x[1]).valueOf()' in content`. test_no_nan_for_iso_dates runs a Node script but that script also just reads the file and checks for string patterns. None of these tests actually import/call createChartOptions or test its output behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A trivial implementation that just does a text replacement (sed 's/new Date(item.x\\[1\\].*?\\.getTime()/dayjs(item.x[1]).valueOf()/g') without understanding the bug would pass all f2p tests, since they only check for literal string presence in the file. No behavioral execution of the function is tested."
+      "reason": "The f2p tests only check for specific string patterns in the source file (e.g., `dayjs(item.x[1]).valueOf()`). An agent could simply do a string replacement of `new Date(item.x[1]` with `dayjs(item.x[1]).valueOf()` without understanding the bug at all - a mechanical text substitution satisfies all f2p tests. No behavioral test actually runs the function to verify it produces correct timestamps."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow alongside the task. An agent could read /solution/solve.sh (or the patch within it) to see the exact strings the tests check for. Additionally, the tests themselves check for specific literal strings that could be discovered by reading test_outputs.py."
+      "reason": "The solution file exists at /workspace/airflow (solution/solve.sh is mounted or accessible). The agent could read the gold patch from the solution directory. Additionally, since tests are pure string-matching, the agent could grep test files for the expected patterns (`dayjs(item.x[1]).valueOf()`) and mechanically insert them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes fixing the 'Error invalid date' bug by using dayjs instead of new Date for date parsing. The tests verify dayjs is used, TypeScript compiles, ESLint passes, and prettier formatting is maintained \u2014 covering the described behavior."
+      "reason": "The instruction describes replacing date parsing to fix NaN errors, and the tests verify dayjs usage, NaN prevention, TypeScript compilation, linting, and formatting - covering the described behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_dayjs_used_for_date_parsing, test_no_nan_for_iso_dates, etc.), have docstrings with fail_to_pass/pass_to_pass annotations, and are logically grouped."
+      "reason": "Tests are well-named (test_dayjs_used_for_date_parsing, test_no_nan_for_iso_dates, etc.), have docstrings explaining purpose, and are annotated with fail_to_pass/pass_to_pass labels."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,18 +39,19 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and commands in the instruction and tests are consistent and correct."
+      "reason": "All file paths, function names, and variable names in the instruction match those in the actual codebase and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function but doesn't specify exact line numbers or the precise code change. Naming the file is appropriate since the task domain (Gantt chart utils) makes it obvious where to look."
+      "reason": "The instruction names the file and function which is appropriate for scoping the task, but doesn't mention specific line numbers or the exact code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -58,6 +59,6 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

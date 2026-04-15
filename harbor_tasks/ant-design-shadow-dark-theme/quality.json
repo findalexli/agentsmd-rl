@@ -2,48 +2,48 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details not mentioned in instruction.md: the helper function name 'getShadowColor' (test_alias_uses_colorShadow), the exact string 'new FastColor(mergedToken.colorShadow)' (test_alias_uses_colorShadow), the parameter name 'shadowColor?:' in ColorMap.ts and color files (test_generateNeutralColorMap_signature, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors), and the exact pattern 'colorShadow = shadowColor ||' (test_colorShadow_in_d"
+      "outcome": "pass",
+      "reason": "The instruction names all relevant file paths (colors.ts, ColorMap.ts, dark/colors.ts, default/colors.ts, alias.ts), the colorShadow property, shadowColor parameter, GenerateNeutralColorMap type, getShadowColor helper, FastColor usage, and the specific shadow token names. All test assertions check for these elements which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's 'Key Insight' section explicitly states the implementation approach: 'introduce a colorShadow token that derives from the theme... and use that as the base for all shadow generation.' It also specifies which files to modify and the exact token name to introduce, which is essentially the solution design rather than just describing the bug."
+      "reason": "The instruction explicitly prescribes the implementation: 'A getShadowColor helper should apply alpha multipliers', 'new FastColor(mergedToken.colorShadow)', 'GenerateNeutralColorMap type should accept an optional shadowColor parameter', 'colorShadow property marked as @internal'. These are specific implementation details, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_alias_uses_colorShadow requires 'new FastColor(mergedToken.colorShadow)' and 'getShadowColor' helper function name. test_colorShadow_in_dark_colors requires 'shadowColor?:' parameter and 'colorShadow = shadowColor ||' pattern. An alternative correct fix using a different helper name, different parameter pattern, or different color derivation approach would fail these tests despite correctly fixing the bug."
+      "reason": "Tests assert on gold-specific implementation details: test_alias_uses_colorShadow checks for exact string 'new FastColor(mergedToken.colorShadow)', 'getShadowColor' helper name, and '${getShadowColor(' template literal syntax. test_colorShadow_in_dark_colors checks for exact strings like 'shadowColor?:' and 'colorShadow,'. An alternative correct fix using different variable names (e.g., 'shadowBase', 'computeShadow') or a different architecture would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most f2p tests (test_colorShadow_token_exists_in_interface, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors, test_generateNeutralColorMap_signature, test_alias_uses_colorShadow, test_shadow_tokens_use_dynamic_color) only do string matching on source files via 'assert X in content'. While there are execution-based tests (test_repo_theme_unit_tests, test_repo_theme_all_tests, etc.), the majority of fail-to-pass tests are pure text assertions."
+      "reason": "Tests like test_colorShadow_token_exists_in_interface, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors, test_generateNeutralColorMap_signature, test_alias_uses_colorShadow, and test_shadow_tokens_use_dynamic_color are all pure text-matching (assert 'string' in open(path).read()). While test_repo_theme_unit_tests and test_repo_theme_all_tests do run Jest, the f2p tests (the ones checking the fix) are predominantly text-based assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings and patterns that don't exist in the original codebase (e.g., 'colorShadow', 'getShadowColor', 'shadowColor?:'), so a stub or no-op implementation would not pass them. The execution-based tests (test_repo_theme_unit_tests) run actual Jest tests that verify shadow token values."
+      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'colorShadow' in the interface file, 'getShadowColor' in alias.ts). A stub/no-op implementation would not add these strings, so the tests would fail. test_shadow_tokens_use_dynamic_color also checks that hardcoded rgba(0,0,0,...) values are removed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/ant-design (the repo root) and the solve.sh is in /solution/solve.sh. An agent could read the solution file or the patch directly. Additionally, since tests are pure string-matching on source files, the agent could reverse-engineer exact expected patterns from test files if accessible."
+      "reason": "The solution file exists at /workspace/ant-design (or could be accessed via the solve.sh path). The agent could read the hidden test file or solution to discover exact expected strings. Additionally, the text-matching tests make it trivial to reverse-engineer: just grep for the exact strings the tests check for (e.g., 'getShadowColor', 'new FastColor(mergedToken.colorShadow)') and insert them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: (1) colorShadow token existence, (2) shadow token generation using colorShadow, (3) alpha value preservation (test_shadow_tokens_use_dynamic_color checks shadow definitions), (4) custom colorTextBase support (the Jest test includes darkCustomTextBaseToken)."
+      "reason": "All behaviors described in the instruction are tested: colorShadow in interface, shadowColor parameter in type definition, dark/light theme generators accepting shadowColor, FastColor usage in alias.ts, getShadowColor helper, and no hardcoded rgba(0,0,0,...) values."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They cover structural checks, behavioral checks, and pass-to-pass regression checks in a logical grouping."
+      "reason": "Tests are well-named (test_colorShadow_token_exists_in_interface, test_alias_uses_colorShadow, etc.), have docstrings explaining what they verify, and are logically grouped by component (interface, dark colors, default colors, alias, behavior)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript theme token generation code, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves modifying TypeScript source code for a theme system, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and commands in the instruction appear correct and match the actual repository structure referenced in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files to modify (alias.ts, ColorMap.ts, colors.ts for both themes, colors.ts interface), the exact token name to introduce ('colorShadow'), and the exact approach ('use that as the base for all shadow generation'). The 'Key Insight' section essentially provides the solution architecture."
+      "reason": "The instruction names exact files, exact property names (colorShadow, shadowColor), exact helper function names (getShadowColor), and exact usage patterns (new FastColor(mergedToken.colorShadow)). This goes well beyond identifying the buggy area - it specifies the exact implementation approach including internal helper names."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,7 +51,6 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

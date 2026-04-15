@@ -19,10 +19,9 @@ This affects any project whose `requires-python` doesn't map to a version that t
    - Avoid using `.unwrap()`, `panic!()`, or `unreachable!()` patterns in the function handling requires-python resolution
    - Rust imports should always go at the top of files, never locally inside functions
 
-## Files to Look At
+## Function to Modify
 
-- `crates/ty_project/src/metadata/pyproject.rs` — handles parsing of `pyproject.toml` metadata
-- `crates/ty_project/src/metadata.rs` — project metadata discovery
+- `resolve_requires_python` in `crates/ty_project/src/metadata/pyproject.rs` — the function that resolves `requires-python` specifiers
 
 ## Technical Context
 

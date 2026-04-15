@@ -2,62 +2,64 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The tests assert specific hash values (31c54d7f8c54f73d, 7c073565f380599b, fb22905d5b100a5a), the exact new video ID (19899678), and exact string literals like 'b.AssertLogContains(`WARN  The \"vimeo\" shortcode was unable to retrieve the remote data.`)'. The instruction.md mentions none of these specific values \u2014 it only says 'Hash values in the assertions will need to be updated' and 'use a video ID that returns valid data' without specifying which ID or which hashes."
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all specific values tested: video IDs (55073825\u219219899678), hash values (fb22905d5b100a5a, 31c54d7f8c54f73d, 7c073565f380599b), the exact warning message, exact file paths, the comment string to remove, and the exact method call to re-enable. All test assertions are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the symptoms (old video ID 55073825 no longer works, simple mode tests commented out) but does not specify the exact replacement video ID, hash values, or line-level changes to make."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact replacement values ('Replace all occurrences of video ID 55073825 with video ID 19899678'), exact hash strings to use, the exact warning message string, and precisely which comment to remove. This is a complete step-by-step solution, not a problem description \u2014 the agent needs zero reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests hard-code the exact video ID 19899678 (test_vimeo_video_id_updated, test_vimeo_test_uses_correct_id) and exact hash strings (test_vimeo_simple_mode_hash checks 'fb22905d5b100a5a', test_vimeo_regular_mode_hashes checks '31c54d7f8c54f73d' and '7c073565f380599b'). Any alternative correct fix using a different valid Vimeo video ID would fail these tests."
+      "reason": "Tests like test_simple_mode_enabled assert exact string matches like 'b.AssertLogContains(`WARN  The \"vimeo\" shortcode was unable to retrieve the remote data.`)' and test_vimeo_simple_mode_hash asserts exact line content 'b.AssertFileContent(\"public/p1/index.html\", \"fb22905d5b100a5a\")'. An alternative correct fix (e.g., using different quoting, different variable structure, or splitting assertions differently) would fail these text-matching tests even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_vimeo_video_id_updated, test_vimeo_test_uses_correct_id, test_simple_mode_enabled, test_vimeo_simple_mode_hash, test_vimeo_regular_mode_hashes) are purely text-matching via 'assert X in open(path).read()'. Only test_vimeo_shortcode_passes actually executes code. The majority of f2p tests are textual."
+      "reason": "Most fail_to_pass tests (test_vimeo_video_id_updated, test_vimeo_test_uses_correct_id, test_simple_mode_enabled, test_vimeo_simple_mode_hash, test_vimeo_regular_mode_hashes) are purely text-matching via 'assert ... in content' on file reads. Only test_vimeo_shortcode_passes actually executes the code. 5 of 6 fail_to_pass tests verify text, not behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_vimeo_shortcode_passes runs the actual Go test and checks returncode==0, which cannot be satisfied by a stub. The text-matching tests require specific content changes that wouldn't be present by default."
+      "reason": "test_vimeo_shortcode_passes runs the actual Go test which would fail without the fix (old video ID returns errors from Vimeo's API). A stub/no-op would not pass this test. The text-matching tests also cannot be passed without making specific changes to the files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/hugo/../solution/solve.sh (or similar path in the container). The agent could read solve.sh to find the exact video ID (19899678) and all hash values. Additionally, the test file test_outputs.py contains all expected literal strings that could be grep'd directly."
+      "reason": "The solution file exists at /workspace/hugo's solution directory (solve.sh is copied into the container environment), and the agent could read test_outputs.py to find all exact strings needed (hash values, warning messages). The instruction itself already provides all fixture values, making it trivially possible to match literal strings without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) test passes, (2) simple mode re-enabled, (3) working video ID, (4) updated hashes. All are tested."
+      "reason": "All behaviors specified in instruction.md are tested: video ID replacement in both files, re-enabling simple mode tests, hash value updates, warning message, and that go test passes."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_vimeo_shortcode_passes, test_simple_mode_enabled, etc.) with docstrings indicating fail_to_pass vs pass_to_pass classification."
+      "reason": "Tests are well-named (test_vimeo_shortcode_passes, test_vimeo_video_id_updated, etc.), have docstrings indicating fail_to_pass vs pass_to_pass, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "This task modifies Go source/test files, not structured data formats."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "All file paths, commands, variable names, and hash values in the instruction are consistent with the test expectations and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the two files to modify and the old video ID, which is reasonable context. It doesn't specify exact line numbers or the replacement values."
+      "outcome": "fail",
+      "reason": "The instruction names exact files to modify, exact IDs to replace, exact hash values to insert, and the exact comment line to remove. This goes far beyond identifying the buggy module \u2014 it provides the complete diff specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/test edit task, not a config-edit task."
+      "reason": "This is a code-edit task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
 }

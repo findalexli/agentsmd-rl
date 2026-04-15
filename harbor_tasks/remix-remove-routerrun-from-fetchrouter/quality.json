@@ -3,59 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (router.ts, router.test.ts, README.md, bookstore README.md, .changes/minor.router-run.md), the method name `run()`, the interface `Router`, the function `createRouter()`, and the describe block. The test checks for `createStorageKey` import removal, which is implied by 'imports that were only used by those tests should be cleaned up'. All specifics are discoverable from the instruction."
+      "reason": "The instruction names all five files tested (router.ts, router.test.ts, fetch-router README.md, bookstore README.md, .changes/minor.router-run.md), describes removing run() from the Router interface and createRouter, removing the describe block and createStorageKey import, deleting the change file, and removing the README sections. The test checks for specific strings like 'createStorageKey', 'router.run(', 'Running Code In Request Context', '#running-code-in-request-context' \u2014 all of which are "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to remove (router.run() method, its types, tests, change file, docs) but doesn't specify exact line numbers, exact code replacements, or specific implementation details of how to do it. The developer must still reason about what constitutes the run() method body, which imports to remove, and what doc sections to delete."
+      "reason": "The instruction describes WHAT should be removed (the router.run() API, its tests, its documentation sections, its change file) but does not specify exact line numbers, exact replacement text, or the precise diff. A developer still needs to reason about which lines to remove and how to clean up imports."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests check for absence of `run` method declarations, absence of `router.run(` calls, absence of `createStorageKey` import, absence of specific README sections, and file deletion. Any correct implementation that removes the run() API would pass these checks. Tests don't assert on specific line numbers or gold-specific variable names beyond what's inherent to the task."
+      "outcome": "fail",
+      "reason": "test_router_run_tests_and_imports_removed checks for the absence of 'createStorageKey' anywhere in the test file. An alternative correct fix might retain createStorageKey if it were used elsewhere, or might remove the run() tests but reorganize imports differently. More critically, test_readme_router_run_section_removed checks for the exact heading string '### Running Code In Request Context' \u2014 an agent that rewrites the section differently (e.g., rephrasing while still removing run() references"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely text-matching: test_router_run_removed_from_source checks regex patterns in source text, test_router_run_tests_and_imports_removed checks string inclusion, test_readme_router_run_section_removed and test_bookstore_readme_no_router_run check string patterns. However, test_repo_unit_tests, test_repo_lint, and test_repo_typecheck do execute actual commands. The core f2p tests (the first 5) are all text-based assertions with no execution of the code itself."
+      "reason": "Most fail-to-pass tests (test_router_run_removed_from_source, test_router_run_tests_and_imports_removed, test_readme_router_run_section_removed, test_bookstore_readme_no_router_run) are purely text-based: they read file contents and check for string presence/absence with no code execution. test_change_file_deleted checks file existence. Only test_repo_unit_tests, test_repo_lint, and test_repo_typecheck execute code, and those are pass-to-pass tests. The core fail-to-pass tests are all string-mat"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that specific content has been REMOVED from files that initially contain it. A stub/no-op solution (doing nothing) would leave the original router.run() code in place and fail these tests. The change file deletion test also requires actual file removal."
+      "reason": "The fail-to-pass tests check that specific strings (run method declarations, test blocks, imports, README sections) have been removed from files that initially contain them. A stub/no-op solution that doesn't modify the files would fail these tests since the original files contain router.run() references."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/remix as a git repo, and solve.sh is in /solution/solve.sh. The agent could read the solution file directly. Additionally, since the tests are purely text-matching on file contents, the agent could grep for the expected patterns and surgically remove only the matched strings without understanding the codebase."
+      "reason": "The solution file exists at /workspace/remix (the solve.sh is in solution/solve.sh which may be accessible in the container). An agent could potentially read the gold patch from the solution directory. Additionally, since the tests are purely text-based (checking string absence), an agent could grep for the exact strings being tested ('createStorageKey', 'Running Code In Request Context', etc.) and surgically remove just those strings without understanding the broader task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors are tested: run() removal from interface and implementation (test_router_run_removed_from_source), test deletion and import cleanup (test_router_run_tests_and_imports_removed), change file deletion (test_change_file_deleted), README section removal (test_readme_router_run_section_removed), bookstore README cleanup (test_bookstore_readme_no_router_run), and preserved functionality (fetch, map, syntax, linting, typecheck)."
+      "reason": "All explicitly required behaviors from instruction.md are tested: removing run() from Router interface and implementation (test_router_run_removed_from_source), removing tests and unused imports (test_router_run_tests_and_imports_removed), deleting the change file (test_change_file_deleted), updating fetch-router README (test_readme_router_run_section_removed), and updating bookstore README (test_bookstore_readme_no_router_run). Pass-to-pass tests verify preserved functionality."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear names and section comments (fail-to-pass vs pass-to-pass). Each test function has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves removing code and documentation, not producing structured data output."
+      "reason": "This task involves code and documentation removal, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and commands in the instruction and tests are correct and consistent with each other."
+      "reason": "All file paths, function names, and identifiers in the instruction and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names specific files but this is appropriate since the task is about removing a specific API. It doesn't specify exact line numbers or exact code to write. The files listed are the obvious locations where router.run() would appear."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify, the exact method name to remove, the exact describe block name, the exact import (createStorageKey is implied by 'imports that were only used by those tests'), the exact README section title, and the exact change file path. While this is a removal task where specificity is somewhat expected, the instruction essentially provides a complete checklist that eliminates the need for the agent to locate what needs changing."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code removal task, not a config-edit task."
+      "reason": "This is a code/documentation removal task, not an agentmd-edits or config-editing task."
     }
   },
   "tier_a_fails": [
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names scripts/docker-clean.js, the container names postgres-payload-test and mongodb-payload-test, the use of child_process/execSync, docker rm, docker compose down, the docker:clean and docker:start scripts in package.json, and the removal of docker:stop. All test assertions check for these same elements which are discoverable from the instruction."
+      "reason": "The instruction explicitly names scripts/docker-clean.js, the container names postgres-payload-test and mongodb-payload-test, docker rm, docker compose down, child_process/execSync, the docker:clean and docker:start scripts in package.json, and the removal of docker:stop. All asserted specifics in tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive: it specifies the exact file path (scripts/docker-clean.js), exact container names to force-remove, exact npm script names to add/remove, exact commands to use (execSync, docker rm, docker compose down with volume removal), and the exact wiring (docker:start calls docker:clean). This leaves virtually no reasoning for the agent \u2014 it's a step-by-step implementation specification rather than a problem description."
+      "reason": "The instruction essentially dictates the exact implementation: create scripts/docker-clean.js using execSync, force-remove specific named containers with docker rm, run docker compose down, remove docker:stop, add docker:clean, and update docker:start to call docker:clean. This is a step-by-step recipe, not a problem description requiring reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_docker_clean_removes_named_containers assert literal strings like 'docker rm' in file content. An alternative valid implementation using dockerode (a Node.js Docker API client) or using 'docker container rm' instead of 'docker rm' would fail. Similarly, test_docker_clean_runs_compose_down checks for both 'docker compose' and 'down' as substrings \u2014 an implementation using docker-compose (hyphenated) would fail."
+      "reason": "Tests like test_docker_clean_removes_named_containers assert literal strings 'docker rm' and container names in the file content; test_docker_clean_runs_compose_down asserts 'docker compose' and 'down' as literal text. A correct alternative using e.g. dockerode (a Node.js Docker API library) or child_process.spawn with arguments in an array (where 'docker rm' doesn't appear as a single string) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_docker_clean_script_exists, test_docker_clean_removes_named_containers, test_docker_clean_runs_compose_down, test_not_stub) are all purely textual \u2014 they read file content and assert on string presence ('docker rm' in content, 'postgres-payload-test' in content, etc.). Only test_syntax_check runs 'node --check' which verifies parsability but not behavior. No test actually executes docker-clean.js or verifies it removes containers."
+      "reason": "The core fail-to-pass tests (test_docker_clean_removes_named_containers, test_docker_clean_runs_compose_down, test_docker_clean_script_exists) all use `assert 'X' in content` pattern \u2014 pure text matching on file contents. Only test_syntax_check runs `node --check` for syntax validation. No test actually executes the script or verifies behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub docker-clean.js containing the right string literals without real logic could pass most tests. For example: `const x = 'docker rm -f postgres-payload-test mongodb-payload-test'; const y = 'docker compose down';` with a few extra comment lines would pass test_docker_clean_removes_named_containers, test_docker_clean_runs_compose_down, and test_not_stub (5+ non-comment lines) without actually implementing any cleanup."
+      "reason": "A script containing the right string literals without actual working logic would pass. For example, a file with comments containing 'docker rm', 'postgres-payload-test', 'mongodb-payload-test', 'docker compose', 'down', 'execSync' and 5+ non-comment lines would pass all fail-to-pass tests without implementing any real cleanup behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/payload as the solve.sh applies a git patch there. The agent could read solution/solve.sh (if accessible) or simply grep the test file to discover exact required strings. Since tests are purely text-matching, the agent could craft a file containing the expected literals without understanding the bug."
+      "reason": "The solution exists at /workspace/payload after solve.sh runs, and solution/solve.sh is visible in the container. The agent could read solve.sh or the resulting files to extract the exact patch. Additionally, since tests are purely text-matching, the agent could craft a file with the right keywords without understanding the problem."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: script existence, use of child_process, container name references, docker compose down, package.json docker:clean script, docker:start calling clean, removal of docker:stop. Documentation updates (CLAUDE.md, CONTRIBUTING.md) are mentioned in instruction but have placeholder test functions with no assertions, which is a minor gap but the core behavior is covered."
+      "outcome": "fail",
+      "reason": "The instruction says to 'update the relevant documentation to reflect the renamed commands' referencing CLAUDE.md and CONTRIBUTING.md (as seen in the gold patch). The test file has commented-out config_edit tests with no actual assertions for documentation updates, so this required behavior is untested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Config-edit, Pass-to-pass, Anti-stub), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Config-edit, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a script and config edits, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task involves creating a script and editing package.json scripts, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to create (scripts/docker-clean.js), exact script names in package.json, exact container names, and exact implementation approach (execSync, docker rm). This goes beyond describing the problem domain and into specifying the exact solution location and method."
+      "reason": "The instruction specifies the exact file to create (scripts/docker-clean.js), exact script names (docker:clean replacing docker:stop), exact implementation approach (execSync from child_process), and exact container names to target. This goes beyond describing the problem domain into prescribing the exact solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff shows localized changes to package.json (2 script lines), CLAUDE.md (1 line), CONTRIBUTING.md (2 lines), and docker-compose.yml comments (2 lines). All are small, scoped edits consistent with the task requirements."
+      "reason": "The gold diff for config files (package.json, CLAUDE.md, CONTRIBUTING.md, docker-compose.yml) consists of localized line changes, not full-file rewrites, and doesn't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [
@@ -59,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 7
 }

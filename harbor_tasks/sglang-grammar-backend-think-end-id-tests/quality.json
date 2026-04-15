@@ -3,56 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths, class name (TestCreateGrammarBackend), all four affected method names, the parameter name (think_end_id), the attribute to remove (tokenizer.think_end_id), and the production file. The test-specific values like think_end_id=42 and think_end_id=None are discoverable from reading the existing test file code which is referenced. The instruction tells the agent to look at both files."
+      "reason": "The instruction names the exact file paths, class name (TestCreateGrammarBackend), all four affected method names, the parameter name (think_end_id), and the attribute (tokenizer.think_end_id). The test checks for think_end_id=42 and think_end_id=None which are discoverable from the instruction's description of the mock attribute value (42) and the default (None)."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'the create_grammar_backend call must pass think_end_id as an explicit keyword argument' and 'any tokenizer.think_end_id = N assignments in the affected methods must be removed.' This tells the agent exactly WHAT to change, leaving virtually no reasoning required."
+      "reason": "The instruction explicitly states: 'the create_grammar_backend call must pass think_end_id as an explicit keyword argument' and 'any tokenizer.think_end_id = N assignments in the affected methods must be removed'. This tells the agent exactly WHAT to change (add keyword arg, remove assignment lines), not just what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on very specific AST patterns: think_end_id=42 as a keyword argument with exact value 42 (ast.Constant with val==42), think_end_id=None with exact None value. An alternative correct fix that passes think_end_id via a variable (e.g., `tid=42; create_grammar_backend(..., think_end_id=tid)`) would fail test_think_end_id_passed_in_reasoner_test because it checks isinstance(val, ast.Constant) and val.value == 42."
+      "outcome": "pass",
+      "reason": "The tests check for specific API usage patterns (think_end_id=42, think_end_id=None as keyword args, no tokenizer.think_end_id assignments) which are the only correct way to fix the described problem. Alternative correct fixes would need to pass the same keyword arguments, so the tests appropriately constrain the solution space."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Tests use AST parsing to inspect code structure, which is a legitimate form of structural/behavioral verification. They parse the Python file into an AST, walk the tree, and check for specific call patterns and assignment patterns. This is more than simple text matching."
+      "outcome": "fail",
+      "reason": "All f2p tests use AST analysis (parsing the source file and checking for specific patterns) rather than executing the code. They never import or call create_grammar_backend, never run the test suite. While AST analysis is more sophisticated than raw text matching, it's still static analysis of source text, not behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific changes: think_end_id=42 keyword args in specific methods, think_end_id=None in another, and removal of tokenizer.think_end_id assignments. A stub/no-op would fail because the original file lacks these keyword arguments and has the assignments."
+      "reason": "The f2p tests check for specific structural changes: think_end_id=42 keyword in specific calls, think_end_id=None in another, and removal of .think_end_id assignments. A stub/no-op change would fail these tests since the original file has tokenizer.think_end_id = 42 assignments and lacks the keyword arguments."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sglang as a git repo, and solution/solve.sh contains the exact patch. An agent could read solve.sh (if accessible) or grep for fixture values. The test values (42, None) are also explicitly stated in instruction.md. Additionally, the agent could simply read the hidden test file to determine exact AST patterns expected."
+      "reason": "The solution file exists at /workspace/sglang as a git repo, and the agent could run 'cat /solution/solve.sh' or similar. The Dockerfile doesn't remove /solution/. Also, the test checks for literal values (42, None) that appear in the instruction, making pattern-matching without understanding feasible."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) passing think_end_id explicitly as keyword arg in four methods, (2) removing tokenizer.think_end_id assignments. Tests verify both: keyword arg presence with correct values in three methods, and absence of .think_end_id assignments in all four methods. The test_custom_backend_skips_reasoner_wrapping case is covered by the assignment removal test."
+      "reason": "The instruction requires (1) passing think_end_id as explicit keyword arg in affected methods, and (2) removing tokenizer.think_end_id assignments. Both behaviors are tested: tests check for keyword args with correct values and test_no_tokenizer_think_end_id_assignment checks removal of assignments across all four methods."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into gate/pass_to_pass and fail_to_pass sections with comments, and each test function has a descriptive name and explanation."
+      "reason": "Tests are well-organized with descriptive names, docstrings, clear section comments (Gate, Fail-to-pass, Pass-to-pass), and helper functions with documentation."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying test code, not producing structured data output."
+      "reason": "This task involves modifying test code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, method names, parameter names, and variable names in the instruction and tests are consistent and correct."
+      "reason": "File paths, method names, parameter names, and variable names are all correctly spelled and consistent between instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names all four exact method names, specifies the exact parameter name (think_end_id), and describes the exact changes needed (pass as keyword argument, remove tokenizer.think_end_id assignments). This goes beyond describing what's broken and provides the complete localization and fix strategy."
+      "reason": "The instruction names the exact four affected methods, specifies exactly what changes to make (pass think_end_id as keyword, remove tokenizer.think_end_id assignments), effectively eliminating any localization or reasoning challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying test files, not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],

@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (scripts/in_container/install_airflow_and_providers.py), both function names (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), the datetime import requirement, the --exclude-newer flag, the ISO timestamp format, the requirement it appears at least twice, and the 'airflow and providers' message string. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction describes all key test specifics: --exclude-newer flag appearing at least twice, datetime import, 'airflow and providers' exact phrase, the two installation code paths (_install_airflow_and_optionally_providers_together and _install_only_airflow_airflow_core_task_sdk_with_constraints), pre_release=True/False behavior, ISO 8601 timestamp format, and the target file. The InstallationSpec fields and function names are discoverable from the existing codebase the agent has access to. "
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation steps: add datetime import, generate UTC timestamp in ISO format, add --exclude-newer to both named functions, and update the console message to include 'airflow and providers'. This is effectively telling the agent exactly what to change, not just describing what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (cooldown period blocking RC installs) and the expected behavior (add --exclude-newer with timestamp when pre_release=True, update message), but does not give exact line numbers to change or the precise code to write. The agent must still figure out how to implement the datetime generation, where exactly to add the flags, and how to structure the code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_datetime_import_present check for exact string 'from datetime import datetime' or 'import datetime' in source. test_exclude_newer_appears_twice_in_source counts literal occurrences of '--exclude-newer' in the source file. test_prerelease_message_updated checks for the exact string 'airflow and providers' in console output. An alternative correct fix using e.g. time.time() or a different timestamp library would fail these text-based checks."
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: --pre and --exclude-newer in command lists, ISO timestamp format via regex, 'airflow and providers' in console output, and valid syntax/linting. Alternative implementations (e.g., using datetime.datetime.utcnow(), datetime.now(timezone.utc), different variable names, different code structure) would all pass as long as they produce the same observable behavior."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_datetime_import_present and test_exclude_newer_appears_twice_in_source are purely textual (assert 'X' in file.read_text()). While other tests do import and call code, these two f2p tests only inspect source text without execution."
+      "outcome": "pass",
+      "reason": "Tests import install_airflow_and_providers, instantiate InstallationSpec, call the actual functions (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), capture commands via mock side_effect, and inspect the resulting command lists. The ruff tests execute subprocesses. This is behavioral testing, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for --exclude-newer in captured commands, datetime import in source, count of --exclude-newer occurrences, and 'airflow and providers' in console messages. A stub or no-op implementation of the original code would not produce these artifacts, so the tests are not tautological."
+      "reason": "The tests call actual functions and assert that --exclude-newer and --pre appear in captured commands, that the timestamp matches ISO format, and that console messages contain 'airflow and providers'. A stub/no-op implementation of the functions would not produce these command arguments or console output, so the tests cannot be trivially satisfied without implementing the fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace/airflow or potentially accessible path. The Dockerfile doesn't remove or protect the solution directory. An agent could read the gold patch from the solution file and apply it directly."
+      "reason": "The solution file exists at /workspace/airflow (the solve.sh is applied there) and the Dockerfile doesn't remove the tests directory. More critically, solution/solve.sh is listed as 'hidden' but may exist in the container environment. An agent could potentially read /solution/solve.sh or the test file at tests/test_outputs.py to extract the exact patch. The Dockerfile doesn't show explicit measures to prevent reading these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from the instruction are tested: datetime import (test_datetime_import_present), --exclude-newer in both functions (test_prerelease_adds_exclude_newer_to_providers_install, test_prerelease_adds_exclude_newer_to_airflow_install, test_exclude_newer_appears_twice_in_source), updated console message (test_prerelease_message_updated), and non-pre-release unaffected (test_no_prerelease_no_exclude_newer)."
+      "reason": "All three explicit observable requirements from the instruction are tested: --exclude-newer appearing in both paths (tests 1 and 2), datetime import functionality (test 4), 'airflow and providers' message (test 5), and non-pre-release not being affected (test 3). Ruff lint/format tests ensure code quality."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, have docstrings explaining what they test, and include comments like '(fail_to_pass)' and '(pass_to_pass)' to indicate their category."
+      "reason": "Tests are well-named (test_prerelease_adds_exclude_newer_to_providers_install, test_no_prerelease_no_exclude_newer, etc.), each has a docstring explaining its purpose, and they are logically grouped by the behavior they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,27 +39,22 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or function names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names both exact function names (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), specifies exactly where to add the datetime import, and describes the precise code changes needed. This goes beyond identifying the file and leaks localization details."
+      "outcome": "pass",
+      "reason": "The instruction names the file to modify (scripts/in_container/install_airflow_and_providers.py) which is appropriate since it's the only relevant file. It describes what behavior to implement but doesn't specify exact line numbers or the precise code changes needed. Mentioning both installation code paths is acceptable context since the agent needs to know both must be modified."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

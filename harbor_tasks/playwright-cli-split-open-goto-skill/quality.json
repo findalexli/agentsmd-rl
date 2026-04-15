@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific details not mentioned in instruction.md. For example: test_program_ts_not_stub checks for 'async function install', 'fs.promises.mkdir', 'fs.promises.cp' \u2014 these function names are not in the instruction. test_console_output_emoji_format checks for specific target strings like 'Workspace initialized', 'Skills installed', 'Created default config', 'Found ' \u2014 these exact phrases are not in the instruction. test_skill_md_open_goto_split checks for specific code block stru"
+      "reason": "Tests assert very specific details not mentioned in instruction.md: test_program_ts_not_stub checks for exact strings like 'async function install', 'fs.promises.mkdir', 'fs.promises.cp'; test_console_output_emoji_format checks for specific target strings like 'Workspace initialized', 'Skills installed', 'Created default config', 'Found '; test_console_output_backtick_paths checks that paths are wrapped in literal backtick characters with specific format like `\\`/test/workspace\\``; test_skill_md"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior should change (emoji prefixes, backtick-wrapped paths, open/goto split, SKILL.md updates) but does not specify exact line changes or code to write. The agent must figure out the implementation."
+      "reason": "instruction.md describes the desired behavior (emoji prefixes, backtick-wrapped paths, open/goto split) but does not specify exact code changes, line numbers, or replacement strings. A developer must reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_console_output_emoji_format dynamically evaluates template literals from program.ts by extracting content between backtick characters and calling `new Function(...)`. This is extremely sensitive to exact formatting \u2014 it requires console.log lines to use template literals with specific variable names (cwd, channel, path, skillDestDir) and specific target substrings ('Workspace initialized', 'Skills installed', etc.). An alternative correct implementation using string concatenation instead of"
+      "reason": "test_console_output_emoji_format dynamically evaluates template literals from program.ts by finding lines starting with 'console.log(' and extracting content between backticks, then evaluating with mock variables. This is extremely sensitive to implementation details \u2014 the test assumes template literals, specific variable names (cwd, channel, path, skillDestDir), and specific target strings. An alternative correct implementation using string concatenation or different variable names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_console_output_emoji_format, test_console_output_backtick_paths, test_skill_md_open_goto_split, test_skill_md_close_shown, test_skill_md_install_syntax) all read source files and inspect their text content \u2014 they do NOT execute the CLI or call any functions. They parse source code strings and check for patterns. For example, test_console_output_emoji_format reads program.ts, finds console.log lines, and evaluates their template literals \u2014 this is text inspection with"
+      "reason": "Most fail_to_pass tests (test_console_output_emoji_format, test_console_output_backtick_paths, test_skill_md_open_goto_split, test_skill_md_close_in_examples, test_skill_md_install_syntax) read source files as text and inspect their content with string matching/regex \u2014 they do not execute the CLI or import the modules. test_console_output_emoji_format does eval template literals from source text, but fundamentally it's text inspection of source code, not behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for specific content (emoji prefixes \u2705/\u274c, backtick-wrapped paths, 'playwright-cli goto' in SKILL.md, 'close' command in docs) that is NOT present in the original codebase. A stub or no-op implementation would not pass these tests \u2014 the original code uses plain text without emoji prefixes and SKILL.md lacks the goto command."
+      "reason": "The fail_to_pass tests check for specific emoji prefixes (\u2705/\u274c), backtick-wrapped paths, and SKILL.md documentation structure that don't exist in the original codebase. A stub or no-op implementation would not produce these specific patterns in the source files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/playwright as solve.sh content could potentially be reconstructed. More critically, the test file test_outputs.py is accessible and contains the exact patterns being checked (e.g., target strings 'Workspace initialized', 'Skills installed', the emoji characters, the backtick wrapping pattern). An agent could read the test file to reverse-engineer exactly what patterns to produce. The solution patch is also in the container image context."
+      "reason": "The solution patch is available at /workspace/playwright as solve.sh could be accessed. More critically, tests read source files and check for specific string patterns \u2014 an agent could grep test_outputs.py to discover exactly what strings/patterns are expected (e.g., '\\u2705', '\\u274C', backtick wrapping format) and make targeted edits to match those patterns without understanding the underlying task."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'The CLI should support open (launch browser without a URL) and goto (navigate to a URL) as distinct operations' but no test actually verifies that the CLI commands open and goto work as distinct operations in program.ts. Tests only check SKILL.md documentation and console output formatting, not the actual command implementation split."
+      "reason": "Instruction says 'The CLI should support open (launch browser without a URL) and goto (navigate to a URL) as distinct operations' but no test verifies that the actual CLI commands work as separate operations in program.ts \u2014 tests only check SKILL.md documentation, not the actual command implementation split."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (pass_to_pass static gates, pass_to_pass repo_tests, fail_to_pass behavioral), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (pass_to_pass static gates, pass_to_pass repo_tests, fail_to_pass behavioral sections), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing source code and documentation files, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves CLI output formatting and documentation changes, not structured data schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md are accurate and consistent with the actual repository structure."
+      "reason": "File paths, commands, and variable names in instruction.md and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files to look at (program.ts, SKILL.md, cli-misc.spec.ts) which is appropriate for the task domain. It doesn't specify exact line numbers or exact code changes, just describes the desired behavior."
+      "reason": "instruction.md names the files to modify (program.ts, SKILL.md, cli-misc.spec.ts) which is appropriate given the task domain. It doesn't specify exact line numbers or exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

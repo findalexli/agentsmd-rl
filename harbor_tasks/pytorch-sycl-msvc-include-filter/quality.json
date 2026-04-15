@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_filter_applied_in_sycl_cflags asserts that the sycl_cflags line must contain 'common_cflags' and 'pp_opts' together, and that pp_opts is wrapped in a function call (not raw concatenation). The instruction says 'integrate it into the SYCL compilation path' but never mentions 'common_cflags' or the specific line pattern 'sycl_cflags = common_cflags + ... + _COMMON_SYCL_FLAGS'. Also, test_cuda_hip_flags_preserved checks for exact function signatures 'def win_cuda_flags(cflags):' and 'def win_h"
+      "reason": "test_filter_applied_in_sycl_cflags asserts that the sycl_cflags assignment line must contain 'common_cflags' and 'pp_opts' together, and checks that pp_opts is wrapped in a function call (parentheses) rather than concatenated with '+'. The instruction says 'integrate it into the SYCL compilation path' and 'wrap the preprocessor options' but never mentions the specific variable name 'common_cflags' or the exact pattern the test searches for (line containing 'sycl_cflags', 'pp_opts', '=', and 'com"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (conflicting headers due to explicit -I flags) and specifies what function to create and what it should do, but does not give the exact code, line numbers, or specific code changes. The developer still needs to reason about implementation details."
+      "reason": "The instruction describes the bug (MSVC include dirs conflict with oneAPI 2025.3+) and specifies the function to create and its behavior, but does not give exact code, line numbers, or the specific diff. The developer must figure out the implementation and integration point."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_filter_applied_in_sycl_cflags searches for lines containing both 'sycl_cflags' and 'pp_opts' and 'common_cflags' with '=', then asserts pp_opts is not raw-concatenated with '+'. An alternative correct fix that, say, filters pp_opts in a separate statement before the assignment (e.g., 'pp_opts = win_filter_msvc_include_dirs(pp_opts)' followed by 'sycl_cflags = common_cflags + pp_opts + _COMMON_SYCL_FLAGS') would fail this test because the sycl_cflags line would still have raw '+ pp_opts +'. "
+      "reason": "test_filter_applied_in_sycl_cflags searches for lines containing both 'sycl_cflags' and 'pp_opts' and 'common_cflags' and '=', then asserts no '+ pp_opts +' pattern and requires parentheses wrapping. An alternative correct fix that, e.g., filters pp_opts into a new variable before the sycl_cflags line (like 'filtered_opts = win_filter_msvc_include_dirs(pp_opts)' then 'sycl_cflags = common_cflags + filtered_opts + ...') would fail this test because the sycl_cflags line wouldn't contain 'pp_opts' "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core f2p tests (test_filter_msvc_paths_new_oneapi, test_no_filter_old_oneapi, etc.) extract the function via AST, execute it in a subprocess, and check the returned list. test_filter_applied_in_sycl_cflags is text-based, but it's supplementary. The majority of tests verify actual behavior through execution."
+      "reason": "Most tests extract the function via AST parsing and execute it in a subprocess with mocked dependencies, checking actual return values. test_filter_applied_in_sycl_cflags is text-based but the majority of fail-to-pass tests are behavioral execution tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning [] would fail test_no_filter_old_oneapi (expects original list preserved), test_no_filter_without_env_var (expects original list preserved), and test_filter_msvc_paths_new_oneapi (expects exactly 3 items). A stub returning the input unchanged would fail test_filter_msvc_paths_new_oneapi (expects MSVC paths removed). Actual logic is required."
+      "reason": "A stub returning [] would fail test_no_filter_old_oneapi (expects original list preserved) and test_no_filter_without_env_var (expects same length as input). A stub returning the input unchanged would fail test_filter_msvc_paths_new_oneapi (expects filtered results with fewer items). The function must actually implement the version-gated filtering logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/pytorch (solve.sh is in solution/ which is in the container per Dockerfile context). The agent could read /solution/solve.sh or the gold patch to extract the exact answer. No evidence of solution directory being excluded from the container."
+      "reason": "The solution is available at /workspace/pytorch in the container via solve.sh, and the agent could potentially read the test file at tests/test_outputs.py to see exact expected behaviors. The solution patch is in solution/solve.sh which may be accessible in the container filesystem."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from the instruction (accept list, version check >= 20250300, filter VCToolsInstallDir paths, return unchanged for old versions/missing env var, handle empty list) are tested by the f2p tests. Integration into SYCL path is also tested."
+      "reason": "All five numbered requirements from instruction.md are tested: accepting a list (all tests), version checking via _get_icpx_version (test_filter_msvc_paths_new_oneapi, test_no_filter_old_oneapi), filtering with VCToolsInstallDir (test_filter_msvc_paths_new_oneapi), no-filter when below 2025.3 or no env var (test_no_filter_old_oneapi, test_no_filter_without_env_var), empty list handling (test_filter_empty_opts), and SYCL integration (test_filter_applied_in_sycl_cflags)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-structured with clear sections (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or function names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (torch/utils/cpp_extension.py) which is appropriate for the task domain. It doesn't specify exact line numbers or the precise code to change, only the function to create and its behavior."
+      "reason": "The instruction names the target file (torch/utils/cpp_extension.py) which is appropriate for the task domain, and describes helper functions like _get_icpx_version() that the agent needs to use. It doesn't specify exact line numbers or the precise code change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

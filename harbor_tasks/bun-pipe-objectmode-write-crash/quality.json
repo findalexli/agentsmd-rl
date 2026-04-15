@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (src/js/internal/streams/readable.ts), the pipe method, the ondata callback, the error code ERR_INVALID_ARG_TYPE, and the expected behavior (error emitted on destination stream, dest destroyed). The tests check these same elements. The tests extract the ondata function from the named file, check for try/catch wrapping dest.write, check dest.destroy is called, etc. All test-specific details are discoverable from instruction.md."
+      "reason": "The instruction names the target file (src/js/internal/streams/readable.ts), the pipe method, the ondata callback, the error code ERR_INVALID_ARG_TYPE, and the expected behavior (error emitted on dest stream, dest destroyed). The tests check these same elements. The specific function name 'ondata' is mentioned in the instruction ('specifically in the ondata callback'). The test assertions about dest.destroy, error propagation, and normal write/backpressure behavior are all discoverable from the "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (error not caught, process crashes) and points to the ondata callback in the pipe method, but does not say 'wrap dest.write in try/catch' or 'call dest.destroy(err)'. A developer must reason about the fix themselves."
+      "reason": "The instruction describes the bug (error not caught, process crashes instead of emitting error) and points to the ondata callback in the pipe method, but does not specify the exact fix (try/catch wrapping dest.write with dest.destroy in catch). A developer must still reason about how to implement the error handling."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests extract the ondata function body and eval it in isolation with a mock dest object. They specifically test that ondata catches exceptions from dest.write() and calls dest.destroy(err). An alternative correct fix that, for example, catches the error at a higher level in the pipe method (e.g., wrapping the event listener registration or using a different error forwarding mechanism like dest.emit('error', err)) would fail these tests because the tests specifically eval only the ondata func"
+      "reason": "The tests extract the 'function ondata' body via string parsing, then eval it and call it directly with mock objects. This approach is tightly coupled to the specific implementation pattern. For example, the tests assume 'ondata' is a named function findable by 'function ondata' string search, that it calls dest.write(chunk) and dest.destroy(err), and that there's a 'pause' function in scope. An alternative fix that renames the function, uses an arrow function, or handles errors at a different l"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests extract the ondata function, eval it with mock objects, and actually execute it to verify that exceptions are caught and dest.destroy is called. This is behavioral testing via execution, not just text matching. The anti-stub test does use text inspection but is complementary to the behavioral tests."
+      "reason": "The fail-to-pass tests extract the ondata function, eval it, and actually execute it with mock objects that throw errors, checking that dest.destroy is called and errors don't escape. The pass-to-pass tests similarly execute the function. test_ondata_not_stub checks both text content and meaningful structure. This is primarily behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub ondata (e.g., empty function or one that just calls dest.write without try/catch) would fail: test_write_error_caught_and_forwarded would see the error escape as an uncaught exception (threwUncaught=true), and test_exact_error_object_propagated would similarly fail. The tests require actual error catching logic."
+      "reason": "A stub ondata that does nothing would fail test_normal_write_still_works (written===null check) and test_backpressure_pause (paused not called). A stub that just calls dest.write without try/catch would fail test_write_error_caught_and_forwarded (threwUncaught would be true). The tests require actual error-catching logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun's git history or solution/solve.sh in the container. The agent could read solution/solve.sh to see the exact patch (try/catch around dest.write with dest.destroy(err)). There's no evidence that solution/ is excluded from the agent's filesystem access."
+      "reason": "The solution file exists at /workspace/bun's git history or solution/solve.sh in the container. An agent could read solution/solve.sh to see the exact patch. Additionally, the test file at tests/test_outputs.py contains the complete test logic including the expected behavior, which the agent could read to reverse-engineer the exact required implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) error emitted on destination stream's error event \u2014 tested via dest.destroy(err) propagation, (2) destination stream destroyed with the error \u2014 tested, (3) error catchable \u2014 tested. The 'for await' iteration catchability mentioned in instruction is not directly tested, but the core behaviors are covered."
+      "reason": "The instruction requires: (1) error emitted on dest stream's error event - tested via dest.destroy(err) propagation, (2) dest destroyed with error - tested explicitly, (3) catchable via for-await - not directly tested but the core mechanism (error forwarding) is tested. The main behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names (test_write_error_caught_and_forwarded, test_exact_error_object_propagated, etc.), and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a bug in stream piping behavior, not producing structured data output."
+      "reason": "This task involves fixing a streaming bug, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (src/js/internal/streams/readable.ts) and the exact callback function (ondata) in the 'Relevant code' section: 'The issue is in the pipe method implementation in src/js/internal/streams/readable.ts, specifically in the ondata callback that handles chunks flowing from source to destination.' This narrows localization to a specific function, which is essentially the fix location."
+      "reason": "The instruction explicitly states 'The issue is in the pipe method implementation in src/js/internal/streams/readable.ts, specifically in the ondata callback that handles chunks flowing from source to destination.' This names the exact file, method, and inner callback function, which significantly reduces the localization effort required."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

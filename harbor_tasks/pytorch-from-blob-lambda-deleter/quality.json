@@ -2,55 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all three files (shim.h, ops.h, shim_common.cpp), the function names (torch_from_blob, from_blob), parameter names (deleter_callback, deleter_ctx), the two-arg callback signature, the wrapping lambda pattern, std::is_invocable_v, and the template SFINAE approach. All assert targets in tests are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details not fully discoverable from instruction.md alone. For example, test_shim_cpp_context_forwarded checks for exact parameter names 'deleter_callback' and 'deleter_ctx' in the wrapping lambda capture list via regex `[deleter_callback, deleter_ctx](void* \\w+)`. While instruction.md mentions these names, the tests also check for specific regex patterns like `std::is_invocable_v` in ops.h (test_ops_h_accepts_capturing_lambda), specific formatting rul"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies exact implementation details: parameter names 'deleter_callback' and 'deleter_ctx', the exact SFINAE constraint 'std::is_invocable_v<F, void*>', the two cases for convertible vs non-convertible callables with heap allocation, and the wrapping lambda capturing both parameters. This goes far beyond describing what's broken \u2014 it prescribes the exact fix."
+      "reason": "The instruction explicitly states the exact fix: 'change from void (*deleter)(void*) to void (*deleter)(void* data, void* ctx) plus void* context', 'template with SFINAE using std::is_invocable_v<F, void*>', 'heap-allocate the callable, pass it as the context pointer', 'wrapping lambda that captures both deleter_callback and deleter_ctx'. This is not describing what's broken \u2014 it's describing exactly what to write, including specific variable names, implementation strategy, and code structure."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: test_shim_cpp_context_forwarded checks for exact regex matches on 'deleter_callback' and 'deleter_ctx' parameter names, and the exact lambda capture pattern '[deleter_callback, deleter_ctx]'. An alternative correct fix using different parameter names (e.g., 'deleter_fn', 'deleter_context') would fail despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: test_shim_cpp_context_forwarded checks for exact variable names 'deleter_callback' and 'deleter_ctx' in lambda captures via regex. test_ops_h_accepts_capturing_lambda checks for 'std::is_invocable_v' specifically. An alternative correct fix using std::is_invocable or concepts or a different SFINAE mechanism would fail. An alternative using different parameter names (e.g., 'callback' and 'context') would also fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are predominantly text-matching: test_ops_h_accepts_capturing_lambda only checks for 'template' and 'std::is_invocable_v' strings in source; test_shim_cpp_context_forwarded is entirely regex-based checking for specific variable names and patterns. test_shim_h_two_arg_deleter_compiles does compile and run code but only verifies the declaration shape, not actual deleter behavior."
+      "reason": "The fail-to-pass tests are mostly text-matching: test_ops_h_accepts_capturing_lambda checks for regex patterns in source code (template signature, std::is_invocable_v string); test_shim_cpp_context_forwarded is entirely regex-based checking for specific code patterns in source text. test_shim_h_two_arg_deleter_compiles does compile and execute code, but the other two f2p tests are pure text inspection. The majority of tests (pass-to-pass) also just read file contents."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific structural changes (two-arg callback signature, template with SFINAE, wrapping lambda) that cannot be satisfied by stub/no-op implementations. The base commit code would fail these checks."
+      "reason": "The f2p tests cannot be satisfied by stub implementations: test_shim_h_two_arg_deleter_compiles requires an actual compilable signature change, test_ops_h_accepts_capturing_lambda requires a template with is_invocable_v in the source, and test_shim_cpp_context_forwarded requires specific wrapping lambda code patterns. A no-op or empty change would not satisfy these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/pytorch as solve.sh could be read, and the tests only check for specific regex patterns in source files. An agent could read the test file at tests/test_outputs.py to discover exact expected patterns (e.g., 'deleter_callback', 'deleter_ctx') and write code matching those patterns without understanding the bug."
+      "reason": "The solution exists at /workspace/pytorch and the agent could potentially read the solution/solve.sh file if it exists in the container. Also, since tests are purely regex-based on source files, the agent could craft source text that matches the expected patterns without understanding the actual bug fix (e.g., adding comments containing the expected strings)."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires backward compatibility with existing callers that pass plain function pointers, and requires the heap-allocation path for non-convertible callables, but no test verifies these behaviors through execution. The instruction also specifies the no-deleter overload must remain unchanged using aoti_torch_create_tensor_from_blob, which is not tested."
+      "reason": "Instruction.md specifies that the fix must support capturing lambdas and be backwards-compatible with plain function pointers, but no test actually compiles and runs code that passes a capturing lambda through the full from_blob API or tests backward compatibility with plain function pointers at runtime."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass', 'Pass-to-pass'), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-grouped with clear section comments (fail-to-pass behavioral, pass-to-pass backward compatibility), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces C/C++ source code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "This task involves C++ code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact parameter names ('deleter_callback', 'deleter_ctx'), exact SFINAE constraint ('std::is_invocable_v<F, void*>'), exact lambda capture pattern, and the two implementation cases (convertible vs heap-allocated). This goes well beyond identifying the buggy files/functions and prescribes the exact solution code."
+      "reason": "Instruction.md specifies exact implementation details: specific parameter names ('deleter_callback', 'deleter_ctx'), exact SFINAE mechanism ('std::is_invocable_v<F, void*>'), exact two cases for the template implementation, and the exact wrapping lambda structure. This goes far beyond describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

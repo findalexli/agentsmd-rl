@@ -19,14 +19,21 @@ After the `rust:version` task updates version files, it should automatically inv
 
 ## Files to Modify
 
-1. **`rake_tasks/rust.rake`** - Add automatic `rust:update` invocation at the end of the `version` task
-2. **`.github/workflows/pre-release.yml`** (optional) - Simplify the update command since rust:update is now automatic
+1. **`rake_tasks/rust.rake`** — the `version` task must be modified to automatically invoke `rust:update` after version files are updated
+2. **`.github/workflows/pre-release.yml`** — the update command should be simplified since `rust:update` is now automatic
 
-## Key Considerations
+## Required Implementation Details
 
-- The `rust:update` task may have already been called in the same Ruby process, so you'll need to use `Rake::Task['rust:update'].reenable` before invoking it again
-- The fix should include a comment explaining why this is necessary (mid-evaluation file-hash conflict in Bazel)
-- The comment should mention `CARGO_BAZEL_REPIN` to clarify what operation is being performed
+The `rake_tasks/rust.rake` file must contain all of the following after modification:
+
+1. The exact string `Rake::Task['rust:update'].reenable`
+2. The exact string `Rake::Task['rust:update'].invoke`
+3. A comment containing the exact phrase: `Repin cargo immediately after updating the version`
+4. The comment must mention `CARGO_BAZEL_REPIN`
+5. The comment must explain the mid-evaluation file-hash conflict (mention either `mid-evaluation` or `file-hash conflict`)
+6. The `Rake::Task['rust:update'].reenable` call must appear before `Rake::Task['rust:update'].invoke`
+7. The `invoke` call must be inside the `version` task block (within the `task :version ... do ... end` structure)
+8. The Ruby syntax must be valid: `ruby -c rake_tasks/rust.rake` should pass
 
 ## Testing
 

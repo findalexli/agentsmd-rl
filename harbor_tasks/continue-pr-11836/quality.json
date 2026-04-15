@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names all key identifiers tested: ensureModelInfo(), modelInfoPromise, explicitContextLength, AUTODETECT string, the null-check pattern '!parts || parts.length < 2', Promise.resolve(), the file path core/llm/llms/Ollama.ts, and the method signature 'private ensureModelInfo(): Promise<void>'. Every assert target in the tests is discoverable from instruction.md."
+      "reason": "The instruction.md names all key specifics asserted in tests: 'ensureModelInfo()' method name, 'modelInfoPromise' field, 'explicitContextLength' field, the null-check pattern '!parts || parts.length < 2', 'AUTODETECT' string literal, 'Promise.resolve()' return, and the file path 'core/llm/llms/Ollama.ts'. Every assert target is discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates implementation details: exact field names (modelInfoPromise, explicitContextLength), exact method signature ('private ensureModelInfo(): Promise<void>'), exact null-check pattern ('if (!parts || parts.length < 2)'), and exact control flow ('return Promise.resolve()'). This leaves almost no reasoning for the agent \u2014 it's essentially a specification of the exact code to write."
+      "reason": "The instruction dictates exact implementation details: private method name 'ensureModelInfo(): Promise<void>', private field 'modelInfoPromise: Promise<void> | undefined', private field 'explicitContextLength' (boolean), exact null-check pattern 'if (!parts || parts.length < 2)', and 'return Promise.resolve()' for AUTODETECT. This is effectively specifying the fix, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_ensureModelInfo_method_exists checks for exact regex 'private\\s+ensureModelInfo\\s*\\(\\s*\\)\\s*:\\s*Promise<void>', test_modelInfoPromise_caching_field_exists checks for exact string 'modelInfoPromise', test_explicit_contextLength_respected checks for exact field name 'explicitContextLength' and exact pattern 'if (!this.explicitContextLength) { this._contextLength'. An alternative correct fix using different variable names (e.g., 'cachedInfo"
+      "reason": "Tests assert gold-specific implementation details: test_ensureModelInfo_method_exists checks for exact method signature 'private ensureModelInfo(): Promise<void>', test_modelInfoPromise_caching_field_exists checks for exact field name 'modelInfoPromise', test_explicit_contextLength_respected checks for exact field name 'explicitContextLength' and exact pattern 'if (!this.explicitContextLength) { this._contextLength'. Alternative correct implementations (e.g., using 'loadModelInfo', 'cachedInfoPr"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_ensureModelInfo_method_exists, test_modelInfoPromise_caching_field_exists, test_regex_null_check_fix, test_explicit_contextLength_respected, test_autodetect_returns_promise_resolve) exclusively use string/regex matching on file contents with patterns like 'assert \"ensureModelInfo\" in content' and re.search(). No test imports, compiles, or executes the TypeScript code to verify actual behavior."
+      "reason": "All fail-to-pass tests (test_ensureModelInfo_method_exists, test_modelInfoPromise_caching_field_exists, test_regex_null_check_fix, test_explicit_contextLength_respected, test_autodetect_returns_promise_resolve) only read the file and check for string/regex patterns. None import, compile, or execute the TypeScript code. The pass-to-pass tests do run prettier/eslint but those just check formatting, not behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since tests only check for string presence in the file, an agent could pass all tests by simply appending a comment block containing all the required strings (e.g., '// private ensureModelInfo(): Promise<void> { modelInfoPromise explicitContextLength if (!parts || parts.length < 2) this.model === \"AUTODETECT\" return Promise.resolve() if (!this.explicitContextLength) { this._contextLength }') without implementing any actual fix."
+      "reason": "An agent could satisfy all fail-to-pass tests by simply inserting dead code containing the expected strings/patterns (e.g., adding commented-out or unreachable code with 'private ensureModelInfo(): Promise<void>', 'modelInfoPromise', 'explicitContextLength', '!parts || parts.length < 2', 'return Promise.resolve()', 'this.model === \"AUTODETECT\"') without actually fixing any bugs, since tests only check text presence via regex."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/continue_repo accessible via solve.sh. The agent could read the gold patch from solution/solve.sh if it exists in the container. Additionally, since tests only check text patterns, the agent could grep test_outputs.py for the exact regex patterns being checked and insert matching strings without understanding the bug."
+      "reason": "The solution is in /workspace/continue_repo accessible via 'git apply' in solve.sh, and the agent could read solution/solve.sh or tests/test_outputs.py to extract exact strings to insert. Since tests are purely text-matching, the agent could grep test_outputs.py for expected patterns and insert them verbatim."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five required behaviors from instruction.md are tested: lazy loading (ensureModelInfo), response caching (modelInfoPromise), AUTODETECT special case, explicit contextLength preservation (explicitContextLength), and null-safe regex handling. The prettier/eslint pass-to-pass tests also verify formatting compliance."
+      "reason": "All five required behaviors from instruction.md are tested: lazy loading (ensureModelInfo), response caching (modelInfoPromise), AUTODETECT special case, explicit contextLength preservation (explicitContextLength), and null-safe regex handling (!parts check)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_ensureModelInfo_method_exists, test_regex_null_check_fix, etc.), comprehensive docstrings explaining what each tests and why, and a clear header comment distinguishing fail-to-pass from pass-to-pass tests."
+      "reason": "Tests are well-named, individually documented with docstrings explaining fail_to_pass vs pass_to_pass, and grouped logically with a module-level docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "This task modifies TypeScript source code; it does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames (core/llm/llms/Ollama.ts), variable names (ensureModelInfo, modelInfoPromise, explicitContextLength), and paths are consistent between instruction.md and the test file with no typos."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact private field names (modelInfoPromise, explicitContextLength), exact method signatures (private ensureModelInfo(): Promise<void>), and exact code patterns (if (!parts || parts.length < 2)). This goes well beyond describing what's broken and into specifying the exact implementation, which is excessive localization."
+      "reason": "instruction.md specifies exact method names ('ensureModelInfo'), exact field names ('modelInfoPromise', 'explicitContextLength'), exact type signatures ('Promise<void> | undefined'), and exact code patterns ('if (!parts || parts.length < 2)'). This goes far beyond naming the buggy file and effectively provides the implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Ollama.ts, not a configuration edit task."
+      "reason": "This is a code-only task modifying TypeScript source, not a config edit task."
     }
   },
   "tier_a_fails": [

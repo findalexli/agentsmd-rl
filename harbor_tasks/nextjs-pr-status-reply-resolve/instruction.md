@@ -4,16 +4,19 @@
 
 The `scripts/pr-status.js` script in this Next.js monorepo manages PR triage workflow. Currently, replying to a review thread and then resolving it requires two separate commands (`reply-thread` then `resolve-thread`). This is tedious — agents typically want to do both at once after addressing feedback.
 
-The current `replyToThread()` function uses a GraphQL mutation (`addPullRequestReviewThreadReply`) that can attach replies to pending/draft reviews instead of publishing them immediately. The REST API endpoint for replies always publishes immediately, so it should be preferred. Note: the REST endpoint requires looking up both the PR number and a comment's `databaseId` from the thread node ID via a GraphQL query first.
+The current reply-to-thread implementation uses a GraphQL mutation that can attach replies to pending/draft reviews instead of publishing them immediately. When the reply is not published immediately, reviewers may not see it right away.
 
 ## Expected Behavior
 
-1. A new `reply-and-resolve-thread` subcommand should be added that accepts a thread node ID and reply body, calls `replyToThread()` then `resolveThread()` in sequence. When called with missing arguments it must print a non-zero exit code and a `Usage:` message that includes the subcommand name.
-2. The `replyToThread()` function should be refactored to use the REST API (`/repos/{owner}/{repo}/pulls/{pr}/comments/{commentId}/replies`) instead of the GraphQL `addPullRequestReviewThreadReply` mutation. It needs to look up the PR number and `databaseId` of the first comment in the thread via a GraphQL query, then POST to the REST replies endpoint. The REST response contains an `html_url` field that should be logged.
-3. The `generateThreadMd()` function should include a combined command option labeled "Reply and resolve in one step" that references the `reply-and-resolve-thread` subcommand.
-4. The agent skill documentation files (SKILL.md and workflow.md in `.agents/skills/pr-status-triage/`) should be updated:
-   - SKILL.md: add a "Thread interaction" section with commands including `reply-and-resolve-thread`, and update step 6 to mention doing both actions in one step.
-   - workflow.md: describe the one-step `reply-and-resolve-thread` alternative.
+1. A new `reply-and-resolve-thread` subcommand should be added to `scripts/pr-status.js` that accepts a thread node ID and reply body, and performs both operations. When called with missing arguments it must exit with a non-zero code and print a `Usage:` message to stderr that includes the subcommand name.
+
+2. The reply-to-thread function should be refactored to use a REST API endpoint instead of the old GraphQL mutation. The REST endpoint URL path contains `/comments/` and `/replies`. The implementation needs to look up a field called `databaseId` via a GraphQL query to construct the REST call. After posting, the response includes an `html_url` field that should be logged.
+
+3. The `generateThreadMd()` function output should include a command option labeled exactly "Reply and resolve in one step" that references the `reply-and-resolve-thread` subcommand.
+
+4. The skill documentation files (SKILL.md and workflow.md in `.agents/skills/pr-status-triage/`) should be updated to document the combined command:
+   - SKILL.md: add a section with the heading "Thread interaction" (case-sensitive) that includes the `reply-and-resolve-thread` command, and update the workflow step about handling review comments to mention doing both actions in "one step".
+   - workflow.md: describe the one-step alternative using the `reply-and-resolve-thread` subcommand and mention "one step".
 
 ## Files to Look At
 

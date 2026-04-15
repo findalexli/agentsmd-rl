@@ -3,60 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the script path (scripts/update-example-deps.mjs), the package.json modification (changeset:version script), the globSync with exclude/node_modules strings, the 'Updated' output message, 2-space indentation + trailing newline, and the path.join(import.meta.dirname, '..') pattern (implied by the rootDir replacement in tests). All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names the script path (scripts/update-example-deps.mjs), the package.json modification (changeset:version script), the glob with exclude/node_modules strings, 2-space indentation + trailing newline, 'Updated' output, and the path.join(import.meta.dirname, '..') pattern (implied by rootDir). All test-asserted specifics (file paths, string literals like 'Updated', 'exclude', 'node_modules', formatting requirements, dependency version format '^X.Y.Z') are discoverable from the instr"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: use globSync with exclude option, check `^${workspace_version}`, print 'Updated', use 2-space indentation + trailing newline, specific file paths and script structure. While it describes requirements rather than giving line-by-line code, it is extremely prescriptive about implementation details rather than just describing behavior."
+      "reason": "The instruction is extremely prescriptive: it specifies exact file paths, exact implementation details like using globSync with exclude option, exact version format '^${workspace_version}', exact JSON formatting (2-space + trailing newline), exact output containing 'Updated', and even that the source code must contain the strings 'exclude' and 'node_modules'. This goes beyond describing what's broken and effectively dictates the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_script_updates_example_dependencies replaces the exact string `path.join(import.meta.dirname, '..')` with a temp directory path. If an agent uses a different approach to compute rootDir (e.g., `new URL('..', import.meta.url).pathname` or `process.cwd()`), this string replacement would fail and the test would break. This is gold-solution-specific."
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes (dependencies updated correctly, formatting preserved, script runs successfully) and only check two specific strings in source ('exclude' and 'node_modules'). Alternative implementations using different variable names, different iteration approaches, or different glob libraries would pass. The key constraint is path.join(import.meta.dirname, '..') which the test replaces, but alternatives using the same pattern would work."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute the script via subprocess (node), check return codes, verify actual JSON content of modified files, and run the repo's lint/typecheck/unit tests. test_script_excludes_node_modules is text-based (checking for 'node_modules' and 'exclude' strings), but the majority of tests verify actual behavior through execution."
+      "reason": "Most tests execute the script via subprocess.run and check behavioral outcomes: test_script_updates_example_dependencies runs the script and verifies JSON content changes, test_script_preserves_json_formatting runs the script and checks output formatting, test_script_is_valid_javascript uses node --check. Only test_script_excludes_node_modules is text-based (checking source for strings), but the majority of tests verify behavior through execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub script that does nothing would fail test_script_updates_example_dependencies (which checks that dependency versions are actually changed in the output JSON) and test_changeset_version_script_updated (which checks the package.json scripts field). These require real implementation."
+      "reason": "A stub/empty script would fail test_script_updates_example_dependencies because it checks that dependency versions are actually changed from '^1.0.0' to '^1.2.3' in the output JSON. A no-op script would leave the original values unchanged and fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router after solve.sh runs, but more critically, the agent could read the test file at tests/test_outputs.py to discover the exact string replacement pattern (path.join(import.meta.dirname, '..')) and tailor the solution to pass tests. The solution/solve.sh is also accessible in the container."
+      "reason": "The solution file exists at /workspace/router (or accessible path) in the container. The solve.sh is in solution/solve.sh and while the instruction says the agent doesn't see it, the Dockerfile doesn't explicitly prevent access. An agent could potentially read the solution directory or grep for expected test values. The test uses tempdir with dynamic paths which helps, but the gold solution script is written to disk and readable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors are tested: script existence, valid JS syntax, changeset:version script update, dependency updating, JSON formatting preservation, node_modules exclusion, and pass-to-pass repo tests."
+      "reason": "All explicitly required behaviors are tested: script existence, valid JS syntax, changeset:version script updated, dependency updates working correctly, JSON formatting preserved, node_modules exclusion, 'Updated' output message, and pass-to-pass repo tests (lint, types, unit, build, format, docs)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., test_script_file_exists, test_script_updates_example_dependencies, test_script_preserves_json_formatting)."
+      "reason": "Tests are well-named with descriptive function names (test_script_file_exists, test_script_updates_example_dependencies, etc.) and each has a docstring explaining its purpose. They're logically grouped from basic existence checks to behavioral verification to pass-to-pass repo tests."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task involves producing/modifying JSON (package.json files). The instruction specifies the schema requirements: 2-space indentation, trailing newline, dependency format as `^${version}`."
+      "reason": "The task produces/modifies JSON (package.json files). The instruction specifies the exact schema requirements: 2-space indentation, trailing newline, dependency format '^${version}', and which fields to modify (dependencies, devDependencies)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what to create and modify without revealing the exact buggy line. It specifies the changeset:version script should be updated but doesn't quote the exact current content of that script line."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'the source code must contain the strings exclude and node_modules', and specifies the exact rootDir pattern with path.join(import.meta.dirname, '..'). These are implementation-level hints that constrain the solution to match the test's replacement mechanism rather than describing the problem domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff for package.json is a single-line change to the changeset:version script, which is localized and doesn't contradict other files."
+      "reason": "The gold patch for package.json is a single-line change to the changeset:version script, which is a localized edit. The new script file is a creation, not a rewrite. No contradictions with other files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 9,
   "fail_count": 3
 }

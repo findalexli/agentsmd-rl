@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant files (client-fixture.mjs, bake-harness.ts), describes all five bugs that map to test functions, mentions unhandledRejection, retry logic, null content-type handling, exit code propagation to output.exitCode, and the CLAUDE.md dynamic import convention. The test-specific details like 'output.exitCode' assignment and 'unhandledRejection' handler are all discoverable from the instruction."
+      "reason": "The instruction names the relevant files (client-fixture.mjs, bake-harness.ts), the function (loadPage), the concepts (retry logic, null content-type, unhandledRejection handler, exit code propagation), and references exitCodeMap.reloadFailed. The test for unhandledRejection checks for 'process.on(\"unhandledRejection\"' and 'reloadFailed'/'exitCodeMap' in the handler body, and the instruction explicitly mentions unhandled rejection handling with meaningful exit code. The test for exit code propag"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (no retry logic, null content-type crash, no unhandledRejection handler, no try/catch on initial load, exit code not propagated) but does not specify exact code changes, line numbers to modify, or specific implementation patterns like 'use maxRetries variable' or 'add for loop with 3 attempts'."
+      "reason": "The instruction describes what is broken (no retry logic, null content-type crashes, no unhandledRejection handler, no try/catch on initial load, exit code not propagated) and the expected behavior, but does not prescribe exact code changes, line numbers to modify, or specific implementation patterns like 'use maxRetries variable'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_unhandled_rejection_handler uses a regex that requires a specific arrow-function pattern: `process.on('unhandledRejection', ...) => { ... }` with body length >= 10 chars. An alternative using a named function like `process.on('unhandledRejection', function handler(reason) { ... })` would fail the regex match. test_exit_code_propagation requires the exact pattern `output.exitCode =` which is reasonable but still constrains alternatives. The retry test requires exactly the extracted loadPage "
+      "reason": "test_unhandled_rejection_handler extracts the handler body using brace-depth matching and then executes it in a constructed script that imports from '/workspace/bun/test/bake/exit-code-map.mjs'. It checks for specific string patterns like 'process.exit' and 'reloadFailed' or 'exitCodeMap' in the handler body. More critically, test_exit_code_propagation (truncated but visible pattern) checks for specific patterns like 'proc.exited' and 'this.output.exitCode' \u2014 an alternative correct implementatio"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core tests (null-ct, retry, valid, valid-charset) extract the loadPage function and actually execute it against a real HTTP server, verifying behavioral outcomes (request counts, successful loads, no TypeErrors). While some tests (unhandledRejection, exit code propagation) are structural/text-based, they have justified reasons and the majority of tests are behavioral."
+      "reason": "The tests use behavioral verification: _run_extractor actually starts an HTTP server and runs the extracted loadPage function, verifying request counts and outcomes. test_unhandled_rejection_handler executes the handler code in a subprocess. test_null_content_type_handled and test_retry_on_transient_failures both execute code and verify behavioral outcomes (request counts, status codes). While test_unhandled_rejection_handler does some text inspection, it also executes the handler behaviorally."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests have anti-stub measures: test_null_content_type_handled verifies req >= 1 (server was actually contacted); test_retry_on_transient_failures verifies req >= 3 (proving actual retry behavior); test_unhandled_rejection_handler checks body length >= 10; test_exit_code_propagation checks for actual assignment pattern. A stub/no-op cannot satisfy these."
+      "reason": "test_retry_on_transient_failures requires >=3 requests (anti-stub: a stub that doesn't retry would only make 1 request). test_null_content_type_handled requires req >= 1 and status OK/EXIT (a stub wouldn't fetch). test_unhandled_rejection_handler requires exit code 34 from actual handler execution. These cannot be satisfied by trivial stubs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/bun with solve.sh containing the exact gold patch. An agent could read solution/solve.sh (if accessible in container) or simply `cat` the test file at tests/test_outputs.py to reverse-engineer exactly what patterns are needed. The Dockerfile doesn't remove the solution directory, and the tests are stored in the container filesystem."
+      "reason": "The solution exists at /workspace/bun and the gold patch is applied via solve.sh. The agent could potentially read the git history or check if solution/ directory exists in the container. More importantly, the test file at tests/test_outputs.py is accessible in the container and reveals exact test logic including the EXTRACTOR_SCRIPT, expected patterns, and exit codes \u2014 an agent could read this to reverse-engineer the exact solution needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behaviors described in the instruction are tested: retry logic (test_retry_on_transient_failures), null content-type (test_null_content_type_handled), unhandledRejection handler (test_unhandled_rejection_handler), initial page load error handling (covered implicitly by the loadPage tests), and exit code propagation (test_exit_code_propagation)."
+      "reason": "All five behaviors from the instruction are tested: retry logic (test_retry_on_transient_failures), null content-type handling (test_null_content_type_handled), unhandledRejection handler (test_unhandled_rejection_handler), initial page load error handling (implicitly covered by the loadPage tests), and exit code propagation (test_exit_code_propagation). The static import convention is tested by test_no_dynamic_imports."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gate, Fail-to-pass, Pass-to-pass, Structural, Agent-config), descriptive function names, docstrings explaining each test's purpose and anti-stub rationale, and clear categorization tags like [pr_diff] and [repo_tests]."
+      "reason": "Tests are well-named (test_syntax_check, test_null_content_type_handled, test_retry_on_transient_failures, etc.), have docstrings explaining the bug and anti-stub logic, and are categorized with comments like '[static] pass_to_pass' and '[pr_diff] fail_to_pass'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing bug handling in test fixture code, not producing structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task involves fixing bug handling in test fixtures, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (test/bake/client-fixture.mjs, test/bake/bake-harness.ts), variable names (exitCodeMap, OutputLineStream, loadPage), and commands are all correctly spelled and consistent between instruction and tests."
+      "reason": "File paths (test/bake/client-fixture.mjs, test/bake/bake-harness.ts), function names (loadPage), and variable names (exitCodeMap, reloadFailed) are all correctly spelled and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions 'around line 817' for the harness file and names the relevant files, but these are reasonable given the task domain. It describes what's broken without specifying exact fix implementations. The file names are necessary context, not localization leakage."
+      "reason": "The instruction mentions the files (client-fixture.mjs, bake-harness.ts) and approximate location ('around line 817') but these are natural for a bug report. It doesn't specify exact line numbers for the bugs or exact code to write. The 'around line 817' reference for the harness is reasonable context for a two-file fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving JavaScript/TypeScript source fixes, not agent config edits."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

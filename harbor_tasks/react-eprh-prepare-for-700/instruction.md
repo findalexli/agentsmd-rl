@@ -10,7 +10,7 @@ Additionally, the `recommended` preset only enables the two basic hooks rules (`
 
 Slim down to just 2 configuration presets:
 
-- **`recommended`**: includes ALL recommended rules (both basic hooks rules and compiler rules) — this config must reference the variable that contains all rule configurations (including `rules-of-hooks`, `exhaustive-deps`, and all React Compiler rules)
+- **`recommended`**: includes ALL recommended rules (both basic hooks rules and compiler rules) — this config must reference the variable named `allRuleConfigs` (which contains all rule configurations including `rules-of-hooks`, `exhaustive-deps`, and all React Compiler rules)
 - **`recommended-latest`**: same as recommended plus any bleeding-edge experimental compiler rules
 
 The removed presets (`recommended-legacy`, `recommended-latest-legacy`, `flat/recommended`) and their flat config equivalents should be deleted entirely from `packages/eslint-plugin-react-hooks/src/index.ts`.
@@ -19,7 +19,7 @@ The plugin's `meta` object should also include a `version` field with a semver s
 
 The package.json version field must be updated to `7.0.0` or higher.
 
-After making the code changes, update the package's README to reflect the simplified configuration. The README should have two main configuration sections:
+After making the code changes, update the package's README to reflect the simplified configuration. The README should have two main configuration sections with these exact headers:
 - `## Flat Config` — for users of ESLint's flat config format (eslint.config.js)
 - `## Legacy Config` — for users of traditional .eslintrc format
 

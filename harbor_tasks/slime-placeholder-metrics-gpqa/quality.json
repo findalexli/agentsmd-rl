@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three files (slime/rollout/rm_hub/gpqa.py, slime/router/router.py, slime/ray/rollout.py), the function compute_gpqa_reward, the WorkerType enum, the nodes_per_engine property, the init_tracking call, and the specific behavior (labels 8/9 mapping to I/J, placeholder worker type, filtering placeholder groups). All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names the relevant files (slime/rollout/rm_hub/gpqa.py, slime/router/router.py, slime/ray/rollout.py), the function compute_gpqa_reward, the WorkerType enum, the nodes_per_engine property, the init_tracking call, and the relevant behaviors (letters I/J for indices 8/9, placeholder worker_type, filtering placeholders). All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (letter range too narrow, placeholder groups not filtered, init_tracking called too early) but does not specify exact code changes like 'change [:8] to [:10]' or 'add if g.worker_type != placeholder'. A developer must still reason about the implementation."
+      "reason": "The instruction describes the bugs (letter range too narrow, placeholder not filtered, init_tracking called too early) but does not specify exact code changes like 'change [:8] to [:10]' or 'add PLACEHOLDER to the enum'. A developer must reason about the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_nodes_per_engine_ignores_placeholder extracts the nodes_per_engine method source via AST, then executes it with FakeGroup objects that have a .worker_type attribute. The test assumes the fix filters on g.worker_type == 'placeholder' specifically. An alternative fix that uses a different attribute name, checks an is_placeholder property, or uses a different filtering mechanism would fail. Similarly, test_init_tracking_after_server_launch checks for specific ordering patterns in the AST (init"
+      "reason": "test_nodes_per_engine_ignores_placeholder extracts the nodes_per_engine method source via AST, then executes it with FakeGroup objects that have a 'worker_type' attribute. The test assumes the method filters by checking g.worker_type != 'placeholder' (string comparison). An alternative correct fix might check against WorkerType.PLACEHOLDER enum value instead of the string 'placeholder', but the test's FakeGroup uses plain strings, so enum-based filtering would fail. Similarly, test_init_tracking"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests actually execute code: GPQA tests import and call compute_gpqa_reward, the WorkerType test executes the class definition, nodes_per_engine test executes the extracted method with mock objects, and the init_tracking test uses AST analysis to verify ordering. These are behavioral checks, not simple string matching."
+      "reason": "Tests actually execute code: GPQA tests import and call compute_gpqa_reward, the nodes_per_engine test extracts and executes the method with fake objects, the WorkerType test executes the class definition. The init_tracking test uses AST inspection of ordering but this is behavioral (checking call order). Tests are not mere string-in-file checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "For GPQA tests: a stub returning 0.0 would fail the assert reward==1.0 checks. For WorkerType: a stub enum without PLACEHOLDER would fail. For nodes_per_engine: a stub returning None or not filtering placeholders would raise ValueError or return wrong value. For init_tracking ordering: a stub with original ordering would fail the AST position check. No stub/default implementation passes these."
+      "reason": "The f2p tests would fail with stub/default implementations: compute_gpqa_reward returning 0.0 by default would fail the assert == 1.0 checks; a missing PLACEHOLDER enum member would fail the membership check; nodes_per_engine without filtering would raise ValueError on heterogeneous groups; and init_tracking in the wrong position would fail the AST ordering check."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/slime's filesystem as solve.sh could be reconstructed, and the test file at tests/test_outputs.py contains the exact expected values (e.g., label 8 maps to I, label 9 maps to J, WorkerType.PLACEHOLDER.value == 'placeholder'). An agent could read the test file to extract exact expected behaviors. The Dockerfile doesn't remove /solution/ directory if present."
+      "reason": "The solution is available at /workspace/slime as a git repo, and solve.sh is in /solution/solve.sh in the container. An agent could read the solution file directly or inspect the test file at tests/test_outputs.py to extract exact expected values and implementation details."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three issues described in instruction.md are tested: GPQA letter range (tests for labels 8, 9, and regression for A-H), placeholder worker type (WorkerType enum test and nodes_per_engine filtering test), and init_tracking ordering (test_init_tracking_after_server_launch)."
+      "reason": "All three issues described in the instruction are tested: GPQA letter range (tests for I/J and regression for A-H), placeholder filtering in nodes_per_engine, WorkerType PLACEHOLDER enum, and init_tracking ordering after server launch."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories like [pr_diff] fail_to_pass."
+      "reason": "Tests are well-organized with section headers (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, docstrings, and comments indicating test categories like [pr_diff] fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files and describes bugs at a conceptual level (e.g., 'default set of valid answer letters only covers A through H') without specifying exact line numbers or exact code to write. The file paths are necessary context for a multi-file bug fix task."
+      "reason": "The instruction names files that are natural given the task domain (gpqa.py for GPQA reward, router.py for WorkerType, rollout.py for rollout server). It describes the bug behavior without pinpointing exact line numbers or giving the fix. Mentioning 'A through H (8 options)' is describing the symptom, not the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

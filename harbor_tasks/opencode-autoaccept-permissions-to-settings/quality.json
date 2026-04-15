@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key identifiers tested: data-action='prompt-permissions' (to be removed), data-action='settings-auto-accept-permissions' (to be added), Switch component, usePermission context, toggleAccept/acceptLabel (to be removed), toggleAutoAcceptDirectory/enableAutoAccept/disableAutoAccept (session/directory handling), and the exact file paths prompt-input.tsx, settings-general.tsx, and the e2e test files."
+      "reason": "The instruction names all key specifics tested: data-action='prompt-permissions' removal, data-action='settings-auto-accept-permissions' addition, Switch component, usePermission context, toggleAutoAcceptDirectory/enableAutoAccept/disableAutoAccept for session/directory handling, toggleAccept/acceptLabel removal, and the exact file paths (prompt-input.tsx, settings-general.tsx). The e2e test files are also mentioned. All assert'd strings and paths are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what should be moved and where, but does not give exact code changes, line numbers, or copy-paste solutions. A developer must reason about how to implement the Switch, wire up the permission context, decode URL params, and update e2e tests."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact data-action attribute value to use ('settings-auto-accept-permissions'), specifies using a Switch component inside a SettingsRow, names the exact functions to remove (toggleAccept, acceptLabel), and tells the agent to use usePermission context. This is prescriptive enough that the agent doesn't need to reason about WHAT to change\u2014it's told exactly what to implement."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_auto_accept_toggle_in_settings requires a Switch component with 'checked' or 'onChange' props AND data-action='settings-auto-accept-permissions'. test_settings_uses_permission_context requires importing specifically 'usePermission' by that exact name. test_settings_toggle_handles_session_and_directory requires the exact strings 'toggleAutoAcceptDirectory' and 'enableAutoAccept'/'disableAutoAccept' or 'toggleAutoAccept'. An alternative corre"
+      "reason": "Tests assert on gold-specific implementation details: exact data-action string 'settings-auto-accept-permissions' (test_auto_accept_toggle_in_settings), exact Switch component with checked/onChange props, exact import name 'usePermission' (test_settings_uses_permission_context), exact variable names 'toggleAutoAcceptDirectory' and 'enableAutoAccept'/'disableAutoAccept' (test_settings_toggle_handles_session_and_directory). An alternative correct implementation using different naming (e.g., 'autoA"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are AST-based text inspection (checking for presence/absence of specific identifiers, attributes, and imports in source files) or plain string matching (test_settings_toggle_handles_session_and_directory uses 'in src' checks). While AST parsing is more sophisticated than raw text search, none of these tests actually execute the components, render them, or verify runtime behavior. The typecheck test does execute compilation, but the core behavioral tests are static analysi"
+      "reason": "Most tests are AST-based text inspection (checking for presence/absence of specific strings, variable names, JSX attributes in source files) rather than executing the code. test_settings_toggle_handles_session_and_directory is literally 'toggleAutoAcceptDirectory in src' \u2014 a plain text search. The typecheck test does execute compilation, but the core behavioral tests (f2p) are all static analysis of source text, not runtime behavior verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass: test_permissions_button_removed_from_composer checks the original file still has its original content minus specific code, test_auto_accept_toggle_in_settings requires specific JSX elements with specific attributes, test_prompt_input_not_stubbed requires >1000 lines, and the typecheck test requires valid TypeScript compilation."
+      "reason": "A stub implementation would not pass these tests. test_permissions_button_removed_from_composer requires actual removal of specific code from prompt-input.tsx. test_auto_accept_toggle_in_settings requires adding a Switch with checked/onChange and a specific data-action. test_settings_uses_permission_context requires importing and calling usePermission. test_prompt_input_not_stubbed requires >1000 lines. These collectively prevent trivial stubs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/opencode as solve.sh with the full git patch. An agent could read solution/solve.sh (if accessible in the container) or discover the expected patterns by examining test_outputs.py which contains all the exact strings and AST patterns being checked."
+      "reason": "The solution is available at /workspace/opencode after the gold patch could be applied via solve.sh which is referenced in solution/solve.sh. While the agent supposedly doesn't see solution/, the file exists in the container. The agent could also read test_outputs.py to discover exact expected strings like 'settings-auto-accept-permissions', 'usePermission', 'toggleAutoAcceptDirectory' and pattern-match without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: removal of old toggle from prompt-input (test_permissions_button_removed, test_prompt_toggle_accept_removed), addition to settings (test_auto_accept_toggle_in_settings), permission context usage (test_settings_uses_permission_context), session/directory handling (test_settings_toggle_handles_session_and_directory), and typecheck/unit test passing."
+      "reason": "All behaviors explicitly required by the instruction are tested: removal of old button/code from prompt-input.tsx, addition of Switch with correct data-action in settings-general.tsx, use of permission context, handling session and directory toggling, and typecheck passing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub, repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, repo_tests), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, data-action values, and component names in the instruction match what's used in the tests and solution."
+      "reason": "All file paths, variable names, data-action strings, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names internal implementation details: 'acceptLabel memo', 'toggleAccept function', 'TooltipKeybind-wrapped Button', 'data-action=\"prompt-permissions\"', 'data-action=\"settings-auto-accept-permissions\"', 'SettingsRow', 'Switch component', and the onMouseDown selector reference. These are specific enough to directly guide implementation rather than describe the problem."
+      "reason": "The instruction names exact implementation details: specific data-action value 'settings-auto-accept-permissions', exact variable names to remove (acceptLabel, toggleAccept), exact component type (Switch in SettingsRow), and the onMouseDown selector reference. This goes beyond describing the problem and prescribes the exact solution shape."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,6 +51,7 @@
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
@@ -59,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

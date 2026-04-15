@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions all key file paths (.github/scripts/setup.js, package.json, docs/README.md), the commit SHA c1e86e6, schema keys (scripts, setup, workspaces, name, version), and the specific literal strings that tests check for (e.g., 'yarn setup', '--recursive', 'initializes the database', 'sets up git hooks', 'yarn reset:data', 'frontend dev servers'). The pass_to_pass tests check repository structure files (.github/workflows/ci.yml, .github/hooks/*, Dockerfile, ghost/core/package.jso"
+      "reason": "The instruction mentions all key file paths (.github/scripts/setup.js, package.json, docs/README.md), the setup script content expectations, the --recursive flag, yarn reset:data, and the documentation changes. The test-specific details like git commit SHA c1e86e6, workflow job names (job_setup, job_lint, job_unit-tests), git hooks paths, Dockerfile, ghost/core/package.json, bump-version.js, install-deps.sh are all mentioned or implied in the Repository Context section. The exact literal strings"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Consist of exactly two parts: dependency installation (yarn) and submodule initialization (git submodule update --init --recursive)', tells exactly what strings to remove ('initializes the database', 'sets up git hooks'), what to replace them with, and that setup.js should be deleted. This leaves virtually no reasoning for the agent \u2014 it's a direct specification of the solution, not just a description of what's broken."
+      "reason": "The instruction explicitly states the exact fix: 'Consist of exactly two parts: dependency installation (yarn) and submodule initialization (git submodule update --init --recursive)', tells you exactly to delete setup.js, and specifies the exact replacement strings for docs (e.g., 'yarn reset:data' instead of 'yarn knex-migrator reset'). This is prescriptive solution specification, not just problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings. For example, test_setup_script_simplified checks that the setup script equals exactly 'yarn && git submodule update --init --recursive'. test_docs_no_old_setup_description checks for absence of exact phrases like 'initializes the database'. test_docs_dev_mentions_frontend checks for 'frontend' in the yarn dev description line. An alternative correct fix that used different wording (e.g., 'Install deps and init submodules' comment, or 'front-end' instead of 'fr"
+      "reason": "The test test_setup_script_simplified asserts the exact string 'yarn && git submodule update --init --recursive' for the setup script. An alternative correct fix like 'yarn install && git submodule update --init --recursive' or using '&&' with different spacing would fail. Similarly, test_docs_dev_description checks for exact substring 'frontend dev servers' which is a gold-specific phrase choice."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The tests are almost entirely text-matching: checking file existence, reading file contents and asserting string presence/absence (e.g., 'assert setup_js not in content', 'assert \"--recursive\" in setup_cmd'). No code is actually executed, no subprocess runs the setup script, no behavior is verified. The pass_to_pass tests similarly just check file existence and string content, not behavior."
+      "reason": "The core f2p tests (setup_js_removed, setup_script_simplified, docs updates) are all text/file content checks: checking if a file exists, reading JSON and checking string values, reading docs/README.md and checking for substring presence/absence. None execute the setup script, run yarn setup, or test actual behavior. The pass_to_pass tests do run git commands but those verify unchanged repo state, not the fix."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p (fail-to-pass) tests check for specific changes that must be made: setup.js must be deleted (test_setup_js_removed), package.json setup script must be changed (test_setup_script_simplified), docs must be updated (multiple tests). A stub/no-op implementation leaving the repo unchanged would fail these tests since the original files contain the old content."
+      "reason": "The f2p tests check for specific changes: setup.js must not exist (it does by default), package.json setup script must equal a specific string (it doesn't by default), docs must not contain 'knex-migrator' (it does by default). A stub/no-op implementation would fail these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/Ghost alongside the task. The solve.sh is at solution/solve.sh which may be accessible in the container. An agent could read the solution file or grep for expected test fixture strings in the test file. The environment Dockerfile doesn't remove solution/ or tests/ from the container."
+      "reason": "The solution file exists at /workspace/Ghost/../solution/solve.sh (or wherever Harbor mounts it). The agent could potentially read /solution/solve.sh to see the exact changes needed. Additionally, the test file at tests/test_outputs.py contains all expected strings and could be read to reverse-engineer the solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three main behavioral requirements from the instruction are tested: (1) setup.js deletion (test_setup_js_removed), (2) package.json setup script update (test_setup_script_simplified, test_setup_script_no_setup_js, test_setup_script_has_recursive), (3) docs/README.md updates (test_docs_no_old_setup_description, test_docs_dev_mentions_frontend, test_docs_reset_data_command)."
+      "reason": "All behaviors specified in instruction.md are tested: setup.js deletion, package.json setup script update with --recursive flag, docs README updates for setup description, yarn dev description, and reset:data command."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_setup_js_removed, test_docs_dev_mentions_frontend), have docstrings explaining what each test checks, and are grouped logically with comments separating 'Gates (pass_to_pass)' from fail-to-pass tests."
+      "reason": "Tests are well-organized with clear naming (test_setup_js_removed, test_setup_script_simplified, test_docs_*), grouped into Gates (pass_to_pass) and fail_to_pass sections with comments, and each has a descriptive docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing configuration files and documentation, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task involves file deletion, JSON field modification, and documentation editing, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md. All references match the actual repository structure."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact replacement text: 'Consist of exactly two parts: dependency installation (yarn) and submodule initialization (git submodule update --init --recursive)' and 'The reset instructions should use yarn reset:data instead of yarn knex-migrator reset and yarn knex-migrator init'. This gives away the exact fix rather than letting the agent discover it."
+      "reason": "The instruction's 'Expected Behavior' section essentially provides the complete solution: exact script content ('yarn && git submodule update --init --recursive'), exact phrases to remove/add in docs, and exact commands to replace. This goes beyond identifying the buggy file to specifying the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes: deletes one file, modifies one field in package.json, and makes three targeted string replacements in docs/README.md. No full-file rewrites or contradictions with other files."
+      "reason": "The gold patch makes localized changes: deletes one file, modifies one JSON field in package.json, and makes targeted string replacements in docs/README.md. No full-file rewrites."
     }
   },
   "tier_a_fails": [

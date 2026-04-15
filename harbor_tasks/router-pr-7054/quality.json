@@ -2,48 +2,48 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_onrendered_returns_null_on_server checks for exact pattern 'if (isServer ?? router.isServer) { return null }', test_onrendered_uses_layout_effect checks for 'useLayoutEffect', test_solid_router_onrendered_comment_updated checks that 'renders a dummy dom element' is removed from solid-router. The instruction hints at these but never explicitly names useLayoutEffect, the isServer pattern, or the solid-router comment"
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (packages/react-router/src/Match.tsx, packages/solid-router/src/Match.tsx, packages/react-router/tests/Scripts.test.tsx), the function (OnRendered), the test name ('should inject scripts in order'), the specific behaviors (return null on server, useLayoutEffect from './utils', resetKey prop, no <script> rendering, comment about 'renders a dummy dom element'), and the packages (@tanstack/react-router, @tanstack/solid-router). All test-asserted specifics ar"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The hints section essentially describes the solution: 'There may be a better approach that doesn't require rendering any DOM elements during SSR' combined with 'Currently it renders a script tag to track render completion via the ref callback' strongly implies returning null on server. While not line-specific, the instruction heavily guides toward the exact fix approach."
+      "reason": "The instruction explicitly specifies the implementation details: 'Return null during server-side rendering', 'Use useLayoutEffect imported from ./utils', 'Compare current location href against stored previous value', 'Accept and use a resetKey prop as a dependency alongside router.latestLocation.state.__TSR_key', 'if (isServer ?? router.isServer) { return null }' pattern is essentially spelled out. This tells the agent exactly WHAT to change rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_onrendered_returns_null_on_server uses regex 'if\\s*\\(\\s*isServer\\s*\\?\\?\\s*router\\.isServer\\s*\\)\\s*\\{\\s*return\\s+null' which requires the exact pattern 'isServer ?? router.isServer'. An alternative correct fix (e.g., using only router.isServer, or a different conditional structure) would fail. test_onrendered_uses_layout_effect requires useLayoutEffect specifically; using useEffect would fail even if correct."
+      "reason": "test_onrendered_returns_null_on_server asserts a specific regex pattern 'if\\s*\\(\\s*isServer\\s*\\?\\?\\s*router\\.isServer\\s*\\)\\s*\\{\\s*return\\s+null' which requires the exact gold-patch code structure. An alternative correct fix (e.g., using 'if (typeof window === \"undefined\") return null' or a different server detection) would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_onrendered_returns_null_on_server, test_onrendered_uses_layout_effect, test_onrendered_no_script_tag_rendering, and test_solid_router_onrendered_comment_updated are purely text-matching tests using regex/string matching on source files with no execution. Only test_ssr_scripts_test_passes and the pass_to_pass tests actually execute code. The majority of fail_to_pass tests are text-only."
+      "reason": "Tests test_onrendered_returns_null_on_server, test_onrendered_uses_layout_effect, test_onrendered_no_script_tag_rendering, and test_solid_router_onrendered_comment_updated are purely text-matching tests using regex/string searches on source files with no execution. Only test_ssr_scripts_test_passes and the pass_to_pass tests actually execute code. Multiple f2p tests are text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests require specific code changes (adding useLayoutEffect, server null return, removing script tag rendering) that cannot be satisfied by a stub/no-op implementation. The base code at the checked-out commit would fail these tests."
+      "reason": "The f2p tests cannot be satisfied by stub implementations. test_ssr_scripts_test_passes runs actual unit tests that verify SSR output. The text-matching tests check for specific code patterns that don't exist in the base commit. A no-op change would fail all f2p tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory contains /solution/pr7054.diff and /solution/solve.sh which the agent could read directly. The solve.sh explicitly shows 'git apply --verbose /solution/pr7054.diff'. An agent could simply cat /solution/solve.sh or apply the diff file to pass all tests."
+      "reason": "The solution exists at /solution/solve.sh and /solution/pr7054.diff in the container. The agent could simply run 'cat /solution/solve.sh' or 'git apply /solution/pr7054.diff' to obtain and apply the exact gold patch. There are no measures preventing access to /solution/."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes removing the extra empty script tag from SSR output, and the tests verify this behavior through both the SSR test execution and source code checks for the OnRendered component changes."
+      "reason": "All behaviors mentioned in the instruction are tested: SSR output without extra script tag (test_ssr_scripts_test_passes), null return on server (test_onrendered_returns_null_on_server), useLayoutEffect usage (test_onrendered_uses_layout_effect), no script rendering (test_onrendered_no_script_tag_rendering), solid-router comment update (test_solid_router_onrendered_comment_updated), and all build/test/type/lint checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and why (e.g., 'fail_to_pass' vs 'pass_to_pass' annotations in comments)."
+      "reason": "Tests are well-named (e.g., test_ssr_scripts_test_passes, test_onrendered_returns_null_on_server), have docstrings explaining their purpose, and include labels like '(fail_to_pass)' and '(pass_to_pass)' to indicate their category."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a rendering bug, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names 'packages/react-router/src/Match.tsx' and the 'OnRendered' component, and hints say 'Currently it renders a script tag to track render completion via the ref callback' and 'There may be a better approach that doesn't require rendering any DOM elements during SSR' \u2014 this essentially describes the exact fix location and approach."
+      "reason": "The instruction explicitly names the exact file (packages/react-router/src/Match.tsx), the exact component (OnRendered), and provides implementation-level details like 'Use useLayoutEffect (imported from ./utils)', 'Accept and use a resetKey prop as a dependency alongside router.latestLocation.state.__TSR_key', and the specific server check pattern. This goes well beyond describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,7 +51,6 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

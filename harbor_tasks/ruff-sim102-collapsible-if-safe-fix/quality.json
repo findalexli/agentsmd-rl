@@ -3,60 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_preview_function_defined asserts the exact string 'is_collapsible_if_fix_safe_enabled' must exist in preview.rs. While instruction.md mentions preview.rs and 'preview-gated feature flags', it never names this specific function. A developer reading only instruction.md could reasonably choose a different function name (e.g., 'is_sim102_safe_fix_enabled'). Also, test_no_unwrap_or_panic checks preview.rs for unwrap/panic/unreachable patterns referencing AGENTS.md line 79, and test_rust_imports_"
+      "reason": "The tests assert specific details not mentioned in instruction.md: test_no_unwrap_or_panic checks that preview.rs must not contain .unwrap(), panic!(), or unreachable!() (citing AGENTS.md line 79); test_rust_imports_at_top checks no local imports inside function bodies (citing AGENTS.md line 76); test_sim102_snapshot_tests runs 'cargo test -- SIM102'; test_cargo_test_flake8_simplify runs flake8_simplify tests; test_cargo_check_ruff_linter checks ruff_linter package compilation. These constraints"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the problem (fix is always Unsafe) and desired behavior (Safe in preview, Unsafe otherwise) but does not specify exact code changes, line numbers, or specific implementation details like function signatures."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states: 'The fix safety should be gated by a function named is_collapsible_if_fix_safe_enabled in preview.rs that returns true when preview mode is enabled.' This names the exact function to create, the exact file to put it in, and its behavior \u2014 essentially dictating the implementation rather than just describing the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_preview_function_defined requires the exact function name 'is_collapsible_if_fix_safe_enabled' in preview.rs. An alternative correct implementation using a different function name (e.g., 'is_sim102_fix_safe') or a different mechanism (e.g., inline check of settings.preview in collapsible_if.rs without a preview.rs function) would fail this test despite being functionally correct."
+      "reason": "test_preview_function_defined asserts 'is_collapsible_if_fix_safe_enabled' must appear in preview.rs. This forces the agent to use this exact function name. An alternative correct implementation that uses a different function name (e.g., 'is_sim102_safe_fix_enabled' or inline preview check) would fail this test despite being behaviorally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core behavioral tests (test_fix_safe_in_preview, test_fix_unsafe_without_preview, test_fix_safe_in_preview_varied_inputs) build the binary and run it as a subprocess, inspecting JSON output for actual fix applicability. While test_preview_function_defined and test_no_unwrap_or_panic are text-based, the majority of tests execute code and verify behavior."
+      "reason": "Most tests build the ruff binary and execute it as a subprocess, checking JSON output for behavioral properties (applicability='safe'/'unsafe'). test_preview_function_defined is text-based, but the majority of fail-to-pass tests (test_fix_safe_in_preview, test_fix_safe_in_preview_varied_inputs) verify actual runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_fix_safe_in_preview asserts applicability == 'safe' with --preview. On the base commit, SIM102 always returns 'unsafe', so a stub/no-op would fail. test_preview_function_defined checks for a new function that doesn't exist on the base commit. These cannot be satisfied without implementing the fix."
+      "reason": "The fail-to-pass tests check that SIM102 fix applicability changes from 'unsafe' to 'safe' when --preview is enabled. A stub or no-op implementation would leave the fix as 'unsafe' (the base behavior), failing test_fix_safe_in_preview. test_preview_function_defined checks for existence of the new function which doesn't exist at baseline."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ruff as solve.sh content is applied via the gold patch. The agent could potentially read /solution/solve.sh (if mounted) or examine the test file at tests/test_outputs.py to discover the exact function name 'is_collapsible_if_fix_safe_enabled' and other implementation details. No evidence of measures preventing access to these files."
+      "reason": "The solution file exists at /workspace/ruff as solve.sh in the solution/ directory, and the Dockerfile doesn't remove it. The agent could potentially read /solution/solve.sh (or the gold patch therein) to get the exact changes needed. Additionally, the test file at tests/test_outputs.py reveals the exact expected behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors specified in instruction.md are tested: Safe in preview (test_fix_safe_in_preview), Unsafe without preview (test_fix_unsafe_without_preview), and preview function in preview.rs (test_preview_function_defined)."
+      "reason": "All three behaviors specified in instruction.md are tested: safe applicability in preview mode (test_fix_safe_in_preview), unsafe without preview (test_fix_unsafe_without_preview), and the gating function existence (test_preview_function_defined)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining each test's purpose and relationship to the PR."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output; it modifies Rust source code in a linter project."
+      "outcome": "pass",
+      "reason": "The JSON output schema from ruff (with 'fix' containing 'applicability') is implicitly documented through the test assertions and the ruff tool's --output-format json flag, which is a well-known tool with documented output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names the two files to modify (collapsible_if.rs and preview.rs), which is appropriate since they are the natural files for this change. It doesn't specify exact line numbers, function signatures, or implementation details."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files to modify (collapsible_if.rs and preview.rs), the exact function name to create (is_collapsible_if_fix_safe_enabled), and the exact function to modify (nested_if_statements). This goes beyond describing the problem and into specifying the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Rust source files, not a configuration edit task."
+      "reason": "This is a code-only task involving Rust source files, not configuration edits."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
 }

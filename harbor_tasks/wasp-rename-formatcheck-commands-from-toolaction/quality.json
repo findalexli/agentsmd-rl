@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four files (waspc/run, package.json, .github/workflows/ci-formatting.yaml, waspc/README.md), the old command names (ormolu:check, prettier:format, cabal-gild:format, etc.), and the new command names (check:ormolu, format:prettier, format:cabal, etc.). It also specifies creating top-level format/check commands. All test assertions reference these known strings, file paths, and conventions documented in the instruction."
+      "reason": "The instruction names all four files (waspc/run, package.json, .github/workflows/ci-formatting.yaml, waspc/README.md), the old command names (ormolu:check, prettier:format, cabal-gild:format, etc.), the new command names (check:ormolu, format:prettier, format:cabal, etc.), and the top-level format/check commands. All test assertions check for strings and paths that are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired naming convention and which files to update, but does not specify exact line numbers, exact variable names to change (like PRETTIER_CHECK_CMD), or the precise diff. A developer must reason about what specifically to change in each file."
+      "reason": "The instruction describes what needs to change (rename convention, add top-level commands, update CI/docs) but does not specify exact line numbers, diffs, or implementation details like variable names (PRETTIER_CHECK_CMD etc.)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_run_script_has_top_level_format_command and test_run_script_has_top_level_check_command use 'grep \"^  format)\"' and 'grep \"^  check)\"' respectively, asserting exact indentation (two leading spaces) for the case branch. An alternative correct implementation with different indentation (e.g., tabs, 4 spaces, or no leading spaces) would fail these tests despite being functionally correct."
+      "reason": "test_run_script_has_top_level_format_command greps for '^  format)' requiring exactly two spaces of indentation before 'format)'. An alternative correct implementation with different indentation (e.g., tab or 4 spaces) would fail. test_run_script_case_branches_renamed only checks for check:ormolu and format:ormolu but not check:cabal/format:cabal/check:prettier/format:prettier in its assertions, so it's incomplete but not overly restrictive. The indentation-specific grep is the main concern."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text-matching via grep (e.g., test_run_script_case_branches_renamed greps for 'check:ormolu' in the file, test_package_json_scripts_renamed checks if a key exists in JSON). While some pass-to-pass tests execute the run script (test_run_script_executes), no fail-to-pass test actually executes the renamed commands to verify they work \u2014 they only check that certain strings appear in files."
+      "reason": "The fail-to-pass tests are almost entirely text-matching via grep (e.g., test_run_script_case_branches_renamed greps for strings in files, test_package_json_scripts_renamed checks key names in JSON, test_ci_formatting_uses_new_script_name greps a YAML file). While some pass-to-pass tests execute the script (test_run_script_executes), the core fail-to-pass tests that verify the actual change are purely textual checks with no behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific new strings (check:ormolu, format:ormolu, format:prettier, check:prettier, etc.) that don't exist in the base commit. A stub or no-op implementation wouldn't produce these strings in the files, so the tests cannot be trivially satisfied."
+      "reason": "The fail-to-pass tests check for specific new strings (check:ormolu, format:ormolu, check:prettier, format:prettier, top-level format/check commands) that don't exist in the base commit. A stub or no-op would not introduce these strings into the files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/wasp (accessible in the container) as solution/solve.sh, and the agent could read the test file at tests/test_outputs.py to see exactly what strings to grep for. The tests only check for string presence in files, so the agent could simply insert the expected strings without understanding the task."
+      "reason": "The solution file exists at /workspace/wasp (or solution/solve.sh in the container). The agent could read solve.sh or simply apply the patch. Additionally, since tests just grep for literal strings, the agent could insert the expected strings without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires updating waspc/README.md documentation, but no test verifies that README.md was updated with new command names. Also, no test verifies the CI workflow uses the new names for ormolu or cabal-gild \u2014 only check:prettier is tested in CI context."
+      "reason": "Instruction requires updating waspc/README.md to reflect new command names, but no test checks that the README was updated. The gold patch modifies README.md but no test validates it."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, clearly separated into pass-to-pass and fail-to-pass categories, and grouped by the file/feature they test."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into pass-to-pass and fail-to-pass categories with comments marking each section."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves renaming commands in scripts and config files, not producing structured data output."
+      "reason": "The task involves renaming commands in scripts/config files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify which is appropriate for the task scope, but doesn't specify exact line numbers or internal variable names. The files listed are the natural scope of the task."
+      "reason": "The instruction names the files to modify (which is appropriate for the task scope) but doesn't specify exact line numbers or internal implementation details like variable names."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized edits (renaming specific strings) across four files, all consistent with the instruction. No full-file rewrites or contradictions with other files."
+      "reason": "The gold patch makes localized edits across four files (run script case branches/variables, package.json script keys, CI yaml command, README examples) without full-file rewrites."
     }
   },
   "tier_a_fails": [

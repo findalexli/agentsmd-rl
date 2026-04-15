@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (dev/breeze/src/airflow_breeze/utils/path_utils.py), the function (cleanup_python_generated_files), and all specific patterns tested: 'd != \"node_modules\"', 'startswith(\".\")', 'dirnames[:] =', 'dirnames.clear()', removal of rglob usage, os.walk, shutil.rmtree, and error handling for FileNotFoundError/PermissionError. All test assertions map to explicitly stated requirements."
+      "reason": "All test-asserted specifics are discoverable from instruction.md: the file path `dev/breeze/src/airflow_breeze/utils/path_utils.py`, function name `cleanup_python_generated_files`, use of `os.walk`, `dirnames[:] =` slice assignment pattern, `dirnames.clear()`, skipping `node_modules` and hidden directories (starting with `.`), `shutil.rmtree`, and error handling for `FileNotFoundError`/`PermissionError` are all explicitly mentioned."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: use 'dirnames[:] =' pattern, filter with 'd != \"node_modules\"', check 'startswith(\".\")', call 'dirnames.clear()' after removal, use os.walk. This is not describing what's broken \u2014 it's prescribing the exact fix with specific code patterns. A developer doesn't need to reason about what to change; they just follow the recipe."
+      "reason": "The instruction explicitly states the exact implementation: 'Replace the rglob calls with os.walk', 'modifying the dirnames list in-place using slice assignment (dirnames[:] = ...)', 'call dirnames.clear()', use 'd != \"node_modules\"' and 'd.startswith(\".\")' patterns. This is a complete specification of the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'd != \"node_modules\"' (test_skips_node_modules_directory), exact pattern 'dirnames[:] =' (test_dirnames_modified_in_place), exact call 'dirnames.clear()' (test_clears_dirnames_after_pycache_removal), exact string 'startswith(\".\")' (test_skips_hidden_directories). An alternative correct fix using e.g. 'd not in (\"node_modules\",)' or 'dirnames.remove()' or 'del dirnames[:]' would fail these text-matching tests."
+      "reason": "test_dirnames_modified_in_place checks for exact string 'dirnames[:] =' in source code. An alternative correct implementation using e.g. `del dirnames[i]` or `while` loop mutation would fail. test_uses_os_walk checks for literal 'os.walk' in source. An alternative using manual recursion with os.listdir/os.scandir that correctly prunes would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail_to_pass tests (test_uses_os_walk, test_skips_node_modules_directory, test_skips_hidden_directories, test_dirnames_modified_in_place, test_no_rglob_for_pyc, test_no_rglob_for_pycache, test_clears_dirnames_after_pycache_removal) are purely string-matching on file content with patterns like 'assert \"os.walk\" in content'. No test actually calls cleanup_python_generated_files or verifies it skips node_modules at runtime."
+      "reason": "test_uses_os_walk asserts `'os.walk' in content` (text check on source). test_dirnames_modified_in_place asserts `'dirnames[:] =' in func_content` and `'dirnames.clear()' in func_content` (text checks). While some tests also run behavioral checks, these specific assertions are pure text matching with no execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass because the tests check for specific strings that don't exist in the original file (e.g., 'os.walk', 'dirnames[:] =', 'dirnames.clear()') and check that rglob patterns are removed from the function. The original file would fail the fail_to_pass tests."
+      "reason": "The behavioral tests (test_skips_node_modules_directory, test_skips_hidden_directories) create actual directory structures and verify files are/aren't deleted. A stub or no-op implementation wouldn't delete the regular.pyc file, failing the assertion. The run_cleanup_in_temp_dir function executes an independent script that implements the expected behavior pattern, so these tests do verify real behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/airflow with solve.sh containing the exact gold patch. The agent could read solution/solve.sh if accessible in the container, or simply grep for the expected test strings and insert them. Since tests are purely text-matching, the agent could insert the literal strings as comments without understanding the bug."
+      "reason": "The solution file exists at /workspace/airflow and solve.sh is in the container's solution/ directory. The agent could read /solution/solve.sh to see the exact gold patch. Also, run_cleanup_in_temp_dir doesn't actually execute the agent's code - it runs a hardcoded test script that reimplements the expected behavior independently, so the behavioral tests don't actually test the agent's implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 behavioral requirements from the instruction (skip node_modules, skip hidden dirs, use os.walk, dirnames[:]=, dirnames.clear(), no rglob for pyc, no rglob for pycache, preserve error handling) have corresponding tests. Error handling preservation is indirectly tested via syntax/lint checks and __pycache__/shutil.rmtree presence checks."
+      "reason": "All explicitly required behaviors from instruction.md are tested: skipping node_modules (test_skips_node_modules_directory), skipping hidden directories (test_skips_hidden_directories), using os.walk (test_uses_os_walk), in-place slice assignment (test_dirnames_modified_in_place), dirnames.clear() after pycache removal, and error handling preservation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_uses_os_walk, test_skips_node_modules_directory, etc.), have docstrings explaining what they check and why, and include (pass_to_pass) / (fail_to_pass) annotations."
+      "reason": "Tests are well-named (test_skips_node_modules_directory, test_skips_hidden_directories, etc.), have docstrings explaining what they test, and include pass_to_pass/fail_to_pass annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact code patterns: 'd != \"node_modules\"', 'startswith(\".\")', 'dirnames[:] =', 'dirnames.clear()', 'os.walk'. These are implementation-level hints that go far beyond naming the buggy file/function \u2014 they dictate the exact solution code."
+      "reason": "The instruction names the exact file path and function (`dev/breeze/src/airflow_breeze/utils/path_utils.py`, `cleanup_python_generated_files`), specifies exact patterns to use (`d != \"node_modules\"`, `d.startswith(\".\")`), and prescribes the exact implementation approach (os.walk with dirnames[:] slice assignment and dirnames.clear()). This goes well beyond identifying what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [

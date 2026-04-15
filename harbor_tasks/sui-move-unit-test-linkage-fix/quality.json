@@ -2,48 +2,48 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file path (test_runner.rs), the functions (from_modules_for_testing, from_module_for_testing_with_linkage, LinkageContext::new), the import (linkage_context from move_vm_runtime::shared), the variable name (linkage_table), and the method (packages.keys()). All test-asserted specifics are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific identifiers not mentioned in instruction.md: 'from_module_for_testing_with_linkage' (test_from_module_for_testing_with_linkage_used), 'LinkageContext::new' (test_linkage_context_import_present), 'linkage_table' variable name (test_linkage_table_creation), 'packages.keys()' (test_linkage_table_creation). The instruction mentions 'linkage context' generically but never names these specific function names, variable names, or expressions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Use StoredPackage::from_module_for_testing_with_linkage instead of StoredPackage::from_modules_for_testing', 'Import linkage_context from move_vm_runtime::shared', 'Create a linkage table that maps package addresses to themselves', and 'The linkage context needs to be cloned when passed to each package creation'. This is a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction says 'The move_vm_runtime crate provides linkage context functionality through its shared module' and 'Linkage context needs to map package addresses appropriately for proper module resolution', which strongly hints at importing from shared::linkage_context and building a map from package addresses. While not giving exact code, it narrows the solution space significantly. However, it doesn't specify exact function names like 'from_module_for_testing_with_linkage', so this is bord"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_linkage_table_creation checks for the exact variable name 'linkage_table' and exact expression 'packages.keys()'; test_from_module_for_testing_with_linkage_used checks for exact function name 'from_module_for_testing_with_linkage'; test_linkage_context_import_present checks for 'LinkageContext::new'. An alternative correct fix using different variable names or approaches would fail these text-matching tests."
+      "reason": "Tests assert gold-specific implementation details: test_from_module_for_testing_with_linkage_used requires the exact function name 'from_module_for_testing_with_linkage' and forbids 'from_modules_for_testing('; test_linkage_table_creation requires a variable named 'linkage_table' and the exact expression 'packages.keys()'; test_linkage_context_import_present requires 'LinkageContext::new'. An alternative correct fix using different variable names or different construction patterns would fail the"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_linkage_context_import_present, test_from_module_for_testing_with_linkage_used, and test_linkage_table_creation are purely text-matching tests (assert 'X' in open(path).read()). While there are compilation/execution tests too, 4 of the FAIL_TO_PASS tests are pure string matching with no behavioral verification."
+      "reason": "Tests test_linkage_context_import_present, test_from_module_for_testing_with_linkage_used, and test_linkage_table_creation are purely text-matching (assert 'X' in open(path).read()). While test_compilation_move_unit_test and others do execute cargo check/test, the FAIL_TO_PASS tests include multiple purely textual checks that don't verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The compilation test (test_compilation_move_unit_test) requires the code to actually compile, which a stub/no-op would not achieve since the base commit has code that references APIs that need to be changed. The text-matching FAIL_TO_PASS tests also require specific code patterns that wouldn't exist without implementing the fix."
+      "reason": "The FAIL_TO_PASS tests include test_compilation_move_unit_test which runs 'cargo check -p move-unit-test' and asserts returncode==0. A stub or no-op change wouldn't fix the compilation error, so this test requires the actual bug fix. The string-matching tests also can't be satisfied without modifying the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sui (solve.sh contains the full git patch). The agent could read solution/solve.sh or /workspace/sui/.git to find the exact patch. The Dockerfile doesn't remove the solution directory, and the tests don't guard against this."
+      "reason": "The solution file exists at /workspace/sui (the solve.sh is in solution/solve.sh which contains the exact gold patch). An agent could read the solution directory or the Dockerfile to find the base commit and reconstruct the expected change. The string-matching tests could also be satisfied by simply inserting the expected strings as comments without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires compilation success, proper import of LinkageContext, use of from_module_for_testing_with_linkage, and linkage table creation - all of which are tested. The instruction also mentions cargo check which is tested."
+      "reason": "The instruction requires: (1) compilation with cargo check -p move-unit-test (tested), (2) proper linkage context handling (tested via string checks and compilation), (3) cargo test -p move-unit-test passing (tested). All explicitly required behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_compilation_move_unit_test, test_linkage_context_import_present, etc.), have docstrings with FAIL_TO_PASS/PASS_TO_PASS labels, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings, categorized as FAIL_TO_PASS and PASS_TO_PASS, and each test has a clear purpose explained in its docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Rust source code, not producing structured data output."
+      "reason": "This task involves fixing Rust code compilation, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, crate names, and commands are all correctly spelled and consistent between instruction and tests."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function (setup_test_storage), exact replacement function (from_module_for_testing_with_linkage), exact import path (linkage_context from move_vm_runtime::shared), and exact variable name (linkage_table). This goes far beyond locating the bug - it specifies every implementation detail."
+      "reason": "The instruction explicitly names the exact file to modify (test_runner.rs), mentions 'StoredPackage' API, and says 'The move_vm_runtime crate provides linkage context functionality through its shared module'\u2014this is quite specific localization that narrows the solution space beyond what's needed for task description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,6 +51,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -60,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

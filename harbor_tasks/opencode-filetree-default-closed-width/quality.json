@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "instruction.md is '(missing)' \u2014 it contains no content at all. The f2p test test_fix_claude_md_created asserts on specific strings like 'Task-specific guidance' and 'Agg backend' in a file called CLAUDE.md, none of which are discoverable from a missing instruction."
+      "reason": "instruction.md is missing entirely. The agent sees nothing \u2014 no mention of CLAUDE.md, 'Task-specific guidance', 'Agg backend', or any other test-asserted specifics. Every assert in test_fix_claude_md_created is undiscoverable."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md is missing entirely, so there's nothing to leak \u2014 but also nothing to guide the agent. The task is fundamentally broken because the agent receives no instructions at all."
+      "reason": "instruction.md is missing, so there is no instruction at all. The rubric cannot be satisfied because no description of what's broken is provided either. However, since there's nothing to leak, this could be argued as pass \u2014 but the spirit of the rubric (agent must reason) fails because the agent has zero information."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_fix_claude_md_created asserts exact literal strings 'Task-specific guidance' and 'Agg backend' must appear in CLAUDE.md. Any alternative correct approach that uses different wording (e.g., 'Use non-interactive backend') would fail."
+      "reason": "test_fix_claude_md_created asserts exact strings 'Task-specific guidance' and 'Agg backend' in CLAUDE.md content. Any alternative correct approach that uses different wording would fail these literal string checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p test test_fix_claude_md_created only does file existence check and string-in-file assertions ('assert \"Task-specific guidance\" in content'). It never imports, calls, or executes the created file as code. The pass-to-pass tests do execute code, but the actual fix verification is pure text matching."
+      "reason": "The fail-to-pass test (test_fix_claude_md_created) only checks file existence and literal string content via 'assert \"Task-specific guidance\" in content' and 'assert \"Agg backend\" in content'. It does not import, call, or execute any code behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A trivial stub that just writes a file containing the two required strings ('Task-specific guidance' and 'Agg backend') passes test_fix_claude_md_created. No real bug fix or behavioral change is verified."
+      "reason": "A trivial stub that writes a file containing the two required strings ('Task-specific guidance' and 'Agg backend') passes test_fix_claude_md_created. No real bug fix or behavioral change is needed \u2014 just creating a text file with specific strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/matplotlib/../solution/solve.sh (or accessible in the container). The agent could also grep test_outputs.py for the exact fixture strings 'Task-specific guidance' and 'Agg backend' and write them verbatim into CLAUDE.md without understanding anything."
+      "reason": "The agent can read /workspace/matplotlib's solve.sh or the test file itself (test_outputs.py is at a known path) to discover the exact fixture strings 'Task-specific guidance' and 'Agg backend', then write them verbatim into CLAUDE.md without understanding anything."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md is missing, so no behavior is explicitly required. The tests cannot be said to cover requirements that don't exist."
+      "reason": "instruction.md is missing so no behavior is explicitly required; thus tests cannot be said to cover instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with docstrings distinguishing pass_to_pass vs fail_to_pass gates, and grouped logically by module (cbook, rcparams, transforms, etc.)."
+      "reason": "Tests are well-named, grouped into pass-to-pass and fail-to-pass sections with docstrings and comments separating them."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos in filenames, paths, commands, or variable names in the test and solution files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the test and solution files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "not_applicable",
-      "reason": "instruction.md is missing, so there's nothing to evaluate for hint leakage."
+      "reason": "instruction.md is missing entirely, so there is nothing to evaluate for hint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch only creates a single new file (CLAUDE.md) with minimal content; it doesn't rewrite existing config files."
+      "reason": "The gold patch only creates a single new file (CLAUDE.md) with minimal content \u2014 it is localized and does not contradict other files."
     }
   },
   "tier_a_fails": [

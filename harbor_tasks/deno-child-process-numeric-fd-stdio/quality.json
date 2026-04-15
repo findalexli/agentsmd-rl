@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific names like 'StdioOrFd', 'Fd(i32)', 'ChildProcessStdio', 'borrow::<ChildProcessStdio>', 'use deno_io::ChildProcessStdio', 'as_i64()', 'libc::dup(', 'from_raw_fd', and the exact removal of 'FileResource' import. The instruction.md never names 'StdioOrFd', 'Fd(i32)', 'StdioOrRid', 'ChildProcessStdio' struct, 'libc::dup', 'from_raw_fd', 'as_i64', or specifies that FileResource import must be removed. These are undiscoverable from instruction.md alone."
+      "reason": "Tests assert very specific names like 'StdioOrFd', 'Fd(i32)', 'ChildProcessStdio', 'libc::dup(', 'from_raw_fd', 'as_i64()', 'borrow::<ChildProcessStdio>', 'use deno_io::ChildProcessStdio', removal of 'FileResource' import, and 'extra_stdio: Vec<StdioOrFd>'. The instruction.md never names 'StdioOrFd', 'Fd(i32)', 'ChildProcessStdio' struct name, 'libc::dup', 'from_raw_fd', 'as_i64()', or the specific import changes. These are undiscoverable from instruction.md alone."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states implementation details: 'The implementation must use a signed integer type for deserialization', 'error messages should reference file descriptor not resource id', 'the runtime to capture its own stdout/stderr handles during initialization', and specifies exact files and what changes are needed in each. This goes well beyond describing what's broken."
+      "reason": "Instruction.md states specific implementation details: 'must use a signed integer type for deserialization', 'error messages should reference file descriptor not resource id', 'capture its own stdout/stderr handles during initialization', and points to exact files/areas. This substantially narrows the solution space beyond just describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific names: 'StdioOrFd' enum name (test_stdio_or_fd_enum), 'Fd(i32)' variant (test_fd_variant_with_i32), 'ChildProcessStdio' struct (test_child_process_stdio_struct), exact import 'use deno_io::ChildProcessStdio' (test_file_resource_import_removed), 'libc::dup(' (test_as_stdio_fd_duplication). An alternative correct fix using different names (e.g., 'StdioOrDescriptor', 'OsFd(RawFd)') would fail."
+      "reason": "Tests enforce gold-specific names: 'StdioOrFd' enum name (test_stdio_or_fd_enum), 'Fd(i32)' variant (test_fd_variant_with_i32), 'ChildProcessStdio' struct (test_child_process_stdio_struct), exact import 'use deno_io::ChildProcessStdio' (test_file_resource_import_removed), 'libc::dup(' (test_as_stdio_fd_duplication). An alternative correct implementation using different names (e.g., 'StdioOrDescriptor', 'FileDesc(i32)') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_stdio_or_fd_enum, test_fd_variant_with_i32, test_as_stdio_fd_duplication, etc.) are ALL text-matching tests using regex/string searches on source files. None execute code, spawn processes, or verify runtime behavior. Only the pass-to-pass cargo tests (test_cargo_check_*, test_cargo_test_*) actually execute code."
+      "reason": "The fail-to-pass tests (test_stdio_or_fd_enum, test_fd_variant_with_i32, test_as_stdio_fd_duplication, test_child_process_stdio_struct, etc.) are ALL text-matching via regex/string search on source files. None import, call, or execute the code. The repo_tests do run cargo check/clippy/test but those are pass-to-pass regression checks, not behavioral verification of the new feature."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check source text patterns. An agent could satisfy all f2p tests by writing code with the expected string patterns that doesn't actually work (e.g., dead code containing 'pub enum StdioOrFd', 'Fd(i32)', 'libc::dup(' in comments). The cargo check/clippy tests are pass-to-pass, not fail-to-pass, so they don't gate correctness of the new feature."
+      "reason": "The f2p tests only check for presence of specific strings/patterns in source files. An agent could satisfy them by inserting dead code: e.g., adding 'pub enum StdioOrFd { Fd(i32) }' as unused code, adding a comment with 'libc::dup(' and 'from_raw_fd', etc., without actually implementing the feature correctly."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/deno adjacent to where the agent works. The agent could read solution/solve.sh (or the patch within it) to extract exact changes. Also, since tests are pure text-matching, the agent could grep test_outputs.py for the exact strings being asserted and write them into the source files."
+      "reason": "The solution is in /workspace/deno as a git repo and solve.sh is in /solution/. An agent could read /solution/solve.sh or the gold patch directly. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for exact strings to insert."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires numeric fd passthrough to actually work (child process writes to the fd) and inherit mode with redirected output. No test verifies these runtime behaviors \u2014 all f2p tests are text-matching only."
+      "reason": "Instruction.md requires numeric fd passthrough to actually work (child process writes to fd), and inherit mode with redirected output. No test actually spawns a child process with a numeric fd or verifies redirected output inheritance."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with section comments (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), each has a docstring explaining purpose, and naming is descriptive."
+      "reason": "Tests are well-organized into sections (fail_to_pass, pass_to_pass static, pass_to_pass repo_tests) with clear docstrings and descriptive function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output (JSON/CSV/API/DB)."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files (ext/process/lib.rs, ext/io/lib.rs) and describes specific implementation details like 'signed integer type for deserialization', 'ChildStdio struct fields must still be typed with a stdio option type', naming the exact struct. This leaks localization and solution approach."
+      "reason": "Instruction.md names exact files (ext/process/lib.rs, ext/io/lib.rs) and specifies implementation details like 'signed integer type for deserialization', 'error messages should reference file descriptor', and 'capture its own stdout/stderr handles during initialization'. This goes beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

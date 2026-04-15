@@ -3,60 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_display_ordering_structure asserts that 'parameter.is_positional_only()' must appear before 'parameter.is_keyword_only()' in the loop body \u2014 this specific structural requirement (ordering of method calls in source) is not mentioned in instruction.md. Also, test_no_panic_unwrap_in_display_fn, test_no_local_imports_in_display_fn, and test_no_allow_lint_suppression reference AGENTS.md rules (lines 76, 79, 81) which are not cited in instruction.md. The injected snapshot assertions with exact st"
+      "reason": "test_display_ordering_structure asserts that within the loop body 'for parameter in parameters', 'parameter.is_positional_only()' must appear at an earlier source offset than 'parameter.is_keyword_only()'. The instruction mentions this ordering requirement but test_slash_star_display relies on specific injected snapshot assertions with exact literal strings like '(a, /, *, x, y) -> None' and '(p, q, /, *, k) -> None' that are injected by the test harness, not discoverable from instruction.md. Ad"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the symptom (wrong ordering of / and * separators) and points to the relevant file, but does not specify the exact code change (e.g., moving the keyword-only block after the positional-only block). A developer must still reason about what to change."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()' \u2014 this directly tells the agent the exact fix (reorder two code blocks in a specific loop). This is not just describing what's broken; it prescribes the implementation change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_display_ordering_structure explicitly asserts that 'parameter.is_positional_only()' must appear at a lower offset than 'parameter.is_keyword_only()' in the loop body. An alternative correct fix that restructures the logic differently (e.g., using a different approach like collecting separators in a buffer, or using a different variable/method name pattern) could fail this structural source-code check even if it produces correct output."
+      "reason": "test_display_ordering_structure asserts the exact source-level ordering of 'parameter.is_positional_only()' before 'parameter.is_keyword_only()' within the loop. An alternative correct fix (e.g., using a different approach like buffering output, using a separate pass, or restructuring the logic with different method names or a state machine) would fail this test even if it produces correct output. The test checks implementation structure, not just behavior."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests include cargo check, cargo test, cargo clippy, and cargo fmt \u2014 these compile and execute the Rust code. test_slash_star_display runs actual snapshot tests. While test_display_ordering_structure is a source-text inspection, the majority of tests execute code and verify behavior."
+      "reason": "Tests execute cargo check, cargo test, cargo clippy, and cargo fmt as subprocesses, verifying compilation and runtime behavior. test_slash_star_display runs actual Rust snapshot tests. While test_display_ordering_structure does source inspection, the majority of tests exercise actual code behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_slash_star_display injects snapshot assertions that run cargo test and verify actual rendering output matches '(a, /, *, x, y) -> None'. A stub or no-op implementation would produce wrong output and fail the snapshot comparison. test_display_ordering_structure checks source ordering which requires actual code changes."
+      "reason": "test_slash_star_display injects snapshot assertions that will fail on the base commit because the bug produces '(a, *, /, x, y) -> None' instead of '(a, /, *, x, y) -> None'. A stub or no-op would not pass these snapshot tests since the underlying Rust code must produce the correct output."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/ruff's git history or could be found via solution/solve.sh if accessible. The agent could also grep test_outputs.py for the exact expected strings like '(a, /, *, x, y) -> None' and the _INJECTED_ASSERTIONS content to reverse-engineer the fix. The solution patch is present in the container at solution/solve.sh."
+      "reason": "The solution is available at /workspace/ruff via the gold patch in solution/solve.sh. An agent could read solution/solve.sh (if accessible) or simply grep for the expected test fixture strings in the test file. The _INJECTED_ASSERTIONS and _INSERTION_MARKER are visible patterns that reveal the exact expected behavior and fix location."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires that '/' appears before '*' in callable type display, and this is tested by test_slash_star_display with the specific examples mentioned in the instruction."
+      "reason": "The instruction requires that '/' appears before '*' in callable type display, and the tests verify this through snapshot assertions and source ordering checks. The AGENTS.md requirements (no panic/unwrap, no local imports, prefer expect over allow) are also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear section headers (Gates, Repo CI/CD, Fail-to-pass, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section comments (Gates, Repo CI/CD, Fail-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a display rendering bug in Rust code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names the file display.rs and the impl (FmtDetailed for DisplayParameters), which is appropriate given the task domain. It doesn't specify exact line numbers or the precise code change needed."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the file 'crates/ty_python_semantic/src/types/display.rs', the specific impl block 'FmtDetailed implementation for DisplayParameters', and even prescribes that 'the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()' within 'the loop body that iterates over parameters'. This goes well beyond naming the buggy component \u2014 it identifies the exact code structure and the exact reo"
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
 }

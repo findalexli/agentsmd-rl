@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (Dockerfile, Dockerfile.ci, scripts/docker/install_os_dependencies.sh, .github/workflows/additional-ci-image-checks.yml), the function name install_rustup, all SHA256 checksums, architecture mappings, environment variables (RUSTUP_HOME, CARGO_HOME, PATH), version 1.29.0, timeout values (25, 1320), and the secure download flags. The test for `install_additional_dev_dependencies\\n\\s*install_rustup` ordering is implied by 'integrated into the dev dependency inst"
+      "reason": "The instruction specifies all file paths (Dockerfile, Dockerfile.ci, scripts/docker/install_os_dependencies.sh, .github/workflows/additional-ci-image-checks.yml), the function name install_rustup, exact SHA-256 checksums, architecture mappings, version 1.29.0, RUSTUP_HOME/CARGO_HOME values, timeout values (25, 1320), curl flags, and the call ordering after install_additional_dev_dependencies. All test assertions map to explicitly stated requirements."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact variable names (RUSTUP_VERSION), exact default values, exact environment variable paths, exact checksums, exact timeout values, exact curl flags, and the exact integration pattern. While it doesn't say 'change line X', it essentially dictates the complete implementation rather than describing what's broken. A developer reading it has almost no design decisions to make."
+      "reason": "The instruction essentially specifies the complete implementation: exact function name, exact checksums, exact env var values, exact curl flags, exact placement after install_additional_dev_dependencies, exact timeout values. While framed as requirements, this is effectively dictating the solution line-by-line rather than describing broken behavior. A developer doesn't need to reason about what to change \u2014 they just transcribe the specification."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use very rigid text matching: e.g., test_dockerfile_calls_install_rustup asserts `re.search(r'install_additional_dev_dependencies\\s*\\n\\s*install_rustup', content)` requiring install_rustup to appear on the exact next line after install_additional_dev_dependencies. test_dockerfile_sets_rustup_env_vars checks for exact string 'RUSTUP_HOME=\"/usr/local/rustup\"' with specific quoting. An alternative correct fix using different quoting style (e.g., RUSTUP_HOME=/usr/local/rustup without quotes, o"
+      "reason": "Tests use exact string matching like 'function install_rustup()' (not just checking for a rustup installation), regex patterns like r'install_additional_dev_dependencies\\s*\\n\\s*install_rustup' requiring exact adjacent line placement, exact strings like 'RUSTUP_HOME=\"/usr/local/rustup\"' and '--proto \\'=https\\''. An alternative correct implementation using e.g. 'install_rustup ()' (with space), or placing the call with a comment line between them, or using different quoting for env vars would fail"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test is purely text-matching: `assert 'string' in content` or `re.search(pattern, content)`. No test builds the Docker image, runs rustup, executes any shell command to verify behavior, or imports/calls any code. This is entirely textual verification."
+      "reason": "Every fail-to-pass test is purely text matching: 'assert X in content' or 'assert re.search(pattern, content)'. No test actually builds a Docker image, runs the install function, executes cargo, or verifies any runtime behavior. This is entirely textual/syntactic verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings (checksums, function definitions, environment variables) that would not be present in a stub or default file. A no-op or empty implementation would not contain 'function install_rustup()' or the SHA256 checksums."
+      "reason": "The tests check for specific strings (checksums, function definitions, env vars, timeout values) that do not exist in the base commit files. A stub or no-op implementation would not add these strings to the files, so the tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't exclude it). An agent could read this file and apply the gold patch directly. Additionally, the tests check for exact literal strings (checksums, function names) that are all stated in instruction.md, so the agent could just grep for and insert those exact strings without understanding the problem."
+      "reason": "The solution file exists at /workspace/airflow's git history context, and solve.sh is in /solution/solve.sh in the container. The agent could read /solution/solve.sh to get the exact patch. Additionally, the checksums and all specific strings needed are in the instruction.md itself, so the agent can just pattern-match without understanding the problem."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: version pinning, checksums, architecture mappings, secure download flags, environment variables, function definitions, integration calls, and CI timeout values are all covered by corresponding test functions."
+      "reason": "All requirements from instruction.md are tested: function definition in all 3 files, checksums, architecture mappings, function invocation ordering, env vars, version pinning, HTTPS/TLS flags, and CI timeout values."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly separated into 'fail-to-pass' and 'pass-to-pass' sections with comments, descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are clearly grouped with section comments ('Fail-to-pass tests', 'Pass-to-pass tests'), have descriptive names and docstrings indicating which file and what aspect they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing Docker/shell/YAML configuration files, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task modifies Dockerfiles and shell scripts, not structured data formats like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or checksums across instruction.md and tests."
+      "reason": "All filenames, paths, variable names, checksums, and commands in the instruction match what the tests expect. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies extremely detailed implementation guidance including exact variable names, exact values, exact patterns to follow ('follow the same secure pattern used for cosign installation'), and exact placement ('after install_additional_dev_dependencies'). This leaks the solution structure far beyond what domain knowledge would suggest."
+      "reason": "The instruction names exact files, exact function names, exact placement ('after the existing install_additional_dev_dependencies step'), exact variable names and values, and exact timeout numbers. This goes well beyond describing the problem domain and effectively specifies the complete diff."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized \u2014 it adds install_rustup functions and env vars at specific points in 4 files without full-file rewrites, and doesn't contradict other tier-1 files."
+      "reason": "The gold patch is localized: small additions to 4 specific files, no full-file rewrites, and changes are consistent with the instruction requirements."
     }
   },
   "tier_a_fails": [

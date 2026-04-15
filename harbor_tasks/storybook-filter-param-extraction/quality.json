@@ -3,59 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path `code/core/src/manager-api/lib/filter-param.ts`, the function `parseFilterParam`, the return shape `{ included: string[], excluded: string[] }`, the semicolon splitting, `!`-prefix detection, null/undefined skipping, transform function parameter, and the refactoring of both `parseTagsParam` and `parseStatusesParam`. All test assertions reference these same paths, function names, and behaviors which are discoverable from the instruction."
+      "reason": "The instruction specifies the file path `code/core/src/manager-api/lib/filter-param.ts`, the function name `parseFilterParam`, the return shape `{ included: string[], excluded: string[] }`, semicolon splitting, `!`-prefix handling, transform function accepting null/undefined, and that `parseTagsParam` and `parseStatusesParam` should be refactored. All test assertions reference these same paths, function names, and behaviors. The tests also reference `serializeTagsParam` which is part of the exis"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what the shared helper should do and where it should live, but does not give exact code, line numbers to change, or the specific implementation. A developer must still reason about how to implement the generic function and refactor the callers."
+      "reason": "The instruction describes WHAT to build (a shared helper function with specific behavior) but does not give exact implementation code, line numbers to change, or the precise refactored code for tags.ts/statuses.ts. A developer must still reason about how to implement the generic helper and how to wire it into the existing modules."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests `test_tags_uses_shared_helper` and `test_statuses_uses_shared_helper` assert that both files must contain `import { ... parseFilterParam ...}` via regex, and that `split(';').forEach` must NOT appear. This forces one specific implementation pattern \u2014 an alternative correct fix that, e.g., names the helper `parseFilter` instead of `parseFilterParam`, or uses a different internal approach while still importing from the correct module, would fail. The tests also mandate the exact function nam"
+      "outcome": "pass",
+      "reason": "The tests assert on the exported function name `parseFilterParam` from a specific path, and on behavioral outcomes (correct included/excluded arrays). The instruction explicitly requires this function name and path, so any correct implementation using that name/path would pass. Alternative implementations (using reduce, for-of, filter+map, etc.) would all pass as long as behavior matches."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests (test_filter_param_basic_inclusion, test_filter_param_exclusion_handling, test_filter_param_transform_and_null_skip, test_filter_param_empty_and_edge_cases, test_repo_tags_module, test_repo_vitest_tags, test_repo_vitest_statuses) actually import and execute the code via tsx or vitest. While test_tags_uses_shared_helper and test_statuses_uses_shared_helper are text-based checks, the majority of tests verify behavior through execution."
+      "reason": "All fail-to-pass tests import the functions and call them with various inputs, then use `assert.deepStrictEqual` to verify return values. The pass-to-pass tests run vitest and tsx scripts that execute the code. No test merely checks file text content (except the syntax check which is a gate, not a behavior test)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests like test_filter_param_basic_inclusion assert specific non-empty return values (e.g., `{ included: ['alpha', 'beta', 'gamma'], excluded: [] }`), which cannot be satisfied by a stub returning empty arrays. Similarly, exclusion and transform tests check for specific non-trivial results."
+      "reason": "The f2p tests check non-trivial behaviors: `test_filter_param_basic_inclusion` checks that 'alpha;beta;gamma' produces `{included: ['alpha','beta','gamma'], excluded: []}` \u2014 a stub returning `{included: [], excluded: []}` would fail. `test_filter_param_exclusion_handling` checks mixed inclusion/exclusion. `test_filter_param_transform_and_null_skip` checks transform application and null-skipping. None can be satisfied by a trivial stub."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/storybook` as `solve.sh` would be applied there, and the test file `_test_runner_tmp.mts` is written to the repo root. More critically, the agent could potentially read the test file at `/tests/test_outputs.py` or the solution at `/solution/solve.sh` if those paths are mounted in the container, then simply apply the gold patch. The Dockerfile doesn't show any measures to prevent reading these files."
+      "reason": "The solution file exists at `/workspace/storybook/_test_runner_tmp.mts` only transiently, but `solution/solve.sh` is described as 'hidden' \u2014 however, there's no evidence it's actually excluded from the container filesystem. If the agent can read `/solution/solve.sh` or the gold patch, it could directly apply it. The Dockerfile doesn't show any mechanism to prevent reading solution files if they exist in the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: semicolon splitting, empty-string guarding, !-prefix detection, transform application, null/undefined skipping, return shape, refactoring of both modules, and unchanged public API (via vitest and tsx tests)."
+      "reason": "The instruction requires: semicolon splitting (tested), empty-string filtering (tested), !-prefix detection (tested), transform function application (tested), null/undefined skipping (tested), return shape {included, excluded} (tested), and that parseTagsParam/parseStatusesParam still work (tested via vitest and tsx). All explicitly required behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, clear section comments (Gates, Fail-to-pass behavioral, Fail-to-pass integration), and each test function has a docstring explaining its purpose."
+      "reason": "Tests are well-organized with clear section comments ('Gates', 'Fail-to-pass \u2014 core behavioral tests', 'Fail-to-pass \u2014 refactoring integration checks'), descriptive function names (e.g., `test_filter_param_basic_inclusion`, `test_filter_param_exclusion_handling`), and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The return shape `{ included: string[], excluded: string[] }` is explicitly documented in the instruction and verified in the tests with deepStrictEqual checks."
+      "reason": "The instruction explicitly documents the return schema: `{ included: string[], excluded: string[] }`, which matches what the tests assert."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and variable names in the instruction are consistent and correctly spelled, matching the test expectations."
+      "reason": "All file paths, function names, and variable names in the instruction match those used in the tests and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify and the new file to create, which is appropriate for a refactoring task. It doesn't specify exact line numbers or give the implementation code. The file paths are natural for the task domain."
+      "reason": "The instruction names the files to modify (tags.ts, statuses.ts) and the file to create (filter-param.ts), but this is appropriate since the task is a refactoring task where the locations are part of the problem specification, not a localization challenge. It doesn't specify exact line numbers or the precise code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config edit task."
+      "reason": "This is a code-only refactoring task, not an agentmd-edits or config-editing task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 1
 }

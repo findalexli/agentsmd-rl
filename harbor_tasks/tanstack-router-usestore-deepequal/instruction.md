@@ -6,18 +6,20 @@ The React Router's `Scripts` component (`packages/react-router/src/Scripts.tsx`)
 
 When `useStore` from `@tanstack/react-store` is called with a selector that returns a new array or object on each call, the component re-renders even when the underlying data hasn't changed. This is because `useStore` uses reference equality by default (same as `===`).
 
-## Specific Files
+## Scope
 
-- `packages/react-router/src/Scripts.tsx` — The `Scripts` component that renders script tags
-- `packages/react-router/src/headContentUtils.tsx` — Contains the `useTags` hook that manages head/meta content
+- `Scripts.tsx` contains 2 `useStore` calls (selecting `assetScripts` via `getAssetScripts` and `scripts` via `getScripts`)
+- `headContentUtils.tsx` contains a `useTags` hook with 5 `useStore` calls
 
-Both files call `useStore` with selectors that return newly-constructed arrays on every invocation, even when the matched route data is semantically identical.
+## Requirements
 
-## Hint
+The `@tanstack/router-core` package exports a `deepEqual` utility. After the fix:
 
-The `@tanstack/react-store` package's `useStore` hook accepts an optional third argument: a comparison function. Using a deep-equality comparator in this argument prevents unnecessary re-renders when the selector produces a new object reference but the actual content is the same.
-
-The `@tanstack/router-core` package exports comparison utilities that may be useful.
+1. **Scripts.tsx** must contain the import: `import { deepEqual } from '@tanstack/router-core'`
+2. **headContentUtils.tsx** must import `deepEqual` from `@tanstack/router-core` (alongside the existing `escapeHtml` import — either `deepEqual, escapeHtml` or `escapeHtml, deepEqual`)
+3. All 7 `useStore` calls across both files must pass `deepEqual` as their third argument, formatted with Prettier-compatible multi-line style (e.g., each argument on its own line with `deepEqual,` as the last argument line)
+4. In `Scripts.tsx`, the `useStore` calls must produce the patterns `getAssetScripts,\n    deepEqual,` and `getScripts,\n    deepEqual,`
+5. In `headContentUtils.tsx`, the `useTags` function must contain exactly 5 `useStore` calls, each with `deepEqual` as its third argument
 
 ## Verification
 

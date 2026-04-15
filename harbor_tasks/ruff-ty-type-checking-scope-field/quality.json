@@ -3,59 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (scope.rs, semantic_index.rs, builder.rs, function.rs, overloaded_function.rs), the struct name (Scope), the field (in_type_checking_block), the getter method, the SemanticIndex::is_in_type_checking_block method, and the is_range_in_type_checking_block mechanism. The tests check these same paths, field names, and method names. The test for ancestor iteration checks for patterns like 'ancestor_scopes' or 'parent' which are natural consequences of the "
+      "reason": "instruction.md names all the specific file paths (scope.rs, semantic_index.rs, builder.rs, function.rs, overloaded_function.rs), the Scope struct, the in_type_checking_block field/getter, the is_in_type_checking_block method on SemanticIndex, and the is_range_in_type_checking_block mechanism. The tests check these same paths and patterns. The cargo check/clippy/test/fmt commands are standard CI checks implied by 'cargo check, clippy, tests, fmt must all pass'."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes WHAT should change (remove per-scope field, derive info from ancestor scopes and use-def maps) but does not specify exact code changes like 'change line X to Y' or provide the implementation. The agent must figure out how to implement the ancestor scope iteration and wire up the callers."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: remove in_type_checking_block field from Scope, remove the getter, derive info by checking ancestor scopes and their use-def maps, update callers in function.rs and overloaded_function.rs to use SemanticIndex::is_in_type_checking_block. This describes WHAT to change and HOW, leaving minimal reasoning for the agent. However, it doesn't specify exact line numbers or exact replacement code, so it's borderline. Still, the instruction essentially descr"
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_type_checking_uses_ancestor_iteration asserts that the function body contains specific strings like 'ancestor_scopes' or 'parent' or '.any(' or 'for ' or 'loop'. An alternative correct implementation using, e.g., a recursive helper function or iterating via a different mechanism (e.g., using 'while let' with index arithmetic) that doesn't use any of those exact tokens would fail. Additionally, the test checks for 'is_range_in_type_checking_block' in the function body, which constrains the i"
+      "outcome": "pass",
+      "reason": "The tests check for structural properties (field removed, getter removed, ancestor iteration pattern, use of is_range_in_type_checking_block) but don't assert on exact line positions or gold-specific variable names. Alternative implementations using different iteration patterns (parent chain, loop, for, .any()) would all pass test_type_checking_uses_ancestor_iteration since it checks for any of those patterns."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The test suite includes cargo check, cargo clippy, cargo test --lib, and cargo fmt --check which all execute real compilation and test runs. While some tests do text-based source inspection (test_scope_field_removed, test_scope_getter_removed, etc.), these are combined with execution-based tests that verify the code compiles and tests pass, ensuring behavioral correctness."
+      "reason": "Tests include cargo check, cargo clippy, cargo test --lib, and cargo fmt which all execute the code/compiler. While some tests (test_scope_field_removed, test_scope_getter_removed, etc.) do text inspection, they are complemented by the compilation and test execution tests that verify actual behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for structural changes (field removal, getter removal) that cannot be satisfied by a stub. test_scope_field_removed verifies the field is gone from the struct body. test_type_checking_uses_ancestor_iteration checks for specific implementation patterns AND the cargo test/check tests ensure the implementation actually works. A stub returning false would fail the existing library tests."
+      "reason": "The fail-to-pass tests (test_scope_field_removed, test_scope_getter_removed, test_type_checking_uses_ancestor_iteration, test_function_callers_updated, test_overloaded_function_callers_updated) would fail on the original code since the field, getter, and direct calls exist. A stub implementation (e.g., empty function body) would fail test_is_in_type_checking_block_not_stub and cargo test --lib. The combination ensures real implementation is needed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/ruff after the gold patch could be read from solve.sh or the solution directory. The agent could potentially read /solution/solve.sh if it exists in the container, or examine the test file at tests/test_outputs.py to understand exactly what strings to include/exclude. The Dockerfile and environment don't appear to restrict access to these files."
+      "reason": "The solution is available at /workspace/ruff after applying the gold patch via solve.sh, and the agent could read solution/solve.sh if it exists in the container. The Dockerfile doesn't remove /solution/ directory. An agent could simply read the patch and apply it directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: field removal (test_scope_field_removed), getter removal (test_scope_getter_removed), ancestor-based derivation (test_type_checking_uses_ancestor_iteration), caller updates in function.rs and overloaded_function.rs (test_function_callers_updated, test_overloaded_function_callers_updated), and continued correctness (test_cargo_check, test_cargo_test_lib, test_cargo_clippy, test_cargo_fmt_check)."
+      "reason": "All behaviors specified in instruction.md are tested: field removal (test_scope_field_removed), getter removal (test_scope_getter_removed), ancestor-based derivation (test_type_checking_uses_ancestor_iteration), caller updates (test_function_callers_updated, test_overloaded_function_callers_updated), and continued correct operation (test_cargo_check, test_cargo_test_lib, test_cargo_clippy, test_cargo_fmt_check)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining what each test verifies, and annotations like [static], [pr_diff], [repo_ci], [agent_config]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves Rust code refactoring, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, commands, and variable names in the instruction and tests are correct and consistent with the actual repository structure."
+      "reason": "All file paths, command names, function names, and variable names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the files to look at, which is appropriate given the task domain. It describes the architectural change without specifying exact line numbers or providing the implementation code. The file list is reasonable guidance, not leakage."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names all five files to modify under 'Files to Look At' and describes the exact changes needed (remove field, remove getter, use ancestor iteration with use-def maps, update specific callers). This goes beyond describing what's broken and essentially prescribes the solution implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config/agentmd-edits task."
+      "reason": "This is a code-only refactoring task, not an agent config edit task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
+    "no_solution_leakage",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' in Actions.tsx and TTDDialogTrigger.tsx, exact class name 'dropdown-menu-item__badge', exact prop syntax 'badge={badge}', and exact regex patterns for rendering order. The instruction mentions the class name and general approach but does not specify the exact JSX syntax like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' that tests assert. Also test_font_picker_list_uses_badge"
+      "reason": "Tests assert very specific strings like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' in Actions.tsx and TTDDialogTrigger.tsx, exact class name 'dropdown-menu-item__badge', exact prop syntax 'badge={badge}', and exact regex patterns for ordering in DropdownMenuItemContent.tsx. While the instruction mentions the class name and general approach, it does not specify the exact JSX expression 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' that tests like test_action"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: 'Add a badge prop to the component interface and pass it to MenuItemContent', 'Accept the badge prop and render it in the appropriate position', 'Move the AI badge from being a child element to the badge prop'. It also specifies the exact class name 'dropdown-menu-item__badge' and the exact type 'React.ReactNode'. This is prescribing the solution, not just describing the problem."
+      "reason": "The instruction explicitly states what to change: 'Add a badge prop to the component interface and pass it to MenuItemContent', 'Accept the badge prop and render it in the appropriate position', 'Move the AI badge from being a child element to the badge prop'. It specifies the exact class name 'dropdown-menu-item__badge', the exact prop type 'React.ReactNode', and tells the agent to conditionally render it. This is effectively telling the agent the fix rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' in test_actions_uses_badge_prop and test_ttd_dialog_trigger_uses_badge_prop. They also use exact regex for rendering order in test_badge_rendered_in_correct_position. An alternative correct fix with different whitespace, prop ordering, or equivalent JSX structure would fail these string/regex assertions."
+      "reason": "Tests assert exact string matches like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' in test_actions_uses_badge_prop, exact regex patterns for whitespace/ordering in test_badge_rendered_in_correct_position, and 'badge={badge}' in test_dropdown_menu_item_has_badge_prop. An alternative correct implementation using slightly different formatting (e.g., multi-line JSX for the badge prop, or different whitespace) would fail these string/regex assertions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_dropdown_menu_item_has_badge_prop, test_menu_item_content_has_badge_prop, test_actions_uses_badge_prop, test_font_picker_list_uses_badge_prop, test_ttd_dialog_trigger_uses_badge_prop, test_badge_rendered_in_correct_position) ALL use 'assert X in open(path).read()' pattern \u2014 pure text/regex matching on source files with no execution or behavioral testing. The pass_to_pass tests do run subprocesses (typecheck, lint, etc.) but all f2p tests are text-based."
+      "reason": "The fail_to_pass tests (test_dropdown_menu_item_has_badge_prop, test_menu_item_content_has_badge_prop, test_actions_uses_badge_prop, test_font_picker_list_uses_badge_prop, test_ttd_dialog_trigger_uses_badge_prop, test_badge_rendered_in_correct_position) all use `open(path).read()` and assert on string/regex matches in source files. None of them import, execute, or render the components. The pass_to_pass tests do run subprocesses (typecheck, lint, prettier, unit tests), but every fail_to_pass tes"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'badge?: React.ReactNode;' in DropdownMenuItem.tsx, 'badge={badge}' passed to MenuItemContent). A stub/no-op implementation wouldn't add these strings to the source files."
+      "reason": "A stub implementation would not pass these tests since they check for specific strings that don't exist in the base commit files (e.g., 'badge?: React.ReactNode;' in DropdownMenuItem.tsx, 'dropdown-menu-item__badge' class in DropdownMenuItemContent.tsx). The agent must actually modify the files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/excalidraw accessible via solve.sh. The agent could read the test file at tests/test_outputs.py to see exact expected strings like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' and simply paste those exact strings into the right files. No anti-cheating measures prevent reading /solution/ or test files."
+      "reason": "The solution is in /workspace/excalidraw accessible via solve.sh. The agent could read the test file at tests/test_outputs.py to discover exact expected strings like 'badge={<DropdownMenu.Item.Badge>AI</DropdownMenu.Item.Badge>}' and simply insert them. The agent could also potentially access /solution/solve.sh if it exists in the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (badge prop on DropdownMenuItem, badge prop on MenuItemContent, rendering position, migration of existing usages in Actions.tsx, FontPickerList.tsx, TTDDialogTrigger.tsx, typecheck passing) are covered by corresponding tests."
+      "reason": "All behaviors described in the instruction (badge prop on DropdownMenuItem, badge prop on MenuItemContent, rendering with correct class, correct position, updating Actions.tsx, FontPickerList.tsx, TTDDialogTrigger.tsx) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_dropdown_menu_item_has_badge_prop, test_badge_rendered_in_correct_position, etc.), have docstrings with pass_to_pass/fail_to_pass annotations, and are logically grouped by component."
+      "reason": "Tests are well-named (test_dropdown_menu_item_has_badge_prop, test_badge_rendered_in_correct_position, etc.), have docstrings indicating pass_to_pass vs fail_to_pass, and have a module-level docstring explaining the PR context."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying React component code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves modifying React component code, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the actual repository structure."
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names all 5 files to modify, describes the exact prop name ('badge'), the exact type ('React.ReactNode'), the exact CSS class ('dropdown-menu-item__badge'), and the exact rendering position. This goes beyond describing the problem into specifying the implementation."
+      "reason": "The instruction names all 5 exact files to modify, specifies the exact class name 'dropdown-menu-item__badge', the exact type 'React.ReactNode', and exactly where to render the badge ('after the text content, before the shortcut'). This goes beyond describing the bug and essentially prescribes the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

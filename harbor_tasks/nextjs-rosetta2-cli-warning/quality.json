@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the target file (packages/next/src/bin/next.ts), the import style (import os from 'os'), the three detection conditions (process.platform === 'darwin', process.arch === 'x64', os.cpus().some with cpu.model.includes('Apple')), the warn() function, and the required message content ('Apple Silicon' and 'performance'). All test assertions map to these described requirements."
+      "reason": "The instruction specifies the target file (packages/next/src/bin/next.ts), the exact conditions (process.platform === 'darwin', process.arch === 'x64', os.cpus().some with cpu.model.includes('Apple')), the import style (import os from 'os'), the warn function, and the required message content ('Apple Silicon' and 'performance'). All test assertions check for these elements which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies the exact three conditions to check (process.platform === 'darwin', process.arch === 'x64', os.cpus().some with cpu.model.includes('Apple')), the exact import syntax ('import os from \"os\"'), and even gives the exact warning message string. This leaves almost no reasoning for the agent about WHAT to change; it essentially dictates the implementation."
+      "reason": "The instruction essentially gives the complete solution: it specifies the exact file, the exact three conditions with precise syntax (process.platform === 'darwin', process.arch === 'x64', os.cpus().some with cpu.model.includes('Apple')), the exact import syntax, the exact function to call (warn), and even an example warning message. A developer doesn't need to reason about what to change \u2014 the instruction is a specification of the exact code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like src.includes(\"process.platform === 'darwin'\"), src.includes(\"process.arch === 'x64'\"), src.includes(\"os.cpus().some\"), and src.includes(\"cpu.model.includes('Apple')\"). An alternative correct implementation using e.g. process.platform == 'darwin' (double equals), os.cpus().filter() instead of .some(), or cpu.model.indexOf('Apple') !== -1 would fail these tests despite being functionally correct."
+      "reason": "Tests in test_rosetta_warning_darwin_x64_apple assert exact string matches like src.includes(\"process.platform === 'darwin'\"), src.includes(\"process.arch === 'x64'\"), src.includes(\"os.cpus().some\"), and src.includes(\"cpu.model.includes('Apple')\"). An alternative correct implementation using e.g. process.platform == 'darwin' (double equals), os.cpus().filter() instead of .some(), or cpu.model.indexOf('Apple') !== -1 would fail these literal string checks despite being behaviorally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are primarily text-matching: test_os_import_exists checks for literal import text, test_warning_message_content uses regex on source text. test_rosetta_warning_darwin_x64_apple does eval() the extracted condition and body, which is a hybrid approach, but the extraction itself relies on text matching (src.includes checks). test_syntax_valid only checks brace balance. The tests never actually run the CLI or import the module."
+      "reason": "Most tests are text-matching: test_os_import_exists checks for literal import strings in source, test_warning_message_content uses regex on source text, test_syntax_valid counts braces. Even test_rosetta_warning_darwin_x64_apple primarily does src.includes() checks for exact strings, then evals extracted code fragments rather than running the actual CLI. No test actually executes the Next.js CLI to observe behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would fail: test_os_import_exists requires the import line, test_warning_message_content requires a warn() call with specific content, and test_rosetta_warning_darwin_x64_apple evaluates the condition and checks warn was called. These cannot be satisfied by a no-op."
+      "reason": "A stub implementation (empty file or unchanged next.ts) would fail test_os_import_exists (no 'import os from \"os\"'), test_warning_message_content (no warn call with 'Apple Silicon' and 'performance'), and test_rosetta_warning_darwin_x64_apple (missing detection components). The tests require actual implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/next.js via the solve.sh script path referenced in solution/solve.sh. An agent could potentially read the solution file if it exists in the container. Additionally, the tests themselves contain the exact strings and patterns needed, so grepping test files would reveal the expected implementation."
+      "reason": "The solution is available at /workspace/next.js in the container's git history or could be found via the solve.sh in /solution/. The agent could read /solution/solve.sh to get the exact patch, or could grep for the expected test fixture strings (like 'Apple Silicon', 'Rosetta 2') and just insert matching text."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: the three detection conditions, the os import, the warning message content mentioning 'Apple Silicon' and 'performance', no false positive on arm64, no false positive on Linux, and no false positive on non-Apple x64."
+      "reason": "All behaviors from the instruction are tested: darwin+x64+Apple CPU triggers warning (test_rosetta_warning_darwin_x64_apple), arm64 doesn't trigger (test_no_false_positive_arm64), Linux doesn't trigger (test_no_false_positive_linux), os import exists (test_os_import_exists), message content requirements (test_warning_message_content)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_rosetta_warning_darwin_x64_apple, test_no_false_positive_arm64, etc.), grouped with comments into 'Gates', 'Fail-to-pass', and 'Pass-to-pass' sections, and each has a docstring explaining what it checks."
+      "reason": "Tests are well-named, grouped into sections (Gates/static, Fail-to-pass/core behavioral, Pass-to-pass/regression), and each has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task produces code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (packages/next/src/bin/next.ts), specifies the exact import syntax, the exact conditions with precise string comparisons, and even provides an example warning message that matches the gold solution nearly verbatim. This goes well beyond identifying the buggy module."
+      "reason": "The instruction explicitly names the exact file (packages/next/src/bin/next.ts), tells you exactly where to add code ('the CLI entry point where platform detection should be added'), specifies the exact import to use, and even gives a near-verbatim example of the warning message. This goes beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

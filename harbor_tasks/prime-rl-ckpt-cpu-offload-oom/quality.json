@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific identifiers not mentioned in instruction.md: the class name 'AppState', the method name 'load_state_dict', the file path 'src/prime_rl/trainer/ckpt.py', and the variable 'has_cpu_offload' pattern. The instruction mentions 'checkpoint handling code' generically but never names the AppState class, the load_state_dict method, or the exact file path. Also 'state_dict.clear()' is mentioned in instruction but the file location is not specified."
+      "reason": "Tests assert on specific class/method names like 'AppState' and 'load_state_dict' (e.g., _find_method(tree, 'AppState', 'load_state_dict')), the file path 'src/prime_rl/trainer/ckpt.py', and specific calls like 'state_dict.clear()'. The instruction.md never mentions the class name 'AppState', the method name 'load_state_dict', or the exact file path. It only vaguely references 'checkpoint handling code'. The agent cannot discover these specifics from instruction.md alone."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Call state_dict.clear(), gc.collect(), and torch.cuda.empty_cache() inside a conditional block that only executes when CPUOffloadOptimizer was detected' and 'Track whether any optimizer is a CPUOffloadOptimizer during the state restoration loop'. This is not describing what's broken \u2014 it's prescribing the exact implementation steps."
+      "reason": "instruction.md explicitly states the exact fix: 'Call state_dict.clear(), gc.collect(), and torch.cuda.empty_cache() inside a conditional block that only executes when CPUOffloadOptimizer was detected' and 'Track whether any optimizer is a CPUOffloadOptimizer during the state restoration loop'. This is not describing what's broken \u2014 it's prescribing the exact implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use AST analysis and string matching (e.g., test_cleanup_gated_on_offload checks for gc.collect/empty_cache inside an ast.If node, test_memory_reclamation_on_cpu_offload checks literal strings 'gc.collect()' and 'empty_cache()' in source). An alternative correct fix that uses a context manager, a finally block, or wraps cleanup in a helper function called from outside load_state_dict would fail these tests."
+      "reason": "Tests use AST analysis to check that gc.collect() and empty_cache() appear inside an ast.If node within the specific method AppState.load_state_dict. An alternative correct fix that places cleanup in a helper function called from load_state_dict, or uses a context manager, or uses 'del state_dict' instead of 'state_dict.clear()', would fail the AST-based tests. The tests are overly specific to the gold patch's structure."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_gc_imported, test_memory_reclamation_on_cpu_offload, test_cleanup_gated_on_offload) all operate via AST parsing and string matching on source code \u2014 they never import, instantiate, or execute the code. While the test file acknowledges this ('Since tests run on CPU-only Docker, we use AST analysis'), they are fundamentally text/structure checks, not behavioral tests."
+      "reason": "The fail-to-pass tests (test_gc_imported, test_memory_reclamation_on_cpu_offload, test_cleanup_gated_on_offload) all use AST parsing and string matching on source code \u2014 checking for 'gc.collect()' in method_source, 'empty_cache()' in method_source, 'CPUOffloadOptimizer' in method_source. No test actually imports, instantiates, or calls the code. The pass-to-pass tests do run py_compile and ruff but those are gates, not behavioral tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for gc import, gc.collect()/empty_cache() calls within load_state_dict, and conditional gating on CPUOffloadOptimizer \u2014 none of these would be satisfied by a stub/pass implementation since the original code lacks these elements."
+      "reason": "The fail-to-pass tests check for gc import, gc.collect()/empty_cache() calls in load_state_dict, and conditional gating on CPUOffloadOptimizer \u2014 none of these exist in the base commit. A stub or no-op implementation would not pass these checks since the original code lacks these elements."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/prime-rl relative path and the solve.sh is a readable shell script. An agent could read /solution/solve.sh or examine the test file at tests/test_outputs.py to extract the exact expected patterns. The Dockerfile doesn't remove these files."
+      "reason": "The solution is in /workspace/prime-rl accessible to the agent via solve.sh. The agent could read the solution file or simply grep for the expected patterns. The Dockerfile also doesn't remove the solution directory, and the test file paths are predictable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (gc import, gc.collect(), torch.cuda.empty_cache(), conditional on CPUOffloadOptimizer, state_dict.clear()) are tested in the fail-to-pass tests."
+      "reason": "All behaviors from instruction.md are tested: gc import (test_gc_imported), gc.collect() and torch.cuda.empty_cache() calls (test_memory_reclamation_on_cpu_offload), conditional on CPUOffloadOptimizer (test_cleanup_gated_on_offload), and state_dict.clear() is mentioned in instruction but not explicitly tested (though it would be needed to pass the overall logic)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass, Fail-to-pass pr_diff, Pass-to-pass static anti-stub), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass, Fail-to-pass pr_diff, Pass-to-pass static anti-stub), descriptive function names, and detailed docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves code modification, not structured data output."
+      "reason": "This task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact implementation: 'Call state_dict.clear(), gc.collect(), and torch.cuda.empty_cache() inside a conditional block' and 'Track whether any optimizer is a CPUOffloadOptimizer during the state restoration loop'. This removes localization and design reasoning from the task."
+      "reason": "instruction.md specifies exact implementation details: 'Call state_dict.clear(), gc.collect(), and torch.cuda.empty_cache()', 'Track whether any optimizer is a CPUOffloadOptimizer during the state restoration loop', and 'inside a conditional block'. This goes well beyond describing the bug \u2014 it prescribes the exact code structure, removing the need for the agent to reason about localization or solution design."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

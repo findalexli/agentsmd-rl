@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (project_mobile_detail_content.dart, project_tasks_panel.dart, README.md), class names (ProjectTasksSliverPanel, CustomScrollView, SliverToBoxAdapter, SliverList, TaskSummaryRow), widget details (StatelessWidget, itemBuilder, itemCount, slivers:, ProjectRecord, HealthPanel, _ProjectMobileHeader), and the requirement to remove SingleChildScrollView and ProjectTasksPanel(. The README update is mentioned in the 'Files to L"
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (project_mobile_detail_content.dart, project_tasks_panel.dart, README.md), class names (ProjectTasksSliverPanel, CustomScrollView, SliverToBoxAdapter, SliverList), widget names (_ProjectMobileHeader, HealthPanel, TaskSummaryRow, ProjectTasksPanel), parameters (slivers:, itemBuilder, itemCount), and the requirement that ProjectTasksSliverPanel extends StatelessWidget with a build method returning Widget accepting Project"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact class names (ProjectTasksSliverPanel), exact parent class (StatelessWidget), exact widget types to use (CustomScrollView, SliverToBoxAdapter, SliverList), exact parameters (itemBuilder, itemCount, slivers:), and exact wrapping patterns. This goes well beyond describing what's broken and essentially dictates the implementation. A competent developer doesn't need to reason about WHAT to change; the instruction tells them exactly."
+      "reason": "The instruction explicitly tells the agent exactly what to do: replace SingleChildScrollView with CustomScrollView, wrap headers in SliverToBoxAdapter, create ProjectTasksSliverPanel extending StatelessWidget, use SliverList with itemBuilder and itemCount. This is not describing 'what's broken' but rather prescribing the exact implementation. The agent doesn't need to reason about what to change \u2014 the fix is fully specified."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details like the exact class name 'ProjectTasksSliverPanel', 'StatelessWidget' as the parent class, 'SliverList', 'itemBuilder', 'itemCount', 'SliverToBoxAdapter', and the absence of 'SingleChildScrollView(' and 'ProjectTasksPanel('. Alternative correct solutions using SliverFixedExtentList, SliverPrototypeExtentList, a delegate-based approach instead of itemBuilder, or a differently named sliver panel class would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: exact class name 'ProjectTasksSliverPanel' extending 'StatelessWidget', exact use of 'SliverList' with 'itemBuilder' and 'itemCount', exact use of 'SliverToBoxAdapter', and removal of 'SingleChildScrollView('. An alternative correct fix using SliverFixedExtentList, or a different class name, or using SliverChildBuilderDelegate with 'delegate' instead of 'itemBuilder' directly, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test is purely textual: they read .dart source files as strings and check for presence/absence of specific substrings like 'CustomScrollView', 'SliverList', 'itemBuilder', etc. No test compiles the Dart code, runs a widget test, or executes any behavioral verification. All checks are `assert 'foo' in open(path).read()` style."
+      "reason": "Every fail-to-pass test is purely text-based: they read .dart source files and check for string presence (e.g., 'CustomScrollView' in src, 'SliverList' in src, regex matches on class definitions). No test compiles the Dart code, runs the Flutter app, or executes any behavioral check. The pass-to-pass syntax check only counts braces. All tests are essentially `assert 'foo' in open(path).read()`."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply contains the right keywords would pass. For example, adding `class ProjectTasksSliverPanel extends StatelessWidget { Widget build(BuildContext c) => SliverList(delegate: SliverChildBuilderDelegate((c,i) => TaskSummaryRow(), childCount: 0)); }` with `ProjectRecord` mentioned in a comment, and similarly adding keyword strings to the detail content file, would pass all tests without actually implementing correct lazy scrolling behavior."
+      "reason": "A stub implementation that simply adds the right keywords to the files would pass. For example, adding a class ProjectTasksSliverPanel extends StatelessWidget with a build method containing SliverList, itemBuilder, itemCount, and TaskSummaryRow as string literals in comments or dead code would pass all tests, since no test actually compiles or runs the code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/lotti via `solve.sh` which does `git checkout e0ed1461... -- <files>`. The agent could read solve.sh from the solution directory or simply run git commands to fetch the gold commit. Additionally, since tests only check for string presence in files, the agent could grep the test file for expected strings and paste them in."
+      "reason": "The solution/solve.sh is present in the container at /workspace and reveals the exact git commit (e0ed1461a20edea9ea57c49fda29fb89d72d7882) to checkout. An agent could read this file and execute the git checkout command directly. Additionally, since tests only check for string presence, the agent could grep test files to discover exactly what strings need to be present."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit behaviors from instruction.md are tested: CustomScrollView replacement, SliverToBoxAdapter wrapping, ProjectTasksSliverPanel class creation with StatelessWidget/build/ProjectRecord, SliverList with itemBuilder/itemCount, removal of old widgets, TaskSummaryRow usage, and README updates (truncated but referenced)."
+      "reason": "The main behavioral requirements from instruction.md are tested: CustomScrollView replacing SingleChildScrollView, SliverToBoxAdapter wrapping headers, ProjectTasksSliverPanel class creation with SliverList lazy rendering, detail content using the new sliver panel, and README documentation updates (test_readme_documents_scroll_architecture, though truncated). The preservation of ProjectTasksPanel is implicitly tested by not requiring its removal from the tasks panel file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_custom_scroll_view_in_detail_content, test_sliver_task_panel_class_exists), and docstrings explaining each check's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_custom_scroll_view_in_detail_content, test_sliver_task_panel_class_exists), and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [repo_tests] categorize the tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI widget refactoring in Dart/Flutter, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves Flutter/Dart UI code changes, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, class names, widget names, and parameter names in instruction.md match those asserted in tests without typos."
+      "reason": "File paths, class names, widget names, and parameter names in instruction.md match those checked by the tests without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact widget classes to use (CustomScrollView, SliverToBoxAdapter, SliverList), exact class names to create (ProjectTasksSliverPanel), exact parameters (itemBuilder, itemCount, slivers:), and exact files to modify. This goes beyond pointing to the relevant area and essentially specifies the implementation at a line-by-line level."
+      "reason": "The instruction names exact widget classes to use (CustomScrollView, SliverToBoxAdapter, SliverList), exact class name to create (ProjectTasksSliverPanel), exact parameters (itemBuilder, itemCount, slivers:), and exact files to modify. This goes well beyond identifying the buggy area \u2014 it specifies the complete solution architecture."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Dart source files, not configuration file edits."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

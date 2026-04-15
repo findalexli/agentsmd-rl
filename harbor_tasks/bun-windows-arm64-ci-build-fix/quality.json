@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions all key elements tested: the ternary runtime selection with target.os/target.arch, 'bun' vs 'node --experimental-strip-types', skipSizeCheck option, getBinarySizeStep function, key 'binary-size', 'bun scripts/binary-size.ts', 'threshold-mb', depends_on, options.skipSizeCheck, and the specific skip patterns. The exact string patterns like 'const runtime = target.os === \"windows\" && target.arch === \"aarch64\"' are very close to what the instruction describes with 'Platform-"
+      "reason": "The instruction mentions all key elements tested: the ternary runtime selection with target.os/target.arch, 'bun' vs 'node --experimental-strip-types', skipSizeCheck option, getBinarySizeStep function, key 'binary-size', 'bun scripts/binary-size.ts', 'threshold-mb', depends_on, options.skipSizeCheck, and platform-aware runtime selection. The specific string patterns like 'const runtime = target.os === \"windows\" && target.arch === \"aarch64\"' are discoverable from the instruction's description of "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially prescribes the exact implementation: 'Platform-aware runtime selection using a ternary expression that selects different runtimes based on OS (target.os) and architecture (target.arch)', 'A getBinarySizeStep() function that creates a BuildKite step with key \"binary-size\"', 'Running bun scripts/binary-size.ts', 'A threshold-mb parameter', 'An option skipSizeCheck (accessed via options.skipSizeCheck)'. This is describing WHAT to code, not just what's broken."
+      "reason": "The instruction explicitly states the exact implementation: 'A ternary expression that selects different runtimes based on OS (target.os) and architecture (target.arch)', 'skipSizeCheck (accessed via options.skipSizeCheck)', 'key \"binary-size\"', 'bun scripts/binary-size.ts', 'threshold-mb parameter', 'depends_on property linking to release builds'. This is essentially a specification of the exact code to write, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_windows_arm64_uses_bun_runtime checks for the exact string 'const runtime = target.os === \"windows\" && target.arch === \"aarch64\"' and '? \"bun\" : \"node --experimental-strip-types\"' and that getBuildCommand uses 'runtime' variable in a specific pattern. An alternative fix (e.g., using an if/else block, different variable names, or a switch statement) would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact string matches like 'const runtime = target.os === \"windows\" && target.arch === \"aarch64\"' and '? \"bun\" : \"node --experimental-strip-types\"' in test_windows_arm64_uses_bun_runtime. An equally correct alternative (e.g., using an if/else block, a different variable name, or a switch statement) would fail these tests despite correctly fixing the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_windows_arm64_uses_bun_runtime, test_skip_size_check_option_parsed, test_binary_size_step_function_exists) are all text-matching tests using string inclusion checks like 'assert \"skipSizeCheck\" in ci_mjs' and code.includes() checks. They never import, call, or execute the functions. The pass-to-pass tests do run syntax checks and linters, but the core behavioral tests are purely textual."
+      "reason": "The core fail-to-pass tests (test_windows_arm64_uses_bun_runtime, test_skip_size_check_option_parsed, test_binary_size_step_function_exists) all work by reading the file and checking for specific string patterns using 'in' or regex matches. They do not import, call, or execute the functions. Only the syntax check and repo-level tests actually execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings and patterns that don't exist in the base commit (e.g., 'const runtime = target.os === \"windows\" && target.arch === \"aarch64\"', 'function getBinarySizeStep(', 'skipSizeCheck'). A stub or no-op wouldn't add these strings to ci.mjs, so the tests would fail."
+      "reason": "A stub implementation (empty file, pass, etc.) would not contain the required strings like 'const runtime = target.os === \"windows\"...', 'function getBinarySizeStep(', 'key: \"binary-size\"', etc. The agent must write substantive code containing these specific patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/bun via the solve.sh script reference, and the Dockerfile doesn't remove the solution directory. An agent could read the test file at tests/test_outputs.py to see exact string patterns expected, or could potentially access the solution patch. The tests check for literal strings that could be directly copied."
+      "reason": "The solution file exists at /workspace/bun as solve.sh (solution/solve.sh is mounted/available in the container). The agent could read /solution/solve.sh or simply grep for the expected test strings in test files. The tests check for exact literal strings that appear in test_outputs.py, so reading the test file and inserting those strings would suffice."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in the instruction are tested: Windows ARM64 runtime selection, skip size check parsing, getBinarySizeStep function with key/depends_on/threshold-mb, skipSizeCheck option, and preservation of node runtime for other platforms."
+      "reason": "All behaviors mentioned in the instruction are tested: Windows ARM64 runtime fix, skipSizeCheck parsing, getBinarySizeStep function with key/depends_on/threshold-mb, binary-size.ts command, and preservation of node runtime for other platforms."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [repo_tests] categorize tests."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it modifies CI pipeline configuration code."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'a ternary expression that selects different runtimes based on OS (target.os) and architecture (target.arch)', 'A getBinarySizeStep() function', 'key \"binary-size\"', 'options.skipSizeCheck'. This goes beyond describing the bug and prescribes the exact code structure, effectively leaking the solution approach."
+      "reason": "The instruction specifies exact implementation details: 'ternary expression that selects different runtimes based on OS (target.os) and architecture (target.arch)', 'skipSizeCheck (accessed via options.skipSizeCheck)', 'key \"binary-size\"'. This goes beyond naming the buggy file and describes the exact code structure to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized to specific additions in .buildkite/ci.mjs (runtime ternary, getBinarySizeStep function, skipSizeCheck option, pipeline integration) and a new file. It doesn't rewrite the entire file."
+      "reason": "The gold patch is localized: a few lines changed in getBuildCommand, a new function getBinarySizeStep added, and a few lines added to getPipelineOptions and getPipeline. It does not rewrite the entire file."
     }
   },
   "tier_a_fails": [

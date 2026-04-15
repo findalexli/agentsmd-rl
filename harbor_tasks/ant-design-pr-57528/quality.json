@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the key file paths (components/popconfirm/index.tsx, components/popconfirm/PurePanel.tsx implicitly via 'Popconfirm panel'), the type names (PopconfirmSemanticType, PopconfirmSemanticAllType, PopoverSemanticType), the exact string patterns (classNames?.icon, styles?.icon, message-icon, clsx(), export type PopconfirmSemanticType = {, PopoverSemanticType['classNames']), and rendering requirements that correspond to what the tests assert."
+      "reason": "The instruction names the file paths (components/popconfirm/index.tsx, components/popconfirm/PurePanel.tsx), the type names (PopconfirmSemanticType, PopconfirmSemanticAllType, PopoverSemanticType), the specific string patterns (classNames?.icon, styles?.icon, clsx, icon?: string, icon?: React.CSSProperties, PopoverSemanticType['classNames']), and the required export syntax. All assert targets in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'Use the syntax export type PopconfirmSemanticType = {', 'using bracket notation like PopoverSemanticType[\"classNames\"]', 'Apply the custom icon class using the clsx() utility function', 'Reference the semantic values using optional chaining syntax: classNames?.icon and styles?.icon'. These are not descriptions of broken behavior but prescriptions of exact code to write."
+      "reason": "The instruction explicitly states implementation details like 'Use bracket indexing to extend the base semantic types from Popover (e.g., PopoverSemanticType[\"classNames\"])', 'export type PopconfirmSemanticType = { ... }', 'Use clsx to combine the base icon class with any semantic icon class', and 'import PopoverSemanticType (not PopoverSemanticAllType)'. These are essentially step-by-step instructions for the exact fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string patterns like 'export type PopconfirmSemanticType = {' (test_popconfirm_type_exported), 'classNames?.icon' (test_purepanel_applies_classnames_icon), 'styles?.icon' (test_purepanel_applies_styles_icon), 'clsx(' combined with 'message-icon' and 'classNames?.icon' (test_icon_element_uses_clsx). A correct alternative using e.g. 'classNames.icon' without optional chaining, or cx() instead of clsx(), or a different type syntax would fail."
+      "reason": "Tests assert on exact string patterns like 'export type PopconfirmSemanticType = {' (test_popconfirm_type_exported), 'PopoverSemanticType[' (test_icon_semantic_integration), 'PopconfirmSemanticAllType' (test_imports_from_popover_updated), and specific patterns in OverlayProps (test_overlay_props_use_popconfirm_types). An alternative correct fix using different type naming, different extension syntax, or interface instead of type would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_popconfirm_semantic_type_has_icon, test_purepanel_applies_classnames_icon, test_purepanel_applies_styles_icon, test_icon_element_uses_clsx, test_popconfirm_type_exported, test_imports_from_popover_updated, test_overlay_props_use_popconfirm_types, and test_icon_semantic_integration all exclusively use 'assert <string> in open(path).read()' pattern with no code execution. Only test_repo_jest_popconfirm, test_repo_lint_popconfirm, and test_repo_biome_lint run actual code."
+      "reason": "Tests test_popconfirm_semantic_type_has_icon, test_purepanel_applies_classnames_icon, test_purepanel_applies_styles_icon, test_icon_element_uses_clsx, test_popconfirm_type_exported, test_imports_from_popover_updated, test_overlay_props_use_popconfirm_types, and test_icon_semantic_integration all use 'assert STRING in open(path).read()' pattern without any execution or behavioral verification. Only test_repo_jest_popconfirm, test_repo_lint_popconfirm, and test_repo_biome_lint execute code, and th"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests only check for string presence in source files. An agent could simply append comment strings like '// classNames?.icon styles?.icon clsx( message-icon export type PopconfirmSemanticType = { PopoverSemanticType[\"classNames\"] PopconfirmSemanticAllType' to the files without implementing any actual functionality, and most text-based tests would pass."
+      "reason": "The fail_to_pass tests are purely text-matching (e.g., checking if 'classNames?.icon' appears in the file). An agent could satisfy them by appending a dead-code comment like '// classNames?.icon styles?.icon clsx( message-icon PopconfirmSemanticAllType' without actually implementing any functional change. No behavioral execution validates that the icon actually receives semantic styling."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution script exists at /workspace/ant-design/../solution/solve.sh (or similar path in the container). The agent could read /solution/solve.sh to find the exact patch. Additionally, since tests are pure string matching, the agent could grep test files or simply add matching strings as comments."
+      "reason": "The solution exists at /workspace/ant-design and the solve.sh is in the container's /solution/ directory. An agent could read /solution/solve.sh to get the exact patch. Additionally, since tests are pure string matching, the agent could grep test files or the solution to find the exact strings needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (type definition with icon fields, clsx usage, optional chaining, proper exports, PopconfirmSemanticAllType usage, extending PopoverSemanticType) are tested."
+      "reason": "All behaviors described in instruction.md (type definitions, rendering with clsx, classNames?.icon, styles?.icon, proper imports, lint passing) are tested, though only via text matching rather than behavioral execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings indicating what each test checks (e.g., test_popconfirm_semantic_type_has_icon, test_purepanel_applies_classnames_icon). Tests are grouped logically."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'PopconfirmSemanticType includes icon in classNames (fail_to_pass)') and grouped logically by concern (types, rendering, imports, linting)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task is about component styling/types, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact syntax patterns to use: 'export type PopconfirmSemanticType = {', 'PopoverSemanticType[\"classNames\"]', 'clsx() utility function', 'classNames?.icon and styles?.icon'. It also specifies the exact type names and their relationships, going well beyond describing the bug."
+      "reason": "The instruction specifies exact file paths (components/popconfirm/index.tsx, components/popconfirm/PurePanel.tsx), exact type syntax ('export type PopconfirmSemanticType = { ... }'), exact import sources ('import PopoverSemanticType (not PopoverSemanticAllType)'), and exact bracket indexing syntax ('PopoverSemanticType[\"classNames\"]'). This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

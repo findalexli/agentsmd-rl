@@ -3,61 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (scripts/ci/prek/update_airflow_pyproject_toml.py, scripts/in_container/install_airflow_and_providers.py), the function name (get_all_workspace_component_names is implied by 'Create a function that extracts all workspace component names'), the constants (START_EXCLUDE_NEWER_PACKAGE, END_EXCLUDE_NEWER_PACKAGE, START_EXCLUDE_NEWER_PACKAGE_PIP), the reference to 'update_airflow_pyproject_toml.py' in marker text, the pattern '--exclude-newer' with 'datetime.n"
+      "reason": "The instruction names the specific file paths (scripts/ci/prek/update_airflow_pyproject_toml.py, scripts/in_container/install_airflow_and_providers.py), function name (get_all_workspace_component_names is implied by the workspace extraction requirement), constant names (START_EXCLUDE_NEWER_PACKAGE, END_EXCLUDE_NEWER_PACKAGE, START_EXCLUDE_NEWER_PACKAGE_PIP), the pyproject.toml path, the [tool.uv.sources] section, workspace=true filtering, sorted list return, update_airflow_pyproject_toml.py refe"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be created (function, constants) and what needs to be removed (datetime-based --exclude-newer), but doesn't specify exact line numbers, regex patterns, or specific code to write. A developer still needs to reason about implementation details."
+      "reason": "The instruction describes what needs to be created/changed (a function, constants, removing a pattern) but doesn't specify exact line numbers, exact string values for constants, or the precise regex to use. A developer must still reason about implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_function_extracts_workspace_components_correctly checks for '_read_toml' in func_source as an implementation detail. An alternative correct implementation could use tomllib.loads() directly or a differently-named helper function and would fail this assertion. Also test_get_all_workspace_component_names_returns_sorted_list checks for 'sources' as a substring in the unparsed AST, which constrains variable naming."
+      "reason": "Tests assert on gold-specific implementation details: test_get_all_workspace_component_names_function_exists checks for exact function name 'get_all_workspace_component_names' via AST; test_exclude_newer_package_constants_defined checks for exact variable names START_EXCLUDE_NEWER_PACKAGE, END_EXCLUDE_NEWER_PACKAGE, START_EXCLUDE_NEWER_PACKAGE_PIP, END_EXCLUDE_NEWER_PACKAGE_PIP; test_get_all_workspace_component_names_returns_sorted_list assumes a helper function '_read_toml' exists. An alternati"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Nearly all tests are text/AST inspection: checking if strings appear in file content (e.g., 'assert \"START_EXCLUDE_NEWER_PACKAGE\" in content'), checking AST for function names, checking unparsed source for substrings like 'sorted', 'workspace', '_read_toml'. No test actually imports or calls get_all_workspace_component_names() to verify its runtime behavior. The py_compile tests only verify syntax, not behavior."
+      "outcome": "pass",
+      "reason": "Tests use AST parsing and subprocess execution to verify behavior. test_get_all_workspace_component_names_returns_sorted_list actually executes the function and compares its output against expected values computed from pyproject.toml. test_install_script_no_exclude_newer_with_datetime uses AST analysis rather than simple text matching. These are behavioral checks, not pure text searches."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation like 'def get_all_workspace_component_names() -> list[str]: sources = _read_toml(AIRFLOW_PYPROJECT_TOML_FILE).get(\"tool\", {}).get(\"uv\", {}).get(\"sources\", {}); return sorted(n for n, v in sources.items() if isinstance(v, dict) and v.get(\"workspace\"))' would pass all AST-based checks, but more critically, a function that simply contains the right keywords in its source (sorted, workspace, sources, get, _read_toml) without actually working correctly would pass. The tests neve"
+      "outcome": "pass",
+      "reason": "test_get_all_workspace_component_names_returns_sorted_list actually calls the function and verifies its return value matches expected workspace components from pyproject.toml - a stub returning empty list or None would fail. test_exclude_newer_package_marker_values checks that constant values contain specific content ('update_airflow_pyproject_toml.py' and 'exclude-newer-package'). These cannot be satisfied by trivial stubs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/airflow and the solve.sh script is in the container's solution/ directory. An agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings and patterns, then produce matching code without understanding the problem."
+      "reason": "The solution is available at /workspace/airflow as the solve.sh script operates there, and the agent could potentially read the solution/solve.sh file if it exists in the container. The Dockerfile doesn't explicitly prevent access to /solution/ directory. An agent could also grep test files to discover expected constant names and function signatures."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three main requirements from instruction.md are tested: workspace component extraction (function existence and implementation checks), configuration section markers (constant definitions), and simplified pre-release installation (removal of --exclude-newer datetime pattern)."
+      "reason": "All three main requirements are tested: workspace component extraction (test_get_all_workspace_component_names_*), configuration section markers (test_exclude_newer_package_constants_defined, test_exclude_newer_package_marker_values), and simplified pre-release installation (test_install_script_no_exclude_newer_with_datetime, test_install_script_pre_release_simplified)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies. They are logically grouped by the three requirements: function existence/implementation, constants, and install script changes."
+      "reason": "Tests are well-named with descriptive function names and docstrings. They are logically grouped: function existence, return value correctness, sorting verification, constant definition, marker values, and install script pattern checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction are consistent with what the tests check. No typos detected."
+      "reason": "File paths, variable names, function names, and commands in the instruction are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies the files to modify (which is necessary given the task domain) but doesn't specify exact line numbers or specific code patterns to use. The level of specificity is appropriate for the task."
+      "reason": "The instruction specifies which files to modify (which is appropriate given the task domain) but doesn't mention exact line numbers or exact replacement strings. The constant names mentioned are part of the requirements specification, not hints about the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes: adding constants and a function to one file, and doing a regex replacement in another. The changes don't contradict other tier-1 files."
+      "reason": "The gold patch in solve.sh makes localized changes: inserting constants and a function into update_airflow_pyproject_toml.py, and a regex substitution in install_airflow_and_providers.py. These are bounded, targeted edits."
     }
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 4
+  "pass_count": 9,
+  "fail_count": 2
 }

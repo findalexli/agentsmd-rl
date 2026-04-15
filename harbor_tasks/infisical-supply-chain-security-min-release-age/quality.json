@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific values not discoverable from instruction.md alone: (1) `min-release-age=7` as the exact .npmrc key (instruction says 'consult npm documentation' but never names this config key), (2) npm version `11.10.0` in engines field (instruction says 'identify the minimum npm version' but never states it), (3) exact existing CLAUDE.md section names `## Essential Commands` and `## Cross-Cutting Patterns` are asserted but not mentioned in instruction.md, (4) `pkg.get('name') == 'backend"
+      "reason": "Tests assert specific values not mentioned in instruction.md: 'min-release-age=7' as exact config key (instruction says 'consult npm documentation'), npm version '11.10' in engines field (instruction says 'identify the relevant configuration mechanism and the minimum npm version'), exact file paths like .npmrc (not mentioned in instruction), and exact package.json 'engines' field structure. The instruction tells the agent to discover these via npm docs, but the test asserts on very specific stri"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (refuse packages < 7 days old, enforce npm version, update CLAUDE.md) but does not specify exact file contents, config keys, or line-level changes. The agent must research npm's built-in feature and determine the implementation."
+      "reason": "The instruction describes the desired behavior (refuse packages published fewer than 7 days ago) and asks the agent to consult npm documentation to find the mechanism. It doesn't specify exact config keys, file names, or version numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_backend_npmrc_exists asserts `'min-release-age=7' in content` which means alternatives like `min-release-age = 7` (with spaces) or `min-release-age=604800` (in seconds) would fail. test_backend_package_json_engine uses `'11.10' in npm_ver` which is fairly flexible but still anchors to a specific version string. The CLAUDE.md test requires either 'min-release-age' or 'minimum release age' as literal strings."
+      "reason": "test_backend_npmrc_exists and test_frontend_npmrc_exists assert exact string 'min-release-age=7' in content. An agent could reasonably write 'min-release-age = 7' (with spaces) which is valid .npmrc syntax but would fail the substring check. Similarly, test_backend_package_json_engine asserts '11.10' in the npm version string \u2014 an agent writing '>=11.10.1' would pass but '>= 11.10.0' might also pass; however '>=12.0.0' (which also satisfies the requirement) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests include behavioral checks: test_npm_reads_backend_config and test_npm_reads_frontend_config actually execute `npm config get min-release-age` as subprocesses. test_repo_frontend_typecheck and test_repo_frontend_lint run actual npm commands. While some tests are text-based (checking file contents), not every test is purely textual."
+      "reason": "test_npm_reads_backend_config and test_npm_reads_frontend_config actually execute 'npm config get min-release-age' as a subprocess and verify the output. test_repo_frontend_typecheck and test_repo_frontend_lint run actual npm commands. While some tests do text-matching (e.g., test_backend_npmrc_exists), the behavioral tests execute real commands."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for files that don't exist by default (.npmrc files), engine fields not present in original package.json, and CLAUDE.md content not originally there. A stub/no-op implementation would fail these tests since the .npmrc files wouldn't exist and package.json wouldn't have engines."
+      "reason": "The fail-to-pass tests require actual file creation (.npmrc files), JSON modification (engines field in package.json), and documentation updates (CLAUDE.md). A stub/no-op implementation would not create these files or modify existing ones, so the tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/infisical after the Dockerfile runs (the solve.sh is part of the task bundle). An agent could potentially read /solution/solve.sh if mounted in the container, or could grep for test fixture values like 'min-release-age=7' in the test files. The Dockerfile doesn't explicitly exclude the solution directory from the container."
+      "reason": "The solution file exists at /workspace/infisical (the solve.sh is in solution/solve.sh in the container context). An agent could potentially read the solution directory if it exists in the container. Additionally, the test file itself at tests/test_outputs.py contains all the exact expected values ('min-release-age=7', '11.10', etc.) that could be grepped."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from instruction.md are tested: .npmrc with 7-day age in both directories, npm version engine constraints in both package.json files, CLAUDE.md 'Dependency Policy' section with supply-chain context, and preservation of existing content."
+      "reason": "All behaviors from instruction.md are tested: .npmrc configuration in both directories, npm version requirement in package.json engines, CLAUDE.md Dependency Policy section with supply-chain context, and preservation of existing sections/fields."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names and clear docstrings. They are grouped by category (behavioral tests, structural tests, config/documentation, pass-to-pass) with comments separating sections."
+      "reason": "Tests are well-organized with clear docstrings, grouped by category (behavioral tests, structural tests, config/documentation, pass-to-pass), and have descriptive names like test_npm_reads_backend_config, test_claude_md_dependency_policy, etc."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves configuration files and documentation, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves configuration files and documentation updates, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction deliberately avoids naming the specific config key or npm version, instead saying 'consult the npm documentation to identify the relevant configuration mechanism and the minimum npm version.' It does not leak implementation details."
+      "reason": "The instruction doesn't name exact config keys, file names (.npmrc), or version numbers. It asks the agent to consult npm documentation to discover these, which is appropriate for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold solution makes localized changes: creates new .npmrc files, adds one field to existing package.json files, and inserts a section into CLAUDE.md. No full-file rewrites and no contradictions with other files."
+      "reason": "The gold solution makes localized changes: creates new .npmrc files, adds an 'engines' field to existing package.json files, and inserts a section into CLAUDE.md. No full-file rewrites or contradictions with other files."
     }
   },
   "tier_a_fails": [

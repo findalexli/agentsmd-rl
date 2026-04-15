@@ -2,55 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (provider.lifecycle.ts), the function (drainPendingGatewayErrors), the flag (lifecycleStopping), the event type ('reconnect-exhausted'), and the behavioral expectation (unconditional graceful stop). Tests check for these same identifiers. The exported function runDiscordGatewayLifecycle, disallowed-intents handling, and other details are discoverable from reading the named file."
+      "outcome": "fail",
+      "reason": "Tests assert specific identifiers like 'drainPendingGatewayErrors', 'drainPending(', 'disallowed-intents', 'runDiscordGatewayLifecycle', 'lifecycleStopping', and specific regex patterns like 'lifecycleStopping && event.type === reconnect-exhausted'. While the instruction mentions 'drainPendingGatewayErrors' and 'lifecycleStopping' and 'reconnect-exhausted', it does not mention 'drainPending(' (the inner call pattern), 'disallowed-intents', or 'runDiscordGatewayLifecycle'. The agent would need to"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'The reconnect-exhausted event type should be treated as a graceful stop event unconditionally, regardless of whether lifecycleStopping has been flipped yet.' Combined with naming the exact function (drainPendingGatewayErrors) and the exact condition (lifecycleStopping guard), this tells the developer exactly what to change \u2014 remove the lifecycleStopping guard from the reconnect-exhausted check."
+      "reason": "The instruction explicitly states 'The reconnect-exhausted event type should be treated as a graceful stop event unconditionally, regardless of whether lifecycleStopping has been flipped yet' \u2014 this directly describes the fix (remove the lifecycleStopping guard from the reconnect-exhausted condition). It also names the exact function ('drainPendingGatewayErrors') and the exact variable ('lifecycleStopping') involved in the conditional that needs changing."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for the absence of the pattern 'lifecycleStopping && event.type === reconnect-exhausted' within the drainPending callback. Any correct fix that removes or restructures the lifecycleStopping guard (e.g., separating into two if-branches, using an array of graceful types, using a switch statement) would pass, as long as the AND-gating pattern is gone."
+      "reason": "The fail-to-pass tests check for the absence of specific bug patterns (lifecycleStopping && event.type === 'reconnect-exhausted') rather than asserting a specific fix implementation. Any correct fix that removes the lifecycleStopping guard \u2014 whether by restructuring the conditional, using separate if-blocks, or other approaches \u2014 would pass as long as reconnect-exhausted is handled unconditionally."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_drain_reconnect_exhausted_not_gated, test_drain_reconnect_exhausted_returns_stop, test_drain_no_parenthesized_lifecycle_guard) all exclusively use regex pattern matching on source text. None import, call, or execute the TypeScript code. Every f2p test is purely 'assert pattern not in source text'."
+      "reason": "Every single test reads the source file as text and uses string matching or regex patterns. No test imports/executes the TypeScript code, runs the function, or checks runtime behavior. For example, test_drain_reconnect_exhausted_not_gated does `src = _read_target()` then `re.search(bug_pattern, src[...])`. All tests are purely textual/structural inspection."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check that a specific regex pattern is NOT present in the source. The original buggy file already contains that pattern, so a no-op won't pass \u2014 but simply deleting the entire if-block (or replacing the function body with a stub that doesn't contain the pattern) would pass all three f2p tests without implementing the actual fix correctly."
+      "reason": "The fail-to-pass tests (test_drain_reconnect_exhausted_not_gated, test_drain_reconnect_exhausted_returns_stop, test_drain_no_parenthesized_lifecycle_guard) all check for the ABSENCE of the buggy pattern. The original unmodified file contains the bug pattern, so these tests would fail on the original code but pass on ANY modification that removes or alters the specific text pattern \u2014 including simply deleting the entire function body or replacing it with a stub, which would also pass these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/openclaw via solve.sh which is accessible in the container. The agent could read the gold patch from the solution directory or simply inspect the git diff. Additionally, since tests are pure text-matching, the agent could grep test files for the regex patterns and craft minimal text edits to pass."
+      "reason": "The solution exists at /workspace/openclaw in the container (from the git checkout), and solve.sh contains the exact patch. An agent could read solve.sh or the solution directory. Additionally, since tests are purely text-based regex checks, the agent could simply delete the offending lines (the bug pattern) without understanding the bug, and all fail-to-pass tests would pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that reconnect-exhausted be treated as a graceful stop unconditionally and that existing behavior (disallowed-intents, lifecycleStopping for other logic) be preserved. Tests verify all of these: removal of the guard, preservation of disallowed-intents, preservation of lifecycleStopping flag, and preservation of exports/structure."
+      "reason": "The instruction requires that reconnect-exhausted be treated as a graceful stop unconditionally (not gated by lifecycleStopping). The fail-to-pass tests verify this by checking the guard is removed. The instruction also implicitly requires preserving existing functionality, which pass-to-pass tests cover (disallowed-intents, lifecycleStopping flag, exports)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with clear section comments (fail-to-pass, pass-to-pass, config-derived) and each test function has a descriptive docstring explaining what it checks."
+      "reason": "Tests are well-organized into clearly labeled sections (fail-to-pass behavioral, pass-to-pass regression/anti-stub, config-derived), with descriptive names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing TypeScript source code, not producing structured data output."
+      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function (drainPendingGatewayErrors), the exact variable (lifecycleStopping), and the exact condition logic (AND-gated with reconnect-exhausted). This goes beyond naming the file and describes the precise code pattern to change, leaving almost no localization work for the agent."
+      "reason": "The instruction names the exact file ('extensions/discord/src/monitor/provider.lifecycle.ts'), the exact function ('drainPendingGatewayErrors'), the exact variable ('lifecycleStopping'), and describes the exact conditional logic that's buggy. This goes beyond naming the file to effectively pinpointing the exact lines to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -60,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

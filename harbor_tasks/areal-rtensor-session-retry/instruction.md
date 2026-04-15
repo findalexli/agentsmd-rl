@@ -8,41 +8,36 @@ When using `HttpRTensorBackend` to fetch large tensor shards over HTTP (e.g., du
 megabytes. Additionally, any transient network hiccup during a fetch causes an immediate,
 unrecoverable failure — even when the issue is temporary and a simple retry would succeed.
 
-## Root Cause
-
-`HttpRTensorBackend` creates a bare `aiohttp.ClientSession()` with no explicit timeout,
-buffer size, or connector configuration. The default aiohttp session uses a small read
-buffer and generic connection settings that are not suited for large tensor transfers.
-The existing HTTP utility module (`areal/infra/utils/http.py`) already defines
-properly-configured session defaults (including a generous timeout, a large read buffer,
-and a `TCPConnector`) — but `HttpRTensorBackend` does not use them.
-
-Furthermore, `_fetch_tensor` has no retry logic at all: a single transient error
-(`TimeoutError`, `ClientError`) immediately propagates up and aborts the entire batch
-fetch.
-
 ## Expected Behavior
 
-1. `HttpRTensorBackend` should create HTTP sessions with the same timeout, buffer, and
-   connector settings already established in `areal/infra.utils.http`. The session must:
-   - Use `DEFAULT_REQUEST_TIMEOUT` from `areal.infra.utils.http` as the timeout total
-   - Use a read buffer of at least 10 MB
-   - Use the default `TCPConnector` from `areal.infra.utils.http`
+1. **`HttpRTensorBackend` must create HTTP sessions using a dedicated session-creation
+   method.** The method must be named one of: `_create_session`, `create_session`,
+   `_make_session`, or `make_session`. It must be callable and must have an explicit
+   return type annotation of `-> aiohttp.ClientSession`.
 
-2. Tensor fetches should retry on transient network errors (connection resets, timeouts,
-   client errors) before giving up. The `_fetch_tensor` method must accept:
-   - `max_retries` (int): number of retry attempts
+2. **The created session must be configured for large tensor transfers:**
+   - The timeout must be set to `DEFAULT_REQUEST_TIMEOUT` from `areal.infra.utils.http`
+     (this value is larger than the aiohttp default of 300 seconds).
+   - The read buffer must be at least 10 MB.
+   - The connector must be a `TCPConnector` obtained via `get_default_connector` from
+     `areal.infra.utils.http`.
+
+3. **`_fetch_tensor` must retry on transient network errors.** The method must accept:
+   - `max_retries` (int): number of retry attempts before giving up
    - `retry_delay` (float): seconds to wait between retries
-   After exhausting all retries, the error message must include the retry count.
+   After exhausting all retries, the raised `RuntimeError` must include the retry count
+   (e.g., "... after 3 attempts").
 
-3. The `HttpRTensorBackend` backend must use a module-level logger named `"HttpRTensor"`
+4. **`fetch()` and `delete()` must use the session-creation method** (not a bare
+   `aiohttp.ClientSession()` call) when creating their sessions.
+
+5. **`HttpRTensorBackend` must use a module-level logger** named `"HttpRTensor"`
    obtained via `areal.utils.logging.getLogger`, and this logger name must be registered
    in the color map in `areal/utils/logging.py`.
 
-4. The session-creation method must have an explicit return type annotation `-> aiohttp.ClientSession`.
-
 ## Files to Modify
 
-- `areal/infra/rpc/rtensor.py` — add session-creation method, retry logic to `_fetch_tensor`,
-  update `fetch` and `delete` to use the new session method
-- `areal/utils/logging.py` — register the `"HttpRTensor"` logger name in the color map
+- `areal/infra/rpc/rtensor.py` — add session-creation method with return type annotation,
+  add retry logic to `_fetch_tensor` with `max_retries` and `retry_delay` parameters,
+  update `fetch` and `delete` to use the new session-creation method, add module-level logger
+- `areal/utils/logging.py` — add `"HttpRTensor"` to the color map

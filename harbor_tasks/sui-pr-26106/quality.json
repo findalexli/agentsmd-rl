@@ -3,61 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific patterns like 'fs_extra::dir::copy(out_dir.join(COMPILED_PACKAGES_DIR)', 'if p.exists() {', 'std::fs::remove_dir_all(&p).unwrap();', 'if api_file.exists() {', 'std::fs::remove_file(&api_file).unwrap();', 'let out_dir = tempdir.path();', and 'CopyOptions'. None of these specific variable names (p, api_file, copy_opts), function calls (fs_extra::dir::copy), or exact code patterns are mentioned in instruction.md. The instruction only gives a high-level hint about using"
+      "reason": "Tests assert very specific patterns like 'fs_extra::dir::copy(out_dir.join(COMPILED_PACKAGES_DIR)', 'if p.exists() {', 'std::fs::remove_dir_all(&p).unwrap();', 'if api_file.exists() {', 'std::fs::remove_file(&api_file).unwrap();', 'let out_dir = tempdir.path();', and 'CopyOptions'. The instruction.md does not mention fs_extra, CopyOptions, the specific variable names 'p' or 'api_file', or the exact code patterns required. These are undiscoverable from the instruction alone."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (delete before build) and expected behavior (delete after successful build) with a hint about using a temp directory, but does not give exact code changes, line numbers, or specific variable names to use."
+      "outcome": "fail",
+      "reason": "The Hint section explicitly states 'The build should always output to a temporary directory. After a successful build, the old files are replaced with the newly built ones. Replacement should use safe operations (e.g., only overwrite after verifying existence).' This describes the exact fix strategy, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'p' in 'if p.exists() {' and 'std::fs::remove_dir_all(&p).unwrap();', 'api_file' in 'if api_file.exists() {', the exact library 'fs_extra::dir::copy', and specific patterns like 'CopyOptions'. An alternative correct fix using different variable names (e.g., 'path' instead of 'p'), or using std::fs::rename, or iterating differently, would fail these text-matching tests."
+      "reason": "Tests in test_fixed_deletes_after_build, test_safe_deletion_checks_existence, and test_copy_from_tempdir_after_build assert exact gold-specific patterns like 'if p.exists() {', 'std::fs::remove_dir_all(&p).unwrap();', 'if api_file.exists() {', 'fs_extra::dir::copy(out_dir.join(COMPILED_PACKAGES_DIR)'. An alternative correct fix using different variable names (e.g., 'path' instead of 'p'), different copy libraries, or different control flow would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_buggy_pattern_removed, test_fixed_deletes_after_build, test_update_builds_to_tempdir_first, test_safe_deletion_checks_existence, and test_copy_from_tempdir_after_build are purely text-matching assertions (assert pattern in content / assert pattern not in content). While test_compilation_passes and test_syntax_valid do run cargo check, the core fail-to-pass tests are all string-in-file checks with no behavioral execution."
+      "reason": "Tests test_buggy_pattern_removed, test_fixed_deletes_after_build, test_safe_deletion_checks_existence, test_copy_from_tempdir_after_build, and test_update_builds_to_tempdir_first are purely string-matching tests (assert pattern in content). While test_compilation_passes and test_syntax_valid do execute compilation, the core fail-to-pass tests are all text-matching, not behavioral."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the original file (e.g., 'let out_dir = tempdir.path();' as a standalone assignment, fs_extra::dir::copy calls, existence checks). A stub or no-op wouldn't contain these patterns, so they wouldn't pass."
+      "reason": "The f2p tests check for specific code patterns that wouldn't exist in the original buggy code and can't be satisfied by a stub/no-op change. The original code has the buggy pattern and lacks the fix patterns, so actual code changes are required."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sui relative path as solution/solve.sh in the container environment. The agent could read the gold patch from the solution directory or from test_outputs.py (which contains the exact string patterns needed) to reverse-engineer the expected code. The tests are pure text matching, so copying the exact patterns would suffice."
+      "reason": "The solution exists at /workspace/sui and solution/solve.sh contains the exact gold patch. An agent could read the solution file or the test file to discover the exact string patterns being asserted and produce them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) cargo check passes - tested by test_compilation_passes, (2) build to temp dir first then safe update - tested by multiple pattern tests. The core behavioral requirements from instruction.md are covered."
+      "reason": "The instruction requires compilation passing and safe update behavior (delete after build). Tests cover compilation (test_compilation_passes), the removal of the buggy pattern, and the presence of safe deletion/copy-after-build logic."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_compilation_passes, test_buggy_pattern_removed, test_fixed_deletes_after_build, etc.), have docstrings explaining their purpose, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies (e.g., test_buggy_pattern_removed, test_fixed_deletes_after_build, test_safe_deletion_checks_existence)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Rust source code; it does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task modifies Rust source code; no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, constant names, commands, and variable names in instruction.md are consistent with the actual codebase (CRATE_ROOT, COMPILED_PACKAGES_DIR, DOCS_DIR, PUBLISHED_API_FILE, cargo check -p sui-framework --tests)."
+      "reason": "File paths, variable names, and commands in the instruction appear correct and consistent with the actual repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the specific file to modify (build-system-packages.rs) and the function (build_system_packages), which is reasonable for a single-file fix task. It doesn't specify exact line numbers or the precise code to write."
+      "reason": "The instruction names the specific file to modify (build-system-packages.rs) which is appropriate since this is a single-file fix task. It doesn't specify exact line numbers or the precise code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Rust test file, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

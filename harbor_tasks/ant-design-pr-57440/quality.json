@@ -3,58 +3,55 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file paths, interface names like ActionsConfig, literal strings like \"placement?: 'start' | 'end'\", \"...measureDeps\", \"placement === 'start'\", \"actions-start\", \"marginInlineEnd\", etc.) are explicitly mentioned in instruction.md."
+      "reason": "The instruction names ActionsConfig interface, BlockProps with actions prop, placement values 'start'/'end', the CSS class pattern `${prefixCls}-actions-start`, measureDeps prop on Ellipsis, and all three files to modify. The test assertions check for these exact things (e.g., '.ant-typography-actions-start' class, ActionsConfig type, measureDeps prop, BlockProps.actions). All test-specific identifiers are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: exact interface signature, exact CSS class name, exact comparison expression 'placement === 'start'', exact prop name 'measureDeps', exact spread syntax '...measureDeps'. This tells the agent precisely WHAT to write rather than describing desired behavior."
+      "outcome": "pass",
+      "reason": "The instruction describes desired behavior (new interface, new prop, CSS class naming convention, measureDeps) but doesn't specify exact line numbers, exact code to write, or exact implementation details like specific React hooks or conditionals to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are purely text-matching (e.g., assert \"export interface ActionsConfig\" in content, assert \"placement === 'start'\" in content, assert \"...measureDeps\" in content). An alternative correct implementation using different naming (e.g., 'ActionBarConfig', 'position' instead of 'placement', or different spread patterns) would fail these tests despite being functionally correct."
+      "reason": "test_actions_placement_behavior asserts on the exact CSS class '.ant-typography-actions-start', and tests check for the exact interface name 'ActionsConfig' and exact prop name 'measureDeps'. While the instruction does specify these names, the test for placement behavior specifically checks `container.querySelector('.ant-typography-actions-start')` which requires a specific CSS class naming pattern. An alternative correct implementation using a different class name pattern (e.g., 'ant-typography"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_actions_config_interface_exists, test_actions_prop_in_block_props, test_actions_start_class_in_styles, test_placement_logic_in_render, test_measure_deps_in_ellipsis) are ALL purely string-matching with open().read() and assert 'X' in content patterns. None import, execute, or render the component to verify behavior."
+      "outcome": "pass",
+      "reason": "Tests compile TypeScript code (tsc --noEmit), run Jest tests that render React components and query the DOM, and run linting tools. They execute code rather than just checking file contents."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply appends the required strings as comments to the source files (e.g., adding '// export interface ActionsConfig' and '// placement === \\'start\\'') could pass the text-matching tests without implementing any actual functionality."
+      "outcome": "pass",
+      "reason": "The f2p tests require actual implementation: test_actions_config_typescript_compilation requires a properly typed and exported ActionsConfig interface; test_actions_placement_behavior renders a component and checks for a specific CSS class in the DOM which requires actual rendering logic; test_measure_deps_integration requires the EllipsisProps type to accept measureDeps. A stub/no-op would fail TypeScript compilation or DOM assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/antd and solve.sh is in /solution/. The agent could read /solution/solve.sh or simply grep the test file for the expected literal strings and insert them into the source files as comments to pass the text-matching tests."
+      "reason": "The solution exists at /workspace/antd with solve.sh accessible. The gold patch is in solution/solve.sh which the agent could potentially read. Additionally, the Dockerfile doesn't remove or protect the solution directory. An agent could read the solution file or grep for expected test values."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "No test verifies that placement='start' actually renders actions before text content, or that the CSS class is actually applied at runtime, or that ellipsis re-measurement occurs on placement change. The behavioral requirements are only checked via string matching."
+      "reason": "Instruction requirement #5 specifies CSS styling with 'marginInlineEnd instead of marginInlineStart' for start-positioned actions, but no test verifies the actual CSS properties/styles applied. The CSS compilation test (test_actions_start_css_compilation) only checks that the style file compiles, not that it contains the correct margin properties."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_actions_config_interface_exists, test_placement_logic_in_render, etc.) with docstrings explaining fail-to-pass vs pass-to-pass categories and what each test verifies."
+      "reason": "Tests are well-named with descriptive function names (test_actions_config_typescript_compilation, test_actions_placement_behavior, etc.) and have docstrings categorizing them as 'Fail-to-pass' or 'Pass-to-pass'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces TypeScript/CSS code modifications, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves UI component modifications, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in instruction.md file paths, variable names, or commands. The truncated solve.sh has 'placem' but that's in the hidden solution, not in what the agent sees."
+      "reason": "File paths, interface names, prop names, and commands in both instruction.md and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files, exact interface signatures ('export interface ActionsConfig'), exact comparison expressions ('placement === \\'start\\''), exact spread syntax ('...measureDeps'), and exact CSS property names ('marginInlineEnd'). This goes far beyond naming the buggy module and constitutes full solution specification."
+      "reason": "Instruction.md explicitly names the exact files to modify (components/typography/Base/index.tsx, components/typography/Base/Ellipsis.tsx, components/typography/style/index.ts) and specifies exact implementation details like the CSS class pattern '${prefixCls}-actions-start', the exact prop name 'measureDeps', and that dependencies should be 'incorporated into the measurement logic using spread syntax'. The spread syntax detail is a direct implementation hint."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying TypeScript/React components, not a configuration editing task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -62,6 +59,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 6,
+  "fail_count": 4
 }

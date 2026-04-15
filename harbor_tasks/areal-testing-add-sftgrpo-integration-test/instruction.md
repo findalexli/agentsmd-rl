@@ -6,29 +6,29 @@ The SFT and GRPO integration tests in `areal/tests/sft/` and `areal/tests/grpo/`
 
 ## Expected Behavior
 
-Both `test_sft` and `test_grpo` must run against both `fsdp` and `megatron` backends. This requires:
+Both `test_sft` and `test_grpo` must exercise both `fsdp` and `megatron` backends. This requires:
 
-1. **Parametrization**: Each test function must be parametrized with `@pytest.mark.parametrize` to accept a `backend` parameter accepting values `"fsdp"` and `"megatron"`.
+1. **Backend-aware test functions**: Each test function must be able to run with different backend configurations. The test functions must not hardcode a single backend.
 
-2. **Backend-specific config files**: Each test must load its config via a path constructed from the `backend` parameter (e.g., `config_{backend}.yaml`). This means there must be a `config_fsdp.yaml` (the renamed original) and a `config_megatron.yaml` for each of SFT and GRPO.
+2. **Backend-specific config files**: Each test must load its config via a path that varies based on the backend. For example, a pattern like `config_{backend}.yaml` allows distinguishing between `fsdp` and `megatron` variants.
 
 3. **GRPO megatron config** (`areal/tests/grpo/config_megatron.yaml`):
-   - Must contain `allocation_mode:` with value containing `megatron`
+   - Must contain `allocation_mode:` with a value that includes the string `megatron`
    - Must have `experiment_name: tests-grpo`
    - Must be valid YAML
 
 4. **SFT megatron config** (`areal/tests/sft/config_megatron.yaml`):
-   - Must contain `allocation_mode:` with value containing `megatron`
+   - Must contain `allocation_mode:` with a value that includes the string `megatron`
    - Must have `experiment_name: tests-sft`
    - Must be valid YAML
 
 5. **SFT reference losses for megatron** (`areal/tests/sft/ref_losses_megatron.json`):
    - Must be a JSON array of exactly **16 float values**
-   - Each value must be strictly between `0.0` and `10.0`
+   - Each value must be strictly greater than `0.0` and strictly less than `10.0`
 
-6. **File renaming**: The existing FSDP-only files (`config.yaml`, `ref_losses.json`) must be renamed to include a `_fsdp` suffix so the parametrized config loading can distinguish them from the new megatron files.
+6. **File renaming**: The existing FSDP-only config files (`config.yaml`) and reference loss files (`ref_losses.json`) should be renamed to include a `_fsdp` suffix to distinguish them from megatron-specific variants.
 
-7. **No hardcoded config paths**: The test functions must not contain any literal `"config.yaml"` string as an active (non-comment, non-fixture) config path argument to `load_expr_config`.
+7. **No hardcoded config paths**: The test functions must not pass a literal `"config.yaml"` string as the config path argument to `load_expr_config`.
 
 ## Files to Look At
 

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_max_output_tokens_computed_before_hook requires maxOutputTokens to be computed BEFORE Plugin.trigger (ordering constraint not in instructions); test_stream_text_uses_params_max_output_tokens checks for literal 'params.maxOutputTokens' in streamText call; test_hook_preserves_existing_params checks for 'options' field which is never mentioned in instruction.md; test_max_output_tokens_in_hook_params parses specific b"
+      "reason": "Tests assert specific file paths (packages/opencode/src/session/llm.ts, packages/plugin/src/index.ts), specific patterns like 'return streamText(', 'const maxOutputTokens', 'Plugin.trigger(\"chat.params\"', 'params.maxOutputTokens', and specific field names in specific sections. The instruction.md does not mention the file paths, does not mention 'streamText', does not mention 'Plugin.trigger', and does not specify that 'const maxOutputTokens' must appear before the trigger call. An agent would ne"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (maxOutputTokens not exposed through chat.params hook) and expected behavior (plugins should be able to modify it), but does not specify exact code changes, line numbers, or the specific implementation approach."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix in detail: (1) add maxOutputTokens to the hook output type, (2) compute maxOutputTokens BEFORE Plugin.trigger call, (3) include it in the output object, (4) use params.maxOutputTokens in streamText. It even provides the exact output type signature. This is a step-by-step implementation guide, not just a bug description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_stream_text_uses_params_max_output_tokens asserts the literal string 'params.maxOutputTokens' appears in the streamText call. An alternative correct fix might destructure params (e.g., `const { maxOutputTokens: finalMaxTokens } = params`) or use a different variable name. test_max_output_tokens_computed_before_hook asserts `const maxOutputTokens` appears before Plugin.trigger \u2014 an alternative could inline the computation directly into the hook output object without a separate const declarat"
+      "reason": "Tests assert gold-specific implementation details: test_stream_text_uses_params_max_output_tokens checks for literal string 'params.maxOutputTokens'; test_max_output_tokens_computed_before_hook checks for 'const maxOutputTokens' variable name and its position relative to Plugin.trigger. An alternative fix that uses a different variable name (e.g., 'maxTokens') or a different code structure (e.g., inline computation) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_max_output_tokens_in_hook_params, test_stream_text_uses_params_max_output_tokens, test_hook_type_includes_max_output_tokens, test_max_output_tokens_computed_before_hook) are all text/pattern matching on source files \u2014 they read file contents and check for string presence or regex patterns. They do not execute the actual code paths to verify plugin hooks work. However, test_repo_typecheck_plugin, test_repo_typecheck_opencode, and test_repo_llm_tests do execute co"
+      "reason": "The core fail-to-pass tests (test_max_output_tokens_in_hook_params, test_stream_text_uses_params_max_output_tokens, test_hook_type_includes_max_output_tokens, test_max_output_tokens_computed_before_hook) are all text-matching tests that search for string patterns in source files. They do not execute the code or test runtime behavior. The typecheck and test runner tests do execute code but are pass_to_pass regression tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific structural changes: maxOutputTokens in chat.params output object, params.maxOutputTokens in streamText call, maxOutputTokens in plugin type definition, and ordering of computation before hook trigger. A stub or no-op would not pass these since the base code lacks these patterns."
+      "reason": "The fail-to-pass tests check for specific source code changes (maxOutputTokens in hook output object, params.maxOutputTokens in streamText, correct ordering, type definition) that are not present in the base commit. A stub or no-op implementation would not pass these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/opencode (solution/solve.sh is available in the container environment). The agent could potentially read the solve.sh script or inspect the gold patch. Additionally, since tests are purely text-matching, the agent could grep for expected patterns and reverse-engineer exactly what strings need to appear in which files."
+      "reason": "The solution is in /workspace/opencode/_eval_tmp.mjs or can be found by reading solution/solve.sh which contains the complete git patch. The agent could also read the test file at tests/test_outputs.py to see exactly what string patterns are expected and write code to match those patterns without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction says plugins should be able to modify maxOutputTokens through chat.params hook, the hook output type should include it, and the returned value should be passed to the model. Tests verify: type includes maxOutputTokens, hook output includes it, streamText uses params.maxOutputTokens, and typechecking passes."
+      "reason": "All four requirements from instruction.md (type includes maxOutputTokens, computed before hook, included in output object, streamText uses params.maxOutputTokens) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names and docstrings, and tags like [static], [pr_diff], [repo_tests] indicating their category."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code and type definitions, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the two exact files to modify ('packages/opencode/src/session/llm.ts' and 'packages/plugin/src/index.ts') and describes specifically that maxOutputTokens needs to be added to the hook's output type and that the hook's return value should be what's passed to the model. While the files are somewhat obvious from context, the instruction essentially describes the fix approach rather than just the bug."
+      "reason": "The instruction describes exact implementation steps including where maxOutputTokens should be computed (before Plugin.trigger), how it should be passed (in the output object), and how it should be consumed (params.maxOutputTokens in streamText). It also provides the exact TypeScript type signature for the output object."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,6 +52,7 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
@@ -60,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

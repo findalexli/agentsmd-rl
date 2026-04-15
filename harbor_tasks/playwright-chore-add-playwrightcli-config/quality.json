@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_config_command_declared checks for a regex pattern `// config[\\s\\S]{0,40}config,` (exact comment format); test_program_routes_config checks for exact method name `configure` on session manager; test_session_manager_configure checks for exact property path `this._options.config`; test_daemon_browser_viewport checks for exact viewport `{width:1280,height:720}` and `contextOptions` key with `cliOptions.daemonHea"
+      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md: test_config_command_declared checks for a regex pattern `// config[\\s\\S]{0,40}config,` requiring exact comment formatting; test_program_routes_config checks for exact string 'configure' as method name dispatched via handleSessionCommand; test_configure_method checks for exact property path `this._options.config`; test_session_list_returns_map checks that list() returns a Map (not mentioned in instructio"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly WHAT to change: add 'config' to Category union, declare command with declareCommand({name:'config', category:'config'}), add to commands array with '// config' comment, add {name:'config',title:'Configuration'} to categories array, route through handleSessionCommand passing 'config', dispatch to configure() method, update this._options.config, add contextOptions with viewport {width:1280,height:720}. This is essentially the full solution specifi"
+      "reason": "The instruction specifies exact implementation steps like 'Update this._options.config with the new config path', 'dispatch the config subcommand to a configure() method', and 'set default viewport dimensions... with contextOptions with a viewport of { width: 1280, height: 720 }'. These tell the agent exactly WHAT to change and HOW, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use very specific regex patterns that constrain implementation to match the gold patch exactly. For example, test_config_command_declared checks `/\\/\\/ config[\\s\\S]{0,40}config,/` requiring a specific comment format; test_program_routes_config checks for exact string patterns like `case 'config'` and `sessionManager.configure`; test_session_manager_configure checks for exact code pattern `this._options.config`. An alternative correct implementation using different variable names, different"
+      "reason": "Tests use regex patterns that enforce gold-specific implementation details: test_config_command_declared requires `// config` comment with specific proximity to `config,`; test_program_routes_config requires exact string matching for handleSessionCommand dispatch pattern; test_configure_method requires exact property names like `this._options.config` and specific method structure; test_session_list_returns_map enforces returning Map instead of array which is gold-specific refactoring not require"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are purely textual/regex checks on source files (e.g., test_config_category_in_type reads file and regex-matches the Category type string, test_config_command_declared regex-matches source code, test_help_has_configuration_category regex-matches source). No test actually imports, compiles, or executes the TypeScript code to verify runtime behavior. The tests are essentially `assert pattern in open(path).read()` style checks."
+      "reason": "Almost all fail-to-pass tests are text/regex matching on source files (e.g., test_config_category_in_type reads source and regex-matches Category type, test_config_command_declared regex-matches declareCommand blocks, test_help_has_configuration_category regex-matches categories array). No test actually imports, compiles, or executes the code to verify runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While the tests are text-based, they do check for specific content that wouldn't exist without making changes. A stub/no-op wouldn't add 'config' to the Category type or add the command declaration, so these tests would fail on an unmodified codebase."
+      "reason": "The fail-to-pass tests check for specific strings/patterns that don't exist in the base commit (e.g., 'config' in Category type, config command declaration, configure method). A stub/no-op wouldn't add these patterns to the source files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/playwright/_eval_tmp.cjs or could be found by examining solve.sh. More importantly, since tests are pure regex/text checks on source files, the agent could grep the test file to discover exact patterns needed (e.g., the `// config` comment format, the `sessionManager.configure` method name) and just insert matching text without understanding the feature."
+      "reason": "The solution is in /workspace/playwright/_eval_tmp.cjs patterns and solve.sh is at /solution/solve.sh. An agent could read the solution file directly or grep for the exact regex patterns used in tests (visible in test file names and structure) to reverse-engineer what text to insert."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires the configure() method to 'Check if the session can be connected' and 'If connected, stop the existing session' then 'Reconnect to the session', but test_session_manager_configure only checks for textual presence of patterns like `this._options.config` and `connect` \u2014 it doesn't verify the actual stop-then-reconnect behavior or error handling."
+      "reason": "test_session_list_returns_map tests that list() returns a Map instead of an array, which is not mentioned anywhere in instruction.md. The instruction says nothing about changing the return type of the list method."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,15 +35,15 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves adding a CLI command to a TypeScript project, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task doesn't produce structured data output like JSON/CSV/API/DB; it's about modifying TypeScript source code and documentation."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, command names, and variable names in instruction.md appear correct and consistent with the test file references."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names internal implementation details: 'declareCommand with name: config', 'handleSessionCommand', 'configure() method on the session manager', 'this._options.config', specific viewport dimensions {width:1280, height:720}, and the exact comment format '// config'. These are implementation-level specifics that go beyond describing the desired feature."
+      "reason": "Instruction specifies exact internal implementation details: 'Update this._options.config', 'route it through handleSessionCommand passing config as the subcommand', 'configure() method on the session manager', and exact viewport dimensions {width: 1280, height: 720}. These name specific internal properties and methods."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

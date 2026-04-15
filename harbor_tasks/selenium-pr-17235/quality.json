@@ -3,63 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (SessionCapabilitiesMutator.java, SessionCapabilitiesMutatorTest.java), the method name (apply()), the test method name (shouldPropagateVncCapsWhenRequestHasNoBrowserName), the capability keys (se:vncEnabled, se:noVncPort), the required comment text ('Always propagate VNC capabilities from the stereotype'), and the reproduction scenario. All assert'd specifics in test_outputs.py are discoverable from instruction.md."
+      "reason": "The instruction names the file paths (SessionCapabilitiesMutator.java, SessionCapabilitiesMutatorTest.java), the method name apply(), the test method name shouldPropagateVncCapsWhenRequestHasNoBrowserName, the capability keys (se:vncEnabled, se:noVncPort), the required comment text ('Always propagate VNC capabilities from the stereotype'), and the reproduction scenario. All assert targets in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially describes the fix: move VNC capability propagation before the browserName check, add a specific comment string, and write a specific test method. While it frames this as 'expected behavior,' test_vnc_propagation_order_in_apply_method explicitly checks that VNC handling appears before the browserName early-return, which is exactly the structural change needed. The instruction's requirement that 'The apply() method must include a comment with the text Always propagate V"
+      "reason": "The instruction essentially describes the fix: move VNC propagation before the browserName check, and add a specific comment. While it doesn't say 'change line X', it strongly implies the exact structural change needed. However, the instruction describes the problem (VNC caps missing when no browserName) and expected behavior rather than explicitly stating 'move the browserName check after VNC propagation'. The comment requirement is very specific but could be seen as a documentation requirement"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_vnc_propagation_order_in_apply_method asserts a specific code structure: it uses regex to find 'Object vncEnabled = slotStereotype.getCapability(SE_VNC_ENABLED)' before the browserName early-return pattern. An alternative correct fix (e.g., removing the early return entirely, or propagating VNC caps in a separate method, or using a different variable name) would fail this test even if functionally correct. test_vnc_propagation_comment_exists requires exact literal string 'Always propagate V"
+      "reason": "test_vnc_propagation_order_in_apply_method uses a specific regex to check that VNC handling code appears before the browserName early-return check, enforcing a particular code structure. An alternative valid fix (e.g., removing the early return entirely, or adding a separate VNC propagation block after the browserName check, or using a helper method) would fail this positional regex test. The test also requires the exact pattern 'Object vncEnabled = slotStereotype.getCapability(SE_VNC_ENABLED)' "
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_vnc_propagation_order_in_apply_method and test_vnc_propagation_comment_exists are pure text/regex assertions on source file content (checking position of code patterns and presence of a comment string). While test_session_capabilities_mutator_test_suite and test_existing_vnc_tests_still_pass do execute code via bazel, the fail_to_pass tests (marked in docstrings) are predominantly text-matching, not behavioral execution."
+      "outcome": "pass",
+      "reason": "Tests include both textual inspection (test_vnc_propagation_order_in_apply_method, test_vnc_propagation_comment_exists, test_new_test_method_exists) AND behavioral execution via bazel test (test_session_capabilities_mutator_test_suite, test_existing_vnc_tests_still_pass, test_build_source_module, test_default_slot_matcher_vnc). The behavioral tests actually compile and run the Java code. Not every test is text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check: (1) existence of a specific test method with @Test annotation, (2) VNC code appearing before browserName check in apply(), (3) a specific comment string. A stub/no-op implementation would not pass these - the agent must actually restructure the apply() method and add the test method. The bazel test execution also validates the new test passes functionally."
+      "reason": "The fail-to-pass tests require: (1) a new test method with specific name and @Test annotation, (2) VNC handling code positioned before browserName check in the apply method, (3) a specific comment string. A stub/no-op implementation would not satisfy these - particularly the order check requires actual code restructuring, and the bazel test suite must pass meaning the Java test must actually verify VNC propagation behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/selenium relative path accessible from the container (solution/solve.sh contains the full patch). An agent could read this file to extract the exact changes needed. The Dockerfile doesn't remove or protect the solution directory."
+      "reason": "The solution is available at /workspace/selenium after the agent starts (solve.sh is at solution/solve.sh in the container). An agent could read the solution file or the gold patch directly. The Dockerfile doesn't remove or protect the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: VNC capability propagation when no browserName is present (test_vnc_propagation_order_in_apply_method, test_session_capabilities_mutator_test_suite), the comment requirement (test_vnc_propagation_comment_exists), and the new test method requirement (test_new_test_method_exists)."
+      "reason": "All behaviors specified in instruction.md are tested: VNC caps propagation when no browserName (test_vnc_propagation_order_in_apply_method, test_session_capabilities_mutator_test_suite), the comment requirement (test_vnc_propagation_comment_exists), and the new test method (test_new_test_method_exists)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_vnc_propagation_order_in_apply_method), have docstrings explaining what they verify and whether they're fail_to_pass or pass_to_pass, and are logically grouped by concern."
+      "reason": "Tests are well-named (e.g., test_vnc_propagation_order_in_apply_method, test_new_test_method_exists), have docstrings explaining purpose and categorization (fail_to_pass vs pass_to_pass), and the file has a module-level docstring explaining the bug."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves Java source code modification, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves Java source code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, method names, capability keys, and commands in instruction.md match what's used in tests and solution exactly."
+      "reason": "File paths, method names, capability keys, and other identifiers are consistent across instruction.md and test files with no typos detected."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file (SessionCapabilitiesMutator.java), the exact method (apply()), the exact comment text to include, and the exact test method name. Combined with the 'Expected Behavior' section describing that VNC caps 'must be propagated regardless of whether the request included a browserName,' this effectively tells the agent to move the browserName check after VNC propagation - which is the exact fix."
+      "outcome": "pass",
+      "reason": "The instruction names the file SessionCapabilitiesMutator.java and the apply() method, but these are the obvious files given the task domain. It doesn't specify exact line numbers or the precise code change needed (moving the browserName check)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
 }

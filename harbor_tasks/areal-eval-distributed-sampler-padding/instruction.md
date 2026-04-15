@@ -24,6 +24,8 @@ The solution must:
 - All parameters of `EvalDistributedSampler.__init__` must have explicit type annotations
 - `dataloader.py` must contain no `print()` statements (use `areal.utils.logging.getLogger()` for debugging)
 - `create_dataloader` must dispatch `EvalDistributedSampler` when given a `ValidDatasetConfig`
+- The file must pass `ruff check`, `ruff format --check`, `bandit`, and `python -m py_compile` with no errors
+- The file must have no trailing whitespace on any line, must end with a newline, and must not contain wildcard imports
 
 ## Relevant Files
 

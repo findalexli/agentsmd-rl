@@ -3,64 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (worker.ts, thread.ts, app.tsx, .opencode/command/changelog.md), the RPC method name 'snapshot', the filenames 'tui.heapsnapshot' and 'server.heapsnapshot', the 'onSnapshot' callback, 'client.call' pattern, 'writeHeapSnapshot' from 'node:v8', and the changelog section headers (# TUI, # Desktop, # Core, # Misc) and output file UPCOMING_CHANGELOG.md. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names all key file paths (worker.ts, thread.ts, app.tsx, .opencode/command/changelog.md), the RPC method name 'snapshot', the filenames 'tui.heapsnapshot' and 'server.heapsnapshot', the 'onSnapshot' callback name, the 'node:v8'/'v8' module, 'writeHeapSnapshot', 'client.call', the changelog section headers (# TUI, # Desktop, # Core, # Misc), and UPCOMING_CHANGELOG.md. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction effectively specifies the exact implementation: an RPC method named 'snapshot' on the worker writing 'server.heapsnapshot', an 'onSnapshot' callback in thread.ts that calls both local writeHeapSnapshot and client.call('snapshot'), and passing onSnapshot as an optional prop to App. This is a step-by-step implementation guide, not a problem description. A developer doesn't need to reason about what to change \u2014 it's all spelled out."
+      "reason": "The instruction explicitly dictates implementation details: 'An RPC method named snapshot on the worker that calls writeHeapSnapshot to server.heapsnapshot', 'An onSnapshot callback in the TUI thread that triggers both snapshot writes', 'onSnapshot callback must be passed as an optional prop'. This goes beyond describing what's broken and prescribes exactly what to implement, including method names, callback signatures, and prop threading."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string patterns like 'snapshot()' (must appear literally in worker.ts), 'server.heapsnapshot', 'tui.heapsnapshot', 'onSnapshot?:' (exact optional syntax), 'onSnapshot={input.onSnapshot}' (exact JSX prop passing pattern), and 'client.call(\"snapshot\"'. An alternative correct implementation using e.g. 'snapshot: async ()' instead of 'snapshot()' or 'input?.onSnapshot' instead of 'onSnapshot?:' would fail these string-matching tests."
+      "reason": "Tests check for exact string patterns like 'snapshot()' in worker.ts, 'onSnapshot?:' in app.tsx, 'onSnapshot={input.onSnapshot}' in app.tsx, and 'client.call(\"snapshot\"' in thread.ts. An alternative correct implementation using e.g. 'heapSnapshot' as the RPC method name, or passing the callback differently (e.g. via context), or using a different prop-passing pattern would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_worker_has_snapshot_rpc, test_thread_implements_onsnapshot, test_app_accepts_onsnapshot_prop, test_changelog_command_updated) are all pure text/string-matching checks \u2014 they read file contents and check for substring presence. None of them import, call, or execute the actual code to verify behavior."
+      "reason": "The fail-to-pass tests (test_worker_has_snapshot_rpc, test_thread_implements_onsnapshot, test_app_accepts_onsnapshot_prop, test_changelog_command_updated) all exclusively use string matching (includes/regex) on file contents. None of them import, instantiate, or execute the modified code. They are purely textual grep-style checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply adds the required string literals to the files (e.g., adding comments containing 'writeHeapSnapshot', 'snapshot()', 'server.heapsnapshot', 'onSnapshot?:', 'client.call(\"snapshot\"', etc.) without any functional implementation would pass all fail-to-pass tests, since they only check for string presence in file contents."
+      "outcome": "pass",
+      "reason": "While the tests are text-based, they check for specific additions (writeHeapSnapshot import, snapshot() method, server.heapsnapshot string, onSnapshot callback, client.call invocation, changelog sections) that don't exist in the base commit. A stub/no-op wouldn't contain these strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/opencode as solve.sh and the tests only do string matching. An agent could read the solution script, or simply grep the test file for the expected strings and add them as comments to the relevant files to pass all checks."
+      "reason": "The solution file exists at /workspace/opencode (solve.sh is executed there), and the tests only check for string presence in files. An agent could read the solution file or simply grep for the expected test strings and insert them as comments or dead code to pass all text-matching tests without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's requirements (worker snapshot RPC, thread onSnapshot callback, app prop passing, changelog sections) are all tested. The toast notification showing both paths is not directly tested but is implicitly covered by the onSnapshot return value pattern."
+      "reason": "All behaviors described in the instruction are tested: worker snapshot RPC, thread onSnapshot coordination, app prop threading, toast notification (implicitly via onSnapshot return), and changelog restructuring."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear grouping comments (Gates/static, Fail-to-pass, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates/static, Fail-to-pass, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON, CSV, API responses, or database schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "File paths, variable names, commands, and identifiers in the instruction are consistent and correctly spelled throughout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify, the exact method name ('snapshot'), the exact callback name ('onSnapshot'), the exact filenames for heap snapshots, and the exact pattern for RPC calls ('client.call(\"methodName\", args)'). This goes well beyond identifying the problem domain and into specifying the exact code changes."
+      "reason": "The instruction specifies exact implementation details: the RPC method must be named 'snapshot', the callback must be named 'onSnapshot', filenames must be 'tui.heapsnapshot' and 'server.heapsnapshot', and the callback must be 'passed as an optional prop through to the App component'. This over-constrains the solution space beyond what's needed to describe the problem."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code task, not an agentmd-edits task. The changelog.md edit is a full rewrite but it's a small config-like file that's part of the task requirements."
+      "outcome": "pass",
+      "reason": "The changelog.md edit is a localized content rewrite of a single command file, and the code changes are additions to three specific files. The gold patch doesn't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 5
 }

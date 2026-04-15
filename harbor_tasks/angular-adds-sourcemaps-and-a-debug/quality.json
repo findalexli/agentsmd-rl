@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: `bool_flag` named `debug`, `config_setting` named `debug_build`, `def esbuild(...)` with `minify`/`sourcemap` params, `select()` with `//devtools:debug_build` and `//conditions:default`, `_esbuild(` internal call, specific script names (`detect-angular.ts`, `backend.ts`, `ng-validate.ts`, `content-script.ts`), `sourcemap = \"inline\"`, removal of `minify = True`, debug npm script names and `--//devtools:debug` flag, all file paths, and README update."
+      "reason": "The instruction names all specific file paths (devtools/BUILD.bazel, devtools/tools/defaults.bzl, devtools/projects/shell-browser/src/BUILD.bazel, devtools/projects/shell-browser/src/app/BUILD.bazel, package.json), key identifiers (bool_flag 'debug', config_setting 'debug_build', 'devtools:build:chrome:debug', 'devtools:build:firefox:debug'), parameter names (minify, sourcemap), literal values ('inline', 'True', '--//devtools:debug'), and script names (detect-angular.ts, backend.ts, ng-validate."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact implementation details like 'create a wrapper function named `esbuild` (defined with `def esbuild(...)`)', 'must internally call a function named `_esbuild(`', exact `select()` mapping with `//devtools:debug_build` \u2192 `False` and `//conditions:default` \u2192 `True`, exact flag/setting names, exact parameter names. This is essentially dictating the solution line-by-line rather than describing what's broken."
+      "reason": "The instruction is extremely prescriptive about the exact implementation: it specifies the exact flag name ('debug'), exact config_setting name ('debug_build'), exact parameter names (minify, sourcemap), exact values (sourcemap='inline'), and exact npm script names with exact flag syntax ('--//devtools:debug'). It also says exactly which lines to remove ('minify = True'). This leaves very little reasoning for the developer\u2014it's essentially a specification of the solution rather than a descriptio"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_defaults_bzl_esbuild_wrapper checks for `_esbuild(` internal call name, exact `select()` structure with specific label strings, `def esbuild` function definition pattern. A correct alternative could use a different internal function name (e.g., `original_esbuild(` or `native_esbuild(`), use a macro instead of a wrapper function, or structure the select differently \u2014 all would fail the tests despite being functionally correct."
+      "reason": "Tests assert on implementation-specific details: test_defaults_bzl_esbuild_behavior requires select() with ':debug_build' condition and '**kwargs' delegation pattern; test_debug_flag_behavior requires exact names 'debug' and 'debug_build' with specific flag_values structure; test_injected_scripts_inline_sourcemaps checks for exact 'sourcemap = \"inline\"' text pattern. An alternative correct implementation using a different mechanism (e.g., a different conditional construct, different variable nam"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads files and checks text patterns with regex/string matching (e.g., `assert '_esbuild(' in content`, `assert re.search(r'def\\s+esbuild', ...)`, `assert 'sourcemap' in params`). No test actually executes a Bazel build, imports a module, or verifies runtime behavior. All tests are textual assertions on file contents."
+      "reason": "Despite claiming to be 'behavioral', most tests are regex-based text parsing: test_defaults_bzl_esbuild_behavior parses .bzl file text with regex looking for 'select(' and ':debug_build' strings; test_debug_flag_behavior parses BUILD.bazel text with regex; test_injected_scripts_inline_sourcemaps (visible from truncated tests) likely checks for text patterns. The test_syntax_check just counts parentheses. None actually execute Bazel, load the Starlark code, or run any build commands."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for non-trivial content that wouldn't exist in the original files \u2014 e.g., `def esbuild(` wrapper definition, `bool_flag` and `config_setting` blocks, `sourcemap = \"inline\"` on specific targets, debug npm scripts in package.json. A stub/no-op wouldn't pass since the original repo doesn't contain these constructs."
+      "reason": "The tests check for specific structural elements that don't exist in the original codebase (bool_flag, config_setting, select() in esbuild wrapper, debug npm scripts). A stub or no-op implementation would not pass these tests since the original files lack these constructs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/angular as solve.sh would be applied there. The agent could read solution/solve.sh if mounted, or grep test_outputs.py (which contains the exact assertions and expected patterns like `_esbuild(`, `//devtools:debug_build`, etc.) to reverse-engineer the exact solution needed."
+      "reason": "The solution is in /workspace/angular as a gold patch applied via solve.sh. The agent could read the solution file at solution/solve.sh if it exists in the container, or grep for the expected patterns in test_outputs.py which is at tests/test_outputs.py. The tests use regex patterns that could be reverse-engineered to produce matching text without understanding the actual build system."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six requirements from the instruction are tested: debug flag (test_debug_flag_defined), esbuild wrapper (test_defaults_bzl_esbuild_wrapper), inline sourcemaps (test_sourcemap_inline_for_injected_scripts), removed hardcoded minification (test_no_hardcoded_minify_in_shell_browser_src), debug scripts (test_package_json_debug_scripts), and README update (implied by test_readme_updated \u2014 referenced in truncated tests)."
+      "reason": "All five requirements from the instruction are covered: debug flag in BUILD.bazel (test_debug_flag_behavior), configurable esbuild (test_defaults_bzl_esbuild_behavior), inline sourcemaps for injected scripts (test_injected_scripts_inline_sourcemaps), removal of hardcoded minification (test_no_hardcoded_minify_in_shell_browser), and debug npm scripts (test_package_json_debug_scripts)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_syntax_check, test_defaults_bzl_esbuild_wrapper, etc.), docstrings explaining each test's purpose, and clear section comments separating gate tests from fail-to-pass and pass-to-pass categories."
+      "reason": "Tests are well-organized with descriptive names, docstrings explaining what they verify, and clear section comments separating 'gates (pass_to_pass)' from 'fail-to-pass' tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves config/build file modifications, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task produces build configuration files, not structured data outputs like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, flag names, and commands in the instruction all match those referenced in the tests and solution without any typos."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact internal implementation details like 'must internally call a function named `_esbuild(`', exact select() mapping values, exact parameter names \u2014 going well beyond describing the problem domain and into specifying the exact code to write."
+      "reason": "The instruction specifies exact implementation details like 'A config setting named debug_build', 'boolean flag named debug', 'sourcemap = \"inline\"', and 'minify = True' removal from specific files. This goes beyond naming the relevant files and describes the exact changes needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized to specific sections of a handful of config files (BUILD.bazel, defaults.bzl, package.json, README.md) with targeted additions/removals, not full-file rewrites."
+      "reason": "The gold diff is localized to specific additions/removals in 5 files without full-file rewrites, and changes are consistent with the instruction requirements."
     }
   },
   "tier_a_fails": [

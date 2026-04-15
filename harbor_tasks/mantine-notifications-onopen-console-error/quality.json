@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_onopen_destructured_before_spread asserts the literal string 'onOpen: _onOpen' must appear in the file. The instruction.md never mentions this specific variable name '_onOpen' or the destructuring pattern. Also test_repo_oxlint, test_repo_format, test_repo_syncpack are not mentioned in instruction.md at all."
+      "reason": "test_onopen_destructured_before_spread asserts the literal string 'onOpen: _onOpen' must appear in the file. The instruction.md never mentions this specific variable naming convention (_onOpen). Also test_repo_oxlint, test_repo_format, test_repo_syncpack check tooling not mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the symptom (onOpen causing React warning) and points to the file, but does not state the exact fix (destructuring onOpen before spreading). A developer must reason about what to change."
+      "reason": "instruction.md describes the symptom (onOpen causing React warning) and points to the file, but does not state the exact fix (destructuring onOpen before spreading). A developer must reason about the cause."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_onopen_destructured_before_spread checks for the exact string 'onOpen: _onOpen' in the source file. An alternative correct fix like 'onOpen: __onOpen' or 'onOpen: _dataOnOpen' or using a different destructuring variable name would fail this test, despite being functionally correct."
+      "reason": "test_onopen_destructured_before_spread asserts 'onOpen: _onOpen' as a literal string in the source file. An alternative correct fix using a different variable name (e.g., 'onOpen: _onOpenCb' or 'onOpen: __onOpen') or a different approach (e.g., deleting onOpen from notificationProps after destructuring) would fail this test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_react_warning_not_emitted_for_onopen and test_onopen_destructured_before_spread) are essentially text-matching tests. test_onopen_destructured_before_spread does `assert 'onOpen: _onOpen' in content`. test_react_warning_not_emitted_for_onopen uses a regex on source code (`/onOpen:\\s*_onOpen/`) rather than actually rendering the component and checking for warnings. Neither imports nor executes the actual component code."
+      "reason": "test_onopen_destructured_before_spread is purely text-matching: it reads the source file and checks 'onOpen: _onOpen' in content. test_react_warning_not_emitted_for_onopen also primarily does regex on the source file (/onOpen:\\s*_onOpen/) rather than actually rendering the component and checking for warnings. Most fail-to-pass tests are string-in-file checks, not behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_onopen_destructured_before_spread simply checks if the string 'onOpen: _onOpen' exists in the file. Adding just that string to the destructuring pattern (even without understanding the bug) passes the test. test_react_warning_not_emitted_for_onopen similarly just checks the same regex pattern in source code, not actual behavior."
+      "reason": "test_onopen_destructured_before_spread can be passed by simply adding the string 'onOpen: _onOpen' anywhere in the file (e.g., in a comment). It doesn't verify the fix actually works at runtime. Similarly test_react_warning_not_emitted_for_onopen checks for the regex pattern in source text, not actual behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/mantine/solution/solve.sh (or the gold patch visible in the Dockerfile build context) to see the exact fix: adding 'onOpen: _onOpen' to the destructuring. The test literally checks for this exact string, so reading the solution file directly yields the answer."
+      "reason": "The solution file exists at /workspace/mantine as solve.sh content shows the exact patch. The agent could read solution/solve.sh to see the gold patch. Additionally, the test checks for the literal string 'onOpen: _onOpen' which could be discovered by reading the test files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: onOpen fires on mount (tested via test_onopen_still_invoked_via_data_in_useeffect), no React warnings (tested via test_react_warning_not_emitted_for_onopen), and onClose still works (covered by test_repo_notifications_tests_pass). All explicit requirements are tested."
+      "reason": "The instruction requires: (1) onOpen fires on mount without warnings - tested by test_react_warning_not_emitted_for_onopen and test_onopen_still_invoked_via_data_in_useeffect, (2) no React warnings - tested, (3) existing functionality preserved - tested by test_repo_notifications_tests_pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining fail-to-pass vs pass-to-pass, and what each test validates."
+      "reason": "Tests are well-named with descriptive docstrings categorizing them as 'fail-to-pass' or 'pass-to-pass', and each has clear purpose documentation."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing a bug in a React component, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the task files."
+      "reason": "File paths, commands, and variable names in instruction.md and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md points to NotificationContainer.tsx which is the single relevant file for the notifications package. This is appropriate domain-level guidance, not line-level leakage."
+      "reason": "instruction.md points to NotificationContainer.tsx which is reasonable since it's the directly relevant file for the notification system. It doesn't mention specific lines or the destructuring fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

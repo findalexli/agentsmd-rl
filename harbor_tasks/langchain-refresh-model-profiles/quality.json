@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for exact file paths like 'libs/partners/mistralai/langchain_mistralai/data/_profiles.py' and the variable name '_PROFILES' declared as an ast.AnnAssign (type-annotated assignment). The instruction mentions '_profiles.py' files and '_PROFILES' dictionary but doesn't specify the exact relative paths under the repo root (e.g., 'libs/partners/mistralai/langchain_mistralai/data/_profiles.py'). More critically, tests check that _PROFILES is defined via ast.AnnAssign (type-annotated assign"
+      "reason": "Tests check for specific file paths like 'libs/partners/mistralai/langchain_mistralai/data/_profiles.py' and the variable name '_PROFILES' declared as an annotated assignment (ast.AnnAssign). The instruction mentions '_profiles.py' files and '_PROFILES' dictionary but doesn't specify the exact full paths. More critically, the tests check that _PROFILES is defined via ast.AnnAssign (type-annotated assignment like `_PROFILES: dict[str, dict[str, Any]] = {...}`), which is not mentioned in the instr"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exactly what values to set for each field (e.g., 'max_input_tokens: 256000', 'max_output_tokens: 256000', 'reasoning_output: True'), the exact model IDs to add, the exact display names, and the exact character change for the OpenRouter fix (hyphen to colon). This leaves essentially no reasoning for the agent \u2014 it's a direct specification of the fix rather than a description of the problem."
+      "reason": "The instruction explicitly states the exact changes: add 'mistral-small-2603' with specific field values, update 'mistral-small-latest' fields to specific values (256000, True, etc.), add 'gpt-5.3-chat-latest' with specific values, and change the key from hyphen to colon. This is essentially telling the agent exactly what to write, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for the presence of specific keys and values in dictionary entries using AST parsing, not exact line positions or formatting. An agent could add entries anywhere in the _PROFILES dict, use different ordering of fields, include additional fields, or format differently, and tests would still pass. The tests check semantic content not syntactic form."
+      "reason": "Tests check for the presence of model IDs as dictionary keys in _PROFILES and verify specific field values using AST parsing. Any correct implementation that adds the entries with the right specs to the _PROFILES dict would pass, regardless of ordering, formatting, or surrounding entries. The tests don't assert on line positions or specific helper functions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several tests are primarily text-matching: test_openrouter_nemotron_model_id_fixed uses `assert '\"nvidia/nemotron-3-super-120b-a12b:free\":' in content` which is pure string matching. test_mistralai_model_small_2603_exists also starts with `assert '\"mistral-small-2603\":' in content`. While some tests do AST parsing and there are import/syntax tests, the core f2p tests rely heavily on string-in-file checks. The import tests (test_*_profiles_importable) do execute imports, and syntax tests run py_c"
+      "reason": "Most tests use a combination of string matching ('assert '\"mistral-small-2603\":' in content') and AST parsing, but don't actually import or execute the modules. test_openrouter_nemotron_model_id_fixed is purely text-based (string in/not in content). The syntax tests use py_compile which is behavioral. The import tests do actually import the module. So it's a mix, but several core f2p tests (like test_openrouter_nemotron_model_id_fixed) are purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific model IDs, field names, and values that don't exist in the original codebase. A stub/no-op implementation would fail because the original files lack 'mistral-small-2603', 'gpt-5.3-chat-latest', and have the wrong nemotron ID. The mistral-small-latest update test checks for specific values (256000, True) that differ from the originals."
+      "reason": "The f2p tests check for specific model IDs and specific field values that don't exist in the base commit. A stub or no-op implementation would not add these entries, so the tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/langchain (or can be found in the container) via solve.sh. The agent could read /solution/solve.sh which contains the exact git patch with all changes. Additionally, the test file at tests/test_outputs.py contains all expected values as literal strings, so an agent could grep for them directly."
+      "reason": "The solution file exists at /workspace/langchain (solution/solve.sh contains the full git patch). An agent could read the solve.sh file or the test file itself to extract exact expected values. The tests check for literal strings like '\"mistral-small-2603\":' and '\"nvidia/nemotron-3-super-120b-a12b:free\":' which could be found by grepping the test file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behaviors specified in the instruction (add mistral-small-2603, update mistral-small-latest, add gpt-5.3-chat-latest, fix OpenRouter model ID, maintain valid Python/importability) are tested by corresponding test functions."
+      "reason": "All five explicit requirements from the instruction are tested: adding mistral-small-2603, updating mistral-small-latest, adding gpt-5.3-chat-latest, fixing the OpenRouter model ID, and maintaining valid Python syntax/importability."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_mistralai_model_small_2603_exists, test_openai_gpt_5_3_chat_latest_specs, etc.), docstrings indicating fail-to-pass vs pass-to-pass, and logical grouping by partner package."
+      "reason": "Tests are well-named (e.g., test_mistralai_model_small_2603_exists, test_openrouter_nemotron_model_id_fixed) and have docstrings indicating fail-to-pass vs pass-to-pass classification."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema of model profile entries with all fields and their types in the 'Data Structure' section, and notes OpenAI-specific additional fields."
+      "reason": "The instruction documents the exact schema of model profile entries including all field names and types in a code block."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, model IDs, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, model IDs, or variable names in the instruction or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact field names and values to change (e.g., 'max_input_tokens: 256000', 'reasoning_output: True'), exact model IDs to add, and the exact character fix for the OpenRouter ID. While it doesn't name exact line numbers, it provides the complete solution specification, going well beyond identifying the files involved."
+      "reason": "The instruction names the exact files (_profiles.py in each partner package), the exact dictionary name (_PROFILES), the exact model IDs to add/modify, and the exact field values to set. For a data-editing task this is somewhat expected, but the level of specificity (e.g., 'change nvidia/nemotron-3-super-120b-a12b-free to nvidia/nemotron-3-super-120b-a12b:free') removes all localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized \u2014 it adds/modifies specific dictionary entries in three _profiles.py files without rewriting entire files, and doesn't contradict other tier-1 files."
+      "reason": "The gold patch is localized \u2014 it adds entries and modifies specific fields in three files without full-file rewrites, and doesn't contradict any other files."
     }
   },
   "tier_a_fails": [

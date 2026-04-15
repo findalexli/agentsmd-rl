@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the test name 'skip child beforeLoad when parent beforeLoad throws during preload', the file paths (packages/router-core/src/load-matches.ts, packages/router-core/tests/load.test.ts), the exact code patterns ('inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', '? inner.firstBadMatchIndex'), and the commands to run tests. All assert targets in test_outputs.py are discoverable from instruction.md."
+      "reason": "The instruction names the exact test name 'skip child beforeLoad when parent beforeLoad throws during preload', the exact file paths (load-matches.ts, load.test.ts), the exact code patterns to verify ('inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', '? inner.firstBadMatchIndex'), and the test commands. All assert targets in test_outputs.py are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md section 'Code Patterns to Verify' literally tells the agent the exact code strings to write: 'inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', '? inner.firstBadMatchIndex'. This is effectively telling the agent what the fix is \u2014 the exact conditional expressions to use \u2014 leaving no reasoning about WHAT to change."
+      "reason": "The 'Code Patterns to Verify' section in instruction.md explicitly states the exact code strings the fix must contain: 'inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', and '? inner.firstBadMatchIndex'. This tells the agent exactly what code to write, eliminating the need to reason about the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_code_logic_fix() asserts exact string patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and 'inner.firstBadMatchIndex !== undefined' and '? inner.firstBadMatchIndex'. An alternative correct fix (e.g., using 'inner.firstBadMatchIndex != undefined' instead of '!== undefined', or structuring the conditional differently) would fail these string-matching tests despite being functionally correct."
+      "reason": "test_code_logic_fix() asserts exact string patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and '? inner.firstBadMatchIndex'. An alternative correct fix using different variable names, different conditional structures (e.g., a helper function, or checking match.error instead of firstBadMatchIndex) would fail these string-matching tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_code_logic_fix() is purely text-matching: it reads load-matches.ts and checks for exact string patterns with no execution. While other tests do execute code via subprocess, this test is entirely 'assert X in open(path).read()' style. Not every test is text-only, but this one is a significant part of the test suite."
+      "reason": "test_code_logic_fix() is purely a text-matching test that reads load-matches.ts and checks for exact string patterns without executing any code. While other tests do execute the code (test_preload_parent_beforeload_error_skips_child_handlers runs unit tests), the rubric says FAIL if 'every test is assert foo in open(path).read()' \u2014 this specific test is exactly that pattern, and it's a critical part of the test suite."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass test (test_preload_parent_beforeload_error_skips_child_handlers) runs the actual regression test via subprocess which validates that child handlers are NOT called when parent beforeLoad throws. A stub or no-op implementation would not pass this test since the base commit fails it."
+      "reason": "The f2p test (test_preload_parent_beforeload_error_skips_child_handlers) runs the actual unit test suite which requires the agent to write a working regression test and apply a real fix. A stub/no-op implementation would fail the child handler assertions. The test verifies actual runtime behavior through subprocess execution of vitest."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/router and solve.sh is in the container's solution directory. The agent could read /solution/solve.sh (if accessible) or simply grep the test_outputs.py file for the exact string patterns required by test_code_logic_fix(). The exact fixture strings are also spelled out in instruction.md's 'Code Patterns to Verify' section."
+      "reason": "The solution exists at /workspace/router and the agent could read solve.sh if it exists in the container (the Dockerfile doesn't show it being removed). Also, the exact code patterns to write are spelled out in instruction.md's 'Code Patterns to Verify' section, making it trivial to match literal fixture strings without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) fixing the bug in load-matches.ts, (2) adding a regression test with the exact name. Both are tested \u2014 the regression test is checked for existence and execution, and the code fix is verified via string matching and unit test execution."
+      "reason": "The instruction requires: (1) fixing the bug in load-matches.ts, (2) adding a regression test with exact name, (3) code patterns present. All three are tested: unit tests run, test name presence is checked, code patterns are verified, plus type checking, linting, formatting, and build validation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and clearly separated: test_preload_parent_beforeload_error_skips_child_handlers, test_unit_tests_pass, test_typescript_types_pass, test_eslint_linter_passes, test_build_package_validation_passes, test_prettier_formatting_passes, test_code_logic_fix. Each has a docstring explaining its purpose."
+      "reason": "Tests are well-named and grouped by concern: test_preload_parent_beforeload_error_skips_child_handlers, test_unit_tests_pass, test_typescript_types_pass, test_eslint_linter_passes, test_build_package_validation_passes, test_prettier_formatting_passes, test_code_logic_fix. Each has docstrings explaining purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in TypeScript code, not producing structured data output."
+      "reason": "This task is about fixing a bug in TypeScript code; it does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, variable names, and test names are consistent and correct across instruction.md and test_outputs.py."
+      "reason": "File paths, commands, variable names, and test names are consistent across instruction.md and test_outputs.py with no typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify (load-matches.ts), the exact function (loadMatches), and provides the exact code patterns that must appear in the fix ('inner.serialError || inner.firstBadMatchIndex != null', etc.). This goes well beyond identifying the buggy module \u2014 it specifies the exact implementation."
+      "reason": "instruction.md specifies the exact file to modify (load-matches.ts) which is reasonable, but also gives the exact code patterns that must appear in the fix: 'inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', '? inner.firstBadMatchIndex'. This is direct solution leakage of internal implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task involving TypeScript source files and test files, not configuration edits."
     }
   },
   "tier_a_fails": [

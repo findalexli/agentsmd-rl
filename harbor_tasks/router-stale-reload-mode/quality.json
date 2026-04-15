@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics asserted by tests: file paths (route.ts, router.ts, load-matches.ts, index.ts, fileRoute.ts in react/solid/vue), exact type names (LoaderStaleReloadMode, RouteLoaderEntry, RouteLoaderObject, ResolveRouteLoaderFn), exact literal strings ('background' | 'blocking'), exact property names (defaultStaleReloadMode, staleReloadMode, shouldReloadInBackground), and the exact handler extraction pattern. The test names for behavior tests (object-form loader, backgrou"
+      "reason": "The instruction names all specific file paths (route.ts, load-matches.ts, router.ts, index.ts, fileRoute.ts in react/solid/vue-router), type names (LoaderStaleReloadMode, RouteLoaderEntry, RouteLoaderObject, ResolveRouteLoaderFn), literal strings ('background' | 'blocking'), property names (defaultStaleReloadMode, staleReloadMode, shouldReloadInBackground), and the exact handler extraction pattern that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation pattern: 'typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler', the exact variable name 'shouldReloadInBackground', the exact condition 'prevMatch.status === \"success\" && shouldReloadInBackground', and exact type definitions. This is not describing what's broken but dictating the exact code to write."
+      "reason": "The instruction explicitly states exact implementation details like 'typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler' pattern, the exact variable name 'shouldReloadInBackground', the exact type definition 'export type LoaderStaleReloadMode = \"background\" | \"blocking\"', and exact property signatures like 'staleReloadMode?: LoaderStaleReloadMode'. This tells the agent exactly WHAT code to write, not just what behavior is needed."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_load_matches_handles_object_loader assert the exact string 'typeof routeLoader === \\'function\\' ? routeLoader : routeLoader?.handler' via text search. test_load_matches_uses_should_reload_in_background asserts the exact variable name 'shouldReloadInBackground'. test_route_loader_object_type_exists asserts exact string 'staleReloadMode?: LoaderStaleReloadMode'. A correct alternative using different variable names (e.g., 'isBackgroundReload') or different handler extraction pattern"
+      "reason": "Tests assert on gold-specific implementation details: test_load_matches_handles_object_loader checks for the exact string 'typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler'; test_load_matches_uses_should_reload_in_background checks for the exact variable name 'shouldReloadInBackground'; test_loader_stale_reload_mode_type_defined checks for exact string 'export type LoaderStaleReloadMode = \"background\" | \"blocking\"'. Alternative correct implementations using different variab"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Many tests are purely text-based: test_types_exported, test_route_loader_object_type_exists, test_resolve_route_loader_fn_type_exists, test_loader_stale_reload_mode_type_defined, test_router_options_has_default_stale_reload_mode, test_load_matches_handles_object_loader, test_load_matches_uses_should_reload_in_background, test_load_matches_respects_stale_reload_mode, and test_fileroute_uses_route_loader_entry all just do `assert 'string' in open(path).read()`. While some tests (test_object_loader"
+      "reason": "Many tests are purely text-matching: test_types_exported, test_route_loader_object_type_exists, test_resolve_route_loader_fn_type_exists, test_loader_stale_reload_mode_type_defined, test_router_options_has_default_stale_reload_mode, test_load_matches_handles_object_loader, test_load_matches_uses_should_reload_in_background, test_load_matches_respects_stale_reload_mode, and test_fileroute_uses_route_loader_entry all use 'assert X in open(path).read()' with no execution. While some tests (test_obj"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The behavioral tests (test_object_loader_handler_runs, test_background_stale_reload_default, test_blocking_stale_reload_loader_level, etc.) run repo tests that don't exist in the base commit - they look for specific test names like 'supports object-form loader handler'. These tests would fail because the test files don't exist, but they'd also fail for a stub. However, the text-matching tests (test_types_exported, etc.) could be passed by simply appending strings to files without any real implem"
+      "reason": "The behavioral tests (test_object_loader_handler_runs, test_background_stale_reload_default, test_blocking_stale_reload_loader_level, test_blocking_stale_reload_router_default, test_loader_overrides_router_default) run vitest looking for specific test names like 'supports object-form loader handler' but these tests don't exist in the repo \u2014 the agent would need to write them. If the agent doesn't write them, vitest may pass with 0 tests matched (returncode 0), making these tautological. Addition"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/router via solve.sh which downloads and applies the PR patch. The agent could read solve.sh or simply curl the patch URL (https://github.com/TanStack/router/pull/6921.patch) directly. The solution directory exists in the container."
+      "reason": "The solution is available at /workspace/router via 'curl -sL https://github.com/TanStack/router/pull/6921.patch' as shown in solve.sh. The agent could read solve.sh if solution/ is accessible, or simply apply the same PR patch. The solve.sh file exists in the container at /solution/solve.sh (based on the task structure)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (types exported, object-form loader, blocking mode, background mode, router default, loader override, framework integration, TypeScript compilation) are tested."
+      "reason": "All acceptance criteria from the instruction are covered by tests: type exports, type definitions, router options, load-matches behavior, framework file updates, TypeScript compilation, and unit tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped logically (type checks, file content checks, behavioral tests, build/lint tests)."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., test_types_exported, test_load_matches_handles_object_loader) and are logically grouped from type checks to behavioral tests to build validation."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces TypeScript code changes, not structured data output."
+      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "File paths, variable names, type names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (load-matches.ts, route.ts, router.ts, fileRoute.ts), exact variable names (shouldReloadInBackground), and exact code patterns ('typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler'). This goes far beyond describing the feature and into dictating the implementation."
+      "reason": "The instruction names exact files (load-matches.ts, route.ts, router.ts, fileRoute.ts), exact variable names (shouldReloadInBackground), exact code patterns ('typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler'), and exact type definitions. This goes far beyond describing the feature and specifies the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

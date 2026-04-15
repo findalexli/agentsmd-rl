@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (src/gateway/openai-http.ts), the function (buildAgentCommandInput), the endpoint (POST /v1/chat/completions), the test file (src/gateway/openai-http.test.ts), and the concept of senderIsOwner/owner-level context. The tests check for senderIsOwner, buildAgentCommandInput, handleOpenAiHttpRequest, and fields like deliver/bestEffortDeliver/allowModelOverride \u2014 all of which are discoverable from the named file and function. The instruction provides enough information t"
+      "reason": "instruction.md names the file (src/gateway/openai-http.ts), the function (buildAgentCommandInput), the endpoint (POST /v1/chat/completions), and the concept (senderIsOwner/owner-level context). The test file (src/gateway/openai-http.test.ts) is also cited. All assert'd paths, function names, and key concepts (senderIsOwner, buildAgentCommandInput, handleOpenAiHttpRequest) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the bug (owner-level privileges granted to HTTP callers) and the expected behavior (non-owner context) but never says 'change senderIsOwner from true to false' or specifies the exact line to change. A developer must inspect the code to find the specific field and value."
+      "reason": "instruction.md describes the bug (owner-level privileges granted to HTTP callers) and expected behavior (non-owner context) but does not say 'change senderIsOwner from true to false' or specify the exact line. A developer must reason about what flag to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_sender_is_owner_in_source asserts 'senderIsOwner: false' must appear literally in the function body and 'senderIsOwner: true' must not. An alternative correct fix like using a variable (e.g., `const isOwner = false; ... senderIsOwner: isOwner`) or a computed expression (e.g., `senderIsOwner: !isHttpIngress`) would fail because the test does exact string matching on 'senderIsOwner: false' in the function body text."
+      "reason": "test_sender_is_owner_in_source asserts the literal string 'senderIsOwner: false' must appear in the function body and 'senderIsOwner: true' must not. An alternative correct fix that uses a variable (e.g., `const isOwner = false; ... senderIsOwner: isOwner`) or a computed expression would fail these literal string checks. The tests are overly specific to the gold patch's exact syntax."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_sender_is_owner_false runs vitest as a subprocess to execute the actual test suite, verifying runtime behavior. test_adjacent_fields_preserved attempts to execute the function via tsx. While test_sender_is_owner_in_source is text-based, the primary f2p test (test_sender_is_owner_false) executes actual code. Not every test is pure text matching."
+      "reason": "test_sender_is_owner_false runs actual vitest tests via subprocess to verify runtime behavior. test_adjacent_fields_preserved attempts to execute the function via tsx. While test_sender_is_owner_in_source is text-based, the suite as a whole includes genuine behavioral execution, so not every test is pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_sender_is_owner_false runs the actual vitest suite which checks senderIsOwner is false at runtime \u2014 a stub or unchanged code with senderIsOwner: true would fail. test_sender_is_owner_in_source checks that the literal 'senderIsOwner: true' is NOT present, which also fails on unmodified code."
+      "reason": "The f2p tests (test_sender_is_owner_false, test_sender_is_owner_in_source) would fail on the original code which has senderIsOwner: true. A stub or no-op wouldn't pass because test_sender_is_owner_false runs the actual vitest suite which contains assertions about senderIsOwner being false, and test_sender_is_owner_in_source checks for the literal 'senderIsOwner: false' in the function body."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /solution/solve.sh in the container and contains the exact patch. An agent could read this file (cat /solution/solve.sh) and apply it directly. The Dockerfile doesn't remove or protect the solution directory."
+      "reason": "The solution file exists at /workspace/openclaw (or could be inferred). More critically, solve.sh is at a known path and contains the exact patch. The agent could read /solution/solve.sh or the gold patch directly. The Dockerfile doesn't prevent access to test files or solution files at runtime. An agent could also grep for 'senderIsOwner: false' in test_outputs.py to determine the expected value."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that the HTTP endpoint dispatches with non-owner context. The tests verify senderIsOwner is false (both via vitest execution and source inspection), check function existence, export preservation, and adjacent field correctness \u2014 covering the described behavior."
+      "reason": "instruction.md requires that HTTP callers get non-owner context. The tests verify senderIsOwner is false (test_sender_is_owner_false, test_sender_is_owner_in_source), verify function existence, export preservation, and adjacent field preservation \u2014 covering all stated requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments (Gates, Fail-to-pass, Pass-to-pass), each test function has a descriptive name and docstring explaining its purpose."
+      "reason": "Tests are grouped with clear section comments (Gates/static, Fail-to-pass, Pass-to-pass), have descriptive names and docstrings explaining what each test validates."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task is a bug fix in TypeScript source code, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task is a code bug fix, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (src/gateway/openai-http.ts, src/gateway/openai-http.test.ts), function names (buildAgentCommandInput, handleOpenAiHttpRequest), and field names (senderIsOwner) are all correctly spelled and consistent across instruction and tests."
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the file and function (buildAgentCommandInput in src/gateway/openai-http.ts) which is reasonable for a security bug report, but doesn't specify the exact line number or the exact field (senderIsOwner) that needs changing. The developer must read the function to identify the problematic field."
+      "reason": "instruction.md names the function buildAgentCommandInput and the file, which is appropriate for a security bug report. It does not name the exact line number or the specific field (senderIsOwner) that needs changing, leaving localization work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not an agentmd-edits or config task."
     }
   },
   "tier_a_fails": [

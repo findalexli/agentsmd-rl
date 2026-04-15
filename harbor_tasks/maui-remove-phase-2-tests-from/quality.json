@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key files: .github/agents/pr.md, .github/agents/pr/PLAN-TEMPLATE.md, .github/agents/pr/post-gate.md, .github/README-AI.md, .github/copilot-instructions.md, .github/scripts/Review-PR.ps1, and .github/skills/ai-summary-comment/ (which contains the scripts like post-ai-summary-comment.ps1). The tests check these same files. The specific changes (removing Tests phase, updating 5-phase to 4-phase, removing phase references) are all described in the instruction. Variable name"
+      "reason": "The instruction names all key file paths (pr.md, PLAN-TEMPLATE.md, post-gate.md, README-AI.md, copilot-instructions.md, Review-PR.ps1, ai-summary-comment skills), and describes what needs to change (remove Tests phase, renumber to 4 phases, update PowerShell scripts). The specific variable names like $testsContent, $testsSection, phaseStatuses entries are implementation details that follow naturally from the task description of removing Tests phase handling from the PowerShell scripts. The instr"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to do (remove the Tests phase, update numbering, update documentation) but does not specify exact line changes, variable names to remove, or specific code replacements. A developer must still examine each file and reason about what specifically to change."
+      "reason": "The instruction describes WHAT is broken (redundant Tests phase) and WHAT the result should be (4-phase workflow), but doesn't specify exact line changes, variable names to remove, or specific code transformations. A developer must still reason about how to implement the removal across all files."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: test_summary_script_no_tests_section_extraction checks for exact strings '$testsContent = Get-SectionByPattern', '$testsSection = New-PhaseSection', and '$phaseSections += $testsSection'. An alternative correct fix might rename these variables differently (e.g., removing the entire block vs. commenting it out, or restructuring the code differently) \u2014 but any fix that removes Tests phase handling would pass. However, the test also asserts '$testsSecti"
+      "reason": "Tests assert on gold-specific variable names: test_summary_script_no_tests_section_extraction checks for exact strings '$testsContent = Get-SectionByPattern', '$testsSection = New-PhaseSection', '$phaseSections += $testsSection'. An alternative correct fix might rename variables differently during refactoring, or restructure the code so these exact patterns don't appear but the Tests phase is still removed. However, more critically, these are negative assertions (must NOT contain), so any correc"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are pure text-matching: 'assert \"Tests\" not in content', 'assert \"4-phase\" in content', 'assert \"$testsContent = Get-SectionByPattern\" not in content'. The PowerShell parse checks (_parse_pwsh) do verify behavioral correctness (syntax validity), but the core fail-to-pass tests (test_summary_script_no_tests_phase_status, test_summary_script_no_tests_section_extraction, test_summary_script_no_tests_validation_case, test_review_script_describes_4_phase) are all primarily string-in-file c"
+      "reason": "The tests are predominantly text-matching: e.g., test_summary_script_no_tests_phase_status does `assert '\"Tests\" = ' not in content`, test_review_script_describes_4_phase does `assert '4-phase' in content`. While some tests also run PowerShell syntax parsing (_parse_pwsh), the core fail-to-pass assertions are all string-in-file checks. No test actually executes the PowerShell scripts with inputs and checks outputs/behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the absence of specific strings that exist in the original codebase (e.g., '\"Tests\" = ' in phaseStatuses, '$testsContent = Get-SectionByPattern', '5-phase'). A stub or no-op would not remove these strings from the existing files, so the tests cannot be passed without actually making changes."
+      "reason": "The fail-to-pass tests check that specific strings are removed from existing files (e.g., '\"Tests\" = ' must not appear, '5-phase' must not appear, '$testsContent = Get-SectionByPattern' must not appear) and that new strings are present ('4-phase'). A stub/no-op implementation would leave the original files unchanged, which would fail these tests since the original files contain the old Tests phase references."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/maui (accessible in the container after solve.sh runs) but more critically, the agent could read the test file at tests/test_outputs.py to discover exact assertions like '$testsContent = Get-SectionByPattern' and mechanically grep-and-remove those specific strings without understanding the task. The solution patch is also available in the container filesystem."
+      "reason": "The solution file exists at /workspace/maui (or could be accessed via solve.sh). The agent could read /solution/solve.sh if it exists in the container, which contains the complete git diff patch. The Dockerfile doesn't remove /solution/ after setup. Additionally, the agent could grep test_outputs.py for exact expected strings like '4-phase' and '$testsContent' to reverse-engineer what changes are needed."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires removing the Tests phase, updating phase numbering, updating documentation, and updating PowerShell scripts. Tests cover: removal of Tests phase from PowerShell scripts, 4-phase numbering in Review-PR.ps1, preservation of remaining phases in markdown and scripts, and PowerShell syntax validity. The main documented requirements are tested."
+      "outcome": "fail",
+      "reason": "The instruction mentions updating copilot-instructions.md and .github/README-AI.md, but no tests verify those files were updated. The instruction also mentions updating PLAN-TEMPLATE.md phase numbering and the ai-summary-comment SKILL.md/IMPROVEMENTS.md/NO-EXTERNAL-REFERENCES-RULE.md files, but tests only check PLAN-TEMPLATE.md has Gate/Fix/Report (pass-to-pass, not checking Tests removal) and don't check the other skill files at all."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail_to_pass vs pass_to_pass, pr_diff vs static vs repo_tests), descriptive function names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing markdown and PowerShell config/script files, not producing structured data outputs."
+      "reason": "This task involves editing markdown and PowerShell config files, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in both instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files to examine (which is appropriate for the task scope) but does not specify exact lines, variable names, or specific code patterns to change. The 'Files to Look At' section is reasonable given the task requires cross-file coordination."
+      "reason": "The instruction names files to look at (which is appropriate for a multi-file refactoring task) but doesn't specify exact lines, variable names, or specific code patterns to change. The task domain makes the file list natural and necessary."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff shows localized edits across multiple files (string replacements, section removals) \u2014 not full-file rewrites. Changes are scoped to removing Tests phase references and renumbering."
+      "reason": "The gold patch shows localized changes across multiple files (removing Tests phase references, renumbering), not full-file rewrites. Changes are consistent and don't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [
@@ -56,7 +56,9 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
 }

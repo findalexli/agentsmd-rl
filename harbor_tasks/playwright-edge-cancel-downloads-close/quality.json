@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the files (download.ts, crBrowser.ts), the class names (Download, CRBrowserContext), the method name (cancel()), the _downloads collection, cancelDownload(uuid), the UUID instance field requirement (this.<field>), the public naming convention from CLAUDE.md, and the Target.disposeBrowserContext command. All test-asserted specifics (file paths, method names, field access patterns, _downloads reference, .cancel() call before disposeBrowserContext) are discoverable from the in"
+      "reason": "The instruction names both file paths (download.ts, crBrowser.ts), the Download class, cancel() method, cancelDownload(uuid), _downloads collection, CRBrowserContext, Target.disposeBrowserContext, the UUID instance field requirement (this.<field>), and public naming convention from CLAUDE.md. All test assertions reference these same elements which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add a cancel() method that calls cancelDownload(this.<field>), iterate _downloads before Target.disposeBrowserContext and call cancel() on each. This is a complete implementation specification, not just a description of what's broken. A developer reading instruction.md has virtually no reasoning left to do about WHAT to change."
+      "reason": "The instruction explicitly states the exact fix: add a cancel() method that calls cancelDownload(this.<field>), iterate _downloads before Target.disposeBrowserContext calling cancel() on each. It specifies exact method names, exact delegation pattern, and exact placement. This leaves no reasoning for the agent about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_download_cancel_method requires a class-level cancel() method with exactly 2-space indent matching pattern 'cancel\\s*\\(' and body containing 'cancelDownload(this.\\w+)'; test_context_close_cancels_downloads requires '.cancel()' and '_downloads' in the 50 lines before disposeBrowserContext. An alternative correct fix using a different iteration pattern (e.g., a helper method, or using a different collection name) would fail. test_cancel_uses_"
+      "reason": "test_download_cancel_method requires the cancel() method body to match /cancelDownload\\(this\\.\\w+\\)/ specifically. test_context_close_cancels_downloads requires '.cancel()' and '_downloads' to appear in the 50 lines before 'Target.disposeBrowserContext'. An alternative correct fix that e.g. used a different iteration variable name or called a wrapper method would fail. The regex pattern for cancel method extraction (2-space indent specifically) is also gold-specific."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests (test_context_close_cancels_downloads, test_cancel_uses_instance_field, test_cancel_method_public_naming, test_not_stub) are purely text-based regex searches on source files with no execution. test_download_cancel_method uses a Node script that parses source text rather than importing/calling the class. Only the pass_to_pass tests (typecheck, build) actually execute the code, but these aren't the behavioral tests."
+      "reason": "Most fail-to-pass tests (test_context_close_cancels_downloads, test_cancel_uses_instance_field, test_cancel_method_public_naming, test_not_stub) are purely text/regex-based checks on source code content. test_download_cancel_method runs a node script but only parses source text, never imports or executes the code. Only test_repo_typecheck and test_repo_build actually compile/execute the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub cancel() method (empty body or return None) would fail test_not_stub which checks body length > 5 and requires 'cancelDownload' in the body, and test_cancel_uses_instance_field which requires 'this.\\w+' in the cancel body. The tests cannot be satisfied without adding meaningful implementation."
+      "reason": "A stub cancel() {} would fail test_not_stub (requires body length > 5 and 'cancelDownload' in body), test_cancel_uses_instance_field (requires this.xxx reference), and test_download_cancel_method (requires cancelDownload(this.<field>) pattern). The tests do require substantive implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/playwright in the solve.sh script path, and the agent could read the Dockerfile or solution/solve.sh if they exist in the container. The tests check for specific text patterns that the agent could discover by examining the test files or solution files."
+      "reason": "The solution file exists at /workspace/playwright in the container (solve.sh writes to it). The agent could potentially read solution/solve.sh if it exists in the container, or grep for the expected patterns in test_outputs.py to reverse-engineer the exact regex matches needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md are tested: (1) cancel() method on Download class (test_download_cancel_method, test_cancel_uses_instance_field, test_not_stub), (2) public naming convention (test_cancel_method_public_naming), (3) cancel downloads before context disposal (test_context_close_cancels_downloads)."
+      "reason": "All three main behaviors from the instruction are tested: cancel() method existence and implementation (test_download_cancel_method, test_cancel_uses_instance_field), public naming (test_cancel_method_public_naming), and cancelling downloads before disposal (test_context_close_cancels_downloads)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff, Pass-to-pass/anti-stub, Config-derived/agent_config), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining each check, and comments mapping to eval_manifest categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in file paths, method names, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact methods, exact field access patterns (this.<field>), exact collection name (_downloads), and exact CDP command (Target.disposeBrowserContext). It even specifies the ordering (cancel before dispose) and references specific CLAUDE.md line numbers (99-102). This goes well beyond identifying the buggy area."
+      "reason": "The instruction names both exact files to modify, specifies the exact method name (cancel()), the exact delegation call (cancelDownload with this.<field>), the exact collection (_downloads), and the exact placement (before Target.disposeBrowserContext). This goes well beyond identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [

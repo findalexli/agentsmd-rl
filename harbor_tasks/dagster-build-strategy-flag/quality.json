@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert extremely specific implementation details not mentioned in instruction.md. For example: test_build_strategy_on_deploy_group checks exact function signature 'def deploy_group(\\n    organization: Optional[str],\\n    deployment: Optional[str],\\n    build_strategy: str,'; test_build_strategy_on_build_and_push checks 'def build_and_push_command(\\n    agent_type_str: str,\\n    build_strategy: str,'; test_build_artifact_signature_updated checks exact signature 'def build_artifact(\\n    dg_"
+      "reason": "Tests assert exact function signatures like 'def deploy_group(\\n    organization: Optional[str],\\n    deployment: Optional[str],\\n    build_strategy: str,' and 'def build_and_push_command(\\n    agent_type_str: str,\\n    build_strategy: str,' including exact parameter ordering and newline formatting. The instruction never specifies these exact signatures or parameter orderings. Tests also assert exact variable names like 'build_strategy_enum' and 'build_strategy_option_group = make_option_group' "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md provides very specific implementation details: exact variable name 'BuildStrategy' with exact import path 'dagster_cloud_cli.commands.ci', states to use 'make_option_group', specifies lazy import pattern, specifies TYPE_CHECKING block usage, and describes exact threading path through 'build_artifact' and 'build_impl'. This goes well beyond describing what's broken \u2014 it prescribes the exact implementation approach."
+      "reason": "The instruction explicitly states implementation details like 'using make_option_group', 'Import BuildStrategy lazily inside functions rather than at module level', 'The deploy session module uses a TYPE_CHECKING block for type hints \u2014 add BuildStrategy there', and specifies the exact variable name pattern 'BuildStrategy enum' and the exact import path 'from dagster_cloud_cli.commands.ci'. These are not descriptions of what's broken but rather specific implementation instructions."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'build_strategy_option_group' (test_build_strategy_option_exists), exact variable name 'build_strategy_enum' (test_build_strategy_enum_import, test_build_strategy_passed_from_commands), exact parameter ordering in function signatures (test_build_strategy_on_deploy_group, test_build_and_push), exact function name '_build_artifact_for_project' (test_build_strategy_passed_to_inner_functions). An alternative correct implementa"
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'build_strategy_option_group' (test_build_strategy_option_exists), exact variable 'build_strategy_enum' (test_build_strategy_enum_import, test_build_strategy_passed_from_commands), exact function parameter ordering in signatures (test_build_strategy_on_deploy_group, test_build_strategy_on_build_and_push), and exact string matching like 'build_strategy_enum = BuildStrategy(build_strategy)'. An alternative correct implementa"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The vast majority of tests (test_build_strategy_option_exists, test_build_strategy_on_deploy_group, test_build_strategy_on_build_and_push, test_build_strategy_enum_import, test_build_artifact_signature_updated, test_build_strategy_passed_to_build_impl, test_hybrid_pex_validation, test_build_strategy_passed_to_inner_functions, test_build_strategy_type_hint_updated, test_build_strategy_passed_from_commands, test_hardcoded_docker_removed) are purely source code text matching via read_text() and str"
+      "reason": "The vast majority of tests (test_build_strategy_option_exists, test_build_strategy_on_deploy_group, test_build_strategy_on_build_and_push, test_build_strategy_enum_import, test_build_artifact_signature_updated, test_build_strategy_passed_to_build_impl, test_hybrid_pex_validation, test_build_strategy_passed_to_inner_functions, test_build_strategy_type_hint_updated, test_build_strategy_passed_from_commands, test_hardcoded_docker_removed) are pure source code text matching using 'assert X in source"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific code patterns, function signatures, and CLI output that would not be present in stub implementations. A stub/no-op would not have the required option groups, parameter signatures, or CLI help text."
+      "reason": "The tests check for specific strings and patterns that would not be present in stub implementations. A stub returning None or empty values would not cause 'build_strategy_option_group = make_option_group' to appear in source code. The CLI help tests also require actual working CLI integration."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/dagster and solve.sh contains the complete gold patch. An agent could read solve.sh or simply apply the patch directly. The tests are source-text matching tests that check for exact strings in source files, making it trivial to reverse-engineer the expected content from the test assertions themselves."
+      "reason": "The solution file exists at /workspace/dagster and solve.sh contains the complete gold patch. An agent could read the solution directly. Additionally, since tests are pure text matching on source files, an agent could simply write the exact strings the tests look for without understanding the underlying functionality."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: CLI option spec (choices, default, envvar), validation error for Hybrid+pex, build strategy threading, CLI help output, and ruff formatting."
+      "outcome": "fail",
+      "reason": "The instruction specifies that selecting python-executable with a Hybrid agent must raise a click.UsageError with a specific message, but test_hybrid_pex_validation only checks that the validation string exists in source code text \u2014 it never actually invokes the code to verify the error is raised at runtime."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped logically (option existence, decorator application, enum import, signature updates, validation, CLI help, formatting), and have a module-level docstring explaining what is tested."
+      "reason": "Tests are well-named with descriptive docstrings, grouped logically (option existence, parameter passing, validation, CLI help), and the module docstring explains the overall test coverage."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces CLI code changes, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves CLI option additions, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names specific internal implementation details: 'make_option_group' pattern, 'build_artifact' and 'build_impl' function names, 'TYPE_CHECKING block', lazy import pattern inside functions. While it doesn't give line numbers, it reveals the exact internal architecture the agent needs to modify, which is part of the task's difficulty."
+      "reason": "The instruction specifies exact implementation details: 'using make_option_group', lazy import pattern, TYPE_CHECKING block modification, exact variable naming like 'BuildStrategy enum', and the exact import path. This goes beyond describing the desired behavior and into prescribing the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -59,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

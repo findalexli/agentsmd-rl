@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_mergedSelectedKeys_uses_empty_list_fallback asserts for the literal string 'mergedSelectedKeys ?? EMPTY_LIST' and variable name 'mergedSelectedKeyList' in the source file. While instruction.md does mention these, test_rowSelection_radio_undefined_keys references a test named 'works with selectionType radio receive selectedRowKeys from [] to undefined' which is not mentioned anywhere in instruction.md. The instruction only references one test pattern, not this radio-specific one."
+      "reason": "test_mergedSelectedKeys_uses_empty_list_fallback asserts for the literal string 'mergedSelectedKeys ?? EMPTY_LIST' and variable name 'mergedSelectedKeyList' in the source file. While instruction.md does mention these patterns, the test test_rowSelection_radio_undefined_keys checks for a test named 'works with selectionType radio receive selectedRowKeys from [] to undefined' which is not mentioned anywhere in instruction.md \u2014 the instruction only references the preserveSelectedRowKeys regression "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'Add a fallback: const mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST;' and specifies exactly where to use it (useEffect, useMemo) and to update dependency arrays. This is a complete solution specification, not just a problem description."
+      "reason": "instruction.md explicitly states the exact fix: 'Add a fallback: const mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST;' and lists the exact three locations to substitute. It also specifies 'Use mergedSelectedKeyList instead of mergedSelectedKeys in: The useEffect that calls updatePreserveRecordsCache, The useMemo that computes derivedSelectedKeys'. This is a complete implementation recipe, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_mergedSelectedKeys_uses_empty_list_fallback asserts the exact string 'mergedSelectedKeys ?? EMPTY_LIST' and the variable name 'mergedSelectedKeyList' in the source. An equally correct alternative fix (e.g., using a different variable name like 'safeSelectedKeys' or using 'mergedSelectedKeys || EMPTY_LIST' at usage sites) would fail this structural test."
+      "reason": "test_mergedSelectedKeys_uses_empty_list_fallback asserts the exact string 'mergedSelectedKeys ?? EMPTY_LIST' and the exact variable name 'mergedSelectedKeyList' in the source file. An alternative correct fix (e.g., using a different variable name like 'safeSelectedKeys' or defaulting in useMergedState) would fail this structural test even if it correctly fixes the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_mergedSelectedKeys_uses_empty_list_fallback is purely a text-matching test: it reads the file and asserts specific strings are present ('mergedSelectedKeys ?? EMPTY_LIST', 'mergedSelectedKeyList') without any execution or behavioral verification. While other tests do execute code, this test is purely textual."
+      "reason": "test_mergedSelectedKeys_uses_empty_list_fallback is purely a text-matching test: it reads the file and asserts specific strings ('mergedSelectedKeys ?? EMPTY_LIST' and 'mergedSelectedKeyList') exist in the content, with no execution or behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests (test_rowSelection_regression_preserveSelectedRowKeys and test_rowSelection_radio_undefined_keys) run actual Jest tests that exercise the Table component with the crash scenario. A stub/no-op would not fix the underlying crash, so these tests cannot be trivially satisfied."
+      "reason": "The fail_to_pass tests (test_rowSelection_regression_preserveSelectedRowKeys, test_rowSelection_radio_undefined_keys) run actual Jest tests that exercise the Table component with specific selectedRowKeys transitions and would crash/fail without the real fix. A stub/no-op would not pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ant-design (accessible via solve.sh content or /tmp/fix.patch if the agent runs it). Additionally, the agent could read the test file at components/table/__tests__/Table.rowSelection.test.tsx to discover exact test expectations. The structural test (test_mergedSelectedKeys_uses_empty_list_fallback) can be satisfied by simply inserting the literal strings without understanding the bug."
+      "reason": "The solution file exists at /workspace/ant-design (solution/solve.sh contains the complete gold patch). An agent could read /tmp/fix.patch or the solve.sh script if it has filesystem access. Additionally, the test_mergedSelectedKeys_uses_empty_list_fallback test literally contains the exact strings the agent needs to insert, which could be discovered by reading the test file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires fixing the crash when selectedRowKeys becomes undefined with preserveSelectedRowKeys enabled. The tests verify this behavior through the regression test, radio selection test, TypeScript compilation, linting, and all table unit tests."
+      "reason": "The instruction requires: (1) fixing the crash when selectedRowKeys becomes undefined with preserveSelectedRowKeys \u2014 tested by test_rowSelection_regression_preserveSelectedRowKeys; (2) using the ?? EMPTY_LIST pattern \u2014 tested by test_mergedSelectedKeys_uses_empty_list_fallback; (3) not breaking existing tests \u2014 tested by test_table_rowSelection_unit and test_table_all_unit."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each validates (e.g., 'Regression test', 'Structural check', 'pass_to_pass' vs 'fail_to_pass' annotations). They are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings, organized by concern (linting, type checking, unit tests, regression tests, structural checks), and clearly indicate pass_to_pass vs fail_to_pass distinctions."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in a UI component, not producing structured data output."
+      "reason": "This task involves fixing a bug in a React component, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and test patterns in instruction.md appear correct and consistent with the codebase structure."
+      "reason": "File paths, variable names, commands, and test patterns in instruction.md are consistent and correct (e.g., components/table/hooks/useSelection.tsx, mergedSelectedKeys, EMPTY_LIST)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (components/table/hooks/useSelection.tsx), the exact variable (mergedSelectedKeys), the exact fix pattern (mergedSelectedKeys ?? EMPTY_LIST), and even the new variable name (mergedSelectedKeyList). This goes far beyond pointing to the buggy module \u2014 it provides the complete implementation."
+      "reason": "instruction.md names the exact file (components/table/hooks/useSelection.tsx), the exact variable (mergedSelectedKeys), the exact fix pattern (mergedSelectedKeys ?? EMPTY_LIST), and the exact new variable name (mergedSelectedKeyList). It even specifies the three exact locations to substitute. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [

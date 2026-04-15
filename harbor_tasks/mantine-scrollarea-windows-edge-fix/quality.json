@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file path TARGET_FILE, variable names isAtTop/isAtBottom/canScrollHorizontally, exact strings like 'const handleWheel = (event:', 'onWheel?.(event)', 'event.stopPropagation()', 'event.shiftKey', 'scrollTop < 1', 'scrollTop >= scrollHeight - clientHeight - 1', 'scrollWidth > clientWidth', 'onWheel={handleWheel}', 'ctx.scrollbarXEnabled', 'ctx.viewport') are all explicitly mentioned in instruction.md."
+      "reason": "All test-asserted specifics (file path TARGET_FILE, variable names like isAtTop/isAtBottom/canScrollHorizontally, exact strings like 'const handleWheel = (event:', 'onWheel?.(event)', 'event.stopPropagation()', 'scrollTop < 1', 'scrollTop >= scrollHeight - clientHeight - 1', 'scrollWidth > clientWidth', 'onWheel={handleWheel}', 'ctx.scrollbarXEnabled', 'ctx.viewport', 'event.shiftKey') are all explicitly stated in instruction.md's Requirements and Expected Behavior sections."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: exact variable names (isAtTop, isAtBottom, canScrollHorizontally), exact function signature ('const handleWheel = (event:'), exact call syntax ('onWheel?.(event)'), exact boundary conditions ('scrollTop < 1', 'scrollTop >= scrollHeight - clientHeight - 1'), and exact attachment method ('onWheel={handleWheel}'). This is essentially the complete solution, not just a description of what's broken."
+      "reason": "The instruction explicitly dictates the exact implementation: specific variable names (isAtTop, isAtBottom, canScrollHorizontally), exact function signature ('const handleWheel = (event:'), exact call syntax ('onWheel?.(event)'), exact boundary conditions ('scrollTop < 1', 'scrollTop >= scrollHeight - clientHeight - 1'), and exact attachment ('onWheel={handleWheel}'). This is essentially the complete solution spelled out step by step, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names 'isAtTop'/'isAtBottom'/'canScrollHorizontally' (test_stoppropagation_at_boundaries, test_horizontal_scroll_check), exact function signature 'const handleWheel = (event:' (test_handlewheel_function_exists), exact syntax 'onWheel?.(event)' (test_handlewheel_calls_onwheel), exact regex pattern requiring ctx.scrollbarXEnabled, ctx.viewport, and event.shiftKey in a specific if-statement order (test_scrollbarXEnabled_in_handlewhee"
+      "reason": "Tests assert exact variable names (isAtTop, isAtBottom, canScrollHorizontally), exact string literals ('const handleWheel = (event:', 'onWheel?.(event)', 'onWheel={handleWheel}'), and exact expression forms ('scrollTop < 1', 'scrollWidth > clientWidth'). A correct alternative using different variable names (e.g., 'atTopEdge'), different function names (e.g., 'wheelHandler'), or equivalent expressions (e.g., 'scrollTop === 0') would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_onwheel_prop_extracted, test_handlewheel_function_exists, test_handlewheel_calls_onwheel, test_stoppropagation_at_boundaries, test_shiftkey_check, test_scrollbarXEnabled_in_handlewheel_condition, test_handlewheel_attached_to_box, test_horizontal_scroll_check, test_viewport_boundaries_logic) are ALL string/regex searches on file content with no execution of the actual code logic. While some pass_to_pass tests run tsc/eslint/jest, the core behavioral tests are purely t"
+      "reason": "The fail_to_pass tests (test_onwheel_prop_extracted, test_handlewheel_function_exists, test_handlewheel_calls_onwheel, test_stoppropagation_at_boundaries, test_shiftkey_check, test_scrollbarXEnabled_in_handlewheel_condition, test_handlewheel_attached_to_box, test_horizontal_scroll_check, test_viewport_boundaries_logic) are ALL pure text-matching: they read the file and assert specific strings/patterns are present. While pass_to_pass tests do run TypeScript/ESLint/Jest, every fail_to_pass test is"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail_to_pass tests are text-matching tests. An agent could paste the exact expected strings as comments in the file without implementing any actual wheel event handling logic, and all f2p tests would pass. For example, adding '// const handleWheel = (event: ... onWheel?.(event) ... event.stopPropagation() ...' as comments would satisfy many checks."
+      "reason": "Since all f2p tests are string-matching tests, an agent could simply insert a comment block containing all the required strings (e.g., '// const handleWheel = (event: ... onWheel?.(event) ... isAtTop ... isAtBottom ... event.stopPropagation() ...') without implementing any actual functionality, and all f2p tests would pass. The TypeScript compilation test might catch non-compilable code but the Jest test for ScrollArea is pass_to_pass (existing tests, not new behavioral tests)."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/mantine (solve.sh contains the full patch). The agent could read solution/solve.sh if accessible in the container. Additionally, since tests are purely text-matching, the agent could grep test files for expected strings and insert them verbatim."
+      "reason": "The solution is available at /workspace/mantine and the solve.sh is in /solution/solve.sh within the container. An agent could read /solution/solve.sh to get the exact patch, or simply grep the test file to discover the exact strings being checked and insert them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (onWheel prop extraction, handleWheel function, calling user's onWheel, boundary detection with isAtTop/isAtBottom, canScrollHorizontally check, shiftKey check, stopPropagation, attaching to Box) are tested."
+      "reason": "All behaviors described in instruction.md (onWheel extraction, handleWheel function, calling user's onWheel, boundary detection with isAtTop/isAtBottom, canScrollHorizontally check, shiftKey check, stopPropagation, attaching to Box) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, each with a docstring explaining what it checks, and logically grouped by aspect of the fix (prop extraction, function existence, boundary logic, etc.)."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test checks. They are logically grouped by concern (prop extraction, function existence, boundary logic, etc.)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or tests."
+      "reason": "File paths, variable names, commands, and other identifiers in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify, exact function signature, exact variable names, exact boundary conditions, and exact call syntax. This goes far beyond identifying the buggy file \u2014 it provides the complete implementation blueprint."
+      "reason": "The instruction specifies the exact file to modify, exact variable names to use, exact function signature, exact conditional logic, and exact method calls. This goes well beyond naming the buggy file \u2014 it's a complete implementation specification including 'const handleWheel = (event:', 'isAtTop', 'isAtBottom', 'canScrollHorizontally', 'scrollTop < 1', etc."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

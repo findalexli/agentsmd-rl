@@ -31,13 +31,11 @@ The semantic type definitions must be updated to include `icon` support:
 - `classNames` should accept an `icon` field with type `string`
 - `styles` should accept an `icon` field with type `React.CSSProperties`
 
-The internal interface used for the overlay component's props must reference `PopconfirmSemanticAllType['classNames']` and `PopconfirmSemanticAllType['styles']` for its classNames and styles properties.
-
 ## Files to Modify
 
 The implementation should modify files within `components/popconfirm/`:
 
-1. The main component entry file that defines `PopconfirmSemanticType`
+1. The main component entry file that defines the semantic types
 2. The panel implementation file that renders the icon element
 3. The demo file `demo/_semantic.tsx` that documents semantic elements
 4. The test file `__tests__/semantic.test.tsx` that validates semantic styling

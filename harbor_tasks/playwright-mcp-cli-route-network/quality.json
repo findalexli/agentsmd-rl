@@ -3,55 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions reference file paths, string literals, type names, method names, and section headings that are explicitly mentioned in instruction.md (e.g., 'RouteEntry', 'routes()', 'addRoute', 'removeRoute', 'browser_route', 'browser_route_list', 'browser_unroute', 'network' category, '## Building', 'Do not run test --debug', 'npm run flint', 'flint:mcp', file paths like route.ts, context.ts, commands.ts, helpGenerator.ts, SKILL.md, and the import/spread patterns)."
+      "reason": "All test assertions reference file paths, type names (RouteEntry), method names (routes(), addRoute, removeRoute), tool names (browser_route, browser_route_list, browser_unroute), command names, category strings ('network'), import patterns, and SKILL.md content that are explicitly specified in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction effectively IS the solution \u2014 it specifies exact file paths to create/modify, exact type names (RouteEntry with specific fields), exact method signatures (routes(), addRoute, removeRoute), exact import statements ('import route from ./tools/route'), exact spread syntax ('...route'), exact string literals for categories and commands. This leaves virtually no reasoning for the agent; it's a step-by-step implementation guide rather than a problem description."
+      "outcome": "pass",
+      "reason": "The instruction describes what to implement (features, types, methods, commands) but does not give exact code or line-by-line changes. A developer must still reason about implementation details like handler logic, route fulfillment vs continuation, etc."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details like 'import route from \"./tools/route\"' in tools.ts, '...route' spread syntax, exact method names 'routes()' and 'addRoute' and 'removeRoute' in context.ts, exact string 'RouteEntry', exact command names \"name: 'route'\", and exact section headers '## Building'. Alternative correct implementations (e.g., using 'import * as route', different type names, different method signatures) would fail these text-matching tests."
+      "reason": "Tests assert exact string patterns like \"import route from './tools/route'\" and \"...route\" in tools.ts, \"name: 'route'\" in commands.ts, and exact content like \"Do not run test --debug\" and \"npm run flint\". While instruction.md specifies these, the tests also check for exact import syntax (e.g., single vs double quotes) which constrains alternatives. More critically, test_route_exported_from_tools asserts the exact import statement format 'import route from ./tools/route' which rules out valid al"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every fail-to-pass test is purely text-matching via 'assert X in file.read_text()' \u2014 e.g., test_route_tools_file_exists checks for string 'browser_route' in file content, test_context_has_route_entry_type checks for 'RouteEntry' string, test_terminal_commands_defined checks for string patterns. Only test_build_succeeds and test_lint_succeeds execute the code. No test actually imports, instantiates, or calls any of the implemented functionality."
+      "reason": "Almost all fail-to-pass tests are purely text-matching (assert 'string' in file.read_text()). The only behavioral tests are test_build_succeeds and test_lint_succeeds which run npm commands. No test actually imports/calls the route tools, executes browser_route, or verifies that network mocking works. The core functionality is untested behaviorally."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Many f2p tests can be satisfied by creating files with the right string tokens without real implementation. For example, test_route_tools_file_exists just checks that 'browser_route', 'browser_route_list', 'browser_unroute' strings exist in route.ts \u2014 a file containing only comments with those strings would pass. test_context_has_route_entry_type just checks for 'RouteEntry', 'routes()', 'addRoute', 'removeRoute' strings. However, test_build_succeeds and test_lint_succeeds do provide some guard "
+      "reason": "A stub route.ts containing just comments with 'browser_route', 'browser_route_list', 'browser_unroute' strings would pass test_route_tools_file_exists. Similarly, adding string literals to commands.ts without functional implementation would pass test_terminal_commands_defined and test_route_command_maps_arguments_correctly. The build/lint tests provide some guard but the feature-specific tests are satisfiable without real implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is present at /tmp/network_route.patch (created by solve.sh) and the solve.sh script itself is in /workspace or accessible. The agent could read solution/solve.sh which contains the complete gold patch. Additionally, since tests are purely text-matching, the agent could grep test files for expected strings and write them into the appropriate files."
+      "reason": "The solution is in /workspace/playwright's solve.sh which is accessible in the container. The agent could read /tmp/network_route.patch or the solution directory to extract the exact gold patch. Additionally, test fixture strings like 'Do not run test --debug' and 'npm run flint' are visible in test_outputs.py if the agent can access the tests/ directory."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Several behaviors from the instruction are not tested: the actual route handler logic (fulfilling vs continuing), capability: 'core' setting, the alphabetical ordering between pdf and runCode, specific option mappings like 'repeatable' header, the placement of network category 'between storage and devtools' in helpGenerator, and the actual functional behavior of route mocking/unmocking."
+      "reason": "Instruction requires route.ts to support fulfilling with mock response AND modifying headers and continuing, defines specific RouteEntry fields (handler, addHeaders, etc.), and requires removeRoute to return number of routes removed. None of these behavioral requirements are tested - only string presence in files is checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Pass-to-Pass Tests', 'Fail-to-Pass Tests (code)', 'Fail-to-Pass Tests (config)', 'Build/Type Tests'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear sections (Pass-to-Pass, Fail-to-Pass code, Fail-to-Pass config, Build/Type Tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task produces code files and documentation, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, variable names, and string literals in instruction.md are consistent and correctly spelled throughout."
+      "reason": "File paths, commands, variable names, and strings in instruction.md are consistent with those in tests and solution. The 'flint' command name (not 'lint') is intentional per the codebase convention."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details far beyond what's needed: exact import statements ('import route from ./tools/route'), exact spread syntax ('...route'), exact placement ('between pdf and runCode'), exact type field names, exact method signatures. This is effectively giving the complete solution rather than describing the desired behavior."
+      "outcome": "pass",
+      "reason": "The instruction specifies what files to create/modify and what features to add, which is appropriate for a feature implementation task. It references existing files as patterns but doesn't give exact line numbers or the solution code."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The SKILL.md config diff in the gold patch is localized \u2014 it adds specific sections and modifies a single lint command, without rewriting the entire file. The changes are consistent with what instruction.md describes."
+      "reason": "The SKILL.md config changes are localized additions (Building sections, testing notes, lint command change) and don't contradict other files. The gold diff shows targeted insertions rather than a full rewrite."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -59,9 +58,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 7
+  "pass_count": 6,
+  "fail_count": 5
 }

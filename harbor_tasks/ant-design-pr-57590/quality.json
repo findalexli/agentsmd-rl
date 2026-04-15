@@ -3,63 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact files (PurePanel.tsx, style/index.ts), the pattern 'title && (...)', the className pattern with prefixCls, the '&:first-child' selector, marginInlineEnd, marginTop: 0, and token references. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "The instruction names the two files (components/notification/PurePanel.tsx and components/notification/style/index.ts) that all tests inspect. The tests check for patterns within these files (conditional title rendering, CSS spacing rules, component structure), and the instruction describes the symptom (close button overlaps description when no title) which points to exactly these concerns. No undiscoverable specifics are required."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation pattern: 'use the pattern title && (...)' for conditional rendering, add '&:first-child' selector with specific properties marginInlineEnd and marginTop: 0. This tells the agent exactly WHAT to change rather than just describing the bug."
+      "outcome": "pass",
+      "reason": "The instruction only describes the symptom (close button overlaps description text when no title is provided) and expected behavior. It does not specify to make title rendering conditional or to add &:first-child CSS rules. A developer must reason about the fix themselves."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact textual patterns like 'title && (' in content, regex matching 'title\\s*&&\\s*\\(\\s*<div[^>]*className=\\{clsx\\(`\\$\\{prefixCls\\}-title`', and exact string \"'&:first-child'\" with specific property names inside. Alternative correct fixes (e.g., using a ternary 'title ? (...) : null', or using CSS :empty selector, or different conditional patterns) would fail these text-matching tests."
+      "reason": "Tests assert on very specific implementation patterns. test_title_conditional_rendering checks for regex patterns like 'title && (' or 'title ? (' or '{title && <div' \u2014 an alternative fix like wrapping in a helper component or using CSS display:none would fail. test_description_spacing_without_title requires specifically '&:first-child' in the style file \u2014 an alternative correct fix using padding on the parent container, or a different CSS selector like ':not(.has-title)', would fail despite cor"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (TestConditionalTitleRendering, TestDescriptionFirstChildStyle) exclusively use file content string matching: 'assert \"title && (\" in content', regex searches on file text, 'assert \"'&:first-child'\" in content'. No test renders the component, calls functions, or checks actual DOM/CSS behavior. The integration tests run linters but don't test the actual bug fix behavior."
+      "reason": "Nearly all fail-to-pass tests are pure text/regex inspection of source files (fs.readFileSync + regex matching). test_title_conditional_rendering checks regex patterns in source code. test_description_spacing_without_title checks for string '&:first-child' in source. test_css_provides_close_button_spacing checks for string patterns. None render the component or test actual visual/DOM behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns ('title && (', '&:first-child' with marginInlineEnd and marginTop: 0) that don't exist in the base commit's files. A stub/no-op solution would not pass these tests."
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original source (e.g., conditional title rendering with 'title &&', '&:first-child' CSS rule). A stub or no-op change would not introduce these patterns, so the tests would fail without a real fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/antd after solve.sh runs, but more critically, the agent could read the test file at the tests/ path or grep for expected patterns. The tests only check for literal strings in files, so the agent could simply insert the exact text patterns without understanding the bug."
+      "reason": "The solution file exists at /workspace/antd/../solution/solve.sh (or similar path in the container). The agent could read the solve.sh file to see the exact gold patch. Additionally, since tests are pure regex checks on source files, the agent could grep test files for the expected patterns and insert them mechanically without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: conditional title rendering with 'title && (' pattern, '&:first-child' selector, marginInlineEnd, marginTop: 0, and design token usage."
+      "reason": "The instruction says the description should not overlap with the close button when no title is present. The tests verify conditional title rendering and CSS spacing for description, which covers the described behavior. ESLint and design token tests ensure code quality is maintained."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into descriptive classes (TestConditionalTitleRendering, TestDescriptionFirstChildStyle, TestRepoIntegration) with clear docstrings explaining before/after behavior."
+      "reason": "Tests are well-organized into classes (TestConditionalTitleRendering, TestDescriptionSpacing, TestLayoutBehavior, TestRepoIntegration) with descriptive docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing UI component code, not producing structured data output."
+      "reason": "This task involves fixing a UI component bug, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, CSS properties, and commands are all correctly spelled throughout instruction.md and test files."
+      "reason": "File paths (components/notification/PurePanel.tsx, components/notification/style/index.ts), variable names, and commands are all correct with no typos."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'use the pattern title && (...)' for conditional rendering, the exact CSS selector '&:first-child', exact properties marginInlineEnd and marginTop: 0, and even references to specific token names (token.marginXS, token.marginSM). This goes far beyond describing the bug."
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files, which is appropriate since the task domain is a specific component. It doesn't mention specific line numbers, variable names like 'iconNode', or the exact fix approach (conditional rendering, &:first-child)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TSX and TS style files, not configuration files."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
 }

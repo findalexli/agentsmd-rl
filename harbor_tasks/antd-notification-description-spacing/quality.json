@@ -2,66 +2,64 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_css_description_first_child_spacing asserts a specific regex pattern matching '&:first-child' with 'marginInlineEnd: token.marginSM'. While instruction.md hints at token.marginSM and first-child concepts, the exact pattern '&:first-child' as a CSS selector with that specific token is not explicitly stated. Similarly, test_pure_content_conditional_title_rendering asserts the exact pattern '{title && (' which is hinted but not explicitly required. The tests also assert on specific file paths "
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files (PurePanel.tsx, style/index.ts), the CSS pattern (&:first-child with marginInlineEnd: token.marginSM), and the conditional rendering pattern (title && (<div>...</div>)). All test-asserted specifics (file paths, regex patterns, token names) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Hint #3 explicitly says 'Conditionally rendering the title div only when title exists' and 'Adding styles for when description is the first child (no title before it)' with 'Using design tokens like token.marginSM for spacing'. Hint #4 says 'Use logical properties (marginInlineEnd instead of marginRight)'. These combined essentially describe the exact implementation: wrap title in conditional rendering, add &:first-child CSS rule with marginInlineEnd: token.marginSM. This is the solution, not ju"
+      "reason": "The instruction explicitly states the exact fix: use '{title && (<div>...</div>)}' conditional pattern and add '&:first-child' CSS selector with 'marginInlineEnd: token.marginSM'. This leaves no reasoning for the agent \u2014 it's a direct implementation specification, not a bug description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_css_description_first_child_spacing uses regex pattern matching for exactly '&:first-child' with 'marginInlineEnd: token.marginSM'. An alternative correct fix could use '&:only-child', or apply the spacing via a different CSS selector like `.ant-notification-closable .ant-notification-description` directly, or use paddingInlineEnd instead of marginInlineEnd. test_pure_content_conditional_title_rendering requires the exact pattern '{title && (' - an alternative like '{title ? (<div>...</div>"
+      "reason": "test_css_description_first_child_spacing uses regex requiring exact pattern '&:first-child' with 'marginInlineEnd: token.marginSM', and test_pure_content_conditional_title_rendering requires exact pattern '{title && ('. Alternative correct fixes (e.g., using a ternary, using a CSS class-based approach, using paddingInlineEnd, or applying styles inline in TSX) would fail these regex tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_css_description_first_child_spacing and test_pure_content_conditional_title_rendering are purely text-matching tests using regex on file contents (re.search on open(path).read()). They never import, render, or execute the component. While other tests (unit tests, lint) do execute code, the two fail-to-pass tests are entirely text-based assertions."
+      "reason": "The two fail-to-pass tests (test_css_description_first_child_spacing and test_pure_content_conditional_title_rendering) are purely text-matching with regex on source files \u2014 they do not execute code, render components, or check runtime behavior. They are literally 'assert pattern in open(path).read()' style tests."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Both f2p tests (test_css_description_first_child_spacing and test_pure_content_conditional_title_rendering) are pure text-matching tests. A stub that simply appends the matching text patterns to the respective files without understanding the bug would pass. For example, adding a comment containing '&:first-child': { marginInlineEnd: token.marginSM } to style/index.ts would pass the first test."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns that don't exist in the original codebase. A stub or no-op implementation wouldn't add the required regex-matched patterns to the source files, so the tests would fail without actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace with solve.sh containing the exact patch. The agent could read /solution/solve.sh (or the hidden test file) to discover the exact regex patterns being tested and the exact code changes needed. The f2p tests only do text matching, so the agent could grep the test file for the expected patterns and insert matching text."
+      "reason": "The solution is at /workspace/ant-design/../solution/solve.sh (or accessible in the container). The agent could read /solution/solve.sh or grep test files for the expected regex patterns. The f2p tests contain the exact regex patterns needed, so the agent could reverse-engineer the fix from test files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes fixing close button overlap by (1) conditionally rendering title and (2) adding CSS spacing for description. Both are tested via f2p tests, and existing behavior is verified via pass-to-pass tests (unit tests, lint)."
+      "reason": "The instruction requires two specific changes (CSS first-child rule and conditional title rendering), both of which are tested. Additional pass-to-pass tests verify no regressions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_css_description_first_child_spacing, test_pure_content_conditional_title_rendering, etc.) and detailed docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS categorization."
+      "reason": "Tests are well-named (test_css_description_first_child_spacing, test_pure_content_conditional_title_rendering, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing UI component code, not producing structured data output."
+      "reason": "This task involves UI component code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and token references are all consistent and correct across instruction.md and test files."
+      "reason": "File paths, variable names, and commands appear correct and consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md Hint #2 names the exact CSS selector '.ant-notification-closable .ant-notification-title' and the exact function 'genNoticeStyle'. Hint #3 specifies 'token.marginSM' and the exact approach of 'description is the first child'. Hint #4 specifies 'marginInlineEnd'. These combined leak the exact implementation details needed."
+      "reason": "The instruction specifies exact CSS selector ('&:first-child'), exact property (marginInlineEnd: token.marginSM), and exact JSX pattern ('{title && (<div>...</div>)}'), which amounts to giving the exact code changes needed rather than just describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript/TSX files, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 5
 }

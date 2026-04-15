@@ -3,15 +3,15 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both files (MountCustomComponent.svelte, MountComponents.svelte), the specific issues (onDestroy vs $effect cleanup, umount typo, $inspect debug call, module-level comp variable preventing re-triggering), and the expected behavior. All test assertions check for concepts explicitly described in the instruction."
+      "reason": "The instruction names the two files (MountCustomComponent.svelte, MountComponents.svelte), the specific issues (onDestroy vs $effect cleanup, umount typo, $inspect debug call, !comp guard pattern), and the expected behaviors. All test assertions check for things derivable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'cleanup is handled via onDestroy instead of returning a cleanup function from $effect', 'runtime type uses umount instead of unmount', 'module-level variable that prevents it from re-triggering', and 'stale $inspect(node) debug call'. These are not just descriptions of what's broken but prescribe the exact code changes needed (replace onDestroy with $effect return, fix umount->unmount, remove module-level guard variable, remove $inspect)"
+      "reason": "The instruction explicitly states the fix details: 'cleanup is handled via onDestroy instead of returning a cleanup function from $effect', 'typo where the runtime type uses umount instead of unmount', 'stale $inspect(node) debug call exists in MountComponents.svelte that should be removed', and 'guarded by a module-level variable that prevents it from re-triggering'. These tell the agent exactly WHAT to change (replace onDestroy with $effect return, rename umount to unmount, remove $inspect, re"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation patterns: test_effect_returns_cleanup checks for 'return () =>' literal string and '.unmount(' and absence of 'onDestroy'; test_effect_remounts_on_rerun checks for absence of 'let comp' and '&& !comp'. An alternative correct fix using different variable names or a different cleanup pattern (e.g., using a different unmount approach or naming conventions) would fail these text-matching tests."
+      "reason": "Tests assert very specific implementation patterns: 'return () =>' must be in the $effect, 'onDestroy' must not appear, '.unmount(' must be present, 'let comp' must not exist, '&& !comp' must not exist. An alternative correct fix (e.g., using a different cleanup variable name pattern, using onDestroy with proper reactive tracking, or structuring the return differently like 'return function() {') would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
@@ -19,35 +19,35 @@
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The original (buggy) files contain 'onDestroy', 'umount', '$inspect', and 'let comp' / '&& !comp' patterns. A stub or the unmodified file would fail these tests since they check for the absence of old patterns and presence of new ones. The tests require actual meaningful changes to the files."
+      "reason": "The tests check for specific code patterns that don't exist in the original broken file. A stub or no-op would not pass because the original file contains 'onDestroy', 'umount', '$inspect', and 'let comp' which the tests assert must be absent, plus requiring 'return () =>' and '.unmount(' which don't exist in the original."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/gradio as a git repo, and solve.sh with the exact patch is in /solution/solve.sh. An agent could read the solution file directly. Additionally, since tests are pure text-matching, the agent could grep test files or the solution to find exact expected strings."
+      "reason": "The solution exists at /workspace/gradio and solve.sh contains the exact gold patch. An agent could read solution/solve.sh (if accessible) or simply grep the container filesystem. The tests only check file content patterns, so copying the gold patch directly would pass all tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors listed in 'Expected Behavior' are tested: re-mounting on reload (test_effect_remounts_on_rerun), proper unmounting via cleanup (test_effect_returns_cleanup), unmount spelling (test_unmount_spelling), and no $inspect calls (test_no_inspect_debug)."
+      "reason": "All four explicitly required behaviors from instruction.md are tested: re-mounting on reload (test_effect_remounts_on_rerun), proper unmount cleanup (test_effect_returns_cleanup), unmount spelling fix (test_unmount_spelling), and $inspect removal (test_no_inspect_debug)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass static, repo_tests), descriptive function names, and docstrings explaining what each test validates."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Svelte component code, not producing structured data output."
+      "reason": "This task involves fixing Svelte component code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct."
+      "reason": "File paths (js/core/src/MountCustomComponent.svelte, js/core/src/MountComponents.svelte), variable names, and commands are all spelled correctly in the instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's 'Root Cause' section names exact implementation details: 'module-level variable', 'onDestroy instead of returning a cleanup function from $effect', 'umount instead of unmount', and '$inspect(node)'. These go beyond describing symptoms and effectively prescribe the exact code changes, making localization and reasoning trivial."
+      "reason": "The instruction names the exact files AND describes the exact code patterns to change: 'module-level variable', 'onDestroy instead of returning a cleanup function from $effect', 'umount instead of unmount', '$inspect(node) debug call'. This goes well beyond describing what's broken and tells the agent exactly where and what to fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Svelte component files, not configuration editing."
+      "reason": "This is a code-only task involving Svelte component files, not configuration edits."
     }
   },
   "tier_a_fails": [

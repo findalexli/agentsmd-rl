@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/opencode/src/skill/index.ts), the function names (add, scan, loadSkills), the patterns to remove (Effect.runPromise, Config.get(), Config.directories(), Promise.all, .then(), Effect.promise(...loadSkills)), the patterns to add (yield* Config.Service, yield* Bus.Service, Layer.provide(Config., Layer.provide(Bus.), Effect.fnUntraced/fn/gen), and references to SKILL.md, InstanceState, Session.Event.Error. All test-asserted specifics are discoverable fro"
+      "reason": "The instruction names the file path (packages/opencode/src/skill/index.ts), the helper function names (add, scan, loadSkills), the patterns to remove (Effect.runPromise, Effect.promise, .then(), Promise.all, Config.get(), Config.directories()), the patterns to add (Effect.fnUntraced/fn/gen, yield* Config.Service, yield* Bus.Service, Layer.provide(Config.*, Layer.provide(Bus.*), and related identifiers like InstanceState, SKILL.md, Session.Event.Error. All test assertions map to items explicitly "
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (async functions instead of Effect generators, promise chains, static facades) and what the expected behavior should be, but does not prescribe exact code changes like 'change line X to Y'. The developer must figure out the implementation details."
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive about the exact fix: it specifies that helpers must use Effect.fn/fnUntraced/gen, that Config.Service and Bus.Service must be yielded, that Layer.provide(Config.* and Layer.provide(Bus.* must be present in defaultLayer, that Promise.all must be replaced with Effect.forEach/Effect.all, etc. This goes well beyond describing what's broken \u2014 it tells the agent exactly what code patterns to use as replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use rigid regex patterns like /\\bconst\\s+add\\s*=\\s*Effect\\.(fnUntraced|fn|gen)\\b/ and /\\bloadSkills\\s*=\\s*Effect\\.(fnUntraced|fn|gen)\\b/. An alternative correct fix that uses e.g. `function* add` as a generator passed to Effect.gen elsewhere, or assigns loadSkills via `const loadSkills = Effect.gen(function* () {...})` with different spacing, or uses a different variable binding pattern, would fail these regex-based tests despite being behaviorally correct."
+      "reason": "Tests use regex patterns like /\\bconst\\s+add\\s*=\\s*Effect\\.(fnUntraced|fn|gen)\\b/ that require specific variable assignment syntax. An alternative correct fix that, e.g., defines add as a method on a class, or uses a different naming convention, or wraps the generator differently, would fail. The tests also check for exact patterns like 'yield* Config.Service' and 'Layer.provide(Config.' which are implementation-specific rather than behavioral."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the source file and performs regex/string matching on the code text. No test imports the module, instantiates the service, calls functions, or verifies runtime behavior. For example, test_loadskills_is_effect_generator just checks regex patterns against the source text."
+      "reason": "Every test reads the source file and checks for regex patterns in the text (e.g., checking if 'const add = Effect.fnUntraced' appears in the code, checking absence of '.then(' strings). No test actually imports, compiles, or runs the code. This is purely textual/syntactic matching, not behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code transformations (e.g., removing async, adding Effect.fnUntraced, removing Effect.runPromise). A stub or no-op implementation would not satisfy these regex checks since the base commit code has the old patterns. The agent must actively modify the code."
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., add being an Effect generator, loadSkills being an Effect generator). A stub or no-op wouldn't satisfy these regex-based checks \u2014 the specific Effect patterns must actually be written into the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/opencode as a git repo, and the solve.sh with the full patch is in /solution/solve.sh. An agent could read the solution directory or simply apply the patch. Additionally, since tests are purely text-matching, the agent could reverse-engineer exact patterns from the test file if it could access it."
+      "reason": "The solution is in /workspace/opencode as a git repo and solve.sh contains the exact patch. An agent could read the solution file or simply inspect the test script (_eval_analysis.mjs content is embedded in test_outputs.py) to see exactly what regex patterns are checked and write code that matches them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (Effect generators for helpers, removing static facades, removing runPromise, removing promise chains, layer dependencies, preserving SKILL.md/InstanceState/Session.Event.Error, AGENTS.md rules) are tested."
+      "reason": "All behavioral requirements listed in instruction.md (Effect generators for helpers, removal of static facades, removal of Effect.runPromise, removal of monolithic wrapper, removal of .then() chains, removal of Promise.all, yielding Config.Service/Bus.Service, defaultLayer providing Config/Bus) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (fail_to_pass behavioral, pass_to_pass regression, agent_config rules), descriptive function names, and docstrings explaining each check."
+      "reason": "Tests are well-organized into sections (fail_to_pass core behavioral, pass_to_pass regression, agent_config rules) with descriptive names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about code refactoring, not producing structured data output."
+      "reason": "This task involves refactoring TypeScript code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, function names, or variable names in the instruction or tests."
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (packages/opencode/src/skill/index.ts), the exact helper function names (add, scan, loadSkills), and precisely what patterns to look for and replace (e.g., 'yield* Config.Service and yield* Bus.Service are not used', 'Layer.provide(Config. and Layer.provide(Bus. are not present'). This goes beyond describing symptoms and essentially specifies the solution structure."
+      "reason": "The instruction explicitly names the exact file (packages/opencode/src/skill/index.ts), the exact function names (add, scan, loadSkills), and specifies exact replacement patterns (Effect.fnUntraced/fn/gen, yield* Config.Service, yield* Bus.Service, Layer.provide(Config.*, Layer.provide(Bus.*). This is detailed localization and solution specification, not just a bug description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,6 +51,7 @@
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
@@ -59,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

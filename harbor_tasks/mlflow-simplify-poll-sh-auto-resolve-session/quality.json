@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the file paths (.claude/skills/copilot/poll.sh, .claude/skills/copilot/SKILL.md), the variable assignments (repo=\"$1\", pr_number=\"$2\", removing session_id=\"$1\"), the gh agent-task list command, the jq fields (repository, pullRequestNumber, createdAt, sort_by), the allowed-tools entry (gh agent-task list), the removal of session_url patterns, the mention of 'automatic'/'auto', and the retention of while true/gh pr ready/gh agent-task view. All asser"
+      "reason": "The instruction names all key specifics tested: the file paths (.claude/skills/copilot/poll.sh, .claude/skills/copilot/SKILL.md), the variable names (repo=\"$1\", pr_number=\"$2\", session_id=\"$1\" to remove), the gh agent-task list command, the jq fields (repository, pullRequestNumber, createdAt, sort_by), the allowed-tools entry (gh agent-task list:*), the session_url= pattern to remove, the 'automatic'/'auto' wording, the shebang/set options, the while true loop, gh pr ready, and gh agent-task vie"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, specifying exact variable names (repo=, pr_number=), exact argument positions ($1, $2), the exact jq filter logic (select by repository and pullRequestNumber, sort_by createdAt, take last, extract .id), and exact text changes for SKILL.md. This goes well beyond describing what's broken \u2014 it essentially dictates the implementation line by line."
+      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: 'The first argument ($1) should be assigned to a variable repo= and the second argument ($2) to a variable pr_number=', 'Add a session resolution block that calls gh agent-task list, filters by repository and pullRequestNumber using jq, sorts by createdAt, and extracts the session id', 'Add gh agent-task list:* to the allowed-tools list'. This leaves virtually no reasoning for the developer \u2014 it describes "
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_poll_two_arg_interface checks for exact patterns like 'repo=' with '\"$1\"' on the same line and 'pr_number=' with '\"$2\"' on the same line. A correct alternative using e.g. 'REPO=\"$1\"' or 'pr=\"$2\"' or positional parameter arrays would fail. test_poll_auto_resolves_session checks for literal strings 'sort_by' and 'pullRequestNumber' which are jq implementation details \u2014 an alternative using 'order_by' or a different filtering approach would"
+      "outcome": "pass",
+      "reason": "The tests check for reasonable behavioral markers (presence of 'gh agent-task list', 'repository', 'pullRequestNumber', 'sort_by' or 'createdAt', variable assignments with repo=$1 and pr_number=$2) that any correct implementation would share. They don't assert exact line positions, specific helper function names, or gold-specific formatting. Alternative correct implementations (e.g., different jq syntax, different variable ordering) would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_poll_two_arg_interface, test_poll_auto_resolves_session, test_skill_allowed_tools_has_agent_task_list, test_skill_polling_simplified) all exclusively use string matching on file contents (e.g., 'assert ... in content', 'assert ... not in content'). No test actually executes poll.sh or verifies runtime behavior. The pass-to-pass tests do run bash -n and shellcheck, but ALL f2p tests are pure text assertions."
+      "reason": "The fail-to-pass tests (test_poll_two_arg_interface, test_poll_auto_resolves_session, test_skill_allowed_tools_has_agent_task_list, test_skill_polling_simplified) are ALL pure text/string matching: they read file contents and check for substrings like 'session_id=\"$1\"' not in content, 'gh agent-task list' in content, etc. No test actually executes poll.sh or tests its runtime behavior. The pass-to-pass tests do run bash -n and shellcheck, but the core behavioral tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would fail \u2014 test_poll_two_arg_interface requires specific variable assignments present in the file, test_poll_auto_resolves_session requires 'gh agent-task list' and related strings, and the pass-to-pass tests require valid bash syntax and shellcheck compliance. A no-op or empty file wouldn't pass."
+      "reason": "A stub/empty implementation would fail: test_poll_two_arg_interface requires repo=$1 and pr_number=$2 assignments, test_poll_auto_resolves_session requires 'gh agent-task list' and 'repository' and 'pullRequestNumber' strings, test_copilot_files_exist checks for shebang and set -euo pipefail. An empty file or pass-through would not satisfy these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/mlflow (accessible via solve.sh which is in solution/solve.sh). The Dockerfile doesn't remove the solution directory. An agent could read the solution patch or grep for expected test strings in the test file at tests/test_outputs.py to reverse-engineer exact required content."
+      "reason": "The solution file exists at /workspace/mlflow's git history or potentially at a path accessible in the container. More critically, solution/solve.sh contains the exact gold patch. If the agent reads /solution/solve.sh (or the Dockerfile doesn't prevent access to the task definition directory), it can simply apply the patch verbatim. There are no explicit anti-cheating measures preventing the agent from reading the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are covered by tests: 2-argument interface, session auto-resolution via gh agent-task list, SKILL.md allowed-tools update, removal of session_url patterns, simplified polling documentation, retention of core loop, and syntax/lint checks."
+      "reason": "All behaviors described in the instruction are tested: 2-arg interface (test_poll_two_arg_interface), auto-resolution via gh agent-task list (test_poll_auto_resolves_session), allowed-tools update (test_skill_allowed_tools_has_agent_task_list), simplified SKILL.md documentation (test_skill_polling_simplified), retained polling loop (test_poll_retains_core_loop), syntax validity (test_poll_sh_syntax), and structural integrity (test_copilot_files_exist)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, and docstrings explaining each test's purpose and category."
+      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass gates, Fail-to-pass), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories [static], [repo_tests], [pr_diff]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing shell scripts and markdown files, not producing structured data output."
+      "reason": "This task modifies shell scripts and markdown documentation, not structured data formats like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,16 +43,15 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names ('repo=', 'pr_number='), exact argument positions ($1, $2), the exact jq filter structure (select by repository and pullRequestNumber, sort_by createdAt, take last, extract .id), and exact line-level changes like 'Remove any session_id=\"$1\" assignment'. This is detailed implementation guidance, not just problem description."
+      "reason": "The instruction explicitly names the exact variable assignments to use ('repo=\"$1\"', 'pr_number=\"$2\"'), the exact pattern to remove ('session_id=\"$1\"'), the exact jq fields and operations (sort_by(.createdAt), filter by repository and pullRequestNumber), and the exact allowed-tools entry to add. This goes well beyond identifying the buggy file \u2014 it specifies the exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized: one line added to SKILL.md's allowed-tools, a small block rewritten in the polling section, and a targeted refactor in poll.sh. No full-file rewrites or contradictions with other files."
+      "reason": "The gold diff is localized: it adds one line to allowed-tools in SKILL.md, simplifies the polling documentation section, and modifies the argument handling in poll.sh. These are targeted, bounded edits that don't contradict other files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
@@ -60,6 +59,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 4
 }

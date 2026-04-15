@@ -11,47 +11,56 @@ The audit logging system currently categorizes all authenticated activity as eit
 
 ## Required changes
 
-Replace the single `app` type with granular user types:
+### 1. Define new activity type constants in `app/init/constants.php`
 
-1. **New constants in `app/init/constants.php`:**
-   - `ACTIVITY_TYPE_USER = 'user'` (regular authenticated user)
-   - `ACTIVITY_TYPE_ADMIN = 'admin'` (console admin in APP_MODE_ADMIN)
-   - `ACTIVITY_TYPE_GUEST = 'guest'` (unauthenticated guest)
-   - `ACTIVITY_TYPE_KEY_PROJECT = 'keyProject'` (standard/dynamic project API key)
-   - `ACTIVITY_TYPE_KEY_ACCOUNT = 'keyAccount'` (account-scoped API key)
-   - `ACTIVITY_TYPE_KEY_ORGANIZATION = 'keyOrganization'` (organization-scoped API key)
-   - Remove the old `ACTIVITY_TYPE_APP` constant
+Replace the single coarse-grained type system with granular constants:
 
-2. **Update `app/controllers/shared/api.php`:**
-   - When setting audit user type, check `$mode === APP_MODE_ADMIN` to assign `ACTIVITY_TYPE_ADMIN` vs `ACTIVITY_TYPE_USER`
-   - Only set the type if it's not already set (`empty($user->getAttribute('type'))`)
-   - For API keys, use a match expression on `$apiKey->getType()`:
-     - `API_KEY_STANDARD` → `ACTIVITY_TYPE_KEY_PROJECT`
-     - `API_KEY_ACCOUNT` → `ACTIVITY_TYPE_KEY_ACCOUNT`
-     - `API_KEY_ORGANIZATION` → `ACTIVITY_TYPE_KEY_ORGANIZATION`
-   - Inject the `mode` parameter in the relevant action handler
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `ACTIVITY_TYPE_USER` | `'user'` | Regular authenticated user |
+| `ACTIVITY_TYPE_ADMIN` | `'admin'` | Console admin operating in `APP_MODE_ADMIN` |
+| `ACTIVITY_TYPE_GUEST` | `'guest'` | Unauthenticated guest user |
+| `ACTIVITY_TYPE_KEY_PROJECT` | `'keyProject'` | Standard/dynamic project-scoped API key |
+| `ACTIVITY_TYPE_KEY_ACCOUNT` | `'keyAccount'` | Account-scoped API key |
+| `ACTIVITY_TYPE_KEY_ORGANIZATION` | `'keyOrganization'` | Organization-scoped API key |
 
-3. **Update `src/Appwrite/Utopia/Response/Model/Log.php`:**
-   - Add a `userType` rule to the Log model with description and possible values
+Remove the old `ACTIVITY_TYPE_APP` constant.
 
-4. **Update log response builders to include `userType`:**
-   - `app/controllers/api/users.php` - add `userType` and `mode` to log response
-   - `app/controllers/api/messaging.php` - add `userType` to all 4 log response locations
-   - `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Documents/Logs/XList.php`
-   - `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Logs/XList.php`
-   - `src/Appwrite/Platform/Modules/Databases/Http/Databases/Logs/XList.php`
-   - `src/Appwrite/Platform/Modules/Databases/Http/TablesDB/Logs/XList.php`
-   - `src/Appwrite/Platform/Modules/Teams/Http/Logs/XList.php`
+### 2. Update `app/controllers/shared/api.php`
 
-All log listing endpoints should return the `userType` field from `$log['data']['userType'] ?? null`.
+**Mode-based user type assignment:** When setting the audit user type for authenticated users, distinguish between console admin mode and regular user mode. The appropriate constants are `ACTIVITY_TYPE_ADMIN` and `ACTIVITY_TYPE_USER`.
+
+**Existing type preservation:** User type values that are already set should not be overwritten.
+
+**API key type mapping:** API keys have three types (`API_KEY_STANDARD`, `API_KEY_ACCOUNT`, `API_KEY_ORGANIZATION`) that must map to their corresponding activity types (`ACTIVITY_TYPE_KEY_PROJECT`, `ACTIVITY_TYPE_KEY_ACCOUNT`, `ACTIVITY_TYPE_KEY_ORGANIZATION`).
+
+**Mode parameter access:** The action handler needs access to the current application mode to determine if the request is in admin context.
+
+### 3. Update `src/Appwrite/Utopia/Response/Model/Log.php`
+
+Add a `userType` field to the Log response model with:
+- Description: "User type who triggered the audit log"
+- Possible values: `user`, `admin`, `guest`, `keyProject`, `keyAccount`, `keyOrganization`
+
+### 4. Include `userType` in all log response builders
+
+All log listing endpoints must return the `userType` field from `$log['data']['userType'] ?? null`:
+
+- `app/controllers/api/users.php` - include both `userType` and `mode`
+- `app/controllers/api/messaging.php` - include `userType` (4 locations)
+- `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Documents/Logs/XList.php`
+- `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Logs/XList.php`
+- `src/Appwrite/Platform/Modules/Databases/Http/Databases/Logs/XList.php`
+- `src/Appwrite/Platform/Modules/Databases/Http/TablesDB/Logs/XList.php`
+- `src/Appwrite/Platform/Modules/Teams/Http/Logs/XList.php`
 
 ## Files to modify
 
-- `app/init/constants.php` - define new constants
-- `app/controllers/shared/api.php` - set correct user type based on mode and API key type
-- `src/Appwrite/Utopia/Response/Model/Log.php` - add userType field to response model
-- `app/controllers/api/users.php` - include userType and mode in response
-- `app/controllers/api/messaging.php` - include userType in 4 log response places
-- 5 XList.php files in database and teams modules - include userType in log responses
+- `app/init/constants.php` - define new constants, remove `ACTIVITY_TYPE_APP`
+- `app/controllers/shared/api.php` - mode-based type assignment, API key mapping, mode access
+- `src/Appwrite/Utopia/Response/Model/Log.php` - add `userType` field definition
+- `app/controllers/api/users.php` - include `userType` and `mode` in log response
+- `app/controllers/api/messaging.php` - include `userType` in log responses
+- 5 XList.php files in Databases and Teams modules - include `userType` in log responses
 
 See the AGENTS.md files for Appwrite's module structure and conventions.

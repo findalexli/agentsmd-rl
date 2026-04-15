@@ -3,62 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific import paths like 'from sglang.srt.mem_cache.utils import get_hash_str' in radix_cache.py and cache_controller.py (test_import_sites_updated), and assert functions are removed from hicache_storage.py (test_hicache_storage_functions_removed). The instruction says 'You may need to modify' these files but never specifies that functions must be moved to utils.py specifically, that hicache_storage.py must have the function definitions removed, or that the exact import path 'from"
+      "reason": "Tests assert very specific things not mentioned in instruction.md: (1) test_import_sites_updated checks for exact import strings like 'from sglang.srt.mem_cache.utils import get_hash_str' in radix_cache.py and cache_controller.py; (2) test_hicache_storage_functions_removed asserts the functions are REMOVED from hicache_storage.py (instruction says 'separated' but doesn't explicitly say removed); (3) test_not_stub checks function body has >= 3 statements; (4) test_modified_files_black checks blac"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (CUDA dependency chain via imports) and the goal (hash functions importable without CUDA) but does not specify exact code changes, line numbers, or the precise solution approach."
+      "reason": "The instruction describes what's broken (CUDA dependency chain through imports) and the goal (hash functions importable without CUDA), but doesn't specify exact line changes or the precise solution. It says 'You may need to modify' certain files but doesn't dictate the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_import_sites_updated asserts exact strings like 'from sglang.srt.mem_cache.utils import get_hash_str' in radix_cache.py. An alternative correct fix placing the functions in a different module (e.g., sglang.srt.mem_cache.hash_utils) would fail this test despite being functionally correct. test_hicache_storage_functions_removed requires function definitions be removed from hicache_storage.py, ruling out a valid approach of keeping them there but importing from utils."
+      "reason": "test_import_sites_updated asserts exact import strings like 'from sglang.srt.mem_cache.utils import get_hash_str' in radix_cache.py and cache_controller.py. An alternative correct fix could place the functions in a different module (e.g., sglang.srt.mem_cache.hash_utils) or use a different import structure, but would fail these tests. test_hicache_storage_functions_removed also forces one specific approach (removal) rather than allowing re-export."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Tests include behavioral verification: test_hash_functions_correctness and test_hash_bigram_mode extract, compile, and execute the functions with real inputs and check outputs. test_modified_files_syntax runs py_compile subprocess. test_modified_files_lint runs ruff. Not every test is text-only; there is substantial execution-based testing."
+      "outcome": "fail",
+      "reason": "test_import_sites_updated is purely text-matching: 'assert \"from sglang.srt.mem_cache.utils import get_hash_str\" in content'. test_hicache_storage_functions_removed is also purely text: 'assert \"def get_hash_str(\" not in content'. However, other tests (test_hash_functions_correctness, test_hash_bigram_mode) do extract and execute the functions. Since not EVERY test is text-only, but key structural tests are purely textual, and the rubric says FAIL if every test is text-only \u2014 this is borderline."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_not_stub checks that function bodies have >= 3 non-trivial statements, preventing stubs. test_hash_functions_correctness verifies actual SHA256 computation against expected values. A stub returning None or empty string would fail these tests."
+      "reason": "test_hash_functions_correctness computes expected SHA256 hashes and compares against the function output, and test_not_stub checks the function body has >= 3 statements. A stub returning None or empty string would fail these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sglang (the solve.sh applies a patch there), and the Dockerfile does not remove /solution/. An agent could read solve.sh or the gold patch to discover the exact changes needed. The test fixture values (SHA256 hashes) are deterministic but the agent could also grep test files for expected paths and strings."
+      "reason": "The solution file exists at /workspace/sglang as a git repo where the agent operates. The solve.sh is at /solution/solve.sh which could be read by the agent. The Dockerfile doesn't remove the /solution directory or restrict access to it."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires hash functions be importable without CUDA, remain functionally identical, and be accessible from utils. Tests verify all of these: function correctness, placement in utils.py, import path updates, and syntax/lint checks."
+      "reason": "The instruction requires hash functions be importable without CUDA and remain functionally identical. Tests verify functional correctness (test_hash_functions_correctness, test_hash_bigram_mode), proper placement in utils.py (test_import_hash_utils_from_utils), and import site updates (test_import_sites_updated)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and grouped by concern: test_syntax_check, test_import_hash_utils_from_utils, test_hash_functions_correctness, test_hash_bigram_mode, test_import_sites_updated, test_hicache_storage_functions_removed, test_not_stub, etc."
+      "reason": "Tests are well-named and grouped by concern: syntax checks, import verification, correctness, lint, stub detection, etc."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not structured data output."
+      "reason": "Task doesn't produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and module names in instruction.md are consistent and correct (radix_cache.py, cache_controller.py, hicache_storage.py, utils.py, get_hash_str, hash_str_to_int64)."
+      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names all four files to modify: 'radix_cache.py, cache_controller.py, hicache_storage.py, and utils.py'. While it doesn't specify line numbers, naming utils.py as a target file strongly hints at the solution of moving functions there, reducing the localization challenge that should be part of the task."
+      "reason": "The instruction explicitly names the exact files to modify: 'You may need to modify: radix_cache.py, cache_controller.py, hicache_storage.py, and utils.py.' It also identifies the exact root cause location: 'radix_cache.py imports get_hash_str and hash_str_to_int64 from hicache_storage.py'. This significantly reduces the localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

@@ -2,36 +2,36 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction describes all key behaviors tested: conditional element rendering with `as` prop based on `href`, focus-visible styles with `theme.color.secondary` and `zIndex`, deprecation via `deprecate` from `storybook/internal/client-logger`, `isButton = undefined` default, and compilation/formatting checks. The specific string `as={href ? 'a' : 'button'}` tested in test_link_renders_as_button_without_href is implied by the instruction's requirement to 'use styled-components' `as` prop or eq"
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings like `as={href ? 'a' : 'button'}`, `href={href}`, `isButton = undefined`, `if\\s*\\(\\s*isButton\\s*!==?\\s*undefined\\s*\\)` \u2014 these exact implementation patterns are not all explicitly stated in instruction.md. For example, instruction.md says to use the `as` prop but doesn't specify the exact syntax `as={href ? 'a' : 'button'}`. It says to pass href but doesn't specify `href={href}`. The regex pattern for the if-check is very specific and not dictated by th"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: use `as` prop for conditional rendering, add `&:focus-visible` with `outline` using `theme.color.secondary` and `zIndex`, import `deprecate` from specific module, set `isButton = undefined`, check `isButton !== undefined`. This is not just describing what's broken \u2014 it prescribes the exact code patterns to write."
+      "reason": "Instruction.md essentially dictates the exact implementation: use styled-components' `as` prop to dynamically change the element, add `&:focus-visible` with `outline` using `theme.color.secondary` and `zIndex`, default `isButton` to `undefined` not `false`, import `deprecate` from `storybook/internal/client-logger`, and check when `isButton` is explicitly passed. This is a detailed step-by-step solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like `as={href ? 'a' : 'button'}`, `href={href}`, `isButton = undefined`, and `if\\s*\\(\\s*isButton\\s*!==?\\s*undefined\\s*\\)`. An alternative correct fix using e.g. a ternary variable (`const Tag = href ? 'a' : 'button'` then `as={Tag}`), or checking `isButton != null`, or using `typeof isButton !== 'undefined'` would fail these regex-based tests despite being functionally correct."
+      "reason": "Tests assert exact literal strings like `as={href ? 'a' : 'button'}` and `href={href}` and regex `if\\s*\\(\\s*isButton\\s*!==?\\s*undefined\\s*\\)`. An alternative correct fix could use a variable like `const Tag = href ? 'a' : 'button'` and then `as={Tag}`, or use a different conditional structure, but would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_link_renders_as_button_without_href, test_link_renders_as_anchor_with_href, test_button_focus_styles_applied, test_isbutton_prop_deprecated, and test_isbutton_default_changed all exclusively use `assert 'string' in content` or regex matching on the source file text. Only the compilation/formatting tests (test_typescript_compilation, test_component_compiles, test_repo_formatting) execute subprocesses. The core behavioral F2P tests never import, render, or execute the component."
+      "reason": "Tests test_link_renders_as_button_without_href, test_link_renders_as_anchor_with_href, test_button_focus_styles_applied, test_isbutton_prop_deprecated, and test_isbutton_default_changed are all purely `assert 'string' in open(path).read()` with no execution or behavioral testing. Only test_typescript_compilation, test_component_compiles, and test_repo_formatting execute subprocesses, but they only check compilation/formatting, not actual rendering behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all F2P tests just check for string/regex patterns in the source file, an agent could pass them by inserting dead code comments or unreachable code blocks containing the expected strings (e.g., `// as={href ? 'a' : 'button'}`) without actually implementing the fix. The tests don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "The F2P tests check for specific strings that don't exist in the original file (e.g., `as={href ? 'a' : 'button'}`, `isButton = undefined`, `deprecate`), so a stub/no-op implementation wouldn't pass them."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/storybook (via solve.sh in the container's solution/ directory). The agent could read the gold patch from /solution/solve.sh to see the exact expected code. Additionally, since tests are pure text-matching on the source file, the agent could grep test_outputs.py for the exact assertion strings and insert them verbatim."
+      "reason": "The solution exists at /workspace/storybook with solve.sh containing the exact gold patch. The agent could read solution/solve.sh to see the exact patch to apply. Additionally, since tests just check for literal strings in the file, the agent could grep the test file to discover exactly what strings to include."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md (conditional rendering, focus styles, deprecation warning, isButton default change, compilation, type checking, formatting) have corresponding test functions."
+      "reason": "All four main behaviors described in instruction.md (conditional element rendering, focus indicator styles, deprecation warning, and verification via compilation/formatting) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (test_link_renders_as_button_without_href, etc.), docstrings explaining the purpose and rationale, and F2P/P2P annotations."
+      "reason": "Tests are well-named (e.g., test_link_renders_as_button_without_href), have docstrings explaining purpose, and are grouped logically with F2P/P2P annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,22 +39,22 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files. (Note: there's `AssertionError` typo in test_outputs.py __main__ block but that's a Python built-in misspelling that doesn't affect test execution via pytest.)"
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify, the exact CSS selectors to add (`&:focus-visible`), the exact prop mechanism (`as` prop), the exact import path (`storybook/internal/client-logger`), and the exact default value change (`isButton = undefined`). This goes well beyond identifying the buggy file \u2014 it prescribes implementation details."
+      "reason": "Instruction.md specifies extremely detailed implementation: exact CSS selectors (`&:focus-visible`), exact prop names and default values (`isButton = undefined`), exact import path (`storybook/internal/client-logger`), and the exact mechanism (`as` prop). This goes far beyond identifying the buggy file and into specifying the exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],

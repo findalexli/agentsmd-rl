@@ -3,64 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names the file path (components/typography/Base/index.tsx), the variable name (needNativeEllipsisMeasure), the exact definition (cssEllipsis && !!tooltipProps.title), the gating condition, the useEffect dependency array contents, the isMergedEllipsis update, and the IntersectionObserver changes. All assert'd specifics in the tests (variable names, patterns, ordering) are discoverable from the instruction."
+      "reason": "The instruction names the file path (components/typography/Base/index.tsx), the function (isEleEllipsis), the hook (useTooltipProps), the variable name (needNativeEllipsisMeasure), and all the behavioral requirements checked by the tests (gating condition, dependency arrays, isMergedEllipsis calculation, IntersectionObserver conditions). All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix in 7 numbered steps: 'Define a boolean variable named needNativeEllipsisMeasure that evaluates to cssEllipsis && !!tooltipProps.title', 'Gate the isEleEllipsis call behind the condition if (enableEllipsis && needNativeEllipsisMeasure && textEle)', exact dependency array ordering, etc. This is a complete implementation specification, not a problem description."
+      "reason": "The instruction explicitly states 'The variable name used for the condition combining CSS ellipsis and tooltip title must match exactly `needNativeEllipsisMeasure`' and specifies exactly what the variable should combine (cssEllipsis && tooltipProps.title), plus details like 'The useEffect that controls ellipsis measurement includes the appropriate dependency' and 'The IntersectionObserver useEffect's early-return condition properly reflects whether native ellipsis measurement is needed.' Combine"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the exact variable name 'needNativeEllipsisMeasure' (test_needNativeEllipsisMeasure_variable_exists), the exact regex pattern 'cssEllipsis && !!tooltipProps.title', exact dependency array ordering '[enableEllipsis, needNativeEllipsisMeasure, children,' etc. An alternative correct fix using a different variable name (e.g., 'shouldMeasureNativeEllipsis') or different but equivalent logic would fail all f2p tests."
+      "reason": "Tests assert the exact variable name 'needNativeEllipsisMeasure' (test_needNativeEllipsisMeasure_variable_exists), exact regex patterns like 'enableEllipsis && (\\w+) && textEle', and specific structural positions. An alternative correct fix using a different variable name (e.g., 'shouldMeasureEllipsis') or a different code structure (e.g., inline condition) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All 7 fail-to-pass tests exclusively use regex pattern matching on file contents (e.g., re.search(pattern, content)). None import the component, render it, call isEleEllipsis, or execute any code. The pass-to-pass tests do run linters/parsers as subprocesses, but the core behavioral tests are purely text-matching."
+      "reason": "All visible tests use Node.js to read the source file and check string patterns via regex (e.g., content.match, content.indexOf, content.includes). None of them actually import, compile, or execute the Typography component. They are pure text/structure analysis tests, equivalent to 'assert pattern in open(path).read()'."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All f2p tests check for the presence of specific strings/patterns in source code. An agent could simply add a dead-code comment block containing all the required patterns (e.g., '// needNativeEllipsisMeasure = cssEllipsis && !!tooltipProps.title') without actually fixing the bug, and most f2p tests would pass. There's no execution-based verification that the optimization actually works."
+      "outcome": "pass",
+      "reason": "The tests check for specific code transformations (variable definitions, reordered declarations, modified dependency arrays) that would not be present in the base commit's code. A stub or no-op would not pass because the base file lacks the needNativeEllipsisMeasure variable and has tooltipProps defined after the measurement useEffect."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/antd and solve.sh is in /solution/. The agent could read solve.sh to see the exact patch. Additionally, since tests are pure regex on file content, the agent could grep test files (if accessible) for the exact patterns and insert matching strings without understanding the bug."
+      "reason": "The solution exists at /workspace/antd with the gold patch in solve.sh. The agent could read the solution file or grep for 'needNativeEllipsisMeasure' in test files. Additionally, the instruction itself reveals the exact variable name and fix structure, making it trivial to pattern-match without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 behavioral requirements listed in instruction.md (steps 1-7) have corresponding test functions that check for their implementation."
+      "reason": "All six behavioral requirements from the instruction (gating isEleEllipsis, useTooltipProps ordering, useEffect dependencies, isMergedEllipsis calculation, IntersectionObserver early-return, IntersectionObserver dependencies) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, have descriptive function names, and include docstrings explaining before/after behavior."
+      "reason": "Tests are well-named (test_isEleEllipsis_gated_by_combined_condition, test_tooltipProps_computed_before_measurement, etc.), have docstrings explaining before/after behavior, and are logically grouped into fail-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modification, not structured data output."
+      "reason": "This task involves modifying a React component, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "File paths, variable names, and commands in the instruction appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names (needNativeEllipsisMeasure), exact expressions (cssEllipsis && !!tooltipProps.title), exact conditions (if (enableEllipsis && needNativeEllipsisMeasure && textEle)), and exact dependency array ordering. This goes far beyond identifying the buggy file/area and constitutes detailed implementation specification."
+      "reason": "The instruction specifies the exact variable name 'needNativeEllipsisMeasure', describes precisely which useEffect dependencies to change, and details the exact isMergedEllipsis calculation modification. This goes well beyond describing what's broken and into prescribing the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

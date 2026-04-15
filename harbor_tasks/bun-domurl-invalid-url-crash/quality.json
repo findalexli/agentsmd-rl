@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not discoverable from instruction.md alone: test_fix_is_minimal checks git diff has zero deletions and only additions containing 'RETURN_IF_EXCEPTION'; test_success_path_preserved checks for 'reportExtraMemoryAllocated' and 'RELEASE_AND_RETURN' in specific order after 'jsCast<JSDOMURL*>'; test_fix_adds_return_if_exception checks for exact macro 'RETURN_IF_EXCEPTION(throwScope, {})' between 'toJSNewlyCreated' and 'jsCast'. While instruction.md mentions the function n"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the exact file path 'src/bun.js/bindings/BunString.cpp', the function name 'BunString__toJSDOMURL', the macro 'RETURN_IF_EXCEPTION(throwScope, {})', the call 'toJSNewlyCreated', and the cast 'jsCast<JSDOMURL*>'. While requirement 3 mentions jsCast, reportExtraMemoryAllocated, RELEASE_AND_RETURN, and toJSNewlyCreated, and requirement 4 mentions BunString.cpp and root.h, the exact macro 'RETURN_IF_EXCEPTION(throwScope"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'Adding a guard that returns early on exception before the dereference prevents the crash' and names the exact function 'BunString__toJSDOMURL' and that 'DOMURL::create() fails to parse a string and returns an exception, the code proceeds to dereference a null pointer.' This essentially tells the agent exactly what to change (add an early return guard between the DOMURL::create/toJSNewlyCreated call and the dereference)."
+      "reason": "Requirement 3 states 'The success path through the code must still reach jsCast<JSDOMURL*>, then reportExtraMemoryAllocated, then RELEASE_AND_RETURN \u2014 in that order after toJSNewlyCreated' and requirement 2 says 'additions only (no deletions)'. Combined with requirement 4 naming the exact file BunString.cpp, this effectively tells the agent exactly where and what kind of fix to apply \u2014 a single-line insertion guard between toJSNewlyCreated and jsCast in that specific file."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_fix_adds_return_if_exception requires the exact macro 'RETURN_IF_EXCEPTION(throwScope, {})' between toJSNewlyCreated and jsCast. An alternative correct fix like 'if (throwScope.exception()) return {};' would fail this test. test_guard_prevents_null_deref_on_error has a fallback for explicit return+conditional but requires specific patterns. The tests are tightly coupled to the gold solution's exact macro usage."
+      "reason": "test_fix_adds_return_if_exception explicitly checks for the exact macro 'RETURN_IF_EXCEPTION' with exact arguments '(throwScope, {})' via regex. An alternative correct fix like checking throwScope.exception() and returning early with an if-statement, or using EXCEPTION_ASSERT, would fail the primary test even though it would correctly fix the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_fix_adds_return_if_exception, test_fix_is_minimal, test_guard_prevents_null_deref_on_error) are purely textual/static analysis - they read the source file and check for string patterns like 'RETURN_IF_EXCEPTION' in the text. No test actually compiles or runs the code, executes the server, or tests the actual behavior of accessing server.url with an invalid unix socket path. The subprocess in test_fix_adds_return_if_exception just runs a Python script that does text a"
+      "reason": "All fail-to-pass tests (test_fix_adds_return_if_exception, test_fix_is_minimal, test_guard_prevents_null_deref_on_error) only read file text and check for string patterns via regex or git diff. No test actually compiles or runs the code to verify the crash is fixed. The tests are fundamentally 'assert X in open(path).read()' style checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op would not pass the f2p tests. test_fix_adds_return_if_exception requires 'RETURN_IF_EXCEPTION(throwScope, {})' to appear in a specific location in the source. test_fix_is_minimal requires a non-empty git diff with additions containing RETURN_IF_EXCEPTION. These cannot be satisfied without modifying the file."
+      "reason": "A stub or no-op implementation would not pass the tests because they check for the specific addition of RETURN_IF_EXCEPTION between toJSNewlyCreated and jsCast in the actual source file. Without making the specific code change, the git diff would be empty and the regex checks would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /repo/../solution/solve.sh (or similar path in the container). The agent could read the solution patch directly. Additionally, the test script itself at tests/test_outputs.py contains the exact fix description and the expected macro 'RETURN_IF_EXCEPTION(throwScope, {})' which the agent could grep for."
+      "reason": "The solution file exists at /repo/../solution/solve.sh (or wherever mounted) and contains the exact git patch. The agent could read the test file at tests/test_outputs.py to discover exactly what string pattern is expected (RETURN_IF_EXCEPTION(throwScope, {})) and apply it mechanically. The instruction.md requirements 3 and 4 also give enough specifics to reverse-engineer the exact fix without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says accessing server.url should 'throw a proper JavaScript error, not crash the process.' No test verifies that a JavaScript error is actually thrown or that the process doesn't crash. All tests only verify source code text patterns."
+      "reason": "Instruction says 'Accessing server.url when the URL is invalid should throw a proper JavaScript error (e.g., a JavaScript exception that can be caught with try/catch), not crash the entire process'. No test actually verifies this runtime behavior \u2014 tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass - pr_diff, pass_to_pass - pr_diff, pass_to_pass - static), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass - pr_diff, pass_to_pass - pr_diff, pass_to_pass - static), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves fixing a C++ source file, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact buggy file 'src/bun.js/bindings/BunString.cpp', the exact function 'BunString__toJSDOMURL', and describes the exact fix mechanism: 'Adding a guard that returns early on exception before the dereference prevents the crash.' This goes beyond describing what's broken and into how to fix it."
+      "reason": "Requirement 3 names exact internal symbols (jsCast<JSDOMURL*>, reportExtraMemoryAllocated, RELEASE_AND_RETURN, toJSNewlyCreated) and their required order, and requirement 4 names the exact file 'src/bun.js/bindings/BunString.cpp' with a specific include. This pinpoints the exact location and context of the fix, making localization trivial."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
     }
   },
   "tier_a_fails": [

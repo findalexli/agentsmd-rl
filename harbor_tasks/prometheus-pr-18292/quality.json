@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The test `test_method_signature_updated` checks that `getOrCreate` signature was changed to accept a ref parameter, and `test_setunlessalreadyset_method_exists` greps for 'SetUnlessAlreadySet' in series.go. The instruction does mention SetUnlessAlreadySet and hints at signature changes, but the specific requirement that getOrCreate must accept a ref parameter (chunks.HeadSeriesRef) is not explicitly stated in instruction.md \u2014 only hinted at obliquely. Also, tests like `test_existing_agent_tests`"
+      "reason": "The test `test_method_signature_updated` checks that `getOrCreate` signature was changed to accept a ref parameter, and `test_setunlessalreadyset_method_exists` greps for 'SetUnlessAlreadySet' in series.go. The instruction mentions `SetUnlessAlreadySet` by name and mentions getOrCreate, but does NOT explicitly state the signature must change to accept a ref parameter. Also, the hidden tests check for specific Go test function names (e.g., TestConcurrentAppendSameLabels) which ARE mentioned in in"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states 'The stripeSeries type must implement a method named SetUnlessAlreadySet' \u2014 this names the exact method the solution must add. It also says 'The fix may involve a new method that combines existence check with conditional insertion,' which directly describes the solution approach. This goes beyond describing what's broken."
+      "reason": "The instruction explicitly names the exact method to implement ('SetUnlessAlreadySet'), specifies it must be on `stripeSeries`, names the exact test functions to add, and describes the fix pattern ('a new method that combines existence check with conditional insertion'). This goes beyond describing what's broken and prescribes the specific solution approach and method name."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_setunlessalreadyset_method_exists does `grep 'SetUnlessAlreadySet' tsdb/agent/series.go` \u2014 any correct alternative fix that uses a different method name (e.g., 'GetOrCreate', 'AtomicInsert', 'CASSet') would fail this test. The tests also run TestStripeSeries_SetUnlessAlreadySet and TestSetUnlessAlreadySetConcurrentSameLabels which are gold-patch-specific test names that must exist exactly."
+      "reason": "test_setunlessalreadyset_method_exists explicitly greps for the string 'SetUnlessAlreadySet' in series.go. test_method_signature_updated checks that getOrCreate's signature was changed. The hidden Go tests (TestStripeSeries_SetUnlessAlreadySet, etc.) are pre-written in the solution patch and assert on the specific 'SetUnlessAlreadySet' method name. An alternative correct fix using a different method name (e.g., 'GetOrCreate' with atomic semantics, or 'AtomicInsert') would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests execute `go test`, `go build`, `go vet`, or `go fmt` as subprocesses and check return codes. test_setunlessalreadyset_method_exists uses grep but also has a go doc path. The overwhelming majority of tests verify behavior through execution."
+      "reason": "Most tests execute `go test`, `go build`, `go vet`, or `go fmt` as subprocesses and check return codes. The only text-based check is test_setunlessalreadyset_method_exists which greps for method existence, but this is supplementary to the behavioral tests that actually compile and run the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests like test_concurrent_append_same_labels run actual Go tests that verify concurrent append behavior produces exactly one series. A stub implementation wouldn't pass these Go-level tests which check for race conditions and correct series deduplication."
+      "reason": "The fail-to-pass tests (test_concurrent_append_same_labels, test_set_unless_already_set_concurrent, etc.) run actual Go test functions that verify concurrent behavior. These cannot be satisfied by stub implementations - the Go tests check that concurrent appends produce exactly one series, which requires actual atomic check-and-insert logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/prometheus after solve.sh runs, but more critically, the gold patch is in solution/solve.sh which is accessible in the container. An agent could read /solution/solve.sh to extract the exact patch. The Dockerfile doesn't remove or protect the solution directory."
+      "reason": "The solution is in /workspace/prometheus (same working directory). The agent could read solution/solve.sh if mounted, or could examine the Dockerfile/test files. More importantly, the gold patch content is available in the task definition itself (solution/solve.sh), and the agent could potentially access test_outputs.py to see exactly what's being tested and craft a minimal pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four expected behaviors from instruction.md (one series in memory, one WAL record, same canonical ref, cleanup of losing refs) are tested through the concurrent append tests and SetUnlessAlreadySet tests, plus compilation and vet checks."
+      "reason": "The instruction requires: one series in memory for concurrent appends (tested by TestConcurrentAppendSameLabels), one WAL record (tested implicitly), same canonical ref (tested by concurrent tests), cleanup of losing refs (tested by GC test). All major behaviors are covered by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies (e.g., 'Fail-to-pass: Verifies concurrent appends...'). They are logically grouped into fail-to-pass and pass-to-pass categories."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies (e.g., 'Fail-to-pass: Verifies concurrent appends...', 'Pass-to-pass: Ensure agent package compiles'). Tests are logically grouped by fail-to-pass vs pass-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task involves fixing a race condition in Go code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "File paths (tsdb/agent/series.go, tsdb/agent/db.go, etc.), function names (SetUnlessAlreadySet, getOrCreate, stripeSeries), and commands are all correctly spelled and consistent between instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact method 'SetUnlessAlreadySet' that must be added to stripeSeries, and names the exact affected files and methods (getOrCreate, GetOrSet, stripeSeries). It also specifies the exact test function names. This goes well beyond naming the domain \u2014 it localizes the fix to specific methods and prescribes the solution's API."
+      "reason": "The instruction names the exact method to create ('SetUnlessAlreadySet'), specifies which files to modify (series.go, db.go, db_append_v2.go), names specific internal components (stripeSeries, GetOrSet), and provides exact test function names. This leaks significant localization and implementation details beyond what's needed to describe the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [

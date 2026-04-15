@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file paths like MCP_DIR / 'extension' / 'cdpRelay.ts', MCP_DIR / 'sdk' / 'server.ts', MCP_DIR / 'browser' / 'browserServerBackend.ts', MCP_DIR / 'browser' / 'context.ts', and test files like 'cli-isolated.spec.ts', 'cli-misc.spec.ts', 'cli-session.spec.ts'. Tests also check for specific content like 'throwBrowserIsNotInstalledError' (test_session_flag_renamed_in_code checks for '-s'), DEPS.list structure with 'strict' markers, and balanced braces/parens. While many files"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md. For example, test_session_flag_renamed_in_program checks for literal string '-s' in program.ts and absence of specific patterns like \"'-b'\" or \"\\\"-b\\\"\". test_daemon_stdout_communication checks for 'READY' marker string. test_browser_error_includes_channel checks for 'channel' or 'browser' in error handling code near 'not installed'. test_mcp_deps_structure checks DEPS.list structure details including 'strict' marker"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (direct daemon startup via stdout, rename -b to -s, better error messages) without specifying exact code changes, line numbers, or implementation details. The agent must figure out how to implement these changes."
+      "reason": "instruction.md describes the problem and expected behavior at an architectural level (stdout markers, direct browser launch, flag rename from -b to -s) without specifying exact code changes, line numbers, or function implementations."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests check for very specific implementation details. For example, test_session_flag_renamed_in_code asserts '-s' appears and '-b' does not appear in program.ts (an alternative might use '--session' as the short flag). test_browser_error_handling_improved checks for 'throwBrowserIsNotInstalledError' - a gold-specific function name that an alternative correct implementation might name differently (e.g., 'throwBrowserNotFoundError'). test_daemon_startup_refactored checks for specific strings l"
+      "reason": "Tests assert on gold-specific implementation details. For example, test_daemon_stdout_communication checks for the exact string 'READY' as a stdout marker - an alternative implementation might use 'DAEMON_STARTED' or 'OK'. test_daemon_launches_browser_at_startup checks for specific function names like 'createBrowserContext' or 'launchBrowser'. test_session_flag_renamed_in_docs checks for exact patterns '-s <name>' or '--session' in docs. An alternative correct implementation using different nami"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The vast majority of tests are purely text-based file content checks: `assert 'string' in file.read_text()`, `assert 'string' not in file.read_text()`, checking balanced braces, checking file sizes. No test actually runs the TypeScript code, spawns the daemon, tests the CLI, or verifies runtime behavior. Every single test is a static file content assertion."
+      "reason": "Nearly all tests are purely text-based file content checks using patterns like `assert 'foo' in open(path).read()`. No test actually imports, calls, or executes the code. Examples: test_session_flag_renamed_in_program reads file text and checks for '-s'; test_daemon_stdout_communication reads daemon.ts and checks for 'READY' string; test_daemon_launches_browser_at_startup reads file and checks for function name strings. There is no subprocess execution or behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Many pass_to_pass tests (test_syntax_check, test_all_modified_files_exist, test_typescript_syntax_valid, test_mcp_module_structure, test_documentation_files_valid, test_test_files_valid) check that files exist and have basic structure. These would pass on the unmodified base commit without any changes, since the files already exist. A stub that doesn't implement the fix would pass these tests."
+      "reason": "Many f2p (pass_to_pass) tests check only structural properties that the base commit already satisfies - e.g., test_syntax_check just checks files exist and are >100 chars, test_all_modified_files_exist checks files exist and are >50 chars, test_typescript_syntax_valid checks balanced braces/parens, test_mcp_module_structure checks 'import' and 'export' keywords exist. These pass without any code changes on the base commit."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh is present in the container and uses `git show e0e7f41e80247f857e97cb23f4833d2eee2122fe:...` to fetch exact gold file contents. An agent could read /solution/solve.sh, extract the merge commit SHA, and run the same git show commands to get the exact expected files. Additionally, the test file itself contains the target commit SHA and hints about expected content (e.g., 'throwBrowserIsNotInstalledError', 'READY', 'ERROR' markers)."
+      "reason": "The solution/solve.sh is present in the container at /workspace and contains the exact merge commit SHA (e0e7f41e80247f857e97cb23f4833d2eee2122fe) and explicit git show commands to extract the gold solution. An agent could read this file and simply execute it to pass all tests."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies that the daemon should 'launch the browser context directly at startup', 'signal success or failure back to the parent via stdout markers', and 'exit cleanly if the browser context closes'. None of these runtime behaviors are actually tested - tests only check for string patterns in source files, not actual daemon behavior."
+      "reason": "Key behaviors from instruction.md are not properly tested: 'Signal success or failure back to the parent via stdout markers' is only checked by grepping for 'READY' string in source, not by actually running the daemon. 'Exit cleanly if browser context closes' is not tested at all. Direct daemon startup behavior is only checked via source text patterns, not execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped into categories (Gates/pass_to_pass/static, and fail_to_pass behavioral checks), and each test function has a clear purpose explained in its docstring."
+      "reason": "Tests are well-organized with descriptive function names (test_session_flag_renamed_in_program, test_daemon_stdout_communication, etc.), docstrings explaining each test's purpose, and clear grouping into 'Gates (pass_to_pass, static)' and behavioral categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code/documentation changes, not structured data output."
+      "reason": "This task involves code refactoring and CLI changes, not producing structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear correct with no obvious typos."
+      "reason": "File paths, commands, and variable names in instruction.md and test files appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction lists files to look at but doesn't specify exact line numbers or specific code changes. The file list is reasonable given the scope of the task (daemon startup refactor + flag rename across the codebase)."
+      "reason": "While instruction.md lists specific files to look at, this is appropriate given the large codebase. It doesn't specify exact line numbers or precise code changes, only architectural direction."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-change task, not a config-edit task."
+      "reason": "This is a code-change task, not an agentmd-edits or config-only task."
     }
   },
   "tier_a_fails": [

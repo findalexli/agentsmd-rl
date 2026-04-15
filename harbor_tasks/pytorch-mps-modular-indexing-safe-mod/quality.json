@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_mps_ast_valid checks for specific method names like '_print_FloorDiv', '_print_Min', '_print_Max' which aren't mentioned in the instruction. test_modular_indexing_method_signature checks for 'x, div, mod' unpacking pattern. test_utils_h_key_functions_exist checks for 'floor_divide' and 'fmod' functions. While instruction.md mentions the files, it doesn't enumerate all these specific m"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md. For example, test_mps_ast_valid checks for specific method names like '_print_FloorDiv', '_print_Min', '_print_Max' in MetalExprPrinter class - these are not mentioned in instruction.md. Tests also check for specific functions like 'floor_divide' and 'fmod' in utils.h (test_utils_h_key_functions_exist), and test_modular_indexing_method_signature checks for 'x, div, mod' unpacking pattern. While some of these"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'detect when div is a power of two such as 65536 AND mod is not a power of two' and 'emit a function call instead of bare %'. It specifies adding a 'safe-modulo function' with 'volatile, optnone, __attribute__((noinline)), inline asm' optimization barriers. It names the exact method (_print_ModularIndexing) and exact file locations. This describes WHAT to change with high specificity."
+      "reason": "instruction.md is extremely prescriptive about the fix: it says to 'detect when div is a power of two such as 65536 AND mod is not a power of two' and 'emit a function call instead of bare %', to add a 'safe-modulo function' to 'c10/metal/utils.h' in the 'c10::metal namespace' with an 'optimization barrier (e.g., volatile, optnone, __attribute__((noinline)), inline asm)'. This essentially describes the exact solution rather than just the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests check for gold-specific implementation details. The hidden tests check for 'safe_mod' (or similar names from a small set) in utils.h, check for 'c10::metal::safe_mod' in codegen output, and verify the specific power-of-two detection logic with div=65536. Tests like test_mps_modular_indexing_behavior likely assert on the exact output format 'c10::metal::safe_mod(...)'. An alternative fix using a different approach (e.g., casting to float, using a different decomposition, or restructuring th"
+      "reason": "Tests check for specific patterns like the function name containing 'safe_mod' or similar variants (the truncated test code likely asserts on 'safe_mod' or 'safe_modulo' appearing in output). The gold solution uses 'safe_mod' with volatile parameter, and tests likely assert on this specific function name pattern. An alternative fix (e.g., using bitwise operations, casting to float and back, or a completely different approach like emitting a temporary variable) would fail the tests that grep for "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests do execute code: they use ast.parse, py_compile.compile, subprocess.run to execute Python, extract methods via AST and call them (_extract_method), and run ruff linting. The behavioral tests (test_mps_modular_indexing_behavior) extract and execute the actual _print_ModularIndexing method. This is behavioral verification, not just text matching."
+      "reason": "Tests use a mix of approaches: AST parsing and compilation (test_mps_syntax, test_mps_py_compile), subprocess execution (test_mps_modular_indexing_behavior which extracts and calls the method), and structural validation. The behavioral tests actually extract and call _print_ModularIndexing via AST extraction and execute it, not just grep for strings."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p behavioral tests like test_mps_modular_indexing_behavior actually call the extracted _print_ModularIndexing method and check its output for specific cases (div=65536, non-power-of-two mod). A stub implementation returning None or empty string would fail these assertions. The safe_mod function must exist in utils.h with an optimization barrier."
+      "reason": "The behavioral tests (test_mps_modular_indexing_behavior and similar f2p tests) extract _print_ModularIndexing and call it with specific arguments like div=65536 and non-power-of-two mod, checking that the output contains 'safe_mod' or similar. A stub returning None or empty string would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/pytorch and the agent could read solution/solve.sh if it exists in the container. The gold patch is a simple git apply, and the agent could grep for the expected test fixture values or read the test file to determine exactly what assertions to satisfy. The Dockerfile doesn't remove solution/ files."
+      "reason": "The solution exists at /workspace/pytorch alongside the test files. The agent could read solution/solve.sh which contains the exact git patch with the complete fix. The Dockerfile doesn't remove or protect the solution directory. An agent could simply cat /solution/solve.sh or look at the test file to extract the expected behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires (1) codegen change to detect power-of-two div with non-power-of-two mod and emit a function call, and (2) a safe-modulo function in utils.h with an optimization barrier. Tests verify both: behavioral tests check codegen output for safe_mod calls in the problematic case, and utils.h tests check for the function existence and optimization barrier keywords."
+      "reason": "The instruction requires two changes: (1) codegen change to detect power-of-two div with non-power-of-two mod and emit a function call, and (2) utility header with safe-modulo function with optimization barrier. Tests verify both: the codegen output behavior and the presence of the safe_mod function with optimization barrier in utils.h."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_mps_syntax, test_utils_h_balanced_braces, etc.), grouped into 'Pass-to-pass (static)' and 'Pass-to-pass (repo_tests)' sections with clear comments, and each has a docstring explaining what it checks."
+      "reason": "Tests are well-organized with clear categories (pass-to-pass static, repo CI/CD, behavioral f2p), descriptive function names (test_mps_syntax, test_utils_h_balanced_braces, etc.), and docstrings explaining what each test validates."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes (Python codegen and C++ header), not structured data like JSON/CSV/API/DB."
+      "reason": "This task involves code changes to Python and C++ files, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (torch/_inductor/codegen/mps.py, c10/metal/utils.h), function names (_print_ModularIndexing, floor_divide, fmod), and variable names are all correctly spelled and consistent between instruction.md and the test files."
+      "reason": "File paths (torch/_inductor/codegen/mps.py, c10/metal/utils.h), function names (_print_ModularIndexing, floor_divide, fmod), and other identifiers are consistently spelled correctly throughout instruction.md."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact method '_print_ModularIndexing' in 'MetalExprPrinter', specifies the exact file paths, describes the exact condition (div=65536, non-power-of-two mod), and even suggests specific implementation techniques (volatile, optnone, etc.). This goes beyond describing what's broken and into prescribing the exact localization and approach."
+      "reason": "instruction.md names the exact method '_print_ModularIndexing' in 'MetalExprPrinter', specifies the exact files to change, describes the exact condition (div == 65536, mod not power of two), and prescribes the exact fix mechanism (function call with optimization barrier using volatile). This goes well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Python and C++ source files, not configuration files."
+      "reason": "This is a code-only task involving Python and C++ source changes, not configuration edits."
     }
   },
   "tier_a_fails": [

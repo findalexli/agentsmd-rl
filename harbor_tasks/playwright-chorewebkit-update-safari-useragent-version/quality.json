@@ -3,60 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert the exact version string '26.4' (e.g., `assert ts_version == '26.4'`, `assert 'webkit-26.4' in readme`, `assert 'WebKit 26.4' in notes`), but instruction.md never states '26.4'. It says the current version is '26.0' and directs the agent to look up the latest from an external website. The agent cannot discover '26.4' from instruction.md alone \u2014 it must access an external URL that may show a different version in the future. The test also checks `>26.4<` in README.md, which is not men"
+      "reason": "Tests assert the exact target version '26.4' (e.g., `assert ts_version == '26.4'`, `assert 'webkit-26.4' in readme`), but instruction.md never states '26.4' explicitly \u2014 it only says to check Safari Release Notes for the latest stable version. The agent would have to visit an external website to discover '26.4'. Also, tests check for `>26.4<` in README.md and specific badge format `webkit-26.4`, which are not described in instructions. The specific literal '26.0' as the current version is also n"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (version 26.0 is stale) and which files to update, but doesn't specify the exact replacement value or exact lines to change. The agent must look up the current stable Safari version and figure out the sed patterns."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly lists every file to change, names the exact constant (`BROWSER_VERSION`), names the exact fields (`browserVersion`, `Version/X.Y`), and describes creating a specific skill doc at a specific path with specific content requirements. It also states the current version is '26.0' and the target is '26.4' (via 'latest stable Safari release is 26.4'). This is essentially a step-by-step fix description, not just a problem statement."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for the presence of version '26.4' in specific files and check that a skill doc exists with certain keywords. Any correct implementation that updates the version to 26.4 and creates a properly-worded skill doc would pass. Tests don't assert on specific line numbers, variable naming beyond BROWSER_VERSION (which is pre-existing), or implementation details."
+      "reason": "Tests check for the presence of '26.4' in specific locations and that a skill doc exists with certain keywords. Any correct implementation that updates the version to 26.4 and creates the skill doc with the required content would pass. Tests don't assert on exact line positions, specific helper functions, or implementation-specific details beyond the version string."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely text-matching: `assert 'webkit-26.4' in readme`, `assert 'WebKit 26.4' in notes`, `assert 'BROWSER_VERSION' in content`, checking file contents with string searches. No test actually imports, compiles, or executes the TypeScript code. The subprocess calls just run Python scripts that read files and check string presence."
+      "reason": "Almost every fail-to-pass test is purely text-matching: checking strings like 'webkit-26.4' in README, 'WebKit 26.4' in release notes, 'BROWSER_VERSION' in skill doc, regex on .ts file content. No test imports or executes the actual code, runs the browser, or checks runtime behavior. They are all `assert 'foo' in open(path).read()` style checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for '26.4' in files that currently contain '26.0'. A stub/no-op implementation would leave '26.0' in place and fail these assertions. The skill doc tests check for file existence and content that doesn't exist yet."
+      "reason": "The fail-to-pass tests check for '26.4' while the repo starts at '26.0', so a stub/no-op would fail. The skill doc test checks for a file that doesn't exist initially. These tests require actual changes to pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/playwright's container as solve.sh. The agent could read the test file or solution file to discover that '26.4' is the expected value. Also, the test scripts contain the literal string '26.4' multiple times, so grepping test files or environment would reveal the answer without understanding the task."
+      "reason": "The solution file exists at /workspace/playwright (solution/solve.sh is mounted or accessible), and the test fixture values ('26.4', 'webkit-26.4', '>26.4<', 'WebKit 26.4') are literal strings in tests/test_outputs.py. An agent could grep the test file or solution to find the exact expected values and apply them mechanically without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: BROWSER_VERSION update, browsers.json update, device descriptors update, README badge update, release notes update, skill doc creation, and SKILL.md linkage."
+      "reason": "All behaviors required by instruction.md are tested: version update in wkBrowser.ts, browsers.json, device descriptors, README badge, release notes, skill doc creation, and SKILL.md index link."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into fail-to-pass (behavioral) and pass-to-pass (static/repo) sections with clear comments, descriptive function names, and docstrings explaining each check."
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass behavioral tests, pass-to-pass static/structural gates, repo CI commands), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB; it modifies existing config and source files."
+      "reason": "Task involves text/config file edits, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md match those in the test files and solution without typos."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names files like wkBrowser.ts and BROWSER_VERSION, but these are the natural locations for this task. It doesn't specify exact line numbers or the exact replacement value '26.4'."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files, the exact constant name (BROWSER_VERSION), the exact field names (browserVersion, Version/X.Y), and even the exact path for the skill doc (.claude/skills/playwright-dev/webkit-safari-version.md). It also states the current version '26.0' and target '26.4'. This removes essentially all localization effort from the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff (solve.sh) makes targeted sed replacements in specific files rather than full-file rewrites, and the changes are consistent with the instruction scope."
+      "reason": "The gold diff (solve.sh) uses targeted sed replacements on specific strings in specific files \u2014 localized edits, not full-file rewrites. No contradictions with other tier-1 files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
 }

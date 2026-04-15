@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific function names like `stream_sse_v1plus`, `ServerMessage`, specific variable names like `pending_messages_per_event`, and specific initialization patterns (deque vs list). The instruction.md never mentions `stream_sse_v1plus`, `ServerMessage`, `pending_messages_per_event`, or `popleft`. It only vaguely describes 'pending message queues' and 'plain Python list objects'. An agent cannot discover these specific identifiers from the instruction alone."
+      "reason": "Tests assert on specific function names like `stream_sse_v1plus`, `ServerMessage`, specific variable names like `pending_messages_per_event`, and specific class `deque` with method `popleft`. The instruction.md never mentions `stream_sse_v1plus`, `ServerMessage`, `pending_messages_per_event`, or `popleft`/`deque` by name. An agent reading only the instruction would not know these specific identifiers exist."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (O(n) front removal from lists causing quadratic degradation) and says operations should be O(1), but does not explicitly say 'use deque' or 'change line X to Y'. A developer must reason about the appropriate data structure and code changes."
+      "reason": "The instruction describes the problem (O(n) front removal from lists causing quadratic degradation) and says operations should be O(1), but does not specify 'use deque' or 'change line X to Y'. A developer must reason about the appropriate data structure change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_pending_init_uses_deque and test_type_annotation_uses_deque use AST parsing to assert that `deque` appears in specific type annotations and initializations. An alternative correct fix using, e.g., a custom O(1) queue wrapper class or an index-based approach instead of deque would fail these tests. The tests enforce the specific `deque` implementation choice."
+      "reason": "Tests like test_pending_init_uses_deque and test_type_annotation_uses_deque use AST parsing to assert that 'deque' appears in source code annotations and initializations. An alternative correct fix (e.g., using a custom O(1) queue class, or using an index-based approach without deque) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_pending_init_uses_deque and test_type_annotation_uses_deque are purely AST-based text/structure checks that parse source code and assert 'deque' appears in annotations and assignments. They do not execute the code behaviorally. test_ruff_lint_check is also a static analysis check. While test_stream_sse_deque_single, test_stream_sse_deque_fifo, and test_stream_sse_deque_varied_protocols do execute code, the majority of fail-to-pass tests are text inspection."
+      "reason": "test_pending_init_uses_deque and test_type_annotation_uses_deque are purely source-code text/AST inspection tests that check for the string 'deque' in annotations and assignments. They do not execute the code behaviorally. While some tests (test_stream_sse_deque_single, test_stream_sse_deque_fifo) do call actual code, the AST-based tests are text-matching, not behavioral."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests (test_stream_sse_deque_single, test_stream_sse_deque_fifo, test_stream_sse_deque_varied_protocols) pass deque objects to stream_sse_v1plus and assert on specific output values. Without changing the code from list.pop(0) to deque.popleft(), passing a deque would cause an AttributeError (deque has popleft but the code calls pop(0) \u2014 actually pop(0) works on deque too). Wait \u2014 deque does support pop(0)? No, deque doesn't have pop(0) with index argument. Actually, deque.pop() on"
+      "reason": "The behavioral tests (test_stream_sse_deque_single, test_stream_sse_deque_fifo) construct deque objects, pass them to stream_sse_v1plus, and assert on returned data values. A stub returning None or empty would fail these assertions. The original unmodified code using list.pop(0) would also fail since the tests pass deque objects which don't have pop(0) working the same way \u2014 actually wait, deque does have pop(0) too... but the tests pass deque objects and the original code calls .pop(0) which wo"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/gradio with a solve.sh in /solution/. The Dockerfile doesn't remove these paths. An agent could potentially read the solution patch or grep for expected test values. The solve.sh is in the solution/ directory which the agent might access."
+      "reason": "The solution file exists at /workspace/gradio (solution/solve.sh applies a patch there), and the agent could read /solution/solve.sh or the patch directly if it exists in the container. The Dockerfile doesn't remove /solution/. Also, the tests embed literal expected strings like 'PASS: Single message consumed from deque via popleft' that could be pattern-matched."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires O(1) queue operations by updating data structures, initializations, type annotations, and consumption sites. Tests cover all of these: initialization (test_pending_init_uses_deque), type annotations (test_type_annotation_uses_deque), consumption behavior (test_stream_sse_deque_single/fifo/varied_protocols), and consistency (test_ruff_lint_check, test_syntax_check)."
+      "reason": "The instruction requires O(1) queue operations by updating data structures, initializations, type annotations, and consumption sites. Tests cover all of these: deque usage in consumption (stream_sse tests), initialization (test_pending_init_uses_deque), type annotations (test_type_annotation_uses_deque), and import verification (test_deque_import)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names, docstrings, and comments grouping them into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections."
+      "reason": "Tests are well-named (test_syntax_check, test_stream_sse_deque_single, test_stream_sse_deque_fifo, etc.), grouped by gates vs fail-to-pass with comments, and each has a descriptive docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to fix a performance bug, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two files to investigate (client.py and utils.py) which is reasonable scope, but does not name specific line numbers, function names like stream_sse_v1plus, or variable names like pending_messages_per_event. It describes the problem abstractly."
+      "reason": "The instruction names the two files to investigate (client.py and utils.py) which is appropriate for the task domain, and describes the bug pattern (O(n) front removal) without naming specific line numbers, variable names, or the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four file paths, the specific functions/classes (e.g., _compute_server_args, _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS, _get_metrics_router_addr, init_wandb_secondary, GenerateState, dp_rank_context), the key literals (enable_metrics, follow_bootstrap_room, round_robin, sglang_enable_metrics), and the contextmanager import. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names all four file paths, the specific functions (_compute_server_args, _get_metrics_router_addr, init_wandb_secondary, GenerateState, dp_rank_context), the key names (enable_metrics, _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS), the literal values (True, follow_bootstrap_room, round_robin), and the contextmanager import. The tests check for things like 'follow_bootstrap_room', 'enable_metrics', 'dp_rank_context', 'dp_counts', 'dp_rank', 'sglang_enable_metrics', 'from contextlib import c"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fixes: 'setting enable_metrics=True in the server kwargs', 'enable_metrics key must be added to _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS', 'should use follow_bootstrap_room instead of round_robin', 'This guard should be removed', etc. These are not descriptions of broken behavior but prescriptions of exact code changes."
+      "reason": "The instruction explicitly states the exact fixes: 'setting enable_metrics=True in the server kwargs', 'enable_metrics key must be added to _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS', 'should use follow_bootstrap_room instead of round_robin', 'This guard should be removed', 'forwarding should activate based on the presence of the router address, not the CLI flag', 'remove dp_rank_context method, dp_counts, dp_rank, and the contextmanager import'. These are direct fix instructions, not just bug descript"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use AST inspection to check for specific implementation details. For example, test_enable_metrics_in_server_kwargs checks for enable_metrics as a key in a dict literal with value True. test_prefill_load_balance_method checks for specific assignment patterns. An alternative correct fix (e.g., setting enable_metrics via a function call, or using a variable) would fail these AST-based tests even if functionally correct."
+      "reason": "Tests like test_enable_metrics_in_server_kwargs assert a specific ast.Dict key 'enable_metrics' with value True inside _compute_server_args. test_prefill_load_balance_method looks for an assignment to 'load_balance_method' with value 'follow_bootstrap_room' specifically as an ast.Constant in a subscript assignment pattern. An alternative correct fix that sets these values differently (e.g., via a variable, or through a helper function) would fail these AST-based checks. test_dp_rank_context_remo"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all tests are static AST/text analysis: checking string presence in source code (e.g., 'sglang_enable_metrics not in body'), checking AST structure of dict literals, checking import statements as text. No test actually imports/calls the code, instantiates objects, or verifies runtime behavior. The only execution-based tests are ruff linting and a GAE subprocess test (pass_to_pass)."
+      "reason": "Nearly all tests are text/AST inspection: checking string presence/absence in source code (e.g., 'sglang_enable_metrics not in body', 'from contextlib import contextmanager not in source'), checking AST structure of dict literals and assignments. No test actually imports and runs the code, instantiates objects, or exercises the metrics endpoint. test_repo_ruff_check and test_repo_chunked_gae run subprocesses but are pass-to-pass checks. The fail-to-pass tests are entirely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for changes from the base commit state. A stub or no-op wouldn't pass because the base code contains the sglang_enable_metrics guard, lacks enable_metrics in kwargs, uses round_robin, and contains dp_rank_context. The agent must actively modify the code to pass."
+      "reason": "The tests check for specific changes that must be actively made: adding 'enable_metrics': True to a dict literal, adding 'enable_metrics' to an allowlist, changing 'round_robin' to 'follow_bootstrap_room', removing dp_rank_context and related code, removing guard clauses. A stub or no-op would not satisfy these \u2014 the original code fails these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it). An agent could read this file to obtain the exact patch. Additionally, test_outputs.py is at a predictable path and could be read to reverse-engineer exact requirements."
+      "reason": "The solution/solve.sh file exists in the container at /solution/ (based on the Dockerfile setup pattern). An agent could read it to obtain the exact patch. Additionally, the tests are purely text/AST based, so an agent could grep the test file (if accessible) to find exact expected strings and patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from the instruction are tested: enable_metrics in server kwargs, enable_metrics in allowlist, follow_bootstrap_room for prefill, removal of CLI flag gates in rollout.py and wandb_utils.py, and removal of dp_rank_context dead code including the contextmanager import."
+      "reason": "All five behaviors listed in the Expected Behavior section are tested: enable_metrics=True (test_enable_metrics_in_server_kwargs), allowlist (test_enable_metrics_in_passthrough_args), follow_bootstrap_room (test_prefill_load_balance_method), CLI flag removal in rollout.py and wandb_utils.py (test_metrics_router_not_gated_on_flag, test_wandb_forwarding_not_gated_on_flag), dead code removal (test_dp_rank_context_removed, test_generate_and_rm_no_dp_rank_context, test_contextmanager_import_removed)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_enable_metrics_in_server_kwargs, test_dp_rank_context_removed) and each has a docstring explaining what it checks. They are logically grouped by the file/feature they verify."
+      "reason": "Tests are well-named, each with a docstring explaining what it checks, and logically grouped by concern (server config, router, wandb, dead code removal, structural integrity)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modifications, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and CLI flag names in the instruction all match what appears in the tests and solution. No typos detected."
+      "reason": "File paths, function names, variable names, and configuration keys are all correctly spelled and consistent between instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact variable names (_EXTERNAL_ENGINE_SKIP_CHECK_FIELDS), exact values to set (enable_metrics=True, follow_bootstrap_room), exact methods to remove (dp_rank_context), and exact imports to remove (from contextlib import contextmanager). This goes well beyond describing the bug domain and effectively specifies the solution."
+      "reason": "The instruction names exact file paths, exact function names, exact variable names (_EXTERNAL_ENGINE_SKIP_CHECK_FIELDS, dp_rank_context, dp_counts, dp_rank), exact replacement values (follow_bootstrap_room, enable_metrics=True), and the exact import to remove (from contextlib import contextmanager). This goes well beyond identifying the buggy module \u2014 it provides a complete roadmap of what to change where."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

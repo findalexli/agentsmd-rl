@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: (1) test_replacement_has_body requires a nested function defined inside init_device with actual function calls, (2) the AST extraction in _EXTRACT_AND_TEST looks for an ast.Assign where torch.set_num_threads is reassigned (monkey-patched), which is a specific implementation pattern not described in the instructions. The instruction says 'subsequent calls must not change the thread count' but doesn't specify monkey-patc"
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: (1) test_replacement_has_body checks for a nested function defined inside init_device with ast.Call nodes; (2) the AST extraction in _EXTRACT_AND_TEST looks for ast.Assign nodes where torch.set_num_threads is reassigned (monkey-patching), which is never mentioned in instruction.md; (3) tests check for 'set_num_threads' or 'skip' in log output lowercase, but instruction.md doesn't specify the monkey-patching approach. T"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (torch.set_num_threads disrupts thread binding) and what behavior is expected (no-op + warning), but does not specify the exact fix mechanism (monkey-patching via assignment inside init_device). A developer must reason about the implementation approach."
+      "reason": "instruction.md describes the problem (thread binding disrupted by torch.set_num_threads) and expected behavior (no-op + warning) but does not specify the exact implementation (monkey-patching, nested function name, exact code). A developer must reason about how to implement the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The test extraction code (_EXTRACT_AND_TEST) specifically looks for an ast.Assign node where torch.set_num_threads is reassigned inside init_device (is_set_num_threads_assign function). Alternative valid fixes like using a context manager, a module-level wrapper, subclassing, or patching at module import time would all fail because the AST extraction wouldn't find the expected pattern. The tests enforce the gold solution's specific monkey-patch-via-assignment approach."
+      "reason": "The test extraction code (_EXTRACT_AND_TEST) specifically looks for (1) an ast.Assign where torch.set_num_threads is the target (is_set_num_threads_assign), and (2) nested FunctionDef nodes inside init_device. An alternative correct fix using a module-level wrapper class, a decorator, or any approach that doesn't use `torch.set_num_threads = <func>` as an assignment inside init_device would fail the AST extraction and thus fail the tests. For example, patching via unittest.mock or setting it out"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_set_num_threads_noop, test_warning_logged, test_patch_after_thread_binding) extract code via AST, execute it in a subprocess with real torch, and verify behavioral outcomes (thread count unchanged, warnings logged). While some pass-to-pass tests do text checks, the core behavioral tests execute code."
+      "reason": "The fail-to-pass tests (test_set_num_threads_noop, test_warning_logged, test_patch_after_thread_binding) extract code via AST, exec it, and verify behavioral outcomes (thread count unchanged, warnings logged). They execute the monkey-patch code against real torch. Pass-to-pass tests also use AST parsing and subprocess execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty init_device or pass) would fail because: test_set_num_threads_noop verifies torch.set_num_threads becomes a no-op (baseline thread count preserved), test_warning_logged verifies actual log output is produced, and test_replacement_has_body checks the nested function contains real calls. Without the actual monkey-patch, torch.set_num_threads would still change thread counts."
+      "reason": "A stub implementation (e.g., empty init_device or pass) would fail: test_set_num_threads_noop would fail because torch.set_num_threads would still change thread count; test_replacement_has_body checks for function calls inside the nested function; the AST extraction asserts nodes exist. The base commit (without patch) would fail the extraction assertion."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/vllm's git history or could be in /solution/solve.sh in the container. The Dockerfile doesn't remove the solution directory. An agent could read /solution/solve.sh to discover the exact patch and apply it directly."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact gold patch. An agent could read /workspace/vllm's git history or the solution directory (if mounted) to discover the exact fix. The Dockerfile doesn't remove or protect solution files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: (1) torch.set_num_threads must not change thread count (test_set_num_threads_noop), (2) warning must be emitted mentioning 'set_num_threads' or 'skip' (test_warning_logged), (3) init_device must still call init_worker_distributed_environment and set_random_seed (test_key_functionality_preserved), (4) syntax/lint/typos checks are covered."
+      "reason": "instruction.md requires: (1) set_num_threads must not change thread count after binding \u2014 tested by test_set_num_threads_noop and test_patch_after_thread_binding; (2) WARNING-level log mentioning set_num_threads or skip \u2014 tested by test_warning_logged; (3) CPUWorker class with init_device \u2014 tested by test_init_device_exists; (4) init_worker_distributed_environment and set_random_seed preserved \u2014 tested by test_key_functionality_preserved; (5) valid syntax \u2014 tested by test_repo_syntax_cpu_worker."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, repo CI/CD checks), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-structured with descriptive names, docstrings, and comments grouping them into 'fail-to-pass (pr_diff)' behavioral tests and 'pass-to-pass' regression/CI checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task involves modifying Python source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the file 'vllm/v1/worker/cpu_worker.py' and the method 'init_device' as where the fix should go, and specifies that 'torch.set_num_threads()' calls must be intercepted. Combined with the requirement that the warning must mention 'set_num_threads' or 'skip', this substantially narrows the solution space beyond what's needed for a bug description."
+      "reason": "instruction.md explicitly names the file 'vllm/v1/worker/cpu_worker.py', the class 'CPUWorker', the method 'init_device', and the exact function 'torch.set_num_threads' that needs to be intercepted. It also specifies the warning must mention 'set_num_threads' or 'skip'. While identifying the file is somewhat natural for the domain, specifying the exact method and the warning keywords significantly narrows the solution space."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

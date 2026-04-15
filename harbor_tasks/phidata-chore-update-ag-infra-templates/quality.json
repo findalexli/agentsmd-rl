@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all files (enums.py, operator.py, pyproject.toml, CLAUDE.md), the enum names (agentos_docker, agentos_aws, agentos_railway), the version bump to 1.0.7, the CLAUDE.md section requirements (GitHub Operations, gh api, gh pr edit, GraphQL, -X PATCH, repos/<owner>/<repo>/pulls/<number>), and the repo URL preservation requirement. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "The instruction names all files (enums.py, operator.py, pyproject.toml, CLAUDE.md), specifies the enum renaming pattern (e.g., agentos_docker = 'agentos-docker'), the version bump to 1.0.7, the GitHub Operations section content (GraphQL, gh pr edit, gh api, -X PATCH, repos/<owner>/<repo>/pulls/<number>), and that repo URLs must remain unchanged. All test assertions reference specifics discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact new enum member names ('agentos_docker = \"agentos-docker\"'), the exact version to set ('1.0.7'), and the exact content to add to CLAUDE.md (specific command formats). This goes beyond describing what's broken and tells the agent exactly what to write."
+      "reason": "The instruction explicitly states the exact new enum member names ('agentos_docker = \"agentos-docker\"'), the exact version to set ('1.0.7'), exact strings for CLAUDE.md ('gh api', '-X PATCH', 'repos/<owner>/<repo>/pulls/<number>'), and exact prompt text ('default (agentos-docker)'). This tells the agent precisely WHAT to change rather than just describing the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_claude_md_github_operations_section assert exact strings like 'GitHub Operations', 'gh api', 'gh pr edit'. test_claude_md_graphql_workaround asserts 'PATCH', 'repos/', '/pulls/'. test_default_template_prompt_updated asserts the exact string 'default (agentos-docker)'. These are implementation-specific string checks that constrain the solution to match the gold patch's exact wording rather than testing behavior."
+      "reason": "Tests like test_claude_md_github_operations_section assert exact strings like 'GitHub Operations', 'gh api', 'gh pr edit'. test_claude_md_graphql_workaround asserts 'PATCH' and 'repos/' and '/pulls/'. test_default_template_prompt_updated asserts the exact string 'default (agentos-docker)'. An alternative correct documentation or prompt wording (e.g., 'GitHub Workarounds' section, or different prompt phrasing) would fail these tests despite being equally valid."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_enum_values_renamed imports and calls the enum (behavioral). However, test_template_name_map_updated, test_default_template_prompt_updated, test_claude_md_github_operations_section, test_claude_md_graphql_workaround, and test_version_bumped are all pure text/AST-based file content checks (assert 'X' in content patterns). The majority of tests are text-matching, not behavioral execution."
+      "reason": "Most tests are text/AST inspection: test_template_name_map_updated parses AST for dict values, test_default_template_prompt_updated does 'assert ... in content', test_claude_md_* tests are purely string matching on file content, test_version_bumped checks 'version = \"1.0.7\"' in content. Only test_enum_values_renamed actually imports and executes code. The majority of tests are text-matching, not behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the absence of '-template' suffixes and presence of specific shortened names. A stub or no-op implementation would leave the original '-template' suffixed names in place, which would fail these assertions. The version bump test checks for '1.0.7' while the original is '1.0.6'. None can be passed trivially."
+      "reason": "The fail-to-pass tests check for specific content changes (removing '-template' suffixes, adding CLAUDE.md sections, version bump). A stub/no-op implementation leaving original files unchanged would fail because the original files have '-template' suffixes and version 1.0.6, and CLAUDE.md lacks the GitHub Operations section."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly (cat /solution/solve.sh or similar path) to obtain the exact changes needed. The Dockerfile doesn't show any measures to prevent access to solution files."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, the instruction already provides most literal fixture strings the tests check for, making it trivial to pattern-match without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: enum renaming (test_enum_values_renamed), map updates (test_template_name_map_updated), prompt update (test_default_template_prompt_updated), repo URL preservation (test_repo_urls_unchanged), version bump (test_version_bumped), and CLAUDE.md updates (test_claude_md_github_operations_section, test_claude_md_graphql_workaround)."
+      "reason": "All behaviors described in instruction.md are tested: enum renaming (test_enum_values_renamed), map updates (test_template_name_map_updated), prompt update (test_default_template_prompt_updated), repo URLs unchanged (test_repo_urls_unchanged), version bump (test_version_bumped), and CLAUDE.md updates (test_claude_md_github_operations_section, test_claude_md_graphql_workaround)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config/documentation), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Config/documentation, Pass-to-pass regression), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task involves code refactoring and documentation updates, not structured data output (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify (enums.py, operator.py, pyproject.toml, CLAUDE.md) and the exact changes to make (e.g., 'agentos_docker = \"agentos-docker\"', version '1.0.7', specific CLAUDE.md content including 'repos/<owner>/<repo>/pulls/<number>'). This eliminates the need for the agent to localize the problem."
+      "reason": "The instruction explicitly names the exact files and even specifies the exact new values (e.g., 'agentos_docker = \"agentos-docker\"'), the exact version number '1.0.7', and exact documentation content to add. The 'Files to Look At' section pins exact file paths with descriptions of what to change in each."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The CLAUDE.md edit in the gold patch is a localized addition of a new section, not a full-file rewrite, and doesn't contradict other files."
+      "reason": "The gold CLAUDE.md diff is a localized insertion of a new section, not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [

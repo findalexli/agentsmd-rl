@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The test `test_isBidi_in_test_signature` checks that the test function signature includes `isBidi`, and `test_bidi_cookie_rejection_condition` checks for `|| isBidi` combined with `browserName === 'chromium'` and `value === 'None'`. The instruction.md never mentions `isBidi` as a fixture parameter, nor does it specify that the condition should use `|| isBidi`. It only vaguely says to 'handle the case where cookies... are rejected when running under the BiDi protocol'. The specific variable name "
+      "reason": "The test `test_isBidi_in_test_signature` checks that `isBidi` appears in the test function signature, and `test_bidi_cookie_rejection_condition` checks for `|| isBidi` combined with the chromium condition. The instruction.md never mentions `isBidi` as a fixture parameter, nor does it specify that the fix involves adding `isBidi` to the function signature or OR-combining it with the chromium check. These specific implementation details (the exact variable name `isBidi`, the `|| isBidi` pattern) a"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (the test doesn't account for BiDi protocol) and what the expected outcome is (test should handle BiDi, expectations file should not list it), but does not prescribe the exact code change like 'add isBidi to the condition' or 'change line X to Y'."
+      "reason": "The instruction describes the problem (test doesn't account for BiDi protocol behavior) and expected outcome (test should handle BiDi, expectations file should no longer list it) without specifying the exact code change like 'add isBidi to the signature' or 'use || isBidi'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests are extremely specific to the gold solution's implementation: `test_isBidi_in_test_signature` requires `isBidi` in the function signature line, and `test_bidi_cookie_rejection_condition` requires the exact pattern `|| isBidi` on the same line as `browserName === 'chromium'` and `value === 'None'`. An alternative correct fix (e.g., using a helper function, a separate `if` block for BiDi, or a different variable name like `isUsingBidi`) would fail these tests."
+      "reason": "test_bidi_cookie_rejection_condition requires the exact pattern `|| isBidi` on a line that also contains `browserName === 'chromium'` and `value === 'None'`. An alternative valid fix could use a helper variable like `const rejectNone = browserName === 'chromium' || isBidi` and then reference that variable, which would fail the test. Similarly, test_isBidi_in_test_signature requires `isBidi` on the same line as `SameSite` and `async`, which is very gold-specific."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (`test_isBidi_in_test_signature`, `test_bidi_cookie_rejection_condition`, `test_bidi_expectation_removed`) are all text-matching tests \u2014 they read file contents and check for specific string patterns (e.g., `sigLine.includes('isBidi')`, `joined.includes('|| isBidi')`, `not in content`). None of them execute the test or verify actual cookie behavior. The pass-to-pass tests do run builds/linting but those aren't the behavioral tests."
+      "reason": "The core f2p tests (test_isBidi_in_test_signature, test_bidi_cookie_rejection_condition, test_bidi_expectation_removed) all perform text/string matching on file contents \u2014 checking for specific strings in source code rather than executing the test or verifying runtime behavior. They are essentially `assert 'foo' in open(path).read()` checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific changes: adding `isBidi` to the signature, modifying the condition, and removing the line from expectations. A stub or no-op would not pass since the original code lacks `isBidi` in the signature and condition, and the expectations file still contains the test entry."
+      "reason": "The f2p tests check for specific code patterns (isBidi in signature, || isBidi in condition, removal from expectations file) that aren't present in the original code. A stub/no-op wouldn't pass because the original files don't contain these patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/playwright` (the solve.sh is a shell script with the exact patch). An agent could read `solution/solve.sh` if accessible in the container, or grep for the patch content. Additionally, the test checks are pure string matching, so an agent could just pattern-match the expected strings without understanding the bug."
+      "reason": "The solution file exists at /workspace/playwright (the solve.sh is hidden but the Dockerfile doesn't prevent access to solution/ directory if it exists). More importantly, the agent could grep test_outputs.py (which is on the filesystem at tests/test_outputs.py) to discover the exact patterns being checked (like `|| isBidi`) and match them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires two behaviors: (1) updating the test logic to handle BiDi protocol and (2) removing the test from the BiDi expectations file. Both are tested via `test_bidi_cookie_rejection_condition`/`test_isBidi_in_test_signature` and `test_bidi_expectation_removed`."
+      "reason": "The instruction requires two things: (1) update the test logic for BiDi protocol handling and (2) remove the test from the BiDi expectations file. Both are tested via test_isBidi_in_test_signature + test_bidi_cookie_rejection_condition and test_bidi_expectation_removed respectively."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests) with clear docstrings and descriptive function names."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing test files and expectation lists, not producing structured data output."
+      "reason": "This task involves editing test source code and an expectations text file, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are all correct and consistent."
+      "reason": "File paths, variable names, and commands are all correctly spelled and consistent between instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction says 'the set-cookie test around line 1155 in the SameSite test function' \u2014 giving an approximate line number. While the files to look at are reasonable for the domain, specifying 'around line 1155' is localization leakage that narrows the search significantly."
+      "outcome": "pass",
+      "reason": "The instruction mentions the two files to look at and the approximate location (~line 1155), but since localization to the correct test and file is a natural part of the task description (not an unwarranted hint), this is acceptable. It doesn't name the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is highly localized: one line change in the spec file and one line removal in the expectations file. It doesn't contradict other files."
+      "reason": "The gold diff is minimal: one line added to a function signature, one condition modified, and one line removed from an expectations file. It's well-localized and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
@@ -57,9 +57,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 4
 }

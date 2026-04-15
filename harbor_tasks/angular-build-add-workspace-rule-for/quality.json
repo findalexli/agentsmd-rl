@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key paths (.agent/rules/agents.md, AGENTS.md, .prettierignore, .pullapprove.yml), the symlink target (../../AGENTS.md), the frontmatter content (trigger: always_on), the prettierignore entry (.agent/rules/agents.md), and the glob pattern (.agent/**/{*,.*}). The pass-to-pass tests check for '## Environment' and 'pnpm' in AGENTS.md, which are existing content that the instruction implicitly requires preserving by saying 'needs frontmatter added' (not rewritten). All test-"
+      "reason": "The instruction names all key paths (.agent/rules/agents.md, AGENTS.md, .prettierignore, .pullapprove.yml), the required frontmatter (trigger: always_on), the glob pattern (.agent/**/{*,.*}), and the preserved sections (## Environment, pnpm). The symlink requirement is implied by 'content at that path should match the existing AGENTS.md file'. All assert targets in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: create a symlink at '.agent/rules/agents.md' pointing to '../../AGENTS.md', add YAML frontmatter with 'trigger: always_on', add '.agent/rules/agents.md' to .prettierignore, and add '.agent/**/{*,.*}' to .pullapprove.yml. It specifies the exact file paths, exact strings to add, and exact symlink target. There is no reasoning required about WHAT to change \u2014 the instruction IS the solution."
+      "outcome": "pass",
+      "reason": "The instruction describes what should exist (symlink, frontmatter, prettierignore entry, pullapprove glob) but does not prescribe exact implementation steps like 'ln -s ../../AGENTS.md' or 'insert before line X'. A developer must still reason about how to create the symlink, where to insert entries, etc."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "The tests check for behavioral outcomes (symlink exists and resolves, frontmatter regex match, string presence in config files) rather than implementation details like exact line positions or specific helper functions. Any correct implementation that creates the right symlink, adds frontmatter, and includes the required strings would pass."
+      "outcome": "fail",
+      "reason": "test_symlink_exists_and_resolves checks os.path.islink() and fails if the path is not a symlink, but the instruction only says 'The content at that path should match the existing AGENTS.md file' \u2014 it never requires a symlink specifically. A correct alternative fix of copying the file would fail the test. This forces a gold-specific implementation detail (symlink vs copy)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text checks: test_prettierignore_has_agent_entry does 'assert \".agent/rules/agents.md\" in content', test_pullapprove_has_agent_glob does 'assert \".agent/**/{*,.*}\" in content', test_agents_md_has_frontmatter checks regex on file content. Only test_symlink_exists_and_resolves verifies actual filesystem behavior (symlink resolution). However, the pass-to-pass repo_tests (tslint, pullapprove verify, etc.) do execute real tooling, providing some behavioral validation"
+      "reason": "Most fail-to-pass tests are purely textual checks: test_agents_md_has_frontmatter does regex on file content, test_prettierignore_has_agent_entry does 'assert string in content', test_pullapprove_has_agent_glob does 'assert string in content'. The repo_tests (tslint, pullapprove verify, etc.) do execute behavior, but those are pass-to-pass regression tests, not fail-to-pass. The core f2p tests are text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass: the symlink doesn't exist by default, AGENTS.md has no frontmatter, .prettierignore doesn't contain the agent entry, and .pullapprove.yml doesn't contain the glob. Each fail-to-pass test requires actual file creation or modification."
+      "reason": "The f2p tests check for content/files that don't exist in the base commit (no .agent/rules/agents.md, no frontmatter in AGENTS.md, no prettierignore entry, no pullapprove glob). A stub/no-op implementation would not create these artifacts, so the tests cannot be trivially passed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/angular (or the container) as solution/solve.sh. An agent could read this file to extract the exact patch. Additionally, the test file itself at tests/test_outputs.py contains all expected literal strings, so grepping for fixture values is trivial."
+      "reason": "The solution file exists at /workspace/angular (or solution/solve.sh is accessible in the container). The agent could read solve.sh directly or grep for the expected test values. Additionally, the test file at tests/test_outputs.py contains all exact expected strings, which an agent could read to construct a minimal passing solution without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors described in the instruction (symlink creation, frontmatter addition, prettierignore entry, pullapprove glob) are tested by corresponding fail-to-pass tests. Regression tests also verify existing content is preserved."
+      "reason": "All five explicit requirements from the instruction (workspace rule accessible, frontmatter present, prettier ignore configured, pullapprove coverage, existing content preserved) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each check."
+      "reason": "Tests are well-organized with clear sections (fail-to-pass vs pass-to-pass), descriptive function names, docstrings, and comments indicating test categories like [pr_diff] and [static]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,26 +39,24 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, variable names, and patterns in the instruction and tests are consistent and correct."
+      "reason": "All file paths, commands, variable names, and patterns in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the symlink target '../../AGENTS.md', the exact frontmatter 'trigger: always_on', the exact prettierignore entry '.agent/rules/agents.md', and the exact glob '.agent/**/{*,.*}'. This goes beyond describing what's broken and provides the complete solution specification."
+      "outcome": "pass",
+      "reason": "The instruction names files that need to be modified but doesn't specify exact line numbers or precise insertion points. The files mentioned are all directly relevant to the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff (solve.sh) makes localized, targeted edits to each file \u2014 adding a symlink, inserting lines into .prettierignore and .pullapprove.yml, and prepending frontmatter to AGENTS.md. No full-file rewrites occur."
+      "reason": "The gold diff is localized: it adds frontmatter to AGENTS.md, creates a symlink, adds one line to .prettierignore, and adds one glob to .pullapprove.yml. These are small, bounded changes that don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
 }

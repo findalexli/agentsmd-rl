@@ -3,63 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check many specifics not mentioned in instruction.md. For example: test_repo_jinja_template_syntax_include and test_repo_jinja_template_syntax_import check existing files' Jinja syntax validity; test_repo_yamllint_jinja_include checks specific submodule YAML files like 'readFromTextTransform.yaml', 'mapToFieldsSplitConfig.yaml', etc.; test_repo_yamllint_wordcount_minimal checks wordcount_minimal.yaml; test_repo_yamllint_non_jinja checks combine_sum_minimal.yaml; test_repo_yaml_syntax_aggre"
+      "reason": "Tests assert specific paths like 'inheritance/base/base_pipeline.yaml', 'inheritance/wordCountInheritance.yaml', specific Jinja block names like 'extra_steps', specific variable names in templates, and registration patterns in input_data.py/examples_test.py for the inheritance example (e.g., 'test_wordCountInheritance_yaml'). The instruction.md does not specify the exact directory structure ('inheritance/base/'), the exact filenames ('base_pipeline.yaml', 'wordCountInheritance.yaml'), the block "
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact file paths to create (inheritance/base/base_pipeline.yaml, inheritance/wordCountInheritance.yaml), exact extends path string, exact test identifier 'test_wordCountInheritance_yaml', exact function calls like 'word_count_jinja_template_data('test_wordCountInheritance_yaml')', exact return value 'inheritance/base/base_pipeline.yaml', and exact keys for word_count_jinja_parameter_data(). This is essentially telling the agent exactly what code to write, not just descr"
+      "outcome": "pass",
+      "reason": "The instruction describes what to build (base pipeline with a block, child pipeline using extends, test registration, README) but does not specify exact code, line changes, or implementation details like 'change line 42 to X'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests (visible in truncated form) check for gold-specific details: the exact block name pattern, exact variable names like 'readFromTextTransform', 'combineTransform', 'mapToFieldsSplitConfig' as keys in word_count_jinja_parameter_data(), exact template data return for 'test_wordCountInheritance_yaml'. Alternative correct implementations using different block names, different variable organization, or different test registration patterns would fail."
+      "reason": "The tests (truncated but visible patterns) check for specific file paths like 'inheritance/base/base_pipeline.yaml' and 'inheritance/wordCountInheritance.yaml', specific Jinja block names, specific directory structures, and specific registration patterns. An alternative correct implementation using different filenames (e.g., 'baseWordCount.yaml' instead of 'base_pipeline.yaml') or different block names would fail the tests despite being a valid solution."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute Python code via subprocess, run py_compile for syntax checking, invoke yamllint, load Jinja2 templates via the Environment API, and call actual functions from input_data.py via exec(). They test behavioral correctness, not just text matching."
+      "reason": "Tests execute Python code via subprocess, run Jinja2 template rendering, check YAML syntax with yamllint, verify Python syntax with py_compile, and call actual functions from input_data.py. They are not purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (new file tests in the truncated portion) require actual file creation and correct Jinja syntax, correct function registration in input_data.py returning specific keys, and correct Python syntax. A stub/empty implementation would not pass these tests since they check for specific keys, valid template loading, and structural requirements."
+      "reason": "The fail-to-pass tests require creating actual files (inheritance directory, base pipeline, child pipeline, README) and modifying input_data.py/examples_test.py. A stub/empty implementation would not create these files or register the example, so tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/beam as solve.sh in the solution/ directory. The Dockerfile doesn't prevent access to /solution/. An agent could read solution/solve.sh to get the exact gold patch and replay it. Additionally, the test file at tests/test_outputs.py contains all the expected assertions which could be reverse-engineered."
+      "reason": "The solution is available at /workspace/beam after the Dockerfile sets up the repo, and the solve.sh script is in /solution/solve.sh. The agent could potentially read the solution file or grep for expected test fixture values in the test file itself (test_outputs.py checks for specific paths and strings that could be extracted)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires creating base_pipeline.yaml, wordCountInheritance.yaml, test registration, input_data.py updates, and README. The visible tests check Jinja template syntax validity, Python syntax of modified files, function return values from input_data.py, and file existence. Core behavioral requirements appear to be tested."
+      "reason": "The instruction requires: base pipeline with block, child pipeline with extends, test framework registration, and README. The tests verify file existence, Jinja template validity, test registration, and README presence - covering all explicitly required behaviors."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (e.g., test_repo_input_data_functions, test_repo_jinja_template_syntax_include), docstrings explaining what each test checks, and clear categorization comments like '[repo_tests] pass_to_pass'."
+      "reason": "Tests are well-named with descriptive docstrings, grouped into pass_to_pass (repo_tests) and fail_to_pass categories, with clear comments like '[repo_tests] pass_to_pass'."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema of Jinja template variables in a table with variable names, purposes, and required sub-keys (e.g., readFromTextTransform must include 'path' sub-key, combineTransform must include 'group_by' and 'combine' sub-keys)."
+      "reason": "The instruction documents the JSON schema keys returned by word_count_jinja_parameter_data() (readFromTextTransform, mapToFieldsSplitConfig, combineTransform) and the structure of template data functions."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction appear consistent and correctly spelled throughout."
+      "reason": "No typos observed in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact file paths, exact extends directive string, exact test identifier, exact function signatures and return values, and exact key names. For example: 'word_count_jinja_template_data('test_wordCountInheritance_yaml') must return the base pipeline path inheritance/base/base_pipeline.yaml' and 'appearing at least 3 times total' in examples_test.py. This goes beyond describing the problem and prescribes the exact solution."
+      "outcome": "pass",
+      "reason": "The instruction references existing directories and files as context but does not name exact buggy lines or specific internal implementation details of the solution. It describes the pattern to follow without specifying exact code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/file creation task, not an agentmd-edits config task."
+      "reason": "This is a code/file creation task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
 }

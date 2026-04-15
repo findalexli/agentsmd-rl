@@ -3,63 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (status_router.py, system_stats.py locations), endpoint paths (/alive, /health, /ready, /server_info), return values ({\"status\":\"ok\"}, \"OK\", dict with uptime/idle_time/resources keys), import strings, function names (get_system_info, get_system_stats, update_last_execution_time), router tag ('Status'), and the exact import/registration lines for app.py are all explicitly stated."
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (status_router.py, system_stats.py locations), endpoint paths (/alive, /health, /ready, /server_info), return values ({'status': 'ok'}, 'OK'), APIRouter tag ('Status'), dictionary keys (uptime, idle_time, resources), function names (get_system_info, get_system_stats, update_last_execution_time), import strings, and the old file removal are all explicitly stated."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do at a code level: e.g., 'replace them with a new import: from openhands.app_server.status.status_router import router as health_router, and register the router with app.include_router(health_router)'. It also specifies exact sed-like replacements for action_execution_server.py and action_execution_client.py imports. This is giving the fix, not describing what's broken."
+      "reason": "The instruction explicitly states exact implementation steps: 'replace them with a new import: from openhands.app_server.status.status_router import router as health_router, and register the router with app.include_router(health_router)'. It specifies exact sed-like replacements for imports in action_execution_server.py and action_execution_client.py. This leaves no reasoning for the agent about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_server_app_uses_new_health_router assert exact string matches like 'from openhands.app_server.status.status_router import router as health_router' and 'app.include_router(health_router)'. An alternative correct fix using a different alias name (e.g., 'status_router' instead of 'health_router') or different import style would fail these tests despite being functionally correct."
+      "reason": "Tests like test_server_app_uses_new_health_router assert exact string matches like 'from openhands.app_server.status.status_router import router as health_router' and 'app.include_router(health_router)'. An alternative correct fix using a different alias name (e.g., 'status_router' instead of 'health_router') or different import style would fail. Similarly, test_status_router_has_required_endpoints asserts exact decorator syntax '@router.get(...)' which would fail if the variable was named diffe"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Multiple critical tests are purely text-based: test_status_router_has_required_endpoints checks for literal strings like '@router.get(\"/alive\")' in file content; test_server_app_uses_new_health_router, test_action_execution_server_imports_updated, and test_action_execution_client_imports_updated all only check file text with 'in content' assertions and never execute the code. While some tests (test_status_router_routes_work, test_system_info_returns_dict) do execute code, the majority of f2p tes"
+      "outcome": "pass",
+      "reason": "While several tests do text-matching (test_server_app_uses_new_health_router, test_action_execution_server_imports_updated, test_action_execution_client_imports_updated), critical tests like test_status_router_routes_work actually import the router, create a TestClient, and make HTTP requests verifying response status codes and bodies. test_system_stats_functions_work calls get_system_stats() and update_last_execution_time(). Not every test is text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by stubs: test_status_router_routes_work actually calls endpoints and checks specific return values; test_system_info_returns_dict calls get_system_info() and checks for specific keys; test_status_router_has_required_endpoints requires specific endpoint decorators. A stub returning None/empty would fail these."
+      "reason": "The f2p tests cannot be satisfied by stubs: test_status_router_routes_work checks actual HTTP responses with specific values ({'status': 'ok'}, 'OK'), test_system_info_returns_dict checks for specific keys (uptime, idle_time, resources) in the returned dict, and test_system_stats_functions_work checks for memory/cpu_percent/disk keys. A stub returning None or empty dict would fail these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/OpenHands with solve.sh accessible in the container environment. The agent could read /solution/solve.sh or examine the test file at tests/test_outputs.py to extract exact expected strings and fixture values. No measures prevent this."
+      "reason": "The solution exists at /workspace/OpenHands with solve.sh visible in the container's solution/ directory. An agent could read /solution/solve.sh to get the exact patch. The Dockerfile doesn't remove or protect the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors from instruction.md are tested: endpoint creation and responses, system_stats relocation and importability, import updates in all three files, old health.py removal, router tag, and get_system_info return schema."
+      "reason": "All behaviors required by instruction.md are tested: endpoint return values, APIRouter tag, system_stats relocation, import updates in all three files, old health.py removal, and get_system_info dictionary keys."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear F2P/P2P sections marked by comments, descriptive function names (test_status_router_exists, test_old_health_file_removed), and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear F2P/P2P sections marked by comments, descriptive function names (test_status_router_exists, test_old_health_file_removed, etc.), and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact return schemas: /alive returns {\"status\": \"ok\"}, /health and /ready return \"OK\", /server_info returns a dict with keys uptime, idle_time, resources. These are all tested."
+      "reason": "The instruction documents the exact schema: /alive returns {'status': 'ok'}, /health and /ready return 'OK', /server_info returns a dict with keys uptime, idle_time, resources. get_system_stats returns dict with memory, cpu_percent, disk."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "All file paths, function names, import paths, and endpoint names in the instruction match what the tests expect, with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact import lines to use (e.g., 'from openhands.app_server.status.status_router import router as health_router') and exact calls to make ('app.include_router(health_router)'), which goes beyond describing the task and into specifying the exact code changes needed."
+      "reason": "The instruction explicitly names exact import lines to add/remove in specific files (e.g., 'from openhands.app_server.status.status_router import router as health_router'), exact function calls to replace ('add_health_endpoints(app)' \u2192 'app.include_router(health_router)'), essentially providing the complete diff rather than describing desired behavior."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config-edit task."
+      "reason": "This is a code-only refactoring task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 4
 }

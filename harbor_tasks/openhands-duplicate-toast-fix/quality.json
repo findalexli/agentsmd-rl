@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_useeffect_has_primitive_dependencies checks that 'searchParams' is NOT in the useEffect dependency array and that 'amount' and 'sessionId' ARE; test_searchparams_extracted_outside_effect checks for exact patterns like 'const amount = searchParams.get(\"amount\")' and 'const sessionId = searchParams.get(\"session_id\")' positioned before React.useEffect; test_no_searchparams_get_inside_effect checks no searchParams.get"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_no_searchparams_get_inside_effect checks that searchParams.get() is not called inside useEffect; test_useeffect_has_primitive_dependencies checks that 'searchParams' is NOT in the dependency array and that 'amount' and 'sessionId' ARE. While instruction.md mentions variable naming, it never describes the root cause (unstable searchParams reference in useEffect deps) or the specific fix pattern (extract "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact variable naming convention ('checkout' \u2192 checkoutStatus, 'amount' \u2192 amount, 'session_id' \u2192 sessionId) and requirement #4 explicitly states variable names. Combined with the context about useSearchParams() and the specific verification commands, a developer barely needs to reason about what to change \u2014 the instruction essentially prescribes extracting these specific named variables from searchParams."
+      "reason": "Instruction.md specifies the exact variable naming convention ('checkout' \u2192 checkoutStatus, 'amount' \u2192 amount, 'session_id' \u2192 sessionId) and that these are extracted from searchParams, which combined with the React context strongly hints at the exact fix. However, it doesn't explicitly say 'move extraction outside useEffect' or 'remove searchParams from deps'. This is borderline but the variable naming details are very specific to the solution pattern."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to assert very specific implementation patterns: test_useeffect_has_primitive_dependencies requires 'amount' and 'sessionId' literally in the dependency array; test_searchparams_extracted_outside_effect requires exact patterns 'const amount = searchParams.get(\"amount\")' and 'const sessionId = searchParams.get(\"session_id\")' positioned before useEffect. Alternative correct fixes (e.g., using useRef to track if effect already ran, using a custom hook, using useMemo for searchParams"
+      "reason": "Tests enforce a very specific implementation: test_useeffect_has_primitive_dependencies requires 'amount' and 'sessionId' in useEffect deps and 'searchParams' NOT in deps; test_searchparams_extracted_outside_effect requires exact patterns like 'const amount = searchParams.get(\"amount\")' before the useEffect; test_no_searchparams_get_inside_effect forbids searchParams.get() inside useEffect. Alternative correct fixes (e.g., using useRef to track if effect already ran, using a custom hook, using u"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect, test_no_searchparams_get_inside_effect, and test_checkout_status_extraction are purely text/regex-based assertions on file content (e.g., re.search on file content, checking string positions). While some tests do run subprocesses (test_vitest_billing_tests, test_frontend_build_passes, etc.), the core fail_to_pass tests are entirely text-matching with no code execution."
+      "reason": "Tests test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect, test_no_searchparams_get_inside_effect, and test_checkout_status_extraction are pure text/regex checks on file content (open(BILLING_FILE).read() with re.search). While some tests do run subprocesses (test_vitest_billing_tests, test_frontend_build_passes, etc.), the fail_to_pass tests are entirely text-matching, not behavioral."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for specific structural changes (extracting variables outside useEffect, removing searchParams from deps). A stub/no-op implementation wouldn't pass because the original buggy code has searchParams in the dependency array and searchParams.get() calls inside the effect, which would fail these assertions."
+      "reason": "The fail_to_pass tests check specific code structure patterns (primitives extracted outside useEffect, no searchParams in deps) that cannot be satisfied by a stub/no-op implementation. The vitest tests also run actual component rendering tests that verify toast behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/OpenHands as a git repo, and solve.sh contains the exact git patch. An agent could read the solution by running 'cat /solution/solve.sh' or by examining the test file at tests/test_outputs.py to see exactly what regex patterns are expected, then matching those patterns without understanding the bug."
+      "reason": "The solution is available at /workspace/OpenHands after the Dockerfile clones the repo, and solution/solve.sh contains the exact git patch. An agent could read solve.sh or the solution directory to get the exact fix. The tests also check for exact string patterns that could be copied from the test file itself."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: success toast exactly once (vitest billing tests), error toast exactly once (vitest billing tests), analytics tracking fires once (vitest billing tests), and variable naming (text-matching tests for checkoutStatus, amount, sessionId)."
+      "reason": "All four requirements from instruction.md are tested: success toast once (vitest billing tests), error toast once (vitest billing tests), analytics tracking once (vitest billing tests), and variable naming (test_checkout_status_extraction, test_searchparams_extracted_outside_effect)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect, etc.) and include docstrings explaining what each test verifies and whether it's fail_to_pass or pass_to_pass."
+      "reason": "Tests are well-named with descriptive docstrings indicating what they check and whether they are pass_to_pass or fail_to_pass, e.g., test_useeffect_has_primitive_dependencies has a clear docstring explaining the bug and fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (frontend/src/routes/billing.tsx), variable names (checkoutStatus, amount, sessionId), and commands are all consistent between instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (frontend/src/routes/billing.tsx), specifies the exact variable names to use (checkoutStatus, amount, sessionId), and describes the URL parameter mapping convention in detail. While naming the file is reasonable, prescribing the exact variable naming convention effectively tells the agent the solution structure."
+      "reason": "Instruction.md explicitly names the file (frontend/src/routes/billing.tsx), the hook (useSearchParams), the exact variable naming convention, and the parameter-to-variable mapping. While naming the file is reasonable, specifying exact variable names like 'checkoutStatus', 'amount', 'sessionId' goes beyond describing the bug and leaks implementation details of the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

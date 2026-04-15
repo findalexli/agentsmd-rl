@@ -2,65 +2,64 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths (schemas.py, list_databases.py, app.py, mcp_core.py, test_database_tools.py), variable names (DATABASE_DEFAULT_COLUMNS, DEFAULT_DATABASE_COLUMNS), function names (parse_filters, parse_columns, create_mock_database, _humanize_timestamp), literal strings ('created_by_fk', 'changed_by_fk', 'charts/dashboards/databases', '(chart, dataset, dashboard, database)', 'created_by_fk with the user'), and specific patterns (field_validator, datetime.now(time"
+      "outcome": "fail",
+      "reason": "Tests import from `superset.mcp_service.common.schema_discovery` (e.g., `DATABASE_DEFAULT_COLUMNS`), but instruction.md only references `superset/mcp_service/database/tool/schema_discovery.py` as the source module. The `common.schema_discovery` path is undiscoverable from the instruction alone. Also, tests check for `__pydantic_decorators__.field_validators` keys like 'parse_filters' and 'parse_columns' \u2014 while the instruction mentions these names, the specific introspection mechanism is not doc"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact fixes: 'add validators named parse_filters and parse_columns', 'import DATABASE_DEFAULT_COLUMNS, from schema_discovery', 'use datetime.now(timezone.utc)', 'checking dt.tzinfo', specific type annotations like 'database_id: int = 1', and exact strings like 'charts/dashboards/databases'. This goes well beyond describing what's broken \u2014 it tells the agent exactly WHAT to change and HOW."
+      "reason": "The instruction explicitly states exact implementation details: e.g., 'should have a validator function `parse_filters` decorated as `@field_validator(\"filters\")`', 'call `datetime.now(timezone.utc)`', 'check `dt.tzinfo` in `_humanize_timestamp`', 'import `field_validator` from pydantic', 'should import `DATABASE_DEFAULT_COLUMNS,` from schema_discovery, passing it as `default_columns=DATABASE_DEFAULT_COLUMNS`'. These are specific code fixes, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'created_by_fk with the user' in content, exact format 'DATABASE_DEFAULT_COLUMNS,' with trailing comma, exact string 'list_databases(filters=[{{\"col\": \"created_by_fk\"' in app.py, exact string '(chart, dataset, dashboard, database)' in docstring. An alternative correct fix using different wording/formatting would fail."
+      "reason": "Tests assert on gold-specific implementation details: `test_field_validator_imported` checks that `__pydantic_decorators__.field_validators` contains exactly 'parse_filters' and 'parse_columns' as keys. An alternative correct fix using different validator names or `@model_validator` would fail. `test_imports_database_default_columns` checks for exact import name 'DATABASE_DEFAULT_COLUMNS' via AST. `test_no_local_default_database_columns_definition` checks for absence of exact variable name 'DEFA"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Nearly every test reads file content and checks for string presence: e.g., 'assert \"created_by_fk\" in content', 'assert \"def parse_filters\" in content', 'assert \"DATABASE_DEFAULT_COLUMNS,\" in content'. The only behavioral tests are syntax checks via py_compile subprocess calls. No test imports the modules, instantiates classes, or calls functions to verify actual behavior."
+      "outcome": "pass",
+      "reason": "Most tests import and call actual code (e.g., `DatabaseError.create()`, `_humanize_timestamp()`, `DatabaseFilter()`, `ListDatabasesRequest()`). Some tests use AST parsing which is structural inspection rather than plain text grep. While a few tests (like `test_no_local_default_database_columns_definition`) are source-level checks, the majority exercise behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All tests are text-matching on file contents (assert 'X' in open(path).read()). An agent could simply append comments or dead code containing the expected strings to each file without implementing any actual fix. For example, adding '# created_by_fk with the user' as a comment would pass the description test."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests would not pass with stub implementations: `test_database_error_uses_timezone_utc` requires a non-None timezone-aware timestamp with UTC tzinfo; `test_humanize_timestamp_uses_tzinfo` requires a string containing 'ago'; `test_create_mock_database_has_type_hints` requires AST annotations to be present; `test_model_type_docstring_includes_database` requires 'database' in the docstring."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/superset (solve.sh path) and the agent could read test_outputs.py to discover exact strings being asserted (like 'created_by_fk with the user', 'DATABASE_DEFAULT_COLUMNS,', etc.) and simply insert those strings into files. The tests only check string presence, making this trivially exploitable."
+      "reason": "The solution exists at /workspace/superset as solve.sh would be applied there. The agent could potentially read the test file at tests/test_outputs.py to discover exact expected behaviors and fixture values. Additionally, the solution/solve.sh file may be accessible in the container depending on mount configuration."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All seven categories of fixes described in instruction.md (DatabaseFilter fields, validators, duplicate constants, timezone handling, type annotations, app instructions, docstring) have corresponding test classes that check for the described changes."
+      "reason": "All seven issues described in instruction.md have corresponding test coverage: timezone handling (issue 4), type annotations (issue 5), docstring update (issue 7), DatabaseFilter owner filtering (issue 1), JSON string validators (issue 2), duplicate columns removal (issue 3), and app instructions (issue 6 is tested in the truncated portion)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into descriptive classes (TestDatabaseFilterCreatedBy, TestListDatabasesRequestValidators, TestDuplicateDefaultColumnsRemoved, etc.) with clear docstrings on each test method."
+      "reason": "Tests are well-organized into descriptive classes (TestTimezoneHandling, TestTypeAnnotations, TestMcpCoreDocstring, etc.) with clear docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modifications, not structured data output (JSON/CSV/API/DB schema)."
+      "reason": "The task involves fixing code bugs and adding features, not producing structured data output like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in instruction.md are consistent with those checked in tests and the repository structure."
+      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: exact validator names 'parse_filters' and 'parse_columns', exact import 'DATABASE_DEFAULT_COLUMNS,' with trailing comma, exact parameter 'default_columns=DATABASE_DEFAULT_COLUMNS', exact type annotations 'database_id: int = 1', and exact strings to include in app.py. This goes far beyond identifying the buggy file/module."
+      "reason": "The instruction explicitly names exact variable names (`parse_filters`, `parse_columns`, `DATABASE_DEFAULT_COLUMNS`), exact decorator syntax (`@field_validator(\"filters\")`), exact import statements (`from datetime import datetime, timezone`), and exact code patterns (`datetime.now(timezone.utc)`, `dt.tzinfo`). This goes well beyond identifying buggy files and describes the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config editing task."
+      "reason": "This is a code-only task involving Python source file modifications, not configuration edits."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

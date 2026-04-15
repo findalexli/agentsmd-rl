@@ -2,61 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test `test_normalization_init_no_redundant_validation` inspects the Normalization class's __init__ in areal/utils/data.py to assert that no `raise` statements referencing 'mean_level' or 'std_level' exist. While the instruction mentions eliminating duplicate validation, it doesn't specify the exact mechanism (removing raise statements from Normalization.__init__). Also, `test_repo_ruff_format` and `test_repo_ruff_check` enforce ruff formatting/linting with a specific version (0.14.9), which "
+      "outcome": "pass",
+      "reason": "The instruction names all affected classes (NormConfig, PPOActorConfig, BaseExperimentConfig), files (areal/api/cli_args.py, areal/utils/data.py), fields, valid/invalid values, error types (ValueError/TypeError), and the requirement to remove duplicate validation from Normalization.__init__. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (missing validation, duplicate validation) and what the expected behavior should be, but does not specify exact code changes, line numbers to modify, or specific implementation approaches like 'add __post_init__'."
+      "reason": "The instruction describes what is broken (missing validation, duplicate validation) and what the correct behavior should be, but does not specify exact code changes, line numbers to modify, or implementation details like 'add __post_init__ with these exact lines'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The test `_extract_post_init` specifically looks for a method named `__post_init__` in the AST of the class definitions. An alternative valid approach like using a custom `__init__` method, a class method factory, or a `__init_subclass__` hook would fail. Also `test_normalization_init_no_redundant_validation` checks that Normalization.__init__ has no raise statements about mean_level/std_level - an agent could validly keep validation in both places (belt-and-suspenders) which would be a correct "
+      "reason": "Tests like test_ppo_rejects_negative_sapo_temperature and test_base_experiment_rejects_bad_epochs extract the __post_init__ function via AST and call it as a standalone function on a SimpleNamespace. This requires the validation logic to be entirely self-contained in __post_init__ without relying on any helper methods, class methods, or external validators. The test for PPOActorConfig calls post_init_fn(ns_obj) where ns_obj is a SimpleNamespace \u2014 if an alternative solution used a separate valida"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests actually instantiate classes or call extracted __post_init__ methods with mock objects and check for raised exceptions. The `test_normalization_init_no_redundant_validation` does AST inspection but this is checking structural behavior (absence of validation code), not just string matching. Tests like `test_normconfig_rejects_invalid_mean_level` actually construct the class and verify ValueError is raised."
+      "reason": "Tests actually instantiate NormConfig objects, execute extracted __post_init__ functions on SimpleNamespace objects, run ruff as subprocesses, and use AST parsing to verify structural properties. They test behavior (ValueError raised) not just text presence."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests construct objects with invalid values and assert that ValueError/TypeError is raised. A stub __post_init__ that does nothing (pass/return None) would not raise these exceptions and would fail the tests. The tests use try/except patterns where not raising an exception triggers AssertionError."
+      "reason": "The fail-to-pass tests check that ValueError is raised for specific invalid inputs. A stub __post_init__ that does nothing (pass) would not raise ValueError, so the tests would fail. The normalization redundancy test checks that raise statement count decreased, which wouldn't pass without actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/AReaL and the agent could potentially access the solution/solve.sh file if it exists in the container. The Dockerfile doesn't explicitly prevent access to test files. An agent could read tests/test_outputs.py to see exact expected behavior and fixture values."
+      "reason": "The solution file exists at /workspace/AReaL's git history or potentially at /solution/solve.sh in the container. The Dockerfile doesn't remove /solution/ or /tests/ directories. An agent could read the solution script or test file to reverse-engineer the exact expected implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: NormConfig validation (tested), PPOActorConfig SAPO validation (tested), BaseExperimentConfig epoch validation (tested), duplicate validation elimination (tested via test_normalization_init_no_redundant_validation), valid configs still work (tested via test_valid_normconfig_constructs), docstrings in validation methods (tested via test_post_init_has_docstring). All major requirements are covered."
+      "reason": "All behaviors from the instruction are tested: NormConfig validation of mean_level, std_level, group_size; PPOActorConfig SAPO validation and SAPO+decoupled incompatibility; BaseExperimentConfig epoch validation; removal of duplicate validation in Normalization; docstrings in __post_init__; ruff formatting/linting; valid configs still constructing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped by sections with comment headers (Gates, NormConfig validation, PPOActorConfig SAPO validation, BaseExperimentConfig validation, regression tests). Each test has a descriptive name and docstring, and tests are tagged with [pr_diff], [static], [repo_ci] annotations."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass NormConfig, Fail-to-pass PPOActorConfig, etc.), descriptive function names, and helper functions clearly separated."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves adding validation to Python dataclasses, not producing structured data outputs like JSON/CSV/API/DB schemas."
+      "reason": "This task involves Python dataclass validation, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (areal/api/cli_args.py, areal/utils/data.py), class names (NormConfig, PPOActorConfig, BaseExperimentConfig, Normalization), and field names are all consistent between instruction.md and the test file."
+      "reason": "File paths, class names, field names, and commands in the instruction are all correct and match the actual codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the affected files (areal/api/cli_args.py, areal/utils/data.py) and classes, which is appropriate given the task domain. It doesn't specify exact line numbers or the specific implementation mechanism (__post_init__). The files are named because the task is about specific config classes, not general bug localization."
+      "reason": "The instruction names the affected files and classes but doesn't specify exact line numbers or the precise code to write. The files are naturally obvious from the task domain (config validation in config files)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Python source file modifications, not a configuration file edit task."
+      "reason": "This is a code-editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 8,
+  "fail_count": 2
 }

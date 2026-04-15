@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all five files tested (router.ts, router.test.ts, README.md, minor.router-run.md, demos/bookstore/README.md), mentions removing the run() method, removing tests, removing the change file, and updating documentation. The specific strings checked in tests (e.g., 'run<result>(', 'createStorageKey', 'Running Code In Request Context', 'router.run()') are all discoverable from the instruction's description of removing the run() API and its references. The instruction also mention"
+      "reason": "The instruction names all five files that tests check (router.ts, router.test.ts, README.md, .changes/minor.router-run.md, demos/bookstore/README.md), describes removing `run()` method, removing tests, removing change file, and updating documentation. The specific strings tested (e.g., 'run<result>(', 'createStorageKey', 'Running Code In Request Context', 'router.run()') are all discoverable from examining the named files. The instruction also mentions cleaning up related tests, documentation, a"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to remove (the run() method, related tests, change file, documentation references) but doesn't specify exact line numbers, exact code to delete, or replacement text. A developer still needs to reason about which specific lines to modify and how to clean up imports."
+      "reason": "The instruction describes WHAT to remove (the run() method, its tests, change file, documentation references) but doesn't specify exact line numbers, exact code replacements, or implementation details of how to do it. A developer still needs to examine the files and determine what specific code to remove."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for absence of specific API-related strings (run<result>(, router.run(, createStorageKey, 'Running Code In Request Context') and file deletion. Any correct implementation that removes the run() method and its references would pass these checks. The tests don't assert on gold-specific variable names or exact line positions."
+      "reason": "The tests check for absence of specific strings that any correct removal would eliminate (e.g., 'run<result>(' in source, 'router.run(' in tests, 'createStorageKey' in tests, 'router.run()' in READMEs). Any correct implementation that removes the run() API would pass these checks. The pass-to-pass tests verify compilation and existing tests still work, which any correct removal would satisfy."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_run_method_removed, test_run_tests_removed, test_fetch_router_readme_updated, test_bookstore_readme_updated, test_change_file_deleted) are ALL pure text/file-existence checks using 'assert X not in open(path).read()' or 'assert not path.exists()'. While pass-to-pass tests do run subprocesses (typecheck, test, lint), the actual fail-to-pass tests that verify the core task never execute or import any code."
+      "reason": "The fail-to-pass tests (test_run_method_removed, test_run_tests_removed, test_change_file_deleted, test_fetch_router_readme_updated, test_bookstore_readme_updated) are ALL text-matching checks using `assert 'string' not in open(path).read()` with no execution. However, the pass-to-pass tests do execute subprocesses (typecheck, test suites, lint, format). Since the f2p tests are purely textual, this fails the rubric criterion 'FAIL if every test is assert foo in open(path).read() with no executio"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that specific strings/files are ABSENT from the codebase. These would fail on the original repo (which contains router.run() code). A stub or no-op solution would fail because the original files still contain the strings being checked against."
+      "reason": "The f2p tests check for absence of specific strings that exist in the original codebase (e.g., 'run<result>(' exists in router.ts, 'router.run(' exists in tests, the change file exists). A stub/no-op solution that doesn't modify the files would fail these tests. The agent must actually remove the code and documentation to pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/remix and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact git patch. Additionally, since all f2p tests are string-absence checks, the agent could simply delete the checked strings without understanding the code structure, or even delete entire files and replace them with empty content (though this would fail pass-to-pass tests)."
+      "reason": "The solution exists at /workspace/remix as a git repo, and the solve.sh is in /solution/solve.sh which may be accessible in the container. An agent could read /solution/solve.sh or simply apply the git patch. The Dockerfile doesn't show any measures to hide or remove the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: removal of run() from interface/implementation, removal of test suite, deletion of change file, and documentation cleanup in both README files. Pass-to-pass tests also verify the project still compiles and existing tests pass."
+      "reason": "All behaviors described in the instruction are tested: removing run() from interface/implementation, removing tests, removing change file, updating both README files, plus regression tests ensuring remaining code still compiles and passes."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass code removal, fail-to-pass documentation updates, pass-to-pass regression/compilation), descriptive function names, and docstrings explaining each check."
+      "reason": "Tests are well-organized with clear comments separating 'Fail-to-pass (pr_diff) \u2014 code removal tests', 'config/documentation update tests', and 'Pass-to-pass (static / repo_tests) \u2014 regression + compilation'. Each test function has a descriptive docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code/documentation removal, not structured data output."
+      "reason": "This task involves code removal, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and commands in the instruction and tests are correct and consistent with the repository structure."
+      "reason": "All file paths, function names, and commands in the instruction and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly lists all 5 exact file paths to modify, including the specific change file path 'packages/fetch-router/.changes/minor.router-run.md' and 'demos/bookstore/README.md'. It even names the specific section 'Running Code In Request Context' implicitly by describing the documentation. This removes the localization challenge from the task."
+      "outcome": "pass",
+      "reason": "The instruction names files to look at but doesn't specify exact line numbers or exact code to write. Naming the files is appropriate since the task is about removing a specific API across multiple files."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/documentation removal task, not an agentmd-edits or config-edit task."
+      "reason": "This is a code removal task, not an agentmd-edits/config-edit task."
     }
   },
   "tier_a_fails": [
@@ -55,9 +55,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

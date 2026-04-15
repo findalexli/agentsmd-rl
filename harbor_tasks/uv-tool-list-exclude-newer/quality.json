@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four files tested (crates/uv-cli/src/lib.rs, crates/uv/src/settings.rs, crates/uv/src/commands/tool/list.rs, crates/uv/src/lib.rs), the struct names (ToolListArgs, ToolListSettings), the function (list()), and the concept of exclude_newer, --exclude-newer, ResolverInstallerOptions, and option merging. All asserted identifiers (exclude_newer, ToolListArgs, ToolListSettings, ResolverInstallerOptions, .combine()) are discoverable from the instruction's description of the p"
+      "reason": "The instruction names all four files tested (crates/uv-cli/src/lib.rs, crates/uv/src/settings.rs, crates/uv/src/commands/tool/list.rs, crates/uv/src/lib.rs), the struct names (ToolListArgs, ToolListSettings), the function (list()), and the concept of exclude_newer. All assert targets (struct fields, function signatures, combine calls) are discoverable from the instruction's description of the problem and the files listed."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (--exclude-newer not supported in uv tool list --outdated) and the expected behavior, plus which files to look at. It does not specify exact code changes, line numbers, or implementation details like using .combine() or adding specific struct fields."
+      "reason": "The instruction describes what's broken (no --exclude-newer support in uv tool list) and expected behavior (accept the flag, merge options), but doesn't specify exact code changes like 'add this field' or 'change line X to Y'. It lists files to look at but doesn't dictate the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_options_combined_in_list checks for '.combine(' in source text; test_list_fn_receives_resolver_options checks for 'ResolverInstallerOptions' in the function signature; test_settings_resolves_exclude_newer checks for 'ResolverInstallerOptions' in the struct body. An alternative correct implementation could, e.g., pass just an ExcludeNewer field directly instead of ResolverInstallerOptions, or merge options without using .combine() (e.g., man"
+      "reason": "test_options_combined_in_list checks for '.combine(' in the source text. An alternative correct implementation could merge options using a different method (e.g., manual field overrides, a custom merge function, or using '.merge(' or '.override_with(') and would fail this test. Similarly, test_list_fn_receives_resolver_options requires either 'ResolverInstallerOptions' or 'exclude_newer' in the function signature, but an alternative could pass an already-constructed ResolverInstallerSettings and"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_exclude_newer_arg_defined, test_settings_resolves_exclude_newer, test_list_fn_receives_resolver_options, test_options_combined_in_list) all read source files and check for string patterns like 'exclude_newer' in body, 'ResolverInstallerOptions' in sig, '.combine(' in src. They do not execute the code or test actual behavior. The compilation tests (cargo check/test --no-run) verify compilation but not runtime behavior of --exclude-newer."
+      "reason": "The fail-to-pass tests (test_exclude_newer_arg_defined, test_settings_resolves_exclude_newer, test_list_fn_receives_resolver_options, test_options_combined_in_list) all read source files and check for string patterns like 'exclude_newer' in source text, '.combine(' in source text, 'ResolverInstallerOptions' in function signatures. They do not execute the code, call functions, or test runtime behavior. The compilation tests verify build success but not behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for structural changes (exclude_newer field in ToolListArgs, exclude_newer handling in ToolListSettings, resolver options in list() signature, .combine() usage). A stub/no-op implementation would not add these fields/patterns to the source code, so these tests would fail without actual implementation work."
+      "reason": "The f2p tests check for specific new code additions (exclude_newer field in ToolListArgs, exclude_newer handling in ToolListSettings, new parameters in list() signature, option merging). A stub/no-op implementation would not add these structural elements and would fail these tests. The base commit explicitly lacks these, confirming they're non-trivial."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/uv as a git repo, and solve.sh is at a predictable path. An agent could read /solution/solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what string patterns are being checked and satisfy them minimally. The tests only check for string presence in source files, making it trivial to game by inserting comments containing the expected strings."
+      "reason": "The solution exists at /workspace/uv as a git repo where solve.sh applies a patch. The agent could read solution/solve.sh if it exists in the container (the Dockerfile doesn't explicitly remove it). Additionally, since tests are purely text-matching on source files, the agent could reverse-engineer exactly what strings need to appear by examining the test file patterns."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'The CLI flag should take precedence over filesystem configuration, and both should take precedence over tool-specific stored options.' No test verifies this precedence behavior at runtime. Also, no test verifies that UV_EXCLUDE_NEWER environment variable or uv.toml configuration actually works with 'uv tool list --outdated'."
+      "reason": "The instruction states 'The CLI flag should take precedence over filesystem configuration, and both should take precedence over tool-specific stored options \u2014 matching the standard option-merging behavior.' No test verifies this precedence ordering at runtime. Tests only check structural presence of code, not that exclude-newer actually filters releases or that precedence works correctly."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,19 +35,19 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves CLI argument/flag implementation, not structured data output like JSON/CSV/API."
+      "reason": "This task involves CLI flag support and code changes, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or struct names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or struct names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files, struct names (ToolListArgs, ToolListSettings), function name (list()), and even the specific method (resolve()) to modify. While listing relevant files is reasonable, specifying 'ToolListSettings struct and its resolve() method' and 'The list() function that checks for outdated tools' significantly narrows the search space beyond what the task domain requires."
+      "reason": "The instruction explicitly names the exact structs (ToolListArgs, ToolListSettings), methods (resolve()), functions (list()), and specific files with their roles. It even says 'Top-level command dispatch, wires settings into list()' for lib.rs, essentially describing the wiring change needed. This goes beyond describing what's broken and localizes the fix precisely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config editing task."
+      "reason": "This is a code-only task modifying Rust source files, not a configuration editing task."
     }
   },
   "tier_a_fails": [

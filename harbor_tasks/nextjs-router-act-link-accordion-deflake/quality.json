@@ -3,62 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all critical paths (hub-a/b/c page.tsx, dynamic-stale-10/60, test file path, LinkAccordion component path, AGENTS.md, .agents/skills/router-act/SKILL.md), required literal strings ('LinkAccordion', 'await connection()', 'export default function Page()', 'Suspense', 'hub-a/b/c', 'no-requests', 'browser.back()', 'BFCache', 'router-act', 'includes'), and structural requirements (frontmatter with 'name: router-act' and 'description'). The test checks for 'data-link-accordion' a"
+      "reason": "The instruction names all key paths (hub-a/b/c page.tsx, dynamic-stale-10/60, test file path, LinkAccordion component path, AGENTS.md, .agents/skills/router-act/SKILL.md), required strings ('LinkAccordion', 'await connection()', '<Suspense', 'export default function Page()', 'Hub a', 'no-requests', 'hub', 'browser.back()', 'BFCache', '$router-act', 'router-act', 'includes', 'requestIdleCallback'), and structural requirements. The test checks for 'data-link-accordion' in the pre-existing componen"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially prescribes the exact fix: create three hub pages with specific structure, modify stale pages to add LinkAccordion links to hubs, replace browser.back() with hub navigation, create specific documentation files. It tells the agent exactly WHAT to change (e.g., 'Navigate to /per-page-config/hub-a, hub-b, hub-c instead of using await browser.back()'), which hub pages to create, what imports to use, and what documentation to write. This is a detailed implementation specifi"
+      "reason": "The instruction essentially specifies the exact fix: create three hub pages at exact paths with exact structure (LinkAccordion, connection(), Suspense, default Page export), modify stale pages to add LinkAccordion links to hubs, remove browser.back() from the specific test, create AGENTS.md and SKILL.md with specific content. This is prescriptive enough that there's minimal reasoning required about WHAT to change \u2014 it's essentially a specification of the solution rather than a description of the"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: exact string 'export default function Page()' in hub pages (test_hub_pages_structure), exact paths hub-a/hub-b/hub-c, specific content like 'Hub a' in hub content divs, exact frontmatter 'name: router-act', 'description' field in SKILL.md. An alternative correct fix (e.g., using 'export default function HubPage()' or different page structure) would fail. The test_hub_pages_structure runs a Node script checking for exact string 'export default fu"
+      "reason": "Tests assert exact strings like 'export default function Page()' (test_hub_pages_structure), exact file paths, and exact content patterns. An alternative correct fix might use 'export default async function Page()' or a different export pattern, or might structure the hub pages differently while still fixing the flakiness. The test in test_hub_pages_structure checks for the literal string 'export default function Page()' which rules out valid alternatives like arrow function exports or async def"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text/file content checks: test_hub_pages_structure checks for string presence ('LinkAccordion', 'await connection()', '<Suspense', 'export default function Page()'), test_stale_pages_link_to_hubs checks string presence, test_test_uses_hub_navigation checks string presence, test_agents_md_router_act_rule checks string presence, test_router_act_skill_created checks string presence. None of them actually compile, run, or execute the code. The pass-to-pass tests run "
+      "reason": "The fail-to-pass tests (test_hub_pages_structure, test_stale_pages_link_to_hubs, test_test_uses_hub_navigation, test_agents_md_router_act_rule, test_router_act_skill_created) are almost entirely text-matching assertions \u2014 reading file contents and checking for string presence. test_hub_pages_structure runs a Node script but that script only reads files and checks string inclusion, not execution. No test actually builds or runs the Next.js app, executes the test suite, or verifies runtime behavio"
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply creates files with the right string patterns would pass all fail-to-pass tests. For example, test_hub_pages_structure only checks for string inclusion of 'LinkAccordion', 'await connection()', '<Suspense', 'export default function Page()' \u2014 a file containing all these strings as comments would pass. No test actually compiles or runs the Next.js pages."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require creating new files (hub-a/b/c page.tsx, AGENTS.md, SKILL.md) and modifying existing files (dynamic-stale-10/60 page.tsx, test file). A stub/no-op implementation would fail because the files don't exist at the base commit. The tests check for specific content that must be deliberately added."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh in the container and could be read directly by the agent. The tests only check for file existence and string patterns, so the agent could also grep the test file (test_outputs.py) to extract exact expected strings. There are no measures preventing these approaches."
+      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it, and the hidden test file header shows it). An agent could simply read and execute solve.sh. Additionally, the test assertions are pure string matching, so an agent could grep the test file to discover exactly what strings need to be present in each file."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md (hub pages structure, stale page connectivity, test navigation assertions, AGENTS.md documentation, SKILL.md creation) are tested by corresponding test functions."
+      "outcome": "fail",
+      "reason": "Instruction requires 'The test must deterministically pass every time after the fix is applied' but no test actually runs the Next.js e2e test to verify deterministic passing. The instruction also requires 'act scopes with includes assertions matching hub content' but tests only check for hub path strings, not act scope usage patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments (Pass-to-pass static, Pass-to-pass repo_tests, Fail-to-pass pr_diff code behavior, Fail-to-pass config/instruction), well-named functions, and descriptive docstrings."
+      "reason": "Tests are well-organized with clear section headers (Pass-to-pass static, Pass-to-pass repo_tests, Fail-to-pass pr_diff code behavior, Fail-to-pass config/instruction), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code files and documentation, not structured data like JSON/CSV/API/DB."
+      "reason": "This task produces source code files and documentation, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact test ('per-page value overrides global staleTimes.dynamic regardless of direction'), specifies exactly which calls to remove ('browser.back()'), what to replace them with (hub page navigation to hub-a/b/c), and the exact file structure to create. This goes beyond identifying the buggy area into prescribing the exact fix."
+      "reason": "The instruction specifies exact file paths to create/modify, exact content patterns (e.g., 'export default function Page()', 'await connection()'), exact navigation patterns to use in the test ('Navigate to /per-page-config/hub-a, hub-b, hub-c instead of using await browser.back()'), and exact documentation content. This goes well beyond naming the buggy area \u2014 it prescribes the solution structure in detail."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code task with documentation additions, not a config-edit-only task."
+      "reason": "This is primarily a code task involving creating new files and modifying existing ones, not a config-edit-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

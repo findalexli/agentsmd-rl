@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (areal/engine/megatron_engine.py), the method (initialize), the context manager (patch_bridge_for_tree_training), and the function (make_mcore_model). All test assertions check these same names/paths, which are discoverable from the instruction."
+      "reason": "The instruction names the file (areal/engine/megatron_engine.py), the method (initialize), the context manager (patch_bridge_for_tree_training), and the function (make_mcore_model). All key identifiers checked by the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (make_mcore_model runs outside the patch_bridge_for_tree_training context) and what the expected behavior is, but does not specify the exact fix (e.g., 'indent these lines' or 'move line X into block Y'). The developer must reason about the code structure."
+      "reason": "The instruction describes WHAT is broken (make_mcore_model runs outside the context manager scope) and what the expected behavior is, but does not specify the exact code change (e.g., 'indent the with self.device block'). The developer must reason about how to restructure the code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "The tests check structural properties: (1) make_mcore_model is called within patch_bridge_for_tree_training's with-block body, (2) make_mcore_model is NOT in a direct-child with-block of initialize() that isn't the tree training context. Alternative correct fixes (e.g., moving the with self.device block inside the context, or restructuring differently) would pass as long as make_mcore_model ends up nested inside patch_bridge_for_tree_training."
+      "outcome": "fail",
+      "reason": "test_device_context_nested_in_tree_training asserts that no direct-child with-block of initialize() (other than patch_bridge_for_tree_training) contains make_mcore_model. An alternative correct fix could, for example, duplicate/inline the make_mcore_model call in a separate with-block at initialize body level that also applies tree training patches via a different mechanism, or restructure using a helper function called at body level \u2014 these would fail the test even if functionally correct. The "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_mcore_model_in_tree_training_scope, test_device_context_nested_in_tree_training) use AST parsing to check structural properties of the source code \u2014 they do not import, call, or execute the code. While AST analysis is more sophisticated than raw string matching, it is still inspecting source text structure rather than executing behavior. No test actually runs the initialize() method or verifies tree-training patches are active at runtime."
+      "reason": "The core fail-to-pass tests (test_mcore_model_in_tree_training_scope, test_device_context_nested_in_tree_training) use AST analysis on the source file \u2014 they parse the text structure of the code rather than importing/calling the code or executing it. While AST analysis is more sophisticated than raw string matching, it is still static text/structure inspection, not behavioral testing (no code is executed, no runtime behavior is verified)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., initialize with just pass/return) would fail test_initialize_not_stub (requires \u226510 meaningful statements) and test_mcore_model_in_tree_training_scope (requires finding both the context manager and the call within it). The f2p tests require actual structural changes that reflect the bug fix."
+      "reason": "A stub implementation (e.g., initialize with just pass/return) would fail test_initialize_not_stub (requires >=10 meaningful statements) and test_mcore_model_in_tree_training_scope (requires both the context manager and make_mcore_model call to exist and be properly nested). The f2p tests cannot be passed without making the structural change."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/AReaL's filesystem as solve.sh is applied, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exactly what AST structure is expected, then mechanically produce that structure without understanding the bug."
+      "reason": "The solution file exists at /workspace/AReaL in the container (solution/solve.sh contains the exact patch). An agent could read this file or the gold patch to determine the exact fix. Additionally, the tests do AST analysis only, so an agent could grep for test expectations and reverse-engineer the required structure."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that make_mcore_model runs within the patch_bridge_for_tree_training context. The tests verify exactly this structural requirement plus lint/format/style checks."
+      "reason": "The instruction requires that make_mcore_model runs within the patch_bridge_for_tree_training context. The tests verify this structural requirement (test_mcore_model_in_tree_training_scope), verify make_mcore_model is not at the wrong nesting level (test_device_context_nested_in_tree_training), plus syntax, lint, and anti-stub checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly organized with section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD, Pre-commit) and each test has a descriptive docstring explaining what it checks."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD, Pre-commit), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code restructuring, not structured data output."
+      "reason": "This task involves a code fix, not structured data output (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and method (which is appropriate for the task domain) but does not specify exact line numbers or the precise code change needed. It describes the conceptual scoping issue without pinpointing the exact buggy line."
+      "reason": "The instruction names the file and method (reasonable for the task domain) but does not specify exact line numbers or the precise code change needed. It describes the problem conceptually (context manager scope doesn't cover model construction)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,11 +51,12 @@
     }
   },
   "tier_a_fails": [
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 7,
+  "fail_count": 3
 }

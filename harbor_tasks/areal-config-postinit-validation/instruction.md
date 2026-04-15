@@ -8,6 +8,12 @@ during training initialization or at runtime — wasting resources and making
 debugging harder. The affected files are `areal/api/cli_args.py` and
 `areal/utils/data.py`.
 
+## Style Requirements
+
+All Python files must pass formatting and linting checks using **ruff version
+0.14.9**. Run `ruff format` and `ruff check` on `areal/api/cli_args.py` and
+`areal/utils/data.py` before submitting.
+
 ## Affected Areas
 
 ### 1. `NormConfig` (areal/api/cli_args.py)
@@ -28,11 +34,12 @@ through the entire setup phase before failing.
 - `std_level`: `"invalid"`, `"per_sample"`, or any integer like `99`
 - `group_size`: `0`, `-1`, or any non-positive value when using group normalization
 
-Additionally, the `Normalization` class independently validates `mean_level` and
-`std_level` in the same way. This creates duplicate validation — both the config
-dataclass and `Normalization` check these values against the same allowed set. This
-duplication should be eliminated so that `mean_level` and `std_level` validation
-exists in only one place.
+**Eliminate duplicate validation:** The `Normalization` class in `areal/utils/data.py`
+independently validates `mean_level` and `std_level` in its `__init__` method. This
+creates duplicate validation — both `NormConfig.__post_init__` (once added) and
+`Normalization.__init__` would check these values against the same allowed set.
+Remove the `mean_level` and `std_level` validation from `Normalization.__init__`
+entirely; it should exist only in `NormConfig.__post_init__`.
 
 ### 2. `PPOActorConfig` (areal/api/cli_args.py)
 

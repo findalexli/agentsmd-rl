@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both files (tcp_wrap.ts and no_deno_api_in_polyfills.ts), the TCP class, listen() method, EXPECTED_VIOLATIONS, bind()/bind6() methods, and the concepts of dead code removal and unused import cleanup. The test assertions check for 'export class TCP', 'listen(backlog', 'EXPECTED_VIOLATIONS', specific file paths, the base commit SHA (which is part of the repo setup, not a puzzle the agent must discover), and _listen.ts exports. The commit SHA is tested but is about the environ"
+      "reason": "instruction.md names both files (tcp_wrap.ts and no_deno_api_in_polyfills.ts), the TCP class export, the listen() method, EXPECTED_VIOLATIONS, the bind()/bind6() methods, and the general structure. The tests check for patterns like 'export class TCP', 'listen(backlog', 'EXPECTED_VIOLATIONS', specific file paths, and the base commit SHA \u2014 all of which are either named in or directly derivable from the instruction. The commit SHA is checked by test_repo_git_base_commit but that's a precondition ch"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (dead legacy server accept code path, unused imports, stale EXPECTED_VIOLATIONS entry) but does not specify exact lines to change, specific method names to remove (#listenLegacy, #accept, #acceptBackoff), or exact import lines to delete. A developer must reason about which code constitutes the dead path."
+      "reason": "The instruction describes what is broken (dead legacy server accept code path) and what should be done (remove dead code, clean up imports, update EXPECTED_VIOLATIONS) but does not specify exact lines, exact code changes, or specific implementation details of the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Most tests are pass_to_pass checks that verify the repo remains in a valid state (lint passes, files exist, core structure preserved). The tests check for 'export class TCP', 'listen(backlog', 'EXPECTED_VIOLATIONS' - these are structural invariants any correct solution must preserve. The tests don't assert on specific removed method names, exact line counts, or implementation-specific details of the fix. Alternative correct fixes (e.g., different import cleanup approaches) would all pass."
+      "reason": "The tests mostly check structural properties (TCP class exists, listen method exists, EXPECTED_VIOLATIONS exists, lint passes, files are tracked in git) and use flexible assertions (many grep tests accept both returncode 0 and 1). Alternative correct fixes that remove the dead code differently would still pass, as tests don't assert on specific line numbers, exact import lists, or specific internal helper function names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Many tests are purely textual: test_syntax_check uses 'assert \"export class TCP\" in tcp', test_repo_grep_deno_listen uses grep for string presence, test_repo_grep_deno_usage_count greps for patterns, test_repo_listen_module_exports checks string presence in file contents. While some tests do execute subprocesses (deno lint), several critical tests like test_repo_grep_deno_listen and test_repo_grep_expected_violations accept BOTH states (found or not found) as valid, making them essentially no-op"
+      "reason": "Most tests are text-based pattern matching: test_syntax_check uses 'assert \"export class TCP\" in tcp', test_repo_lint_expected_violations_count uses regex on file content, and many grep tests just check for string presence. While some tests do execute subprocesses (deno lint, tools/lint.js), many critical f2p tests like test_repo_grep_deno_listen, test_repo_grep_deno_usage_count, and test_repo_grep_expected_violations accept BOTH returncode 0 and 1, meaning they pass regardless of whether the fi"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Nearly all tests are pass_to_pass that pass on the unmodified base commit. test_repo_grep_deno_listen accepts returncode 0 or 1 (both valid), test_repo_grep_expected_violations accepts returncode 0 or 1, test_repo_grep_deno_usage_count accepts both states. test_repo_lint_js is the only test that could potentially fail on the base commit and pass after fix, but most tests are satisfied by doing nothing at all. A stub/no-op solution (making zero changes) would pass virtually all tests."
+      "reason": "Many f2p tests pass on the unmodified base commit with no changes at all. For example: test_repo_grep_deno_listen accepts both returncode 0 and 1, test_repo_grep_deno_usage_count accepts both, test_repo_grep_expected_violations accepts both, test_repo_lint_expected_violations_count accepts the entry being present or absent, test_repo_lint_with_plugin accepts returncode 0 or 1, test_repo_git_status_clean says 'Any state is valid'. The only test that truly validates the fix is test_repo_lint_js wh"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/deno (or solution/solve.sh in the container). The agent could read the gold patch from solution/solve.sh if it exists in the container. Additionally, since almost all tests pass on the unmodified base commit, the agent could simply do nothing and pass all tests."
+      "reason": "The solution is in /workspace/deno as a git repo. The agent could run 'cat /solution/solve.sh' or look at the hidden solution file if it exists in the container. Additionally, since nearly all tests pass on the unmodified base commit (they're all labeled pass_to_pass and accept both pre-fix and post-fix states), the agent can 'win' by doing nothing at all."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires: (1) removing dead legacy server accept code, (2) cleaning up unused imports, (3) updating EXPECTED_VIOLATIONS to reflect tcp_wrap.ts no longer has violations. None of these are strictly verified - test_repo_grep_deno_listen and test_repo_grep_expected_violations accept both the base and fixed states. test_repo_lint_js is the only test that might enforce the EXPECTED_VIOLATIONS update, but other core requirements (dead code removal, import cleanup) are not behaviorally t"
+      "reason": "The instruction explicitly requires: (1) dead legacy accept code removed, (2) unused imports cleaned up, (3) EXPECTED_VIOLATIONS updated to reflect tcp_wrap.ts no longer has violations, (4) client-side connect path preserved. None of these are strictly tested \u2014 no test verifies that the dead code was actually removed (grep tests accept both states), no test checks that imports were cleaned up, no test verifies EXPECTED_VIOLATIONS was updated (accepts both states), and test_repo_lint_js is pass_t"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped by category (static checks, repo_tests), and each has descriptive names and comments indicating whether they are pass_to_pass checks."
+      "reason": "Tests are well-organized with clear names, docstrings, section comments (Gates: pass_to_pass, static/repo_tests), and each test function has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring/dead code removal, not structured data output."
+      "reason": "This task involves code refactoring/cleanup, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, commands, variable names, and function names in the instruction and tests appear correct with no typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two files to modify (which is necessary scope information) but doesn't specify exact line numbers, method names to remove, or specific import lines to delete. The description of bind()/bind6() enabling native wrap is contextual explanation, not line-level leakage."
+      "reason": "The instruction names the two files to modify and describes the conceptual problem (dead code in bind/bind6/listen path), but doesn't specify exact line numbers or exact code to change. Naming the files is appropriate since the task is scoped to those files."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving TypeScript source files, not configuration editing."
+      "reason": "This is a code-only task, not an agentmd-edits or config-editing task."
     }
   },
   "tier_a_fails": [

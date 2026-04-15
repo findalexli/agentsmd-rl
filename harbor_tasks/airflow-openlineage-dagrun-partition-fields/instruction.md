@@ -2,22 +2,15 @@
 
 ## Problem
 
-The OpenLineage integration in Airflow is not including partition information when serializing DagRun data for lineage events. Airflow 3.2 introduced `partition_key` and `partition_date` attributes on DagRun, but these fields are absent from the serialized output sent to lineage backends.
+Airflow 3.2 introduced `partition_key` and `partition_date` attributes on DagRun objects. The OpenLineage integration's DagRun serialization does not include these new fields when sending lineage events to backends.
 
 ## Symptom
 
-When DagRun information is serialized for OpenLineage events, the output is missing:
-- `partition_key`: The partition identifier string (or None)
-- `partition_date`: The partition date in ISO 8601 format (or None)
+The `DagRunInfo` class in the OpenLineage provider utils module controls which DagRun attributes are included in lineage events via its `includes` list. The attributes `partition_key` and `partition_date` are absent from this list, so partition information is dropped during serialization.
 
 ## Expected Behavior
 
-The DagRun serialization must include these two fields. The source code controlling which fields are serialized uses entries with inline version comments in the pattern `"<field_name>",  # Airflow X.Y`. The new entries must satisfy:
-
-1. **Field names**: The exact strings `"partition_key"` and `"partition_date"` must be included.
-2. **Version comments**: Each entry must have a trailing inline comment with the exact text `# Airflow 3.2+`, matching the existing formatting convention (string value, comma, two spaces, version comment).
-3. **Ordering**: The entries must appear after the `"logical_date"` entry (comment: `# Airflow 3`) and before the `"run_after"` entry (comment: `# Airflow 3`). `"partition_key"` must appear before `"partition_date"`.
-4. **No duplicates**: Each field should appear only once.
+Update the `DagRunInfo` class so that `partition_key` and `partition_date` are included in serialization output. The `includes` list entries follow a consistent version-comment convention — study the existing entries to determine the correct format and apply the appropriate version annotation for an Airflow 3.2 feature. Place the new entries in the appropriate position relative to surrounding entries, with each field appearing exactly once.
 
 All existing unit tests and linting (ruff, mypy) in the OpenLineage provider must continue to pass.
 

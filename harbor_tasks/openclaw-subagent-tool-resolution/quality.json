@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert specific details not mentioned in instruction.md: test_resolve_tools_delegates_registry checks that the function body must NOT contain '= resolveRuntimePluginRegistry(' as a direct assignment, which is a specific structural pattern not described in the instructions. Also, the vitest behavioral test references resetPluginRuntimeStateForTest and setActivePluginRegistry from ./runtime.js, and specific mock patterns (e.g., resolveRuntimePluginRegistryMock not being called) that aren"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_resolve_tools_delegates_registry checks that the function body must NOT contain '= resolveRuntimePluginRegistry(' as a direct assignment, and test_active_registry_import checks for a specific regex pattern of the import statement. The instruction says to 'add the getActivePluginRegistry import from ./runtime.js' which covers the import check, but the instruction never specifies that the direct assignment `= resolveRuntimePluginR"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md essentially describes the complete fix: (1) import getActivePluginRegistry from ./runtime.js, (2) when allowGatewaySubagentBinding is true, check getActivePluginRegistry() first, (3) replace the direct resolveRuntimePluginRegistry call with conditional logic. This is a step-by-step implementation guide, not just a description of what's broken. The 'Expected Behavior' section tells the agent exactly WHAT to change and HOW."
+      "reason": "The instruction explicitly states the implementation steps: '1. Import getActivePluginRegistry from ./runtime.js', '2. When allowGatewaySubagentBinding is true, first check for an active registry using getActivePluginRegistry(). If one exists, reuse it. Only fall back to calling resolveRuntimePluginRegistry if no active registry is available.' and '3. The direct resolveRuntimePluginRegistry(loadOptions) call... must be replaced with logic that accounts for the active registry'. This is essential"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_resolve_tools_delegates_registry uses regex to assert there is NO direct '= resolveRuntimePluginRegistry(' inside resolvePluginTools body. An alternative correct fix that inlines the conditional (e.g., 'const registry = allowGatewaySubagentBinding ? (getActivePluginRegistry() ?? resolveRuntimePluginRegistry(loadOptions)) : resolveRuntimePluginRegistry(loadOptions)') would FAIL this test because it contains '= ... resolveRuntimePluginRegistry(' pattern matching. The test enforces the gold so"
+      "reason": "test_resolve_tools_delegates_registry uses regex `=\\s*resolveRuntimePluginRegistry\\s*\\(` to assert no direct assignment exists in the resolvePluginTools body. An alternative correct fix that inlines the conditional (e.g., `const registry = allowGatewaySubagentBinding ? (getActivePluginRegistry() ?? resolveRuntimePluginRegistry(loadOptions)) : resolveRuntimePluginRegistry(loadOptions)`) would FAIL this test because it still contains `= ... resolveRuntimePluginRegistry(` in the function body. The "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_subagent_uses_active_registry writes and runs a vitest test that actually imports and calls resolvePluginTools, sets up mocks, and verifies behavioral outcomes (tools returned, mock not called). test_repo_oxlint and test_repo_plugins_unit run actual compilation/test commands. While test_active_registry_import and test_resolve_tools_delegates_registry are text-based, the behavioral test provides genuine execution-based verification."
+      "reason": "test_subagent_uses_active_registry runs actual vitest tests that import and call resolvePluginTools, mock dependencies, and verify behavioral outcomes (tools returned, mock not called). While test_active_registry_import and test_resolve_tools_delegates_registry are text-based structural checks, the primary behavioral test genuinely executes code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The vitest behavioral test mocks resolveRuntimePluginRegistry to return undefined and sets an active registry, then verifies tools are returned from the active registry. A stub resolvePluginTools returning [] would fail because it asserts tools.map(t => t.name) equals ['optional_tool']. The base commit code also fails because it calls the mocked loader (which returns undefined) instead of using the active registry."
+      "reason": "The vitest behavioral test mocks resolveRuntimePluginRegistry to return undefined, sets an active registry, and asserts tools are returned from it. A stub that returns an empty array would fail the expect(tools.map(t => t.name)).toEqual(['optional_tool']) assertion. The structural tests also cannot be passed by stubs since they check specific code patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/openclaw with solve.sh accessible. The agent could read /solution/solve.sh (if mounted) or inspect the git history. Additionally, the test file _VITEST_SUBAGENT_TEST is written inline in test_outputs.py which could be read to reverse-engineer the exact expected behavior and mock patterns."
+      "reason": "The solution file exists at /workspace/openclaw as part of the container, and solve.sh contains the complete git patch. An agent could read /solution/solve.sh (if accessible) or examine the test file at the _EVAL_TEST_PATH location to reverse-engineer exactly what's needed. The tests also write the vitest test content to a known path in the repo."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md's 'Expected Behavior' section are tested: (1) importing getActivePluginRegistry (test_active_registry_import), (2) reusing active registry when allowGatewaySubagentBinding is true (test_subagent_uses_active_registry), (3) not calling resolveRuntimePluginRegistry directly (test_resolve_tools_delegates_registry)."
+      "reason": "The instruction requires: (1) importing getActivePluginRegistry \u2014 tested by test_active_registry_import, (2) checking active registry when allowGatewaySubagentBinding is true \u2014 tested by test_subagent_uses_active_registry, (3) not unconditionally calling resolveRuntimePluginRegistry \u2014 tested by test_resolve_tools_delegates_registry. All explicit requirements are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_syntax_check, test_subagent_uses_active_registry, test_active_registry_import, etc.), clear docstrings explaining what each test verifies and why, and comments categorizing them as pass_to_pass vs fail_to_pass."
+      "reason": "Tests are well-organized with descriptive function names (test_syntax_check, test_subagent_uses_active_registry, test_active_registry_import, test_resolve_tools_delegates_registry, test_repo_oxlint, test_repo_plugins_unit) and include detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing TypeScript source code logic, not producing structured data output."
+      "reason": "This task involves modifying TypeScript code logic, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames (src/plugins/tools.ts, ./runtime.js, ./loader.js), function names (resolvePluginTools, getActivePluginRegistry, resolveRuntimePluginRegistry), or other identifiers in the instruction."
+      "reason": "File paths (src/plugins/tools.ts, ./runtime.js, ./loader.js), function names (resolvePluginTools, getActivePluginRegistry, resolveRuntimePluginRegistry), and other identifiers are consistently spelled correctly throughout the instruction."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact file (src/plugins/tools.ts), exact function (resolvePluginTools), exact import to add (getActivePluginRegistry from ./runtime.js), and exact variable assignment to change ('resolvePluginTools should not unconditionally assign the result of resolveRuntimePluginRegistry(...)  to the registry variable'). This goes well beyond naming the buggy module \u2014 it identifies the exact line-level changes needed."
+      "reason": "The instruction specifies the exact file to modify (src/plugins/tools.ts), the exact function to change (resolvePluginTools), the exact import to add (getActivePluginRegistry from ./runtime.js), and the exact call to replace (resolveRuntimePluginRegistry(loadOptions)). This goes well beyond identifying the buggy module \u2014 it provides the complete localization and implementation strategy."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript source, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

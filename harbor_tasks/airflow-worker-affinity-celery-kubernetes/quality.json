@@ -3,64 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (chart/files/pod-template-file.kubernetes-helm-yaml, chart/templates/NOTES.txt, chart/values.schema.json, chart/values.yaml), the specific field names tested (workers.celery.affinity, workers.kubernetes.affinity, workers.affinity), and the schema structure expectations. The tests check for these exact strings and paths which are all mentioned in the instruction."
+      "reason": "The instruction names all key file paths (pod-template-file.kubernetes-helm-yaml, NOTES.txt, values.schema.json, values.yaml), the new field names (workers.celery.affinity, workers.kubernetes.affinity), the deprecated field (workers.affinity), precedence rules, backwards compatibility, deprecation warning content, and schema type requirements. All test assertions check for these documented behaviors."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction provides very specific implementation details: 'The `or` function in Helm templates evaluates left-to-right and returns the first non-empty value', and the hint 'Look at how workers.kubernetes.nodeSelector and workers.celery.nodeSelector are implemented for a similar pattern'. Combined with specifying exact files and the precedence logic, this essentially tells the agent exactly what to change (e.g., modify the `$affinity := or` line to add workers.kubernetes.affinity as first op"
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to change (new fields, precedence, deprecation) but does not specify exact line numbers, exact template syntax like '{{- $affinity := or .Values.workers.kubernetes.affinity ...}}', or the precise implementation. A developer must figure out the Helm template logic themselves."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_kubernetes_affinity_in_pod_template asserts specifically on '$affinity := or' being in a line with 'workers.kubernetes.affinity', and checks 'workers.affinity' is in the same line. An alternative correct implementation using a different Helm template construct (e.g., separate if/else blocks, a helper template, or `coalesce`) would fail these string-matching tests even if functionally correct."
+      "outcome": "pass",
+      "reason": "Tests verify behavior by rendering helm templates and checking the output structure (affinity present in pod spec, precedence of values, deprecation warnings). They don't assert on specific variable names, line positions, or internal helper functions. Alternative implementations (e.g., using if/else instead of 'or' chain, different template structure) would pass as long as the rendered output is correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_kubernetes_affinity_in_pod_template, test_celery_affinity_in_worker_deployment, test_deprecated_workers_affinity_deprecation_warning, test_deprecated_affinity_backwards_compatibility) are ALL text-matching tests that read files and assert on string presence. They use patterns like `assert 'workers.kubernetes.affinity' in template_content` and `assert '$affinity := or' in affinity_line`. Only the pass-to-pass test_helm_lint actually executes helm. No f2p test calls he"
+      "outcome": "pass",
+      "reason": "Tests execute 'helm template' as a subprocess, parse the YAML output, and verify the rendered Kubernetes resources have the correct affinity fields. This is behavioral testing through actual template rendering, not just text matching on source files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for content that doesn't exist in the base commit (e.g., 'workers.kubernetes.affinity' in the pod template file, 'affinity' under celery section in values.yaml, deprecation warning in NOTES.txt, schema entries). A stub/no-op implementation would not add these strings to the files, so tests would fail."
+      "reason": "The f2p tests (test_kubernetes_affinity_applied_to_pod_template, test_celery_affinity_applied_to_worker_deployment, test_precedence_new_fields_over_deprecated, test_backwards_compatibility_deprecated_affinity) all require actual helm template changes. A stub or no-op would fail because the base commit doesn't support workers.kubernetes.affinity or workers.celery.affinity, so helm template would either error on unknown fields or not render the affinity."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/airflow's git history or solution/solve.sh. The agent could read solve.sh directly or run `cat /solution/solve.sh` to see the exact patch. The Dockerfile doesn't remove the solution directory, and there's no evidence of access restrictions."
+      "reason": "The solution is available at /workspace/airflow after the agent applies changes, and the solve.sh script with the full gold patch is in /solution/solve.sh. An agent could read /solution/solve.sh (or the git apply patch within it) to directly copy the answer. The Dockerfile doesn't remove or protect the /solution directory."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Requirement 1 ('Setting workers.celery.affinity should apply to Celery worker deployments') is not actually tested with helm template rendering - only string presence in values.yaml is checked. Requirement 4 ('New specific fields should take precedence over the old field when both are set') is only partially tested via string matching, not by actually rendering templates with both old and new values set simultaneously."
+      "outcome": "pass",
+      "reason": "All 7 requirements from the instruction are tested: new fields for kubernetes (test_kubernetes_affinity_applied_to_pod_template), new fields for celery (test_celery_affinity_applied_to_worker_deployment), backwards compatibility (test_backwards_compatibility_deprecated_affinity), precedence (test_precedence_new_fields_over_deprecated), deprecation warning (test_deprecation_warning_in_notes), schema updates (test_schema_includes_new_affinity_fields), and deprecation documentation (test_values_yam"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into 'fail-to-pass' and 'pass-to-pass' sections with comments, and each test function has a descriptive name indicating what it verifies."
+      "reason": "Tests are well-structured with descriptive function names, docstrings explaining each test's purpose, clear separation between f2p and p2p tests (marked with comments), and helper functions for common operations."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies that values.schema.json must include new field definitions for workers.celery.affinity and workers.kubernetes.affinity, and the tests verify the schema structure (type: object). The JSON schema structure is documented."
+      "reason": "The instruction specifies that values.schema.json must include 'type: object' for both new fields, and the tests verify this schema requirement."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "All filenames, paths, field names, and commands in the instruction are correct and consistent with the actual repository structure and test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The hints section tells the agent to look at 'workers.kubernetes.nodeSelector' pattern, mentions 'The `or` function in Helm templates evaluates left-to-right', and specifies 'The pod-template-file template is at chart/files/pod-template-file.kubernetes-helm-yaml'. Combined with the detailed file modification instructions, this leaks the exact implementation approach rather than just describing the problem."
+      "outcome": "pass",
+      "reason": "The instruction names files to modify (which is appropriate for a helm chart task where the file set is bounded) but doesn't specify exact line numbers or exact template syntax. The files listed are the natural targets given the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to 4 config/template files (one line change in pod-template-file, a block addition in NOTES.txt, field additions in schema and values), all scoped and non-contradictory."
+      "reason": "The gold patch makes localized changes to 5 files (adding a few lines each), doesn't rewrite entire files, and the changes are consistent with what the instruction and tests require."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 1
 }

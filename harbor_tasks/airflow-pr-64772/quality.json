@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file path (NothingFoundInfo.tsx), describes the behavior (open in new tab, security best practices for external links), and hints at HTML attributes. The tests check for target=\"_blank\" and rel=\"noopener noreferrer\" which are standard security best practices discoverable from the hints about 'security attributes for links opening in new tabs' and 'correct HTML syntax'."
+      "reason": "The instruction names the exact file path (NothingFoundInfo.tsx), describes the expected behavior (open in new tab, security best practices for external links), and hints at HTML attributes. The tests check for target=\"_blank\" and rel=\"noopener noreferrer\" which are standard security best practices discoverable from the hints about 'security attributes for links opening in new tabs' and 'correct HTML syntax'. The lint/test/format tests use standard project tooling mentioned implicitly by 'pass e"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (link doesn't open correctly, security concerns) and gives hints (look at HTML attributes, security attributes for new tabs, correct HTML syntax) but never states the exact fix like 'change target=\"blank\" to target=\"_blank\"' or 'add rel=\"noopener noreferrer\"'. A developer must reason about what to change."
+      "reason": "The instruction describes what's broken (link doesn't open correctly, security concerns) and gives hints about HTML attributes and security, but never says 'change target=\"blank\" to target=\"_blank\"' or 'add rel=\"noopener noreferrer\"'. A developer must still reason about the specific fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex patterns like r'<Link[^>]*\\srel=\"noopener noreferrer\"[^>]*>' which require the exact string rel=\"noopener noreferrer\" with that exact attribute order. An alternative correct fix using rel=\"noreferrer noopener\" (reversed order) would fail test_link_has_rel_noopener_noreferrer and test_link_attributes_combined, even though both orderings are equally valid and secure."
+      "reason": "Tests use regex patterns like r'<Link[^>]*\\srel=\"noopener noreferrer\"[^>]*>' which require the exact string 'rel=\"noopener noreferrer\"'. An alternative correct fix using rel=\"noreferrer noopener\" (reversed order, which is equally valid HTML) would fail test_link_has_rel_noopener_noreferrer and test_link_attributes_combined. The tests assert on a specific attribute value ordering that is implementation-specific."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_link_has_correct_target_attribute, test_link_has_rel_noopener_noreferrer, test_link_attributes_combined) are purely text-based: they read the file and check for string patterns via regex. They don't render the component, execute it, or verify runtime behavior. The pass_to_pass tests do run lint/test/format subprocesses, but ALL f2p tests are 'assert pattern in open(path).read()' style."
+      "reason": "The three fail_to_pass tests (test_link_has_correct_target_attribute, test_link_has_rel_noopener_noreferrer, test_link_attributes_combined) all exclusively use regex on file content with no execution/rendering. They are purely text-matching: `re.search(link_pattern, content)` and `'target=\"_blank\"' in docs_link`. While there are also pass_to_pass tests that run lint/test/format, every f2p test is text inspection only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for target=\"_blank\" and rel=\"noopener noreferrer\" which are not present in the original file (which has target=\"blank\" and no rel attribute). A stub or no-op would not pass these tests."
+      "reason": "The original code has target=\"blank\" (missing underscore) and no rel attribute. A stub or no-op would not add target=\"_blank\" or rel=\"noopener noreferrer\" to the file, so the f2p tests would fail without the actual fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow (solution/solve.sh is mapped into the container's environment). The agent could read the gold patch from solve.sh or inspect the test file at tests/test_outputs.py to see the exact expected strings (target=\"_blank\" and rel=\"noopener noreferrer\") and apply them directly without understanding the bug."
+      "reason": "The solution file exists at /workspace/airflow and solve.sh is accessible in the container. The agent could read solution/solve.sh or the test file tests/test_outputs.py to discover the exact expected strings ('target=\"_blank\"', 'rel=\"noopener noreferrer\"') and apply them directly. No measures prevent reading these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) link opens in new tab - tested via target=\"_blank\" check, (2) security best practices - tested via rel=\"noopener noreferrer\" check, (3) passes linting/type-checking - tested via lint, test, and format checks."
+      "reason": "All three behaviors from the instruction are tested: (1) link opens in new tab (target=\"_blank\"), (2) security best practices (rel=\"noopener noreferrer\"), (3) linting/type-checking passes (test_lint_passes, test_repo_unit_tests, test_repo_format_check)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_link_has_correct_target_attribute, test_link_has_rel_noopener_noreferrer, etc.), have docstrings explaining what they verify, and are annotated with (fail_to_pass) and (pass_to_pass) labels."
+      "reason": "Tests are well-named (test_link_has_correct_target_attribute, test_link_has_rel_noopener_noreferrer, etc.), each has a docstring explaining what it checks, and they are grouped logically with fail_to_pass/pass_to_pass annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing an HTML/JSX component, not producing structured data output."
+      "reason": "This task involves fixing an HTML/JSX attribute, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, and variable names in the instruction and tests are correct and consistent."
+      "reason": "All file paths, attribute names, and commands in the instruction and tests are correct with no typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file, which is appropriate since the task domain is narrowly scoped. It doesn't name the exact buggy line or the specific attribute values that need changing."
+      "reason": "The instruction names the exact file, which is reasonable for a focused bug fix task. It doesn't name the specific buggy line number or the exact attribute values to change. The hints are general (look at HTML attributes, consider security attributes) not specific solutions."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (fixing a TSX component), not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

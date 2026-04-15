@@ -10,18 +10,19 @@ The `/api/sessions/list` API endpoint in the dashboard backend does not provide 
 
 ### 1. API must include client workspace info in session list response
 
-The `/api/sessions/list` endpoint currently sends only `{ sessions }`. It must be updated to also include client information:
+The `/api/sessions/list` endpoint currently only sends session data. It must be updated to also include client information containing the workspace directory.
 
-- The backend handler must import the `createClientInfo` function from `'../cli-client/registry'`.
-- Inside the `/api/sessions/list` handler, call `createClientInfo()` to obtain the client info.
-- The response must use `sendJSON(response, { sessions, clientInfo })` to send both fields.
+- The backend handler must import the client info creation function from `'../cli-client/registry'`.
+- Inside the `/api/sessions/list` handler, obtain the client info containing the workspace directory.
+- The response must include both `sessions` and `clientInfo` fields.
 
 ### 2. Grid must sort current workspace group first, defaulting to `'Global'`
 
-The grid component must use the `clientInfo` from the API to determine and prioritize the current workspace:
+The grid component must use the client workspace information from the API to determine and prioritize the current workspace:
 
-- Define a derived variable named `currentWorkspace` that resolves to `clientInfo?.workspaceDir` when present, falling back to the string `'Global'` when it is undefined (i.e., `clientInfo?.workspaceDir || 'Global'`).
-- Use `currentWorkspace` (not the raw `clientInfo?.workspaceDir`) when filtering workspace groups with the comparison `key === currentWorkspace`.
+- When `clientInfo.workspaceDir` is present, use it to identify the current workspace group.
+- When `clientInfo.workspaceDir` is undefined, treat `'Global'` as the current workspace.
+- Use the identified current workspace value (not the raw `clientInfo.workspaceDir` property) when determining which group matches the current workspace.
 - Current workspace groups should be listed first; all other groups remain sorted alphabetically via `localeCompare`.
 
 ### 3. Declare the new import in DEPS.list

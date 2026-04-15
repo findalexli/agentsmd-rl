@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the files (gradio/node_server.py, js/tootils/src/app-launcher.ts), function names (verify_server_startup, waitForServerReady, launchGradioApp), the timeout parameter (>=10.0), the 'import http' requirement, and the behavioral requirements (reject TCP-only, reject 5xx, accept 200). All test assertions map to these described requirements."
+      "reason": "The instruction names the specific files (gradio/node_server.py, js/tootils/src/app-launcher.ts), the function names (verify_server_startup, waitForServerReady, launchGradioApp), the timeout parameter (>=10.0), the requirement to import http, and the behavioral requirements (reject TCP-only, reject 5xx, accept 200). All test assertions map to things described in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states implementation details like 'Create a function named waitForServerReady()', 'Import the http module (add import http from \"http\")', 'use HTTP-based polling (not just TCP socket connection)', and 'default timeout parameter should be at least 10.0 seconds (increased from the original 5.0)'. These are specific implementation directives, not just descriptions of what's broken."
+      "reason": "The instruction explicitly says 'Create a function named waitForServerReady()', 'Import the http module (add import http from \"http\")', 'The default timeout parameter should be at least 10.0 seconds', and specifies using HTTP-based polling instead of TCP socket. These are implementation-level directives, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_ts_http_readiness_polling asserts exact strings 'waitForServerReady' and 'import http' in the TypeScript file. An alternative correct fix could use 'fetch' or 'axios' or name the function 'pollServerReady' or 'checkHttpReady' and would fail these text-matching tests. test_verify_default_timeout_increased checks >= 10.0, but the gold uses 15.0 \u2014 an agent choosing exactly 10.0 would pass, but the specific function name requirement in TS is overly constraining."
+      "reason": "test_ts_http_readiness_polling checks for the exact string 'waitForServerReady' and 'import http' in the TypeScript file. An alternative correct fix could use a different function name (e.g., 'pollServerHealth') or use fetch/axios instead of the http module, and would fail these string-matching tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_ts_http_readiness_polling is purely text-matching: it reads app-launcher.ts and asserts 'waitForServerReady' in content and 'import http' in content. It never executes the TypeScript code. While the Python tests do execute code behaviorally, this TS test is entirely string-based."
+      "reason": "test_ts_http_readiness_polling is purely text-matching ('assert \"waitForServerReady\" in content' and 'assert \"import http\" in content') with no execution or behavioral verification. While most Python tests do execute code, this TypeScript test is entirely string-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests are non-trivial: test_verify_rejects_tcp_only_server sets up a real TCP-only server and checks False is returned (original socket-based check would return True); test_verify_rejects_500_error sets up a real HTTP 500 server; test_verify_default_timeout_increased checks the signature default. A stub returning None/True/False wouldn't pass all of them together with the pass-to-pass test_verify_accepts_healthy_server which requires True."
+      "reason": "The fail-to-pass tests (test_verify_rejects_tcp_only_server, test_verify_rejects_500_error, test_verify_default_timeout_increased) cannot be satisfied by stub implementations. The original verify_server_startup uses TCP socket checks and would return True for TCP-only servers, and has a default timeout of 5.0. A stub returning False would fail test_verify_accepts_healthy_server."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/gradio's solution/solve.sh (or could be accessed via the container). The agent could read the gold patch directly. Additionally, the test for TypeScript checks literal strings ('waitForServerReady', 'import http') that are visible in the instruction, making it trivial to pattern-match without understanding the bug."
+      "reason": "The solution file exists at /workspace/gradio alongside the task (solve.sh contains the complete gold patch). An agent could read /solution/solve.sh or the solve.sh file to extract the exact patch. The Dockerfile doesn't prevent access to these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: HTTP-based polling (test_verify_rejects_tcp_only_server), timeout increase (test_verify_default_timeout_increased), reject 5xx (test_verify_rejects_500_error), accept 200 (test_verify_accepts_healthy_server), waitForServerReady function and http import in TS (test_ts_http_readiness_polling)."
+      "reason": "All behaviors described in the instruction are tested: HTTP-based polling (test_verify_rejects_tcp_only_server), increased timeout (test_verify_default_timeout_increased), rejecting 5xx (test_verify_rejects_500_error), accepting 200 (test_verify_accepts_healthy_server), waitForServerReady function and http import in TS (test_ts_http_readiness_polling)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, repo_tests), descriptive function names, docstrings, and category annotations like [pr_diff] and [static]."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, function names, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function 'verify_server_startup()' in 'gradio/node_server.py', specifies the exact new function name 'waitForServerReady()', the exact import statement 'import http from \"http\"', and the exact timeout threshold (10.0 vs original 5.0). This goes beyond naming the buggy module to specifying exact implementation details."
+      "reason": "The instruction specifically names the exact function (verify_server_startup), the exact parameter to change (timeout from 5.0 to >=10.0), the exact new function to create (waitForServerReady), and the exact import to add ('import http from \"http\"'). This goes well beyond identifying what's broken and prescribes implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

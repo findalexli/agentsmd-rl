@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Many test-specific details are not mentioned in instruction.md. For example: test_global_json_valid checks for 'tools', 'dotnet', 'msbuild-sdks' keys in global.json; test_build_scripts_executable checks for shebang in build.sh; test_solution_file_exists checks for 'Microsoft Visual Studio Solution File' string; test_nuget_config_valid checks root tag is 'configuration'; test_editorconfig_exists checks 'root = true'; test_git_repo_clean requires a clean git state; test_csharp_syntax_valid checks "
+      "reason": "Several test-specific details are not discoverable from instruction.md alone: test_global_json_valid checks for 'tools', 'dotnet', and 'msbuild-sdks' keys in global.json; test_nuget_config_valid checks root tag is 'configuration'; test_build_scripts_executable checks for shebang in build.sh; test_solution_file_exists checks for 'Microsoft Visual Studio Solution File' string; test_editorconfig_exists checks 'root = true'; test_git_repo_clean requires all changes to be committed; test_skill_md_yam"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'use File.WriteAllText to write these files as triple-quoted raw string literals containing XML with <Project> as the root element', 'Must set $ErrorActionPreference = \"Stop\"', 'Must include [CmdletBinding()] attribute', 'Must start with a comment block (either # or <#)', specific ValidateSet values, and exact parameter names. This tells the agent exactly WHAT to write rather than describing the problem behavior."
+      "reason": "The instruction explicitly states implementation details like 'use File.WriteAllText to write these files as triple-quoted raw string literals containing XML with <Project> as the root element', 'Must set $ErrorActionPreference = \"Stop\"', 'Must include [CmdletBinding()] attribute on the param() block', and specifies exact file paths, parameter names, and validation sets. This tells the agent exactly WHAT to write rather than just describing the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests check for very specific implementation patterns like 'content.startswith(\"#\") or content.startswith(\"<#\")' for the PS1 file, 'param(' literal string, 'ValidateSet' literal string, 'ErrorActionPreference' literal string, specific YAML frontmatter format with '---' in first 10 chars. However, these are mostly structural requirements that any correct implementation would share. The bigger issue is test_powershell_script_valid which checks for specific string patterns rather than behavior - an"
+      "reason": "test_powershell_script_valid asserts specific implementation details like 'content.startswith(\"#\") or content.startswith(\"<#\")' and 'param(' and 'ValidateSet' and 'ErrorActionPreference'. test_copilot_instructions_valid checks '---' in content[:10]. These are implementation-specific patterns that could reject valid alternatives (e.g., a script using try/catch instead of ErrorActionPreference, or different comment styles)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is purely text/structural checking: reading file content and asserting string presence (e.g., 'assert \"param(\" in content', 'assert \"ValidateSet\" in content', 'assert \"---\" in content[:10]'). No test actually executes the PowerShell script, runs the C# code, or verifies runtime behavior. The git commands (test_git_repo_clean, test_git_no_merge_conflicts) are subprocess calls but verify repo state, not code behavior. XML parsing tests check structure but not functionality."
+      "reason": "Nearly all tests are text/file-content checks: reading files and asserting substrings like 'assert \"param(\" in content', 'assert \"ValidateSet\" in content', 'assert \"---\" in content[:10]', etc. The only 'execution' tests are git commands (test_git_repo_clean, test_git_no_merge_conflicts) which check repo state, not code behavior. No test actually runs the PowerShell script, executes C# code, or tests MSBuild isolation behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Many pass_to_pass tests check pre-existing repo state that requires no changes: test_global_json_valid, test_csproj_files_valid_xml, test_directory_build_props_valid, test_directory_build_targets_valid, test_nuget_config_valid, test_build_scripts_executable, test_solution_file_exists, test_editorconfig_exists, test_gitattributes_exists, test_github_workflows_exist all pass on the unmodified repo. The fail_to_pass tests (like test_powershell_script_valid, test_copilot_instructions_valid with skil"
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require creating new files (SKILL.md, Run-IntegrationTests.ps1, updating copilot-instructions.md, integration-tests.instructions.md) with specific content. A stub/empty implementation would fail these tests since they check for existence and specific content patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/maui and solve.sh is accessible in the container (the Dockerfile sets up WORKDIR /workspace/maui). The agent could read the solution directory contents. Additionally, test_git_repo_clean requires all changes to be committed, but the solution/solve.sh file shows exactly what to create, and the agent could potentially access it."
+      "reason": "The solution file exists at /workspace/maui with solve.sh accessible. The Dockerfile doesn't remove /solution/ or restrict access. An agent could read the gold patch from solve.sh (if mounted) or inspect the test file at tests/test_outputs.py to determine exactly what assertions to satisfy. The test_git_repo_clean test requires committing changes, but the agent could still read solution files before applying changes."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires MSBuild isolation fix in BaseBuildTest.cs (creating empty Directory.Build.props/targets with File.WriteAllText and triple-quoted raw string literals), but no test verifies that these isolation files are created or that the content includes the <Project> element or explanatory comment. test_not_stub only checks for >= 3 File.* operations, which the original code already has."
+      "reason": "Instruction specifies MSBuild isolation fix requiring 'empty MSBuild project files (Directory.Build.props and Directory.Build.targets) in the test directory root' via File.WriteAllText in BaseBuildTest.cs, but no test verifies that these isolation files are actually created in test setup code. test_not_stub only checks for >= 3 File.* operations generically."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped by type (static/pass_to_pass vs repo_tests), and each has a comment indicating its category (e.g., '[static] pass_to_pass', '[repo_tests] pass_to_pass')."
+      "reason": "Tests are well-organized with clear docstrings, descriptive function names (test_csharp_syntax_valid, test_powershell_script_valid, etc.), section comments separating 'Gates (pass_to_pass, static)' from 'Gates (pass_to_pass, repo_tests)', and annotations like '[static] pass_to_pass' and '[repo_tests] pass_to_pass'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB. It creates scripts, markdown files, and modifies C# code."
+      "reason": "The task produces documentation files, scripts, and C# code modifications, not structured data outputs like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction appear consistent and correctly spelled throughout. The test category names (RunOniOS vs RunOniOS) are consistent between instruction and tests."
+      "reason": "File paths, variable names, and commands in the instruction appear consistent and correctly spelled throughout (BaseBuildTest.cs, Run-IntegrationTests.ps1, SKILL.md, etc.)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'use File.WriteAllText to write these files as triple-quoted raw string literals', specific parameter names like 'SkipBuild, SkipInstall, AutoProvision', exact file paths, and exact content requirements like '$ErrorActionPreference = \"Stop\"' and '[CmdletBinding()]'. This goes beyond naming the buggy file to prescribing the exact fix."
+      "reason": "The instruction names the exact file (BaseBuildTest.cs), the exact method (SetUpNuGetPackages), and specifies exact implementation: 'use File.WriteAllText to write these files as triple-quoted raw string literals containing XML with <Project> as the root element'. This goes beyond describing the problem into prescribing the exact code pattern."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch creates new files and makes localized additions to existing files (adding a skill reference to copilot-instructions.md, updating integration-tests.instructions.md). It doesn't do full-file rewrites of existing config."
+      "reason": "The gold patch creates new files and makes localized edits to existing config/documentation files (adding skill references to copilot-instructions.md, updating integration-tests.instructions.md). The changes are scoped and don't rewrite entire files."
     }
   },
   "tier_a_fails": [
@@ -55,7 +55,6 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -63,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 8
+  "pass_count": 4,
+  "fail_count": 7
 }

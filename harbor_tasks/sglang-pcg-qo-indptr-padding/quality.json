@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check specific details not mentioned in instruction.md: test_num_tokens_propagation calls set_forward_context with positional args (None, None, None, [], []) matching its exact signature; test_replay_passes_num_tokens and test_init_forward_metadata_called_inside_context check specific internal implementation details like 'raw_bs', 'raw_num_tokens', 'static_num_tokens' attributes on forward_batch, and the exact call pattern of init_forward_metadata inside set_forward_context. The instructio"
+      "reason": "Tests assert specific details not fully discoverable from instruction.md. For example, test_num_tokens_propagation calls set_forward_context with positional args (None, None, None, [], []) matching the exact signature, and test_replay_calls_set_forward_context_with_num_tokens checks that init_forward_metadata is called inside the set_forward_context context manager. The instruction mentions these behaviors at a high level but doesn't specify the exact positional argument signature of set_forward"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug symptom (qo_indptr[-1] mismatch) and the expected API surface but does not specify exact code changes like 'add self.num_tokens on line X' or 'replace foo with bar'. A developer must still reason about what to change."
+      "reason": "The instruction describes the bug symptom (qo_indptr[-1] mismatch) and which files to modify, plus the expected API surface, but does not specify exact code changes like 'add self.num_tokens = None on line X' or 'change line 42 to Y'. The developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on specific variable names like 'num_tokens' attribute on ForwardContext, and the exact keyword argument name 'num_tokens' in set_forward_context signature. An alternative correct fix that uses a different attribute name (e.g., 'token_count' or 'padded_size') or passes the information differently would fail these tests despite correctly fixing the bug."
+      "reason": "Tests like test_forward_context_has_num_tokens assert hasattr(fc, 'num_tokens') and check inspect.signature for 'num_tokens' parameter name. An alternative fix using a different attribute name (e.g., 'token_count' or 'padded_size') would fail. test_call_begin_forward_pads_qo_indptr checks for self.page_size attribute on the backend, which is gold-specific. These constrain the solution to the exact variable names used in the gold patch."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests actually import modules, instantiate ForwardContext, call set_forward_context, inspect signatures, and execute code via subprocess. The pass-to-pass tests run linters and compilers. Tests verify behavior through execution, not just text matching."
+      "reason": "The fail-to-pass tests actually import and execute the code: they instantiate ForwardContext, call set_forward_context as a context manager, check attribute values at runtime, and verify tensor operations. The pass-to-pass tests run subprocesses for linting/formatting. Tests are behavioral, not just text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_forward_context_has_num_tokens checks that ForwardContext has a num_tokens attribute and set_forward_context accepts num_tokens keyword - neither exists in the original code. test_num_tokens_propagation verifies the value propagates correctly. A stub/no-op wouldn't pass since the original code lacks these features entirely."
+      "reason": "A stub ForwardContext without the num_tokens attribute would fail test_forward_context_has_num_tokens (hasattr check). A set_forward_context without num_tokens keyword would fail the inspect.signature check. test_num_tokens_propagation checks that the value 42 actually propagates through and equals 42 inside the context. These cannot be satisfied by default/empty implementations."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sglang/_eval_ctx_mgr_test.py (written by test helper) and solve.sh is described as hidden but the Dockerfile doesn't prevent reading /solution/ if mounted. More importantly, the agent could grep test_outputs.py (if accessible) or solution files for the exact patch to apply."
+      "reason": "The solution is present at /workspace/sglang/_eval_ctx_mgr_test.py or could be found by the agent reading the solve.sh script if it exists in the container. The Dockerfile doesn't remove /solution/ directory. An agent could potentially read solution/solve.sh to get the exact patch."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction lists expected API surface items (ForwardContext.num_tokens, set_forward_context num_tokens kwarg, replay passing token count, call_begin_forward using token count), and all of these are tested in the fail-to-pass tests."
+      "reason": "All four behavioral requirements listed in instruction.md (ForwardContext.num_tokens, set_forward_context num_tokens kwarg, replay passing token count, call_begin_forward padding) have corresponding fail-to-pass tests that verify them."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments (Gates/static checks vs fail-to-pass behavioral tests), named descriptively (test_forward_context_has_num_tokens, test_num_tokens_propagation, etc.), and have docstrings explaining what they verify."
+      "reason": "Tests are well-organized with clear docstrings, grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with descriptive function names like test_forward_context_has_num_tokens, test_num_tokens_propagation, etc."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to fix a bug, not producing structured data outputs."
+      "reason": "This task involves fixing a CUDA graph bug in Python code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md are consistent and correct (flashinfer_backend.py, piecewise_context_manager.py, piecewise_cuda_graph_runner.py, ForwardContext, set_forward_context, etc.)."
+      "reason": "File paths, function names, and variable names in the instruction appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names all three files to modify and specifies detailed API changes needed (e.g., 'ForwardContext must have a num_tokens attribute', 'set_forward_context must accept a num_tokens keyword argument', 'Must guard the extension logic with a conditional'). This goes beyond describing what's broken and substantially localizes and specifies the fix."
+      "reason": "The instruction explicitly names all three files to modify, specifies exact attribute names ('num_tokens'), exact function signatures ('set_forward_context must accept num_tokens keyword argument'), and describes the internal implementation detail of extending index buffers with conditional guards. This goes well beyond describing what's broken and into specifying the solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all file paths (DockerSession.java, Container.java, ContainerLogs.java, JdkHttpMessages.java, DockerSessionFactory.java), method names (parseMultiplexedStream, isRunning, getLogs, isBinaryStream), literal strings (application/vnd.docker.multiplexed-stream, application/vnd.docker.raw-stream), and implementation details (DataInputStream, readInt, readFully, @Deprecated, Contents.Supplier, Optional.ofNullable) that the tests assert on."
+      "reason": "The instruction names all file paths (DockerSession.java, Container.java, ContainerLogs.java, JdkHttpMessages.java, DockerSessionFactory.java), method names (parseMultiplexedStream, isRunning, getLogs, isBinaryStream), literal strings (application/vnd.docker.multiplexed-stream, application/vnd.docker.raw-stream), and implementation details (DataInputStream, readInt, readFully, @Deprecated, Contents.Supplier, Optional.ofNullable) that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the exact method signatures, implementation algorithms (readFully for 1 byte, readFully for 3 bytes, readInt for payload size, readFully for payload), exact helper method names (isBinaryStream), exact patterns (Optional.ofNullable, Contents.Supplier), and even specifies 'if (!container.isRunning())' early return pattern. This is not just describing what's broken \u2014 it's a complete implementation specification."
+      "reason": "The instruction explicitly specifies the exact implementation: 'skips 1 stream-type byte and 3 padding bytes using readFully()', 'reads 4-byte big-endian payload size using readInt()', exact method signatures, exact helper method names (isBinaryStream), exact content type strings, and 'use Optional.ofNullable pattern with null guard'. This is telling the agent exactly WHAT to change rather than just describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_parse_multiplexed_stream_behavior checks for exact strings 'DataInputStream', 'readInt()', 'readFully'; test_container_is_running_method checks 'return running'; test_container_logs_get_logs_input_stream checks 'Contents.Supplier'; test_jdk_http_binary_stream_detection checks 'isBinaryStream'; test_docker_session_saves_logs_correctly checks exact string 'if (!container.isRunning())'. Alternative correct implementations (e.g., using readN"
+      "reason": "Tests assert on gold-specific implementation details: test_parse_multiplexed_stream_behavior checks for exact strings 'DataInputStream', 'readInt()', 'readFully' in source; test_container_is_running_method checks 'return running'; test_container_logs_get_logs_input_stream checks 'Contents.Supplier'; test_jdk_http_binary_stream_detection checks 'isBinaryStream'; test_docker_session_saves_logs_correctly checks exact string 'if (!container.isRunning())'. Alternative correct implementations (e.g., u"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are pure text-matching: test_container_is_running_method does 'assert \"public boolean isRunning()\" in content', test_container_logs_get_logs_input_stream checks string presence, test_jdk_http_binary_stream_detection checks string presence, test_docker_session_saves_logs_correctly checks string presence, test_timezone_null_check checks string presence. Only test_parse_multiplexed_stream_behavior has an execution component, but even it first does text assertions on the source file. The "
+      "reason": "Most tests are pure text-matching: test_container_is_running_method does `assert 'public boolean isRunning()' in content`, test_container_logs_get_logs_input_stream checks string presence, test_jdk_http_binary_stream_detection checks string presence, test_docker_session_saves_logs_correctly checks string presence, test_timezone_null_check checks string presence. Only test_parse_multiplexed_stream_behavior has a behavioral component (compiling/running Java), but even it first does text matching o"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Most f2p tests can be satisfied by simply adding text to files without implementing actual functionality. For example, test_container_is_running_method passes if you add 'public boolean isRunning() { return running; }' as a dead method. test_jdk_http_binary_stream_detection passes if you add comments containing the literal strings. test_timezone_null_check passes if you add 'Optional.ofNullable' in a comment. These are string-presence checks, not behavioral verification."
+      "reason": "Tests like test_container_is_running_method only check that the string 'public boolean isRunning()' and 'return running' appear in the file. An agent could add a stub `public boolean isRunning() { return running; }` with a hardcoded `boolean running = false;` field and pass. Similarly, test_timezone_null_check just checks for 'Optional.ofNullable' string presence - adding a dead-code comment would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/selenium and solve.sh is accessible. The agent could read the gold patch from /solution/solve.sh if it exists in the container. Additionally, since tests are purely string-matching, the agent could grep test files (if accessible) or simply add the expected literal strings as comments to pass most tests without understanding the bug."
+      "reason": "The solution file exists at /workspace/selenium (the solve.sh applies a patch there). An agent could read solution/solve.sh if accessible, or since the tests only check for string presence in source files, the agent could simply grep the test file to discover exactly which strings to insert without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that 'Log files should contain only clean, readable text without any leading garbage bytes' (behavioral requirement #2) and that the parsing actually works end-to-end, but no test actually verifies log file output in an integration scenario. The behavioral test only runs a standalone Java program unrelated to the actual codebase."
+      "outcome": "pass",
+      "reason": "All six behavioral requirements from the instruction (parseMultiplexedStream, isRunning, getLogs with InputStream, isBinaryStream with content types, isRunning check in saveLogs, TZ null check) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped with section headers (fail_to_pass, pass_to_pass), each has a docstring explaining what it tests and why, and helper functions are clearly separated."
+      "reason": "Tests are well-organized with clear docstrings, descriptive function names, helper functions at the top, and comments indicating fail_to_pass vs pass_to_pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, class names, and content type strings in the instruction match those used in the tests without typos."
+      "reason": "File paths, method names, and content type strings in the instruction match those checked in the tests without typographical errors."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact method signatures, exact implementation patterns (readFully, readInt, DataInputStream, Contents.Supplier, Optional.ofNullable), and even specifies the exact control flow ('if (!container.isRunning())' early return). This goes far beyond describing what's broken and essentially provides the complete solution specification."
+      "reason": "The instruction specifies exact file paths, exact method signatures, exact implementation patterns (readFully, readInt, DataInputStream, Contents.Supplier, Optional.ofNullable), effectively telling the agent exactly where and how to make changes rather than describing the problem and letting the agent localize the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
@@ -59,9 +59,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 6
 }

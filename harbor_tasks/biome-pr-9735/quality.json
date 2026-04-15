@@ -2,36 +2,36 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_fix_pattern_exists asserts the exact string 'end.saturating_sub(start)' in syntax/mod.rs and the exact function signature 'fn inline_list_source_len(p: &mut MarkdownParser) -> usize {'. The instruction's Hints section mentions 'source positions' and 'accumulated token lengths' but never names the specific pattern 'end.saturating_sub(start)' or the function 'inline_list_source_len'. These are undiscoverable from instruction.md alone."
+      "outcome": "pass",
+      "reason": "instruction.md explicitly names all key specifics asserted in tests: the file paths (crates/biome_markdown_parser/src/syntax/mod.rs, crates/biome_markdown_parser/tests/spec_test.rs), the function name and exact signature (fn inline_list_source_len(p: &mut MarkdownParser) -> usize), the pattern 'end.saturating_sub(start)', the test label '9727', the multi-byte content requirement (\ud83d\udca1 emoji), and all cargo commands."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The Hints section tells the agent exactly what to do: 'computing source spans using actual source positions rather than accumulated token lengths' and that 'the inline list length is computed' must 'land on a valid UTF-8 character boundary'. This describes the specific implementation approach rather than just the symptom."
+      "reason": "instruction.md explicitly states the exact fix: the function must be named 'inline_list_source_len' with a specific signature, must contain the exact pattern 'end.saturating_sub(start)', and a test case labeled '9727' with specific content. This tells the agent exactly WHAT to write rather than describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_fix_pattern_exists asserts the exact string 'end.saturating_sub(start)' and the exact function signature 'fn inline_list_source_len(p: &mut MarkdownParser) -> usize {'. An alternative correct fix (e.g., using checked_sub, or restructuring the function differently, or renaming it) would fail these assertions even if it correctly fixes the bug."
+      "reason": "test_fix_pattern_exists asserts the exact string 'end.saturating_sub(start)' and the exact function signature 'fn inline_list_source_len(p: &mut MarkdownParser) -> usize {'. An alternative correct fix using e.g. checked_sub, a different function name, or a different approach to computing source spans would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_fix_pattern_exists is purely textual: it reads syntax/mod.rs and asserts specific strings exist ('end.saturating_sub(start)', exact function signature). test_multibyte_test_case_exists similarly just searches for '9727' and 'multi-byte' or '\ud83d\udca1' in file content. While some tests (cargo check, cargo test, clippy) do execute code, two fail_to_pass tests are purely text-matching."
+      "reason": "test_fix_pattern_exists and test_multibyte_test_case_exists are purely textual grep tests (assert 'end.saturating_sub(start)' in content, assert '9727' in content). While other tests do execute cargo commands, these two fail_to_pass tests only check for literal strings in source files without executing the code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_multibyte_test_case_exists can be satisfied by simply appending a comment containing '9727' and '\ud83d\udca1' to spec_test.rs without any actual test logic. test_fix_pattern_exists can be satisfied by adding a dead function with the exact signature containing 'end.saturating_sub(start)' without actually fixing the bug."
+      "reason": "The f2p tests (test_multibyte_test_case_exists, test_fix_pattern_exists) can be satisfied by simply appending the literal strings '9727', '\ud83d\udca1', 'end.saturating_sub(start)', and 'fn inline_list_source_len(p: &mut MarkdownParser) -> usize {' as comments to the respective files, without implementing any actual bug fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /solution/syntax_mod.rs and /solution/spec_test.rs in the container (as referenced in solve.sh). The agent could simply read and copy these files. Additionally, the test file itself contains the exact strings being asserted ('end.saturating_sub(start)', '9727'), which the agent could grep for."
+      "reason": "The solution files exist at /solution/syntax_mod.rs and /solution/spec_test.rs in the container (as referenced by solve.sh). The agent could simply run 'cp /solution/syntax_mod.rs crates/biome_markdown_parser/src/syntax/mod.rs' and 'cp /solution/spec_test.rs crates/biome_markdown_parser/tests/spec_test.rs' to pass all tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: compilation (tested by cargo check), tests passing (tested by cargo test spec_test), test case for #9727 (tested by test_multibyte_test_case_exists), formatter check (tested), fmt check (tested), clippy (tested). All stated requirements are covered."
+      "reason": "All behaviors listed in instruction.md are tested: cargo check, cargo test spec_test, cargo check formatter, cargo fmt, cargo clippy, presence of the function and pattern, and the test case for #9727."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cargo_check, test_markdown_parser_tests_pass, etc.), have docstrings explaining what they test and whether they're pass_to_pass or fail_to_pass, and are logically grouped."
+      "reason": "Tests are well-named (test_cargo_check, test_multibyte_test_case_exists, etc.) with descriptive docstrings explaining their purpose and whether they are pass_to_pass or fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The Hints section names the specific computation approach ('source spans using actual source positions rather than accumulated token lengths') and the specific function behavior ('inline list length is computed'). Combined with the file path 'crates/biome_markdown_parser/src/syntax/mod.rs' being in the test, this leaks the exact location and nature of the fix."
+      "reason": "instruction.md specifies the exact file (crates/biome_markdown_parser/src/syntax/mod.rs), exact function name and signature (fn inline_list_source_len(p: &mut MarkdownParser) -> usize), and the exact code pattern (end.saturating_sub(start)). This is extreme localization leakage far beyond what the task domain would make obvious."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,7 +51,6 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -62,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 6
 }

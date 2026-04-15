@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (scripts/check_system_python.py), the os.name guard, the 'which' command usage, the need for cross-platform approach (shutil.which is the standard Python solution), and the pylint PATH check. The tests check for shutil.which usage, removal of os.name guard around which calls, raise on None, install_package function signature, and main guard \u2014 all discoverable from the instruction's description of the bug and expected behavior. The function name install_packa"
+      "reason": "The instruction names the target file (scripts/check_system_python.py), the function involved (install_package implicitly via 'pylint PATH verification section after package installation'), the os.name != 'nt' guard, the subprocess.run(['which', 'pylint']) call, and the cross-platform fix direction (shutil.which is the standard cross-platform approach). The tests check for shutil.which usage, removal of os.name guard, raise on None, install_package signature, and main guard \u2014 all discoverable fr"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (os.name guard skips Windows, uses Unix 'which' command) and says to use a 'cross-platform approach' and remove the platform guard. It does not explicitly name shutil.which or give exact replacement code. A developer must reason about which cross-platform mechanism to use."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The script should use a cross-platform approach to check if an executable is on the PATH' and 'The platform guard should be removed so all platforms are tested equally.' While it doesn't literally say 'use shutil.which', the combination of 'cross-platform mechanism' for checking executables on PATH in Python has essentially one standard answer (shutil.which). However, the instruction stops short of naming the exact function, so this is borderline. The instructi"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_uses_cross_platform_which specifically checks for shutil.which() by looking for ast node with func.value.id == 'shutil' and func.attr == 'which'. An alternative correct fix using e.g. `distutils.spawn.find_executable`, `os.path`-based PATH scanning, or `subprocess.run(['where' if os.name == 'nt' else 'which', ...])` (platform-aware subprocess) would fail this test despite being valid cross-platform solutions. test_path_check_raises_when_not_found also specifically requires the pattern `if s"
+      "reason": "test_uses_cross_platform_which specifically checks for shutil.which() via AST matching (node.func.value.id == 'shutil' and node.func.attr == 'which'). An alternative correct fix using e.g. `distutils.spawn.find_executable`, `os.path` traversal of PATH, or `subprocess.run(['where' if os.name == 'nt' else 'which', 'pylint'])` would fail this test. Similarly, test_path_check_raises_when_not_found requires the specific pattern `if shutil.which(...) is None: raise` or `if not shutil.which(...): raise"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST parsing to inspect code structure rather than simple text matching. test_module_loads actually imports and loads the module, verifying it's callable. While the core f2p tests are AST-based rather than runtime execution (justified because the function requires uv binary + network), they verify structural behavior properties (presence of shutil.which calls, absence of platform guards, raise statements) rather than raw text matching."
+      "reason": "Tests use AST parsing to inspect code structure (ast.parse, ast.walk), import the module via importlib.util and call exec_module to verify it loads, and check callable attributes. While they don't execute the actual PATH check (which requires uv binary + network), they verify structural/behavioral properties via AST analysis rather than simple text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would fail: test_uses_cross_platform_which requires a shutil.which() call in the AST, test_no_platform_guard_on_path_check verifies no os.name=='nt' guard around which-related code, test_path_check_raises_when_not_found requires an if-shutil.which-raise pattern, and test_not_stub requires >=5 meaningful statements. The original buggy code would fail the f2p tests because it has subprocess.run(['which',...]) and os.name guard."
+      "reason": "The fail-to-pass tests check for specific AST patterns that don't exist in the original code: test_no_platform_guard_on_path_check would pass on the original (it asserts False if os.name guard with 'which' exists \u2014 original has this), test_uses_cross_platform_which requires shutil.which call which doesn't exist in original, test_path_check_raises_when_not_found requires if shutil.which() is None: raise pattern. A stub or no-op wouldn't pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /repos/uv alongside the target file, and solve.sh is in /solution/solve.sh. An agent could read the gold patch from the Docker container. The Dockerfile doesn't remove or protect the solution directory. Additionally, the agent could look at the git history or examine /solution/solve.sh to find the exact patch."
+      "reason": "The solution is available at /repos/uv in the container via the solve.sh script path, and the Dockerfile doesn't remove /solution/. An agent could read /solution/solve.sh to see the exact patch, or could grep for the expected patterns in test files if they're accessible. The tests directory may also be readable by the agent."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) PATH check runs on all platforms (tested by test_no_platform_guard_on_path_check), (2) cross-platform mechanism instead of Unix-specific command (tested by test_uses_cross_platform_which), and (3) the check should verify the result (tested by test_path_check_raises_when_not_found). All explicit requirements are covered."
+      "reason": "The instruction requires: (1) removing the os.name != 'nt' guard \u2014 tested by test_no_platform_guard_on_path_check, (2) using cross-platform mechanism instead of Unix 'which' \u2014 tested by test_uses_cross_platform_which, (3) PATH check runs on all platforms \u2014 covered by removing the guard. The raise-on-failure behavior (test_path_check_raises_when_not_found) is a reasonable implicit requirement from 'verify pylint is on PATH'."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test checks and why it's AST-only."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_no_platform_guard_on_path_check, test_uses_cross_platform_which), and detailed docstrings explaining what each test verifies and why it uses AST analysis."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,23 +39,24 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "File paths (scripts/check_system_python.py), function names (install_package), variable names (os.name, shutil.which), and commands are all correctly spelled throughout instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file (scripts/check_system_python.py) which is appropriate since it's a single-file bug fix. It describes the bug location as 'around the section that verifies pylint is on the PATH' which is reasonable context, not exact line numbers. The file is already identified in the task domain."
+      "reason": "The instruction identifies the file (scripts/check_system_python.py) and the general section ('pylint PATH verification section after package installation') but doesn't give exact line numbers. The file is the obvious target given the task domain, and the section description is necessary context rather than excessive localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 7,
+  "fail_count": 3
 }

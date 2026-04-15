@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names the file path (superset/mcp_service/auth.py), function (_setup_user_context), and all key literal strings/behaviors tested: 'user = g.user' removal, 'break' removal, 'g.pop(\"user\", None)', 'MCP user resolution failed' log message, absence of 'falling back to middleware-provided', and '_cleanup_session_on_error()' before raise in DB retry path. All test assertions reference specifics discoverable from instruction.md's Verification section."
+      "reason": "The instruction names the file path (superset/mcp_service/auth.py), function (_setup_user_context), key strings ('MCP user resolution failed', 'falling back to middleware-provided'), the ValueError/OperationalError handlers, g.user/g.pop behavior, _cleanup_session_on_error, logger.error level, and the break/re-raise semantics. All test-asserted specifics (function names, string literals, behavior patterns) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction.md Verification section essentially dictates the exact implementation: 'Remove any fallback assignment of user = g.user', 'Remove any break statement', 'Add a call to g.pop(\"user\", None)', 'Log an error message containing \"MCP user resolution failed\"', 'Add a call to _cleanup_session_on_error() before the raise'. This is a step-by-step recipe of what to change, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what the buggy behavior is and what the correct behavior should be (fail-closed, re-raise, clear g.user, log at error level), but does not give exact code lines, exact replacement code, or a patch. A developer must still reason about how to implement the fix."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use regex to extract the ValueError handler block and check for specific strings like 'g.pop(\"user\"', exact absence of 'break', exact absence of 'user = g.user', and exact presence of '_cleanup_session_on_error' within 200 chars of 'DB connection failed on retry'. An alternative correct fix (e.g., using 'del g.user' or 'g.user = None' instead of g.pop, or using a different cleanup approach) would fail these text-matching tests."
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: ValueError propagation, g.user being cleared, logger.error being called, _cleanup_session_on_error call count. Alternative implementations (e.g., different comment text, different ordering of g.pop and logger.error, different log message format as long as it calls logger.error) would all pass. The tests don't assert on exact line positions or gold-specific variable names beyond what's required by the interface."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Every single f2p test (test_valueerror_handler_removes_fallback_logic, test_valueerror_handler_clears_guser, test_valueerror_handler_does_not_break, test_valueerror_logs_error_not_warning, test_cleanup_session_called_on_db_error) works by reading the file content with open() and doing string/regex matching. None imports or calls the actual code. The only 'execution' tests are syntax check and linting (p2p)."
+      "outcome": "pass",
+      "reason": "Tests import the auth module, call _setup_user_context() with mocked dependencies, and check behavioral outcomes (exceptions raised, g.user cleared, logger.error called, _cleanup_session_on_error call count). The syntax/lint tests run subprocesses. No test relies solely on text matching of source code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific changes against the buggy base commit (e.g., 'user = g.user' must be absent, 'break' must be absent, 'g.pop' must be present, 'MCP user resolution failed' must be present). A stub or no-op would not satisfy these since the base file contains the buggy patterns that must be changed."
+      "reason": "The buggy base code catches ValueError and falls back to g.user with a break (silently succeeding). A stub/no-op implementation would not pass test_valueerror_handler_removes_fallback_logic which requires ValueError to propagate, nor test_valueerror_handler_clears_guser which checks g.user is None, nor test_cleanup_session_called_on_db_error which requires _cleanup_session_on_error to be called at least twice."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/superset as a git repo, and solve.sh is a shell script that could potentially be accessed. More critically, the agent could simply read the test file at tests/test_outputs.py to see exactly what string patterns are checked and match them without understanding the bug. The tests are pure text-matching, making pattern-matching cheating trivial."
+      "reason": "The solution file exists at /workspace/superset's git history or the solve.sh is accessible in the container. While solve.sh is described as 'hidden', the gold patch content could potentially be discovered by the agent reading /solution/solve.sh if it exists in the container filesystem. The Dockerfile doesn't explicitly remove or restrict access to the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md's Expected Behavior and Verification sections are covered by tests: fallback removal, break removal, g.pop call, error logging, absence of fallback warning string, and _cleanup_session_on_error call."
+      "reason": "All four required behaviors from instruction.md are tested: (1) re-raise ValueError (test_valueerror_handler_removes_fallback_logic, test_valueerror_handler_does_not_break), (2) clear g.user (test_valueerror_handler_clears_guser), (3) log at error level with correct string (test_valueerror_logs_error_not_warning), (4) _cleanup_session_on_error on retry failure (test_cleanup_session_called_on_db_error). Linting constraints are also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_valueerror_handler_removes_fallback_logic, test_valueerror_handler_clears_guser), have descriptive docstrings with f2p/p2p annotations, and are logically grouped by concern."
+      "reason": "Tests have descriptive names (test_valueerror_handler_removes_fallback_logic, test_valueerror_handler_clears_guser, etc.), docstrings explaining what each tests including f2p/p2p annotations, and clear assert messages."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Python source code for a security fix, not producing structured data output."
+      "reason": "This task involves fixing a security bug in Python code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in instruction.md are consistent with the actual codebase and test expectations."
+      "reason": "File paths, function names, string literals, and commands are all consistent between instruction.md, tests, and solution with no typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md Verification section names exact implementation details: specific strings to add/remove ('g.pop(\"user\", None)', '_cleanup_session_on_error()'), specific statements to remove ('user = g.user', 'break'), and exact log message text. This goes far beyond naming the file and function."
+      "reason": "The instruction explicitly names the exact file (superset/mcp_service/auth.py) and exact function (_setup_user_context), and describes the exact buggy code structure (break statement, g.user fallback, specific log string 'falling back to middleware-provided'). It also names the exact helper function _cleanup_session_on_error and the exact log message string for the OperationalError handler ('DB connection failed on retry during user setup'). This level of specificity means locating the bug requi"
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,15 +51,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 8,
+  "fail_count": 2
 }

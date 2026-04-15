@@ -2,30 +2,35 @@
 
 ## Problem
 
-Angular DevTools currently has no debug build mode. All builds are minified, making it difficult to inspect and debug the extension during development. There's no way to build and load an unminified version of the extension with sourcemaps, and the devtools README doesn't explain how to install or debug a local build of the extension.
+Angular DevTools currently has no debug build mode. All builds are minified, making it difficult to inspect and debug the extension during development. There's no way to build and load an unminified version of the extension with sourcemaps.
 
-## What needs to change
+The esbuild configuration for DevTools scripts has two issues:
+1. Scripts injected into web pages (`detect-angular.ts`, `backend.ts`, `ng-validate.ts`, `content-script.ts`) need inline sourcemaps because Chrome requires inline sourcemaps for injected scripts - linked sourcemaps don't work in that context
+2. The `minify = True` setting is hardcoded in multiple BUILD files, preventing any centralized control over minification
 
-1. **Add a debug build flag**: Create a Bazel `bool_flag` named `debug` and a `config_setting` named `debug_build` in `devtools/BUILD.bazel`. The config setting should match when `:debug` is set to `"True"`. This flag will control whether builds are minified. In debug mode, minification should be disabled.
+## Requirements
 
-2. **Create an esbuild wrapper**: In `devtools/tools/defaults.bzl`, create a wrapper function named `esbuild` (defined with `def esbuild(...)`) that accepts `minify` and `sourcemap` parameters. The wrapper should use `select()` to conditionally set minify based on the `//devtools:debug_build` configuration: `//devtools:debug_build` should set minify to `False`, and `//conditions:default` should set minify to `True`. The wrapper must internally call a function named `_esbuild(` with the resolved parameters.
+The following behavioral changes must be implemented:
 
-3. **Enable inline sourcemaps for injected scripts**: For the following scripts that are injected into the page, set `sourcemap = "inline"` in their esbuild targets (Chrome requires inline sourcemaps for injected scripts - linked sourcemaps don't work):
-   - `detect-angular.ts`
-   - `backend.ts`
-   - `ng-validate.ts`
-   - `content-script.ts`
+1. **Debug flag in `devtools/BUILD.bazel`**:
+   - The build must expose a boolean flag named `debug` that can be set via `--//devtools:debug` on the bazel command line
+   - A config setting named `debug_build` must match when the debug flag is set to `"True"`
 
-4. **Remove hardcoded minification**: The shell-browser source BUILD files (`devtools/projects/shell-browser/src/BUILD.bazel` and `devtools/projects/shell-browser/src/app/BUILD.bazel`) currently have `minify = True` hardcoded on individual esbuild targets. Remove all `minify = True` settings so the centralized debug flag can control it.
+2. **Configurable esbuild in `devtools/tools/defaults.bzl`**:
+   - The esbuild function must accept `minify` and `sourcemap` parameters
+   - Minification must be disabled when the debug configuration is active, enabled by default (when no explicit minify value is provided)
+   - The esbuild wrapper must delegate to an internal esbuild implementation
 
-5. **Add debug build npm scripts**: Add two pnpm scripts to `package.json`:
-   - `devtools:build:chrome:debug` — must pass `--//devtools:debug` flag when invoking bazel
-   - `devtools:build:firefox:debug` — must pass `--//devtools:debug` flag when invoking bazel
-   Both scripts should chain from their respective base scripts (`devtools:build:chrome` and `devtools:build:firefox`).
+3. **Inline sourcemaps for injected scripts in `devtools/projects/shell-browser/src/app/BUILD.bazel`**:
+   - The esbuild targets for `detect-angular.ts`, `backend.ts`, `ng-validate.ts`, and `content-script.ts` must have `sourcemap = "inline"`
+   - These targets must not hardcode `minify = True`
 
-6. **Update the devtools README**: Update `devtools/README.md` to document:
-   - How to build and install a dev version of the extension
-   - Where to find and debug the various extension scripts (panel UI, content scripts, background worker, etc.)
+4. **Remove hardcoded minification in `devtools/projects/shell-browser/src/BUILD.bazel`**:
+   - All esbuild calls must have their hardcoded `minify = True` removed so the centralized debug flag can control minification
+
+5. **Debug build npm scripts in `package.json`**:
+   - A script named `devtools:build:chrome:debug` must pass `--//devtools:debug` to bazel and reference `devtools:build:chrome`
+   - A script named `devtools:build:firefox:debug` must pass `--//devtools:debug` to bazel and reference `devtools:build:firefox`
 
 ## Files to Look At
 
@@ -34,4 +39,3 @@ Angular DevTools currently has no debug build mode. All builds are minified, mak
 - `devtools/projects/shell-browser/src/BUILD.bazel` — main shell browser build targets
 - `devtools/projects/shell-browser/src/app/BUILD.bazel` — individual script build targets (backend, content script, etc.)
 - `package.json` — npm scripts for building devtools
-- `devtools/README.md` — developer documentation for the devtools extension

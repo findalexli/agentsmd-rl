@@ -3,57 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific details not mentioned in instruction.md: the exact class name 'NodeCommandInterceptor' (test_interceptor_interface_exists), the exact file path 'java/src/org/openqa/selenium/grid/node/NodeCommandInterceptor.java', the exact method name 'executeWithInterceptors' (test_execute_with_interceptors_method_exists), the exact field declaration 'private final List<NodeCommandInterceptor> interceptors' (test_local_node_has_interceptors_field), the exact reverse-iteration loop pa"
+      "reason": "Tests assert very specific details not mentioned in instruction.md: the exact class name 'NodeCommandInterceptor' (instruction says 'new SPI interface' but never names it), the exact method name 'executeWithInterceptors' (test_execute_with_interceptors_method_exists), the exact field declaration 'private final List<NodeCommandInterceptor> interceptors', the exact reverse-iteration loop pattern 'for (int i = interceptors.size() - 1; i >= 0; i--)' (test_interceptor_chaining_builds_from_last_to_fir"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what features to implement (SPI interface, Builder method, ServiceLoader discovery, BUILD file updates) but does not specify exact code lines or patches. It describes requirements, not the fix itself."
+      "reason": "The instruction describes requirements (define SPI, integrate with LocalNode, wire ServiceLoader, update BUILD files) without specifying exact code changes, line numbers, or literal patches. It describes what to build, not how to fix a specific bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact private method name 'executeWithInterceptors' (test_execute_with_interceptors_method_exists), exact field declaration pattern 'private final List<NodeCommandInterceptor> interceptors' (test_local_node_has_interceptors_field), exact reverse for-loop pattern 'for (int i = interceptors.size() - 1; i >= 0; i--)' (test_interceptor_chaining_builds_from_last_to_first), and exact cleanup loop pattern 'for (NodeCommandInterceptor interceptor : inte"
+      "reason": "Tests assert gold-specific implementation details: exact method name 'executeWithInterceptors' (test_execute_with_interceptors_method_exists), exact reverse loop pattern with specific variable names (test_interceptor_chaining_builds_from_last_to_first), exact field declaration pattern 'private final List<NodeCommandInterceptor> interceptors', exact variable name 'interceptor' in 'interceptor.isEnabled(config)'. A correct alternative using different helper method names, different iteration patter"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail_to_pass tests use regex pattern matching on source files (e.g., re.search on file content). Only TestBazelCompilation tests actually build/execute code. Tests like test_interceptor_has_intercept_method, test_local_node_has_interceptors_field, test_interceptor_chaining_builds_from_last_to_first are purely text-matching with no execution."
+      "reason": "Almost every test is a regex search over source files (e.g., re.search(pattern, content)). The only behavioral tests are TestBazelCompilation which runs bazel build, but the fail_to_pass tests are all pure text-matching: test_interceptor_has_isEnabled_method, test_builder_has_add_interceptor_method, test_interceptor_chaining_builds_from_last_to_first, etc. No test imports/calls the Java code or verifies runtime behavior of the interceptor chain."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "A stub/empty file would not pass the tests since they check for specific method signatures, field declarations, and code patterns. The agent must write substantive code with the correct interface methods, integration code, and BUILD file entries."
+      "outcome": "fail",
+      "reason": "Since tests only check for text patterns in source files (regex matches on file contents), a stub implementation that contains the right method signatures but empty bodies would pass all the non-compilation tests. For example, an executeWithInterceptors that just returns null with the right signature and the right loop pattern would pass test_interceptor_chaining_builds_from_last_to_first. The Bazel compilation tests provide some guard, but the core behavioral requirements (interceptors actually"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/selenium after solve.sh runs, and the Dockerfile doesn't remove it. The agent could potentially read /solution/solve.sh if it exists in the container. Additionally, since tests are pure text-matching, the agent could grep test files (if accessible) and write code matching exactly the expected regex patterns without understanding the design."
+      "reason": "The solution exists at /workspace/selenium after solve.sh runs, and the agent could read the solution/solve.sh file or the test file itself to discover exact regex patterns being tested and write code that matches those patterns. The tests check for literal text patterns, so an agent could grep test_outputs.py for the expected patterns and produce matching code without understanding the feature."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'A single interceptor receives every WebDriver command executed through the node' and 'Multiple interceptors are invoked in the correct order' but no test actually runs an interceptor and verifies it receives commands. The ordering test only checks a for-loop pattern in source code, not actual runtime behavior."
+      "reason": "Instruction says 'A single interceptor receives every WebDriver command executed through the node' and 'Multiple interceptors are invoked in the correct order' \u2014 these runtime behaviors are never actually tested. Only text patterns and compilation are checked, not actual command interception behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into descriptive classes (TestNodeCommandInterceptorInterface, TestLocalNodeInterceptorSupport, TestLocalNodeFactoryLoadsInterceptors, TestBuildBazelDependencies, TestInterceptorResourceCleanup, TestBazelCompilation) with clear docstrings on each test method."
+      "reason": "Tests are well-organized into descriptive classes (TestNodeCommandInterceptorInterface, TestLocalNodeInterceptorSupport, TestLocalNodeFactoryLoadsInterceptors, etc.) with descriptive docstrings and method names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces Java source code and BUILD files, not structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like 'addInterceptor method' on the Builder, 'interceptors are stored in a list field', 'A method wraps command execution by calling each interceptor in order', and 'The first interceptor added via the Builder becomes the outermost wrapper in the chain' \u2014 these are implementation-level hints that go beyond describing the desired behavior."
+      "reason": "Instruction explicitly names 'LocalNode', 'Builder', 'addInterceptor', 'META-INF/services/', 'ServiceLoader.load(...)', 'isEnabled(config)', 'initialize(config, eventBus)', and specifies exact method signatures and integration points. While some specificity is needed, naming the exact factory class (LocalNodeFactory) and method names goes beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not a config-edit task."
+      "reason": "This is a code-implementation task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -61,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

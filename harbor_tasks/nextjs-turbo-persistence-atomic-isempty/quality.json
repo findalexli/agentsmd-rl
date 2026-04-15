@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (db.rs), struct (TurboPersistence), method (is_empty), existing field (active_write_operation: AtomicBool), AtomicBool type, Ordering::Relaxed, meta_files.is_empty(), load_directory, and commit \u2014 all specifics tested are discoverable from the instruction."
+      "reason": "The instruction names the file path (turbopack/crates/turbo-persistence/src/db.rs), the struct (TurboPersistence), the method (is_empty), the existing field (active_write_operation: AtomicBool), and the mutation sites (load_directory, commit). All test-asserted specifics (struct names, method names, file paths, AtomicBool usage, .load()/.store() patterns) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add an AtomicBool field, rewrite is_empty() to use .load(Ordering::Relaxed), and call .store(meta_files.is_empty(), Ordering::Relaxed) at every mutation site. This is a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly states the exact fix: add an AtomicBool field, rewrite is_empty() to use .load(Ordering::Relaxed), and call .store(meta_files.is_empty(), Ordering::Relaxed) at every mutation point. This is a complete implementation specification, not just a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_atomic_synced_on_mutation requires '.store(' calls containing 'meta_files.is_empty()' (regex pattern), test_isempty_lock_free requires '.load(' in the method body, and test_struct_has_atomic_bool requires an AtomicBool field in the struct that isn't named 'active_write_operation'. An alternative correct fix using e.g. a different caching mechanism, a separate atomic counter, or an Arc<AtomicBool> stored differently would fail these regex"
+      "reason": "Tests assert on very specific implementation details: test_struct_has_atomic_bool checks for a new AtomicBool field in the struct (not active_write_operation), test_isempty_lock_free checks for .load() in the method body, and test_atomic_synced_on_mutation checks for .store() calls containing 'meta_files.is_empty()'. An alternative correct fix using e.g. AtomicU8, a cached field updated differently, or a different sync pattern would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test (test_struct_has_atomic_bool, test_isempty_lock_free, test_atomic_synced_on_mutation) reads db.rs as text and uses regex to check for specific strings like '.load(', '.store(', 'AtomicBool'. No code is compiled or executed. These are pure text/pattern matching tests with no behavioral verification."
+      "reason": "All fail-to-pass tests (test_struct_has_atomic_bool, test_isempty_lock_free, test_atomic_synced_on_mutation, test_relaxed_ordering) are purely text/regex searches on source code. No code is compiled, executed, or behaviorally tested. Every test is essentially 'assert pattern in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., is_empty returning false/true) would fail test_isempty_lock_free which checks that '.load(' appears in the method body and rejects constant stubs ('true'/'false'). The tests also require structural changes (new AtomicBool field, store calls) that a trivial stub wouldn't have."
+      "reason": "A stub implementation (e.g., returning false from is_empty) would fail test_isempty_lock_free which checks for .load() in the method body, and test_struct_has_atomic_bool which requires an AtomicBool field beyond active_write_operation. The anti-stub check in test_isempty_lock_free also rejects hardcoded true/false."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is in /workspace/next.js accessible via solve.sh or the solution directory. The agent could read the gold patch from the container. Additionally, since tests are pure regex on source text, the agent could reverse-engineer exact patterns needed from test_outputs.py if accessible."
+      "reason": "The solution file exists at /workspace/next.js and solution/solve.sh contains the exact patch. An agent could read solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what patterns are being checked and produce matching code without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from the instruction (new AtomicBool field, lock-free is_empty via atomic load, sync at mutation points) are tested by the three fail-to-pass tests."
+      "reason": "The instruction requires: (1) new AtomicBool field \u2014 tested by test_struct_has_atomic_bool, (2) lock-free is_empty() \u2014 tested by test_isempty_lock_free, (3) sync at mutation points \u2014 tested by test_atomic_synced_on_mutation. All three explicit requirements are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear separation between pass_to_pass (gate tests) and fail_to_pass (behavioral tests), each with descriptive names and detailed docstrings explaining what they verify."
+      "reason": "Tests are well-organized with clear separation between pass_to_pass (gates) and fail_to_pass (core behavioral) sections, descriptive function names, and detailed docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves modifying Rust source code, not producing structured data output."
+      "reason": "This task modifies Rust source code and does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md provides the exact implementation steps including 'Add a new AtomicBool field', 'use atomic .load() with Ordering::Relaxed', and 'calling .store(meta_files.is_empty(), Ordering::Relaxed) at every location where meta_files is modified (there are at least two such sites)'. This is detailed implementation guidance, not just problem/file identification."
+      "reason": "The instruction specifies exactly which file to modify, the exact field name pattern (AtomicBool), the exact Ordering (Relaxed), and the exact expression to use (.store(meta_files.is_empty(), Ordering::Relaxed)). This goes far beyond identifying the buggy component."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Rust source, not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

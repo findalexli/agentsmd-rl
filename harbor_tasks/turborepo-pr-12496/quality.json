@@ -3,55 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully specified in instruction.md: test_source_files_contain_new_functions checks for exact names 'detectCatalog', 'updateCatalogVersion', 'CatalogInfo'; test_get_latest_version_resolves_dist_tags checks for exact string 'tags[to]'; test_yaml_dependency_added checks yaml version starts with '2.'; test_npm_pkg_has_update_catalog_test checks for existence of '__tests__/update-catalog.test.ts'. The instruction mentions creating update-catalog.ts but "
+      "reason": "Tests assert very specific paths like 'src/commands/migrate/steps/update-catalog.ts', 'src/commands/migrate/steps/get-turbo-upgrade-command.ts', 'src/commands/migrate/steps/get-latest-version.ts', 'src/commands/migrate/index.ts', '__tests__/update-catalog.test.ts', and fixture paths like '__tests__/__fixtures__/get-turbo-upgrade-command/pnpm-catalog-default' and 'yarn-catalog-default'. The instruction.md does not specify most of these exact file paths. It mentions function names like detectCatal"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken and what needs to be fixed at a functional level (detect catalogs, update catalog files, return install command, resolve dist-tags) without specifying exact code changes, line numbers, or specific implementation details like function signatures."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact functions to create (detectCatalog, updateCatalogVersion, CatalogInfo type), the exact pattern to use for dist-tag resolution (tags[to]), the exact library to import (yaml 2.x), and that a specific test file should exist. This goes well beyond describing what's broken and prescribes the specific implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact function names 'detectCatalog' and 'updateCatalogVersion', exact type name 'CatalogInfo', exact expression 'tags[to]' in get-latest-version.ts, exact method name 'getInstallCommand'. An alternative correct fix using different names (e.g., 'findCatalog', 'writeCatalogVersion', 'CatalogDetails', 'tags.get(to)') would fail these tests despite being functionally correct."
+      "reason": "Tests assert gold-specific implementation details: exact function names 'detectCatalog', 'updateCatalogVersion', type name 'CatalogInfo', exact pattern 'tags[to]', parameter name 'catalogInfo' in get-turbo-upgrade-command.ts, exact file path 'update-catalog.ts', exact fixture directory names 'pnpm-catalog-default' and 'yarn-catalog-default'. An alternative correct fix using different names (e.g., 'checkCatalogUsage', 'writeCatalogVersion', 'CatalogConfig') or a different file structure would fai"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely text-matching: test_source_files_contain_new_functions does 'assert \"detectCatalog\" in content', test_get_turbo_upgrade_command_handles_catalog_info checks 'assert \"catalogInfo\" in content', test_get_latest_version_resolves_dist_tags checks 'assert \"tags[to]\" in content', etc. The only behavioral tests are test_repo_typescript_builds (which runs build/check-types) and test_repo_lint. No test actually imports/calls the code or verifies catalog update behavior."
+      "reason": "Nearly every test is purely textual grep: 'assert \"detectCatalog\" in content', 'assert \"tags[to]\" in content', 'assert \"catalogInfo\" in content', etc. The only behavioral tests are test_repo_typescript_builds (which just runs pnpm build/check-types) and test_repo_lint/format. No test actually calls the catalog detection/update functions, runs the migration codemod, or verifies functional behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub update-catalog.ts containing only comments with the strings 'detectCatalog', 'updateCatalogVersion', 'CatalogInfo', 'catalog:', and 'yaml' would pass test_source_files_contain_new_functions and test_update_catalog_ts_imports_yaml without implementing any actual functionality. Similarly, adding 'catalogInfo' as a comment to get-turbo-upgrade-command.ts passes test_get_turbo_upgrade_command_handles_catalog_info."
+      "reason": "An agent could create stub files containing the expected string literals without implementing any real logic. For example, creating update-catalog.ts with comments containing 'detectCatalog', 'updateCatalogVersion', 'CatalogInfo', 'catalog:', and 'yaml' would pass test_source_files_contain_new_functions and test_update_catalog_ts_imports_yaml. Similarly, adding 'catalogInfo' as a comment in get-turbo-upgrade-command.ts passes test_get_turbo_upgrade_command_handles_catalog_info."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/turborepo accessible to the agent via solve.sh which curls the exact GitHub PR patch. The agent could simply run 'curl -sL https://patch-diff.githubusercontent.com/raw/vercel/turborepo/pull/12496.patch | git apply' to get the solution. Additionally, since tests are purely string-matching, the agent could grep test files or solution files to discover exact expected strings."
+      "reason": "The solution is in /workspace at solve.sh which downloads the exact GitHub PR patch. The agent could read solution/solve.sh to find the PR number (12496) and apply the same patch. Additionally, since tests are purely string-matching, the agent could grep the test file for expected strings and plant them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires 4 behaviors: detect catalog references, update catalog file with version prefix preservation, return install command for catalogs, resolve dist-tags. None of these behaviors are actually tested functionally\u2014tests only check for string presence in source files, not that catalog files are correctly updated or that install commands are returned."
+      "reason": "The instruction says catalog references should be recognized, catalog files updated with new versions preserving prefixes, and install returned instead of add. None of these functional behaviors are actually tested - tests only check for string presence in source files, not that the codemod actually handles catalogs correctly."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped into standalone functions and a TestRepoTests class. Each test clearly indicates what it's checking."
+      "reason": "Tests are well-named with descriptive function names and docstrings, grouped into standalone functions and a TestRepoTests class for repo-level checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB; it modifies source code files."
+      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the test file references."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names the exact files to modify (index.ts, get-turbo-upgrade-command.ts, get-latest-version.ts) and specifies creating a new file (update-catalog.ts) at a specific path, plus details about what each file needs. This goes beyond describing the bug to prescribing the solution architecture."
+      "reason": "The instruction explicitly names exact function names (detectCatalog, updateCatalogVersion), exact type names (CatalogInfo), exact code patterns (tags[to]), and exact file characteristics (yaml 2.x import), effectively prescribing the implementation details rather than just describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-writing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -62,6 +63,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 2,
+  "fail_count": 8
 }

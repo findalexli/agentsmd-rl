@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (grid.tsx, dashboardApp.ts, DEPS.list), the variable name `currentWorkspace`, the fallback string `'Global'`, the `createClientInfo` import, the `sendJSON(response, { sessions, clientInfo })` response shape, the `../cli-client/registry.ts` DEPS entry, the `key === currentWorkspace` comparison, and the `localeCompare` sorting. Every assert target in the tests is discoverable from the instruction."
+      "reason": "The instruction names all file paths (grid.tsx, dashboardApp.ts, DEPS.list), variable names (currentWorkspace, clientInfo), function names (createClientInfo), import paths (../cli-client/registry), literal strings ('Global'), schema keys (sessions, clientInfo), and the comparison pattern (key === currentWorkspace) that are asserted in the tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: 'Define a derived variable named `currentWorkspace` that resolves to `clientInfo?.workspaceDir || 'Global'`', 'sendJSON(response, { sessions, clientInfo })', 'import the `createClientInfo` function from `../cli-client/registry`'. This is not describing what's broken \u2014 it's prescribing the exact code changes line by line."
+      "reason": "The instruction explicitly dictates the exact fix: 'Define a derived variable named currentWorkspace that resolves to clientInfo?.workspaceDir || \"Global\"', 'Use currentWorkspace (not the raw clientInfo?.workspaceDir) when filtering', 'sendJSON(response, { sessions, clientInfo })', and 'import { createClientInfo } from ../cli-client/registry'. This is a complete specification of what code to write, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name `currentWorkspace` via regex match, exact string `key === currentWorkspace`, exact import statement `import { createClientInfo } from '../cli-client/registry'`, and exact `sendJSON(response, { sessions, clientInfo })` pattern. An alternative correct fix using a different variable name (e.g., `activeWorkspace`) or different code structure would fail."
+      "reason": "Tests assert on gold-specific implementation details: test_grid_workspace_ordering checks for the exact regex pattern 'currentWorkspace = clientInfo?.workspaceDir || \"Global\"' and the literal string 'key === currentWorkspace'. test_dashboard_api_sends_client_info checks for the exact import string 'import { createClientInfo } from ../cli-client/registry'' and exact sendJSON pattern 'sendJSON(response, { sessions, clientInfo })'. An alternative correct fix using different variable names, destruct"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_grid_workspace_ordering, test_dashboard_api_sends_client_info, test_deps_declares_cli_client_import) are purely text-matching: they read file contents and assert on string patterns/regex matches. test_grid_workspace_ordering does simulate sorting logic, but it's a self-contained simulation in the test script, not actually importing/calling the real code. test_dashboard_api_sends_client_info is entirely `src.includes()` and regex checks."
+      "reason": "The fail-to-pass tests (test_grid_workspace_ordering, test_dashboard_api_sends_client_info, test_deps_declares_cli_client_import) are almost entirely text-matching: they read source files and check for specific string patterns via regex and includes(). test_grid_workspace_ordering does simulate sorting logic but extracts the fallback value from source text first. None of the f2p tests import/call the actual code or test runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub/trivial implementation that simply inserts the exact string patterns the tests look for (e.g., adding `const currentWorkspace = clientInfo?.workspaceDir || 'Global'` as a comment or dead code, and the import line) would pass the text-matching tests without actually fixing the bug. The tests don't execute the server or render the grid."
+      "reason": "test_deps_declares_cli_client_import just checks if a string exists in a file \u2014 adding a single line '../cli-client/registry.ts' to DEPS.list passes it without any functional implementation. test_dashboard_api_sends_client_info only checks text patterns in the source file, so adding the import line and a commented-out call would pass portions. These are text-matching tests that can be satisfied by superficial edits."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/playwright's git history or solve.sh. The agent could read solution/solve.sh (if accessible) or simply grep the test file to find the exact regex patterns and string literals it needs to insert. The tests check for literal strings, so matching them without understanding the bug is trivial."
+      "reason": "The solution is at /workspace/playwright with solve.sh accessible in the container's /solution/ directory (or mounted). The agent could read the gold patch directly. Additionally, since tests are pure text-matching (regex on source files), the agent could grep test files for expected patterns and reverse-engineer exact strings to insert."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from the instruction (API clientInfo, grid sorting with currentWorkspace fallback, DEPS.list update) are tested, plus regression tests for build/lint/tsc/alphabetical sorting."
+      "reason": "All three behavioral requirements from the instruction (API includes clientInfo, grid sorts current workspace first with 'Global' fallback, DEPS.list updated) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config, repo_tests), descriptive function names, and docstrings explaining each check's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config, repo_tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the API response schema: `sendJSON(response, { sessions, clientInfo })` with clientInfo containing `workspaceDir`."
+      "reason": "The instruction specifies the API response schema: 'sendJSON(response, { sessions, clientInfo })' with clientInfo containing workspaceDir. This is documented in the instruction."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact variable (`currentWorkspace`), the exact expression (`clientInfo?.workspaceDir || 'Global'`), the exact function to import (`createClientInfo`), and the exact response shape \u2014 effectively dictating the solution rather than describing the problem."
+      "reason": "The instruction specifies exact variable names ('currentWorkspace'), exact code patterns ('clientInfo?.workspaceDir || \"Global\"'), exact function calls ('createClientInfo()'), and exact response shapes ('sendJSON(response, { sessions, clientInfo })'). This goes far beyond naming the buggy file \u2014 it prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The DEPS.list edit is a single line addition, and the gold patch is localized to three small changes across three files. No full-file rewrites."
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
@@ -61,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
+  "pass_count": 5,
   "fail_count": 6
 }

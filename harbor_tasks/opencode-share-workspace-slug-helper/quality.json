@@ -2,55 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction specifies all file paths (actions.ts, AGENTS.md, all three spec files), exact function signatures, regex components (/\\/, ([^/]+), /session(?:[/?#]|$)), timeout value (45_000), polling mechanism (expect.poll), and AGENTS.md documentation requirements including 'canonicalized on Windows' and 'shared helpers from ../actions'. All test assertions trace back to information in instruction.md."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: (1) test_actions_exports_wait_slug_async checks for 'expect.poll' and timeout '45_000'/'45000', neither specified in instructions; (2) test_actions_exports_slug_from_url checks for regex pattern containing '/session' and '[^/]+', not specified; (3) test_agents_md_documents_new_helpers asserts 'skip' parameter documentation with specific pattern r'skip[^)]*\\)' \u2014 the instruction mentions 'waitSlug(page, skip?)' only in t"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact function signatures, exact regex components, exact timeout values (45_000), exact implementation details (use expect.poll, track previous and next slug values), and exact AGENTS.md text patterns. This goes far beyond describing what's broken \u2014 it essentially dictates the complete implementation. A competent developer has almost no reasoning to do about WHAT to change."
+      "reason": "The instruction explicitly states the exact function signatures ('slugFromUrl(url)' and 'waitSlug(page, skip?)'), exact file paths to modify, exact import paths ('../actions'), and even the exact documentation text to add (e.g., 'Recommend using shared helpers from `../actions` when validating routing', 'Note that workspace URL slugs can be canonicalized on Windows'). This tells the agent exactly WHAT to write rather than just describing the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'export function slugFromUrl(url: string)' and 'export async function waitSlug(page: Page, skip: string[] = [])' in test_actions_has_slug_from_url and test_actions_has_wait_slug. An alternative correct implementation using 'export const slugFromUrl = (url: string): string =>' arrow function syntax would fail. The regex component checks ('/\\/' in content, '([^/]+)' in content) also enforce one specific implementation pattern."
+      "reason": "Tests enforce gold-specific implementation details: test_actions_exports_slug_from_url requires regex containing '/session' and '[^/]+'; test_actions_exports_wait_slug_async requires 'expect.poll' pattern and '45_000'/'45000' timeout (alternative correct implementations could use different polling mechanisms or timeouts); test_agents_md_documents_routing_guidance requires exact phrase matching 'shared helpers from ../actions' via regex r'shared\\s+helpers\\s+from\\s+[`\"\\']?\\.{2}/actions'. An altern"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_actions_has_slug_from_url, test_actions_has_wait_slug, test_duplicated_helpers_removed_from_specs, test_specs_import_shared_helpers, test_agents_md_documents_new_helpers) are ALL string-in-file checks using patterns like 'assert X in content'. None import or call the functions, none execute the helpers to verify behavior. The typecheck tests run tsc but that only validates syntax, not behavioral correctness."
+      "reason": "Most tests are text/regex matching on file contents rather than behavioral execution. test_actions_exports_slug_from_url checks regex patterns in source text ('has_pattern' checks for string literals); test_actions_exports_wait_slug_async checks for 'expect.poll' and '45_000' as strings in source; test_agents_md_documents_new_helpers and test_agents_md_documents_routing_guidance are pure text grep. While TypeScript type-checking subprocess calls exist (test_typescript_parses, test_repo_e2e_typec"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While the tests are text-based, they do require non-trivial file modifications. A stub/empty file won't pass test_actions_has_slug_from_url (needs specific regex patterns), test_specs_import_shared_helpers (needs import statements), or test_duplicated_helpers_removed_from_specs (needs removal of local definitions). The agent must make real changes to pass."
+      "reason": "The tests require actual code changes \u2014 a stub implementation wouldn't pass because test_actions_exports_slug_from_url requires exported function with specific regex pattern, test_duplicated_helpers_removed_from_specs asserts local definitions are removed, and test_specs_import_shared_helpers verifies imports exist. An empty or no-op change would fail these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/opencode as a git repo where solve.sh applies a patch. The agent could read solution/solve.sh (though it's described as hidden, it may exist in the container), or simply grep the test file for expected strings like 'export function slugFromUrl(url: string)' and write exactly those strings into the files. The tests only check for string presence, making pattern-matching trivial."
+      "reason": "The solution file exists at /workspace/opencode as a git repository where solve.sh applies a patch. The agent could potentially read the test file at tests/test_outputs.py to discover exact regex patterns and string literals being checked, then craft minimal responses to match. The solve.sh script with the full gold patch is also accessible if the agent explores the container filesystem."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: shared exports in actions.ts, removal of local helpers from specs, imports from ../actions, AGENTS.md documentation including canonicalization guidance and shared helpers mention, TypeScript compilation, and Prettier formatting."
+      "reason": "All behaviors specified in instruction.md are tested: exporting functions from actions.ts, removing local helpers from spec files, importing from ../actions, AGENTS.md documentation updates, TypeScript type checking, Prettier formatting, and Biome linting."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (Gates/pass_to_pass, Fail-to-pass/pr_diff, Fail-to-pass/agent_config, Pass-to-pass/repo_tests) with clear docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'test_actions_exports_slug_from_url', 'test_duplicated_helpers_removed_from_specs', 'test_agents_md_documents_routing_guidance') and organized logically from syntax checks to behavioral checks to formatting checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring and documentation updates, not structured data output."
+      "reason": "This task involves code refactoring and documentation, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, function names, and variable names in the instruction are consistent and correctly spelled throughout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact regex components ('/\\/', '([^/]+)', '/session(?:[/?#]|$)'), exact timeout values (45_000), exact implementation patterns (expect.poll, track previous and next slug), and exact AGENTS.md text. This goes beyond naming files/functions and leaks implementation details that should be part of the agent's reasoning."
+      "reason": "The instruction specifies exact function signatures ('slugFromUrl(url)', 'waitSlug(page, skip?)'), exact file paths, exact import paths ('../actions'), and exact documentation phrases to add. For a refactoring task where the agent should determine what to extract and how, this provides the complete solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md gold diff is a localized addition of a few lines in the 'Writing New Tests' section, adding helper documentation and routing guidance. It doesn't contradict other files."
+      "reason": "The AGENTS.md changes in the gold patch are localized additions (3 lines in helper list, 1 modified line in Writing New Tests section) and don't contradict other files."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -60,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 6
 }

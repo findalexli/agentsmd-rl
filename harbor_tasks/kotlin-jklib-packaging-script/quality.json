@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific strings not mentioned in instruction.md, e.g. test_build_file_has_description checks for exact string 'description = \"JKlib Classes packaging script\"', test_build_file_has_configurations checks for 'val buildNumber by configurations.creating' and 'val distContent by configurations.creating', test_build_file_has_license_sync checks 'from(licenseDir)', test_build_file_has_dist_task checks 'destinationDir = distDir.dir(\"jklib\").asFile', test_build_file_has_lib_sync checks"
+      "outcome": "pass",
+      "reason": "The instruction specifies all literal strings, file paths, configuration names, manifest attributes, task names, and exact syntax patterns that the tests check for. Every assert in the tests corresponds to something explicitly described in the instruction (e.g., 'val buildNumber by configurations.creating', 'archiveFileName.set(\"jklib-compiler.jar\")', copyright text, description string, etc.)."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially specifies the complete solution: exact file path, exact manifest attributes with exact values, exact task configurations, exact DuplicatesStrategy values, exact copyright year range. It tells the agent exactly WHAT to write rather than describing a problem to solve."
+      "reason": "The instruction essentially dictates the exact implementation: it specifies exact variable declarations ('val buildNumber by configurations.creating'), exact method calls ('archiveFileName.set(\"jklib-compiler.jar\")'), exact manifest attribute syntax, exact task registration syntax ('tasks.registering(Sync::class)'), and exact expressions like 'destinationDir = distDir.dir(\"jklib\").asFile'. This is not describing what's broken \u2014 it's prescribing the exact code to write line by line."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation strings like 'val buildNumber by configurations.creating', 'val distContent by configurations.creating', 'destinationDir = distDir.dir(\"jklib\").asFile', 'from(licenseDir)', 'from(jar)', 'tasks.registering(Sync::class)'. An alternative correct implementation using different variable names, different Gradle DSL patterns (e.g. tasks.register<Sync>(\"dist\") instead of tasks.registering(Sync::class)), or different directory resolution approaches would fail these text-"
+      "reason": "Tests like test_build_file_has_configurations assert exact strings like 'val buildNumber by configurations.creating' and 'val distContent by configurations.creating'. test_build_file_has_dist_task asserts 'tasks.registering(Sync::class)' and 'destinationDir = distDir.dir(\"jklib\").asFile'. These are implementation-specific patterns \u2014 alternative valid Gradle scripts (e.g., using 'configurations.register(\"buildNumber\")' or 'tasks.register<Sync>(\"dist\")') would fail despite being functionally corre"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The majority of f2p tests (test_build_file_has_copyright, test_build_file_has_description, test_build_file_has_plugins, test_build_file_has_configurations, test_build_file_has_dependencies, test_build_file_has_jar_task, test_build_file_has_manifest, test_build_file_has_dist_task, test_build_file_has_license_sync, test_build_file_has_lib_sync) are purely text-matching with `assert '...' in content`. Only a few tests (test_gradle_module_recognized, test_gradle_build_script_loads, test_gradle_tasks"
+      "reason": "The majority of fail-to-pass tests (test_build_file_has_copyright, test_build_file_has_description, test_build_file_has_plugins, test_build_file_has_configurations, test_build_file_has_dependencies, test_build_file_has_jar_task, test_build_file_has_manifest, test_build_file_has_dist_task, test_build_file_has_license_sync, test_build_file_has_lib_sync) are purely text-matching with 'assert X in open(path).read()'. While a few tests do run Gradle commands, the bulk of the test suite is string matc"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific content in a file that doesn't exist yet (test_build_file_exists would fail), and the Gradle execution tests require a valid build script. A stub/empty file would fail most tests."
+      "reason": "A stub/empty file would not pass: the text-matching tests require specific strings in the build file, and the Gradle execution tests (test_gradle_module_recognized, test_gradle_build_script_loads, test_gradle_tasks_registered) require a valid, parseable Gradle script that actually loads. An empty or trivial file would fail these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/kotlin's container at solution/solve.sh. The agent could read it directly. Additionally, the test file itself at tests/test_outputs.py contains all the exact strings needed, so grepping test files would reveal exactly what to write."
+      "reason": "The solution file exists at /workspace/kotlin (the solve.sh is in solution/solve.sh in the container). An agent could read the solution directory or grep the test file directly (tests/test_outputs.py) to extract all expected strings and patterns. The tests assert exact literal strings that are visible in the test file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md (JAR packaging config, manifest attributes, dist task, settings.gradle registration, DuplicatesStrategy values, isTransitive, copyright header) are tested."
+      "reason": "All requirements from the instruction are covered by tests: copyright header, description, plugin, configurations, dependencies, JAR task configuration, manifest attributes, dist task, license sync, lib sync, settings.gradle registration, and Gradle execution verification."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped logically (file existence, content checks, Gradle execution, pass-to-pass repo validation), and include 'Fail-to-pass' / 'Pass-to-pass' annotations."
+      "reason": "Tests are well-organized with descriptive names (test_build_file_has_copyright, test_gradle_module_recognized, etc.), docstrings explaining each test, and clear separation between fail-to-pass and pass-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces Gradle build scripts and configuration files, not structured data like JSON/CSV/API/DB."
+      "reason": "The task produces a Gradle build script and settings modification, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and configuration keys are consistent between instruction.md, tests, and solution."
+      "reason": "File paths, variable names, commands, and literal strings are consistent between instruction.md and the test file with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like the exact Main-Class value, exact Class-Path value, exact DuplicatesStrategy enum values, exact copyright year range, and exact file permissions string. This goes beyond describing requirements and into specifying the exact code to write."
+      "reason": "The instruction specifies exact Kotlin DSL syntax like 'val buildNumber by configurations.creating', exact method signatures, and exact expression patterns. This goes far beyond describing the task requirements \u2014 it essentially provides the implementation details line by line."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch creates one new file and makes a small localized addition to settings.gradle (two lines). The diff is well-bounded and doesn't contradict other files."
+      "reason": "The gold diff creates one new file (build.gradle.kts) and adds two lines to settings.gradle. The changes are localized and don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 5
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (src/rust/jsg-macros/lib.rs, src/rust/jsg/v8.rs, src/rust/jsg/ffi.h, src/rust/jsg/ffi.c++, src/rust/AGENTS.md, src/rust/jsg-macros/README.md, docs/reference/rust-review-checklist.md), mentions the key concepts tested (static vs instance methods, receiver detection, Member::StaticMethod, Function type, function_template_get_function, prototype/constructor placement), and describes the documentation updates needed. The specific string literals like 'ha"
+      "reason": "The instruction names all relevant file paths (lib.rs, v8.rs, ffi.h, ffi.c++, AGENTS.md, README.md, rust-review-checklist.md), describes the need for has_self detection, Member::StaticMethod, Function type, function_template_get_function, and documentation updates. The specific string literals like 'has_self', 'Member::StaticMethod', 'pub struct Function;', 'as_local_function', 'function_template_get_function', 'From<Local<\\'a, Function>>' are implied by the behavioral description though not all"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (no static method support) and the expected behavior (detect receiver, register on constructor vs prototype) but does not specify exact code changes like specific variable names (has_self), enum variant names (Member::StaticMethod), or function names (as_local_function, function_template_get_function). It describes architectural layers but leaves implementation details to the developer."
+      "reason": "The instruction describes the problem (no static method support) and expected behavior (detect receiver, register on constructor vs prototype, update FFI layer and docs) but does not specify exact code changes, line numbers, or literal replacement text. A developer must still design the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_jsg_method_static_detection requires the exact variable name 'has_self' and 'if has_self'; test_static_member_variant requires exactly 'Member::StaticMethod'; test_function_type_and_ffi requires 'pub struct Function;', 'as_local_function', 'function_template_get_function', 'From<Local<\\'a, Function>>'. An alternative correct implementation could use 'is_static', 'is_instance_method', 'Member::Static', 'get_constructor_function', 'into_lo"
+      "reason": "Tests assert on gold-specific implementation details: 'has_self' variable name (test_jsg_method_static_detection), 'if has_self' exact string (same test), 'Member::StaticMethod' exact enum variant name (test_static_member_variant), 'pub struct Function;' exact declaration (test_function_type_and_ffi), 'as_local_function' exact method name, 'From<Local<\\'a, Function>>' exact trait impl syntax. An alternative correct implementation using e.g. 'is_static', 'is_instance_method', 'Member::Static', or"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is a string-search in source files: 'assert \"has_self\" in lib_rs', 'assert \"Member::StaticMethod\" in lib_rs', 'assert \"pub struct Function;\" in v8_rs', etc. The only behavioral tests are rustfmt syntax checks (test_rustfmt_jsg_macros_syntax, test_rustfmt_jsg_v8_syntax) which just verify the files parse. No test compiles the macro, invokes it, or tests that static methods actually work."
+      "reason": "Almost every test is purely text-matching: reading file contents and checking for substring presence (e.g., 'assert \"has_self\" in lib_rs', 'assert \"Member::StaticMethod\" in lib_rs'). The only execution-based tests are rustfmt syntax checks (test_rustfmt_*). No test actually compiles the macro, runs it, or verifies runtime behavior. This is overwhelmingly 'assert foo in open(path).read()' pattern."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p (fail-to-pass) tests like test_jsg_method_static_detection and test_static_member_variant can be trivially satisfied by appending comments or dead code containing the required strings ('has_self', 'if has_self', 'Member::StaticMethod', 'FnArg::Receiver') without implementing any actual static method support. Similarly test_function_type_and_ffi just checks for string presence."
+      "reason": "The f2p (fail-to-pass) tests like test_jsg_method_static_detection and test_static_member_variant can be satisfied by simply inserting comment strings like '// has_self', '// if has_self', '// Member::StaticMethod' into the file without implementing any actual functionality. No compilation or execution is tested for these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/workerd and solution/solve.sh contains the full gold patch. The agent could read it via `cat /solution/solve.sh` or similar. Additionally, since tests only check for string presence, the agent could grep the test file for expected strings and insert them as comments without understanding the task."
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file and apply it directly. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the expected strings and insert them as comments without understanding the task."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that static methods be 'registered on the constructor, called on the class itself' and that instance methods continue to work. No test verifies this runtime behavior \u2014 only string presence in source files is checked. The core behavioral requirement (static methods actually work in V8) is untested."
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) macro detection of receiver - tested via test_jsg_method_static_detection, (2) static member generation - tested via test_static_member_variant, (3) FFI changes - tested via test_function_type_and_ffi and test_ffi_cpp_implements_get_function, (4) documentation updates - tested via test_agents_md, test_readme, test_review_checklist. All explicitly required behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_jsg_method_static_detection, test_static_member_variant, test_function_type_and_ffi, etc.), each has a docstring explaining what it checks, and they're logically grouped by concern (syntax, macro detection, FFI, documentation)."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test checks. They are logically grouped by concern (syntax, macro logic, FFI, documentation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task produces code changes and documentation updates, not structured data outputs like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions files to look at which is appropriate given the task domain, and describes what needs to change at an architectural level without specifying exact line numbers or variable names."
+      "reason": "The instruction names the files to modify which is appropriate for the task scope. It describes what needs to change at an architectural level without specifying exact line numbers or code snippets to insert."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it's a code implementation task."
+      "reason": "This is not an agentmd-edits task; it involves code and documentation changes across multiple files."
     }
   },
   "tier_a_fails": [
@@ -57,9 +57,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
 }

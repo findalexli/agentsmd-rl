@@ -2,66 +2,62 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific string patterns like 'getAssetScripts,\\n    deepEqual,' and 'getScripts,\\n    deepEqual,' and exact counts (5 useStore calls, 5 deepEqual usages in useTags). The instruction.md does not mention these specific function names (getAssetScripts, getScripts), the exact number of useStore calls (5), or the exact formatting/whitespace patterns. The instruction also doesn't mention that deepEqual specifically must be imported from '@tanstack/router-core' with that exact import"
+      "outcome": "pass",
+      "reason": "The instruction names both file paths (Scripts.tsx, headContentUtils.tsx), the function names (useStore, deepEqual, useTags, getAssetScripts, getScripts), the import source (@tanstack/router-core), and the counts (2 useStore calls in Scripts.tsx, 5 in useTags). All test-asserted specifics (file paths, function counts, scope function 'useTags') are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The Hint section explicitly states: 'useStore hook accepts an optional third argument: a comparison function. Using a deep-equality comparator in this argument prevents unnecessary re-renders' and 'The @tanstack/router-core package exports comparison utilities that may be useful.' This essentially tells the agent exactly what to do: add deepEqual from @tanstack/router-core as the third argument to useStore calls."
+      "reason": "The instruction explicitly states the exact fix: pass `deepEqual` as the third argument to all 7 useStore calls, specifies exact import lines, exact formatting patterns like `getAssetScripts,\\n    deepEqual,`, and even states the exact import syntax. This is a direct specification of WHAT to change, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'getAssetScripts,\\n    deepEqual,' with specific whitespace, exact import statement 'import { deepEqual } from \\'@tanstack/router-core\\'', and 'deepEqual, escapeHtml' or 'escapeHtml, deepEqual' in imports. An alternative correct fix using e.g. isDeepEqual or a custom comparator, or even importing deepEqual differently (e.g., import * as core from '@tanstack/router-core' then using core.deepEqual), would fail these text-matching tests."
+      "outcome": "pass",
+      "reason": "The tests use AST analysis to check that useStore calls have a function identifier as their third argument. They don't check the specific name 'deepEqual' - they check for any identifier. An alternative using a custom comparator function (e.g., `isEqual` from lodash) passed as the third argument would also pass. However, the p2p build/type tests would constrain to valid comparators."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_scripts_has_deep_equal_import, test_scripts_use_store_calls_have_deep_equal, test_head_content_utils_has_deep_equal_import, test_use_tags_use_store_calls_have_deep_equal) are purely text-matching via string containment checks and regex on source files. They never import, call, or execute the code to verify actual behavior (no re-render prevention is tested). The p2p tests do run subprocesses but those pass on the base commit too."
+      "outcome": "pass",
+      "reason": "The f2p tests use TypeScript compiler API via Node.js subprocess to perform AST-based analysis of the source files, not simple string matching. The p2p tests run actual build, type-check, unit test, and prettier commands. This verifies structural properties and behavior rather than raw text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings (deepEqual imports and usage) that are not present in the base commit files. A stub/no-op implementation would not add these strings to the source files, so these tests would fail without the actual fix."
+      "reason": "The f2p tests check that useStore calls have >= 3 arguments with a function identifier as the third argument. A stub or no-op implementation would not add these arguments to existing useStore calls, so these tests would fail on the base commit and require actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/router and solve.sh is in the container's solution/ directory. The agent could read /solution/solve.sh or the gold patch to discover the exact changes needed. Additionally, since tests are pure text-matching, the agent could simply grep the test file to find the exact strings expected and write them into the source files."
+      "reason": "The solution is available at /workspace/router and the solve.sh is in /solution/solve.sh. The agent could read the solution file directly (e.g., cat /solution/solve.sh) or inspect the gold patch. The Dockerfile does not remove the solution directory or restrict access to it."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction states the problem is 'unnecessary re-renders' but no test actually verifies that re-renders are reduced. Tests only check for the presence of deepEqual in source code text, not the actual behavioral improvement."
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: the import of deepEqual in both files (via AST checking for function comparators), all 7 useStore calls having deepEqual as third argument, the useTags scope having exactly 5 calls, and the p2p tests cover build, types, unit tests, prettier, and docs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (e.g., test_scripts_has_deep_equal_import, test_p2p_react_router_unit_tests) and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with descriptive names (test_scripts_has_deep_equal_import, test_use_tags_use_store_calls_have_deep_equal, etc.), clear docstrings explaining what each test verifies, and a logical separation between fail-to-pass and pass-to-pass tests with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing React component code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task involves fixing React component code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md and tests are consistent and correctly spelled."
+      "reason": "File paths, command names, function names, and variable names in the instruction are all correct and consistent with the actual repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact two files to modify (Scripts.tsx and headContentUtils.tsx), the exact hook (useStore), the exact problem location (third argument), and even the specific utility package (@tanstack/router-core) and concept (deep-equality comparator). This goes well beyond describing what's broken."
+      "reason": "The instruction names the exact files (Scripts.tsx, headContentUtils.tsx), exact function to import (deepEqual), exact import source (@tanstack/router-core), exact formatting patterns (`getAssetScripts,\\n    deepEqual,`), and exact counts of useStore calls. This goes well beyond identifying the buggy area and specifies the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task involving TypeScript source files, not configuration files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 7,
+  "fail_count": 3
 }

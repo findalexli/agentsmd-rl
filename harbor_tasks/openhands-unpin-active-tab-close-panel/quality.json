@@ -2,36 +2,36 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific strings like 'should close the right panel when unpinning the currently active tab', 'should not close the right panel when unpinning a non-active tab', 'useConversationStore.getState()', 'hasRightPanelToggled).toBe(false)', 'rightPanelShown).toBe(false)', and test_store_initialization_in_t (truncated) checks for specific store initialization patterns. The instruction.md does not specify these exact test description strings or the exact assertion patterns (e.g., 'hasRightPa"
+      "outcome": "pass",
+      "reason": "The instruction names the exact file paths, store names (useConversationStore), state keys (selectedTab, isRightPanelShown, hasRightPanelToggled), test descriptions, localStorage key patterns (rightPanelShown), and assertion patterns that the tests check for. The test for store initialization checks for specific setState values which are all listed in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'check if selectedTab === tab', 'check isRightPanelShown', 'call setHasRightPanelToggled(false)', 'call setRightPanelShown(false)', which store/hook to use, and exactly where in the code (the else branch of handleTabClick). This is a complete implementation specification, not just a bug description."
+      "reason": "The instruction explicitly tells the agent to use setHasRightPanelToggled(false), setRightPanelShown(false), check selectedTab === tab, destructure from useConversationStore, and gives exact test implementations including assertion patterns like 'hasRightPanelToggled).toBe(false)'. This describes the exact fix, not just the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_active_tab_panel_close_fix_present does pure text matching for 'selectedTab === tab && isRightPanelShown' on the same line. An alternative correct fix could use 'selectedTab === tab' and 'isRightPanelShown' on separate lines, or use different variable names via aliasing, or check conditions in a different order (e.g., 'isRightPanelShown && selectedTab === tab'), and would fail the test."
+      "reason": "Tests like test_active_tab_panel_close_fix_present assert exact string patterns like 'selectedTab === tab && isRightPanelShown' in a single line, 'setHasRightPanelToggled(false)', and 'setRightPanelShown(false)' appearing after that conditional. An alternative correct fix using e.g. getState() inline, different variable names, or a different conditional structure would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_active_tab_panel_close_fix_present, test_conversation_store_imported, test_setrightpanelshown_destructured, test_new_tests_for_active_tab_unpin, and test_store_initialization_in_t are all pure text-matching tests (reading file content and asserting string presence). While test_repo_vitest_tests_pass and test_repo_build do execute code, the fail-to-pass tests are predominantly text-based."
+      "reason": "Tests test_active_tab_panel_close_fix_present, test_conversation_store_imported, test_setrightpanelshown_destructured, test_new_tests_for_active_tab_unpin, and test_store_initialization_in_t* are all pure text-matching (reading file content and asserting strings). While test_repo_vitest_tests_pass etc. do execute code, the fail-to-pass tests are entirely string-in-file checks."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The text-matching f2p tests check for specific code patterns that wouldn't exist in a stub/no-op implementation. The vitest execution tests (test_repo_vitest_tests_pass) would also fail without actual behavioral changes. A stub implementation wouldn't add 'selectedTab === tab && isRightPanelShown' to the source file."
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_active_tab_panel_close_fix_present, test_new_tests_for_active_tab_unpin, etc.) only check for string presence in source files. An agent could satisfy them by inserting dead code comments or unreachable code containing those exact strings without actually fixing the bug. Only the vitest execution tests (pass-to-pass) verify actual behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/OpenHands (the solve.sh is in solution/solve.sh in the container). An agent could read the solution directory or the gold patch. Additionally, since tests are pure string matching, an agent could grep test_outputs.py for the exact strings expected and insert them verbatim without understanding the bug."
+      "reason": "The solution exists at /workspace/OpenHands (the solve.sh is applied there), and the agent could read /solution/solve.sh or the test file at tests/test_outputs.py to see exact expected strings like 'selectedTab === tab && isRightPanelShown'. The tests check for literal strings that could be matched by reading test_outputs.py."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: panel closes when active tab unpinned, panel stays open when non-active tab unpinned, store and localStorage updated. Tests verify all of these behaviors (via vitest execution and text matching for the new test cases)."
+      "reason": "All behaviors described in instruction.md are tested: closing panel when active tab unpinned (vitest + string check), not closing when non-active tab unpinned (vitest + string check), store state updates, localStorage updates, and required imports."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., 'Fail-to-pass: The fix for closing panel when unpinning active tab must be present')."
+      "reason": "Tests are well-named with descriptive docstrings explaining fail-to-pass vs pass-to-pass distinction, and organized by concern (fix presence, imports, vitest execution, lint, build, etc.)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,22 +39,22 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md appear correct and consistent with the codebase."
+      "reason": "File paths, variable names, commands, and test descriptions in the instruction match those in the test file without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function (handleTabClick), the exact branch ('the else branch that adds to unpinnedTabs'), exact variable names (selectedTab, isRightPanelShown), exact method calls (setHasRightPanelToggled(false), setRightPanelShown(false)), and exact hooks/stores to use. This goes well beyond identifying the buggy file/component."
+      "reason": "The instruction specifies exact implementation details: 'useConversationStore.setState with selectedTab: editor, isRightPanelShown: true, hasRightPanelToggled: true', exact assertion patterns 'hasRightPanelToggled).toBe(false)' and 'rightPanelShown).toBe(false)', and tells the agent to destructure setRightPanelShown from the localStorage hook."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],

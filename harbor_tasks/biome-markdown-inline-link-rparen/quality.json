@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions the test name `ok::ok::inline_link_whitespace_md`, the snapshot path `crates/biome_markdown_parser/tests/md_test_suite/ok/inline_link_whitespace.md.snap`, the specific token ranges `R_PAREN@65..68` and `R_PAREN@67..68`, the cargo commands, and the package name `biome_markdown_parser`. All test-asserted specifics (snapshot path, regex patterns for R_PAREN@65..68 and R_PAREN@67..68, test filter string, cargo commands) are discoverable from instruction.md."
+      "reason": "The instruction mentions the package name (biome_markdown_parser), the test name (ok::ok::inline_link_whitespace_md), the snapshot path, the R_PAREN token format, cargo test and cargo insta review commands. All test-asserted specifics (package name, test filter, snapshot path, R_PAREN token text) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (trailing whitespace absorbed into R_PAREN token range) and what the correct behavior should be, but does not specify the exact code change (e.g., which lines to modify, what function to add/remove, or the specific loop to insert). The developer must still reason about how to fix the parser."
+      "reason": "The instruction describes the symptom (whitespace absorbed into R_PAREN token range) and the expected correct behavior, but does not specify exact code changes like 'add a while loop' or 'remove skip_link_def_separator_tokens'. A developer must still reason about what code to change and how."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_inline_link_snapshot_fixed asserts on exact byte positions `R_PAREN@67..68` with regex `r'R_PAREN@67\\.\\68\\s+\"\\)\"'`. An alternative correct fix might produce different byte offsets (e.g., if whitespace is handled differently, the title node might have different span boundaries). The test also checks that `R_PAREN@65..68` is absent. These exact position assertions are gold-solution-specific and would reject alternative valid fixes that produce correct parsing but with different internal span "
+      "reason": "test_inline_link_snapshot_fixed uses regex to check R_PAREN token text in the snapshot file. The snapshot format is very specific - an alternative correct fix might produce different tree structure (e.g., whitespace as a separate sibling node rather than inside title content, or using trivia instead of MdTextual nodes). The test also requires exact snapshot match via cargo test, meaning any valid fix that produces different intermediate node structure/ranges would fail even if R_PAREN is correct"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests include `test_markdown_parser_tests_pass` and `test_inline_link_whitespace_md_runs` which execute `cargo test` subprocesses, `test_links_rs_compiles` which runs `cargo check`, and `test_repo_fmt`/`test_repo_clippy` which run cargo fmt/clippy. While `test_inline_link_snapshot_fixed` is text-based snapshot inspection, the majority of tests execute the code."
+      "reason": "Tests execute `cargo test`, `cargo check`, `cargo fmt`, and `cargo clippy` as subprocesses, which compile and run the actual parser code. The snapshot check in test_inline_link_snapshot_fixed also reads the snapshot but only after cargo test confirms behavioral correctness. The tests are not purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests require actual code changes: `test_links_rs_compiles` requires the code to compile after modification, `test_inline_link_snapshot_fixed` requires the snapshot file to have updated content with correct byte ranges, and `test_inline_link_whitespace_md_runs` requires the specific test to pass (which means parser output must match the updated snapshot). A stub/no-op wouldn't satisfy these."
+      "reason": "The fail_to_pass tests (test_links_rs_compiles, test_inline_link_snapshot_fixed, test_inline_link_whitespace_md_runs) require actual code changes. A stub or no-op would not change the parser behavior, so the snapshot would still show the buggy R_PAREN@65..68 with whitespace, failing the regex assertion in test_inline_link_snapshot_fixed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/biome` accessible path as `solve.sh` is not in `/solution/` in the container per the Dockerfile. However, the agent could potentially read the test file at `tests/test_outputs.py` to discover exact regex patterns like `R_PAREN@67..68` and directly edit the snapshot file to match without understanding the bug. The `test_inline_link_snapshot_fixed` test only checks snapshot content, so editing just the snapshot would pass it. While `test_inline_link_whitespa"
+      "reason": "The solution directory exists at /workspace/biome with solve.sh accessible in the container. An agent could read /solution/solve.sh (or the test file tests/test_outputs.py) to see exactly what changes to make and what snapshot content is expected. The Dockerfile does not remove these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires fixing the parser bug and updating the snapshot. Tests verify: compilation, full test suite passes, specific test passes, snapshot content is correct, formatting and clippy pass. All explicitly required behaviors are tested."
+      "reason": "The instruction requires: (1) fixing the R_PAREN token range bug, (2) running cargo test, (3) updating snapshots. All of these are tested via test_markdown_parser_tests_pass, test_inline_link_snapshot_fixed, and test_inline_link_whitespace_md_runs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_markdown_parser_tests_pass, test_links_rs_compiles, test_inline_link_snapshot_fixed, etc.), have docstrings explaining their purpose and whether they are pass_to_pass or fail_to_pass, and are logically grouped by concern."
+      "reason": "Tests have descriptive names (test_markdown_parser_tests_pass, test_links_rs_compiles, test_inline_link_snapshot_fixed, etc.) and detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a parser bug and updating snapshots, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task involves fixing a parser bug, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and test names in the instruction and tests are consistent and free of typos."
+      "reason": "All file paths, commands, package names, and test names in instruction.md are correct and consistent with the actual repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions 'the markdown inline link parser' and describes the bug in terms of behavior, not specific line numbers or function names. It doesn't name exact files like `links.rs` or specific functions like `parse_inline_link_tail`. The affected area is described at an appropriate level of abstraction."
+      "reason": "The instruction says the bug is in 'the markdown inline link parser' and describes the symptom. It doesn't name the exact file (links.rs) or the exact function (parse_inline_link_tail), leaving localization as part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

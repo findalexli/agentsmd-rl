@@ -3,58 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (directive_ext.rs, lib.rs, html.rs, SKILL.md, AGENTS.md), all 8 Svelte directive variants, all 4 Vue directive types, function names (parse_directive_string_value, parse_directive_text_expression, initializer), method chains (.value().ok()?.initializer()), types (HtmlAttributeInitializerClause, AnySvelteDirective), EmbeddingKind variants, inner_string_text(), TextSize::from(1), cast_ref patterns, and documentation requirements. Every specific asserted in "
+      "reason": "The instruction names all key file paths (directive_ext.rs, lib.rs, html.rs, SKILL.md, AGENTS.md), function names (initializer, parse_directive_string_value, parse_directive_text_expression), all 8 Svelte directive variants, all 4 Vue directive types, EmbeddingKind variants, inner_string_text(), TextSize::from(1), cast_ref, HtmlAttributeInitializerClause, and other specifics that appear in tests. The test for AGENTS.md checks for strings like 'widely used' and 'common' which are mentioned in the"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies exact function names (parse_directive_string_value, parse_directive_text_expression), exact method chains (.value().ok()?.initializer()), exact offset values (TextSize::from(1)), exact API calls (inner_string_text(), as_html_attribute_single_text_expression()), and exact implementation patterns (cast_ref for each type). This goes far beyond describing what's broken \u2014 it prescribes the exact implementation."
+      "reason": "The instruction essentially dictates the exact implementation: specific helper function names (parse_directive_string_value, parse_directive_text_expression), exact method call chains (.value().ok()?.initializer()), exact offset calculations (TextSize::from(1)), exact extraction methods (inner_string_text(), as_html_attribute_single_text_expression), and exact parameter types (HtmlAttributeInitializerClause). This is a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names 'parse_directive_string_value' and 'parse_directive_text_expression', exact method 'inner_string_text()', exact expression 'TextSize::from(1)', exact pattern 'directive.initializer()', exact count of 'EmbeddingKind::Vue' >= 4, exact method 'as_html_attribute_single_text_expression'. An alternative correct implementation using different helper names or different extraction approaches would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact function names 'parse_directive_string_value' and 'parse_directive_text_expression', exact method 'inner_string_text()', exact expression 'TextSize::from(1)', exact call pattern 'directive.initializer()', exact count of 'EmbeddingKind::Vue' >= 4, exact match arm pattern '.value().ok()?.initializer()' appearing exactly 8 times. An alternative correct implementation using different helper names or a unified approach would fail these tests"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test uses string matching (e.g., 'assert \"mod directive_ext\" in lib_rs', checking for string patterns in source files via regex). No test compiles the Rust code, runs the linter, or executes the actual behavior. All tests are variants of 'assert pattern in open(path).read()'."
+      "reason": "Every test uses string matching on file contents (e.g., checking 'parse_directive_string_value' in content, counting occurrences of 'EmbeddingKind::Vue', regex matching function signatures). No test actually compiles the Rust code, runs the linter, or verifies that variables in Vue/Svelte directives are no longer reported as unused. All tests are purely textual pattern matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation could pass: creating files with the exact string patterns checked (e.g., a directive_ext.rs with a match block containing all 8 variant names and .value().ok()?.initializer() repeated 8 times) without any actual working logic. The tests only check for string presence, not compilation or execution."
+      "outcome": "pass",
+      "reason": "A stub implementation (empty files, default returns) would not pass these tests since they check for specific content like 'pub fn initializer', all 8 Svelte variants in a match block, specific function signatures, and specific string patterns. The agent must write substantive code matching the expected patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/biome as solve.sh applies a patch there. The agent could read test_outputs.py (though stated as hidden, the Dockerfile doesn't prevent access), or more critically, the tests only check for string patterns in files \u2014 the agent could write files containing the expected strings without understanding the bug."
+      "reason": "The solution is available at /workspace/biome via the gold patch applied by solve.sh. The agent could read the solution directory or the Dockerfile reveals the exact commit. Since tests only check file contents with string matching, the agent could also grep test_outputs.py (which runs inline Python strings) to discover exactly what strings to place in each file."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that 'Running biome lint --only=noUnusedVariables on a .vue or .svelte file should report zero warnings' \u2014 this core behavioral requirement is never tested. Tests only check file contents via string matching, not actual linter behavior."
+      "reason": "The instruction requires that 'Running biome lint --only=noUnusedVariables on a .vue or .svelte file with directive-bound variables should report zero warnings,' but no test actually runs the linter to verify this core behavioral requirement. Tests only check file content patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive names (test_directive_ext_initializer, test_vue_directive_tracking, etc.), grouped by concern (gates, code behavior, documentation), and each has a docstring explaining what it checks."
+      "reason": "Tests are well-organized with descriptive names (test_directive_ext_initializer, test_vue_directive_tracking, test_svelte_directive_tracking, etc.), grouped by concern (gates, fail-to-pass code, fail-to-pass config), and each has a docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task produces Rust source code and markdown documentation, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction appear correct and consistent with the test expectations."
+      "reason": "File paths, function names, variable names, and commands in the instruction are consistent with what appears in the tests and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact function signatures (parse_directive_string_value, parse_directive_text_expression), exact internal method chains, exact offset calculations, and exact file modification locations. This constitutes heavy implementation leakage beyond what's needed to describe the bug."
+      "reason": "The instruction names exact function signatures (parse_directive_string_value, parse_directive_text_expression), exact method chains (.value().ok()?.initializer()), exact offset values (TextSize::from(1)), and exact extraction methods (inner_string_text(), as_html_attribute_single_text_expression). This goes far beyond identifying the buggy area \u2014 it's a complete implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The config/documentation edits (AGENTS.md, SKILL.md files) are localized additions, not full-file rewrites, and are consistent with the task description."
+      "reason": "The config/documentation edits (AGENTS.md, SKILL.md files, README.md) are localized additions \u2014 new sections and new files \u2014 not full-file rewrites, and they don't contradict other files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -62,6 +61,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 6
 }

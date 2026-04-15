@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: helper function names (resolve_provider_and_model, resolve_session_id, handle_resumed_session_workdir, resolve_and_load_extensions, configure_session_prompts), file paths (clippy.toml, scripts/clippy-lint.sh, scripts/clippy-baseline.sh, clippy-baselines/too_many_lines.txt, AGENTS.md, .github/copilot-instructions.md, HOWTOAI.md, CONTRIBUTING.md, Justfile, builder.rs), literal strings ('cargo clippy --all-targets', 'Merge without ru"
+      "reason": "All test-asserted specifics are discoverable from instruction.md: the five helper function names (resolve_provider_and_model, resolve_session_id, handle_resumed_session_workdir, resolve_and_load_extensions, configure_session_prompts), the file paths (builder.rs, clippy.toml, scripts/clippy-lint.sh, etc.), the exact strings like 'cargo clippy --all-targets', 'Merge without running clippy', 'CI handles this (clippy)', 'clippy.toml', 'too-many-lines-threshold', and the requirement of >=10 function "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact five helper functions to create (resolve_provider_and_model, resolve_session_id, etc.), the exact literal strings to use in each documentation file (e.g., 'Merge without running clippy', 'CI handles this (clippy)'), and the exact replacement command. This tells the agent precisely WHAT to write rather than describing desired behavior."
+      "reason": "The instruction specifies exact replacement strings (e.g., 'cargo clippy --all-targets -- -D warnings'), exact helper function names to create, exact phrases to use in documentation files ('Merge without running clippy', 'CI handles this (clippy)'). This tells the agent precisely WHAT to write rather than describing what's broken and letting the agent reason about the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact function names like 'fn resolve_provider_and_model', 'fn resolve_session_id', etc. An equally correct refactoring using different helper names (e.g., 'fn get_provider_config', 'fn determine_session_id') would fail. Tests also assert exact strings like 'Merge without running clippy' and 'CI handles this (clippy)' \u2014 alternative correct phrasings would fail."
+      "reason": "Tests assert on exact function names like 'fn resolve_provider_and_model', 'fn resolve_session_id', etc. A correct alternative decomposition using different helper names (e.g., 'fn setup_provider', 'fn get_session_id') would fail. Similarly, tests check for exact strings like 'Merge without running clippy' and 'CI handles this (clippy)' \u2014 alternative correct phrasings would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_build_session_decomposed, test_clippy_toml_created, test_old_infrastructure_removed, test_agents_md_standard_clippy, test_copilot_instructions_updated, test_doc_files_consistent) are all text-search tests using 'in content' checks. The pass-to-pass tests do run cargo commands (fmt, check, clippy), but the core f2p tests only grep files for strings without executing or importing code."
+      "reason": "The fail-to-pass tests are almost entirely text-matching: checking for string presence in files (e.g., 'fn resolve_provider_and_model' in content, 'cargo clippy --all-targets' in content). The pass-to-pass tests do run cargo fmt/check/clippy which verify behavior, but the core fail-to-pass tests (test_build_session_decomposed, test_clippy_toml_created, test_old_infrastructure_removed, test_agents_md_standard_clippy, etc.) are all 'assert string in open(path).read()' style checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass: the tests check for specific function declarations in builder.rs that don't exist in the original, require clippy.toml to exist with a specific setting, require deletion of existing files, and require specific string changes in documentation files. The baseline repo doesn't satisfy these conditions."
+      "reason": "A stub/default implementation would not pass these tests. The agent must actually create clippy.toml with the right content, delete specific files, modify documentation files to contain specific strings, and refactor builder.rs to contain specific function declarations. These require substantive file modifications."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/goose's solution directory (solve.sh is in solution/), and the agent could read it. Additionally, the test file at tests/test_outputs.py contains all the exact strings being checked, so the agent could grep for expected fixture values and write them directly."
+      "reason": "The solution file exists at /workspace/goose (solve.sh is a gold patch). The agent could read solution/solve.sh if accessible in the container, or could grep test files to find exact expected strings like 'Merge without running clippy' and 'CI handles this (clippy)' without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: helper function decomposition, clippy.toml creation, old file removal, documentation updates for all five files, balanced braces/syntax check, and compilation/clippy pass-to-pass checks."
+      "reason": "All behaviors specified in instruction.md are tested: deletion of old scripts, creation of clippy.toml, updates to all five documentation files, decomposition of build_session into the five named helpers, balanced braces, and >=10 function declarations. The CI workflow file update (.github/workflows/ci.yml) mentioned in the gold patch isn't in the instruction, so that's not a gap."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (fail-to-pass core, fail-to-pass config, pass-to-pass repo, pass-to-pass static) with descriptive names and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear sections (fail-to-pass behavioral, fail-to-pass config updates, pass-to-pass repo tests, pass-to-pass static checks), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact helper function signatures (fn resolve_provider_and_model, fn resolve_session_id, etc.) and exact replacement strings for each file. This goes beyond identifying the problem area and prescribes the exact implementation details."
+      "reason": "The instruction names exact helper function names (resolve_provider_and_model, resolve_session_id, etc.), exact replacement strings for documentation files, and exact file paths. While the file paths are reasonable for the task domain, specifying exact function names for the decomposition is excessive localization that removes the design decision from the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs are localized line replacements in documentation files and the Justfile, not full-file rewrites. They are consistent with the instruction requirements."
+      "reason": "The config edits (documentation files, Justfile) are localized changes replacing script references with standard commands, not full-file rewrites. The gold patch shows targeted line-level changes."
     }
   },
   "tier_a_fails": [

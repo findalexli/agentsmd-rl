@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key paths (products/llm_analytics/mcp/tools.yaml, products/llm_analytics/skills/README.md, products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md), the tool name (llm-analytics-evaluation-summary-create), schema keys (enabled, title, description, scopes, annotations with readOnly/destructive/idempotent), skill naming (exploring-llm-evaluations), frontmatter fields (name, description), and README section headers (## Skills, ## Adding a new skill). All test asse"
+      "reason": "The instruction names the tool key 'llm-analytics-evaluation-summary-create', the skill directory 'exploring-llm-evaluations', the SKILL.md file, the tools.yaml path, the skills/README.md path, all required schema fields (enabled, title, description, scopes, annotations with readOnly/destructive/idempotent), the README section headers ('## Skills', '## Adding a new skill'), frontmatter requirements (name, description), and kebab-case naming rules. All test assertions reference these same paths, "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be enabled and what schema to follow, but does not specify exact YAML content values like the title string, description string, specific scopes, or annotation boolean values. The agent must reason about appropriate values for these fields."
+      "reason": "The instruction describes what needs to be done (enable the tool, create a skill document, update README) and the schema requirements, but does not specify exact field values like the title string, description content, or scope values. The agent must reason about appropriate values."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests validate schema structure (kebab-case names, required fields exist, frontmatter format) rather than exact field values. Different valid title strings, description strings, scope lists, and annotation boolean combinations would all pass. The skill SKILL.md content beyond frontmatter is unconstrained."
+      "reason": "Tests validate schema structure (presence of required keys, types, format patterns) rather than exact values. For example, tests check that 'scopes' is a non-empty list but don't assert specific scope values; they check annotations have the three boolean fields but don't assert specific true/false values; they check frontmatter has 'name' and 'description' but don't assert exact description text. Alternative correct implementations with different titles, descriptions, and scope lists would all p"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are essentially text/structure inspection: test_yaml_valid_syntax parses YAML but just checks it's a dict with 'tools' key; test_tools_yaml_schema checks field presence in parsed YAML; test_skills_readme_structure does 'assert skill_dir.name in readme_content'; test_existing_skills_have_frontmatter checks string patterns in file content. No test actually invokes an MCP tool, calls an API endpoint, or executes any application behavior. They are all file content inspection tests."
+      "reason": "Most tests are effectively text/structure checks: they parse YAML and check for key presence, read file contents and check for string presence (e.g., 'assert skill_dir.name in readme_content', 'assert content.startswith(\"---\")', 'assert \"name:\" in frontmatter'). While they do parse YAML (which is a step beyond raw text matching), the core checks are still 'does this string appear in this file' rather than executing any behavioral code. No test imports or calls application code, or tests runtime "
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests require specific structural changes: the evaluation summary tool must be enabled with scopes and annotations (test_tools_yaml_schema), the exploring-llm-evaluations directory must exist with SKILL.md containing frontmatter (test_existing_skills_have_frontmatter, test_existing_skills_valid_structure), and README must reference all skill directories (test_skills_readme_structure). A stub/no-op wouldn't pass since the files don't exist or aren't configured in the base commit."
+      "reason": "The tests cannot be satisfied without actual changes. The tool 'llm-analytics-evaluation-summary-create' must be enabled with proper schema fields (it starts disabled), the skill directory 'exploring-llm-evaluations/SKILL.md' must exist (it doesn't yet), and the README must reference all skill directories including the new one. A stub/empty implementation would fail these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh is present in the container at /workspace and contains the exact git checkout command with the commit SHA (30f37cacc13303efa00c346122805352deb049ff) and file paths. An agent could read this file or simply execute it. Additionally, the agent could grep for the expected fixture values in the test file at tests/test_outputs.py."
+      "reason": "The solution is in /workspace/posthog accessible to the agent via the solve.sh script which does 'git checkout 30f37cacc13303efa00c346122805352deb049ff -- products/llm_analytics/mcp/tools.yaml ...'. The agent could read solve.sh at the path shown in the Dockerfile context, or simply fetch that git commit to get the exact solution files. The solution directory and git history are accessible within the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: tool enablement with schema validation, skill document creation with frontmatter, README updates referencing all skills, and directory structure requirements."
+      "reason": "All behaviors specified in instruction.md are tested: tool enabled with required schema fields (test_tools_yaml_schema), skill document with frontmatter (test_existing_skills_have_frontmatter, test_existing_skills_valid_structure), README structure with required sections and skill references (test_skills_readme_structure, test_all_existing_skills_in_readme), YAML validity (test_yaml_valid_syntax), and directory structure (test_llm_analytics_directory_structure)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_yaml_valid_syntax, test_tools_yaml_schema, test_skills_readme_structure, etc.), grouped with section comments (Gates, Pass-to-pass repo tests), and each has a docstring explaining its purpose."
+      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (gates/static checks, schema validation, skill structure, directory structure), and include section comments like '# Gates (pass_to_pass, static)' and '# Pass-to-pass repo tests'."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact YAML schema for both MCP tools (required fields: enabled, title, description, scopes, annotations with readOnly/destructive/idempotent) and skill documents (frontmatter with name and description). All structured data schemas are fully specified."
+      "reason": "The instruction documents the exact YAML schema for both MCP tools (required fields: enabled, title, description, scopes, annotations with readOnly/destructive/idempotent) and skill documents (frontmatter with name and description), which matches what tests validate."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, tool names, field names, and directory names are consistent between instruction.md and the test file with no typos detected."
+      "reason": "All filenames, paths, tool names, field names, and section headers are consistent between instruction.md and the test file with no typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction identifies files to modify (which is necessary for the task domain) but doesn't specify exact line numbers, exact content to write, or implementation details like specific scope values or description text."
+      "reason": "The instruction names the files to modify (tools.yaml, skills directory, README.md) which is appropriate for the task domain. It doesn't specify exact line numbers or exact content to insert, only schema requirements. The tool name 'llm-analytics-evaluation-summary-create' is necessary context, not hint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch (solve.sh) checks out exactly 3 files from a specific commit \u2014 it's a localized config edit to tools.yaml, README.md, and a new SKILL.md file. No full-file rewrites or contradictions with other files."
+      "reason": "The gold diff (from solve.sh) is localized: it modifies one entry in tools.yaml, creates one new skill file, and updates the README. These are targeted edits consistent with the instruction scope and don't contradict other files."
     }
   },
   "tier_a_fails": [

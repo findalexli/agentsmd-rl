@@ -2,48 +2,48 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: the file path `crates/sui-indexer-alt-framework-store-traits/src/lib.rs`, the method `sequential_connect`, the error string `Failed to establish sequential connection to store`, the `use anyhow::Context` import, the `transaction` method signature `async fn transaction<'a, R, F>`, the trait name `pub trait SequentialStore`, and the cargo commands are all explicitly mentioned."
+      "outcome": "fail",
+      "reason": "Tests assert on specific names like 'sequential_connect', 'anyhow::Context', 'Failed to establish sequential connection to store', and the exact file path 'crates/sui-indexer-alt-framework-store-traits/src/lib.rs'. The instruction.md does not name 'sequential_connect', 'anyhow::Context', or the specific error string. It only says to find and remove dead code. An agent cannot discover these specific assertions from instruction.md alone without inspecting the actual source code (which it can do, b"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: remove the `sequential_connect` method, remove the `use anyhow::Context` import, and even specifies to remove the blank line after the method. It describes the method's implementation ('delegates to the connect method... adds an error context message'). This is a direct solution specification, not just a problem description."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (dead code/warnings) but does not specify which method or import to remove, leaving the agent to identify the dead code themselves."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for absence of the method signature, absence of the error string, absence of the import, presence of `transaction` method, and compilation/clippy/fmt/tests passing. Any correct removal approach would pass these checks - there's essentially only one way to correctly remove these lines."
+      "reason": "The tests check for the absence of 'sequential_connect' and 'use anyhow::Context;', and the presence of 'transaction' method and 'SequentialStore' trait. Any correct fix that removes the dead code would pass these checks regardless of implementation approach."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests `test_sequential_connect_removed` and `test_context_import_removed` are purely text-based assertions (`if 'async fn sequential_connect' in content`, `if 'use anyhow::Context;' in line`). However, `test_compiles`, `test_no_clippy_warnings`, `test_cargo_fmt`, and `test_crate_unit_tests` do execute subprocesses. Since it's a mix but the fail-to-pass tests are entirely text-based, this is a FAIL."
+      "reason": "Tests test_sequential_connect_removed and test_context_import_removed are purely text-based checks ('async fn sequential_connect' in content, 'use anyhow::Context;' in line). However, test_compiles, test_no_clippy_warnings, test_cargo_fmt, and test_crate_unit_tests do execute subprocesses. Since not ALL tests are text-only, this is borderline, but the two fail-to-pass tests (the core behavioral tests) ARE purely text-matching with no execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (`test_sequential_connect_removed`, `test_context_import_removed`) check that specific content is absent from the file. A stub/no-op approach cannot satisfy these since the original file contains the method and import. The agent must actually modify the file."
+      "reason": "The fail-to-pass tests (test_sequential_connect_removed, test_context_import_removed) check that specific code has been removed from the file. A stub/no-op change would leave the original code intact and fail these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in `/workspace/sui` at `solution/solve.sh` which contains the exact git diff patch. An agent could read this file or grep for the expected test fixture values. The test assertions check for absence of specific strings that are visible in the test file, so matching fixture strings is trivial."
+      "reason": "The solution file exists at /workspace/sui (solution/solve.sh shows the exact patch). The agent could read the test file at tests/test_outputs.py to discover exactly what strings to remove ('sequential_connect', 'anyhow::Context'), or read solution/solve.sh for the exact patch. The Dockerfile doesn't prevent access to these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: removal of `sequential_connect` method, removal of `anyhow::Context` import, compilation, clippy warnings, and preservation of `transaction` method and `SequentialStore` trait."
+      "reason": "The instruction requires: compilation, clippy passing, unit tests passing, proper formatting, SequentialStore trait preserved, transaction method preserved, dead code removed. All of these are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (`test_sequential_connect_removed`, `test_context_import_removed`, etc.), each has a docstring indicating FAIL-TO-PASS or PASS-TO-PASS or SANITY CHECK, and they are logically grouped by concern."
+      "reason": "Tests are well-named (test_sequential_connect_removed, test_context_import_removed, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS/SANITY CHECK labels, and include descriptive assertion messages."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves removing dead code from a Rust file, not producing structured data output."
+      "reason": "This task involves code cleanup, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, and variable names in the instruction and tests are correct and consistent."
+      "reason": "No typos found in filenames, paths, commands, or variable names across all task files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file, exact trait, exact method name, exact import to remove, and even the exact error message string. It tells the agent to 'remove the entire method including its body' and to 'remove the blank line after it'. This is excessive localization for what should be a dead-code removal task."
+      "outcome": "pass",
+      "reason": "The instruction only names the crate 'sui-indexer-alt-framework-store-traits' and mentions the SequentialStore trait and transaction method as things to preserve. It does not name the specific buggy method or import to remove."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,14 +51,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
 }

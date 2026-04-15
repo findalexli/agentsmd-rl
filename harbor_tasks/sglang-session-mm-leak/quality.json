@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four file paths (schedule_batch.py, session_controller.py, scheduler.py, scheduler_output_processor_mixin.py), the relevant classes (MultimodalInputs, SessionController, Session), the relevant methods (_close, create_req, _maybe_clear_mm_inputs, process_batch_result_decode), and describes the three behaviors tested: release_features method, session close cleanup, and BOS offset clamping. The test for callers using release_features is also discoverable from the instructi"
+      "reason": "instruction.md names all four file paths (schedule_batch.py, session_controller.py, scheduler.py, scheduler_output_processor_mixin.py), the relevant classes (MultimodalInputs, SessionController, Session), methods (_close, create_req, _maybe_clear_mm_inputs, process_batch_result_decode), and the behaviors tested (release_features method, session close cleanup, BOS offset clamping, unified method usage). The test specifics like method name 'release_features' are strongly implied by the instruction"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (memory leak, duplicated code, negative offsets) and suggests general approaches (unify into a method, handle defensively) but does not specify exact code changes, line numbers to modify, or specific implementation details like 'use max(0, s-1)'."
+      "reason": "The instruction describes the problem (memory leak, duplicated code, negative offsets) and where to look, but does not prescribe exact code changes like 'add method release_features' or 'use max(0, s-1)'. A developer must still reason about what to name the method, how to implement it, and how to integrate it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_release_features_clears_all requires the method to be named exactly 'release_features' on the MultimodalInputs class. test_callers_use_release_features searches for '.release_features()' call sites by name. test_bos_offset_clamping uses AST inspection looking for specific patterns (ast.Sub in an assignment to .offsets attribute with a ListComp). An alternative correct fix using a different method name (e.g., 'clear_features') or a different code structure (e.g., a standalone function, or us"
+      "reason": "test_release_features_clears_all and test_callers_use_release_features hard-code the method name 'release_features' \u2014 an alternative correct fix using a different method name (e.g., 'clear_features', 'free_mm_tensors') would fail. test_bos_offset_clamping uses AST inspection looking for specific patterns (ast.Sub in offset assignment with ListComp), which could reject valid alternatives like an if-statement guard. test_close_releases_session_mm_features mocks a class with a 'release_features' me"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use a mix of AST parsing and actual code execution via subprocess. test_release_features_clears_all executes the extracted method with mock objects and verifies behavior. test_close_releases_session_mm_features executes the _close method with mocks. test_bos_offset_clamping evaluates the expression with test data. test_callers_use_release_features does AST inspection but checks for method calls. These go beyond simple text matching."
+      "reason": "Tests use a mix of AST parsing and subprocess execution with mock objects. test_release_features_clears_all actually executes the method and checks item.feature is None. test_close_releases_session_mm_features executes _close() and verifies features are released. test_bos_offset_clamping evaluates the offset expression. test_callers_use_release_features does use AST checking for method calls, but this is combined with structural verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_release_features_clears_all requires a method that actually sets feature=None on items - a stub returning None would fail. test_close_releases_session_mm_features requires _close to actually call release_features and set multimodal_inputs=None. test_bos_offset_clamping requires offset expressions that clamp to non-negative values. test_callers_use_release_features requires actual .release_features() calls in the source. None of these pass with trivial stubs."
+      "reason": "A stub release_features that does nothing (pass) would fail test_release_features_clears_all since items' features wouldn't be set to None. A stub _close that just deletes the session would fail test_close_releases_session_mm_features since multimodal_inputs wouldn't be cleared. The BOS offset test verifies non-negative values from actual expression evaluation. These tests require real implementations."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace as a git repo, and solve.sh is at a predictable path. An agent could potentially read the solution patch from the container's solution directory or inspect the test file at tests/test_outputs.py to reverse-engineer the expected implementation. The Dockerfile doesn't explicitly prevent access to /solution/ or test files."
+      "reason": "The solution file exists at /workspace as part of the task setup (solution/solve.sh contains the complete gold patch). An agent could read this file or grep for the expected implementation. The Dockerfile doesn't remove or protect the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires three behaviors: (1) release MM features on session close - tested by test_close_releases_session_mm_features, (2) unify feature release into a reusable method - tested by test_release_features_clears_all and test_callers_use_release_features, (3) defensive offset clamping - tested by test_bos_offset_clamping. All explicitly stated requirements are covered."
+      "reason": "All three behaviors from the instruction are tested: (1) session close releases mm features (test_close_releases_session_mm_features), (2) unified release_features method (test_release_features_clears_all + test_callers_use_release_features), (3) non-negative offset clamping (test_bos_offset_clamping)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_release_features_clears_all, test_close_releases_session_mm_features, test_bos_offset_clamping, test_callers_use_release_features), have docstrings explaining what they check, and are commented with categories like [static] pass_to_pass and [pr_diff] fail_to_pass."
+      "reason": "Tests are well-named (test_syntax_check, test_release_features_clears_all, etc.), grouped with comments indicating gates vs fail-to-pass, and each has a docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves code changes to fix bugs, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, class names, method names, and variable names in the instruction match what's referenced in tests and the codebase."
+      "reason": "All file paths, class names, method names, and variable names in the instruction match the actual codebase references used in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides specific line numbers ('around line 360', 'around line 1674', 'around line 438') and exact method names in exact files, which significantly reduces the localization effort. It also explicitly states 'This should be unified into a method on the MultimodalInputs class' which prescribes the architectural solution rather than just describing the problem."
+      "reason": "instruction.md provides exact line numbers ('around line 360', 'around line 1674', 'around line 438') and exact file paths for all four files. While this is borderline given the task requires changes across multiple files, specifying line numbers goes beyond what's needed and reduces the localization challenge significantly."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

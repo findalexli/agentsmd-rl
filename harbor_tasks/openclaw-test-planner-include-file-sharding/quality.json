@@ -3,63 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: (1) test_filter_helper_defined uses _extract_filter_helper which searches for a const arrow function referencing both 'countExplicitEntryFilters' and 'includeFiles' \u2014 the instruction never says to create a new named helper function. (2) test_executor_call_sites_updated and test_planner_call_sites_updated assert that no remaining call sites use 'countExplicitEntryFilters(unit.args)' outside the helper \u2014 the instruc"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: (1) test_filter_helper_defined requires a top-level const arrow function whose body references both 'countExplicitEntryFilters' and 'includeFiles' - the instruction never says to create a helper function. (2) test_executor_call_sites_updated and test_planner_call_sites_updated assert that no call sites use 'countExplicitEntryFilters(unit.args)' outside the helper - the instruction only says to 'consider includeFil"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (filter-counting logic doesn't account for includeFiles) and where (executor.mjs and planner.mjs), but doesn't prescribe the exact fix \u2014 it says 'includeFiles should also be considered as a fallback' without specifying to create a helper function or the exact code changes."
+      "reason": "The instruction describes the bug (countExplicitEntryFilters returns null for includeFiles-based units) and its effects (over-sharding, incorrect plan output), and says both files should consider includeFiles as a fallback. It does not specify the exact code change, helper function name, or implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are extremely implementation-specific. _extract_filter_helper searches for 'const <name> = (<params>) => { ... };' pattern containing both 'countExplicitEntryFilters' and 'includeFiles'. An alternative correct fix that (a) uses a regular function declaration instead of const arrow, (b) inlines the fallback logic at each call site, or (c) modifies countExplicitEntryFilters itself to accept the unit object would all fail test_filter_helper_defined and the call-site tests. The regex pattern i"
+      "reason": "Tests enforce a very specific implementation pattern: test_filter_helper_defined requires a 'const arrow function whose body references both countExplicitEntryFilters and includeFiles' via regex matching. The _extract_filter_helper function uses a specific regex pattern (r'(const\\s+\\w+\\s*=\\s*\\([^)]*\\)\\s*=>\\s*\\{.*?\\n\\};)') that requires a top-level const arrow function. An alternative fix that uses inline logic, a regular function declaration, or modifies countExplicitEntryFilters itself would fa"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several critical tests are purely textual/structural: test_filter_helper_defined uses regex to find a function pattern in source text; test_executor_call_sites_updated and test_planner_call_sites_updated use regex to check that certain call patterns don't appear in source text; test_explicit_filter_import_preserved checks for string presence. While test_include_files_fallback and test_explicit_filters_take_priority do execute code via node, the majority of f2p tests are text-matching."
+      "outcome": "pass",
+      "reason": "Several tests (test_include_files_fallback, test_explicit_filters_take_priority, test_null_for_no_include_files) extract the helper function and actually execute it via node subprocess with mock inputs and verify return values. While some tests are text-based (test_executor_call_sites_updated, test_filter_helper_defined), the majority execute actual code behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests test_include_files_fallback and test_explicit_filters_take_priority actually run the extracted helper with mock inputs and verify correct return values. test_filter_helper_defined requires a non-trivial code addition. A stub that returns None/null would fail the behavioral tests that check for specific numeric return values."
+      "reason": "The f2p tests require non-trivial implementation: test_include_files_fallback verifies the helper returns includeFiles.length (1, 2, 5) when explicit filters return null - a stub returning None/null would fail. test_explicit_filters_take_priority checks the function returns specific numeric values. A do-nothing or stub implementation cannot satisfy these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/openclaw as the gold patch in solve.sh. The agent could read the solution/solve.sh file (if accessible in the container) or inspect the git history. Additionally, since tests extract and run code from the modified files, an agent could reverse-engineer the expected helper pattern from test_outputs.py if it were accessible."
+      "reason": "The solution file exists at /workspace/openclaw (the solve.sh applies a patch to that directory), and the agent works in the same directory. The agent could read solution/solve.sh if it exists in the container, or could examine the test file at tests/test_outputs.py to see exact regex patterns and implementation expectations, then craft a solution matching those patterns exactly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes two problems (over-sharding and incorrect plan output) and the tests cover both: includeFiles fallback for shard assignment logic and correct filter count display. The scope of fixes (both files, both call sites) is tested."
+      "reason": "The instruction describes two problems (over-sharding and incorrect plan output) and the tests cover both: the helper function tests verify the fallback logic that fixes over-sharding, and the call-site tests verify both executor.mjs (formatPlanOutput) and planner.mjs (buildTopLevelSingleShardAssignments, formatExecutionUnitSummary) are updated."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-structured with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names (test_include_files_fallback, test_explicit_filters_take_priority), and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing JavaScript code logic, not producing structured data output."
+      "reason": "The task involves fixing JavaScript code logic, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (scripts/test-planner/executor.mjs, scripts/test-planner/planner.mjs), function names (countExplicitEntryFilters, buildTopLevelSingleShardAssignments, formatPlanOutput, formatExecutionUnitSummary), and module names (vitest-args.mjs) are all consistent between instruction and tests."
+      "reason": "File paths (scripts/test-planner/executor.mjs, scripts/test-planner/planner.mjs, vitest-args.mjs), function names (countExplicitEntryFilters, buildTopLevelSingleShardAssignments, formatPlanOutput, formatExecutionUnitSummary), and commands are all consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact function names (buildTopLevelSingleShardAssignments, formatPlanOutput, formatExecutionUnitSummary, countExplicitEntryFilters), exact files, and describes precisely that 'countExplicitEntryFilters(unit.args)' is used in several places where 'unit.includeFiles should also be considered as a fallback' \u2014 this is very close to specifying the exact fix pattern."
+      "reason": "The instruction names specific functions (buildTopLevelSingleShardAssignments, formatPlanOutput, formatExecutionUnitSummary, countExplicitEntryFilters), specific files (executor.mjs, planner.mjs), and the exact pattern to fix ('countExplicitEntryFilters(unit.args)' should also consider 'unit.includeFiles as a fallback'). This significantly reduces the localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 4
 }

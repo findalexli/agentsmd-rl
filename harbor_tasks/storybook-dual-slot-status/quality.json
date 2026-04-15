@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "instruction.md is marked as '(missing)', so the agent sees no task description at all. Tests assert specific file paths (core/src/manager/utils/status.tsx), function names (getChangeDetectionStatus, getGroupDualStatus), constants (CHANGE_DETECTION_STATUS_TYPE_ID), and export names (statusPriority) that are completely undiscoverable from a missing instruction."
+      "outcome": "pass",
+      "reason": "All test-asserted specifics (function names like getChangeDetectionStatus, getGroupDualStatus, getMostCriticalStatusValue, getStatus, getGroupStatus; the constant CHANGE_DETECTION_STATUS_TYPE_ID; the file path core/src/manager/utils/status.tsx; the import source 'storybook/internal/types'; the export of statusPriority; types StatusByTypeId and StatusesByStoryIdAndTypeId; keywords like 'filter', 'getDescendantIds', 'change', 'test') are all explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md is missing entirely, so there is nothing to leak \u2014 but also nothing to guide the agent. This is a FAIL because the task is broken: the agent has zero information about what to do."
+      "reason": "The instruction provides exact function signatures, exact implementation steps (e.g., 'filter by typeId === CHANGE_DETECTION_STATUS_TYPE_ID', 'use getMostCriticalStatusValue', 'use getDescendantIds'), and the exact return type shapes. This is essentially a complete specification of the solution rather than a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use grep to assert exact function signatures like 'export function getChangeDetectionStatus', 'export function getGroupDualStatus', exact usage of 'filter', 'getMostCriticalStatusValue', 'getDescendantIds', and return shape keywords 'change' and 'test'. An alternative correct implementation using different internal helper names or different filtering approaches would fail these grep-based checks."
+      "reason": "Tests use grep for exact strings like 'export function getChangeDetectionStatus', 'export function getGroupDualStatus', 'filter', 'getMostCriticalStatusValue', 'getDescendantIds', and 'export.*statusPriority'. An alternative correct implementation using, e.g., a for-loop instead of filter(), or a helper function with a different name pattern, would fail test_change_detection_status_filters_by_typeid which asserts 'filter' in the output."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests use grep/subprocess to check for text patterns in source code (e.g., test_change_detection_status_filters_by_typeid checks for 'filter' string, test_change_detection_uses_most_critical checks for 'getMostCriticalStatusValue' string). Only test_repo_esbuild_status actually executes/compiles the code. No test imports and calls the functions to verify runtime behavior."
+      "reason": "Every single test uses grep/text search (subprocess grep on file contents) rather than importing, calling, or executing the code. No test actually runs the functions or checks their return values. For example, test_change_detection_status_filters_by_typeid just greps for 'filter' in the source text."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply contains the right keywords (e.g., 'export function getChangeDetectionStatus' with a body containing 'CHANGE_DETECTION_STATUS_TYPE_ID', 'filter', 'getMostCriticalStatusValue' as comments or dead code) would pass all grep-based tests without implementing any real logic."
+      "reason": "A stub implementation that merely contains the right keywords would pass all f2p tests. For example, 'export function getChangeDetectionStatus(statuses: StatusByTypeId) { /* filter CHANGE_DETECTION_STATUS_TYPE_ID getMostCriticalStatusValue */ return { changeStatus: \"unknown\" as any, testStatus: \"unknown\" as any }; }' would pass all grep-based tests without implementing correct logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/storybook in the container (solve.sh applies a patch there). The agent could read solution/solve.sh directly or inspect the gold patch to know exactly what to write. Additionally, since tests are purely grep-based, the agent could reverse-engineer exact expected strings from the test file."
+      "reason": "The solution is in /workspace/storybook's git history or in /solution/solve.sh. The agent could read solve.sh directly (cat /solution/solve.sh) or examine the patch to get the exact answer. No measures prevent this."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md is missing, so no behavior is explicitly required. There is nothing to verify tests cover."
+      "reason": "The instruction requires that getChangeDetectionStatus 'correctly split statuses into change vs test categories' and getGroupDualStatus 'compute dual status for groups/components by aggregating descendants' statuses', but no test actually verifies correct runtime behavior \u2014 only that certain strings appear in the source code."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings indicating fail-to-pass vs pass-to-pass categories, and clear grouping by functionality (change detection status, group dual status, repo CI checks)."
+      "reason": "Tests are well-named with descriptive docstrings, grouped into fail-to-pass vs pass-to-pass categories with comments, and clearly indicate what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces TypeScript source code modifications, not structured data output like JSON/CSV/API/DB."
+      "reason": "The task doesn't produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names within the test and solution files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "not_applicable",
-      "reason": "instruction.md is missing entirely, so there is nothing to evaluate for hint leakage."
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify (core/src/manager/utils/status.tsx), exact function signatures with full type annotations, exact implementation approach (use filter, use getMostCriticalStatusValue, compare with CHANGE_DETECTION_STATUS_TYPE_ID), effectively providing the complete solution blueprint."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single TypeScript source file, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -60,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
+  "pass_count": 3,
   "fail_count": 7
 }

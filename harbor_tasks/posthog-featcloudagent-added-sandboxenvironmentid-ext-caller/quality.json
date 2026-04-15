@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: the file path `products/tasks/backend/models.py`, method name `create_and_run`, parameter name `sandbox_environment_id` with type `str | None` and default `None` as keyword-only, `SandboxEnvironment.objects.filter(id=sandbox_environment_id, team=team)`, variable name `sandbox_env`, `.first()` method, `ValueError` with message `Invalid sandbox_environment_id: {sandbox_environment_id}`, `extra_state = extra_state or {}`, `extra_stat"
+      "reason": "The instruction names the file paths (products/tasks/backend/models.py, docs/published/handbook/engineering/ai/sandboxed-agents.md, AGENTS.md), the method (Task.create_and_run), the parameter name (sandbox_environment_id), the type (str | None), the error message ('Invalid sandbox_environment_id: {sandbox_environment_id}'), the extra_state key, and the team filtering requirement. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: variable name `sandbox_env`, exact query `SandboxEnvironment.objects.filter(id=sandbox_environment_id, team=team)`, exact initialization pattern `extra_state = extra_state or {}`, exact storage `extra_state['sandbox_environment_id'] = str(sandbox_env.id)`, and exact error message. This is a complete specification of WHAT to change, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what to implement (accept a parameter, validate it, store it) but does not specify exact line numbers, exact code snippets to insert, or the precise implementation pattern (e.g., .filter().first() vs .get()). A developer must still reason about the implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name `sandbox_env` (test_invalid_sandbox_env_id_raises_valueerror checks 'sandbox_env' in func_src), exact pattern `extra_state = extra_state or {}` (test_sandbox_env_id_stored_in_extra_state), exact string `str(sandbox_env.id)`, exact pattern `extra_state[` with bracket notation. A correct alternative using e.g. `sandbox_environment = ...` or `extra_state.update(...)` or `extra_state = extra_state if extra_state else {}` would"
+      "reason": "Tests assert very specific implementation details: test_invalid_sandbox_env_id_raises_valueerror requires 'SandboxEnvironment.objects.filter' (not .get()), '.first()' (not .exists() or try/except), variable named 'sandbox_env' (not 'env' or 'sandbox_environment'), and 'if not sandbox_env' or 'if sandbox_env is None'. test_sandbox_env_id_stored_in_extra_state requires 'str(sandbox_env.id)' exactly and 'extra_state = extra_state or {}' or 'if extra_state is None' patterns. A correct alternative us"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_invalid_sandbox_env_id_raises_valueerror, test_sandbox_env_id_stored_in_extra_state, test_team_filter_in_sandbox_lookup) are purely string-matching on source code text via AST source segments and substring checks like `'SandboxEnvironment.objects.filter' not in func_src` and `'str(sandbox_env.id)' not in func_src`. No test actually imports or calls create_and_run."
+      "reason": "All fail-to-pass tests (test_create_and_run_accepts_sandbox_env_id, test_invalid_sandbox_env_id_raises_valueerror, test_sandbox_env_id_stored_in_extra_state, test_team_filter_in_sandbox_lookup) perform AST parsing or string matching on source code text. None of them actually import and call create_and_run() or execute the code behaviorally. They are purely static/textual checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation of create_and_run would not contain the required strings like `SandboxEnvironment.objects.filter`, `sandbox_env`, `extra_state['sandbox_environment_id']`, etc. The tests check for specific code patterns that wouldn't exist in the unmodified file."
+      "reason": "A stub implementation (empty function, pass, return None) would not pass these tests because they check for the presence of specific AST structures (kwonlyargs with sandbox_environment_id), specific string patterns in the function body (SandboxEnvironment.objects.filter, extra_state[, str(sandbox_env.id)), etc. The original code lacks these, so a no-op would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/posthog via the gold patch applied by solve.sh. The agent could read the solution file or grep for the expected patterns. Additionally, since tests are pure text-matching, the agent could simply insert the exact expected strings as comments without understanding the logic."
+      "reason": "The solution is available at /workspace/posthog after solve.sh runs, and the solution/solve.sh file exists in the container. An agent could read /solution/solve.sh or examine the git diff to extract the exact patch. The tests only do static analysis of the source file, so applying the gold patch directly would pass all tests."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The documentation update requirement (adding to Parameters table, including usage example with SandboxEnvironment.objects.create(), network_access_level, allowed_domains) is specified in instruction.md but the visible tests don't verify the docs file content (the test file is truncated but the visible tests only check models.py)."
+      "reason": "The instruction requires updating docs/published/handbook/engineering/ai/sandboxed-agents.md with a Parameters table entry and usage example, but the visible tests (truncated but based on test names) don't appear to verify the documentation update content beyond what's shown. The documentation requirements are not tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Agent config compliance), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-grouped into sections (Gates/pass_to_pass, Fail-to-pass/pr_diff, Agent config compliance), each has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,28 +39,26 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in instruction.md."
+      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md specifies the exact file, exact method, exact variable names (`sandbox_env`), exact query pattern, exact error message string, and exact initialization pattern. This goes well beyond identifying the buggy area \u2014 it provides line-level implementation details."
+      "outcome": "pass",
+      "reason": "The instruction names the file and method (Task.create_and_run in products/tasks/backend/models.py) which is appropriate for the task domain. It doesn't specify exact line numbers or exact code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not an agent config edit task."
+      "reason": "This is a code+docs change task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 4
 }

@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "instruction.md is '(missing)' \u2014 it contains no content at all, so none of the test-specific file paths (e.g., transferValue.ts, copy-paste.ts), variable names (skippedReadOnlyFieldNames, ReadOnlyContext, isDocumentLevelPaste), i18n keys, or any other asserted specifics are discoverable from the instruction."
+      "outcome": "pass",
+      "reason": "The instruction names the file paths (transferValue.ts, copy-paste.ts), the function (transferValue, collateObjectValue), the i18n keys (read-only-fields-skipped.description, read-only-fields-skipped-truncated.description), the targetRootPath check, resolveConditionalProperty, currentUser context, warning level, fieldNames/count args, and the threshold of 3. All specifics asserted in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md is missing entirely, so it neither leaks nor provides any information. However, since there is no instruction at all, the agent has zero guidance, making the rubric fail by default \u2014 there's nothing to evaluate against."
+      "reason": "The instruction specifies exact implementation details: detect targetRootPath.length === 0, use resolveConditionalProperty for readOnly evaluation, push warnings to errors array with specific i18n keys, use threshold of 3, specific argument names (fieldNames, count). This goes well beyond describing what's broken \u2014 it prescribes exactly how to fix it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'skippedReadOnlyFieldNames', 'ReadOnlyContext', 'isDocumentLevelPaste', 'readOnlyContext', 'MAX_DISPLAYED_READONLY_FIELDS', and specific patterns like 'skippedReadOnlyFieldNames.push'. An alternative correct fix using different names (e.g., 'readOnlySkippedFields', 'ReadOnlyInfo') would fail these tests."
+      "reason": "Tests grep source files for gold-specific implementation details: test_static_readonly_fields_skipped checks for 'resolveConditionalProperty' and 'targetRootPath.length === 0'; test_readonly_context_type_defined checks for 'readOnlyContext'; test_collateObjectValue_accepts_readOnlyContext checks for 'readOnlyContext' appearing >=2 times; test_skipped_field_names_tracking checks for 'skipped' and 'readOnly' and 'fieldNames'. An alternative correct fix using different variable names (e.g., 'roCont"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_static_readonly_fields_skipped_during_document_paste, test_i18n_strings_exist, test_readonly_context_type_defined, test_collateObjectValue_accepts_readOnlyContext, test_skipped_field_names_tracking, test_readonly_field_warning_generation) all use pattern matching via 'in content' string checks on source files with no execution or behavioral verification of the actual fix."
+      "reason": "6 of 11 tests (test_static_readonly_fields_skipped, test_i18n_strings_exist, test_readonly_context_type_defined, test_collateObjectValue_accepts_readOnlyContext, test_skipped_field_names_tracking, test_readonly_field_warning_generation) are purely text-grep checks using 'in content' pattern matching on source files. They never import, call, or execute the code being tested. Only 3 tests (unit tests, typecheck, oxlint) actually execute code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply writes the expected string patterns into the source files (e.g., appending comments containing 'isDocumentLevelPaste', 'readOnlyContext', 'skippedReadOnlyFieldNames', etc.) would pass all f2p tests without implementing any actual bug fix logic."
+      "reason": "The text-grep fail-to-pass tests (e.g., test_static_readonly_fields_skipped, test_i18n_strings_exist) can be passed by simply inserting comment strings containing the expected keywords (e.g., '// targetRootPath.length === 0 resolveConditionalProperty readOnly level: warning errors.push') without implementing any actual logic. No behavioral execution validates the fix works."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/sanity or could be derived from solve.sh in the container. The agent could read the solution file or grep for the exact string patterns the tests check (e.g., 'skippedReadOnlyFieldNames', 'ReadOnlyContext') and inject them into the source without understanding the bug."
+      "reason": "The solution/solve.sh exists in the container (the Dockerfile doesn't remove it), and the agent could read it. Additionally, the text-grep tests can be trivially satisfied by inserting the expected literal strings as comments without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md is missing, so no behavior is explicitly required, making it impossible to verify that tests cover all required behavior."
+      "reason": "The instruction requires that read-only fields preserve existing target values during paste and that warnings are generated. While text-grep tests check for code patterns, no test actually verifies the behavioral outcome (e.g., that a paste operation with read-only fields returns preserved values and warning messages). The unit test suite (test_transferValue_unit_tests_pass) is pass-to-pass and only verifies existing tests pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped into fail-to-pass and pass-to-pass categories, and each test has clear comments explaining its purpose."
+      "reason": "Tests are well-named (test_static_readonly_fields_skipped_during_document_paste, etc.), have docstrings explaining fail-to-pass vs pass-to-pass, and the module docstring explains the overall purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code patching, not structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it modifies TypeScript source code."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in file paths, variable names, or commands in the test and solution files."
+      "reason": "File paths, commands, variable names, and i18n keys in the instruction are consistent with the test expectations and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md is missing entirely \u2014 there is no instruction content to evaluate for hint leakage."
+      "reason": "The instruction names the exact files to modify, the exact function (transferValue, collateObjectValue), the exact condition (targetRootPath.length === 0), the exact utility (resolveConditionalProperty), and the exact threshold (3). This is detailed implementation guidance, not just identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -63,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 3,
+  "fail_count": 7
 }

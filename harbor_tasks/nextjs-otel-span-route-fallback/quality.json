@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names like `normalizedSrcPage`, `srcPage`, `isWrappedByNextServer`/`wrappedByNextServer`/`isWrapped`/`baseServerSpan` (in test_wrapped_by_server_detection regex), and specific patterns like `parentSpan.setAttribute('http.route', route)` not guarded by `if (route)`. While instruction.md mentions some of these (normalizedSrcPage, srcPage, isWrappedByNextServer, parentSpan.setAttribute), the test_route_eval JS code specifically expects the route assignment to appear w"
+      "reason": "Tests assert specific variable names like `normalizedSrcPage`, `srcPage`, `isWrappedByNextServer`/`wrappedByNextServer`/`isWrapped`/`baseServerSpan` (in test_wrapped_by_server_detection regex), and check that `parentSpan.setAttribute('http.route', route)` appears without being gated by `if (route)`. While instruction.md mentions `normalizedSrcPage`, `srcPage`, `isWrappedByNextServer`, and the parentSpan requirement, the test_parent_span_propagation test specifically checks line-by-line that no `"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md essentially specifies the exact fix: (1) use `normalizedSrcPage` or `srcPage` as fallback when `rootSpanAttributes.get('next.route')` returns nothing, (2) move span attribute assignment outside the `if (route)` guard to be unconditional, (3) use `isWrappedByNextServer` variable for wrapping detection. This is very close to 'change line X to Y' \u2014 it describes the specific code transformations needed rather than just describing the broken behavior."
+      "reason": "Instruction.md explicitly states the fix: 'the route must fall back to other available identifiers such as `normalizedSrcPage` or `srcPage`', 'do NOT guard the span attribute assignment inside `if (route)`', and 'look for variables such as `isWrappedByNextServer`'. This tells the agent exactly WHAT to change (add fallback with `||`, remove the if-guard, add wrapped detection variable), leaving little reasoning required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_wrapped_by_server_detection asserts specific variable names via regex: `isWrapped|wrappedByNextServer|isWrappedByNextServer|baseServerSpan`. An alternative correct fix using a different variable name (e.g., `serverWrapped` or `handlerContext`) would fail. test_parent_span_propagation checks that `parentSpan.setAttribute` with `http.route` exists within 25 lines of the route assignment \u2014 an alternative that structures the code differently could fail. The _ROUTE_EVAL_JS extraction algorithm i"
+      "reason": "The _ROUTE_EVAL_JS test extracts code around `rootSpanAttributes.get('next.route')` and evaluates it with specific variable names (`normalizedSrcPage`, `srcPage`). An alternative fix that, say, used a helper function to compute the route, or restructured the code differently (e.g., computing fallback earlier in a separate block), would likely fail the JavaScript eval because the test parser expects the route assignment to appear within 10 lines of the rootSpanAttributes.get call. test_wrapped_by"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fallback tests use a JS evaluation approach (_ROUTE_EVAL_JS) that extracts and executes the route computation code, simulating runtime behavior with mock values. This is behavioral testing via subprocess execution, not pure text matching. Some tests (test_wrapped_by_server_detection, test_parent_span_propagation) do use regex/text inspection, but the core f2p tests execute code."
+      "reason": "Several tests actually execute the code: _eval_route runs a Node.js subprocess that evaluates extracted route-computation logic with mock inputs and checks the return value. test_repo_tsc_syntax_check runs TypeScript compilation. test_wrapped_by_server_detection and test_parent_span_propagation do use regex on source text, but the route fallback tests (the core f2p tests) execute code behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests evaluate actual route computation logic: test_app_page_route_fallback etc. check that when rootSpanAttributes has no 'next.route', the computed route is still a non-empty string starting with '/'. A stub returning empty/null/undefined would fail. test_wrapped_by_server_detection requires specific variable presence. test_parent_span_propagation requires parentSpan.setAttribute not gated by if(route)."
+      "reason": "The f2p tests evaluate actual route computation logic: test_app_page_route_fallback etc. execute extracted code with an empty rootSpanAttributes map and verify the result is a non-empty string starting with '/'. A stub or no-op would return undefined/empty, failing the test. test_parent_span_propagation checks structural properties that require actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or wherever mounted), and the agent could potentially read it. The test_repo_git_status_clean test requires a clean git status, meaning the agent must commit changes, but there's no explicit protection against reading the solution directory. Additionally, the _ROUTE_EVAL_JS script is written to /tmp/_test_route_eval.js and could be inspected to reverse-engineer exact expectations."
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to obtain the exact fix. The Dockerfile doesn't remove /solution/ or restrict access to it."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md's 'Expected behavior' section are tested: (1) route fallback to normalizedSrcPage/srcPage (test_*_route_fallback), (2) unconditional span attribute assignment (test_parent_span_propagation), (3) wrapping detection in pages-handler (test_wrapped_by_server_detection)."
+      "reason": "All three behaviors described in instruction.md (route fallback, unconditional attribute setting without if(route) guard, wrapped-by-server detection) are tested by corresponding test functions (test_*_route_fallback, test_parent_span_propagation, test_wrapped_by_server_detection)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_app_page_route_fallback, test_wrapped_by_server_detection, test_parent_span_propagation, etc.) and include comments indicating their category ([pr_diff] fail_to_pass, [static] pass_to_pass, [repo_tests] pass_to_pass)."
+      "reason": "Tests are well-named (test_app_page_route_fallback, test_wrapped_by_server_detection, test_parent_span_propagation, etc.), grouped by concern, and include comments marking [pr_diff] fail_to_pass vs [static] pass_to_pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code for span naming, not structured data output."
+      "reason": "This task involves editing source code files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md match those used in tests and the actual repository structure."
+      "reason": "File paths, variable names, and commands in instruction.md match those used in the test suite and the actual repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names specific implementation details: exact variable names to use as fallbacks (normalizedSrcPage, srcPage), the exact guard pattern to remove ('if (route)'), the specific variable name for wrapping detection (isWrappedByNextServer), and specifies 'parentSpan.setAttribute(\"http.route\", route)' \u2014 essentially prescribing the exact code changes rather than just describing the bug."
+      "reason": "Instruction.md names specific variables (`normalizedSrcPage`, `srcPage`, `isWrappedByNextServer`), describes the exact code pattern to change ('do NOT guard the span attribute assignment inside `if (route)`'), and specifies the exact attribute calls (`parentSpan.setAttribute('http.route', route)`). This goes well beyond describing the bug \u2014 it prescribes the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

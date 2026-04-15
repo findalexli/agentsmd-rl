@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (pkg/backend/diy/backend.go), the function (Refresh), the key identifiers (b.Lock, op.Opts.PreviewOnly, opts := backend.ApplierOptions{, defer b.Unlock), and the verification commands (go build, go test, go vet, go fmt). All literal strings and paths asserted in tests are discoverable from instruction.md."
+      "reason": "The instruction.md explicitly names the file (pkg/backend/diy/backend.go), function (Refresh), and all key literals/patterns tested: 'if op.Opts.PreviewOnly', 'b.Lock(ctx, stack.Ref())', 'opts := backend.ApplierOptions{', 'defer b.Unlock(ctx, stack.Ref())', plus the go build/test/vet/fmt verification commands. All assert targets in the tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction requirement #3 states 'the code structure containing if op.Opts.PreviewOnly followed by an early return for preview-only, and b.Lock(...) only in the non-preview code path' and #4 states 'Include opts := backend.ApplierOptions{ as part of the preview-only code path handling'. These describe the exact structural fix, not just the broken behavior. A competent developer doesn't need to reason about what to change \u2014 the instruction tells them precisely to move Lock after the PreviewOnly "
+      "reason": "Instruction.md requirement #3 states 'the code structure containing if op.Opts.PreviewOnly followed by an early return for preview-only, and b.Lock(...) only in the non-preview code path' and #4 says 'Include opts := backend.ApplierOptions{ as part of the preview-only code path handling'. These are highly specific implementation details that essentially describe the exact patch structure, leaving little reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'opts := backend.ApplierOptions{' and 'if op.Opts.PreviewOnly' and check their relative positions. An alternative correct fix that, for example, wraps the lock in a conditional (!op.Opts.PreviewOnly) without restructuring the code into an if/else block with early return would fail test_refresh_preview_only_no_lock_behavioral because Lock could still appear before the PreviewOnly check textually even though it's conditionally guarded."
+      "reason": "Tests assert on gold-specific patterns like 'opts := backend.ApplierOptions{' (test_refresh_function_structure) and exact string 'if op.Opts.PreviewOnly' with positional ordering relative to 'b.Lock(ctx, stack.Ref())' (test_refresh_preview_only_no_lock_behavioral). An alternative correct fix that, e.g., wraps Lock in a conditional like 'if !op.Opts.PreviewOnly { b.Lock(...) }' without restructuring the if-else blocks would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_refresh_preview_only_no_lock_behavioral and test_refresh_function_structure) exclusively use string searching in source code (`content.find(...)`, `'X' in refresh_content`). They never import, call, or execute the Refresh function. While pass-to-pass tests do run go build/test/vet, the core behavioral tests are pure text matching."
+      "reason": "The two fail-to-pass tests (test_refresh_preview_only_no_lock_behavioral and test_refresh_function_structure) are purely text-matching: they read the source file and assert on string positions/presence. They never import, call, or execute the Refresh function. The pass-to-pass tests do run go build/test/vet/fmt, but the critical behavioral tests are text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that Lock appears after PreviewOnly check and that specific code patterns exist in the Refresh function. A stub/no-op implementation would fail these since the base commit has Lock before PreviewOnly \u2014 the agent must actually move code to pass."
+      "reason": "The f2p tests check that Lock() appears after PreviewOnly check positionally, and that specific patterns exist in the Refresh function. A stub or no-op implementation wouldn't have these patterns in the correct positions, so the tests do require the actual code change."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/pulumi's solution/solve.sh (mounted in container), and the agent could read it. Additionally, since tests are pure text-matching on source code, the agent could grep test_outputs.py (if accessible) or the solution to find exact strings to insert. The Dockerfile doesn't remove or protect the solution directory."
+      "reason": "The solution is in /workspace/pulumi's container at solution/solve.sh. The agent could read this file or grep for the expected patterns. Additionally, since tests are purely text-matching, the agent could just rearrange code blocks to match the expected string patterns without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: Lock only in non-preview path (test_refresh_preview_only_no_lock_behavioral), code structure with PreviewOnly check and ApplierOptions (test_refresh_function_structure), compilation (test_pkg_backend_diy_compiles), unit tests (test_pkg_unit_tests), go vet/fmt/build (multiple tests)."
+      "reason": "All behaviors described in instruction.md (lock not acquired for preview-only, lock acquired for actual refresh, compilation, tests passing, vet, fmt) are tested in the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_refresh_preview_only_no_lock_behavioral, test_refresh_function_structure, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_refresh_preview_only_no_lock_behavioral, test_refresh_function_structure, etc.), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS, and are logically grouped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code fix, not producing structured data output."
+      "reason": "This task modifies Go source code and does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, function names, and variable names in the instruction and tests are correct and consistent."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Requirements #3 and #4 specify exact code patterns: 'if op.Opts.PreviewOnly followed by an early return' and 'opts := backend.ApplierOptions{'. These are implementation-level details that tell the agent exactly how to restructure the code, going beyond identifying the bug location."
+      "reason": "Instruction.md specifies exact code patterns like 'if op.Opts.PreviewOnly followed by an early return' and 'opts := backend.ApplierOptions{' and 'defer b.Unlock(ctx, stack.Ref())' \u2014 these are implementation-level details that effectively describe the exact patch, not just the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

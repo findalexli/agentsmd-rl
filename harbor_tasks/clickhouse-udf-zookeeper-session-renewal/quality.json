@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;' (exact variable declaration), 'zookeeper_getter.getZooKeeper().first;' (exact renewal call), 'tryLoadObject(current_zookeeper' (exact parameter usage), 'getObjectNamesAndSetWatch(current_zookeeper, object_type)' (exact call signature). The instruction describes the bug conceptually but never specifies variable names like 'current_zookeeper', the exact getter ca"
+      "reason": "Tests check for specific patterns like 'zookeeper_getter' (test_session_renewal_mechanism_exists), 'getZooKeeper' (same test), ordering of isRetry() before getObjectNamesAndSetWatch (test_session_renewed_before_use), no tabs (test_repo_no_tabs), no trailing whitespace (test_repo_no_trailing_whitespace), no std::cerr/cout (test_repo_no_cerr_cout), no std::format (test_repo_no_std_format), no raw assert (test_repo_no_raw_assert), no __builtin_unreachable, Allman brace style (test_clickhouse_allman"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md section 'Expected Behavior' point 4 says 'The session renewal must happen inside the retry loop, not outside it' and point 1 says 'A fresh ZooKeeper session should be obtained via the zookeeper_getter mechanism'. Combined with 'When retries_ctl.isRetry() indicates a retry iteration', this essentially prescribes the exact fix structure: add an isRetry() check inside the retry loop that calls zookeeper_getter to get a fresh session."
+      "reason": "The instruction explicitly states the exact code patterns required: 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;', 'if (retries_ctl.isRetry())', 'zookeeper_getter.getZooKeeper().first;', and specifies that tryLoadObject and getObjectNamesAndSetWatch must be called with current_zookeeper. This is essentially dictating the exact fix rather than describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact string 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;' in test_session_renewal_in_retry_loop, exact string 'zookeeper_getter.getZooKeeper().first;', variable name 'current_zookeeper' used throughout. An alternative correct fix using a different variable name (e.g., 'fresh_zk' or 'active_session') or a different renewal pattern would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: test_session_renewal_mechanism_exists checks for literal string 'zookeeper_getter' in the retry body, test_session_renewal_on_retry checks for 'getZooKeeper' after isRetry(). An alternative correct fix that uses a different renewal mechanism (e.g., directly calling a reconnect method, or using a different getter pattern) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests (test_session_renewal_in_retry_loop, test_object_names_inside_retry_loop, test_comment_describes_fix) are pure string/pattern matching on file content using 'assert X in content'. They never compile the code, execute it, or test actual behavior. test_no_sleep_in_code also just reads file content. The subprocess calls in some tests merely wrap the same string matching in shell/python scripts."
+      "reason": "Nearly all fail-to-pass tests are pure text/pattern matching on source code: test_session_renewal_on_retry checks for 'isRetry()' and 'getZooKeeper' strings in source, test_object_names_fetched_inside_retry_loop checks for 'getObjectNamesAndSetWatch' string, test_session_renewal_mechanism_exists checks for 'zookeeper_getter' string. No test actually compiles, links, or executes the C++ code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply inserts the exact expected strings into the file (e.g., adding 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;' and 'if (retries_ctl.isRetry())' and 'zookeeper_getter.getZooKeeper().first;' as comments or dead code) would pass all tests without actually fixing the bug, since tests only check for string presence in the file content."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests do check for specific code patterns that are absent in the original (unfixed) file. For example, isRetry() and getZooKeeper inside the retry loop, and getObjectNamesAndSetWatch moved inside the retry loop. A stub or no-op wouldn't pass these since the original file lacks these patterns in the retry body."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse (accessible path). The agent could read solution/solve.sh which contains the exact patch. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact assert strings and insert them verbatim into the file."
+      "reason": "The solution is available at /workspace/ClickHouse via the solve.sh script content visible in the Dockerfile setup. The agent could also read the test file at tests/test_outputs.py to extract exactly what patterns are expected and produce matching code without understanding the bug. The solution patch is embedded in solve.sh which could be accessible."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'The code compiles correctly' but test_compilation only checks file existence and grep for function names, never actually compiles. instruction.md says 'All ZooKeeper operations use the session handle that may have been refreshed' but tests only check string patterns, not actual runtime behavior."
+      "reason": "Instruction requires comments referencing 'zookeeper_getter' with terms 'renew', 'expired', or 'fresh' (Code Style Requirement #6), but no test checks for comment content containing these specific terms. Also, instruction requires 'current_zookeeper = zookeeper;' as a local variable declaration but tests don't verify this exact pattern."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_session_renewal_in_retry_loop, test_object_names_inside_retry_loop, etc.), have docstrings, and are organized by concern with clear comments separating sections like 'REPO CI TESTS'."
+      "reason": "Tests are well-named with descriptive function names (test_session_renewal_on_retry, test_object_names_fetched_inside_retry_loop, etc.) and include docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing C++ source code, not producing structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No obvious typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (UserDefinedSQLObjectsZooKeeperStorage.cpp), exact function (refreshObjects), exact mechanism (ZooKeeperRetriesControl, retries_ctl.isRetry(), zookeeper_getter), and specifies exactly where the fix should go ('inside the retry loop, not outside it'). This goes well beyond identifying the bug location."
+      "reason": "The instruction names the exact file (UserDefinedSQLObjectsZooKeeperStorage.cpp), exact function (refreshObjects), and provides exact code patterns to implement including variable names and method calls. This goes well beyond identifying the buggy area and essentially dictates the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying a C++ source file, not a configuration edit task."
     }
   },
   "tier_a_fails": [
@@ -55,7 +55,6 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -63,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 3,
+  "fail_count": 7
 }

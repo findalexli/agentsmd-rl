@@ -3,63 +3,65 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests like test_warm_uses_target_not_delta assert exact literal strings such as 'const target = @min(count, @as(u14, @truncate(self.max_threads)))' and 'while (sync.spawned < target)'. These exact variable names and expressions are not stated in instruction.md. The instruction mentions concepts like cmpxchgWeak and loop termination but never specifies the exact code strings the tests check for."
+      "reason": "Tests assert exact string patterns like 'const target = @min(count, @as(u14, @truncate(self.max_threads)))' and 'while (sync.spawned < target)' and check for absence of 'count - sync.spawned'. While instruction.md does mention these patterns under 'Required Implementation Patterns', many pass-to-pass tests check unrelated files (Mutex.zig, Condition.zig, Futex.zig, channel.zig, WaitGroup.zig, unbounded_queue.zig, bun.zig, cli.zig) that are not mentioned in instruction.md at all. Also test_warm_u"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes symptoms and gives hints about where to look (CAS logic, loop termination, variable computation) but does not state the exact fix like 'change line X to Y' or 'replace orelse break with |current|'."
+      "outcome": "fail",
+      "reason": "instruction.md under 'Required Implementation Patterns' gives the exact code to write: 'const target = @min(count, @as(u14, @truncate(self.max_threads)));', the exact while loop condition, the exact cmpxchgWeak failure handling pattern, and specifies replacing default_thread_stack_size with self.stack_size. This is essentially the complete solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_warm_uses_target_not_delta asserts exact strings like 'const target = @min(count, @as(u14, @truncate(self.max_threads)))' and 'while (sync.spawned < target)'. An alternative correct fix using a different variable name (e.g., 'max_spawn') or slightly different expression structure would fail these tests despite being functionally correct."
+      "reason": "Tests like test_warm_uses_target_not_delta assert exact strings like 'const target = @min(count, @as(u14, @truncate(self.max_threads)))' and 'while (sync.spawned < target)'. An alternative correct fix using a different variable name (e.g., 'max_spawn') or a different but equivalent expression would fail. test_cmpxchg_correct_logic checks for '|current|' capture pattern. test_sync_update_after_detach checks for exact string 'sync = new_sync'. These are gold-specific implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_warm_uses_target_not_delta and test_cmpxchg_correct_logic are purely text-matching tests (reading file content and asserting substrings). They never compile, run, or execute the code. The f2p tests are just zig fmt/ast-check, not behavioral execution."
+      "reason": "The key fail-to-pass tests (test_warm_uses_target_not_delta, test_cmpxchg_correct_logic, test_warm_uses_stack_size, test_sync_update_after_detach, test_no_early_return_on_spawned) all use string pattern matching with 'assert X in content' or 'assert X not in content' on the source file. No test actually compiles, runs, or executes the ThreadPool code to verify behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (zig fmt --check, zig ast-check) verify that the existing files pass formatting and AST checks. A stub or empty file would fail these checks since the original files must remain valid Zig."
+      "reason": "The fail-to-pass tests check for specific code patterns that are NOT present in the original buggy code (e.g., 'const target = @min(count, ...' doesn't exist before the fix, 'count - sync.spawned' exists before and must be removed). A stub/no-op would not pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's git history or solution/solve.sh. The agent could read solve.sh to get the exact gold patch, or grep the test file to find the exact literal strings being asserted (like 'const target = @min(count, @as(u14, @truncate(self.max_threads)))') and just pattern-match."
+      "reason": "The solution is in /workspace/bun as a git repo where solve.sh applies a patch. The agent could read solution/solve.sh if it exists in the container (the Dockerfile doesn't explicitly remove it). Also, since tests are pure string-matching on source files, the agent could grep test files to discover exact expected strings and copy them in."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'When warm(8) is called on an empty pool with max_threads >= 8, all 8 threads should be spawned before the function returns.' No test actually verifies this runtime behavior \u2014 tests only check source text patterns and formatting."
+      "reason": "instruction.md says 'When warm(8) is called on an empty pool with max_threads >= 8, all 8 threads should be spawned before the function returns.' No test actually verifies this runtime behavior - all tests are source-text pattern matching, not execution-based verification."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with docstrings (e.g., test_warm_uses_target_not_delta, test_cmpxchg_correct_logic) and grouped by category (syntax, AST, behavioral assertions)."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., test_warm_uses_target_not_delta, test_cmpxchg_correct_logic) and logically grouped into pass-to-pass formatting checks and fail-to-pass behavioral checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing a bug in Zig source code, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct and consistent with the actual repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (ThreadPool.zig) and function (warm()) which is appropriate for the task domain. It gives conceptual hints but doesn't name exact buggy lines or the exact fix."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact function (warm()), the exact file (src/threading/ThreadPool.zig), AND provides the exact replacement code patterns including variable declarations, loop conditions, and cmpxchgWeak handling. This goes far beyond identifying the buggy location."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only bug fix task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 7
 }

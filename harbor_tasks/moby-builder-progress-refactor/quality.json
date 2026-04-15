@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'progress.OneOff(ctx, \"resolve \"+p.src.Reference.String())' and 'progress.OneOff(ld.pctx, fmt.Sprintf(\"pulling %s\", ld.desc.Digest))'. The instruction.md never mentions the specific variable names 'ld.pctx', 'ld.desc.Digest', 'p.src.Reference.String()', or the exact call-site patterns. While the instruction says to 'preserve the exact same arguments', it doesn't tell the agent what those arguments are (e.g., that worker.go uses 'ld.pctx' not 'ctx'). The ag"
+      "reason": "Tests assert exact literal strings like 'progress.OneOff(ctx, \"resolve \"+p.src.Reference.String())' and 'progress.OneOff(ld.pctx, fmt.Sprintf(\"pulling %s\", ld.desc.Digest))' including specific variable names (ld.pctx, p.src.Reference) that are not mentioned in instruction.md. The instruction says to use 'the same context variable and progress ID string' but never specifies the exact variable names or exact call-site strings. Also, the test for writer.go asserts the progress import must be remove"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly says 'Replace each call to the local helper function with the appropriate progress.OneOff call' and 'Remove the local helper function definitions' and 'The buildkit progress package provides a OneOff function with the same signature as the local helpers.' This tells the agent exactly what to do: replace oneOffProgress with progress.OneOff and delete the local definitions. The fix is fully specified."
+      "reason": "The instruction explicitly says 'Replace each call to the local helper function with the appropriate progress.OneOff call' \u2014 this names the exact replacement function (progress.OneOff) and tells the agent precisely what to do. It also says 'Remove the local helper function definitions' and 'The buildkit progress package provides a OneOff function with the same signature as the local helpers.' This is stating the fix, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact literal strings like 'progress.OneOff(ctx, \"resolve \"+p.src.Reference.String())' with exact whitespace. An alternative correct fix that, e.g., assigns the result differently, uses a variable for the string, or has slightly different whitespace would fail. The test also checks exact count of 5 progress.OneOff calls, and checks for exact import line presence/absence."
+      "reason": "Tests assert exact literal strings like 'progress.OneOff(ctx, \"resolve \"+p.src.Reference.String())' with no tolerance for formatting variations (e.g., extra spaces, variable renaming of the done callback). The test test_correct_number_of_call_sites counts exact occurrences of 'progress.OneOff(' expecting exactly 5. test_writer_go_no_local_oneoffprogress checks that the progress import is absent. These are highly specific to the gold solution's exact implementation."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_pull_go_uses_progress_oneoff, test_export_go_uses_progress_oneoff, test_writer_go_no_local_oneoffprogress, test_worker_go_uses_progress_oneoff, test_no_duplicate_oneoffprogress_anywhere, test_correct_number_of_call_sites) are ALL pure text-matching assertions using 'assert ... in content' or 'content.count(...)'. While there are compilation/vet/unit-test pass-to-pass tests, the core fail-to-pass tests verify text, not behavior."
+      "reason": "The fail-to-pass tests (test_pull_go_uses_progress_oneoff, test_export_go_uses_progress_oneoff, test_worker_go_uses_progress_oneoff, test_writer_go_no_local_oneoffprogress, test_no_duplicate_oneoffprogress_anywhere, test_correct_number_of_call_sites) are ALL purely text-matching assertions using 'assert X in content' or 'content.count()'. While there are also compilation/vet/test tests, the f2p tests are entirely string-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific content changes (presence of progress.OneOff calls, absence of local function definitions) that cannot be satisfied by a stub or no-op implementation. The original files contain oneOffProgress, not progress.OneOff, so actual code changes are required."
+      "reason": "The fail-to-pass tests check for specific code transformations (presence of progress.OneOff calls, absence of local oneOffProgress definitions) that cannot be satisfied by a stub or no-op implementation \u2014 the original code has oneOffProgress defined locally, so the tests would fail without actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/moby as a git repo and solution/solve.sh is present in the container. The agent could read /solution/solve.sh to get the exact patch. Additionally, the agent could grep test_outputs.py to find the exact literal strings being asserted and reproduce them."
+      "reason": "The solution is in /workspace/moby's git history or could be found in solution/solve.sh. The agent could read the test file at tests/test_outputs.py to see the exact literal strings expected and simply produce those strings. The exact expected content strings are in the test assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: compilation (test_compilation), go vet (test_go_vet), unit tests pass (test_unit_*), no duplicate definitions remain (test_no_duplicate_oneoffprogress_anywhere), and correct usage of progress.OneOff in each file."
+      "reason": "The instruction requires: compilation succeeds, go vet passes, unit tests pass, no duplicate helper definitions remain. All of these are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped by file (pull.go, export.go, writer.go, worker.go) and concern (compilation, vet, unit tests, refactoring correctness)."
+      "reason": "Tests are well-named with descriptive function names and docstrings indicating pass-to-pass vs fail-to-pass, grouped by file and concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "This task involves code refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, package names, function names, and commands in instruction.md all appear correct and match the actual repository structure."
+      "reason": "File paths, package names, function names, and commands in instruction.md appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the files to modify but this is appropriate since the task is about refactoring specific files. It doesn't specify exact line numbers or the precise code to write (though it comes close by naming progress.OneOff)."
+      "outcome": "fail",
+      "reason": "The instruction names the exact replacement function 'progress.OneOff' and tells the agent to use 'go doc github.com/moby/buildkit/util/progress' to find it. It also names all four specific files and tells the agent exactly what to replace (local helper with progress.OneOff). This is significant hint leakage for a refactoring task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -58,7 +58,9 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
 }

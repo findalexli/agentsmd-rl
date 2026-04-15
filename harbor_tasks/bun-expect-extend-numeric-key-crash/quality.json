@@ -2,66 +2,63 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_no_inline_import_in_functions checks @import inside extend body (CLAUDE.md:11), test_no_std_direct_usage checks std.fs/posix/os (CLAUDE.md:16), test_no_wrong_allocator checks std.heap/GeneralPurposeAllocator (CLAUDE.md:232), test_no_catch_outofmemory_pattern references CLAUDE.md:234. The instruction never mentions src/CLAUDE.md or these coding conventions. Also, tests check for specific method names like 'putMayBeIndex' or 'init"
+      "outcome": "pass",
+      "reason": "The instruction names the file (src/bun.js/test/expect.zig), the function (extend), the three targets (expect_proto, expect_constructor, expect_static_proto), the unsafe method (.put()), and the safe alternatives (putMayBeIndex, initFast, isIndex/parseIndex). It also mentions JSPropertyIterator, Bun__JSWrappingFunction__create, applyCustomMatcher, and the READ_ONLY method list. All test assertions check for these named entities, which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'The current registration uses .put() calls on each target. This method internally asserts the property name is not a valid array index' and 'The fix must update property registration on all three targets to handle index properties safely, either by skipping index properties during iteration or by using a property-setting approach that supports index keys.' This tells the agent exactly what to change (.put() calls on three specific targets) and gives two specifi"
+      "reason": "The instruction explicitly states to replace .put() with putMayBeIndex() (or initFast with boolean, or isIndex/parseIndex checks) on all three targets. It essentially prescribes the exact fix: 'Use putMayBeIndex() \u2014 a method that handles both string keys and numeric index keys' and 'Do not use bare .put() calls'. This is the solution, not just a description of the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests accept multiple alternative fixes: (1) using putMayBeIndex or similar safe setter, (2) using initFast with a boolean parameter to skip indices, or (3) using isIndex/parseIndex checks to continue/break/return. The READ_ONLY exclusion set is broad enough to accept various method names. Three distinct fix strategies are accommodated."
+      "reason": "The tests accept multiple alternative fixes: putMayBeIndex, initFast with a boolean parameter, or isIndex/parseIndex checks with continue/break/return. They don't assert on exact line numbers or specific variable names beyond the three targets. All three alternative approaches would pass the tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests are purely text-based: they read the source file, extract function bodies via regex, and check for presence/absence of string patterns (e.g., '.put(', 'putMayBeIndex', '@import', 'std.heap'). No test actually compiles the code, runs the Bun test runner, or executes the reproduction case. Every test is essentially 'assert pattern in/not in open(path).read()' with regex."
+      "reason": "All tests use regex pattern matching on source code text (e.g., checking for '.put(' patterns, looking for 'putMayBeIndex' strings, checking for 'applyCustomMatcher' in text). No test actually compiles or runs the Zig code, executes the JS reproduction case, or verifies runtime behavior. Every test is essentially 'assert pattern in open(path).read()' style."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_no_bare_put_on_registration_targets passes if the initFast pattern is found OR if isIndex/parseIndex pattern is found OR if no bare .put() exists. An agent could simply delete the .put() lines without adding any replacement, and the test would pass (no bare .put() found, exits 0). Similarly test_index_safe_property_setting would fail in that case, but adding any arbitrary method call like 'expect_proto.foo()' where 'foo' is not in READ_ONLY would pass it."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_no_bare_put_on_registration_targets, test_index_safe_property_setting, test_all_three_targets_use_safe_setter) would fail on the original code which has bare .put() calls. A stub or no-op implementation wouldn't pass because the tests also check for the presence of safe setter methods on all three targets."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun with the gold patch available via solve.sh. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exactly what patterns the tests check for (putMayBeIndex, initFast, etc.) and produce a matching solution without understanding the bug."
+      "reason": "The solution is in /workspace/bun's container at solution/solve.sh, and the agent could read it. Additionally, the instruction itself essentially gives the answer (use putMayBeIndex instead of put), so the agent doesn't need to read the solution file to know exactly what to do. The tests only check text patterns, so matching the fixture strings is trivial."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says the bug causes 'a crash in Bun's test runner' when running 'const v1 = { 1073741820: Request }; Bun.jest().expect.extend(v1);' but no test actually runs this reproduction case to verify it no longer crashes. The core behavioral requirement (no crash) is untested."
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: (1) all three targets handled, (2) safe property-setting methods used, (3) core logic preserved (iterator, wrapper function, applyCustomMatcher), (4) no bare .put() calls. The acceptable read-only methods and config rules are also checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with section comments (fail_to_pass, pass_to_pass, config-derived), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, config-derived), descriptive function names, docstrings explaining each test's purpose, and annotations referencing the source (e.g., src/CLAUDE.md line numbers)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a bug in Zig source code, not producing structured data output."
+      "reason": "This task involves fixing a crash in source code; it doesn't produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, variable names, or commands across the instruction and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (src/bun.js/test/expect.zig), the exact method (.put()), the three exact variable names (expect_proto, expect_constructor, expect_static_proto), and specifies the fix strategy. This goes well beyond identifying the buggy module \u2014 it pinpoints the exact lines and mechanism."
+      "reason": "The instruction names the exact file (src/bun.js/test/expect.zig), the exact function (extend), the exact method to replace (.put() \u2192 putMayBeIndex()), and the exact three variable names (expect_proto, expect_constructor, expect_static_proto). This goes far beyond describing the bug and essentially provides the complete fix specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task (Zig source file fix), not a config/agent-md edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 6,
+  "fail_count": 4
 }

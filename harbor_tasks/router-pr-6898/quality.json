@@ -7,47 +7,47 @@
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the function name `resolveAuthorForPR`, the cache name `prAuthorCache`, the variable name `prMatch`, the exact regex pattern `[#(\\d+)]`, the exact API endpoint, and the resolution order (PR before commit). This is effectively dictating the solution rather than describing what's broken."
+      "reason": "The instruction explicitly dictates implementation details: exact function name `resolveAuthorForPR`, exact cache name `prAuthorCache`, exact variable name `prMatch`, exact regex pattern `[#(\\d+)]`, exact resolution order (PR before commit), and the exact API endpoint. This leaves virtually no reasoning for the developer about WHAT to change \u2014 it's a specification of the exact solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names like `prMatch` (test_pr_resolution_before_commit checks content.find('prMatch')), `prAuthorCache` (test_pr_author_cache_exists), `commitMatch` (test_pr_resolution_before_commit), and the exact function name `resolveAuthorForPR`. An alternative correct fix using different variable/function names (e.g., `pullRequestAuthor`, `prCache`, `pullMatch`) would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: test_resolve_author_for_pr_function_exists checks for literal string 'resolveAuthorForPR', test_pr_author_cache_exists checks for 'prAuthorCache', test_pr_resolution_before_commit checks for 'prMatch' appearing before 'commitMatch' by string position. An alternative correct fix using different variable/function names (e.g., `getPRAuthor`, `prCache`, `pullRequestMatch`) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every fail-to-pass test (test_resolve_author_for_pr_function_exists, test_pr_pattern_matching, test_pr_author_cache_exists, test_pr_resolution_before_commit, test_github_api_pr_endpoint, test_pr_match_regex_correctness) uses `assert 'X' in content` or `content.find('X')` on the file text. No test actually imports, calls, or executes the function to verify behavior. Only pass-to-pass tests (syntax, eslint, prettier) run subprocesses."
+      "reason": "Almost every fail-to-pass test is purely text-matching: `assert 'resolveAuthorForPR' in content`, `assert 'prAuthorCache' in content`, string position checks for 'prMatch' vs 'commitMatch', regex pattern matching in file content. Only test_script_syntax_valid and the ESLint/Prettier tests actually execute the code. No test calls the functions or verifies actual changelog transformation behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests are string-presence checks. An agent could simply append a comment block containing all required strings (`resolveAuthorForPR`, `prAuthorCache`, `prMatch`, `commitMatch`, `api.github.com`, `pulls`, `\\[#(\\d+)\\]`) without implementing any actual functionality, and all f2p tests would pass (assuming syntax/eslint/prettier still pass)."
+      "reason": "A stub implementation that simply adds the required strings as comments (e.g., `// resolveAuthorForPR prAuthorCache prMatch` with the regex pattern and API URL) without any functional implementation would pass all fail-to-pass tests since they only check for string presence and ordering in the file content."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router (accessible via solve.sh content or the solution directory). The agent could read /solution/solve.sh or simply grep for the expected strings in the test file (tests/test_outputs.py is described as hidden but may be accessible in the container). Additionally, since tests are pure string checks, the agent can match literal fixture strings without understanding the bug."
+      "reason": "The solution file exists at /workspace/router (accessible in container) and the agent could read solve.sh or simply grep test files to find the exact strings being asserted ('resolveAuthorForPR', 'prAuthorCache', etc.) and insert them as dead code/comments to pass all tests without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that 'Lines not starting with `- ` should pass through unchanged' and that PR entries get author attribution, but no test actually verifies the runtime behavior of appendAuthors\u2014only that certain strings exist in the source file."
+      "reason": "The instruction requires that PR entries get author attribution and dependency updates continue to work, but no test actually verifies changelog transformation behavior \u2014 e.g., no test checks that a line like '- Fixed navigation ([#6891](url))' gets ' by @username' appended after the fix."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (function existence, pattern matching, cache, resolution order, API endpoint, format consistency, syntax, linting)."
+      "reason": "Tests are well-named (e.g., test_resolve_author_for_pr_function_exists, test_pr_resolution_before_commit), have docstrings explaining purpose, and include a module-level docstring explaining the bug context."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact function names (`resolveAuthorForPR`), variable names (`prAuthorCache`, `prMatch`, `commitMatch`), exact regex patterns, and the exact API endpoint. This goes far beyond naming the buggy file and effectively dictates the implementation."
+      "reason": "The instruction specifies the exact file (`scripts/create-github-release.mjs`), exact function names to create (`resolveAuthorForPR`), exact variable names (`prMatch`, `commitMatch`, `prAuthorCache`), exact regex pattern, and exact API endpoint \u2014 this goes well beyond identifying the buggy file and constitutes detailed solution specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

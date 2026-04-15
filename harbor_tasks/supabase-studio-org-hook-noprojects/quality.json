@@ -3,63 +3,65 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The instruction.md never mentions `useSelectedOrganizationQuery`, which is the key hook tested in test_uses_org_hook_not_props and is asserted as a required string in the source. The instruction says 'The component's parameter list must not include organization as a destructured prop' but doesn't tell the agent what to use instead. The test asserts 'useSelectedOrganizationQuery' must be present in the source, but this hook name is undiscoverable from instruction.md alone."
+      "reason": "The instruction.md never mentions `useSelectedOrganizationQuery`, which is the key hook asserted in test_uses_org_hook_not_props and is the core of the fix. The instruction says 'The component's parameter list must not include organization as a destructured prop' but doesn't tell the agent to use this specific hook. An agent reading only instruction.md cannot discover `useSelectedOrganizationQuery` as the required import/usage."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (component returns null, banner never appears) and constraints (no org prop, no props interface), but does not say 'use useSelectedOrganizationQuery' or specify exact code changes. A developer must reason about what hook to use."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the constraints that directly mirror the solution: 'The component's parameter list must not include organization as a destructured prop', 'No NoProjectsOnPaidOrgInfoProps interface should be present'. While it doesn't name useSelectedOrganizationQuery, the constraints effectively dictate exactly what structural changes to make (remove props, remove interface), leaving very little reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_uses_org_hook_not_props asserts `'useSelectedOrganizationQuery' in src`, which is a gold-specific implementation detail. An alternative correct fix could use a different hook (e.g., useSelectedOrganization, useCurrentOrganization, or a store/context) to obtain the organization data, but would fail this test."
+      "reason": "test_uses_org_hook_not_props asserts `'useSelectedOrganizationQuery' in src`, which is a gold-specific implementation detail. An alternative correct fix could use a different hook (e.g., useSelectedOrganization, useCurrentOrganization, or a context/store-based approach) to obtain the organization data, but would fail this test. The tests enforce the exact hook name from the gold solution."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_uses_org_hook_not_props, test_component_has_no_params, test_not_stub) are entirely string-matching on file contents (`assert 'X' in src`). While there are subprocess-based tests (test_repo_typescript_parse, test_repo_billing_tests, etc.), these are pass-to-pass regression tests. The f2p tests never import, execute, or render the component."
+      "reason": "The core fail-to-pass tests (test_uses_org_hook_not_props, test_component_has_no_params, test_not_stub) are purely string-matching via `assert 'X' in src` on the source file. While there are subprocess-based tests (test_repo_typescript_parse, test_repo_billing_tests, etc.), the f2p tests that verify the actual bug fix are all text-matching, not behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning null would fail test_not_stub (which checks for 'Admonition', 'EXCLUDED_PLANS', 'isEligible', 'organization.plan.name' in source) and test_uses_org_hook_not_props (which checks for 'useSelectedOrganizationQuery'). These require actual implementation content."
+      "reason": "A stub implementation (e.g., `export const NoProjectsOnPaidOrgInfo = () => { return null }`) would fail test_not_stub which checks for EXCLUDED_PLANS, isEligible, Admonition, and organization.plan.name in the source. The f2p tests also require useSelectedOrganizationQuery to be present, which a stub wouldn't have."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/supabase's container at solution/solve.sh (or accessible via the gold patch). An agent could read solve.sh or the patch file to discover the exact fix. Additionally, the tests only check string presence in the file, so an agent could grep for expected strings from test_outputs.py and insert them without understanding the bug."
+      "reason": "The solution is available at /workspace/supabase in the container via solve.sh, and the agent could read the solution patch file if it exists at solution/solve.sh. The agent could also simply `cat` the gold patch or grep for the expected strings in the test file to reverse-engineer the exact solution."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says the component must 'Display the organization's plan.name in the banner' and 'Provide a link to billing settings', but no test verifies the banner actually renders or that a billing link is present in rendered output. Tests only do string matching on source code."
+      "reason": "Instruction.md requires rendering an Admonition banner, providing a link to billing settings, and checking project count via useOrgProjectsInfiniteQuery. However, there are no tests that verify the component actually renders the Admonition with correct content, no tests for the Link to billing settings being correct, and no tests for the project count logic. The tests only check string presence in source code."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose and category."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a React component, not producing structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves modifying a React component, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, import paths, and component names are all consistent and correctly spelled across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the exact file path, but this is the obvious target file for the task domain. It doesn't name the specific hook (useSelectedOrganizationQuery) or exact line numbers of the fix."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file path `apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx` and specifies exact implementation details like the EXCLUDED_PLANS array values, the isEligible logic formula, and that NoProjectsOnPaidOrgInfoProps should not exist - these are highly specific constraints that narrow the solution space significantly."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single TSX component file, not a config edit task."
+      "reason": "This is a code-only task modifying a single TypeScript component file, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 7
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key identifiers tested: OPENCODE_ENABLE_QUESTION_TOOL, truthy() helper, flag.ts, registry.ts, QuestionTool, 'const question' variable, app/cli/desktop client types, ACP README path, translator.md path, OPENCODE_EXPERIMENTAL_PLAN_MODE, and the '### Question Tool Opt-In' section heading. All asserted specifics in the tests are discoverable from the instruction."
+      "reason": "The instruction names all key specifics tested: the flag name `OPENCODE_ENABLE_QUESTION_TOOL`, the `truthy()` helper, the file paths (`flag.ts`, `registry.ts`, `README.md`, `translator.md`), the `export const` pattern, the `const question` variable, the client types `app`/`cli`/`desktop`, the `QuestionTool` name, the section title `### Question Tool Opt-In`, and the example command `OPENCODE_ENABLE_QUESTION_TOOL=1 opencode acp`. All test assertions map to discoverable information in the instruct"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'Introduce a local const question variable that evaluates this combined condition', 'define a new exported constant OPENCODE_ENABLE_QUESTION_TOOL using the truthy() helper', and specifies the exact combined condition logic. This goes beyond describing what's broken and tells the agent exactly WHAT to change and HOW."
+      "reason": "The instruction explicitly prescribes implementation details: 'Introduce a local `const question` variable that evaluates this combined condition', 'define a new exported constant `OPENCODE_ENABLE_QUESTION_TOOL` using the `truthy()` helper', and the exact section title and content for documentation. This goes beyond describing what's broken and tells the agent exactly what code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_question_gating_behavior uses regex to match 'const question\\s*=' requiring this exact variable name. An alternative correct implementation that uses a different variable name (e.g., 'const enableQuestion' or 'const includeQuestionTool') or inlines the condition would fail the test. test_flag_constant_defined asserts the exact string 'export const OPENCODE_ENABLE_QUESTION_TOOL' and 'truthy(\"OPENCODE_ENABLE_QUESTION_TOOL\")' which is reasonable, but the 'const question' requirement is overly "
+      "reason": "test_question_gating_behavior uses regex `const question\\s*=\\s*([\\s\\S]*?)` to assert the existence of a specific local variable named `question` in registry.ts. An alternative correct implementation (e.g., inlining the condition, using a different variable name like `showQuestion` or `enableQuestion`) would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely text-matching: test_flag_constant_defined checks strings in file content, test_question_gating_behavior reads source files and simulates logic in JS rather than importing/executing the actual module, test_translator_md_lists_env_var and test_acp_readme_question_section are pure text assertions. The test_question_gating_behavior test simulates the logic independently rather than actually calling the registry code. The pass-to-pass tests do run typecheck and unit"
+      "reason": "Most fail-to-pass tests are pure text/string matching: test_flag_constant_defined checks `'truthy(\"OPENCODE_ENABLE_QUESTION_TOOL\")' in flag_content`, test_translator_md_lists_env_var checks string presence in a markdown file, test_acp_readme_documents_question_tool checks string presence in README. test_question_gating_behavior reads source files and simulates logic in JS rather than actually importing/executing the module. No test actually imports the flag module or calls the tool registry to v"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass these tests - the agent must actually add specific strings to specific files (the flag definition with truthy(), the const question variable in registry.ts with both conditions, documentation sections). Empty or default implementations would fail."
+      "reason": "The fail-to-pass tests require specific string patterns (e.g., `export const OPENCODE_ENABLE_QUESTION_TOOL`, `truthy(...)`, `const question = ...` with both client checks and flag checks) and specific documentation content. A stub or empty implementation would not pass these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/opencode (solve.sh is the gold patch). The agent could read solution/solve.sh if it's mounted in the container, or could discover the exact changes needed. Additionally, the instruction itself is so detailed that it essentially provides the solution."
+      "reason": "The solution file exists at /workspace/opencode as solve.sh would be run there. The agent could potentially read the solution script if it's mounted. Also, since tests are purely text-matching, the agent could trivially pattern-match the expected strings from the test file if accessible, or from the instruction itself which spells out exact patterns like `truthy(\"OPENCODE_ENABLE_QUESTION_TOOL\")`."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: flag definition (test_flag_constant_defined), tool gating logic (test_question_gating_behavior), ACP README documentation (test_acp_readme_question_section), and translator.md update (test_translator_md_lists_env_var). Pass-to-pass tests verify existing functionality isn't broken."
+      "reason": "All four requirements from instruction.md are tested: flag definition (test_flag_constant_defined), tool gating logic (test_question_gating_behavior), ACP README documentation (test_acp_readme_documents_question_tool), and translator.md update (test_translator_md_lists_env_var). Pass-to-pass tests cover typecheck and existing test suites."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/static, Fail-to-pass/pr_diff, agent_config), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized into sections with comments (Gates/static, fail-to-pass/behavioral, config update tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves code changes and documentation updates, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "All filenames, paths, variable names, and commands in instruction.md are consistent with the test file and solution, with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'Introduce a local const question variable', 'using the truthy() helper', 'following the pattern of existing flags', and 'near the existing OPENCODE_EXPERIMENTAL_PLAN_MODE entry'. These are implementation-level hints that go beyond describing the desired behavior."
+      "reason": "The instruction specifies exact implementation details like 'Introduce a local `const question` variable', 'using the `truthy()` helper', exact file paths, and exact section titles. While file paths are reasonable for this task, prescribing the variable name `question` and exact helper function crosses into implementation leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs (translator.md, README.md) are localized additions of a few lines each, not full-file rewrites, and don't contradict other files."
+      "reason": "The gold patch makes localized edits: single-line additions to flag.ts, translator.md, and registry.ts, plus a new section in README.md. No full-file rewrites."
     }
   },
   "tier_a_fails": [

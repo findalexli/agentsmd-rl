@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path `python/python/lancedb/embeddings/utils.py`, the function `url_retrieve()`, the missing import `urllib.request`, and the expected behavior. Tests check these same elements. The import ordering test (urllib.error before urllib.request) is a reasonable convention discoverable from the existing code structure. The ruff checks and retry import are pass-to-pass tests that don't require specific knowledge from the instruction."
+      "reason": "The instruction names the file path `python/python/lancedb/embeddings/utils.py`, the function `url_retrieve()`, the missing import `urllib.request`, and the error `AttributeError`. All test-specific paths, function names, and string literals are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'Add the missing `import urllib.request` statement' \u2014 this IS the fix. A competent developer doesn't need to reason about what to change; the exact solution is spelled out in step 2 of 'What You Need To Do'."
+      "reason": "The instruction explicitly states the fix: 'Add the missing `import urllib.request` statement'. This tells the agent exactly what line to add rather than just describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_urllib_request_import_present checks for literal string 'import urllib.request' in content. test_url_retrieve_code_uses_urllib_request checks AST for 'urllib.request' in imports list. An alternative valid fix like `from urllib.request import urlopen` (and changing the call site) would fail these tests even though it correctly fixes the bug. test_import_ordering_valid asserts exact line text 'import urllib.request'."
+      "reason": "test_urllib_request_import_present checks for the exact string 'import urllib.request' in content, and test_url_retrieve_code_uses_urllib_request checks AST for 'urllib.request' in top-level Import nodes. An alternative valid fix like `from urllib.request import urlopen` (with corresponding code change to use `urlopen()` directly) would fail these tests despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_url_retrieve_has_working_import executes a subprocess that actually calls urllib.request.urlopen. test_repo_import_utils_retry imports and calls the retry decorator. test_python_syntax_valid runs py_compile. While some tests do text/AST checks, behavioral tests are also present."
+      "reason": "While some tests do text/AST checks (test_urllib_request_import_present, test_url_retrieve_code_uses_urllib_request), test_url_retrieve_has_working_import actually executes a subprocess that calls urllib.request.urlopen, test_repo_import_utils_retry imports and runs code, and test_python_syntax_valid compiles the file. Not every test is pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The F2P tests (test_urllib_request_import_present, test_url_retrieve_has_working_import, test_url_retrieve_code_uses_urllib_request) all check for the presence of `import urllib.request` either as text, AST, or via execution. A stub/no-op would not pass since the base code lacks this import."
+      "reason": "The F2P tests check for 'import urllib.request' in the file content and AST, and test_url_retrieve_has_working_import executes code that would fail with AttributeError without the fix. A stub/no-op cannot pass these since the base file is missing the import."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/lancedb and solve.sh is accessible in the container. The agent could read solution/solve.sh to see the exact patch. Additionally, the fix is a single well-known import line that could be matched from test assertions (grepping test files for 'import urllib.request')."
+      "reason": "The solution file exists at /workspace/lancedb's solve.sh path (solution/solve.sh shows the exact patch). An agent could read this file or grep for the expected fixture strings. The Dockerfile doesn't remove the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) finding url_retrieve \u2014 tested by test_url_retrieve_function_structure, (2) adding import urllib.request \u2014 tested by test_urllib_request_import_present, (3) verifying url_retrieve works \u2014 tested by test_url_retrieve_has_working_import."
+      "reason": "The instruction requires adding `import urllib.request` and verifying `url_retrieve()` works with HTTP URLs. Tests cover the import presence, function existence, execution behavior, syntax validity, and linting \u2014 all behaviors described in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining F2P vs P2P, grouped logically from import checks to behavioral verification to linting."
+      "reason": "Tests are well-named (test_urllib_request_import_present, test_url_retrieve_has_working_import, etc.), have docstrings with F2P/P2P labels, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code bug fix, not structured data production."
+      "reason": "This task involves a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, module names, and commands are correctly spelled and consistent."
+      "reason": "All file paths, function names, and module names are correctly spelled throughout the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (`python/python/lancedb/embeddings/utils.py`), the exact missing import (`import urllib.request`), and the exact function (`url_retrieve`). This eliminates any localization challenge. The instruction even says 'Add the missing `import urllib.request` statement' which is the complete solution."
+      "reason": "The instruction names the exact file (`python/python/lancedb/embeddings/utils.py`), the exact function (`url_retrieve()`), and the exact fix (`Add the missing import urllib.request statement`). This is excessive localization for a task where finding and fixing the bug is the core challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

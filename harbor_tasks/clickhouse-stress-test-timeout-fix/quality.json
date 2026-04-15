@@ -2,63 +2,63 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the target file (tests/docker_scripts/stress_runner.sh), the exact strings to use ('$((RANDOM % 2))', 'start_server 30', 'larger timeout for the post-stress restart', 'under sanitizers with'), the pattern to remove ('date +%-d'), and the context (cannot_allocate_thread_injection.xml). All test-asserted specifics are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_randomization_produces_varying_output checks for exact string '$((RANDOM % 2))' in the file and looks for lines matching 'if [' with 'RANDOM' or 'date'. The instruction never mentions using $RANDOM specifically \u2014 it only says 'each independent test execution gets a different randomization result'. Also, test_post_stress_start_server_accepts_timeout_parameter checks for a numeric argument > 6 passed to start_server via regex 'sta"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to change: replace date-based randomization with per-run randomization using 0-or-1 result, add 'start_server 30' after a specific line, and include a comment with exact phrases. It specifies the exact fix ('start_server 30'), the exact comment text, and the exact replacement mechanism. This is essentially dictating the solution rather than describing what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (day-of-month randomization, insufficient timeout, missing comment) without prescribing exact code changes like 'replace X with Y on line N'. The developer must figure out how to implement proper randomization and what timeout value to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact strings like '$((RANDOM % 2))' in test_randomization_uses_random_not_date. An alternative correct fix using e.g. 'shuf -i 0-1 -n 1' or '$((RANDOM & 1))' or '$(( RANDOM % 2 ))' (with spaces) would fail. The test locks in the gold solution's exact syntax."
+      "reason": "test_randomization_produces_varying_output explicitly checks for the exact string '$((RANDOM % 2))' and treats it as the RANDOM approach. An alternative like using `shuf`, `$SRANDOM`, `/dev/urandom`, or `$(od -An -N1 -tu1 /dev/urandom)` would fail this test. Also, test_post_stress_start_server_accepts_timeout_parameter uses regex 'start_server\\s+(\\d+)' which requires the timeout as a positional numeric argument \u2014 alternatives like environment variables or named parameters would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_randomization_uses_random_not_date, test_post_stress_start_server_has_timeout, test_start_server_timeout_has_comment, test_no_date_based_randomization_anywhere) all use 'assert X in content' / string matching on file contents. While there are syntax/shellcheck tests that execute subprocesses, the actual behavioral requirements are only verified via text matching, not execution."
+      "reason": "test_randomization_produces_varying_output primarily does text inspection: it reads the file, searches for '$((RANDOM % 2))' as a string, and only then runs a subprocess to verify $RANDOM varies \u2014 but this subprocess test is on bash's $RANDOM itself, not on the actual script. test_post_stress_start_server_accepts_timeout_parameter is purely text-based: regex matching 'start_server\\s+(\\d+)' in file content. The behavioral tests (shellcheck, syntax) are pass_to_pass tests, not f2p tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original file (e.g., '$((RANDOM % 2))', 'start_server 30', 'larger timeout for the post-stress restart'). A stub/no-op solution would fail since the original file contains 'date +%-d' and 'start_server' without the timeout argument."
+      "reason": "The f2p tests (test_randomization_produces_varying_output, test_post_stress_start_server_accepts_timeout_parameter) would fail on the unmodified file: the original uses $(date +%-d) not $RANDOM, and the original start_server call has no numeric argument. A stub/no-op would not pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or similar path in the container). The agent could read /solution/solve.sh to see the exact patch. Additionally, the agent could grep the test file at tests/test_outputs.py to find exact expected strings like '$((RANDOM % 2))' and 'start_server 30' and simply insert them."
+      "reason": "The solution file exists at /workspace/ClickHouse's git history context and solution/solve.sh is present in the container. An agent could read /solution/solve.sh (if accessible) or simply grep test_outputs.py to find exact strings like '$((RANDOM % 2))' and 'start_server 30' and apply them directly without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All three explicit requirements from instruction.md are tested: (1) RANDOM-based randomization replacing date-based, (2) start_server 30 after the rm line, (3) explanatory comment with the exact phrases."
+      "outcome": "fail",
+      "reason": "Requirement 3 ('Add an explanatory comment before the restart call referencing sanitizer context and table loading behavior') is not tested. No test checks for the presence or content of an explanatory comment."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_randomization_uses_random_not_date, test_post_stress_start_server_has_timeout, etc.) with docstrings explaining their purpose. Pass-to-pass tests are clearly separated from fail-to-pass tests."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and why, clearly separated into f2p tests and pass_to_pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a bash script, not structured data output."
+      "reason": "This task modifies a shell script; no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exactly where to make changes ('After the line that removes cannot_allocate_thread_injection.xml'), exactly what strings to use ('start_server 30'), and exact comment phrases. It also names the exact bash mechanism ('$RANDOM') and pattern to replace ('date +%-d'). This goes beyond describing the problem to dictating the implementation."
+      "outcome": "pass",
+      "reason": "The instruction names the target file (stress_runner.sh) which is appropriate for the task domain, and describes the bug conceptually without naming exact line numbers or specific code replacements."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes two localized changes in stress_runner.sh: replacing one line of randomization logic and modifying one start_server call with a comment. The diff is minimal and doesn't contradict other files."
+      "reason": "The gold patch in solve.sh makes localized changes (two regex substitutions) to stress_runner.sh, not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
   "pass_count": 6,
   "fail_count": 5

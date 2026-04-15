@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the `reply-and-resolve-thread` subcommand, the `Usage:` message with `<threadNodeId>` and `<body>`, the `replyToThread()` function, the REST endpoint pattern `/pulls/.*/(comments|replies)`, the GraphQL mutation `addPullRequestReviewThreadReply`, the `generateThreadMd()` function, and the skill files `.agents/skills/pr-status-triage/SKILL.md` and `workflow.md`. All assert'd strings and paths are discoverable from the instruction."
+      "reason": "The instruction names all key elements tested: the `reply-and-resolve-thread` subcommand, the usage message format with `<threadNodeId>` and `<body>`, the `replyToThread()` function, the REST endpoint pattern `/pulls/.*/(comments|replies)`, the GraphQL mutation `addPullRequestReviewThreadReply`, the `generateThreadMd()` function, and the skill documentation files `.agents/skills/pr-status-triage/SKILL.md` and `workflow.md`. All asserted strings and paths are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (REST API instead of GraphQL, new subcommand, documentation updates) but does not specify exact code changes, line numbers, or the precise implementation (e.g., the GraphQL lookup query, the specific REST endpoint construction). A developer still needs to reason about how to implement the changes."
+      "reason": "The instruction describes what behavior is expected (REST API instead of GraphQL, new subcommand, updated docs) but does not specify exact code changes, line numbers, or the specific implementation approach (e.g., the two-step GraphQL lookup + REST post pattern used in the gold solution)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_reply_to_thread_uses_rest_api checks for a regex `/pulls/.*/(comments|replies)` inside the `replyToThread` function body. An alternative correct implementation could use `octokit.rest.pulls.createReplyForReviewComment()` or a different URL construction pattern that doesn't match that regex. Also, test_generate_thread_md_includes_combined_command searches for the string 'reply-and-resolve-thread' within 5000 chars of `generateThreadMd` function start \u2014 an alternative that generates the comma"
+      "reason": "test_reply_to_thread_uses_rest_api asserts `re.search(r'/pulls/.*/(comments|replies)', func_body)` which requires this specific REST URL pattern to appear literally in the function body. An alternative correct implementation could use `octokit.rest.pulls.createReplyForReviewComment()` or construct the URL differently (e.g., using a variable or template literal that doesn't match this regex). Also, test_generate_thread_md_includes_combined_command searches for the literal string 'reply-and-resolv"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several fail-to-pass tests are purely text-matching: test_reply_to_thread_uses_rest_api reads source code and checks for regex patterns/strings without executing the function; test_generate_thread_md_includes_combined_command reads source and checks for a string; test_skill_md_thread_interaction_commands and test_workflow_md_one_step_resolve just check file contents. Only the subcommand tests (test_reply_and_resolve_subcommand_no_args, test_reply_and_resolve_subcommand_missing_body) actually exe"
+      "reason": "Tests test_reply_to_thread_uses_rest_api, test_generate_thread_md_includes_combined_command, test_skill_md_thread_interaction_commands, and test_workflow_md_one_step_resolve are pure text/source-inspection tests (reading file contents and checking for string presence). While the subcommand tests do execute the script, a significant portion of the test suite only checks that certain strings appear in source files rather than verifying actual behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests cannot be satisfied by stub implementations. test_reply_and_resolve_subcommand_no_args requires a new subcommand that exits non-zero with specific usage text. test_reply_to_thread_uses_rest_api requires actual code changes to the replyToThread function body. test_generate_thread_md_includes_combined_command requires modifying generateThreadMd. These all require substantive implementation work."
+      "reason": "The fail-to-pass tests cannot be satisfied by stubs: the subcommand tests require actual argument validation logic that exits non-zero with specific usage text; the source inspection tests require specific code patterns in specific functions. A no-op or default implementation would not pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/next.js after the gold patch would be applied, and the solve.sh is in /solution/solve.sh. An agent could potentially read /solution/solve.sh if it exists in the container (the Dockerfile doesn't explicitly remove it). Additionally, since many tests are string-matching on source files, an agent could grep for expected patterns and insert them superficially."
+      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or wherever the container places it). The Dockerfile does not remove it. An agent could potentially read the gold patch from the solution directory. Additionally, since several tests are pure text-matching (checking for 'reply-and-resolve-thread' in source files), an agent could grep test files or solution files to find exact expected strings."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: the new subcommand with argument validation, REST API refactoring of replyToThread, generateThreadMd inclusion of new command, and skill documentation updates for both SKILL.md and workflow.md."
+      "reason": "All four explicitly required behaviors are tested: (1) new subcommand with argument validation, (2) REST API refactoring of replyToThread, (3) generateThreadMd includes combined command, (4) skill documentation updates. Regression tests also cover existing subcommands."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, config-derived), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized into clearly labeled sections (fail-to-pass behavioral, pass-to-pass regression, config-derived) with descriptive function names and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant files and functions but doesn't specify exact line numbers or the precise code to write. Naming `replyToThread()`, `generateThreadMd()`, and specific files is appropriate given the task domain."
+      "reason": "The instruction names the relevant files and functions (which is appropriate given the task domain) but does not specify exact line numbers or the precise code changes needed. Mentioning `replyToThread()`, `generateThreadMd()`, and the specific files is reasonable for scoping the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff for SKILL.md and workflow.md shows localized additions (a few lines/paragraphs) rather than full-file rewrites, and the changes are consistent with the instruction."
+      "reason": "The gold patch for SKILL.md and workflow.md shows localized additions (a few lines each) rather than full-file rewrites, and the changes are consistent with the instruction requirements."
     }
   },
   "tier_a_fails": [

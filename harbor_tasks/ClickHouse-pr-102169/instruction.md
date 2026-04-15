@@ -2,22 +2,34 @@
 
 ## Problem
 
-In the ClickHouse codebase (`/workspace/ClickHouse`), the code responsible for refreshing user-defined SQL objects from ZooKeeper has a bug involving stale sessions during retry operations.
+In the ClickHouse codebase at `/workspace/ClickHouse`, the user-defined SQL objects ZooKeeper storage implementation (in `src/Functions/UserDefined/`) has a bug in its object refresh logic. When the underlying ZooKeeper session expires mid-operation, the code throws exceptions instead of recovering.
 
-The `ZooKeeperRetriesControl` retry mechanism is used for resilience against transient Keeper errors, but the code reuses the same ZooKeeper session handle even after it may have expired. Furthermore, the object name list with watches is fetched before the retry loop begins, so on retry iterations the watches remain tied to the stale session rather than being re-established on a fresh one.
+### Symptom
 
-This causes exceptions when a ZooKeeper session expires during a refresh cycle and the code continues operating on the expired handle.
+Two related issues cause the failure:
 
-## Acceptance Criteria
+1. **Stale watches**: `getObjectNamesAndSetWatch` is called once *before* the retry loop begins, so watches are bound to a session that may later expire. On retry, operations fail because watches are still attached to the expired session.
 
-The fix must satisfy all of the following:
+2. **Stale session handle**: The `zookeeper` parameter captured at function entry is reused throughout all retry iterations. Even when the underlying session has expired between attempts, the stale handle continues to be used for all ZooKeeper operations.
 
-1. A local variable `current_zookeeper` of type `zkutil::ZooKeeperPtr` must be declared to track the session handle.
+### Available Infrastructure
 
-2. On retry iterations — detected via `retries_ctl.isRetry()` — the code must obtain a fresh ZooKeeper session through `zookeeper_getter.getZooKeeper()` (the return value is a pair; use `.first` for the handle).
+The class already provides the tools needed for recovery:
 
-3. The call to `getObjectNamesAndSetWatch()` must appear inside the `retries_ctl.retryLoop` lambda, not before it. This ensures watches are set on the current (potentially renewed) session.
+- `zookeeper_getter` — a member whose `getZooKeeper()` method returns `std::pair<ZooKeeperPtr, ...>`. Use `.first` to extract the session pointer.
+- `retries_ctl.isRetry()` — detects whether the current retry-loop iteration is a retry (as opposed to the first attempt).
+- `retries_ctl.retryLoop(...)` — the retry loop wrapper already in use.
 
-4. Both `tryLoadObject` and `getObjectNamesAndSetWatch` must be called with `current_zookeeper` as the session argument, not the original `zookeeper` parameter.
+## Requirements
 
-5. Comments in the modified code must use the word "exception" (not "crash") when referring to logical errors, following project conventions documented in CLAUDE.md.
+After the fix, the code must satisfy all of the following:
+
+1. The active ZooKeeper session must be tracked in a variable named `current_zookeeper` of type `zkutil::ZooKeeperPtr`, initialized from the original `zookeeper` parameter.
+
+2. On retry iterations (detected via `retries_ctl.isRetry()`), the session-tracking variable must be updated with a fresh session from `zookeeper_getter.getZooKeeper().first`.
+
+3. The `getObjectNamesAndSetWatch` call must be inside the retry loop (not before it), so that watches are always established on the current session.
+
+4. All ZooKeeper operations inside the retry loop — including `tryLoadObject` and `getObjectNamesAndSetWatch` — must use `current_zookeeper` rather than the original `zookeeper` parameter.
+
+5. Per the conventions in `CLAUDE.md`, comments should use the word "exception" (not "crash") when referring to logical errors.

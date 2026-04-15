@@ -2,63 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Several test-specific details are not discoverable from instruction.md: test_no_any_type checks for `: any` type annotations in bash.ts (not mentioned); test_not_stub requires 20+ lines, 100+ words, and 5+ unique concepts from a specific regex list; test_preserves_guidance_sections checks for specific regex patterns (quoting, specialized tool, timeout/truncation); test_describes_directory_behavior requires specific phrasing like 'working directory' or 'current directory'. The AGENTS.md-related t"
+      "outcome": "pass",
+      "reason": "The instruction names the exact file paths (packages/opencode/src/tool/bash.txt and packages/opencode/src/tool/bash.ts), the placeholder names (${directory}, ${maxLines}, ${maxBytes}), the export name (BashTool), the concepts list, the line/word minimums, guidance sections, and the prohibition on `: any`. All test-asserted specifics are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (directory placeholder breaks caching) and gives hints about what area to look at, but does not prescribe the exact replacement text ('current working directory') or the exact code changes needed. The agent still needs to reason about the specific fix."
+      "reason": "The instruction describes the problem (directory placeholder breaks caching) and the requirements (remove ${directory}, keep ${maxLines}/${maxBytes}, describe directory behavior in static text), but does not prescribe the exact fix (e.g., does not say 'replace ${directory} with current working directory' or 'remove line X'). The agent must reason about how to restructure the template and TypeScript."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that ${directory} is removed from bash.txt, that no dynamic placeholders remain after maxLines/maxBytes substitution, and that bash.ts doesn't substitute directory into the description. These are behavioral constraints, not implementation-specific. An agent could replace ${directory} with 'project directory', 'current working directory', 'the project root', etc., and all would pass. The test_describes_directory_behavior regex is broad enough to match many phrasings."
+      "reason": "Tests check for absence of ${directory} placeholder, presence of ${maxLines}/${maxBytes}, regex patterns for directory behavior description (multiple alternatives accepted: 'working directory', 'current directory', 'default directory', etc.), guidance sections via flexible regex, and no specific variable names or exact line positions. Alternative correct implementations (different wording, different structure) would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_no_directory_placeholder_in_template, test_ts_no_directory_injection) are purely text-matching: they read file contents and check for string presence/absence. test_template_static_after_substitutions runs a Node subprocess but only does string replacement and regex matching on file content, not actual code execution. No test imports or calls BashTool to verify runtime behavior."
+      "reason": "The fail-to-pass tests (test_no_directory_placeholder_in_template, test_template_static_after_substitutions, test_ts_no_directory_injection) are predominantly text/pattern matching: checking for absence of '${directory}' in file content, running regex over source, and doing string substitution checks. While test_template_static_after_substitutions uses a Node subprocess, it just does string replacement \u2014 no actual code execution/import of the module. The tests never import BashTool or execute th"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty file would fail test_not_stub (requires 20+ lines, 100+ words, 5+ concepts), test_retains_global_placeholders (requires ${maxLines} and ${maxBytes}), and test_describes_directory_behavior (requires mention of working/current/default directory). The f2p tests require actual removal of ${directory} from the real template while preserving substantial content, so a trivial stub won't pass."
+      "reason": "A stub or empty file would fail: test_not_stub requires 20+ lines and 100+ words with 5+ concepts; test_no_directory_placeholder_in_template requires the original ${directory} to be removed (the base file contains it); test_ts_no_directory_injection checks that the .replace/.replaceAll calls with 'directory' are removed from bash.ts. These cannot be satisfied without making the actual fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/opencode's git history or potentially at a predictable path. More critically, the agent could read the test file at tests/test_outputs.py to discover exact assertions (regex patterns, required word counts, etc.) and craft a solution to match. The solution/solve.sh is described as 'hidden' but may be accessible in the container depending on how it's mounted."
+      "reason": "The solution file exists at /workspace/opencode in the container environment (solution/solve.sh is a shell script). An agent could potentially read the solve.sh script or examine the gold patch. Additionally, the test file itself is at tests/test_outputs.py and could be read to reverse-engineer exact requirements. The Dockerfile doesn't remove /solution/ from the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires removing ${directory} from the template and keeping the description project-independent while retaining ${maxLines}/${maxBytes}. All these behaviors are tested: removal of ${directory} (test_no_directory_placeholder_in_template, test_ts_no_directory_injection), static after substitution (test_template_static_after_substitutions), retention of global placeholders (test_retains_global_placeholders), and describing directory behavior (test_describes_directory_behavior)."
+      "reason": "All requirements from instruction.md are tested: no ${directory} in bash.txt, ${maxLines}/${maxBytes} retained, substantial content (20+ lines, 100+ words, 5+ concepts), directory behavior description, guidance sections (quoting, tool preference, timeout/truncation), no directory injection in bash.ts, no `: any` types, BashTool export preserved, and prettier formatting."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI gates), descriptive function names, and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [repo_tests], [agent_config] categorize tests clearly."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI gates), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing source code and template files, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves editing source code files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (packages/opencode/src/tool/bash.ts, packages/opencode/src/tool/bash.txt), variable names (${directory}, ${maxLines}, ${maxBytes}), and function/export names (BashTool, Instance.directory) are all consistent between instruction.md and tests."
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names 'the `description` field in the return object around line 59' in bash.ts, which is overly specific localization. It also says 'The `workdir` parameter's `.describe()` already mentions the directory' which directly hints at the solution approach of relying on the workdir parameter instead."
+      "outcome": "pass",
+      "reason": "The instruction names the files (bash.ts and bash.txt) which is appropriate since the task domain is about these specific tool files. It doesn't specify exact line numbers or the precise replacement text. Mentioning Instance.directory is necessary context about the bug, not solution leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task. While the solution touches AGENTS.md, the instruction.md does not frame this as an AGENTS.md editing task."
+      "reason": "This is primarily a code-editing task, not an agentmd-edits task. While AGENTS.md is modified in the gold solution, this is not the core focus of the task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

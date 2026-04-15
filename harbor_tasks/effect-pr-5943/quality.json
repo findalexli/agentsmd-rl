@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions the package @effect/sql-pg, the file PgClient.ts (implicitly via the package), the reserveRaw function context, the specific error message 'Failed to acquire connection for transaction', the cause 'No client returned', the requirement for 'function' declaration of onError before pool.connect, and the removal of client! assertions. All test-asserted specifics (literal strings, function names, structural requirements) are discoverable from instruction.md."
+      "reason": "The instruction mentions the package @effect/sql-pg, the file PgClient.ts (implicitly via the package), the reserveRaw function pattern, the specific error message 'Failed to acquire connection for transaction', the cause 'No client returned', the requirement for 'function' declaration of onError before pool.connect, and removal of client! assertions. All test-asserted specifics (literal strings, function names, structural requirements) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'The onError handler must be defined using a function declaration (not an arrow function or const assignment) and must appear in the source code before the pool.connect call', and specifies the exact SqlError message and cause strings. This tells the agent exactly WHAT to change rather than just describing what's broken."
+      "reason": "The instruction explicitly states implementation details: 'The onError handler must be defined using a function declaration (not an arrow function or const assignment) and must appear in the source code before the pool.connect call', and specifies exact SqlError message/cause strings. This goes beyond describing what's broken and prescribes the exact fix structure, leaving little reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_onerror_defined_before_callback asserts 'function onError' must appear before pool.connect, rejecting valid alternatives like 'const onError = (cause_: Error) => { cause = cause_ }' defined before pool.connect. test_sql_error_with_no_client_cause asserts the exact literal string 'No client returned' must appear in the code. These are gold-specific implementation details that correct alternative fixes wouldn't necessarily share."
+      "reason": "Tests assert very specific implementation details: test_onerror_defined_before_callback requires 'function onError' to appear before 'pool.connect' in source text; test_sql_error_with_no_client_cause requires the literal string 'No client returned'. A correct alternative fix using a const arrow function for onError, or a different error message like 'Client is null', would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_no_unsafe_client_assertion, test_early_return_error_handling, test_onerror_defined_before_callback, and test_sql_error_with_no_client_cause are ALL purely text-based: they read the source file and check for string patterns (e.g., 'client!' not in code, '!client' in code, 'function onError' in before section, 'No client returned' in code). While test_typescript_check and test_build_package execute the code, the fail_to_pass tests are entirely string matching with no behavioral executio"
+      "reason": "Tests test_no_unsafe_client_assertion, test_early_return_error_handling, test_onerror_defined_before_callback, and test_sql_error_with_no_client_cause all exclusively use string/text matching on source code (reading file, checking substrings). Only test_typescript_check, test_build_package, test_repo_circular, and test_repo_codegen execute code. The fail_to_pass tests are all pure text inspection with no behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that wouldn't exist in the original buggy code: 'client!' must be removed, '!client' check must be added, 'function onError' must appear before pool.connect, and 'No client returned' string must exist. A stub/no-op change would fail these since the original code has 'client!' and lacks the null check."
+      "reason": "The fail_to_pass tests check for specific code changes (removal of 'client!', presence of '!client' check, 'function onError' before pool.connect, 'No client returned' string). A stub or no-op implementation would not pass these since they verify specific text changes in the source file that don't exist in the base commit."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/effect-checkout's accessible filesystem context. The agent could read solve.sh or the patch directly. Additionally, since tests check for exact literal strings like 'No client returned' and 'function onError', the agent could grep test files or solution files to find the expected patterns and insert them verbatim."
+      "reason": "The solution file exists at /workspace/effect-checkout's solve.sh path context, and the gold patch is in solution/solve.sh. An agent could read the solution directory to find the exact patch. Additionally, since tests are pure text matching, the agent could grep test files or simply insert the exact expected strings ('No client returned', 'function onError') without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md are tested: no unsafe non-null assertions (test_no_unsafe_client_assertion), explicit null/falsy client check (test_early_return_error_handling), SqlError with specific message and cause (test_sql_error_with_no_client_cause), and onError as function declaration before pool.connect (test_onerror_defined_before_callback)."
+      "reason": "All four behavioral requirements from instruction.md (no non-null assertions, explicit null client check, specific SqlError message/cause, onError as function declaration before pool.connect) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test checks, categorized as pass_to_pass or fail_to_pass, and include context about the original bug and the expected fix."
+      "reason": "Tests are well-named (test_no_unsafe_client_assertion, test_early_return_error_handling, etc.), have docstrings explaining the rationale and whether they are pass_to_pass or fail_to_pass, and are logically grouped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
+      "reason": "This task involves fixing source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation requirements: 'onError handler must be defined using a function declaration', 'must appear in the source code before the pool.connect call', exact error message 'Failed to acquire connection for transaction', and exact cause 'No client returned'. This goes well beyond describing the bug and prescribes the exact solution structure."
+      "reason": "The instruction specifies exact implementation requirements: 'onError handler must be defined using a function declaration', 'must appear in the source code before the pool.connect call', exact SqlError message and cause strings. This goes well beyond naming the buggy module and effectively dictates the exact code structure of the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

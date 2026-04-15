@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_claude_md_documents_package_json checks for 'Miscellaneous' section header in CLAUDE.md and exact string 'npm run compile', but instruction.md only vaguely says 'update the relevant documentation file' without naming CLAUDE.md or requiring a 'Miscellaneous' section. (2) test_independent_filter_container checks for 'marginTop' and 'flex' styling in a container div, which is implementation-specific and not described in the ins"
+      "reason": "The instruction mentions 'marginTop set to -8' and 'flex' which maps to test_independent_filter_container's assertion, and mentions filters after </VSCodeRadioGroup> mapping to test_filters_outside_radio_group. However, test_sort_options_in_radio_group checks for exact strings 'Newest', 'Oldest', 'Most Relevant' which are not explicitly named in instruction.md (only referenced as 'sort options'). Also test_claude_md_documents_package_json checks for the exact string 'Miscellaneous' and 'npm run "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix: 'The root cause is that the Workspace and Favorites toggles are placed inside a VSCodeRadioGroup component... They need to be moved outside this group.' This tells the agent exactly what structural change to make rather than just describing the broken behavior."
+      "reason": "The instruction explicitly states implementation details: 'the file should contain a line with both marginTop and flex properties set, with marginTop set to -8', 'Both showCurrentWorkspaceOnly and showFavoritesOnly filter controls must appear after the closing </VSCodeRadioGroup> tag', and 'at least 5 VSCodeRadio elements'. These are specific implementation prescriptions, not just descriptions of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_independent_filter_container asserts the existence of a div with both 'marginTop' and 'flex' in the same line, which is a gold-specific implementation detail. An alternative correct fix could use different styling (e.g., padding, gap, or no negative margin) or a different container element. Also, test_claude_md_documents_package_json requires the exact string 'Miscellaneous' as a section header, which is arbitrary and gold-specific."
+      "reason": "Tests assert very specific implementation details: test_independent_filter_container checks for a line containing both 'marginTop' and 'flex' (and the instruction specifies marginTop: -8). An alternative correct fix could use padding instead of margin, or use a different CSS layout approach, or use a CSS class instead of inline styles, and would fail these tests despite correctly fixing the independent toggle behavior."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_filters_outside_radio_group, test_independent_filter_container, test_claude_md_documents_package_json) are all pure text/string assertions on file contents (e.g., checking line positions, string presence). None execute the component, render it, or test actual toggle behavior. The pass-to-pass tests do run subprocesses (biome lint, compile), but the behavioral fix tests are entirely text-matching."
+      "reason": "The core fail-to-pass tests (test_filters_outside_radio_group, test_independent_filter_container, test_claude_md_documents_package_json) are all purely text-based: they read file contents and check for string patterns/line positions. None execute the component, render it, or test actual toggle behavior. The pass-to-pass tests do run subprocesses (biome lint, compile), but the behavioral tests that verify the bug fix are entirely string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check structural properties (line ordering relative to VSCodeRadioGroup close tag, presence of new container div, CLAUDE.md content) that require actual code changes to pass. A stub or no-op would not move lines outside the radio group or create a new file section."
+      "reason": "The f2p tests cannot be satisfied without actual changes: test_filters_outside_radio_group requires workspace/favorites filters to appear after </VSCodeRadioGroup> (they're currently inside it), test_independent_filter_container requires a new div with marginTop and flex styling, and test_claude_md_documents_package_json requires new content in CLAUDE.md. A no-op or stub won't pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/cline's container and solve.sh is accessible. The agent could read /solution/solve.sh to discover the exact patch. Additionally, test_claude_md_documents_package_json checks for literal strings ('Miscellaneous', 'npm run compile', 'package.json') that could be discovered by reading test files."
+      "reason": "The solution file exists at /workspace/cline (same container), and solve.sh is at /solution/solve.sh. The agent could read the solution directory if it exists in the container. Additionally, the test file at tests/test_outputs.py contains the exact assertions and expected patterns, which the agent could grep to reverse-engineer the expected output."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) Workspace/Favorites outside radio group - tested by test_filters_outside_radio_group, (2) Sort options remain in radio group - tested by test_sort_options_in_radio_group, (3) Documentation update - tested by test_claude_md_documents_package_json. All explicit requirements are covered."
+      "reason": "All behaviors described in instruction.md are tested: independent toggles (test_filters_outside_radio_group), sort options in radio group (test_sort_options_in_radio_group), 5+ VSCodeRadio elements (test_syntax_check), marginTop/-8/flex container (test_independent_filter_container), CLAUDE.md updates (test_claude_md_documents_package_json)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass, Regression checks), descriptive function names, and detailed docstrings explaining each test's purpose and relationship to the fix."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining the purpose of each test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI component restructuring and documentation, not structured data output."
+      "reason": "This task involves modifying UI components and documentation, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact component (VSCodeRadioGroup) and states the exact fix ('moved outside this group'), going beyond describing broken behavior. It also specifies the exact file (HistoryView.tsx) though that's somewhat acceptable for a single-file UI fix."
+      "reason": "The instruction specifies exact implementation details like 'marginTop set to -8', 'flex properties', 'at least 5 VSCodeRadio elements', and 'after the closing </VSCodeRadioGroup> tag'. These are highly specific implementation hints that go beyond describing the bug and essentially dictate the structure of the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-edit task (TSX component restructuring and documentation update), not a config-edit task."
+      "reason": "This is primarily a code-editing task, not an agent config/markdown-only edit task."
     }
   },
   "tier_a_fails": [

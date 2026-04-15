@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (app-page.ts, app_page_loader_tree.rs, app.rs, chunk_group_info.rs), the specific import paths that need transition annotations, the function name app_module_graphs, the parameter names (has_layout_segments, client_shared_entries), the enum names (ChunkGroupEntry, ChunkGroup, ChunkGroupKey), and the variant name concept (SharedMerged). The test for SharedMultiple uses that specific variant name which is not explicitly stated in the instruction \u2014 the "
+      "reason": "The instruction names all relevant file paths (app-page.ts, app_page_loader_tree.rs, app.rs, chunk_group_info.rs), the specific imports needing transition annotations, the function name app_module_graphs, the parameter names (has_layout_segments, client_shared_entries), the enum names (ChunkGroupEntry, ChunkGroup, ChunkGroupKey), the variant names (SharedMerged), the transition name (next-server-utility), fillMetadataSegment, EvaluatableAssets::empty(), and the PR reference. All test-asserted sp"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive about the exact fix: it specifies which imports need transition annotations, that fillMetadataSegment's transition should be removed, that app_module_graphs should use 'a single optional parameter' instead of two separate params, that a new variant is needed in 'each of the three related enums \u2014 ChunkGroupEntry, ChunkGroup, and ChunkGroupKey', and that route handlers should pass None instead of EvaluatableAssets::empty(). This goes well beyond describing"
+      "reason": "The instruction explicitly states the fix for each issue: e.g., 'The function should instead use a single optional parameter' (Issue 3), 'A new variant is needed in each of the three related enums' named SharedMultiple-style (Issue 4), 'route handlers should no longer need to create or pass empty asset collections' (Issue 5), and 'should not carry the transition' for fillMetadataSegment (Issue 2). These go beyond describing what's broken and prescribe the solution design."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the specific variant name 'SharedMultiple' (tests test_shared_multiple_in_chunk_group_entry, test_shared_multiple_in_chunk_group, test_shared_multiple_in_chunk_group_key, test_shared_multiple_pattern_matching). A correct alternative fix could use a different variant name like 'SharedEntries', 'MultipleShared', or 'SharedCollection' and would fail these tests. Similarly, test_app_module_graphs_option_param checks for 'Option<' specifically, ruling out alternative designs like an e"
+      "reason": "Tests assert the exact variant name 'SharedMultiple' in ChunkGroupEntry, ChunkGroup, and ChunkGroupKey enums. An alternative correct fix using a different variant name (e.g., 'SharedEntries', 'MultipleShared', 'SharedCollection') would fail all three enum tests and the pattern-matching test. The tests also check for 'Option<' in the function signature, which locks in one specific refactoring approach."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads file contents as text and searches for string patterns (e.g., checking if 'SharedMultiple' appears in enum blocks, if 'next-server-utility' appears near imports, if 'Option<' appears in function signatures). No test compiles the Rust code, runs the TypeScript, or checks any runtime behavior. They are all textual/structural checks."
+      "reason": "All fail-to-pass tests are pure text/regex searches on source files: checking for string patterns like 'SharedMultiple' in enum bodies, 'Option<' in function signatures, 'next-server-utility' in import annotations, and absence of 'EvaluatableAssets::empty()'. No test compiles the Rust code, builds the project, or executes any functional behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific structural changes that don't exist in the base commit: SharedMultiple variant doesn't exist yet, transition annotations are missing from server imports, fillMetadataSegment still has the transition, app_module_graphs still has the old signature. A stub or no-op wouldn't pass these tests since they check the actual file contents against the base state."
+      "reason": "The tests check for specific non-default content in source files (presence of SharedMultiple variant, Option parameter, transition annotations on ~30 imports, absence of specific patterns). A stub or no-op would not produce these source-level changes, so the tests cannot be trivially satisfied."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or similar path in the container). The agent could read it directly. Additionally, since all tests are pure text-matching on file contents, the agent could grep for expected patterns from the test file itself (e.g., searching for 'SharedMultiple', 'Option<', 'next-server-utility') and make minimal targeted string insertions without understanding the bug."
+      "reason": "The solution file exists at /workspace/next.js (the solve.sh applies a patch there), and the agent could read solution/solve.sh if it exists in the container. Additionally, since tests are pure text matching, the agent could grep test files or the solution patch to find exact strings like 'SharedMultiple' and mechanically insert them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five issues described in the instruction are covered by tests: transition annotations (test_app_page_server_imports_have_transition), fillMetadataSegment fix (test_fillmetadata_transition_removed), Option parameter (test_app_module_graphs_option_param), SharedMultiple variant (three enum tests + pattern matching test), and route handler cleanup (test_route_handlers_no_empty_assets)."
+      "reason": "All five issues described in instruction.md are tested: transition annotations (test_app_page_server_imports_have_transition), fillMetadataSegment transition removal (test_fillmetadata_transition_removed), Option parameter (test_app_module_graphs_option_param), SharedMultiple variant (3 enum tests + pattern matching test), and route handler empty assets (test_route_handlers_no_empty_assets)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail_to_pass and pass_to_pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive function names, have docstrings, and are grouped into 'fail_to_pass' and 'pass_to_pass' sections with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to source files, not producing structured data outputs like JSON/CSV/API/DB schemas."
+      "reason": "This task involves source code modifications, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and import paths in the instruction all match those referenced in the tests and solution without any apparent typos."
+      "reason": "File paths, function names, variable names, and enum names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (app-page.ts, app_page_loader_tree.rs, app.rs, chunk_group_info.rs), exact function names (app_module_graphs), exact parameter names (has_layout_segments, client_shared_entries), exact enum names (ChunkGroupEntry, ChunkGroup, ChunkGroupKey), and exact variant names (SharedMerged). It even specifies which enums need new variants and how pattern-match arms should be updated. Localization is a significant part of the task and the instruction eliminates it entirely."
+      "reason": "The instruction names exact files (packages/next/src/build/templates/app-page.ts, crates/next-core/src/app_page_loader_tree.rs, crates/next-api/src/app.rs, turbopack/crates/turbopack-core/src/module_graph/chunk_group_info.rs), exact function names (app_module_graphs), exact parameter names (has_layout_segments: bool, client_shared_entries), and exact enum/variant names (ChunkGroupEntry, ChunkGroup, ChunkGroupKey, SharedMerged). This level of specificity makes localization trivial."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not an agent config editing task."
     }
   },
   "tier_a_fails": [

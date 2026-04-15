@@ -14,32 +14,29 @@ The Airflow scheduler's `dags_needing_dagruns()` method in `DagModel` has a bug 
 
 ## What You Need to Fix
 
-The `dags_needing_dagruns()` method retrieves `SerializedDagModel` rows for DAGs with `AssetDagRunQueue` entries, but it doesn't handle the case where some DAGs have `AssetDagRunQueue` rows but no `SerializedDagModel` yet.
+The `dags_needing_dagruns()` method retrieves `SerializedDagModel` rows for DAGs with `AssetDagRunQueue` entries. Currently, it doesn't handle the case where some DAGs have `AssetDagRunQueue` rows but no `SerializedDagModel` yet.
 
-You need to implement logic that:
+### Expected Behavior
 
-1. **Filters out DAGs missing from serialized_dag table**: After fetching the serialized DAGs, identify which DAG IDs from `adrq_by_dag` have no corresponding serialized data. Remove these DAGs from both `adrq_by_dag` and `dag_statuses` dictionaries before further processing.
+After fetching the serialized DAGs for the candidate DAGs from `AssetDagRunQueue`, the method should:
 
-2. **Preserves ADRQ rows**: Do NOT delete `AssetDagRunQueue` rows for missing DAGs. These rows must remain in the database so the scheduler can re-evaluate on a later run once `SerializedDagModel` exists.
+1. **Identify and skip orphan DAGs**: Compare the set of DAGs with `AssetDagRunQueue` rows against the set of DAGs that have corresponding `SerializedDagModel` rows. DAGs that appear in the queue but have no serialized data should be excluded from DagRun creation.
 
-3. **Emits an informative log message**: When skipping DAGs without serialized data, log an INFO message that includes the sorted list of affected DAG IDs. The log message must contain exactly:
+   Use a set difference operation to find orphan DAGs. Store the result in a variable named `missing_from_serialized`. For example: `missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids` where `ser_dag_ids` is a set containing the dag_ids from the retrieved serialized DAGs.
+
+2. **Preserve ADRQ rows**: Do NOT delete `AssetDagRunQueue` rows for DAGs that lack serialized data. These rows must remain in the database so the scheduler can re-evaluate on a later run once `SerializedDagModel` exists.
+
+3. **Emit an informative log message**: When skipping DAGs without serialized data, log an INFO message that includes the sorted list of affected DAG IDs. The log message must contain exactly:
 
    ```
    Dags have queued asset events (ADRQ), but are not found in the serialized_dag table.
    ```
 
-## Required Variable Names
+   The message should include the sorted list of DAG IDs that are missing from the serialized table.
 
-Your implementation must include these specific variable names:
+4. **Remove from in-memory processing**: Ensure that DAGs without serialized data are removed from the internal data structures used for subsequent processing in the method (so they don't appear in the returned `triggered_date_by_dag` dictionary).
 
-- `missing_from_serialized` - A set containing the DAG IDs that are in `adrq_by_dag` but not in the serialized results
-- `ser_dag_ids` - A set containing the DAG IDs that were found in `SerializedDagModel`
-
-## Expected Behavior After Fix
-
-1. DAGs with `AssetDagRunQueue` rows but no `SerializedDagModel` are **omitted** from the `triggered_date_by_dag` return value
-2. The `AssetDagRunQueue` rows for these DAGs remain in the database (not deleted)
-3. An INFO log message is emitted listing the skipped DAG IDs (sorted alphabetically)
+   Specifically, remove the orphan DAG entries from the `adrq_by_dag` dictionary using `del adrq_by_dag[dag_id]` or `adrq_by_dag.pop(dag_id)` for each orphan DAG ID in `missing_from_serialized`.
 
 ## Testing Your Fix
 
@@ -57,5 +54,7 @@ Your fix should pass these behavioral checks:
 
 ## Key Considerations
 
-- The fix should only affect the in-memory dictionaries (`adrq_by_dag` and `dag_statuses`), not delete database rows
+- The fix should only affect the in-memory processing data structures, not delete database rows
 - Be careful with the session parameter — don't call `session.commit()` in this method
+- The implementation should use the variable name `missing_from_serialized` to hold the set of DAG IDs that have ADRQ rows but no SerializedDagModel
+- The implementation should use `ser_dag_ids` to refer to the set of DAG IDs that have serialized data

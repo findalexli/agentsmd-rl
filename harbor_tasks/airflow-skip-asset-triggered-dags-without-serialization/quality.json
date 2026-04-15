@@ -2,48 +2,48 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The F2P test `test_adrq_without_serialized_dag_is_excluded` checks for exact variable names like 'missing_from_serialized' and 'ser_dag_ids' via string search in the source file. The instruction mentions 'set(adrq_by_dag.keys()) - ser_dag_ids' under 'Key Considerations', and mentions 'missing_from_serialized' isn't explicitly named but is implied. However, the exact variable name 'missing_from_serialized' is not explicitly required by the instruction \u2014 it says 'compute which DAG IDs...are missin"
+      "outcome": "pass",
+      "reason": "The instruction names the file to modify (airflow-core/src/airflow/models/dag.py), the method (dags_needing_dagruns), variable names (missing_from_serialized, ser_dag_ids, adrq_by_dag), the exact log string, and behavioral expectations that correspond to test assertions. All test-specific literals (log message text, variable names, file paths) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the implementation approach: 'Use set operations to efficiently find missing DAG IDs: set(adrq_by_dag.keys()) - ser_dag_ids', tells you to remove entries from both dictionaries, specifies the exact log message text, and describes the exact variable names and operations. This goes beyond describing what's broken and prescribes the exact fix."
+      "reason": "The instruction explicitly tells the agent the exact implementation: use 'missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids', use 'del adrq_by_dag[dag_id]', create 'ser_dag_ids' as a set of dag_ids. This is essentially the complete code patch, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The F2P test `test_adrq_without_serialized_dag_is_excluded` does string matching for exact variable names: `'missing_from_serialized' in method_body` and `'ser_dag_ids' in method_body`. An alternative correct fix using different variable names (e.g., 'unregistered_dags', 'serialized_ids') would fail this test despite being functionally correct."
+      "reason": "test_adrq_without_serialized_dag_is_excluded checks for exact variable names 'missing_from_serialized' and 'ser_dag_ids' via string matching in the source code, and checks for 'del adrq_by_dag[dag_id]' or 'adrq_by_dag.pop'. An alternative correct fix using different variable names (e.g., 'orphan_dags', 'serialized_ids') would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The critical F2P test `test_adrq_without_serialized_dag_is_excluded` is purely text-matching: it reads the source file and checks for string presence of 'missing_from_serialized', 'ser_dag_ids', and 'del adrq_by_dag[dag_id]'. It never imports, calls, or executes the function. While P2P tests do run subprocess tests, the only F2P test is source-text inspection only."
+      "reason": "The key f2p test (test_adrq_without_serialized_dag_is_excluded) is purely text-matching: it reads dag.py as a string and checks 'missing_from_serialized in method_body', 'ser_dag_ids in method_body', and 'del adrq_by_dag[dag_id] in method_body'. It does NOT execute the code or call dags_needing_dagruns(). While some P2P tests run subprocess pytest, the central bug-fix verification is entirely text-based."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The F2P test `test_adrq_without_serialized_dag_is_excluded` only checks that specific variable names exist in the source text. A developer could add dead code like `missing_from_serialized = None; ser_dag_ids = set(); del adrq_by_dag[dag_id]` in an unreachable branch and pass the test without actually fixing the bug."
+      "reason": "The f2p test test_adrq_without_serialized_dag_is_excluded only checks if certain strings exist in the source file. An agent could satisfy it by adding a dead-code comment containing those variable names without actually implementing the fix. No behavioral execution verifies the bug is actually fixed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow and the gold patch is in solution/solve.sh. The agent could read solution/solve.sh to see the exact patch. Additionally, the F2P test only does string matching, so the agent could grep the test file to find the exact variable names needed ('missing_from_serialized', 'ser_dag_ids') without understanding the bug."
+      "reason": "The solution patch exists at /workspace/airflow as solve.sh is applied there. The agent could read solution/solve.sh if it exists in the container. Additionally, the f2p test is pure text matching, so the agent could grep test_outputs.py for the expected strings ('missing_from_serialized', 'ser_dag_ids', 'del adrq_by_dag') and insert them as comments without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that ADRQ rows are preserved in the database and that DAGs are excluded from triggered_date_by_dag return value. The hidden tests only do source code text matching for the F2P case \u2014 they don't actually verify the runtime behavior of ADRQ preservation or exclusion from return values at the F2P level."
+      "reason": "Instruction requires: (1) skip orphan DAGs from triggered_date_by_dag, (2) preserve ADRQ rows, (3) emit INFO log with exact message, (4) sort DAG IDs. The hidden tests only do text matching on the source code for the f2p test, not actually testing behaviors 1-4 at runtime. The behavioral tests from the gold solution (test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing) are in the solution patch but truncated/not in the actual test_outputs.py."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear docstrings, grouped into P2P and F2P categories with explicit comments, and have descriptive function names."
+      "reason": "Tests are well-organized with descriptive names, docstrings explaining purpose (P2P vs F2P), and clear grouping by concern (linting, type checking, unit tests, behavioral verification)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API responses."
+      "reason": "The task doesn't produce structured data like JSON/CSV/API responses; it modifies internal Python method behavior."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, method names, and commands in instruction.md appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file and line number ('around line 680'), the exact variable names to use ('ser_dag_ids', 'adrq_by_dag'), the exact set operation ('set(adrq_by_dag.keys()) - ser_dag_ids'), and the exact log message text. This is excessive localization that removes the need for the agent to reason about the fix."
+      "reason": "The instruction specifies exact variable names (missing_from_serialized, ser_dag_ids), exact code patterns ('missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids'), and exact deletion syntax ('del adrq_by_dag[dag_id]'). This goes far beyond naming the buggy file/method \u2014 it provides the complete implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,7 +51,6 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -63,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 3,
+  "fail_count": 7
 }

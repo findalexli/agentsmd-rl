@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert specific module-level variable names (_Asset, _Archive, _Resource, _CustomResource, _CustomTimeouts, _Stack, _Output) in known_types.py (test_known_types_has_module_caches). The instruction.md says 'The exact names of these variables are checked by the test suite' but never lists the actual variable names. An agent cannot discover these names from the instruction alone."
+      "reason": "The tests assert specific module-level variable names like _Asset, _Archive, _Resource, _CustomResource, _CustomTimeouts, _Stack, _Output in known_types.py (test_known_types_has_module_caches). The instruction.md says 'The exact names of these variables are checked by the test suite' but never specifies what those names are. An agent cannot discover _CustomTimeouts or _Stack from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs caching and the interface requirements (cache_info/cache_clear, immutable return types, module-level caches) but does not specify exact code changes like 'add @functools.cache on line X' or 'replace yield with return tuple()'. The developer must still reason about implementation."
+      "reason": "The instruction describes the problem (repeated computation, no caching) and the desired outcome (caching with cache_info/cache_clear, module-level caches, immutable results) but does not specify exact code changes like 'add @functools.cache on line X' or 'replace Y with Z'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact variable names like _Asset, _Archive, _Resource, _CustomResource, _CustomTimeouts, _Stack, _Output, _Unknown in known_types.py (test_known_types_has_module_caches). An alternative correct implementation using different variable names (e.g., _cached_asset_class, _asset_cache) or a different caching strategy (e.g., a dict-based cache) would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact variable names _Asset, _Archive, _Resource, _CustomResource, _CustomTimeouts, _Stack, _Output in known_types.py (test_known_types_has_module_caches). An alternative correct fix using different cache variable names (e.g., _asset_cache, _cached_asset_cls) or a different caching strategy (e.g., a dict-based cache) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import modules and call functions (_py_properties, _types_from_py_properties, is_asset, is_output, is_resource), check cache_info() attributes, verify object identity with 'is', and run subprocess commands (pytest, ruff, mypy). No test simply reads file text."
+      "reason": "Tests import modules, call functions like _py_properties(), is_asset(), check cache_info() results, run subprocess pytest/ruff/mypy commands. No test simply reads file contents as text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check that _py_properties has cache_info/cache_clear methods, that calling it twice returns the same object (identity check with 'is'), that it returns a tuple, and that existing unit tests pass. A stub returning None or an empty collection would fail the isinstance(result, tuple) check and the cache_info assertions."
+      "reason": "The tests check that _py_properties has cache_info/cache_clear methods, that repeated calls return the same object (identity check with 'is'), that results are tuples, and that existing test suites pass. A stub returning None or empty would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/pulumi as solve.sh (solution/solve.sh). The Dockerfile does not remove or protect the solution directory. An agent could potentially read the test file at tests/test_outputs.py or the solution file to extract exact variable names and implementation details."
+      "reason": "The solution exists at /workspace/pulumi as solve.sh content is applied there. The Dockerfile does not remove or protect the solution directory. An agent could potentially read the gold patch from the hidden test file or solution directory if they exist in the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: cache_info()/cache_clear() on both functions, same-object identity for cached calls, tuple return type for _py_properties, module-level cache variables in known_types, existing unit tests passing, ruff lint, and mypy type-checking."
+      "reason": "All behaviors in instruction.md are tested: cache_info/cache_clear on both functions, same-object caching, tuple return type, module-level cache variables in known_types, existing unit tests, ruff lint, mypy typecheck, and serialization tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_py_properties_is_cached, test_known_types_has_module_caches, etc.), docstrings explaining each test's purpose, and a clear section comment separating pass-to-pass tests from new behavior tests."
+      "reason": "Tests are well-named (test_py_properties_is_cached, test_known_types_has_module_caches, etc.), have docstrings, and are logically grouped with a comment separating pass-to-pass tests from unit tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Python SDK code for caching, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (sdk/python/lib/pulumi/_types.py, sdk/python/lib/pulumi/runtime/known_types.py), function names (_py_properties, _types_from_py_properties, is_asset, etc.), and variable names are all consistent and correct."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two files and the specific functions to cache, but these are the natural target files given the task domain. It doesn't specify line numbers or exact code changes. The files are obvious from the problem description."
+      "reason": "The instruction names the exact files and functions to modify, but these are the obvious targets given the task domain. It doesn't specify line numbers or exact code changes. The file identification is part of the task specification, not localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

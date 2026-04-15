@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for very specific string patterns like \"case 'ImmutableCapture':\" , \"visitedEffects\", \"hookKind == null\", \"instr.effects\", \"isRefLValue\", \"interpolatedAsJsx\", \"validateNoDirectRefValueAccess\", \"validateNoRefPassedToFunction\", \"validateNoRefValueAccess\", exact regex patterns like /import\\s*\\{\\s*mutate\\s*\\}\\s*from\\s*'shared-runtime'/, and specific function/variable names. While instruction.md mentions many of these (ImmutableCapture, visitedEffects, hookKind == null, instr.effects, isR"
+      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md alone. For example: test_validation_handles_immutable_capture checks for exact string 'case \\'ImmutableCapture\\':' and requires 'identifier.id' near the ImmutableCapture handler, and 'Freeze' within 1200 chars. test_panresponder_type_has_freeze_aliasing checks for exact strings like \"kind: 'Freeze'\", \"kind: 'ImmutableCapture'\", \"kind: 'Create'\". test_mutate_ref_fixture_uses_mutate checks exact regex patt"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md essentially describes the exact implementation: it specifies exact variable names (visitedEffects), exact case labels (ImmutableCapture, Mutate, MutateTransitive, MutateConditionally), exact conditional checks (hookKind == null && instr.effects), exact pattern names (isRefLValue, interpolatedAsJsx). It also specifies the exact PanResponder.create implementation ('returns its input argument') and exact type effects (Freeze, Create, ImmutableCapture with Frozen return). This goe"
+      "reason": "The instruction explicitly states implementation details like 'A switch/case handling for effect kinds including an ImmutableCapture case', 'A visitedEffects set for deduplicating validation errors', 'Logic that checks for hookKind == null and instr.effects', 'Handlers for effect kinds including at least Mutate, MutateTransitive, and MutateConditionally', 'An isRefLValue check for the mergeRefs pattern', 'An interpolatedAsJsx check for JSX child ref handling'. These are specific implementation i"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'case \\'ImmutableCapture\\':' (test_validation_handles_immutable_capture), exact variable name 'visitedEffects' (same test), exact strings 'hookKind == null' and 'instr.effects'. An alternative correct implementation using different variable names (e.g., 'processedEffects' instead of 'visitedEffects') or different control flow (if/else instead of switch/case) would fail these text-matching tests."
+      "reason": "Tests assert gold-specific implementation details: exact string 'case \\'ImmutableCapture\\':' (must be a switch/case, not if/else), exact variable name 'visitedEffects', exact strings 'hookKind == null' and 'instr.effects', exact function names 'validateNoDirectRefValueAccess'/'validateNoRefPassedToFunction'/'validateNoRefValueAccess', and exact type property syntax like \"kind: 'Freeze'\". An alternative correct implementation using different variable names, if/else instead of switch, or different"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests (test_validation_handles_immutable_capture, test_panresponder_type_has_freeze_aliasing, test_mutate_ref_fixture_uses_mutate, test_panresponder_fixture_exists, test_validation_preserves_ref_lvalue_branch, test_shared_runtime_exports_typedlog) are purely text-matching: they read file contents and check for string inclusion. Only test_panresponder_runtime_works actually executes code (eval), and test_repo_compiler_lint/test_repo_compiler_jest run actual tools. The majority are 'assert st"
+      "reason": "Nearly all tests are text-matching: they read source files and check for string patterns using includes() or regex. test_panresponder_runtime_works does eval the PanResponder code, test_repo_compiler_lint and test_repo_compiler_jest run actual commands, but the majority (test_validation_handles_immutable_capture, test_panresponder_type_has_freeze_aliasing, test_mutate_ref_fixture_uses_mutate, test_panresponder_fixture_exists, test_validation_preserves_ref_lvalue_branch, test_shared_runtime_expor"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific new content (ImmutableCapture case, visitedEffects, PanResponder export, mutate import in fixture, new fixture file) that doesn't exist in the base repo. A stub/no-op implementation would not pass these checks since the base files lack these patterns."
+      "reason": "The tests do require meaningful implementation: PanResponder.create must return its input, the validation file must contain specific constructs, fixtures must exist with specific content, and lint/jest must pass. A stub/empty implementation would not satisfy these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/react/_eval_tmp.mjs area and solve.sh is at solution/solve.sh. The agent could read the solution file directly. Additionally, since tests are purely text-matching, the agent could grep the test file (tests/test_outputs.py) to find exact strings being checked and insert them verbatim without understanding the bug."
+      "reason": "The solution patch exists at /workspace/react as applied by solve.sh, and the agent could read solution/solve.sh to see the exact gold patch. The tests are primarily string-matching, so an agent could grep test files for expected strings and insert them verbatim. The hidden test file contains all the exact strings being checked."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md's Verification Criteria are tested: ValidateNoRefAccessInRender.ts patterns, shared-runtime.ts exports, type-provider PanResponder type, fixture files, and CLAUDE.md documentation (implicitly via lint test)."
+      "reason": "All behaviors described in instruction.md's Verification Criteria section are covered by corresponding tests: ImmutableCapture handling, visitedEffects, hookKind/effects logic, PanResponder runtime/type, fixture updates, and CLAUDE.md documentation (implied by lint test passing)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_panresponder_runtime_works, test_validation_handles_immutable_capture, etc.) with docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test checks (e.g., test_panresponder_runtime_works, test_validation_handles_immutable_capture)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact implementation details: specific variable names (visitedEffects), specific case labels (ImmutableCapture, Mutate, MutateTransitive, MutateConditionally), specific conditional patterns (hookKind == null && instr.effects), and specific check names (isRefLValue, interpolatedAsJsx). This is far beyond naming files and goes into specifying exact code patterns."
+      "reason": "instruction.md names exact implementation details: 'A switch/case handling for effect kinds including an ImmutableCapture case', 'A visitedEffects set', 'hookKind == null and instr.effects', specific effect kinds 'Mutate, MutateTransitive, MutateConditionally', 'isRefLValue', 'interpolatedAsJsx'. These are precise code-level hints that make localization and implementation trivial."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -3,63 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (src/shell/braces.zig), the functions (flattenTokens, Parser.advance, prev), the struct (Parser), the crash causes (items[0] access on empty list, current-1 underflow on u32 at 0), and the expected behavior. All test assertions reference these same elements, and the specific details like 'brace_count', '.open', 'current - 1' are standard implementation details of the described functions that are discoverable by reading the file."
+      "reason": "The instruction names the file (src/shell/braces.zig), the functions (flattenTokens, Parser.advance, prev), the API calls (Bun.$.braces with empty string, parse:true, tokenize:true), and the expected return value (['']). The tests check these same things. Static tests check for struct names and function names all mentioned in the instruction. The only arguably undiscoverable detail is the exact schema key 'expansions' returned by parse:true, but this is standard Bun API behavior discoverable fro"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes what's broken (two crash sites with their root causes) but does not prescribe the exact fix. It doesn't say 'add if (len == 0) return' or 'use conditional return with self.peek()'. A developer must still reason about the correct guard patterns."
+      "reason": "The instruction describes the two crash sites conceptually (accessing items[0] without checking empty, and u32 underflow in current-1) but does NOT specify the exact fix code. A developer must still reason about what guard to add and how to handle the edge cases."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_flatten_tokens_empty_guard uses very specific regex patterns to detect guards (e.g., '.len == 0' with 'return', or '.len < 1'). An alternative correct fix like wrapping the entire function body in 'if (self.tokens.items.len > 0) { ... }' is partially covered, but a fix using a different approach like 'if (self.tokens.items.len == 0) { return error.EmptyInput; }' or checking via a helper function would fail. Similarly, test_advance_prev_no_underflow checks for very specific patterns; a fix t"
+      "reason": "test_prev_normal_case_intact asserts 'current - 1' appears in the prev() function body using a regex. An alternative correct fix might refactor prev() to not use 'current - 1' directly (e.g., using a helper or restructuring the logic), and would fail this static test. Similarly, test_flatten_tokens_not_stub checks for 'brace_count' and '.open' and requires >=15 lines, which could reject a valid refactored solution. These tests enforce gold-specific implementation details."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_flatten_tokens_empty_guard, test_advance_prev_no_underflow) only do static text/regex analysis of the source file. They never compile or execute the code, never call Bun.$.braces(''), and never verify the actual runtime behavior. Every assertion is pattern matching on file contents."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_braces_empty_string_no_crash, test_braces_empty_string_parse_true, test_braces_empty_string_tokenize_true, test_braces_nonempty_input_still_works) all execute JavaScript code via bun subprocess and check actual runtime behavior. While some static tests do text inspection, the core behavioral tests execute the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty flattenTokens or trivial advance) would fail test_flatten_tokens_not_stub (requires brace_count, .open, >=15 lines) and test_prev_normal_case_intact (requires 'current - 1' or 'current -| 1'). The f2p tests require specific guard patterns that wouldn't exist in unmodified code."
+      "reason": "The f2p tests run the actual buggy code (Bun.$.braces('')) which panics/crashes on the unfixed version. A stub that returns empty or default would not produce returncode==0 with correct JSON output. test_braces_nonempty_input_still_works checks that 'a{b,c}d' expands to ['abd','acd'], requiring real brace expansion logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's git history accessible via solve.sh, and the tests only check static source patterns. An agent could read solution/solve.sh if it exists in the container, or simply grep the test file to discover the exact patterns being checked (e.g., '.len == 0' + 'return', 'current > 0' + 'prev') and insert minimal matching lines."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact gold patch. An agent could read this file to obtain the fix directly. The Dockerfile does not remove or protect this file."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states 'Bun.$.braces(\"\") should return [\"\"] without crashing' and lists three JS reproducers. No test actually verifies this runtime behavior\u2014all tests are static source analysis only."
+      "outcome": "pass",
+      "reason": "The instruction specifies three crash cases (empty string, parse:true, tokenize:true) and expected behavior ([''] return). All three are tested, plus a regression test for non-empty input."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass anti-stub), descriptive function names, and detailed docstrings explaining the bug and valid fix patterns."
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass, Fail-to-pass/pr_diff), descriptive function names, and detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "Task involves fixing a bug in a brace expansion function, not producing structured data output."
+      "outcome": "pass",
+      "reason": "The instruction specifies expected return value [''] for empty input. The parse:true variant returns an object with 'expansions' key, and tokenize:true returns an array. These schemas are verified in the tests and the basic return type is documented in the instruction."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames (src/shell/braces.zig), function names (flattenTokens, advance, prev, peek, is_at_end), or other identifiers in instruction.md."
+      "reason": "No typos found in filenames, paths, function names, or commands in the instruction or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names not just the file but the exact functions (flattenTokens, Parser.advance, prev), the exact variable (self.tokens.items[0], self.current), and the exact crash mechanism (u32 underflow at current-1). This goes beyond identifying what's broken and essentially pinpoints the exact lines to fix."
+      "reason": "The instruction explicitly names the exact functions (flattenTokens, Parser.advance, prev) and describes the exact bug mechanism (accessing items[0] unconditionally, self.current-1 underflow at 0). This goes beyond describing symptoms and essentially pinpoints the exact lines/operations to fix, reducing the localization task to near-zero."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only bug fix task, not an agentmd-edits task."
+      "reason": "This is a code-only bug fix task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 8,
+  "fail_count": 3
 }

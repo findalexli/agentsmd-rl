@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names SecureRandom.hex(12), define_singleton_method(:generate_available_uuid_list), local_podspecs_dir, .podspec.json, xcfw_info, rm_rf(pod_dir), Info.plist, the file paths (installer.rb, precompiled_modules.rb), perform_post_install_actions context, module Pod, class Installer \u2014 all specifics asserted in the tests are discoverable from instruction.md."
+      "reason": "The instruction names SecureRandom.hex(12), define_singleton_method(:generate_available_uuid_list), local_podspecs_dir, .podspec.json, xcfw_info, rm_rf(pod_dir), Info.plist, the file paths installer.rb and precompiled_modules.rb, perform_post_install_actions context, and module Pod / class Installer structure. All specific strings and paths asserted in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Using SecureRandom.hex(12)', 'Defining a singleton method generate_available_uuid_list on the project object', 'using a variable named local_podspecs_dir', 'removed with rm_rf(pod_dir)', 'detected via an xcfw_info path check'. These are not descriptions of what's broken but precise implementation instructions that match the gold patch exactly."
+      "reason": "The instruction explicitly states the exact fix: 'Using SecureRandom.hex(12)', 'Defining a singleton method generate_available_uuid_list on the project object', 'using a variable named local_podspecs_dir', 'removed with rm_rf(pod_dir)', and 'detected via an xcfw_info path check'. These are not descriptions of what's broken but precise implementation instructions that match exactly what the tests check for."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_installer_defines_uuid_singleton_method checks for the exact string 'define_singleton_method(:generate_available_uuid_list)', test_installer_uses_securerandom_for_uuids checks for 'SecureRandom.hex(12)', test_precompiled_clears_local_podspecs checks for the variable name 'local_podspecs_dir', test_precompiled_clears_stale_pod_dir checks for 'xcfw_info' and 'rm_rf(pod_dir)'. An alternative correct fix using different variable names or a diff"
+      "reason": "Tests assert gold-specific variable names like 'local_podspecs_dir' and 'xcfw_info', and exact implementation details like 'define_singleton_method(:generate_available_uuid_list)' and 'SecureRandom.hex(12)'. An alternative correct fix using different variable names (e.g., 'local_specs_path', 'info_plist_path') or a different secure random method (e.g., SecureRandom.uuid) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All four f2p tests are purely text-matching: they open .rb files and assert specific strings exist in content (e.g., 'SecureRandom.hex(12) in content', 'local_podspecs_dir in content'). No test imports, calls, or executes the Ruby code to verify behavior. The p2p tests do run 'ruby -c' for syntax checks, but f2p tests are entirely string-in-file checks."
+      "reason": "All four f2p tests (test_installer_defines_uuid_singleton_method, test_installer_uses_securerandom_for_uuids, test_precompiled_clears_local_podspecs, test_precompiled_clears_stale_pod_dir) exclusively use string-in-file checks like 'assert \"SecureRandom.hex(12)\" in content' and 'assert \"local_podspecs_dir\" in content'. No test imports, calls, or executes the Ruby code to verify actual behavior. The p2p tests do run 'ruby -c' for syntax checks but the f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "An agent could simply append a comment or dead code containing the magic strings (e.g., '# SecureRandom.hex(12)', '# local_podspecs_dir', '# xcfw_info', '# rm_rf(pod_dir)', '# define_singleton_method(:generate_available_uuid_list)') to pass all f2p tests without implementing any actual fix. The tests only check string presence, not functional behavior."
+      "reason": "A stub implementation that simply appends comment lines containing the literal strings 'SecureRandom.hex(12)', 'define_singleton_method(:generate_available_uuid_list)', 'local_podspecs_dir', '.podspec.json', 'xcfw_info', and 'rm_rf(pod_dir)' to the respective files would pass all f2p tests without implementing any actual bug fix. The tests only check for string presence, not functional behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is at /solution/solve.sh and /solution/gold.patch in the container. The agent could read these files directly (cat /solution/gold.patch) and apply the exact patch. There are no measures preventing access to the /solution/ directory."
+      "reason": "The solution is in /solution/solve.sh and /solution/gold.patch which exist in the container. An agent could read these files directly (cat /solution/gold.patch) to obtain the exact fix. Additionally, since tests are purely text-matching, the agent could grep test files for the expected strings and inject them as comments."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (UUID singleton method, SecureRandom usage, local podspecs clearing, stale pod dir removal) are tested. The tests cover both the UUID collision fix and the stale cache fix."
+      "reason": "All behaviors described in the instruction (UUID collision fix via SecureRandom and singleton method, cache clearing of local podspecs and stale pod dirs) are tested, though only via text matching."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (f2p vs p2p), descriptive function names, and detailed docstrings explaining what each test verifies and why it fails on the base commit."
+      "reason": "Tests are well-organized with clear f2p/p2p groupings, descriptive function names, and detailed docstrings explaining what each test verifies and why it would fail on the base commit."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves Ruby source code modifications, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and tests."
+      "reason": "File paths, variable names, method names, and commands in the instruction and tests are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact implementation details: specific method names (define_singleton_method(:generate_available_uuid_list)), exact function calls (SecureRandom.hex(12)), specific variable names (local_podspecs_dir, xcfw_info), and specific operations (rm_rf(pod_dir)). This goes far beyond describing what's broken and into prescribing the exact code to write."
+      "reason": "The instruction specifies exact implementation details: 'Using SecureRandom.hex(12)', 'Defining a singleton method generate_available_uuid_list', 'using a variable named local_podspecs_dir', 'xcfw_info path check', and 'rm_rf(pod_dir)'. These go well beyond describing the bug and into prescribing the exact code-level solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying Ruby source files, not a configuration edit task."
     }
   },
   "tier_a_fails": [

@@ -3,61 +3,64 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for specific implementation details not mentioned in instruction.md: test_replacement_handles_multiline checks for literal strings like 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression', 'nesting' etc. in the Rust source. test_fixture_has_multiline_call checks for an if-statement with Call(name, [int, int, ...]) pattern. test_walrus_still_parenthesized checks for regex pattern 'format!\\s*\\(\\s*\"?\\(\\{' which is not discoverable from instruction.md. The instru"
+      "reason": "Tests check for specific literal strings like 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression', 'is_named_expr', 'nesting', 'needs_parens', 'spans_multiple' in the Rust source, and specific format string patterns like 'format!(\"({'. While instruction.md does list these literal strings explicitly under 'Required Changes', some test specifics like the exact regex pattern `r'format!\\s*\\(\\s*\"?\\(\\{'` in test_walrus_still_parenthesized are not fully specified. However, the "
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (multiline expressions lose parentheses) and suggests two possible approaches (preserve existing parens or add new ones) but doesn't specify exact code changes, line numbers, or function implementations."
+      "outcome": "fail",
+      "reason": "instruction.md Section 1 explicitly dictates the exact function names to create ('condition_as_expression', 'has_top_level_line_break'), the exact variable/identifier names to use ('parenthesized_range', 'is_named_expr', 'nesting', 'needs_parens'), and the exact format string pattern ('format! with \"({}'). It also specifies using parenthesized_range for tracking existing parentheses and the precise algorithmic approach (detect multiline at top level, preserve existing parens or add new ones). Th"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_replacement_handles_multiline asserts that specific indicator strings exist in the Rust source file (e.g., 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression', 'multiline', 'needs_parens', etc.). While the list is broad, an alternative correct fix using different naming conventions (e.g., 'requires_wrapping', 'outer_parens_needed') would fail. Also test_walrus_still_parenthesized asserts a specific regex pattern for the format! macro that a refactored solution might"
+      "reason": "Tests assert on gold-specific implementation details: test_replacement_handles_multiline checks for literal strings like 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression', 'nesting' in the Rust source. test_walrus_still_parenthesized checks for 'is_named_expr' and a specific format! regex. An alternative correct fix using different function/variable names (e.g., 'wrap_multiline_expr', 'check_newlines', 'bracket_depth') would fail these tests despite being functionally "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several core tests are purely text-matching: test_replacement_handles_multiline just checks for string presence in the Rust source file ('has_top_level_line_break' in source, etc.). test_walrus_still_parenthesized checks for 'is_named_expr' in source and a regex pattern. test_fixture_retains_existing_cases checks for 'x := ', 'foo()', 'pass' strings. While test_repo_ruf050_unit_tests and test_repo_unnecessary_if_integration do execute cargo tests, the fail-to-pass tests are predominantly text-in"
+      "reason": "test_replacement_handles_multiline and test_walrus_still_parenthesized are purely text-matching tests that grep for literal strings in the Rust source file without executing any code. test_core_ruf050_logic_intact similarly only checks for string presence and line count. While some tests (test_repo_ruf050_unit_tests, test_repo_unnecessary_if_integration) do execute cargo test, the fail-to-pass test test_replacement_handles_multiline is entirely text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests require actual fixture modifications (adding multiline BinOp and Call test cases) and Rust code changes (adding multiline handling logic). A stub/no-op wouldn't add these to the fixture file or the Rust source."
+      "reason": "The f2p tests check for specific AST structures in the fixture file (BinOp condition, Call with multiple int args) and specific strings in the Rust file. A stub/empty implementation would not have these. Additionally, test_repo_ruf050_unit_tests runs actual cargo tests with snapshot matching, which requires real implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace level and contains the complete gold patch. An agent could read it directly. The Dockerfile doesn't remove or protect solution files."
+      "reason": "The solution patch is in /workspace/ruff's solve.sh (solution/solve.sh), and the gold snapshot content is embedded in the solve script. An agent could read the solution file or grep for the expected snapshot content. The container also has the test file at a known path that reveals exact expected strings."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes: (1) multiline expressions need parentheses, (2) walrus operator handling should be preserved, (3) test cases should be added. All three are tested via fixture checks, Rust source checks, and cargo test execution."
+      "reason": "All behaviors described in instruction.md are tested: multiline BinOp expression (test_fixture_has_multiline_expression), multiline Call (test_fixture_has_multiline_call), multiline handling in Rust (test_replacement_handles_multiline), walrus preservation (test_walrus_still_parenthesized), existing test cases retained (test_fixture_retains_existing_cases), and fixture syntax validity (test_fixture_ruf050_py_syntax)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear section comments (fail_to_pass, pass_to_pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass', 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)'), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces code changes, not structured data output."
+      "reason": "This task involves code changes to a linter rule, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the files to modify (unnecessary_if.rs and RUF050.py) which is appropriate for the task domain. It mentions the walrus operator handling as context but doesn't specify exact line numbers or implementation details."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file to modify (unnecessary_if.rs), specifies exact function names to create (condition_as_expression, has_top_level_line_break), exact identifiers to include (parenthesized_range, is_named_expr, nesting), and the exact format string pattern. This goes far beyond describing the bug and into specifying the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
 }

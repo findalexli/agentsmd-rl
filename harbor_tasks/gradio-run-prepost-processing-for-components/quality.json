@@ -3,59 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics: `trace_phase_sync`, `traced`, `traced_sync`, `PROFILING_ENABLED`, `RequestTrace`, all field names (upload_ms, preprocess_move_to_cache_ms, etc.), `to_dict()`, `_current_trace`, the file paths `gradio/profiling.py` and `scripts/benchmark/README.md`, and the README structure requirements (tier_1, tier_10, tier_100, client_latencies.jsonl, traces.jsonl, {compare_branch}, {app_stem}, tier_{N}). All assert'd specifics in tests are discoverable from the instruc"
+      "reason": "The instruction names all key functions (trace_phase_sync, traced, traced_sync), all field names (upload_ms, preprocess_move_to_cache_ms, etc.), the to_dict() requirement, the no-op fallback, PROFILING_ENABLED, _current_trace usage pattern, and the README documentation requirements (Results Directory Structure, tier_1/10/100, client_latencies.jsonl, traces.jsonl, {compare_branch}, {app_stem}, tier_{N}). All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to add (sync context manager, decorators, new fields) and expected behavior, but does not give exact code, line numbers, or implementation details like 'use contextmanager decorator' or 'use time.monotonic()'."
+      "reason": "The instruction describes what behavior is needed (sync context manager, decorators, new fields, no-op fallback, README updates) but does not specify exact code changes, line numbers, or implementation details like using contextmanager decorator or wraps."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavior (timing recorded, decorator wraps function correctly, fields exist, to_dict() keys present) rather than implementation details. Alternative implementations (e.g., using different timing mechanisms, different decorator patterns) would pass as long as they produce the correct behavior. The function names like `trace_phase_sync`, `traced_sync` are specified in the instruction, so they're required API, not implementation details."
+      "reason": "Tests check behavioral properties: that trace_phase_sync records timing, that traced_sync wraps functions correctly, that fields exist and default to 0.0, that to_dict() includes keys, and that README contains specific strings. Alternative implementations (e.g., different internal timing mechanisms, different decorator structures) would all pass as long as the public API contract is met."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_benchmark_readme_documents_results_directory_structure and test_benchmark_readme_documents_ab_test_structure are purely text-matching tests (`assert 'tier_1' in content`, `assert '{compare_branch}' in content`). However, the majority of tests (trace_phase_sync, traced_sync, RequestTrace fields, to_dict) do execute code via subprocess. The README tests are purely string-in-file checks with no execution, but they're a minority. Since the rubric says 'FAIL if every test is assert foo in open(p"
+      "outcome": "pass",
+      "reason": "Most tests execute code via subprocess, importing the module and calling functions (trace_phase_sync, traced_sync, RequestTrace constructor, to_dict(), set_phase). The README tests do check file content with string matching, but this is appropriate for documentation verification. The code tests genuinely execute behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests verify non-trivial behavior: test_trace_phase_sync_records_timing checks timing >= 15ms after sleep(0.02), test_traced_sync_decorator_records_timing checks return value AND timing, test_request_trace_has_new_phase_fields checks specific field existence and default values, test_to_dict_includes_new_phase_keys checks dictionary output. A stub returning None/empty would fail these assertions."
+      "reason": "test_trace_phase_sync_records_timing checks that preprocess_ms >= 15 after a 20ms sleep, requiring actual timing logic. test_traced_sync_decorator_records_timing checks both return value (42) and timing. test_request_trace_has_new_phase_fields checks hasattr and default values on fields that don't exist yet. A stub/no-op implementation would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/gradio as the gold patch target, and solve.sh is at /solution/solve.sh. An agent could potentially read /solution/solve.sh to see the exact patch. The Dockerfile doesn't remove or protect the /solution directory. Additionally, the test file at tests/test_outputs.py contains all expected field names and behaviors that could be reverse-engineered."
+      "reason": "The solution file exists at /workspace/gradio and solve.sh is in /solution/. The Dockerfile doesn't remove /solution/ or restrict access. An agent could read /solution/solve.sh or even directly apply the patch. Additionally, the test file at tests/test_outputs.py could potentially be read for fixture values."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: trace_phase_sync (test_trace_phase_sync_records_timing, test_trace_phase_sync_no_trace_noop), traced_sync decorator (test_traced_sync_decorator_records_timing), new RequestTrace fields (test_request_trace_has_new_phase_fields), to_dict() keys (test_to_dict_includes_new_phase_keys), no-op fallback (test_trace_phase_sync_no_trace_noop), README updates (two README tests). The `traced` async decorator is mentioned in instruction but not directly tested,"
+      "reason": "All four main behaviors from the instruction are tested: trace_phase_sync (test_trace_phase_sync_records_timing, test_trace_phase_sync_no_trace_noop), decorators (test_traced_sync_decorator_records_timing), new fields (test_request_trace_has_new_phase_fields), to_dict keys (test_to_dict_includes_new_phase_keys), no-op fallback (test_trace_phase_sync_no_trace_noop), and README updates (test_benchmark_readme_*)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [repo_tests] provide categorization."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [repo_tests] categorize test types."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction explicitly documents all field names for RequestTrace (upload_ms, preprocess_move_to_cache_ms, etc.) and specifies they default to 0.0 and must appear in to_dict() output. The to_dict() schema is effectively documented."
+      "reason": "The instruction documents the exact field names for RequestTrace dataclass and specifies they must appear in to_dict() output. All field names are explicitly enumerated with their default values (0.0)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All field names, file paths, function names, and variable names in the instruction are consistent with what tests expect. No typos detected."
+      "reason": "All field names, function names, file paths, and variable names in the instruction match those tested (trace_phase_sync, traced_sync, upload_ms, preprocess_move_to_cache_ms, etc.). No discrepancies found."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names `gradio/profiling.py` and `scripts/benchmark/README.md` as files to modify, which is appropriate for the task domain. It doesn't specify line numbers or exact code to write. The file identification is natural given the task scope."
+      "reason": "The instruction names gradio/profiling.py and scripts/benchmark/README.md as files to modify, which is appropriate since the task domain makes these obvious. It doesn't specify line numbers or exact code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code task, not a config-edit-only task. The changes involve Python source code and documentation."
+      "reason": "This is primarily a code and documentation editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 1
 }

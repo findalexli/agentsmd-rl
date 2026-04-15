@@ -3,59 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all file paths (py/selenium/webdriver/__init__.pyi, browser subdirectories, py/pyproject.toml), class names (Chrome, Firefox, Edge, ActionChains, DesiredCapabilities, Keys), browser submodules (chrome, edge, firefox, ie, safari, webkitgtk, wpewebkit), their required exports (options, service, webdriver, firefox_profile, permissions), __all__ requirements, the exact correct import path for DesiredCapabilities, and the pyproject.toml *.pyi inclusion. All test assertions m"
+      "reason": "The instruction specifies all file paths (py/selenium/webdriver/__init__.pyi, browser submodule stubs, py/pyproject.toml), all class names (Chrome, Firefox, Edge, ActionChains, DesiredCapabilities, Keys), all browser submodules (chrome, edge, firefox, ie, safari, webkitgtk, wpewebkit), their required exports (options, service, webdriver, firefox_profile, permissions), __all__ requirements, and the direct import path correction for DesiredCapabilities. The test for SafariPermissions imports from "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be created (stub files with certain exports) and what needs to change (import paths, pyproject.toml), but doesn't specify exact line numbers, exact file contents, or exact sed commands. The agent must figure out the specific implementation details."
+      "reason": "The instruction describes the problem (lazy loading breaks type checking) and specifies what needs to be created (stub files, build config update, import corrections) but doesn't give exact file contents, line numbers, or the precise implementation. A developer still needs to reason about what to put in stub files and how to structure them."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for file existence, presence of key strings (class names, module names, __all__), and import path patterns. Alternative implementations (different import styles in .pyi files, different orderings, additional exports) would all pass as long as the required names appear in the files. The tests don't assert on exact line positions or specific formatting."
+      "reason": "Tests primarily check: (1) files exist, (2) mypy can resolve types when run against test scripts, (3) __all__ is present in content, (4) *.pyi appears in pyproject.toml, (5) direct import paths are used. These are behavioral checks that would pass for various correct implementations - e.g., different orderings, different comment styles, different import aliases, as long as the type information is correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text-matching: test_main_webdriver_stub_exists checks 'Chrome' in content, test_chrome_stub_exports_modules checks 'options' in content, test_pyproject_includes_pyi_files checks '*.pyi' in content, test_chrome_remote_connection_import checks exact import strings in file content. While pass-to-pass tests do import modules and run subprocesses, the core fail-to-pass tests are all 'assert X in open(path).read()' without execution."
+      "outcome": "pass",
+      "reason": "Most tests run mypy as a subprocess to verify type checking actually works, checking that 'Cannot find' doesn't appear in mypy output. Some tests also check file existence and content for __all__ and *.pyi strings. The mix is heavily weighted toward behavioral verification (running mypy). The few text checks (like __all__ in content, *.pyi in pyproject.toml) are minimal structural checks rather than full text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation wouldn't pass these tests - the agent must actually create .pyi files with specific content, modify pyproject.toml to include *.pyi, and change import statements in remote_connection.py files. Simply creating empty files would fail the content checks."
+      "reason": "A stub implementation cannot pass these tests - the tests run mypy on actual import statements and verify type resolution succeeds. Without properly structured .pyi files with correct import paths, mypy would report 'Cannot find' errors. Empty files or files with just 'pass' would not satisfy mypy's type resolution requirements."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/selenium after the container is built, and solve.sh is in /solution/. An agent could read /solution/solve.sh or inspect the test file at tests/test_outputs.py to see exact expected strings like 'from selenium.webdriver.common.desired_capabilities import DesiredCapabilities'. No measures prevent reading these files."
+      "reason": "The solution exists at /workspace/selenium as accessible files. The solve.sh is in solution/ directory. While the instruction says the agent doesn't see tests/ or solution/, the Dockerfile doesn't prevent reading those paths. An agent could read /solution/solve.sh or inspect the test file at tests/test_outputs.py to extract the exact expected implementation. The container doesn't appear to have restrictions preventing file system access to these directories."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: main stub file existence and exports, browser submodule stubs, chrome/firefox/safari specific exports, pyproject.toml update, and import path corrections for chrome and edge remote_connection files."
+      "reason": "All requirements from instruction.md are tested: (1) main webdriver stub with Chrome/Firefox/Edge/ActionChains/DesiredCapabilities/Keys, (2) browser submodule stubs for all 7 browsers with __all__, (3) pyproject.toml *.pyi inclusion, (4) direct import path corrections for remote connection files. Firefox profile and Safari permissions special cases are also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (FAIL-TO-PASS vs PASS-TO-PASS), descriptive function names (test_chrome_stub_exports_modules), and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are well-named (test_main_webdriver_stub_enables_type_checking, test_browser_submodule_stubs_exist_and_loadable, etc.), have docstrings explaining what they verify and why, and are logically grouped by feature area."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces .pyi stub files and configuration changes, not structured data like JSON/CSV/API/DB."
+      "reason": "This task produces .pyi stub files and config edits, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, module names, class names, and commands are all correctly spelled and consistent between instruction.md and the test file."
+      "reason": "All file paths, module names, class names, and commands in the instruction are correct and consistent with the Selenium project structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to create and modify at a requirements level (create stub files, update pyproject.toml, fix import paths) without specifying exact buggy lines. The mention of specific files like remote_connection.py is appropriate context, not excessive leakage."
+      "reason": "The instruction mentions affected areas broadly (py/selenium/webdriver/, browser submodules, remote connection files) and the correct import path pattern, but doesn't name specific buggy lines. The import path correction hint is necessary context since the agent needs to know what the correct path should be, and it describes the pattern rather than exact file locations."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The pyproject.toml edit is a single line addition (*.pyi to package-data), which is a localized change consistent with the task requirements."
+      "reason": "The pyproject.toml edit is a single line addition (*.pyi to package-data), which is localized and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 1
 }

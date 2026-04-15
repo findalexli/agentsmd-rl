@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully specified in instruction.md: test_strict_host_key_checking_validation_exists checks for '_VALID_STRICT_HOST_KEY_CHECKING' as a string in source and 'raise ValueError' with 'strict_host_key_checking' nearby. While instruction.md mentions the frozenset name, test_urlquote_import_present checks for 'from urllib.parse import' and 'quote' in source, and test_https_url_uses_urlquote_for_username/token check for the exact alias 'urlquote' via patte"
+      "reason": "Tests assert specific implementation details not fully specified in instruction.md: test_strict_host_key_checking_validation_exists checks for the exact name '_VALID_STRICT_HOST_KEY_CHECKING' and 'raise ValueError' with 'strict_host_key_checking' in source; test_https_url_uses_urlquote_for_username/token check for the exact alias 'urlquote' (regex pattern r'urlquote\\s*\\(\\s*self\\.user_name'); test_url_replace_uses_count_parameter checks for specific regex patterns with ',1)'. While instruction.md"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to change: 'use shlex.quote() to properly escape key_path', 'use urlquote with safe=\"\"', 'implement via a class-level set or frozenset named _VALID_STRICT_HOST_KEY_CHECKING', 'raise a ValueError', 'use count=1', 'change or to and'. These are precise fix instructions, not just descriptions of what's broken."
+      "reason": "The instruction explicitly states the exact fix for each item: 'use shlex.quote() to properly escape key_path', 'use urlquote with safe=\"\"', 'use count=1', 'incorrectly uses or instead of and'. These are direct statements of what to change, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to match exact patterns like r'urlquote\\s*\\(\\s*self\\.user_name' requiring the specific alias 'urlquote'. An alternative using 'from urllib.parse import quote' without aliasing (e.g., quote(self.user_name)) would fail test_https_url_uses_urlquote_for_username. Similarly, tests check for exact variable name '_VALID_STRICT_HOST_KEY_CHECKING' as a string in source, and specific shlex.quote patterns. A developer using a wrapper function or different variable names would fail."
+      "reason": "Tests use regex to match exact patterns like r'urlquote\\s*\\(\\s*self\\.user_name' which requires the alias 'urlquote' specifically. An alternative using 'from urllib.parse import quote' without aliasing to 'urlquote' would fail. Similarly, tests check for exact variable name '_VALID_STRICT_HOST_KEY_CHECKING' - using '_VALID_SSH_OPTIONS' or similar would fail. Tests also require exact patterns like r'-i.*shlex\\.quote\\s*\\(\\s*key_path\\s*\\)' which would fail if someone stored the quoted value in an in"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The majority of fail-to-pass tests (test_shlex_import_present, test_urlquote_import_present, test_key_path_uses_shlex_quote, test_known_hosts_file_uses_shlex_quote, test_ssh_config_file_uses_shlex_quote, test_proxy_command_uses_shlex_quote, test_strict_host_key_checking_validation_exists, test_https_url_uses_urlquote_for_username, test_https_url_uses_urlquote_for_token, test_url_replace_uses_count_parameter, test_logic_bug_or_to_and_fixed) are purely text-matching via regex on the source file co"
+      "reason": "The vast majority of fail-to-pass tests (test_shlex_import_present, test_urlquote_import_present, test_key_path_uses_shlex_quote, test_known_hosts_file_uses_shlex_quote, test_ssh_config_file_uses_shlex_quote, test_proxy_command_uses_shlex_quote, test_strict_host_key_checking_validation_exists, test_https_url_uses_urlquote_for_username, test_https_url_uses_urlquote_for_token, test_url_replace_uses_count_parameter, test_logic_bug_or_to_and_fixed) all use the pattern `source = read_source()` follow"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since the tests only check for string/regex patterns in the source file, a stub implementation that simply contains the right string patterns (e.g., comments containing 'shlex.quote(key_path)', 'urlquote(self.user_name', etc.) without any actual functional code would pass all fail-to-pass tests. The tests don't verify runtime behavior."
+      "reason": "Since all f2p tests are text-matching on source code (e.g., checking if 'import shlex' is in the file, if regex patterns match), an agent could satisfy them by inserting dead/unused code containing the expected strings without actually fixing the vulnerabilities. For example, adding `import shlex` and a comment containing 'shlex.quote(key_path)' without actually using it in the logic would pass test_shlex_import_present and test_key_path_uses_shlex_quote."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is available at /workspace/airflow as a git apply target described in solution/solve.sh. An agent could read solution/solve.sh (if accessible in the container) or simply grep the test file for the exact regex patterns being checked and insert matching strings into the source. Since tests are pure text matching, the agent could trivially game them."
+      "reason": "The solution file exists at /workspace/airflow and the solve.sh contains the complete gold patch. An agent could read solution/solve.sh or apply it directly. The tests are pure source-text matching, so reading the expected patterns from test_outputs.py would also trivially reveal what strings to insert."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four categories of required changes (shell injection, URL encoding, strict_host_key_checking validation, logic bug fix) are covered by at least one test each."
+      "reason": "All four required changes from instruction.md (shell injection, URL encoding, strict_host_key_checking validation, logic bug fix) are covered by corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and whether it's fail_to_pass or pass_to_pass."
+      "reason": "Tests are well-named, have docstrings explaining what they check and why (including fail_to_pass/pass_to_pass annotations), and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Python source code for security hardening; no structured data output (JSON/CSV/API/DB) is produced."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct and consistent."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact variable '_VALID_STRICT_HOST_KEY_CHECKING', specifies exact function calls like 'shlex.quote()', exact parameters like 'safe=\"\"' and 'count=1', and describes the exact boolean operator change from 'or' to 'and'. This goes beyond describing the bug to specifying the exact implementation."
+      "reason": "Instruction.md names the exact file to modify and describes precisely what to change on each line (e.g., 'use shlex.quote() on key_path', 'use count=1', 'or instead of and'). This goes beyond identifying the file and into specifying the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Python source file, not a configuration edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

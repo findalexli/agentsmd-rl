@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact constant name 'DEFAULT_STOP_GRACE_PERIOD' with value 60, exact method signature 'private Duration getStopGracePeriod()', exact field names 'containerStopTimeout' and 'videoContainerStopTimeout', exact Require.nonNull strings like 'Container stop timeout', exact field name 'stopGracePeriod' in DockerSessionFactory, exact ConfigValue name 'stop-grace-period', and the exact string 'stop-grace-period must be a n"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact constant name 'DEFAULT_STOP_GRACE_PERIOD' with value 60, exact method signature 'private Duration getStopGracePeriod()', exact field names 'containerStopTimeout' and 'videoContainerStopTimeout', exact Require.nonNull strings like 'Container stop timeout', exact field name 'stopGracePeriod' in DockerSessionFactory, exact ConfigValue name 'stop-grace-period', and the specific fix of using 'readFully' instead o"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (hardcoded timeouts, missing exception safety, skipBytes bug) and what to fix at a high level, but doesn't specify exact code changes like 'change line X to Y' or 'replace skipBytes with readFully'."
+      "reason": "The instruction describes what is broken (hardcoded timeouts, missing exception safety, skipBytes bug) and what to add (configurable flag, try-finally, fix stream parsing) but does not specify exact code changes like 'change line X to Y' or 'replace skipBytes with readFully'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names (containerStopTimeout, videoContainerStopTimeout, stopGracePeriod), exact constant name (DEFAULT_STOP_GRACE_PERIOD), exact Require.nonNull strings, exact method visibility ('private Duration getStopGracePeriod'), and exact field modifiers ('private final Duration'). An alternative correct fix using different names (e.g., 'browserStopTimeout', 'STOP_TIMEOUT_DEFAULT') would fail."
+      "reason": "Tests assert gold-specific implementation details: exact variable names ('containerStopTimeout', 'videoContainerStopTimeout', 'stopGracePeriod', 'DEFAULT_STOP_GRACE_PERIOD'), exact method signature ('private Duration getStopGracePeriod()'), exact Require.nonNull strings, exact field visibility ('private final Duration'). An alternative correct fix using different names (e.g., 'browserStopTimeout', 'getContainerStopGracePeriod', 'STOP_TIMEOUT_DEFAULT') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test uses only `assert X in source` or `re.search(pattern, source)` on file contents read as text. No test imports, compiles, or executes any Java code. The test_java_source_compiles_syntax_check only checks brace balance, not actual compilation."
+      "reason": "Every single test reads source files as text and uses string/regex matching (e.g., `assert 'DEFAULT_STOP_GRACE_PERIOD' in source`, `re.search(pattern, source)`). No test compiles Java code, instantiates objects, or verifies runtime behavior. The 'syntax check' test only counts braces."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since tests only check for string/regex presence in source files, an agent could pass all tests by simply inserting the expected strings as comments or dead code without implementing any actual functionality. For example, adding '// DEFAULT_STOP_GRACE_PERIOD = 60' and '// private Duration getStopGracePeriod()' as comments could satisfy many tests."
+      "reason": "Since tests only check for string presence in source files, an agent could pass all fail-to-pass tests by inserting dead code comments or unused declarations containing the expected strings (e.g., adding `// DEFAULT_STOP_GRACE_PERIOD` or `private final Duration containerStopTimeout = null;`) without actually implementing the fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/selenium after cloning, and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact patch, or read test_outputs.py to see all expected strings and simply insert them. Since tests are text-matching only, the agent can match literal fixture strings without understanding the bug."
+      "reason": "The solution exists at /workspace/selenium after solve.sh runs. The agent could read solution/solve.sh directly to see the exact patch. Additionally, since tests only check for string patterns in source files, the agent could grep test_outputs.py for the expected strings and insert them verbatim."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md are tested: configurable stop grace period (tests 1-3, 6-8), try-finally exception safety (test 5), and readFully fix for stream parsing (test 9)."
+      "reason": "All three behaviors described in the instruction (configurable timeout flag, try-finally exception safety, stream parsing fix) are tested, along with the supporting infrastructure (factory changes, constructor changes)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped into 'fail_to_pass' and 'pass_to_pass' categories with clear comments separating them."
+      "reason": "Tests are well-organized with descriptive function names, docstrings marking fail_to_pass vs pass_to_pass, and a module-level docstring explaining the three areas being tested."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Java source code and does not produce structured data output."
+      "reason": "This task involves Java source code modifications, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, flag names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions file names and method names (DockerSession.stop(), parseMultiplexedStream()) but these are appropriate for the task domain. It mentions Duration.ofMinutes(1) and skipBytes() as the buggy patterns, which is describing the problem rather than the solution."
+      "reason": "The instruction mentions specific files (which is appropriate since it's a code modification task) and describes what's wrong conceptually (hardcoded values, missing try-finally, skipBytes issue) without specifying exact line numbers or replacement code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "This is a code-modification task, not a config-edit task."
     }
   },
   "tier_a_fails": [

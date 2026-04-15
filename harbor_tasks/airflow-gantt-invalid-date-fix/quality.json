@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (airflow-core/src/airflow/ui/src/layouts/Details/Gantt/utils.ts), the function (createChartOptions), the exact patterns to change (new Date(...).getTime() to dayjs(...).valueOf()), and mentions TypeScript compilation and lint checks. All test-asserted specifics like the file path, string patterns 'dayjs(item.x[1]).valueOf()' and 'dayjs(item.x[0]).valueOf()', and the old patterns are explicitly stated in the instruction."
+      "reason": "The instruction names the file path (airflow-core/src/airflow/ui/src/layouts/Details/Gantt/utils.ts), the exact patterns to use (dayjs(item.x[0]).valueOf(), dayjs(item.x[1]).valueOf()), the pattern to remove (new Date(item.x[...] ?? \"\").getTime()), and all verification commands (tsc, lint, prettier, build, pnpm test). All asserted specifics in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Change: new Date(item.x[1] ?? \"\").getTime() \u2192 dayjs(item.x[1]).valueOf()' and 'Change: new Date(item.x[0] ?? \"\").getTime() \u2192 dayjs(item.x[0]).valueOf()' with '4 total changes'. This is a complete solution specification, not just a problem description."
+      "reason": "The instruction explicitly states the exact fix: 'Scale minimum: dayjs(item.x[0]).valueOf()' and 'Scale maximum: dayjs(item.x[1]).valueOf()' and 'The pattern new Date(item.x[...] ?? \"\").getTime() should not appear'. This tells the agent exactly what to change to what, leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_dayjs_used_for_date_parsing asserts exact string matches like 'dayjs(item.x[1]).valueOf()' in the file content. An alternative correct fix using e.g. 'dayjs(item.x[1] ?? \"\").valueOf()' or 'dayjs(item.x[1]).toDate().getTime()' or 'Number(dayjs(item.x[1]))' would fail even though they fix the bug correctly."
+      "reason": "test_dayjs_used_for_date_parsing checks for exact literal strings 'dayjs(item.x[1]).valueOf()' and 'dayjs(item.x[0]).valueOf()' via substring matching. An alternative correct fix like 'dayjs(item.x[1]).unix() * 1000' or 'Number(dayjs(item.x[1]))' or '+dayjs(item.x[1])' would fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_dayjs_used_for_date_parsing is purely textual (reads file content and checks for string patterns). While other tests (test_vitest_unit_tests_pass, test_typescript_compiles, test_date_parsing_produces_valid_numbers, test_chart_options_scale_calculation) do execute code, the primary fail-to-pass test is string matching. Tests like test_date_parsing_produces_valid_numbers and test_chart_options_scale_calculation don't actually test the modified code\u2014they run standalone scripts that test dayjs "
+      "reason": "test_dayjs_used_for_date_parsing is purely text-matching ('dayjs(item.x[1]).valueOf()' in content). While other tests (test_vitest_unit_tests_pass, test_typescript_compiles, test_repo_build, etc.) do execute subprocesses, and test_date_parsing_produces_valid_numbers/test_chart_options_scale_calculation run Node scripts, the primary fail-to-pass test (test_dayjs_used_for_date_parsing) is entirely string-in-file checking with no execution."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_dayjs_used_for_date_parsing (f2p) can be passed by simply doing a text replacement in the file without understanding the bug. test_date_parsing_produces_valid_numbers and test_chart_options_scale_calculation run independent Node scripts that test dayjs behavior generally\u2014they don't import or exercise the actual modified code, so they pass regardless of whether the file was actually fixed (they test dayjs itself, not the agent's changes)."
+      "reason": "test_dayjs_used_for_date_parsing can be satisfied by simply doing a string replacement in the file without understanding the bug. test_date_parsing_produces_valid_numbers and test_chart_options_scale_calculation run independent Node scripts that test dayjs behavior in isolation \u2014 they don't actually import or run the modified utils.ts code, so they pass regardless of the actual file content (they test dayjs itself, not the fix)."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/airflow/.git and solve.sh is at /solution/solve.sh. The agent could read solve.sh to see the exact patch, or simply grep for the expected string patterns from the test file. The primary f2p test is a string match, so the agent could just do a sed replacement matching the literal fixture string without understanding anything."
+      "reason": "The solution is available at /workspace/airflow in the container (solve.sh contains the exact patch). The agent could read solve.sh or the git diff. Also, the test_dayjs_used_for_date_parsing test checks for exact literal strings that are stated verbatim in instruction.md, so the agent could just do a sed replacement matching those strings without understanding anything."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) Gantt chart renders without error for running DagRuns - tested via dayjs usage check and scale calculation tests, (2) completed DagRuns display correctly - tested via unit tests, (3) TypeScript compiles - test_typescript_compiles, (4) lint checks pass - test_repo_lint. All explicit requirements are covered."
+      "reason": "All behaviors described in instruction.md are tested: dayjs usage for date parsing, TypeScript compilation, lint, format check, build, and unit tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_dayjs_used_for_date_parsing, test_vitest_unit_tests_pass, etc.), have docstrings explaining their purpose and whether they are fail-to-pass or pass-to-pass, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining whether they are fail-to-pass or pass-to-pass, and what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "This task modifies TypeScript source code; it does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, commands, and variable names are all correctly spelled and consistent between instruction and tests."
+      "reason": "File paths, commands, variable names, and function names in the instruction and tests are all consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact lines to change ('scales.x.max and scales.x.min calculations'), exact before/after code patterns, and the count of changes ('4 total changes'). This goes well beyond identifying the buggy file/function and into specifying the exact solution."
+      "reason": "The instruction specifies the exact replacement patterns: 'dayjs(item.x[0]).valueOf()' for min, 'dayjs(item.x[1]).valueOf()' for max, and names the exact buggy pattern 'new Date(item.x[...] ?? \"\").getTime()'. This is excessive localization \u2014 it tells the agent exactly which expressions to find and replace."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

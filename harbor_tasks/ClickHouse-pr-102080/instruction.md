@@ -2,27 +2,29 @@
 
 ## Problem
 
-The ClickHouse repository is a large monorepo where every byte committed is cloned by every contributor forever. Binary blobs (JARs, archives, compiled artifacts, datasets) should never be committed directly to git. The repository needs a CI style check that detects and flags any git-tracked file larger than 5 MB, unless it is explicitly whitelisted as legitimate test data.
+The ClickHouse monorepo's CI needs a style check that detects git-tracked files larger than 5 MB. Such files should be flagged as violations unless they match a whitelist of known legitimate test data.
 
 ## Task
 
-Add a large file detection check to `ci/jobs/scripts/check_style/various_checks.sh` that:
+Append a large file detection section to the end of `ci/jobs/scripts/check_style/various_checks.sh`.
 
-1. Scans all git-tracked files using `git ls-files` for files larger than 5 MB
-2. Prints a warning message for any oversized file found
-3. Respects a whitelist of known legitimate large test files
-4. Works on both GNU (Linux) and BSD (macOS) stat formats
-5. Uses efficient bulk operations (avoiding fork-per-file which takes minutes on large repos)
+## Requirements
 
-## Detailed Requirements
+### Functionality
 
-### Size Threshold
+The check must:
 
-Define the size limit as a variable named `MAX_FILE_SIZE` with the value `$((5 * 1024 * 1024))` (5 MB in bytes).
+1. Enumerate all git-tracked files and determine their sizes
+2. Flag any file exceeding 5 MB as a violation
+3. Exclude files matching a whitelist of known large test data (see below)
+4. Print a warning for each violation
+5. Work correctly on both GNU (Linux) and BSD (macOS) systems
 
-### Whitelist
+The `stat` command syntax differs between GNU and BSD platforms, so the check must detect which variant is available at runtime.
 
-Define a whitelist array variable named `LARGE_FILE_WHITELIST` that includes entries for these known legitimate large test data files (the whitelist entries are used as `grep -e` patterns):
+### Whitelist Patterns
+
+These file patterns must be exempt from violation reporting:
 
 - `multi_column_bf.gz.parquet`
 - `libcatboostmodel.so_aarch64`
@@ -31,29 +33,23 @@ Define a whitelist array variable named `LARGE_FILE_WHITELIST` that includes ent
 - `paimon-rest-catalog/chunk_`
 - `ghdata_sample.json`
 
-### Cross-Platform Stat Format Detection
-
-The script must detect whether the system has GNU or BSD `stat` and store the results in two variables:
-
-- `STAT_FMT_FLAG` — the flag character: `-c` for GNU stat, `-f` for BSD stat
-- `STAT_FMT` — the format string: `%s %n` for GNU, `%z %N` for BSD
-
-To detect GNU stat, test whether the command `stat -c '%s %n' /dev/null` succeeds.
-
-### Section Comment
-
-Include a comment containing the text "Large files checked into git" to label this check section.
-
 ### Warning Message
 
-When an oversized, non-whitelisted file is detected, print a warning that includes the exact text:
+Each violation warning must contain the text:
 
 ```
 is larger than 5 MB. Large files should not be committed to git
 ```
 
-The warning must also contain the suggestion: `download them at test time or build from source`.
+along with the suggestion `download them at test time or build from source`.
 
-## File to Modify
+### CI Test Suite Identifiers
 
-- `ci/jobs/scripts/check_style/various_checks.sh` — Add the large file check logic at the end of the file
+The CI test suite validates this check by searching the script for specific identifiers. To pass validation, the script must contain all of the following:
+
+- A comment containing the text `Large files checked into git`
+- The threshold expression `MAX_FILE_SIZE=$((5 * 1024 * 1024))`
+- An array named `LARGE_FILE_WHITELIST` holding the exclusion patterns
+- Variables named `STAT_FMT_FLAG` and `STAT_FMT` for the detected stat configuration
+- The `git ls-files` command for enumerating tracked files
+- A GNU stat probe using `stat -c '%s %n' /dev/null` (the detection logic must reference both `-c` and `-f` flag variants)

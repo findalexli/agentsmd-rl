@@ -2,61 +2,62 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_python_schema_classes_exist asserts specific class names 'InitContainerImage' and 'InitContainerWithStructuredImage' with specific import path 'schema.charts.utils.kubernetes', and asserts a specific property name '.name' for image rendering. These exact class names and the '.name' property are never mentioned in instruction.md. Also test_values_schema_updated checks for specific schema keys like 'InitContainerImage' in values.schema.json files, which are not named in the instruction."
+      "outcome": "pass",
+      "reason": "The instruction describes all key behaviors tested: string image format, structured image with tag/digest, digest precedence, pullPolicy rendering, mixed formats, Python schema classes (InitContainerImage, InitContainerWithStructuredImage with .name property), and values.schema.json updates with $defs.InitContainerImage. All assert targets (image strings like 'busybox:1.36', 'busybox@sha256:abc123def456', class names, property names) are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the desired behavior (what image formats should render to what strings) but does not specify exact code changes, line numbers, or specific template helper names to create."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: the helper template names ('dagster.initContainerImage.name' and 'dagster.initContainer'), that deployment-user.yaml must use 'range $container := $deployment.initContainers', that kindIs \"string\" must be used for detection, exact Pydantic model field names and property implementations, and exact JSON schema structure with $defs keys. This goes beyond describing what's broken and prescribes the specific fix."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_python_schema_classes_exist asserts exact class names 'InitContainerImage' and 'InitContainerWithStructuredImage' from 'schema.charts.utils.kubernetes' and a '.name' property. An alternative correct fix could use different class names (e.g., 'InitContainerImageSpec') or a different method name (e.g., '.full_name' or '.image_ref'), which would pass helm template tests but fail this test. test_values_schema_updated checks for the literal key 'InitContainerImage' in the JSON schema files."
+      "outcome": "pass",
+      "reason": "The tests primarily verify behavioral outcomes (rendered image strings, Python class behavior, JSON schema structure) rather than implementation-specific details like helper template names or internal variable names. An alternative implementation using different helper names or different template logic would still pass as long as it produces the correct rendered output."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests execute 'helm template' as a subprocess and parse the YAML output to inspect rendered container specs. test_python_schema_classes_exist imports and instantiates the Python classes. These are behavioral checks, not simple text matching."
+      "reason": "Tests execute 'helm template' via subprocess and parse YAML output to check rendered container specs. Python schema tests import and instantiate classes, checking property values. The values.schema.json test loads and inspects JSON structure. These are behavioral/execution tests, not simple text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The helm template tests require actual correct rendering of structured image formats (e.g., 'busybox@sha256:abc123def456'), which cannot be produced by stub/default implementations. The existing template would fail on structured image inputs."
+      "reason": "A stub implementation would not pass these tests. The helm template tests require actual Helm template rendering that produces specific image strings from structured input. The Python tests require classes with working .name properties that format strings correctly. No default/empty return would satisfy assertions like 'containers[0][\"image\"] == \"busybox:1.36\"'."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/dagster after the gold patch is applied via solve.sh. The Dockerfile clones the repo to /workspace/dagster and the solution patch is available. An agent could potentially read the solve.sh or solution directory if accessible, or inspect the test file at /tests/test_outputs.py to extract exact expected values."
+      "reason": "The solution exists at /workspace/dagster after the gold patch is applied via solve.sh. The Dockerfile clones the repo to /workspace/dagster. While solve.sh is in /solution/ which the agent shouldn't see, the agent could potentially read the test file at /tests/test_outputs.py (symlinked from /workspace/task/tests) to extract expected values and fixture strings directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: string format, structured with tag, structured with digest, digest precedence over tag, pullPolicy rendering, and mixed formats in a single deployment."
+      "reason": "All major behaviors from instruction.md are tested: string format backward compat, structured with tag, structured with digest, digest precedence over tag, pullPolicy rendering, mixed formats, Python schema classes existence and behavior, and values.schema.json updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_init_container_string_image_format, test_init_container_structured_image_with_digest, etc.), have docstrings explaining what they test and whether they're F2P, and are logically grouped by feature."
+      "reason": "Tests are well-named (test_init_container_string_image_format, test_init_container_structured_image_with_tag, etc.), have docstrings explaining what they test and whether they're F2P, and are logically grouped by feature area."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact expected rendered image strings in a table format and provides example values.yaml with expected outputs. The JSON schema requirements are implicit but the structured format is well-documented."
+      "reason": "The instruction documents the exact JSON schema structure needed ($defs.InitContainerImage with properties repository, tag, digest, pullPolicy; $defs.InitContainerWithStructuredImage with name and image), including the anyOf patterns for type unions."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "File paths, command names, variable names, and schema keys in instruction.md are consistent with the codebase structure and test expectations. No typos detected."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md mentions 'templates/ directory', 'shared template helpers file', and 'schema/' but does not name specific buggy lines, exact file names to change, or specific helper function names to create. The guidance is at the directory/area level appropriate for the task domain."
+      "outcome": "fail",
+      "reason": "The instruction names exact files to modify (deployment-user.yaml, _helpers.tpl, values.schema.json, kubernetes.py, user_deployments.py) and specifies exact template names ('dagster.initContainerImage.name', 'dagster.initContainer'), exact iteration syntax ('range $container := $deployment.initContainers'), and exact detection method ('kindIs \"string\"'). This is excessive localization that removes the need for the agent to reason about where and how to make changes."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is a code/template editing task, not purely a config-edit task."
+      "outcome": "pass",
+      "reason": "The gold patch modifies specific sections of multiple files (adding helper templates, updating deployment template iteration, adding JSON schema definitions) rather than doing full-file rewrites. Changes are localized and consistent across files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
+    "no_solution_leakage",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 9,
   "fail_count": 3
 }

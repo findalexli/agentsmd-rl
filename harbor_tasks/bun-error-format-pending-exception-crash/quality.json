@@ -2,36 +2,36 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "instruction.md names all four functions (createErrorInstance, createTypeErrorInstance, createSyntaxErrorInstance, createRangeErrorInstance), the target file path (src/bun.js/bindings/JSGlobalObject.zig), the exclusion of createDOMExceptionInstance, the requirement to clear pending exceptions, and the typed return requirements. The test for clearExceptionExceptTermination is discoverable from the description of clearing pending exceptions. The test for no inline @import is based on src/CLAUDE.md "
+      "outcome": "fail",
+      "reason": "Tests assert on specific details not mentioned in instruction.md: the exact file path 'src/bun.js/bindings/JSGlobalObject.zig', the exact method name 'clearExceptionExceptTermination', the specific typed return methods like 'toTypeErrorInstance'/'toSyntaxErrorInstance'/'toRangeErrorInstance', the function names 'createErrorInstance'/'createTypeErrorInstance'/'createSyntaxErrorInstance'/'createRangeErrorInstance', and the constraint about 'createDOMExceptionInstance' not being modified. While ins"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes what's broken (pending exception left on VM in catch blocks) and what the fix should achieve (clear the pending exception before returning fallback error), but does not specify exact code changes, line numbers, or the specific method name (clearExceptionExceptTermination) to call. A developer still needs to figure out HOW to clear the exception in Zig/JSC."
+      "reason": "The instruction describes the bug (pending exception not cleared during error formatting) and the expected behavior (clearing pending exceptions), but does not specify exact code changes, line numbers, or the specific API call (clearExceptionExceptTermination) needed. A developer would still need to reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests specifically assert on the exact method name '.clearExceptionExceptTermination()' via regex. An alternative correct fix might clear the exception using a different API (e.g., vm.clearException(), or wrapping in a different error-handling pattern) but would fail the tests. The tests also specifically check for '.toTypeErrorInstance(', '.toSyntaxErrorInstance(', '.toRangeErrorInstance(' method calls, which are implementation-specific to how ZigString creates typed errors."
+      "reason": "Tests require very specific implementation details: the exact method 'clearExceptionExceptTermination' must appear in catch blocks, and typed error functions must use specific methods like 'toTypeErrorInstance', 'toSyntaxErrorInstance', 'toRangeErrorInstance'. An alternative correct fix that clears exceptions using a different mechanism (e.g., a wrapper function, or calling the underlying C++ API directly) would fail the tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests are pure static text analysis \u2014 they parse the Zig source code looking for specific patterns (regex matching for clearExceptionExceptTermination, toTypeErrorInstance, etc.) using brace-counting. No test actually compiles or executes the code, runs the reproduction case, or verifies runtime behavior. Every f2p test is essentially 'assert pattern in source text'."
+      "reason": "All f2p tests are static source-code analysis via regex pattern matching on the Zig source file. They check for the presence of 'clearExceptionExceptTermination' strings and 'toTypeErrorInstance' patterns in catch blocks. No test actually executes the code, runs the reproduction script, or verifies runtime behavior. This is textual assertion, not behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that catch blocks contain clearExceptionExceptTermination calls before return statements and that typed error instances are returned. A stub or no-op implementation would not pass because the original code lacks these calls, and simply leaving the file unchanged or writing a minimal stub would fail the specific pattern checks."
+      "reason": "The f2p tests check that catch blocks contain 'clearExceptionExceptTermination()' before return AND that typed error functions return their specific typed error (not generic). A stub or no-op change would not pass since the original code lacks these calls. The tests verify structural changes that weren't present in the original code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /repo (solution/solve.sh is mounted/available). The agent could read /solution/solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what patterns are being checked (clearExceptionExceptTermination, toTypeErrorInstance, etc.) and mechanically apply them. The _ANALYSIS_SCRIPT is embedded as a string literal in the test file, making the exact checks fully transparent if the agent reads it."
+      "reason": "The solution is available at /repo (solve.sh applies a git patch). The agent could read solution/solve.sh if it exists in the container, or examine the test file at tests/test_outputs.py to discover exactly what patterns are being checked (clearExceptionExceptTermination, toTypeErrorInstance, etc.) and add those exact strings. The analysis script is also written to stdout as a Python file, making the checking logic transparent."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five requirements from instruction.md are tested: (1) clearing exceptions in all four functions, (2-4) typed returns for TypeError/SyntaxError/RangeError, (5) generic error return for createErrorInstance. The exclusion of createDOMExceptionInstance is also tested."
+      "reason": "The instruction requires: (1) clearing pending exceptions in four error functions, (2) returning properly typed errors from catch blocks, (3) not modifying DOMException. All of these are tested. The no-inline-imports and no-std-debug tests cover CLAUDE.md coding rules which are reasonable additional constraints."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail_to_pass, pass_to_pass, agent_config), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,24 +39,25 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, function names, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the file and four functions in scope, which is appropriate given the task domain. It does not mention specific line numbers, the exact API method (clearExceptionExceptTermination), or the specific typed return methods needed."
+      "reason": "The instruction does not name the specific file, line numbers, or the exact API method (clearExceptionExceptTermination) needed. It describes the bug conceptually and mentions the four function categories generically."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only bug fix task, not a config/agentmd edit task."
+      "reason": "This is a code-only bug fix task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 6,
+  "fail_count": 4
 }

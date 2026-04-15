@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for specific values not mentioned in instruction.md: pytestmark must evaluate to pytest.mark.sglang (test_pytestmark_sglang_present), consumer_batch_size >= 3 (instruction says >= 3 but test checks gateway_controller specifically), max_head_offpolicyness >= 100 in gateway_controller_full_init (instruction doesn't mention this fixture needs it but test checks it), and the specific fixture names 'gateway_controller_full_init' are not mentioned in the instruction. The marker name 'sglan"
+      "reason": "The tests check for `pytest.mark.sglang` as the specific marker (test_pytestmark_sglang_present), but instruction.md never names 'sglang' \u2014 it only says 'where <marker> is the identifier registered for this test suite.' An agent reading only instruction.md cannot discover the exact marker name 'sglang' without examining external configuration or guessing."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly states implementation details: 'local_scheduler fixture must use tmp_path_factory parameter (not tmp_path)', 'consumer_batch_size must be >= 3', 'max_head_offpolicyness must be >= 100', specific fixtures must be module-scoped, specific tests referencing should_accept_fn must be removed. These are prescriptive fixes, not just descriptions of what's broken."
+      "reason": "Instruction.md explicitly states the exact fixes: 'local_scheduler fixture must be changed to use tmp_path_factory parameter instead of tmp_path', 'consumer_batch_size argument must be >= 3', 'max_head_offpolicyness argument must be >= 100', 'any test method whose name contains should_accept_fn must be removed'. These are direct implementation directives, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_pytestmark_sglang_present hardcodes the marker name 'sglang' \u2014 an alternative correct fix using a different marker name (e.g., 'inference_service' or 'integration') would fail. test_fixtures_module_scoped checks specific fixture names including 'gateway_controller_full_init'. test_controller_settings_loosened checks max_head_offpolicyness in 'gateway_controller_full_init' by name. An alternative that renames fixtures or uses a different marker would fail."
+      "outcome": "pass",
+      "reason": "The tests check for behavioral properties (scope='module', parameter names, numeric thresholds >= N, absence of certain methods) rather than exact line positions or specific values. An alternative fix meeting the same constraints (e.g., consumer_batch_size=5 instead of 4, max_head_offpolicyness=200 instead of 1024) would also pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST parsing and eval/exec to evaluate decorator expressions and assignments at runtime with mock objects, rather than simple string matching. For example, test_fixtures_module_scoped evaluates fixture decorators with a mock pytest.fixture, and test_pytestmark_sglang_present executes assignments with a mock pytest module."
+      "reason": "Tests use AST parsing and eval/exec to evaluate decorator expressions, fixture scope keywords, and pytestmark assignments with mock objects. They execute code fragments in subprocesses rather than just doing string matching on file contents."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check substantive changes: fixture scope must be 'module'/'session' (default is 'function'), pytestmark must be assigned, slow markers must be removed, should_accept_fn tests must be deleted, specific numeric thresholds must be met. A stub or no-op would not pass these checks against the base commit code."
+      "reason": "The f2p tests check specific properties of the original (unfixed) code that would fail: e.g., fixtures without scope='module' would fail test_fixtures_module_scoped, missing pytestmark would fail test_pytestmark_sglang_present, and should_accept_fn methods still present would fail test_should_accept_fn_tests_removed. A stub/no-op wouldn't pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/AReaL as a git repo, and solve.sh applies a patch. An agent could potentially read /solution/solve.sh or the test file tests/test_outputs.py to discover exact expected values like 'sglang' marker name, consumer_batch_size >= 3, max_head_offpolicyness >= 100. The Dockerfile doesn't restrict access to these files."
+      "reason": "The solution file exists at /workspace/AReaL as solve.sh (or solution/solve.sh in the container). The agent could potentially read the test file at tests/test_outputs.py to discover exact expected values like 'sglang' marker name. The Dockerfile doesn't remove or protect these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: module-scoped fixtures (test_fixtures_module_scoped), module-level markers (test_pytestmark_sglang_present), removal of @pytest.mark.slow (test_slow_marker_removed), controller settings (test_controller_settings_loosened, test_consumer_batch_size_increased), removal of should_accept_fn tests (test_should_accept_fn_tests_removed), tmp_path_factory usage (test_fixture_no_tmp_path)."
+      "reason": "All five requirements from instruction.md are tested: module-scoped fixtures (test_fixtures_module_scoped), pytestmark presence (test_pytestmark_sglang_present), slow marker removal (test_slow_marker_removed), controller settings (test_controller_settings_loosened, test_consumer_batch_size_increased), and should_accept_fn removal (test_should_accept_fn_tests_removed)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with clear docstrings, grouped by concern (syntax, fixture scope, markers, settings, removal), and have section comments separating gate tests from f2p tests."
+      "reason": "Tests are well-named, grouped by concern (syntax, fixtures, markers, settings), and each has a docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,27 +39,26 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in instruction.md or test files."
+      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names exact fixture functions ('local_scheduler', 'gateway_controller'), exact parameters ('tmp_path_factory', 'consumer_batch_size', 'max_head_offpolicyness'), exact numeric thresholds (>= 3, >= 100), and exact test patterns to remove ('should_accept_fn'). This goes well beyond describing the problem domain."
+      "reason": "Instruction.md names exact fixture names (local_scheduler, gateway_controller, gateway_controller_full_init), exact parameter names (tmp_path_factory, consumer_batch_size, max_head_offpolicyness), and exact test method name patterns (should_accept_fn). This goes well beyond describing the problem domain and into specifying exact code locations and changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized \u2014 it modifies specific fixture definitions and class decorators in three files without full-file rewrites, and doesn't contradict other tier-1 files."
+      "reason": "The gold diff is localized to the three test files, making targeted changes to fixture scopes, markers, parameters, and removing specific test methods \u2014 not a full-file rewrite."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 4
 }

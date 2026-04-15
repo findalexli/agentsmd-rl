@@ -3,63 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the file path (src/Interpreters/TokenizerFactory.cpp), the exact error messages ('the empty string cannot be used as a separator' and 'the separators argument cannot be empty'), the style requirements (Allman braces, no tabs, no trailing whitespace, etc.), and the method name (value_as_string.empty() is implied by the validation description). All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction specifies the file to modify (src/Interpreters/TokenizerFactory.cpp), the exact error messages ('the empty string cannot be used as a separator' and 'the separators argument cannot be empty'), the error type (BAD_ARGUMENTS), and the style guidelines. All test-asserted specifics (error message strings, file path, style requirements like no tabs, no trailing whitespace, Allman braces) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially describes the exact fix: check value_as_string.empty(), throw BAD_ARGUMENTS with specific message text, and update the old error message. The tests then check for the exact string 'value_as_string.empty()' (test_empty_separator_validation_compiles), which means the instruction implicitly dictates the variable name and implementation approach. However, the instruction doesn't explicitly say 'change line X to Y' \u2014 it describes expected behavior. On balance, this is bord"
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior should be added (validation for empty separators and empty arrays) and what error messages to produce, but does not specify exact line numbers, variable names, or the specific code changes needed. A developer must reason about where and how to add the validation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_empty_separator_validation_compiles asserts 'value_as_string.empty()' in content \u2014 this is a gold-specific variable name. An alternative correct fix could use a different variable name (e.g., 'sep_str.empty()' or 'str_val.empty()') or inline the check (e.g., 'castAs<String>(value, \"separator\").empty()') and would fail this test despite being functionally correct."
+      "outcome": "pass",
+      "reason": "The tests check for the presence of error message strings in the source file and compilation validity, not for gold-specific variable names like 'value_as_string' or specific line positions. The test even explicitly comments 'This test does NOT assert on gold-specific variable names'. Alternative implementations that add the same error messages with different variable names/structures would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_empty_separator_validation_compiles, test_error_message_updated_compiles) are purely text-matching: they read the source file and assert specific strings like 'value_as_string.empty()' and 'the empty string cannot be used as a separator' are present. They do NOT compile, execute, or call any code to verify behavior. The pass-to-pass tests do run grep/subprocess but those are style checks, not behavioral verification."
+      "reason": "The f2p tests (test_empty_separator_validation_compiles, test_error_message_updated_compiles) primarily use `assert EXPECTED_EMPTY_SEP_MSG in content` and `assert EXPECTED_EMPTY_ARRAY_MSG in content` \u2014 checking for literal strings in the source file. While they also run clang syntax checking, the core behavioral assertions are text-matching against source code, not executing the tokenizer or calling the validation function. The code is never actually run to verify it throws the correct errors."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "A stub or no-op change would not pass the f2p tests because they check for the presence of specific strings ('value_as_string.empty()', 'the empty string cannot be used as a separator', 'the separators argument cannot be empty') and the absence of the old message ('separators cannot be empty'). The default file doesn't contain these strings, so actual code changes are required."
+      "outcome": "fail",
+      "reason": "A stub implementation that simply inserts the two literal error message strings as comments (e.g., `// the empty string cannot be used as a separator` and `// the separators argument cannot be empty`) into the source file and removes the old message 'separators cannot be empty' would pass both f2p tests, since the tests only check string presence in the file content and brace matching, without executing the validation logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/ClickHouse/solution/solve.sh (if present in the container after setup) or examine the test file at tests/test_outputs.py to discover the exact strings it needs to insert. The tests only check for literal string presence in the source file, so the agent could just insert the exact fixture strings without understanding the bug."
+      "reason": "The solution is in /workspace/ClickHouse after solve.sh runs, but more critically, the expected error message strings (EXPECTED_EMPTY_SEP_MSG, EXPECTED_EMPTY_ARRAY_MSG) are already stated verbatim in instruction.md. The agent could simply grep the test file or just read the instruction to insert those exact strings as comments into the source file without understanding the bug. The solution file at solution/solve.sh is also accessible in the container."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says the tokenizer should 'throw a BAD_ARGUMENTS error' for empty separators, but no test actually executes the tokenizer or verifies that an exception is thrown. The tests only check for string patterns in source code, not actual runtime behavior."
+      "reason": "The instruction requires that the tokenizer should 'throw a BAD_ARGUMENTS error' for empty separators, but no test actually verifies that the error is thrown at runtime. The tests only verify string presence in source code and style compliance. The actual throw behavior is untested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into fail-to-pass and pass-to-pass sections with comments, and each test has a descriptive name and explanation."
+      "reason": "Tests are well-organized with clear docstrings, descriptive function names (test_empty_separator_validation_compiles, test_error_message_updated_compiles, test_clickhouse_style_checks, etc.), and comments separating fail-to-pass from pass-to-pass test sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data output."
+      "reason": "This task involves C++ code modification, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, error messages, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file to modify (TokenizerFactory.cpp) which is appropriate for the task scope, but doesn't specify exact line numbers or internal implementation details like variable names. The exact error messages are part of the behavioral specification."
+      "reason": "The instruction names the file to modify (TokenizerFactory.cpp) which is appropriate given the task domain, but does not specify exact line numbers or the specific code structure of the fix. The task naturally requires modifying this single file."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a C++ source file, not a configuration edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 4
 }

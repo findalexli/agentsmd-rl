@@ -2,62 +2,62 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all three files (ReadableStream.ts, ReadableStreamInternals.ts, ReadableStream.cpp), the specific functions tested (readableStreamToArray, readableStreamToText, readableStreamToArrayBuffer, readableStreamToBytes, onCloseDirectStream, onFlushDirectStream, readableStreamToArrayBufferDirect), and describes the null vs undefined comparison issue, sink guard issue, and C++ exception handling issue. The test for C++ checks functions like readableStreamToText, readableStreamToForm"
+      "outcome": "fail",
+      "reason": "Tests assert specific strings like 'PASS: Consumed 6 bytes from async iterable Response', 'PASS: Direct stream closed without crashing', 'PASS: Direct stream flushed without crashing', 'PASS: Double consumption prevented'. These exact strings are embedded in the JS test code within the test file but are not discoverable from instruction.md. Also, test_source_files_exist checks specific file paths which ARE mentioned in instruction.md. However, the test_close_direct_stream_sink_guard and test_flu"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix details: 'The current comparison operator does not exclude null' (implying change !== to !=), 'onCloseDirectStream and onFlushDirectStream access this.$sink without checking if it's already been cleaned up' (implying add a guard), 'readableStreamToArrayBufferDirect does not lock the stream' (implying add locking), and 'do not check for exceptions afterward' (implying add RETURN_IF_EXCEPTION). These are specific enough to be the fix itself rather than jus"
+      "reason": "Instruction.md explicitly states the root cause: 'the async iterable path sets an internal property to null rather than undefined, and the subsequent check in the consumption functions does not account for this distinction' and 'The direct consumption path does not properly mark the stream as consumed' and 'C++ wrapper functions that call into JavaScript builtins do not check for pending exceptions after the call returns.' These are very specific descriptions of what to change (check null vs und"
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The tests use regex to check for specific implementation patterns. For example, test_null_excluded_from_direct_stream_path checks for specific operators like '!=' vs '!==' against 'undefined' or 'null'. test_close_direct_stream_sink_guard checks for specific patterns like 'var X = this.$sink; if (!X) return;' or optional chaining '?.' \u2014 an alternative fix using a different guard pattern (e.g., 'if (this.$sink === undefined) return') would fail. test_stream_locked_on_direct_consumption checks for"
+      "outcome": "pass",
+      "reason": "Tests verify behavioral outcomes (bytes consumed correctly, double consumption rejected, streams closed/flushed without crashing) rather than implementation details. Alternative fixes (e.g., using strict null checks differently, different locking mechanisms) would pass as long as they produce correct behavior."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests are essentially text-matching with regex on source files. test_null_excluded_from_direct_stream_path extracts operators via regex and evaluates JS semantics in Python (not executing JS). test_close_direct_stream_sink_guard and test_flush_direct_stream_sink_guard use regex to find guard patterns. test_cpp_exception_handling_after_call compiles a C program that does string matching on source. While the C compilation adds a layer, the core check is still 'does this string appear in the f"
+      "outcome": "pass",
+      "reason": "Tests execute JavaScript code via Bun subprocess and check return codes and stdout output. test_source_files_exist checks file existence. The behavioral tests actually run code and verify runtime behavior, not just text patterns in source files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that are absent in the base commit. For example, the base code uses !== for null comparison (which the test correctly identifies as buggy), and the sink guard is missing in the base. A stub or no-op wouldn't pass these pattern-matching tests since they check actual source file contents."
+      "reason": "The fail-to-pass tests exercise actual runtime behavior: test_null_excluded_from_direct_stream_path creates an async iterable Response and calls .bytes() which would crash on the unfixed code. A stub/no-op wouldn't produce 'PASS: Consumed 6 bytes' output with exit code 0. The tests require the actual Bun runtime to execute correctly."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/bun level and the agent could read solution/solve.sh if it exists in the container. Additionally, since tests are pure source-file regex checks, the agent could grep the test file (tests/test_outputs.py) to discover exactly what patterns are expected and make minimal targeted edits to match."
+      "reason": "The solution is in /workspace/bun's git history context and solution/solve.sh exists in the container. An agent could potentially read solution/solve.sh or inspect the git log for the PR fix. The Dockerfile doesn't remove the solution directory or restrict access to it."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All four issues described in instruction.md are tested: null exclusion in readableStreamTo* functions, sink guards in onCloseDirectStream and onFlushDirectStream, stream locking in readableStreamToArrayBufferDirect, and C++ exception handling after call()."
+      "outcome": "fail",
+      "reason": "Instruction.md describes 3 bugs but tests cover additional behaviors not explicitly described: sink guards in onCloseDirectStream and onFlushDirectStream (test_close_direct_stream_sink_guard, test_flush_direct_stream_sink_guard) are tested but only vaguely referenced in instruction.md via 'Relevant Files' listing. The close/flush sink null guard issues are not described as bugs in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_null_excluded_from_direct_stream_path, test_close_direct_stream_sink_guard, etc.), grouped into pass-to-pass and fail-to-pass sections with clear comments, and each has a descriptive docstring."
+      "reason": "Tests are well-named (test_null_excluded_from_direct_stream_path, test_stream_locked_on_direct_consumption, etc.), have detailed docstrings explaining the bug and fix, and are logically grouped into pass-to-pass and fail-to-pass sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing source code bugs, not producing structured data output."
+      "reason": "This task involves fixing runtime bugs in a JavaScript engine, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction and tests appear correct and consistent with the actual repository structure."
+      "reason": "File paths, function names, and commands appear correct and consistent between instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact functions and exact nature of the fix: 'initializeArrayBufferStream sets underlyingSource to null \u2014 not undefined. The current comparison operator does not exclude null' directly points to changing !== to !=. It also names onCloseDirectStream, onFlushDirectStream, and readableStreamToArrayBufferDirect with specific descriptions of what's missing in each."
+      "reason": "Instruction.md names specific internal functions (onCloseDirectStream, onFlushDirectStream, readableStreamToArrayBufferDirect) and specific files, and describes the exact nature of checks that are wrong ('sets an internal property to null rather than undefined', 'does not check for pending exceptions after the call returns'). This significantly narrows the search space beyond what a bug report should provide."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-fix task, not a config-edit task."
+      "reason": "This is a code-only task, not a configuration editing task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,

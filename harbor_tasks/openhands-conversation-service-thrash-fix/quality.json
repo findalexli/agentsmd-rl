@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific names like '_get_v1_conversation_info', '_is_v1_conversation', '_get_v1_conversation_config', 'AppConversationInfoService', 'AppConversationInfo', 'depends_app_conversation_info_service', '-> AppConversationInfo | None', and the exact pattern 'v1_conversation_info = await _get_v1_conversation_info'. The instruction.md does not name these specific function names, class names, or type signatures \u2014 it only gives vague hints like 'lighter-weight service variant' and 'consolidat"
+      "reason": "Tests assert specific function names like '_get_v1_conversation_info', '_is_v1_conversation', '_get_v1_conversation_config', class names like 'AppConversationInfoService', 'AppConversationInfo', and variable names like 'app_conversation_info_service_dependency'. The instruction.md mentions 'lighter-weight service variant' and 'consolidate helper functions' but never names these specific identifiers. An agent cannot discover '_get_v1_conversation_info' or 'AppConversationInfoService' from instruc"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's 'Hint' section effectively prescribes the solution: 'Use a lighter-weight service variant for conversation info lookup', 'Consolidate the separate helper functions into a single helper', 'Return the response directly in the V1 branch without additional service calls'. Combined with the file path given, this tells the agent exactly what to change rather than just describing what's broken."
+      "reason": "The Hint section explicitly states: 'Use a lighter-weight service variant for conversation info lookup', 'Consolidate the separate helper functions into a single helper', and 'Return the response directly in the V1 branch without additional service calls'. These describe WHAT to change, not just what's broken. Combined with naming the exact file, this substantially leaks the solution approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_has_get_v1_conversation_info_function checks for exact function name '_get_v1_conversation_info' and exact return type '-> AppConversationInfo | None'; test_no_is_v1_conversation_function asserts '_is_v1_conversation' not in content; test_no_get_v1_conversation_config_function asserts '_get_v1_conversation_config' not in content; test_uses_app_conversation_info_service asserts 'AppConversationService' not in content. An alternative correct "
+      "reason": "Tests assert gold-specific implementation details: test_has_get_v1_conversation_info_function requires exact function name '_get_v1_conversation_info' and exact return type '-> AppConversationInfo | None'; test_no_is_v1_conversation_function and test_no_get_v1_conversation_config_function assert removal of specific old function names; test_uses_app_conversation_info_service asserts 'AppConversationService' not in content. An alternative correct fix using different naming or architecture would fa"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text/AST assertions on the source file: test_uses_app_conversation_info_service does 'assert \"AppConversationInfoService\" in content', test_has_get_v1_conversation_info_function does 'assert \"_get_v1_conversation_info\" in content', test_no_is_v1_conversation_function checks string absence, test_endpoint_returns_json_response_directly_for_v1 searches for string patterns in lines. Only test_unit_tests_pass and the pass-to-pass tests actually execute code."
+      "reason": "The fail-to-pass tests (test_uses_app_conversation_info_service, test_has_get_v1_conversation_info_function, test_no_is_v1_conversation_function, test_no_get_v1_conversation_config_function, test_endpoint_returns_json_response_directly_for_v1, test_imports_app_conversation_info_model) are all string/AST checks on file content. Only pass-to-pass tests run actual code. The core verification is text-matching, not behavioral."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply renames functions and changes imports to match the expected strings (without actually fixing the performance issue) would pass tests like test_uses_app_conversation_info_service, test_has_get_v1_conversation_info_function, test_no_is_v1_conversation_function, etc. These tests check text presence, not actual behavior of reducing service calls."
+      "reason": "The f2p tests check for string presence/absence in the source file. A stub that simply rewrites conversation.py to contain the right strings and function signatures (without implementing actual logic) would pass tests like test_has_get_v1_conversation_info_function, test_uses_app_conversation_info_service, etc. The AST test (test_service_called_only_once_per_request) could also be trivially satisfied by an empty function body."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/openhands via solve.sh in the solution/ directory. The agent could read /solution/solve.sh (if accessible in the container) or simply grep the test file (tests/test_outputs.py) for the exact strings being asserted and produce a matching file without understanding the bug."
+      "reason": "The solution is in /workspace/openhands accessible to the agent via solve.sh. The agent could read solution/solve.sh directly, which contains the complete gold patch as an inline Python script. Additionally, the test expectations (exact function names, class names) are discoverable by reading tests/test_outputs.py."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires reducing 3 service calls to 1, using a lighter service, consolidating helpers, and returning directly in V1 branch. Tests cover all these aspects (service call count via AST analysis, import checks, function existence/absence checks, return pattern check)."
+      "outcome": "fail",
+      "reason": "Instruction says 'The fix should reduce sandbox service response time from 100-200ms to ~6-25ms per request' and 'correctly handle both V1 and V0 conversations', but no test verifies actual performance improvement or correct runtime behavior for V1/V0 conversations. Tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Pass-to-Pass Tests' and 'Fail-to-Pass Tests' sections with descriptive names and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly separated into 'Pass-to-Pass Tests' and 'Fail-to-Pass Tests' sections with comments, descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves refactoring Python code, not producing structured data output like JSON/CSV/API schemas."
+      "reason": "The task is about refactoring code, not producing structured data output like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file 'openhands/server/routes/conversation.py' and the exact endpoint '/config', and the hint section effectively describes the exact refactoring steps (use lighter-weight service variant, consolidate helpers, return directly). This goes beyond naming the buggy file \u2014 it describes the precise structural changes needed."
+      "reason": "Instruction.md names the exact file ('openhands/server/routes/conversation.py'), the exact endpoint ('/config'), and the Hint section describes the exact architectural changes needed (lighter-weight service variant, consolidate helpers, return directly in V1 branch). This goes beyond identifying the bug location to describing the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -60,8 +60,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 2,
+  "fail_count": 8
 }

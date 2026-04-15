@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (src/bun.js/VirtualMachine.zig), function (resolveMaybeNeedsTrailingSlash), the save/restore pattern for log pointers, package_manager.log as the missing piece, and references ModuleLoader.zig as a reference implementation. All test-asserted specifics (function name, file path, package_manager, .log = &log, defer block, _resolve call, resolver/linker log patterns) are discoverable from the instruction."
+      "reason": "instruction.md names the file (src/bun.js/VirtualMachine.zig), the function (resolveMaybeNeedsTrailingSlash), the pattern of saving/restoring log pointers, the package_manager log field, the reference implementation in ModuleLoader.zig, the line range (~1832-1845), and the variables (jsc_vm.log, resolver.log, linker.log, package_manager.log). All test assertions about pm.log set/restore, resolver/linker log intact, _resolve call presence, and function structure are discoverable from these detail"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (package_manager's log pointer is never updated/restored) and where (the save/restore pattern in resolveMaybeNeedsTrailingSlash), but does not specify exact code lines to add or the precise syntax of the fix. A developer must still reason about how to implement the save/restore for pm.log."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states 'The save/restore pattern in resolveMaybeNeedsTrailingSlash around lines 1832\u20131845 needs to also cover package_manager.log' and points to ModuleLoader.zig as a 'reference implementation.' This tells the agent exactly what to change (add package_manager.log to the save/restore pattern) and where to find how to do it. The agent doesn't need to reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for structural patterns (package_manager appearing near .log = &log in a window of lines, before defer and in defer blocks) rather than exact variable names or line positions. Alternative correct fixes (e.g., using different variable names for the saved log, different access patterns to package_manager, or slightly different code organization) would still pass as long as they set and restore package_manager's log pointer in the right locations."
+      "reason": "Tests use broad regex patterns like searching for 'package_manager' in a window with '.log = &log' or '.log = <identifier>', not exact line content or variable names. An alternative fix using different variable capture syntax (e.g., storing pm reference differently, or using a different accessor chain to reach package_manager) would still pass as long as the structural pattern is present."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file as text and uses regex pattern matching (e.g., re.search for 'package_manager' and '.log = &log'). No test compiles, executes, or calls the Zig code. The tests are purely textual/structural assertions on source code content, which is exactly the 'assert foo in open(path).read()' pattern."
+      "reason": "Every test reads VirtualMachine.zig source text and uses regex/string matching (e.g., 'assert re.search(r\".log\\s*=\\s*&log\", before_defer)'). No test compiles or executes the Zig code. The comment 'AST-only because: Zig source cannot be compiled without full bun build toolchain' acknowledges this is purely textual inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_pm_log_set_before_defer, test_pm_log_restored_in_defer, test_pm_log_set_before_resolve_call) check for package_manager log patterns that do NOT exist in the base commit's code. A stub or no-op implementation would not add these patterns and would fail these tests."
+      "reason": "The fail-to-pass tests (test_pm_log_set_before_defer, test_pm_log_restored_in_defer, test_pm_log_set_before_resolve_call) all assert that 'package_manager' appears with '.log = &log' in specific regions of the function. The base commit code does NOT contain these patterns, so a stub or no-op would fail these tests. The agent must add actual package_manager log save/restore code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun's accessible filesystem (solution/solve.sh contains the exact patch). An agent could read it directly or grep for the patch content. Additionally, the gold patch is a simple 6-line addition that could be extracted by reading the solution file."
+      "reason": "The solution file exists at /workspace/bun's filesystem context and solution/solve.sh is present in the container. An agent could read /solution/solve.sh or simply run it to apply the gold patch. Additionally, the git diff-based tests (test_no_std_api_in_diff, test_no_non_default_allocator) only check added lines, so copying the exact patch would trivially pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (package_manager log not saved/restored), and the tests verify: pm.log is set before defer, pm.log is restored in defer, pm.log is set before _resolve call, existing resolver/linker/jsc_vm log patterns remain intact. All described behavioral requirements are tested."
+      "reason": "instruction.md requires: (1) package_manager.log set to stack-local log before resolution, (2) package_manager.log restored in defer block, (3) existing save/restore for resolver/linker/jsc_vm log intact. All of these are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail_to_pass for core fix, pass_to_pass for existing functionality, static anti-stub, agent_config rules), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped with section comments (fail_to_pass for core fix, pass_to_pass for existing functionality, static anti-stub, agent_config rules from CLAUDE.md). Each test has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a source code bug fix, not structured data output."
+      "reason": "Task produces a source code patch, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths (src/bun.js/VirtualMachine.zig, src/bun.js/ModuleLoader.zig), function names (resolveMaybeNeedsTrailingSlash), and variable names are consistent between instruction and tests."
+      "reason": "All filenames (VirtualMachine.zig, ModuleLoader.zig), function names (resolveMaybeNeedsTrailingSlash), variable names (jsc_vm, package_manager, transpiler, resolver, linker), and paths are consistent and correctly spelled throughout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'around lines 1832\u20131845 in src/bun.js/VirtualMachine.zig' and describes the exact pattern needed ('The save/restore pattern... needs to also cover package_manager.log'). It also points to ModuleLoader.zig as containing a 'reference implementation.' This narrows the task significantly beyond just describing the bug."
+      "reason": "instruction.md says 'around lines 1832\u20131845 in src/bun.js/VirtualMachine.zig' and names the exact fix location and pattern needed. It also points to ModuleLoader.zig as a 'reference implementation,' effectively giving the agent the template for the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,6 +51,7 @@
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
@@ -58,6 +59,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 6,
+  "fail_count": 4
 }

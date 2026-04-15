@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the test file path (frontend/__tests__/hooks/chat/use-slash-command.test.ts), the three required test description strings ('includes /new built-in command for V1', 'does NOT include /new', 'returns empty items while skills are loading'), and the npm commands (typecheck, lint, build, test). The hidden tests for translation completeness, hooks/mutation, hooks/query, and use-new-conversation-command are PASS-TO-PASS tests that should already pass at the base commit, so not need"
+      "reason": "instruction.md names the test file path (frontend/__tests__/hooks/chat/use-slash-command.test.ts), the three required test description strings ('includes /new built-in command for V1', 'does NOT include /new', 'returns empty items while skills are loading'), and the npm commands (typecheck, lint, build, test). The hidden tests for translation completeness, hooks/mutation, hooks/query, and use-new-conversation-command are PASS-TO-PASS tests that should already pass at the base commit, so they don"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (add /new to slash command menu for V1, not V0, handle loading state) but does not specify exact code changes, line numbers, or implementation details like importing BUILT_IN_COMMANDS or useActiveConversation."
+      "reason": "instruction.md describes the desired behavior (add /new to slash command menu for V1, not V0, handle loading state) and constraints, but does not specify exact code changes, line numbers, or implementation details like BUILT_IN_COMMANDS constant or useActiveConversation hook."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The hidden tests run npm test with the vitest suite and check for test description strings in stdout and a zero exit code. The agent writes its own test file and implementation. Alternative implementations (e.g., different variable names, different ways of checking V1, different approaches to built-in commands) would pass as long as the tests they write pass and have the correct description strings. The tests don't assert on gold-specific internal implementation details."
+      "reason": "The FAIL-TO-PASS tests run `npm run test -- --run --reporter=verbose use-slash-command` and check for test description strings in stdout and returncode==0. The agent writes their own test file, so they control the test names. The tests check behavior (filtered items contain /new for V1, don't for V0, empty while loading) which can be implemented many ways. Alternative implementations (e.g., different constant names, different hook structures) would pass as long as the behavior is correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The hidden tests execute npm commands (npm run test, npm run typecheck, npm run lint, npm run build) as subprocesses and check return codes. The vitest tests in the gold solution use renderHook to actually call useSlashCommand and inspect returned values. While the hidden tests do check for strings in stdout, those strings come from actual test execution output, not static file reads."
+      "reason": "The hidden tests execute npm commands (npm run test, npm run typecheck, npm run lint, npm run build) as subprocesses and check return codes. The vitest tests themselves (written by the agent) use renderHook to call the actual hook and assert on behavior. test_test_file_exists checks file existence, but that's supplementary to the execution-based tests."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The agent writes BOTH the test file and the implementation. The hidden test_v1_conversation_has_new_command (and similar) just runs `npm run test -- use-slash-command` and checks stdout for description strings. An agent could write trivially passing tests like `it('includes /new built-in command for V1', () => { expect(true).toBe(true); })` which would satisfy all three FAIL-TO-PASS tests without implementing any actual fix. The hidden tests never independently verify that /new actually appears "
+      "reason": "The FAIL-TO-PASS tests (test_v1_conversation_has_new_command, test_v0_conversation_no_new_command, test_empty_items_while_loading) run the agent's own test file and check that it passes and that specific strings appear in stdout. The agent writes BOTH the implementation AND the tests. An agent could write trivially passing tests (e.g., `it('includes /new built-in command for V1', () => { expect(true).toBe(true); })`) that satisfy the hidden test assertions without actually implementing the featu"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is at /workspace/OpenHands and solve.sh applies a git patch. The agent could read /solution/solve.sh (or its contents if accessible) to extract the exact gold patch. Additionally, since the agent writes both the tests and the implementation, it could write tautological tests that pass without real behavior, as noted above."
+      "reason": "The solution exists at /workspace/OpenHands (or the solve.sh is accessible if /solution/ is mounted). More critically, the agent writes its own tests that are then executed - it could write tautological tests that always pass. The agent could also read the solution patch from /solution/solve.sh if it exists in the container to extract the exact implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md (V1 shows /new, V0 doesn't show /new, loading returns empty) are tested via the vitest test descriptions checked in stdout. TypeScript, lint, and build checks are also tested."
+      "reason": "All three behaviors specified in instruction.md (V1 shows /new, V0 doesn't show /new, empty items while loading) have corresponding FAIL-TO-PASS tests that check for those specific test descriptions in vitest output."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Hidden tests are well-named with docstrings explaining purpose and FAIL-TO-PASS vs PASS-TO-PASS classification. They are logically grouped by feature area."
+      "reason": "Hidden tests are well-named (test_v1_conversation_has_new_command, test_v0_conversation_no_new_command, etc.), have docstrings explaining purpose, and are clearly organized by concern (FAIL-TO-PASS vs PASS-TO-PASS noted in docstrings)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves UI hook behavior and slash commands, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, command names, and test description strings in instruction.md match those checked in test_outputs.py without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions not changing types, the menu component, or the /new handler in chat-interface.tsx, which narrows scope but doesn't name the exact buggy file/line. The hook file and constants file to modify are left for the agent to discover."
+      "reason": "instruction.md mentions the hook name (useSlashCommand) and the file where /new handler lives (chat-interface.tsx) but doesn't specify exact lines, the BUILT_IN_COMMANDS constant, or the useActiveConversation import. The note about not changing types/menu component/handler is a constraint, not implementation guidance."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

@@ -2,32 +2,32 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific literal strings not mentioned in instruction.md: 'must be different' (test_script_rejects_same_pr), 'numeric' (test_script_rejects_non_numeric), 'Usage' and 'old_pr' in help output (test_script_help_flag), 'gh pr create' in make-pr SKILL.md (test_make_pr_skill_md), 'Closes #' or 'closing keywords' in supersede-pr SKILL.md (test_supersede_pr_skill_md), 'one-off' in AGENTS.md (test_agents_md_scripts_rule), 'SKILL.md' literal in AGENTS.md (test_agents_md_skills_section). The i"
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (skills/supersede-pr/scripts/close_superseded_pr.ts, skills/supersede-pr/SKILL.md, skills/make-pr/SKILL.md, AGENTS.md), literal strings ('numeric', 'must be different', 'Usage', 'old_pr', '--dry-run', 'name: supersede-pr', 'name: make-pr', 'gh pr create', 'Closes #', 'one-off', 'typescript', 'node', 'SKILL.md', 'let', 'const', 'var'), flags (--help, --repo, --dry-run), and behavioral requirements (non-zero exit for same"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to build (skills, script, AGENTS.md updates) but doesn't give exact file contents, line numbers, or literal code to write. A developer must still design the implementation."
+      "reason": "The instruction describes what to create and behavioral requirements but does not specify exact code, line numbers, or implementation details. A developer still needs to reason about how to implement the TypeScript script, structure the SKILL.md files, and update AGENTS.md."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact error message substrings like 'must be different' in stderr (test_script_rejects_same_pr) and 'numeric' in stderr (test_script_rejects_non_numeric). A correct alternative implementation using different error messages (e.g., 'cannot be the same' or 'invalid number') would fail these tests. Similarly, test_supersede_pr_skill_md checks for 'Closes #' or 'closing keywords' and test_make_pr_skill_md checks for exact string 'gh pr create'."
+      "outcome": "pass",
+      "reason": "Tests check for behavioral outputs (exit codes, presence of keywords in stdout/stderr), file existence, and content patterns (frontmatter keys, keyword mentions). Alternative implementations with different variable names, code structure, or wording would pass as long as they include the required keywords and behaviors."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Several tests execute the TypeScript script as a subprocess (test_script_help_flag, test_script_rejects_same_pr, test_script_rejects_non_numeric) and check exit codes and output. While some tests do text-based checks on SKILL.md and AGENTS.md files, the script behavioral tests genuinely run the code. The mix is acceptable given the task involves both code and documentation."
+      "reason": "Multiple tests execute the TypeScript script as a subprocess (test_script_help_flag, test_script_rejects_same_pr, test_script_rejects_non_numeric) and check exit codes and output. While some tests do check file content (SKILL.md, AGENTS.md), there's also meaningful behavioral testing via subprocess execution. The mix is appropriate for a task that includes both documentation and executable code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests require non-trivial implementations: test_script_help_flag requires a script that prints 'Usage', 'old_pr', '--dry-run' and exits 0; test_script_rejects_same_pr requires non-zero exit and specific stderr; test_script_rejects_non_numeric requires input validation logic. A stub/empty file would fail these."
+      "reason": "Stub implementations would fail: an empty .ts file would fail syntax check but not produce Usage output for --help; a script that always exits 0 would fail test_script_rejects_same_pr (requires non-zero exit); a script that always exits non-zero would fail test_script_help_flag (requires exit 0). The file content tests require specific frontmatter and keywords that wouldn't exist by default."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/remix's container at solve.sh path and the gold patch is available. An agent could potentially read the solution directory or the solve.sh file. The tests don't guard against this \u2014 the agent could inspect test files at tests/test_outputs.py to discover exact assertions and craft minimal passing implementations."
+      "reason": "The solution is available at /workspace/remix in the container via solve.sh, and while solve.sh itself is described as 'hidden', the Dockerfile doesn't prevent the agent from reading test files at tests/test_outputs.py or solution/solve.sh if they exist on disk. The agent could potentially read /solution/solve.sh or grep for expected test fixture strings. However, these files are described as 'hidden' \u2014 if they're not actually mounted in the container, this would be a pass. The ambiguity about w"
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's requirements (validate inputs, --help/--repo/--dry-run flags, SKILL.md files with frontmatter, AGENTS.md updates with skills section and TypeScript convention) are all tested. The --repo flag is tested indirectly in test_script_rejects_same_pr. The tsconfig.json and agents/openai.yaml files mentioned in instructions are not tested, but the core behaviors are covered."
+      "reason": "All major requirements from instruction.md are tested: script validation (numeric, same PR), --help flag, SKILL.md files with frontmatter, AGENTS.md updates (one-off scripts convention, Skills section), agents/openai.yaml is not tested but the tsconfig.json is also not tested \u2014 however, the core behavioral requirements are well-covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,28 +35,26 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies file paths (skills/supersede-pr/scripts/close_superseded_pr.ts, etc.) which is appropriate since the agent needs to create these files. It doesn't reveal implementation details like exact error messages or line numbers."
+      "reason": "The instruction describes what to build at a requirements level without specifying exact line numbers, internal implementation details, or buggy lines. File paths mentioned are necessary for the task specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold AGENTS.md diff is localized \u2014 it adds one line in the Code Style section and appends a Skills section at the end. It doesn't rewrite existing content and is consistent with the test expectations."
+      "reason": "The AGENTS.md edit in the gold solution is localized \u2014 it adds a single code style bullet point and a new Skills section at the end, without rewriting existing content. The instruction appropriately says to 'Add' items to AGENTS.md rather than rewrite it."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 3
+  "pass_count": 10,
+  "fail_count": 1
 }

@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific patterns like 'head or self.head' as literal strings in source code (test_publish_format_uses_self_head, test_push_to_hub_uses_self_head). The instruction.md says 'fall back to the instance attribute value' but never specifies the exact pattern 'head or self.head' that tests grep for. Also, tests check specific file paths like '.agents/skills/gradio/SKILL.md' and 'guides/03_building-with-blocks/06_custom-HTML-components.md' and specific content patterns (e.g., 'Chart.j"
+      "reason": "Tests assert very specific patterns like 'head or self.head' as literal strings in source code (test_publish_format_uses_self_head, test_push_to_hub_uses_self_head). The instruction.md says 'fall back to the instance attribute value' but never specifies the exact expression 'head or self.head' that tests grep for. Also, tests check specific file paths like '.agents/skills/gradio/SKILL.md' and 'guides/03_building-with-blocks/06_custom-HTML-components.md' and specific content patterns (e.g., 'Char"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'Add head: str | None = None to the HTML.__init__ signature, positioned before server_functions', 'Store the head value on the instance', 'these methods should fall back to the instance attribute value set during construction'. It also specifies exact parameter positioning and the fallback pattern. This goes beyond describing what's broken \u2014 it prescribes the exact fix."
+      "reason": "The instruction explicitly states where to add the parameter ('positioned before server_functions'), what to name it ('head: str | None = None'), how to store it ('Store the head value on the instance'), and the exact fallback logic ('When that argument is falsy or not provided, these methods should fall back to the instance attribute'). This is essentially the complete solution specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_publish_format_uses_self_head checks for the literal string 'head or self.head' in source code, test_push_to_hub_uses_self_head similarly checks for 'head or self.head'. An alternative correct implementation using e.g. 'self.head if not head else head' or a helper method would fail these tests despite being functionally equivalent."
+      "reason": "Tests assert exact literal strings like 'head or self.head' in test_publish_format_uses_self_head and test_push_to_hub_uses_self_head. An alternative correct implementation like 'self.head if not head else head' or using a helper method would fail these tests despite being functionally equivalent. The tests also check for exact AST patterns (self.head assignment) rather than behavioral correctness."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_head_param_in_init, test_head_stored_as_attribute, test_publish_format_uses_self_head, test_push_to_hub_uses_self_head, test_skill_md_head_param, test_guide_head_section) are ALL source-text/AST inspection tests that never actually import or execute the HTML component. They parse source code and grep for string patterns like 'head or self.head', 'Chart.js', etc. No test actually instantiates gr.HTML with head= and verifies runtime behavior."
+      "reason": "Most fail-to-pass tests are pure text/AST grep checks: test_publish_format_uses_self_head asserts 'head or self.head' as a substring in source, test_push_to_hub_uses_self_head similarly greps for string patterns, test_head_stored_as_attribute walks the AST for assignment patterns, test_skill_md_head_param and test_guide_head_section grep file contents. None of them actually instantiate HTML with head= and verify runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While the tests are text-based, they do check for specific non-default content that wouldn't exist in a stub. A stub implementation wouldn't have 'self.head = head' in __init__ or 'head or self.head' in _to_publish_format, so these tests would fail on unmodified code."
+      "reason": "A stub/no-op implementation would not pass the tests since they check for specific parameter existence in __init__, self.head assignment, specific string patterns in source code, and documentation content. A default/empty implementation wouldn't have these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/gradio after applying solve.sh, and the tests only check source text patterns. An agent could read /tmp/patch1.diff or the solution directory to extract exact strings. Also, since tests grep for literal patterns like 'head or self.head', an agent could simply insert those exact strings without understanding the feature."
+      "reason": "The solution is in /workspace/gradio's container at solve.sh (though truncated in display). More critically, the tests are pure text-matching on source files \u2014 an agent could read the test file patterns (e.g., 'head or self.head') and insert exactly those strings without understanding the feature. The solution file exists at /solution/solve.sh in the container."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that 'When that argument is falsy or not provided, these methods should fall back to the instance attribute value' \u2014 but no test actually calls _to_publish_format or push_to_hub to verify the fallback behavior at runtime. Only source text inspection is performed."
+      "reason": "The instruction requires that the head parameter serves as a fallback at runtime when publishing/hub-upload methods are called without explicit head. No test actually calls _to_publish_format() or push_to_hub() to verify this runtime fallback behavior \u2014 they only grep source code for string patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates, Pass-to-pass gates, Fail-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear sections (gates/pass_to_pass vs fail-to-pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No obvious typos in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (gradio/components/html.py), the exact parameter position ('positioned before server_functions'), and the exact fallback mechanism ('fall back to the instance attribute value'). It also names the specific methods (_to_publish_format and push_to_hub implicitly via 'publishing and Hub-upload methods'). This is excessive localization for what should be a design task."
+      "reason": "The instruction specifies exact parameter position ('positioned before server_functions'), exact parameter signature ('head: str | None = None'), exact methods to modify ('_to_publish_format', 'push_to_hub'), and exact fallback logic. This goes well beyond naming the file and into implementation-level detail."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it involves code and documentation changes."
+      "reason": "This is primarily a code and documentation editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [

@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the two files to fix (weight_utils.py and test_basic_correctness.py), the function names (initialize_single_dummy_weight, test_compile_correctness), describes the integer parameter zeroing issue on ROCm, the list construction bug with all_args/all_envs mismatch, and the dead inductor code \u2014 all of which correspond to what the tests check."
+      "reason": "The instruction names the specific files (weight_utils.py, test_basic_correctness.py), function names (initialize_single_dummy_weight, test_compile_correctness), the relevant behaviors (int params not initialized, list length mismatch, inductor dead code), and the platform condition (ROCm). All test assertions about zeroing int params on ROCm, list matching, inductor not being dead code, float param behavior, and non-ROCm int param behavior are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (integer params not initialized, duplicate append, all_args*3 mismatch, inductor section dead code) but does not prescribe exact code changes like 'add param.zero_()' or 'remove the duplicate all_envs.append'. A developer must still reason about the specific fix."
+      "reason": "The instruction describes what is broken (int params not initialized, duplicate append, tripled list, missing all_envs for inductor) but does not specify the exact code changes \u2014 e.g., it doesn't say 'add param.zero_()', 'remove the duplicate all_envs.append', or 'remove all_args * 3'. A developer must reason about the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_not_stub (truncated but visible in structure) likely performs AST-level checks on function body size/structure. More critically, test_list_construction_matching_lengths and test_inductor_comparison_not_dead_code use AST extraction and exec of the test function, then check for specific patterns like '-cc.mode=' flags and 'inductor' in arg strings. An alternative correct fix that uses different argument formatting (e.g., '--compile-mode' instead of '-cc.mode=') would fail. The test also requi"
+      "reason": "test_not_stub (truncated but referenced in test file) checks AST structure of the modified functions. More critically, test_list_construction_matching_lengths and test_inductor_comparison_not_dead_code execute the actual test_compile_correctness function via AST extraction and mock compare_all_settings, checking that calls have matching arg/env lengths and inductor args appear. An alternative fix that restructures the function differently (e.g., using a different variable name than all_envs, or "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract functions via AST, compile and execute them with mocked dependencies, then check behavioral outputs (tensor values, call argument lists). They don't just grep for text patterns."
+      "reason": "Tests extract functions via AST, compile and execute them with real torch tensors (test_int_params_zeroed_on_rocm, test_float_params_initialized_correctly) and mock frameworks (test_list_construction_matching_lengths executes the function and captures calls). This is behavioral testing, not text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_int_params_zeroed_on_rocm creates non-zero int tensors and asserts they become zero after calling the function \u2014 a stub (pass/return None) would leave them non-zero and fail. test_list_construction_matching_lengths requires len(args)==len(envs) and >=2 distinct modes \u2014 the buggy code produces mismatched lengths. test_inductor_comparison_not_dead_code requires >=2 calls with inductor args \u2014 the buggy code produces 0 inductor calls."
+      "reason": "test_int_params_zeroed_on_rocm creates non-zero int tensors and asserts they become zero after calling the function \u2014 a stub (pass/return None) would leave them non-zero. test_list_construction_matching_lengths asserts len(args)==len(envs) and >=2 distinct modes \u2014 the buggy code produces mismatched lengths. test_inductor_comparison_not_dead_code asserts >=2 calls with inductor args \u2014 the buggy code produces 0 inductor pairs."
     },
     "anti_cheating_measures": {
       "outcome": "pass",
-      "reason": "The solution directory is not mounted in the container (Dockerfile only clones the repo at the base commit). The test file is at tests/test_outputs.py which is hidden from the agent. The agent cannot trivially grep for fixture values since tests execute code behaviorally."
+      "reason": "The solution directory is not mounted in the container (Dockerfile only clones the repo at the base commit). The test file is in tests/test_outputs.py which is hidden from the agent. There are no obvious fixture strings to grep for."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three described bugs are tested: (1) integer param initialization on ROCm, (2) list length mismatch in eager section, (3) inductor section being dead code. Regression tests also verify float params still work and non-ROCm int params are unchanged."
+      "reason": "All three bugs described in the instruction are tested: (1) int params zeroed on ROCm, (2) list length mismatch fixed, (3) inductor comparison not dead code. Float param regression is also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names, and docstrings explaining each check's purpose."
+      "reason": "Tests are grouped with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Anti-stub) and each test function has a descriptive docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact function (initialize_single_dummy_weight), approximate line number (~line 1345), the exact file paths, and detailed descriptions of exactly what's wrong (duplicate append call, all_args*3, inductor section never populates all_envs). This goes well beyond describing symptoms \u2014 it's a complete root cause analysis that eliminates the need for the agent to localize the bug."
+      "reason": "The instruction specifies exact line numbers ('~line 1345', '~line 100'), exact function names, exact file paths, and describes the precise bugs in detail (duplicate append call, all_args * 3, inductor section never populates all_envs). This significantly reduces the localization challenge that should be part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

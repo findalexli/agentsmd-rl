@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (packages/excalidraw/clipboard.ts), the variable (plainTextEntry), the function (copyTextToSystemClipboard), the MIME type constant (MIME_TYPES.text), and describes the const vs let change, return placement, and navigator.clipboard.writeText behavior. All asserted specifics in tests (file path, variable name, patterns) are discoverable from the instruction."
+      "reason": "The instruction names the file (packages/excalidraw/clipboard.ts), variable (plainTextEntry), function (copyTextToSystemClipboard), the const vs let change, the return placement inside if(clipboardEvent), the navigator.clipboard.writeText return behavior, and MIME_TYPES.text. All asserted specifics in the tests (file path, variable name, patterns) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact changes: 'use const not let', 'move return; inside the if block', 'remove the old code that set entry to undefined and replace with return;'. These are precise implementation directives, not just descriptions of broken behavior. A developer reading instruction.md knows exactly WHAT to change without reasoning."
+      "reason": "The instruction explicitly states the exact changes: 'use const not let', 'move return; inside the if (clipboardEvent) block', 'remove the old code that set entry to undefined and replace with return;'. This is a complete specification of the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact textual patterns like 'const plainTextEntry = entries.find', the exact regex 'await navigator\\.clipboard\\.writeText\\(plainTextEntry\\[1\\]\\);\\s*return;', and count assignments with 'plainTextEntry\\s*='. An alternative correct fix (e.g., using a different variable name, different control flow structure, or a wrapper function) would fail these text-matching tests even if behaviorally correct."
+      "reason": "Tests assert gold-specific implementation details: test_const_plainTextEntry_not_let checks exact string 'const plainTextEntry = entries.find', test_return_after_navigator_clipboard_writeText checks exact pattern 'await navigator.clipboard.writeText(plainTextEntry[1]);\\s*return;', test_no_plainTextEntry_reassignment counts exact assignments. An alternative correct fix (e.g., refactoring the function differently) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_const_plainTextEntry_not_let, test_return_inside_clipboardEvent_block, test_return_after_navigator_clipboard_writeText, test_no_plainTextEntry_reassignment) all use `open(CLIPBOARD_TS).read()` and assert on string/regex patterns in the source file. They do not import, call, or execute the clipboard code to verify behavior. The pass-to-pass tests do run subprocesses (typecheck, lint, unit tests), but the core f2p tests are purely textual."
+      "reason": "The fail-to-pass tests (test_const_plainTextEntry_not_let, test_return_inside_clipboardEvent_block, test_return_after_navigator_clipboard_writeText, test_no_plainTextEntry_reassignment) are ALL pure text/regex matching on the source file with no execution of the actual code logic. They use 'open(CLIPBOARD_TS).read()' and regex patterns, never importing or calling the function."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that differ from the original code (e.g., 'let plainTextEntry' must be changed to 'const plainTextEntry', 'plainTextEntry = undefined' must be removed). A stub or no-op would not satisfy these since the original file has the buggy patterns."
+      "reason": "The f2p tests check for specific textual patterns that differ from the original code (e.g., 'const plainTextEntry' vs 'let plainTextEntry', return inside vs outside the if block). A stub or no-op would not pass these since the original file has different content."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/excalidraw as a git repo and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact patch, or simply grep for the expected patterns in the test file at tests/test_outputs.py to reverse-engineer the exact changes needed."
+      "reason": "The solution file exists at /workspace/excalidraw (solve.sh contains the exact patch). The agent could read the gold patch from the solution directory or grep for the exact fixture strings in test_outputs.py to determine exactly what text patterns to produce."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (const declaration, return inside if block, return after writeText instead of setting undefined) are tested by the f2p tests, and the verification commands (typecheck, lint, unit tests) are covered by p2p tests."
+      "reason": "All three required changes from the instruction (const vs let, return placement, return after writeText) are tested, plus pass-to-pass tests for typecheck, lint, prettier, and unit/integration tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass, and each test function clearly describes what it checks."
+      "reason": "Tests are well-named (test_const_plainTextEntry_not_let, test_return_inside_clipboardEvent_block, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code editing, not producing structured data output."
+      "reason": "This task involves code editing, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and function names in the instruction match what's used in tests and the actual codebase."
+      "reason": "File paths, variable names, and commands in the instruction match those in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (packages/excalidraw/clipboard.ts), exact function (copyTextToSystemClipboard), exact variable (plainTextEntry), and describes precisely which keyword to change (let\u2192const), where to move the return statement, and what line to remove (plainTextEntry = undefined). This goes far beyond identifying the buggy module."
+      "reason": "The instruction specifies the exact file (packages/excalidraw/clipboard.ts), exact variable name (plainTextEntry), exact function (copyTextToSystemClipboard), and exact code changes (const vs let, move return inside if block, replace undefined assignment with return). This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [

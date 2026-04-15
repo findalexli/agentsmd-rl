@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names USER_ID_STR='user_id', get_or_set_user_id function, get_or_create_user_telemetry_dir (implied by storage location), ~/.dagster/.telemetry/user_id.yaml path, TelemetryEntry with user_id field, and the error placeholder <<unable_to_set_user_id>>. The test-specific function names like get_or_create_user_telemetry_dir are discoverable from the instruction's guidance to follow the instance_id pattern and the storage location requirement. The TelemetryEntry constructor parameters"
+      "reason": "The instruction names USER_ID_STR='user_id', get_or_set_user_id function, get_or_create_user_telemetry_dir (implied by storage location), ~/.dagster/.telemetry/user_id.yaml path, TelemetryEntry with user_id field, <<unable_to_set_user_id>> error placeholder, and INSTANCE_ID_STR. All test-asserted specifics (function names, constants, file paths, YAML keys, field names) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (user_id constant, persistence, storage location, TelemetryEntry field) but doesn't specify exact line changes, sed commands, or file-level diffs. A developer must still reason about where and how to implement the changes."
+      "reason": "The instruction describes required behavior and gives implementation guidance (follow the instance_id pattern, store in ~/.dagster/.telemetry/) but does not specify exact lines to change, exact code to write, or specific file modifications. A developer must reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on specific function names like 'get_or_set_user_id' and 'get_or_create_user_telemetry_dir' imported from dagster_shared.telemetry. test_telemetry_entry_accepts_user_id asserts on exact constructor parameter names (action, client_time, event_id, instance_id, user_id, metadata, elapsed_time, run_storage_id). An alternative correct implementation using different function names (e.g., 'ensure_user_id', 'create_user_telemetry_directory') would fail. While instruction.md does mention som"
+      "reason": "Tests assert on specific function names like get_or_set_user_id and get_or_create_user_telemetry_dir imported from dagster_shared.telemetry. test_telemetry_entry_accepts_user_id constructs TelemetryEntry with exact parameter ordering (action, client_time, event_id, instance_id, user_id, metadata, elapsed_time, run_storage_id). An alternative correct implementation that names the function differently (e.g., get_user_id) or places user_id at a different position in the NamedTuple would fail. Howev"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import and call functions (get_or_set_user_id, get_or_create_user_telemetry_dir), construct TelemetryEntry objects, check file existence and YAML content, and run subprocesses. They verify actual runtime behavior, not just text patterns."
+      "reason": "Tests import and call get_or_set_user_id(), construct TelemetryEntry instances, check file contents via yaml.safe_load, and run subprocesses. They test actual behavior, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_get_or_set_user_id_exists checks the returned value is a non-empty string and not the error placeholder. test_user_id_stored_in_user_telemetry_dir checks file creation and YAML content. test_telemetry_entry_has_user_id_field checks _fields tuple. A stub returning None or empty string would fail these assertions."
+      "reason": "test_get_or_set_user_id_exists asserts the return value is a non-empty string that is NOT the error placeholder, so returning None/empty/default fails. test_user_id_stored_in_user_telemetry_dir checks that a YAML file is created with the correct key. test_telemetry_entry_has_user_id_field checks _fields contains 'user_id'. These cannot be satisfied by stub implementations."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/dagster as solve.sh content could potentially be read. The Dockerfile doesn't remove /solution/ directory. An agent could read the gold patch from the solution directory or test file to extract exact implementation details."
+      "reason": "The solution is in /workspace/dagster (the solve.sh is accessible at /solution/solve.sh in the container based on the Dockerfile pattern). An agent could potentially read the solution file. Additionally, the gold patch approach (sed commands and Python scripts) is visible if the agent can access /solution/."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: USER_ID_STR export, UUID generation/retrieval, persistence, storage location independence from DAGSTER_HOME, TelemetryEntry field, and payload inclusion (via P2P tests for telemetry upload)."
+      "reason": "All behaviors listed in instruction.md are tested: USER_ID_STR export, UUID generation/retrieval, persistence, storage location independence from DAGSTER_HOME, TelemetryEntry field, and telemetry payload inclusion (via P2P tests for upload and core telemetry)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped with comments into 'FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS' sections, each test has a descriptive name and docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The YAML schema for user_id.yaml is documented in instruction.md: 'The YAML file must have a key named \"user_id\" containing the user ID string'."
+      "reason": "The YAML schema for user_id.yaml is documented in instruction.md (key 'user_id' containing the user ID string) and tested in test_user_id_stored_in_user_telemetry_dir."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions module paths (dagster_shared.telemetry, dagster._core.telemetry) which are reasonable for the domain, and describes the pattern to follow (instance_id) without specifying exact line numbers or specific code changes."
+      "reason": "Instruction mentions module paths (dagster_shared.telemetry, dagster._core.telemetry) which are appropriate for the task domain, but does not specify exact lines or exact file modifications. The guidance to 'look at how instance_id is implemented' is directional, not exact-fix leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

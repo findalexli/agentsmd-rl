@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'Don't ignore DROP for refreshable materialized views' (test_refreshable_view_check_present), exact variable name 'is_refreshable_view' (test_logic_condition_includes_refreshable_check), exact cast syntax 'dynamic_cast<StorageMaterializedView *>(table.get())' (test_refreshable_view_check_present), and exact condition pattern '!secondary_query && !is_refreshable_view' (test_logic_condition_includes_refreshable_check). While the instruction mentions dynamic_cast, is"
+      "reason": "Tests assert exact strings like 'Don't ignore DROP for refreshable materialized views' (test_refreshable_view_check_present), exact variable name 'is_refreshable_view', exact expression 'dynamic_cast<StorageMaterializedView *>(table.get())', and exact regex pattern 'if\\s*\\(\\s*!secondary_query\\s*&&\\s*!is_refreshable_view' (test_logic_condition_includes_refreshable_check). The instruction.md mentions these concepts generically but does not specify these exact strings, variable names, or the precis"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: 'You can use dynamic_cast to check if a table is a materialized view', 'The StorageMaterializedView class has an isRefreshable() method', 'The condition that checks ignore_drop_queries_probability needs an additional guard', and points to 'Around line 199'. This essentially describes the exact fix rather than just describing what's broken."
+      "reason": "instruction.md under 'What the Tests Check' essentially tells the agent exactly what to write: include StorageMaterializedView.h, add a comment with 'TRUNCATE' and 'refresh', use dynamic_cast to detect refreshable materialized view, add a condition excluding refreshable views. This goes well beyond describing what's broken and prescribes the implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: exact variable name 'is_refreshable_view' (test_logic_condition_includes_refreshable_check uses regex '!is_refreshable_view'), exact comment text 'Don't ignore DROP for refreshable materialized views' (test_refreshable_view_check_present), exact cast syntax 'dynamic_cast<StorageMaterializedView *>(table.get())'. An alternative correct fix using e.g. 'skip_truncate_for_refreshable' as variable name, or a different comment, or using std::dynamic_"
+      "reason": "Tests assert gold-specific implementation details: exact variable name 'is_refreshable_view', exact string 'dynamic_cast<StorageMaterializedView *>(table.get())', exact comment text 'Don't ignore DROP for refreshable materialized views', and exact condition pattern '!secondary_query && !is_refreshable_view'. An alternative correct fix using different variable names (e.g., 'skip_truncate_conversion'), a different detection mechanism, or different comment wording would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_refreshable_view_check_present, test_logic_condition_includes_refreshable_check, test_comment_explains_rationale) are purely text-matching: they read the file and assert specific strings/regexes are present. There is no compilation, execution, or behavioral verification of the actual fix. test_code_compiles_with_clang only checks for syntax errors, not behavior."
+      "reason": "The core fail-to-pass tests (test_storage_materialized_view_include, test_refreshable_view_check_present, test_logic_condition_includes_refreshable_check, test_comment_explains_rationale) are all purely text-matching: they read the file content and assert on string/regex presence. No test actually compiles, executes, or tests the runtime behavior of the fix."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code additions (include directive, dynamic_cast, is_refreshable_view variable, modified condition) that would not be present in the original unmodified file. A stub/no-op would not pass these tests."
+      "reason": "The fail-to-pass tests check for specific strings and patterns that are not present in the original file (e.g., 'is_refreshable_view', the include directive, the comment). A stub or no-op would not pass these tests since the original file lacks these elements."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/ClickHouse accessible via solve.sh. The agent could read solution/solve.sh to see the exact patch and apply it. Additionally, the test file itself (tests/test_outputs.py) contains the exact strings being asserted, so grepping for them would reveal the expected implementation."
+      "reason": "The solution file exists at /workspace/ClickHouse (or could be accessed via the solve.sh). The agent could read the solution patch from /solution/solve.sh if accessible in the container, or simply grep for the exact expected strings from the test file (tests/test_outputs.py) and paste them into the target file. The tests only check for text presence, not behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (detect refreshable MV, skip conversion, add comment) are tested via the various test functions checking for the include, dynamic_cast, isRefreshable(), condition modification, and comment."
+      "reason": "The instruction describes: include directive, comment with TRUNCATE/refresh, logic to detect refreshable MV, condition excluding refreshable views. All four are tested. The instruction also mentions the file location and method, which are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_storage_materialized_view_include, test_refreshable_view_check_present, etc.), have docstrings, and are logically grouped from basic file existence to style checks."
+      "reason": "Tests are well-named (test_storage_materialized_view_include, test_refreshable_view_check_present, etc.), have docstrings, and are logically grouped by what aspect they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces a C++ code fix, not structured data output."
+      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the file (InterpreterDropQuery.cpp), the function (executeToTableImpl), and the approximate line number ('Around line 199'), plus specifies exact implementation approach (dynamic_cast, isRefreshable()). This goes well beyond describing the bug and effectively gives the solution location and approach."
+      "reason": "instruction.md explicitly names the exact file (src/Interpreters/InterpreterDropQuery.cpp) and method (executeToTableImpl), and under 'What the Tests Check' specifies exact implementation details including the include directive, dynamic_cast pattern, variable name conventions, and condition structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [

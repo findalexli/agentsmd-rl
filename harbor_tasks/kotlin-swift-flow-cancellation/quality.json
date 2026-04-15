@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific literal strings like 'private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)', 'public fun cancel() = coroutineScope.cancel(CancellationException', 'continuation.invokeOnCancellation { cancel() }', 'coroutineScope.launch {', 'public final class Iterator: AsyncIteratorProtocol', '_kotlin_swift_SwiftFlowIterator_cancel(iterator.__externalRCRef())', 'internal final class KotlinFlowIterator<Element>'. While the instruction describes the general "
+      "reason": "Tests assert exact literal strings like 'private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)', 'public fun cancel() = coroutineScope.cancel(CancellationException', 'continuation.invokeOnCancellation { cancel() }', 'coroutineScope.launch {', 'public final class Iterator: AsyncIteratorProtocol', '_kotlin_swift_SwiftFlowIterator_cancel(iterator.__externalRCRef())', 'internal final class KotlinFlowIterator<Element>'. While instruction.md describes the general approach,"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'Maintain a CoroutineScope that is shared across all flow operations (instead of creating a new scope for launch())', 'Register cancellation handlers using invokeOnCancellation in the two suspendCancellableCoroutine blocks', 'Introduce a new Iterator class that wraps KotlinFlowIterator', 'Make KotlinFlowIterator internal', 'Move the cancellation logic from KotlinFlowIterator.deinit to the new Iterator.deinit'. This describes exactly W"
+      "reason": "The instruction tells the agent exactly what to do: 'Maintain a CoroutineScope that is shared across all flow operations', 'Register cancellation handlers using invokeOnCancellation', 'Introduce a new Iterator class that wraps KotlinFlowIterator', 'Make KotlinFlowIterator internal', 'Move the cancellation logic from KotlinFlowIterator.deinit to the new Iterator.deinit'. This is essentially the complete fix specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)' and 'public fun cancel() = coroutineScope.cancel(CancellationException'. An alternative correct fix could use a different default context (e.g., Dispatchers.Default), a different parameter name, or structure the cancel method differently while achieving the same behavior. The tests would reject these alternatives."
+      "reason": "Tests assert exact literal strings like 'private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)' and 'public fun cancel() = coroutineScope.cancel(CancellationException' and 'coroutineScope.launch {'. An alternative correct implementation using a different default scope expression, different parameter name, or different cancellation mechanism would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test (test_coroutine_scope_parameter, test_cancel_uses_scope_cancel, test_invoke_on_cancellation_ready_state, etc.) reads file content and asserts on literal strings. No test compiles, runs, or executes the code. The pass-to-pass tests also only do text-based validation (brace counting, regex matching). There is zero behavioral testing."
+      "reason": "Every fail-to-pass test (test_coroutine_scope_parameter, test_cancel_uses_scope_cancel, test_invoke_on_cancellation_ready_state, etc.) uses pattern 'assert \"some string\" in content' where content is read from a file. No test compiles, runs, or executes the code. The pass-to-pass tests also only do text-based validation via subprocess Python scripts that check string patterns."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all f2p tests are pure text assertions (e.g., 'assert \"private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)\" in content'), they could be satisfied by simply inserting the expected strings into the files without actually implementing a working fix. A stub that appends the right text would pass."
+      "reason": "Since all tests are pure text-matching (e.g., 'assert \"private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)\" in content'), an agent could pass every test by simply inserting the exact expected strings into the files without implementing any actual cancellation behavior. The tests don't verify runtime behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/kotlin/.git or the solution directory if it exists. More critically, since all tests are string-matching on file content, the agent could grep test_outputs.py (or infer from instruction.md's detailed specifications) for the exact strings to insert, without understanding the bug at all."
+      "reason": "The agent can read tests/test_outputs.py (not explicitly blocked), see the exact strings being asserted, and insert them verbatim. Additionally, solution/solve.sh contains the complete gold patch. The Docker environment doesn't prevent access to these files."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'Flow collection stops when the iterator is deallocated' and 'Flow collection stops when an async call to next() is cancelled' and 'No behavioral changes for normal flow consumption'. None of these runtime behaviors are actually tested \u2014 only text patterns in source files are checked."
+      "reason": "The instruction says 'Flow collection stops when the iterator is deallocated' and 'Flow collection stops when an async call to next() is cancelled' \u2014 these runtime behaviors are never actually tested. Tests only check for specific code patterns in source files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments ('FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS'), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying source code files, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves modifying source code files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and code references in the instruction appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact methods to modify ('invokeOnCancellation in the two suspendCancellableCoroutine blocks for State.Ready and State.AwaitingConsumer states'), exact class names to create ('Iterator class that wraps KotlinFlowIterator'), and exact visibility changes ('Make KotlinFlowIterator internal'). This goes far beyond naming the relevant files."
+      "reason": "The instruction specifies exact implementation details: 'Register cancellation handlers using invokeOnCancellation in the two suspendCancellableCoroutine blocks (for State.Ready and State.AwaitingConsumer states)', 'Introduce a new Iterator class that wraps KotlinFlowIterator', 'Make KotlinFlowIterator internal'. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -7,53 +7,54 @@
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction effectively specifies the exact implementation: constant names and values (MAX_INLINE_VALUE_SIZE=8, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN=8), exact method names (put_inline, slice_from_subslice, entry_val_size), exact enum variant (EntryValue::Inline), specific implementation details (type = 8 + value_length, use extend_from_slice or copy_from_slice, return LookupValue::Slice). This goes well beyond describing 'what's broken' \u2014 it prescribes the exact fix."
+      "reason": "The instruction provides extremely specific implementation details: exact constant names and values (MAX_INLINE_VALUE_SIZE=8, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN=8), exact method names (put_inline, slice_from_subslice, entry_val_size), exact encoding formula (type = 8 + value_length), exact method calls to use (extend_from_slice or copy_from_slice), and exact return types (LookupValue::Slice). This goes far beyond describing what's broken and essentially dictates the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact constant names (MAX_INLINE_VALUE_SIZE, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN), exact method names (put_inline, slice_from_subslice, entry_val_size), exact enum variant name (Inline in EntryValue), and even specific string patterns like 'extend_from_slice' or 'copy_from_slice' in put_inline. An alternative correct implementation using different names (e.g., INLINE_THRESHOLD, write_inline, sub_slice) would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact constant names (MAX_INLINE_VALUE_SIZE, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN), exact method names (put_inline, entry_val_size, slice_from_subslice), and specific string patterns like 'extend_from_slice' or 'copy_from_slice' in put_inline body. An alternative correct implementation using different names (e.g., INLINE_THRESHOLD, write_inline, inline_value_size) would fail these regex-based tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_inline_value_size_constant, test_entry_value_has_inline_variant, test_inline_entry_type_constant, test_handle_key_match_returns_slice_for_inline, test_entry_val_size_function, test_put_inline_method, test_slice_from_subslice_method) are all text-matching via regex on source files. They do `re.search(...)` on file contents and assert string patterns \u2014 none execute the code or test actual behavior. The pass-to-pass tests (cargo check/test/clippy) do execute code but ar"
+      "reason": "The fail-to-pass tests (test_inline_value_size_constant, test_entry_value_has_inline_variant, test_inline_entry_type_constant, test_handle_key_match_returns_slice_for_inline, test_entry_val_size_function, test_put_inline_method, test_slice_from_subslice_method) are ALL text-matching via regex on source files. They use patterns like re.search on file content, not importing/calling/executing the code. Only the pass-to-pass tests (cargo check/clippy/test) actually execute code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "While the f2p tests are text-based, they cannot be satisfied by stubs \u2014 they require specific constant definitions with specific values (e.g., MAX_INLINE_VALUE_SIZE = 8), specific method bodies containing particular strings (extend_from_slice in put_inline), and specific enum variants. A no-op or empty implementation wouldn't match these patterns. Additionally, cargo check/test must pass, preventing syntactically broken stubs."
+      "outcome": "fail",
+      "reason": "Several f2p tests can be passed by adding stub/empty implementations. For example, test_slice_from_subslice_method only checks that a function signature 'fn slice_from_subslice' exists - a stub `fn slice_from_subslice(&self, _: &[T]) -> ArcSlice<T> { todo!() }` would pass the regex. Similarly test_entry_val_size_function only checks the function exists and contains 'INLINE_MIN' or '>= 8' - a function body with just a comment containing those strings would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/next.js in the container (via solve.sh applying a git patch). The agent could read solution/solve.sh if accessible, or simply inspect the gold patch. Additionally, since tests are pure text-matching, the agent could grep test files to discover exact patterns needed without understanding the problem."
+      "reason": "The solution is in /workspace/next.js as a git repository and solve.sh contains the full patch. An agent could read the solution by examining the test file itself (tests/test_outputs.py reveals all expected patterns), or could find solve.sh if solution/ is mounted. The regex patterns in tests are literal strings that can be directly pattern-matched without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction mentions updating the README ('types 8..255 section should no longer say future'), but there are no tests verifying the README content changes \u2014 the config_edit test functions appear to be empty stubs in the test file."
+      "reason": "The instruction requires updating the README to document inline value format, but there is no test checking the README content. The test file has commented-out stubs for config_edit fail_to_pass tests but no actual assertions about README changes."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass with pr_diff and config_edit labels), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to a Rust crate, not production of structured data like JSON/CSV/API/DB schemas."
+      "reason": "This task produces Rust source code and documentation, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are correct and consistent with the actual codebase structure."
+      "reason": "All filenames, paths, constant names, and variable names in instruction.md and tests match correctly with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact file paths, exact constant names and values, exact method names, exact enum variant names, and implementation details like 'type = 8 + value_length' and 'using extend_from_slice or copy_from_slice'. This removes essentially all design and localization work from the task."
+      "reason": "The instruction names exact files, exact function names (handle_key_match, entry_val_size, put_inline, slice_from_subslice), exact constant names and values, and exact implementation approaches (type = 8 + value_length, use extend_from_slice). This is far beyond naming the domain area and essentially provides the complete solution design."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The README diff in the gold solution is a small localized change (two lines in the key block entry format section), not a full-file rewrite, and doesn't contradict other files."
+      "reason": "The README edit is localized to the types 8..255 section documentation, changing two lines from 'future' placeholder to actual inline storage description. It does not contradict other files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -61,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 7
 }

@@ -2,58 +2,58 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction describes all 5 macro functions with their signatures, parameter types, and return types. Tests check for exact signatures like `public macro fun map_mut<$T, $U>($o: &mut Option<$T>, $f: |&mut $T| -> $U): Option<$U>` which are all derivable from the instruction's detailed signature descriptions. The file path `crates/sui-framework/packages/move-stdlib/sources/option.move` is explicitly named. Implementation details like `o.destroy_some()` and `o.is_none()` are discoverable from t"
+      "outcome": "fail",
+      "reason": "Tests assert very specific patterns not fully discoverable from instruction.md. For example, test_is_none_or_exists asserts 'o.is_none()' must appear in the implementation, test_fold_exists asserts 'o.destroy_some()' must appear, test_no_lint_suppressions asserts '#[allow(' must not appear, and test_macro_syntax_valid asserts at least 5 macros with '$T/$U/$R' type params. The instruction mentions 'Study the existing macro definitions' but doesn't specify these exact implementation details like '"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what macros to implement and their signatures/behavior but does not give exact implementation code. The agent must reason about how to implement each macro body using the existing Move patterns."
+      "reason": "The instruction describes what macros to implement and their signatures but doesn't give the exact implementation code. It tells the agent to study existing patterns, which is guidance, not a direct solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific exact signatures via regex patterns (e.g., test_map_mut_correct_signature checks for exact `public macro fun map_mut<$T, $U>($o: &mut Option<$T>, $f: |&mut $T| -> $U): Option<$U>`), specific implementation details like `o.destroy_some()` in test_fold_exists, and `o.is_none()` in test_is_none_or_exists. An alternative correct implementation using different internal methods (e.g., pattern matching instead of `destroy_some`) or different parameter names would fail thes"
+      "reason": "Tests assert exact signature patterns via regex (e.g., test_map_mut_correct_signature checks the precise parameter order and naming '$o', '$f'), exact implementation details like 'o.is_none()' and 'o.destroy_some()', and exact documentation patterns. An alternative correct implementation using different internal calls (e.g., pattern matching instead of is_none()/destroy_some()) or different parameter names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all tests are pure text/regex checks on the source file content (e.g., `assert 'public macro fun map_mut<' in content`). The only 'execution' tests are structural checks like brace balancing and file existence via subprocess. No test actually compiles or runs the Move code to verify the macros work correctly."
+      "reason": "Almost every test is purely textual: reading the file and asserting string patterns via 'in content' or regex searches. The only subprocess tests check file existence, brace balancing, and structural concerns\u2014none actually compile or execute the Move code. No test imports or calls the macro functions."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "An agent could pass all tests by simply inserting text blocks with the correct signatures and doc comments without any real implementation logic. For example, writing `public macro fun fold<$T, $R>($o: Option<$T>, $none: $R, $some: |$T| -> $R): $R { let o = $o; o.destroy_some(); $none }` would pass the signature test and the `o.destroy_some()` assertion even though the implementation is wrong."
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass since the tests check for specific function signatures, implementation patterns like 'o.destroy_some()', and documentation comments that wouldn't exist without actual implementation work."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sui's solution directory (or the solve.sh is accessible). The agent could read the gold patch from the solution/solve.sh file which contains the exact implementation. Additionally, since tests only check text patterns, the agent could grep test files (if accessible) to find the exact strings being asserted."
+      "reason": "The solution is in /workspace/sui's container at solve.sh path, and the agent could read the solution patch from /solution/solve.sh (if accessible) or simply grep the test file at tests/test_outputs.py to discover exactly what strings and patterns need to appear in the output file."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies behavioral requirements like 'the default should only be evaluated if the option is None' for fold, but tests only check for text patterns like `o.destroy_some()` and correct signatures. No test verifies the lazy evaluation semantics or the actual functional behavior of any macro."
+      "reason": "The instruction specifies behavioral semantics (e.g., 'Returns true if the option is None, OR if the predicate returns true', 'default should only be evaluated if the option is None') but no test actually verifies these runtime behaviors\u2014all tests are purely structural/textual."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_map_mut_correct_signature, test_fold_has_docs), have docstrings explaining what each test verifies, and are logically grouped by macro function and then by cross-cutting concerns."
+      "reason": "Tests are well-named (test_map_mut_exists, test_fold_correct_signature, etc.), have docstrings explaining purpose, and are logically grouped by concern (existence, signatures, docs, structure)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves adding Move source code macros, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task produces Move source code, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, type parameter names ($T, $U, $R), and commands are all consistent and correctly spelled throughout the instruction and test files."
+      "reason": "File paths, function names, commands, and variable names in instruction.md and tests appear correct with no typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction identifies the file to edit (option.move) which is appropriate for the task domain, and suggests placement near existing macros, but does not specify exact line numbers or give the implementation code."
+      "reason": "The instruction names the file to edit (option.move) and nearby functions for placement, which is appropriate for this task domain. It doesn't specify exact line numbers or the precise implementation code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task adding new macro functions to a Move source file, not a config edit task."
+      "reason": "This is a code-only task (adding macro functions to a Move source file), not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],

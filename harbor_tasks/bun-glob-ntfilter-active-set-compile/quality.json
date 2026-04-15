@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific method names like `.count()`, `.findFirstSet()`, and the literal `null` near `setNameFilter`, as well as requiring `active.` BitSet method calls. While instruction.md does mention these (count, findFirstSet, null), several test-specific details like the exact proximity window (25 lines in test_compute_nt_filter_still_called), the `@intCast` wrapping, and the exact pattern of `active.\\w+\\(` regex are not discoverable from the instruction alone. Also, tests like test_repo_oxl"
+      "reason": "Tests assert specific method names like `.count()`, `.findFirstSet()`, and the literal `null` near `setNameFilter`. The instruction does mention these (under 'Required behavior'), but test_repo_oxlint_js, test_repo_prettier_check_scripts, test_repo_prettier_check_docs, test_repo_prettier_check_glob_tests, and test_repo_git_status_clean reference specific directories/files (e.g., 'src/js', 'scripts/', 'docs/', 'test/js/node/fs/glob.test.ts') that are not mentioned anywhere in instruction.md. An a"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'use `.count()` to get the number of set bits and `.findFirstSet()` to retrieve the index of the first set bit', 'When only one component is active, compute the NT filter with that single index', 'When multiple components are active, `setNameFilter` must receive `null`'. This is essentially the complete fix algorithm, leaving no reasoning for the agent to do."
+      "reason": "The instruction explicitly states the exact fix: 'use `.count()` to get the number of set bits and `.findFirstSet()` to retrieve the index of the first set bit', 'When only one component is active, compute the NT filter with that single index', 'When multiple components are active, `setNameFilter` must receive `null`'. This is a direct specification of the solution code structure, not just a description of the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_multi_active_conditional asserts `.count()` appears in the block and `null` appears literally. test_fix_uses_active_bitset asserts regex `active.\\w+\\(`. An alternative correct fix could use `active.iterator()` to check if there's more than one element, or use `active.popcount()` (if it existed), or check via iteration rather than `.count()`. The tests lock in the gold solution's specific API calls."
+      "reason": "Tests assert on gold-specific implementation details: test_fix_uses_active_bitset checks for regex `active\\.\\w+\\(` near setNameFilter, test_multi_active_conditional checks for `.count()` specifically and `null`. An alternative correct fix using e.g. `active.iterator()` to iterate and collect, or using a different variable name after extracting from active, or using `active.popcount()` instead of `.count()`, would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_buggy_component_idx_removed, test_fix_uses_active_bitset, test_multi_active_conditional) are purely text/pattern matching on the source file \u2014 searching for strings like 'computeNtFilter(component_idx)', regex patterns on 'active.\\w+\\(', '.count()', and 'null'. No test compiles or executes the Zig code. These are textual assertions, not behavioral verification."
+      "reason": "All fail-to-pass tests (test_buggy_component_idx_removed, test_fix_uses_active_bitset, test_multi_active_conditional) are purely textual \u2014 they read the source file and check for string/regex patterns. No test compiles or executes the Zig code. The tests are literally `assert 'foo' in open(path).read()` style checks with no behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op change would leave the original buggy 'computeNtFilter(component_idx)' in place, which test_buggy_component_idx_removed would catch. The f2p tests do require actual source modifications matching the expected pattern."
+      "reason": "A stub/no-op would not pass: the original file contains `computeNtFilter(component_idx)` which test_buggy_component_idx_removed checks is removed, and test_fix_uses_active_bitset/test_multi_active_conditional check for new code patterns that don't exist in the original. Doing nothing fails the f2p tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun (or solution/solve.sh in the task container). The agent could read solution/solve.sh to see the exact patch. Additionally, the gold patch is a simple text substitution that could be reverse-engineered from the test assertions (which check for specific string patterns in the source)."
+      "reason": "The solution is in /workspace/bun's container at solution/solve.sh (the gold patch). An agent could read it directly. Additionally, the instruction itself effectively provides the complete solution logic (use .count()==1, .findFirstSet(), null), so the agent can pattern-match without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All required behaviors from instruction.md (removing component_idx reference, using active BitSet with count/findFirstSet, null for multiple active, preserving setNameFilter, preserving computeNtFilter) are tested by the test suite."
+      "reason": "All explicit requirements from instruction.md are tested: removal of component_idx reference, use of active BitSet methods, count() check, null fallback, setNameFilter preserved, computeNtFilter preserved and called."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass, regression checks), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a compilation error in Zig source code, not producing structured data output."
+      "reason": "Task involves fixing a compile error in Zig source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact file (src/glob/GlobWalker.zig), line 715, the exact broken expression ('computeNtFilter(component_idx)'), and prescribes exact method calls (.count(), .findFirstSet()) to use in the fix. This goes well beyond identifying the bug location \u2014 it specifies the implementation."
+      "reason": "Instruction names the exact file (src/glob/GlobWalker.zig), exact line number (715), exact broken call (`computeNtFilter(component_idx)`), and prescribes the exact methods to use (.count(), .findFirstSet()). This goes well beyond identifying the bug location \u2014 it specifies the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

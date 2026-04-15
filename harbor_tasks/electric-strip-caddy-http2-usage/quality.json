@@ -2,57 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific literals not mentioned in instruction.md: 'host: true' removal (test_vite_config_no_host_true), exact string '1.0.13' must appear in AGENTS.md and troubleshooting.md, 'subdomain sharding' must appear in troubleshooting.md, 'localhost:5173' must appear in tanstack README, 'localhost:4000' must appear in burn README, and 'tanstack-start-db-electric-starter.localhost' must NOT appear. The instruction mentions v1.0.13 and subdomain sharding generally but doesn't specify that th"
+      "outcome": "pass",
+      "reason": "The instruction names all the specific files (vite.config.ts, README.md for both examples, package.json files, AGENTS.md, troubleshooting.md), the specific version (^1.0.13), specific paths (tanstack-db-web-starter, burn), specific strings (localhost:5173, localhost:4000, localhost:4001, caddy), and the vite-plugin-caddy concept. The test assertions check for things like 'caddyPlugin', 'vite-plugin-caddy', 'host: true', 'localhost:5173', '1.0.13', 'subdomain sharding', 'HTTP/2 proxy (Caddy/nginx"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what should be removed (Caddy references) and what the replacement approach is (subdomain sharding in v1.0.13+), but doesn't specify exact line changes, replacement strings, or implementation details. The agent must still figure out how to edit each file."
+      "reason": "The instruction describes the problem (Caddy is unnecessary now) and the expected behavior (remove Caddy references, update to v1.0.13+, update docs). It gives bullet points of what the end state should look like but doesn't give exact line changes or replacement text. The agent still needs to figure out the actual edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'localhost:5173' in tanstack README, 'localhost:4000' in burn README, '1.0.13' in AGENTS.md and troubleshooting.md, and 'subdomain sharding' in troubleshooting.md. An alternative correct fix might use 'http://localhost:5173' vs 'localhost:5173', or mention version '1.0.14' instead of '1.0.13', or use different wording like 'connection sharding' instead of 'subdomain sharding'. These would fail the tests despite being correct."
+      "outcome": "pass",
+      "reason": "Tests check for absence of Caddy-related strings, presence of version strings and documentation keywords, file deletion, and valid structure. They don't assert on specific variable names, exact line positions, or implementation details that would vary between correct alternatives. Any correct removal of Caddy and update to v1.0.13+ would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely text-based: checking for string presence/absence in files (e.g., assert 'caddy' not in readme, assert '1.0.13' in agents_md). The few 'execution' tests (test_vite_config_parses, test_tanstack_build) just read files via Node and check string contents. test_repo_lockfile_matches runs pnpm install but that's a pass-to-pass test. No test actually imports code, runs the application, or verifies runtime behavior."
+      "reason": "Nearly all fail-to-pass tests are pure text/content checks: 'assert X not in file.read()', 'assert Y in file.read()', 'assert not path.exists()'. The pass-to-pass tests do execute Node.js scripts and run pnpm install, but the core fail-to-pass tests (test_vite_config_no_caddy, test_caddy_plugin_deleted, test_burn_caddyfile_deleted, test_agents_md_updated_gotcha, test_tanstack_readme_no_caddy, test_burn_readme_direct_port, test_troubleshooting_docs_subdomain_sharding) only check for string presen"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for file deletion (Caddyfile, vite-plugin-caddy.ts), removal of specific strings, addition of new strings, and version bumps. A stub/no-op implementation would fail because the original files contain Caddy references that must be actively removed, and new content must be actively added."
+      "reason": "The f2p tests cannot be satisfied by stub/default implementations. They require actual file modifications (deleting files, editing content to remove specific strings and add others). A no-op would fail because the existing files contain Caddy references that the tests assert must be absent."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/electric (solve.sh is in solution/ directory which may be accessible in the container). The agent could read the test file at tests/test_outputs.py to discover exact expected strings like '1.0.13', 'subdomain sharding', 'localhost:5173', etc. and just ensure those strings appear/disappear without understanding the task."
+      "reason": "The solution is available at /workspace/electric after solve.sh runs, and the Dockerfile doesn't prevent reading /solution/ if it exists. More importantly, the agent could grep the test file at tests/test_outputs.py to discover exact strings being asserted (e.g., 'HTTP/2 proxy (Caddy/nginx)', '1.0.13', 'subdomain sharding') and make targeted string replacements without understanding the task. The task statement says the agent doesn't see tests/, but there's no enforcement mechanism in the contai"
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: Caddy plugin deletion, Caddyfile deletion, version bumps, README updates for both examples, AGENTS.md update, and troubleshooting docs update. The instruction's requirements are well-covered."
+      "reason": "All behaviors explicitly required by instruction.md are tested: vite.config.ts Caddy removal, Caddyfile deletion, README updates for both examples, package.json version bumps, AGENTS.md update, and troubleshooting doc update. The `host: true` removal is tested (test_vite_config_no_host_true) even though it was only implicitly mentioned in instructions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear naming (test_caddy_plugin_deleted, test_burn_caddyfile_deleted, etc.), grouped by fail-to-pass vs pass-to-pass with section comments, and each has a docstring explaining its purpose."
+      "reason": "Tests are well-organized with clear sections (fail-to-pass code changes, fail-to-pass config/doc changes, pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing documentation, config files, and package.json files, not producing structured data output like JSON/CSV/API responses."
+      "reason": "This task involves editing documentation, configuration files, and removing files \u2014 no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in instruction.md and tests match correctly. No typos detected in the task materials."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly lists every file to modify (e.g., 'examples/tanstack-db-web-starter/src/vite-plugin-caddy.ts \u2014 Caddy Vite plugin to remove') and specifies the exact action for each file. While this is a removal task where file identification is important, the instruction goes beyond just naming files to specifying exact actions per file, reducing the agent's need to reason about what to change."
+      "reason": "The instruction explicitly names exact files and exact expected content: 'tanstack-db-web-starter vite.config.ts should not import any Caddy plugin and should not set server.host: true', 'README.md should direct users to localhost:5173', 'burn README.md should reference localhost:4000 directly (not port 4001)', 'Both example package.json files should depend on @electric-sql/client version ^1.0.13'. These are very specific prescriptions of the exact changes needed, reducing the task to mechanical"
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold solution makes localized edits to each file (removing specific sections, updating version strings) rather than full-file rewrites, and the changes don't contradict other configuration files."
+      "reason": "The gold patch makes localized changes to specific sections of files (removing Caddy sections, updating version strings, updating URLs). It doesn't do full-file rewrites and changes are consistent with the instruction."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
@@ -60,6 +58,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 8,
+  "fail_count": 3
 }

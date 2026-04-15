@@ -3,56 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file paths like 'components/cascader/index.tsx', 'components/cascader/index.en-US.md', 'components/cascader/index.zh-CN.md', 'docs/react/migration-v6.en-US.md' and exact patterns like regex for deprecation mappings. The instruction.md never mentions these specific file paths. While a developer familiar with ant-design might infer them, the exact paths (especially 'docs/react/migration-v6.en-US.md') are not discoverable from the instruction alone. The instruction also doe"
+      "reason": "The instruction.md mentions `styles.popup.listItem` as the replacement pattern, and the tests (e.g., test_dropdown_deprecation_not_to_another_deprecated_prop) use regex to parse deprecation mappings and assert specific relationships. The instruction names the relevant files and the replacement API pattern. However, tests like test_repo_eslint_cascader, test_repo_biome_lint_cascader, test_repo_cascader_semantic_tests, and test_repo_markdown_lint_cascader_docs run specific npm/npx commands (e.g., "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact replacement string 'styles.popup.listItem' that should appear in deprecation mappings, JSDoc comments, documentation tables, and migration guides. It even specifies the exact markdown syntax '~~popupMenuColumnStyle~~' and that JSDoc should contain backtick-wrapped `styles.popup.listItem`. This is essentially telling the developer exactly what to change to what."
+      "reason": "instruction.md explicitly states 'The replacement API uses the pattern `styles.popup.listItem`' and specifies exactly what the deprecation mappings should point to, what JSDoc comments should say, and what documentation changes to make. This tells the developer exactly WHAT to change (map both props to 'styles.popup.listItem'), leaving little reasoning required."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "The tests check for behavioral outcomes (presence of specific deprecation mappings, JSDoc comments, markdown patterns) rather than implementation-specific details. Any correct fix that updates the deprecation targets and documentation would pass, regardless of exact code structure."
+      "outcome": "fail",
+      "reason": "The instruction specifies `styles.popup.listItem` as the replacement, and the test _get_deprecation_map() uses regex `(\\w+):\\s*['\"]([^'\"]+)['\"]` to parse the file. While tests check relationships (both point to same target, not to each other), the instruction constrains the solution to use exactly `styles.popup.listItem`. An alternative like `styles.popup.columnStyle` or `columnStyle` would satisfy the test logic but contradict the instruction. The tests themselves are flexible enough on the spe"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The majority of fail-to-pass tests (test_dropdown_deprecation_points_to_styles_popup_listitem, test_popup_menu_column_style_is_deprecated, test_jsdoc_deprecation_comment_updated, test_english_doc_popupmenucolumnstyle_deprecated, test_chinese_doc_popupmenucolumnstyle_deprecated, test_migration_doc_updated, test_english_doc_dropdown_deprecation_updated) are purely text-matching via regex/string search on file contents. While some pass-to-pass tests do execute subprocesses (eslint, biome, semantic "
+      "reason": "Most fail-to-pass tests (test_dropdown_deprecation_not_to_another_deprecated_prop, test_popup_menu_column_style_is_deprecated, test_popup_menu_column_style_jsdoc_deprecated, test_english_doc_both_deprecated_with_strikethrough, test_chinese_doc_both_deprecated_with_strikethrough) are purely text-matching: they read file contents and check for string patterns with regex or substring checks. Only a few pass-to-pass tests (test_cascader_component_syntax, test_repo_cascader_semantic_tests) actually e"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings that do NOT exist in the original codebase (e.g., 'popupMenuColumnStyle' mapped to 'styles.popup.listItem' in index.tsx, '~~popupMenuColumnStyle~~' in docs). A stub or no-op would not satisfy these tests since the original files contain different content."
+      "reason": "The fail-to-pass tests check specific structural properties of the codebase (deprecation map entries, JSDoc comments, strikethrough in docs) that would not be satisfied by a stub or no-op implementation. The existing code fails these tests because popupMenuColumnStyle is not in the deprecation map and dropdownMenuColumnStyle points to popupMenuColumnStyle."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/antd and solve.sh is in the solution/ directory. An agent could read /solution/solve.sh to see the exact git patch. Additionally, since tests are pure text-matching, the agent could grep test files (if accessible) for the expected strings and directly insert them into the target files."
+      "reason": "The solution is in /workspace/antd (the solve.sh applies a git patch there), and the test file reads from /workspace/antd. An agent could read the solve.sh or solution directory to discover the exact patch. Also, since tests are pure text-matching on files, the agent could simply grep for expected patterns and make minimal string replacements without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 behavioral requirements listed in instruction.md are tested: deprecation warnings (tests 1-2), JSDoc comments (test 3), English docs (test 4), Chinese docs (test 5), dropdown docs (test 8), migration guide (test 6), both props deprecated (tests 1-2)."
+      "reason": "All five behaviors described in instruction.md (deprecation mappings, JSDoc comments, English docs, Chinese docs, migration guide) have corresponding test functions that verify them."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They are logically grouped into fail-to-pass and pass-to-pass categories."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies and whether it's fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves code/documentation changes, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact replacement strings like 'styles.popup.listItem', exact markdown syntax '~~popupMenuColumnStyle~~', and exact JSDoc format including backticks. While it doesn't name exact line numbers, it provides so much specificity about what text to write that it constitutes significant hint leakage about the solution."
+      "reason": "instruction.md explicitly names `styles.popup.listItem` as the replacement API and describes exactly what each file should contain, which is essentially the solution itself rather than just a bug description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/documentation editing task, not a config-edit-specific task."
+      "reason": "This is a code/documentation editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
@@ -60,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

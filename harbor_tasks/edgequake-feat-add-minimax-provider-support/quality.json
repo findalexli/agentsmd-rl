@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all relevant file paths (models.toml, provider_types.rs, safety_limits.rs, use-providers.ts, model-card.tsx, model-selector.tsx, provider-status-card.tsx, README.md, configuration.md, .env.example), the provider name 'minimax', model names (M2.7, M2.7-highspeed, M2.5, M2.5-highspeed), API base URL (https://api.minimax.io/v1), env var MINIMAX_API_KEY, and the openaicompatible type. All key specifics checked by tests are discoverable from the instruction."
+      "reason": "The instruction names all relevant file paths (models.toml, provider_types.rs, safety_limits.rs, use-providers.ts, model-card.tsx, model-selector.tsx, provider-status-card.tsx, README.md, configuration.md, .env.example), the provider name 'minimax', the API key 'MINIMAX_API_KEY', the base URL 'https://api.minimax.io/v1', the type 'openaicompatible', and the model names (M2.7, M2.7-highspeed, M2.5, M2.5-highspeed with MiniMax prefix implied). The 204K context window is also mentioned. All test-as"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to add (MiniMax provider support) and which files to modify, but does not give exact code changes, line numbers, or specific implementation details like match arm syntax. A developer still needs to reason about how to implement the changes."
+      "reason": "The instruction describes what needs to be added (MiniMax provider with certain properties) but does not give exact code, line numbers, or copy-paste snippets. A developer must still reason about how to integrate it into each file."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific literal strings like 'id: \"minimax\"' in provider_types.rs (test_provider_types_registers_minimax), exact model names 'MiniMax-M2.7' in safety_limits.rs within 50 chars of '\"minimax\"' (test_safety_limits_minimax_default), and specific TOML field names like 'api_key_env' == 'MINIMAX_API_KEY'. An alternative correct implementation using different Rust syntax (e.g., 'id: String::from(\"minimax\")') or different TOML key names would fail these text-matching tests."
+      "reason": "Tests assert very specific string literals like 'id: \"minimax\"' in provider_types.rs (test_provider_types_registers_minimax), requiring exact Rust formatting. A correct alternative that uses `id: String::from(\"minimax\")` or `id: \"minimax\".to_string()` would fail. Similarly, test_safety_limits_minimax_default checks that '\"minimax\"' and '\"MiniMax-M2.7\"' appear within 50 characters of each other, which is implementation-detail-specific. The TOML tests are more flexible but the Rust source text che"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text/string matching: test_provider_types_registers_minimax checks 'id: \"minimax\"' in file content, test_safety_limits_minimax_default checks string proximity in source, test_frontend_* tests use regex on source files. While pass-to-pass tests do compile/run Rust code, the f2p tests never import, call, or execute the MiniMax-related code \u2014 they only grep file contents."
+      "reason": "The fail-to-pass tests (test_provider_types_registers_minimax, test_safety_limits_minimax_default, test_frontend_use_providers, test_frontend_model_card_icon, test_frontend_model_selector_icon, test_frontend_provider_status_card, test_readme_mentions_minimax, test_docs_configuration_minimax, test_env_example_minimax) are all pure text searches using 'in content' or regex on source files. They never import, compile, or execute the code being tested. The pass-to-pass cargo tests do execute code, b"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific content that doesn't exist in the base commit (e.g., 'minimax' provider in models.toml, 'id: \"minimax\"' in provider_types.rs). A stub or no-op implementation would not add these strings, so the tests cannot be trivially satisfied."
+      "reason": "The fail-to-pass tests check for content that does not exist in the base commit (e.g., 'minimax' in provider_types.rs, safety_limits.rs, frontend files). A stub or no-op implementation would not add these strings to the files, so the tests cannot be trivially satisfied."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/edgequake's git history or could be accessed via the solve.sh patch. The agent could read /solution/solve.sh if accessible in the container, or simply grep the test file patterns and insert the exact literal strings being checked (e.g., 'id: \"minimax\"') without understanding the integration. The tests only check for string presence, making pattern-matching cheating trivial."
+      "reason": "The solution file exists at /workspace/edgequake (or accessible via the solve.sh path). The agent could potentially read the gold patch from the solution directory. Additionally, since tests are pure text matching (e.g., checking 'minimax' appears in files), the agent could simply append matching strings to files without understanding the integration, though cargo checks would catch broken Rust syntax."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires frontend changes (display name mapping, icon configuration, provider status card) and documentation updates (README, configuration.md, .env.example). While the truncated test file appears to include frontend tests, the documentation changes (README architecture diagram, .env.example updates, configuration.md table) are explicitly required but we cannot confirm all are tested due to truncation. However, the visible tests do cover many of the required behaviors."
+      "outcome": "pass",
+      "reason": "All major behaviors listed in the instruction (backend TOML config, API provider registration, safety limits, frontend display/icons, README, docs, .env.example) have corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Gates', 'Pass-to-pass', 'Fail-to-pass'), descriptive function names (test_models_toml_has_minimax_provider, test_provider_types_registers_minimax), and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized into clearly labeled sections (Gates/static checks, pass-to-pass repo tests, fail-to-pass behavioral tests) with descriptive docstrings for each test function."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the expected TOML schema structure (provider type, api_base, models with context_length) and the test validates specific TOML fields. The schema expectations are clear from the instruction."
+      "reason": "The TOML schema for the MiniMax provider entry is effectively documented in the instruction (type, api_base, models with context_length) and tested structurally in test_models_toml_has_minimax_provider and test_minimax_has_four_models."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, model names, and URLs in the instruction are consistent and correctly spelled throughout."
+      "reason": "File paths, variable names, provider names, and model names are consistently spelled correctly across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly lists exact file paths with specific descriptions of what to add (e.g., 'provider_types.rs \u2014 provider registration with env var checks', 'safety_limits.rs \u2014 default model fallback mapping'). While the files are named, the instruction also specifies implementation details like 'checking MINIMAX_API_KEY for availability' and 'openaicompatible type', which significantly narrows the solution space beyond what's needed for a feature description."
+      "reason": "The instruction explicitly lists every file to modify with specific descriptions of what to add in each (e.g., 'checking MINIMAX_API_KEY for availability', 'using openaicompatible type', 'api at https://api.minimax.io/v1'). While the files are reasonable to list for a feature task, the level of detail essentially prescribes the exact implementation rather than leaving localization as part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized additions to multiple files (adding sections/entries for MiniMax) without full-file rewrites, and the changes don't contradict existing configuration."
+      "reason": "The gold patch shows localized additions to multiple files (adding provider entries, match arms, display names) without full-file rewrites, and changes are consistent across files."
     }
   },
   "tier_a_fails": [
@@ -57,9 +57,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 5
+  "pass_count": 8,
+  "fail_count": 4
 }

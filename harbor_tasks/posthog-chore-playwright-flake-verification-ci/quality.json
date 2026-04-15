@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (`.github/scripts/verify-playwright-new-tests-and-snapshots.sh`, `.github/workflows/ci-e2e-playwright.yml`, `playwright/README.md`, `.agents/skills/playwright-test/SKILL.md`), the JSON filename (`flake-verification-results.json`), schema keys (`status`, `message`, `files`, `repeat_count`), required strings (`usage`, `--repeat-each`, `--retries=0`, `write_results`, `best practices`, `gotcha`, `getByRole`, `getByTestId`, `page object model`, `test.step`, `f"
+      "reason": "The instruction names all key file paths (verify-playwright-new-tests-and-snapshots.sh, ci-e2e-playwright.yml, SKILL.md, playwright/README.md), the JSON filename (flake-verification-results.json), schema keys (status, message, files, repeat_count), required strings (usage, getByRole, getByTestId, test.step, flaky, strict mode, best practices, gotcha, page object model, etc.), and flags (--repeat-each, --retries=0). All asserted specifics in test_outputs.py are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to build (a verification script, workflow updates, documentation consolidation) with requirements, but does not specify exact code, line numbers to change, or implementation details like specific bash logic. A developer must still reason about how to implement it."
+      "reason": "The instruction describes what to build (a verification script, workflow updates, documentation consolidation) and the requirements/constraints, but does not specify exact implementation lines, exact code to write, or the precise fix. A developer still needs to reason about how to implement it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like `test_verification_script_repeat_each` assert `'write_results' in content` which checks for a specific function name. The instruction does say 'Must include a write_results function or logic to write results' but the test only checks for the literal string 'write_results' (with a fallback to 'results' in content.lower()). More critically, `test_verification_script_detects_changed_specs` asserts exact strings like `'git diff' in content` and `'playwright/' in content or 'playwright/**'"
+      "reason": "Tests like test_verification_script_detects_changed_specs assert specific implementation details via text search: 'git diff' must appear in content, 'spec.ts' must appear, 'playwright/' must appear. test_verification_script_repeat_each checks for '--repeat-each' and '--retries=0' or '--retries 0' as literal strings. test_workflow_reports_flake_results checks for literal strings like 'flake' and 'verification' and 'failed' in the workflow. While the instruction does mention these, tests like chec"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Many fail-to-pass tests are purely text-based: `test_verification_script_detects_changed_specs` does `assert 'git diff' in content`, `test_verification_script_repeat_each` does `assert '--repeat-each' in content`, `test_workflow_has_verification_step` does `assert 'verify-playwright-new-tests-and-snapshots' in content`, `test_skill_md_references_readme` reads file text and checks for string presence. Only `test_verification_script_validates_args` and `test_shell_script_syntax` actually execute t"
+      "reason": "Most fail-to-pass tests are pure text-matching: test_verification_script_detects_changed_specs does 'assert \"git diff\" in content', test_verification_script_repeat_each does 'assert \"--repeat-each\" in content', test_workflow_has_verification_step does 'assert \"verify-playwright-new-tests-and-snapshots\" in content', and the documentation tests (truncated but implied) check for string presence. Only test_verification_script_validates_args and test_shell_script_syntax actually execute the script. T"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by stub/empty files. `test_shell_script_syntax` requires valid bash. `test_verification_script_validates_args` actually runs the script and checks exit codes and output. Text-matching tests require specific content strings that wouldn't appear in empty or default files. A stub implementation would not pass."
+      "reason": "A stub/empty file would not pass: test_shell_script_syntax requires valid bash, test_verification_script_validates_args requires the script to exit non-zero with 'usage' on bad input, and the text-matching tests require specific content. An empty or trivial stub wouldn't satisfy these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/posthog` as `solution/solve.sh` (or accessible via the container). The agent could potentially read the gold patch from the solution directory. The Dockerfile doesn't show explicit removal of solution files, and the test file itself is at `tests/test_outputs.py` which contains all expected strings the agent could grep for."
+      "reason": "The solution is in /workspace/posthog's container context via solve.sh. An agent could potentially read the solution file or the test file at /tests/test_outputs.py to see exactly what strings are checked and produce a minimal file matching those patterns. The Dockerfile doesn't remove or protect /solution/ or /tests/ paths."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: script creation and syntax, argument validation, git diff usage, repeat-each flag, workflow integration, results JSON schema, SKILL.md references, and README.md best practices/gotchas content. The coverage is comprehensive."
+      "reason": "The tests cover the main requirements: script existence and syntax, argument validation, git diff usage, repeat-each flag, workflow integration, flake results JSON, documentation updates (SKILL.md and README.md content). All explicitly required behaviors from instruction.md are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names (e.g., `test_verification_script_validates_args`), and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized into sections with clear comments (Gates, Pass-to-pass, Fail-to-pass), meaningful function names, and docstrings explaining what each test validates."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the exact JSON schema for `flake-verification-results.json` with fields `status` (string), `message` (string), `files` (array), and `repeat_count` (number), and the exact filename. Tests verify these schema keys."
+      "reason": "The instruction explicitly documents the JSON schema for flake-verification-results.json with exact field names (status, message, files, repeat_count) and their types, and the exact filename is specified."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and command references are consistent between instruction.md and test assertions. No typos detected."
+      "reason": "All filenames, paths, commands, and variable names in the instruction are consistent and correctly spelled, matching what the tests expect."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes requirements at the feature level without pointing to specific lines in existing files. It names target files but that's appropriate since the task is about creating/modifying those specific files."
+      "reason": "The instruction specifies what files to create/modify and what content/behavior is needed, which is appropriate for a task description. It doesn't reveal exact line numbers or minimal diffs \u2014 it describes requirements at an appropriate level."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized changes: a new script file, targeted edits to SKILL.md (removing specific lines, adding references), additions to README.md, and additions to the workflow YAML. No full-file rewrites."
+      "reason": "The gold patch makes localized changes: adding a new script, small modifications to SKILL.md (removing/replacing a few lines), additions to README.md, and a targeted addition to the workflow YAML. These are all bounded, localized edits."
     }
   },
   "tier_a_fails": [

@@ -3,55 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig), all 7 functions (throw, throwPretty, throwTODO, createRangeError, throwValue, throwError), the specific patterns (bun.assert(instance != .zero), createErrorInstance returning .zero, hasException, error.JSError), and the behavior expected. All test assertions reference items discoverable from the instruction."
+      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig), all seven function names (throw, throwPretty, throwTODO, createRangeError, throwValue, throwError), the specific patterns to check (createErrorInstance returning .zero, hasException, error.JSError, bun.assert), and the assertion to remove (bun.assert(instance != .zero)). All test assertions reference these same specifics."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix for each function, e.g., 'Must check if createErrorInstance returns .zero and return error.JSError instead of asserting non-zero with bun.assert(instance != .zero)' for throw(), 'Must check this.hasException() before calling this.vm().throwError()' for throwValue(), and 'Must route through throwValue or have its own exception guard' for throwError(). This is a direct description of the solution, not just a description of the bug."
+      "reason": "The instruction explicitly states the exact fix for each function: e.g., 'Must check if createErrorInstance returns .zero and return error.JSError instead of asserting non-zero with bun.assert(instance != .zero)', 'Must check this.hasException() before calling this.vm().throwError()', 'Must route through throwValue or have its own exception guard'. This is a step-by-step implementation guide, not just a bug description."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests check for patterns like 'if (... == .zero)', 'hasException', and 'error.JSError' in function bodies, which are the canonical Zig patterns for this fix. Alternative correct approaches (e.g., using 'orelse' or 'catch') are also accepted in several tests. The tests don't assert exact line positions or gold-specific variable names beyond what's necessary."
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation patterns: test_crash_assert_removed checks for regex 'if\\s*\\(.*==\\s*\\.zero\\)' and 'error.JSError' in throw/throwPretty bodies; test_throwvalue_guarded checks that 'hasException' appears before 'vm().throwError' positionally. An alternative correct fix (e.g., using a wrapper function, or checking via a different mechanism like catching the error) would fail these pattern-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file and does string/regex matching on the code text (e.g., checking 'bun.assert(instance != .zero)' is removed, 'hasException' appears before 'vm().throwError'). No test compiles or executes the code, runs the reproduction script, or checks runtime behavior."
+      "reason": "Every test reads the source file and does string/regex matching (e.g., checking 'bun.assert(instance != .zero)' not in code, regex for 'if\\s*\\(.*==\\s*\\.zero\\)'). No test compiles the code, runs a subprocess, or executes the JavaScript reproduction case. These are purely textual checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original code (e.g., the original has 'bun.assert(instance != .zero)' which test_crash_assert_removed requires to be absent, and throwValue doesn't have hasException guard originally). A stub or no-op would not pass these tests."
+      "reason": "The fail-to-pass tests check for specific code patterns that are NOT present in the original file (e.g., the original has 'bun.assert(instance != .zero)' which must be removed, and 'if (... == .zero)' checks must be added). A stub or no-op would not pass since the original file content would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/bun's solution/solve.sh path (mounted in container). The agent could also read the test file at tests/test_outputs.py to see exactly what patterns are checked and reverse-engineer the minimal text changes needed without understanding the bug."
+      "reason": "The solution file exists at /workspace/bun's solution/solve.sh path (or can be accessed from the container). The agent could read the gold patch directly. Also, since tests are purely text-matching, the agent could grep test_outputs.py for the exact patterns being checked and make minimal textual edits to satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 functions listed in instruction.md (throw, throwPretty, throwTODO, createRangeError, throw with error options, throwValue, throwError) are tested for the required changes. The instruction's requirements are covered by the test suite."
+      "reason": "All seven functions mentioned in the instruction (throw, throwPretty, throwTODO, createRangeError, the throw overload with error options, throwValue, throwError) have corresponding test coverage. The instruction's requirements about handling .zero returns and hasException guards are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_crash_assert_removed, test_throwvalue_guarded, test_throwtodo_handles_zero) with docstrings explaining what each test verifies. Tests are grouped by function/concern."
+      "reason": "Tests are well-named (test_crash_assert_removed, test_throwvalue_guarded, test_throwtodo_handles_zero, etc.), have docstrings explaining what they check, and are tagged with categories like [pr_diff] fail_to_pass and [static] pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Zig source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "File paths, function names, and variable names in the instruction match those in the actual codebase and tests. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig) and every specific function to change (throw, throwPretty, throwTODO, createRangeError, throwValue, throwError) along with the exact code pattern to replace (e.g., 'bun.assert(instance != .zero)'), which constitutes significant localization leakage beyond what the task domain requires."
+      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig) and lists all 7 specific functions with their exact fix patterns. While naming the file is reasonable, specifying 'bun.assert(instance != .zero)' must be replaced with 'if createErrorInstance returns .zero, return error.JSError' is detailed line-level implementation guidance."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
@@ -59,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

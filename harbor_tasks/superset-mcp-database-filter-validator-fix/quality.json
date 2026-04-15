@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test `test_schemas_py_imports_field_validator` asserts that `field_validator` is re-exported from `superset.mcp_service.database.schemas` and that it `is pydantic_validator` (identity check). The test `test_schemas_py_imports_parse_utilities` asserts `parse_json_or_list` and `parse_json_or_model_list` are importable from the same module. While instruction.md section 2 mentions re-exporting these, the identity check (`field_validator is pydantic_validator`) is a specific test detail not expli"
+      "outcome": "pass",
+      "reason": "The instruction describes all key behaviors tested: DatabaseFilter accepting created_by_fk/changed_by_fk, ListDatabasesRequest parsing JSON strings, importing DATABASE_DEFAULT_COLUMNS from schema_discovery, timezone-aware timestamps in DatabaseError.create(), _humanize_timestamp handling aware datetimes, app.py documentation updates with specific literal strings, and re-exporting field_validator/parse_json_or_list/parse_json_or_model_list from the schemas module. All file paths (schemas, list_da"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix in several places: 'importing DATABASE_DEFAULT_COLUMNS from superset.mcp_service.common.schema_discovery and using it (e.g., default_columns=DATABASE_DEFAULT_COLUMNS)', 'The literal text charts/dashboards/databases should appear', 'It should say (chart, dataset, dashboard, database)'. These are specific implementation directives, not just descriptions of what's broken."
+      "reason": "The instruction is very prescriptive about the exact fix: e.g., 'import DATABASE_DEFAULT_COLUMNS from superset.mcp_service.common.schema_discovery and use it (e.g., default_columns=DATABASE_DEFAULT_COLUMNS)', 'the literal text charts/dashboards/databases should appear', 'The database schemas module must re-export field_validator (from pydantic), parse_json_or_list, and parse_json_or_model_list'. These are implementation-level directives, not just descriptions of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_list_databases_imports_default_columns_from_schema_discovery asserts exact string patterns in source code: `'default_columns=DATABASE_DEFAULT_COLUMNS' in content` or `'DATABASE_DEFAULT_COLUMNS,' in content`. An alternative valid fix using e.g. `columns = DATABASE_DEFAULT_COLUMNS` then passing `default_columns=columns` would fail. test_app_py_has_database_created_by_fk_documentation asserts exact literal strings like `'charts/dashboards/databases'` and `'list_databases(filters=['` and `'My d"
+      "reason": "Several tests assert on implementation details rather than behavior: test_list_databases_imports_default_columns_from_schema_discovery checks for exact string 'default_columns=DATABASE_DEFAULT_COLUMNS' in source code; test_schemas_py_imports_field_validator checks that field_validator is importable from the schemas module (an alternative could use inline validators); test_schemas_py_imports_parse_utilities checks that parse_json_or_list is importable from schemas (could be implemented differentl"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several tests are purely text-matching: test_list_databases_imports_default_columns_from_schema_discovery reads source and checks string patterns; test_app_py_has_database_created_by_fk_documentation reads file content and asserts substring matches. These do not execute the code or verify behavior."
+      "reason": "Multiple tests are purely text-based: test_list_databases_imports_default_columns_from_schema_discovery only reads source and checks for string patterns; test_app_py_has_database_created_by_fk_documentation only reads file content and asserts on literal strings; test_model_get_schema_core_docstring_includes_database checks docstring text. These do not execute or call any code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests (filter creation, JSON parsing, timezone-aware timestamps, _humanize_timestamp) make substantive assertions that cannot be satisfied by stubs. E.g., DatabaseFilter must accept 'created_by_fk' and return it, ListDatabasesRequest must parse JSON strings into structured objects, DatabaseError.create must return timezone-aware timestamps."
+      "reason": "The behavioral tests (e.g., test_database_filter_accepts_created_by_fk, test_list_databases_request_parses_json_filters, test_database_error_has_timezone_aware_timestamp) assert on specific attribute values and conditions that cannot be satisfied by stub implementations returning None or empty collections. For example, DatabaseFilter must have .col == 'created_by_fk', and DatabaseError.create() must produce a timestamp with non-None tzinfo."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/superset as a git repo and solve.sh shows exact commit SHAs (fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45 and be7e1abd8ad3657337840384878d3bbe9f6bde1b). An agent could run `git show fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45` or `git cherry-pick` those commits to get the solution directly. The test file is also accessible at the path shown."
+      "reason": "The solution is available at /workspace/superset via solve.sh which references specific git commits (fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45, be7e1abd8ad3657337840384878d3bbe9f6bde1b). An agent could run 'git show fc8c06f...' to see the exact patches. The Dockerfile doesn't remove .git history or restrict access to the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six categories of fixes described in the instruction are tested: DatabaseFilter fields, JSON parsing validators, duplicate constants removal, timezone-aware timestamps, humanize_timestamp, documentation updates, and the docstring fix (test for ModelGetSchemaCore is in the truncated portion)."
+      "reason": "All behaviors described in the instruction (filter fields, JSON parsing, default columns import, timezone-aware timestamps, humanize_timestamp, documentation updates, docstring fix, re-exports) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names, docstrings noting '(fail_to_pass)', section comments separating test groups, and a module-level docstring listing all 6 categories."
+      "reason": "Tests are well-named with descriptive docstrings, grouped with a clear section header comment for 'Fail-to-Pass' tests, and each test function name clearly indicates what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task involves fixing code bugs and updating documentation, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, variable names, or class names throughout the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact modules and specific implementation details: 'importing DATABASE_DEFAULT_COLUMNS from superset.mcp_service.common.schema_discovery', 'default_columns=DATABASE_DEFAULT_COLUMNS', exact file locations like 'superset.mcp_service.database.schemas', and exact string literals like 'charts/dashboards/databases'. This goes beyond describing what's broken and tells the agent exactly where and what to change."
+      "reason": "The instruction names exact implementation details: 'import DATABASE_DEFAULT_COLUMNS from superset.mcp_service.common.schema_discovery', 're-export field_validator (from pydantic), parse_json_or_list, and parse_json_or_model_list', 'default_columns=DATABASE_DEFAULT_COLUMNS'. These specify exact variable names, import paths, and code patterns beyond what's needed to describe the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four files (commands.ts, program.ts, SKILL.md, session-management.md), the command name 'kill-all', the daemon pattern strings ('run-mcp-server', '--daemon-session'), the behavioral requirements (SIGKILL, Windows PowerShell support, reporting counts), and the documentation updates. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names all four file paths (commands.ts, program.ts, SKILL.md, session-management.md), the command name 'kill-all', the patterns 'run-mcp-server' and '--daemon-session', SIGKILL, platform-specific behavior (Unix ps aux, Windows PowerShell), and documentation requirements including daemon/zombie/stale context. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what the new command should do and which files to modify, but does not specify exact code changes, line numbers, variable names like 'killAllDaemons', or the specific implementation pattern (declareCommand). A developer must still reason about how to implement it."
+      "reason": "The instruction describes what to build (a kill-all command with specific behavior) but does not specify exact code, line numbers, variable names like 'killAllDaemons', or the use of 'declareCommand'. A developer must still decide implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_kill_all_command_registered checks for exact regex 'const\\s+killAll\\s*=\\s*declareCommand' (requiring the variable name 'killAll'), test_kill_all_daemons_implemented checks for the exact function name 'killAllDaemons', and test_kill_all_routed checks for exact string patterns like \"commandName === 'kill-all'\" and \"subcommand === 'kill-all'\". An alternative correct implementation using different variable names (e.g., 'killAllCommand'), functi"
+      "reason": "Tests assert gold-specific implementation details: test_kill_all_command_registered checks for exact regex 'const\\s+killAll\\s*=\\s*declareCommand' requiring the variable name 'killAll'; test_kill_all_daemons_implemented checks for exact function name 'killAllDaemons' and 'execSync'; test_kill_all_routed checks for exact string patterns like \"commandName === 'kill-all'\" and \"subcommand === 'kill-all'\". An alternative correct implementation using different variable names (e.g., 'killAllCommand'), f"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests are purely text/regex-based: they read file contents and check for string patterns (e.g., 'killAllDaemons' in file, regex for 'const\\s+killAll', string inclusion of 'SIGKILL'). No test actually imports, calls, or executes the kill-all command. The pass-to-pass tests do run syntax checks and builds, but no f2p test verifies actual behavior."
+      "reason": "Every fail-to-pass test is purely text/regex matching on file contents (e.g., checking if 'killAllDaemons' string appears in program.ts, regex matching 'const\\s+killAll\\s*=\\s*declareCommand'). No test actually imports, executes, or calls the kill-all command to verify its behavior. All are 'assert string in file.read()' style checks."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the right strings to the right files without any functional logic would pass all f2p tests. For example, adding a comment containing 'killAllDaemons', 'run-mcp-server', '--daemon-session', 'SIGKILL', 'win32', 'execSync' to program.ts would pass test_kill_all_daemons_implemented. The tests only check string presence, not execution."
+      "reason": "Since tests only check for string presence in files (not execution), an agent could write a stub function 'async function killAllDaemons() {}' containing the right keywords ('run-mcp-server', '--daemon-session', 'SIGKILL', 'win32', 'execSync') as comments or dead code, add the routing strings, and pass all fail-to-pass tests without any actual process-killing logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is available at /workspace/playwright as solve.sh could be applied, and since tests only check file contents via string matching, the agent could read the test file patterns from /logs/verifier or the hidden test file and insert matching strings without understanding the task. The solution directory (solution/solve.sh) exists in the container and could be read directly."
+      "reason": "The solution/solve.sh exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, since tests only check for string patterns, the agent could grep the test file itself to discover exact strings needed (e.g., 'killAllDaemons', 'declareCommand') and insert them as dead code."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires the command to 'Report how many processes were killed (or that none were found)' but no test verifies this reporting behavior. Also, the actual process-killing functionality is never tested\u2014only string patterns in source files."
+      "reason": "The instruction says the command should 'Report how many processes were killed (or that none were found)' but no test verifies this reporting behavior. The instruction says it should 'Forcefully terminate matched processes' but no test verifies actual process termination."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, fail-to-pass agent_config, pass-to-pass static, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, fail-to-pass agent_config, pass-to-pass static, repo_tests), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify, which is appropriate given the task domain. It does not specify exact line numbers, variable names, or implementation details like 'killAllDaemons' or 'declareCommand'."
+      "reason": "The instruction lists the four relevant files which is appropriate given the task domain, but doesn't specify exact line numbers, variable names, or internal function names. The files listed are the natural places to make the changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config/documentation diffs (SKILL.md and session-management.md) are localized additions of a few lines each, not full-file rewrites, and don't contradict other files."
+      "reason": "The gold diff for documentation files (SKILL.md, session-management.md) is localized additions, not full-file rewrites, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [

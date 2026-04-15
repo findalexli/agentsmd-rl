@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (packages/react-router/src/router.ts, packages/solid-router/src/router.ts), the exact patterns to remove (globalThis/window assignments, specific import lines), the expected behavior (globalThis.createFileRoute === 'undefined'), and the build commands. All test-asserted specifics (file paths, string patterns, dist paths, export names like Router/RouterProvider/useRouter/useNavigate, createFileRoute/createLazyFileRoute importability from fileRoute module"
+      "reason": "The instruction explicitly names the two files to modify (packages/react-router/src/router.ts, packages/solid-router/src/router.ts), the exact patterns to remove (globalThis/window assignments, the import line), the expected behavior (globalThis.createFileRoute === 'undefined'), the build commands, and that Router class and fileRoute module imports must continue working. All test assertions check things discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact patterns to remove: 'import { createFileRoute, createLazyFileRoute } from \"./fileRoute\"', '(globalThis as any).createFileRoute', '(window as any).createFileRoute', etc. It also says 'Import patterns that must be removed' and 'Global assignment patterns that must be removed', essentially prescribing the exact fix rather than just describing the broken behavior."
+      "reason": "The instruction explicitly states the exact import line to remove ('import { createFileRoute, createLazyFileRoute } from ./fileRoute'), the exact global assignment patterns to remove ('(globalThis as any).createFileRoute', etc.), and the exact window assignment patterns to remove. This is essentially a step-by-step description of the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_react_router_source_no_fileRoute_import_in_router assert the exact string 'import { createFileRoute, createLazyFileRoute } from './fileRoute'' is absent. An alternative fix that renames the import or restructures it differently (e.g., importing only what's needed, or using a different import syntax) would also be correct but these source-text tests constrain the solution to the gold patch's specific approach."
+      "reason": "Tests like test_react_router_source_no_fileRoute_import_in_router check for the exact string 'import { createFileRoute, createLazyFileRoute } from ./fileRoute' in source. An alternative fix that keeps the import but removes only the global assignments would fail this test, even though it would correctly fix the global pollution. Similarly, someone who restructures the import differently (e.g., keeping only createFileRoute imported for other purposes) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "TestSourceCodeChanges (6 tests) are purely text-matching: they read source files and assert specific strings are absent (e.g., '(globalThis as any).createFileRoute' in content). While TestGlobalPollutionRemoved and TestRouterFunctionality do execute code, the majority of fail-to-pass tests (6 out of 8) are text-only assertions with no execution."
+      "reason": "The TestSourceCodeChanges class (6 tests) exclusively checks source file text content with patterns like '(globalThis as any).createFileRoute in content'. While TestGlobalPollutionRemoved and TestRouterFunctionality do execute code, a significant portion of fail-to-pass tests (test_react_router_source_no_global_assignment, test_solid_router_source_no_global_assignment, test_react_router_source_no_fileRoute_import_in_router, test_solid_router_source_no_fileRoute_import_in_router, test_react_route"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for absence of specific patterns in source files and verify that globalThis is not polluted after import. A stub/no-op implementation would not satisfy these\u2014the base commit contains the pollution code, so the agent must actually modify the files to pass."
+      "reason": "The fail-to-pass tests check for the absence of specific patterns that exist in the base commit. A stub or no-op implementation would leave those patterns in place and fail the tests. The behavioral tests (test_react_router_no_global_createFileRoute) actually import the built module and check runtime behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router's solve.sh path (solution/solve.sh in the task), and the agent could potentially read it. Additionally, the source-text tests check for exact string patterns that are visible in the test file, allowing the agent to grep for expected patterns and make targeted string removals without understanding the bug."
+      "reason": "The solution file exists at /workspace/router's sibling or the container includes solution/solve.sh. An agent could read /solution/solve.sh to see the exact patch. Additionally, the test file itself at tests/test_outputs.py contains the exact patterns being checked, so grepping for test fixtures would reveal the solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: no global pollution (TestGlobalPollutionRemoved), no source-level patterns (TestSourceCodeChanges), functions still importable from fileRoute module, Router class still works, ESLint passes, and both react-router and solid-router are covered."
+      "reason": "All behaviors described in instruction.md are tested: no global pollution after import, no globalThis/window assignments in source, Router class still exports, createFileRoute/createLazyFileRoute still importable from fileRoute module, both react-router and solid-router covered, and build/lint commands tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into four classes (TestGlobalPollutionRemoved, TestSourceCodeChanges, TestRouterFunctionality, TestRepoCICommands) with descriptive names and docstrings indicating fail_to_pass vs pass_to_pass."
+      "reason": "Tests are well-organized into four classes (TestGlobalPollutionRemoved, TestSourceCodeChanges, TestRouterFunctionality, TestRepoCICommands) with descriptive names, docstrings indicating fail_to_pass vs pass_to_pass, and clear assert messages."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves removing code patterns from source files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, commands, variable names, or other identifiers in the instruction or test files."
+      "reason": "All file paths, commands, variable names, and patterns in the instruction and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify (packages/react-router/src/router.ts, packages/solid-router/src/router.ts) and the exact lines/patterns to remove, including the specific import statement and global assignment blocks. This goes beyond identifying the buggy module and prescribes the exact code changes."
+      "reason": "The instruction names the exact files (packages/react-router/src/router.ts, packages/solid-router/src/router.ts) and the exact code patterns to remove, including the specific import line and all global/window assignment lines. This goes well beyond naming the buggy module \u2014 it's specifying the exact lines to delete."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

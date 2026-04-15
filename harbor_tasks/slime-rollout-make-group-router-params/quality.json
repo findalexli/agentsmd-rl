@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (slime/ray/rollout.py), the function (_make_group), and the three call sites. Tests check for router params in _make_group's signature, that call sites pass router info, and behavioral independence \u2014 all discoverable from the instruction's description of the closure bug, the function name, and the file path."
+      "reason": "The instruction names the file (slime/ray/rollout.py), the function (_make_group), the enclosing function (start_rollout_servers), the variables (router_ip, router_port), and the three call sites. All test-asserted specifics (function name, file path, parameter names containing 'router', >=3 call sites) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (closure captures mutable variables instead of values) and the expected behavior (each group connected to correct router), but does not prescribe the exact fix such as 'add router_ip and router_port parameters'. A developer must still decide how to solve it."
+      "reason": "The instruction describes the problem (closure captures mutable variable rather than explicit parameters) and the expected behavior (each group connected to correct router without relying on closure state). It does not specify the exact fix (e.g., 'add router_ip and router_port as parameters')\u2014a developer must still reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_make_group_accepts_router_params asserts `any('router' in p for p in params)` checking for parameter names containing 'router'. test_all_call_sites_pass_router_info checks for positional args or keyword args with 'router' in the name. An alternative correct fix \u2014 e.g., passing a config dict with a non-'router' key name like 'endpoint_ip'/'endpoint_port', or using default argument binding to capture the value \u2014 would fail these tests. The tests are tightly coupled to the gold solution's spec"
+      "reason": "test_make_group_accepts_router_params asserts `any('router' in p for p in params)` checking for parameter names containing 'router'. test_all_call_sites_pass_router_info checks for keywords containing 'router' or positional args >=2. An alternative valid fix could pass a single 'config' dict or a named tuple without 'router' in the parameter name (e.g., `endpoint_ip`, `endpoint_port`) and would fail these tests. The tests also require the function to still be named `_make_group` and to have >=3 "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests like test_make_group_uses_param_router_not_closure and test_multi_model_router_independence actually extract the function source, exec it with mock objects, call it, and verify that ServerGroup receives the correct values. This is behavioral testing, not just text matching."
+      "reason": "Tests like test_make_group_uses_param_router_not_closure and test_multi_model_router_independence actually extract the function source, exec it with mock objects, call it, and verify ServerGroup receives the correct values. test_all_call_sites_pass_router_info does AST inspection but it's checking structural properties of call sites. This is a mix of behavioral and structural testing, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests would fail on the original code: test_make_group_accepts_router_params checks for router params in the signature (original has none), test_make_group_uses_param_router_not_closure verifies param values override closure values, test_all_call_sites_pass_router_info checks that call sites pass router arguments. A stub/no-op would not pass these."
+      "reason": "A stub _make_group that does nothing (pass/return None) would fail test_make_group_uses_param_router_not_closure because it checks that ServerGroup was constructed with the correct values. The unpatched original code would fail test_make_group_accepts_router_params because no 'router' parameter exists in the original signature."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/slime as a mounted repo, and solve.sh is in /solution/solve.sh. An agent could read /solution/solve.sh directly or grep for the patch content. The Dockerfile doesn't remove or protect these files."
+      "reason": "The solution file exists at /workspace/slime's solve.sh path is not in the container, but the Dockerfile doesn't prevent reading /solution/solve.sh if it's mounted. More critically, the gold patch is a simple, small diff that the agent could find by examining the test expectations (parameter names containing 'router', >=3 call sites) and reverse-engineering the exact fix without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that each engine group connects to the correct router regardless of iteration order, and that the dependency not rely on mutable closure state. Tests verify: router params in signature, correct values passed through (not closure), multi-model independence, and all call sites updated."
+      "reason": "The instruction requires that each engine group connects to the correct router without relying on mutable closure state. The tests verify: explicit router parameters exist, ServerGroup receives param values not closure values, multi-model independence, and all call sites pass router info. This covers the described behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names and docstrings, grouped into 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff) \u2014 behavioral tests', and 'Pass-to-pass \u2014 repo CI/CD checks' sections with clear comments."
+      "reason": "Tests are well-organized with descriptive names (test_make_group_accepts_router_params, test_multi_model_router_independence, etc.), docstrings, and clear section comments (Gates, Fail-to-pass, Pass-to-pass)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the function (_make_group) and file (slime/ray/rollout.py) and describes the three call sites, but this is appropriate for the task domain \u2014 the bug is specifically about this function's closure behavior. It doesn't give line numbers or the exact fix."
+      "reason": "The instruction names the file and function, which is appropriate since the task is about fixing a specific bug. It describes what's wrong (closure capture) and where to look, but doesn't specify exact line numbers or the exact code change needed. The file is already obvious from the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

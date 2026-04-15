@@ -2,61 +2,62 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "instruction.md names the file path `packages/router-core/src/scroll-restoration.ts`, the function `setupScrollRestoration`, and describes the scroll restoration cache behavior. The tests check for exports like `setupScrollRestoration`, `scrollRestorationCache`, `defaultGetScrollRestorationKey`, event subscriptions like `onBeforeLoad`/`onRendered`, and patterns involving `shouldClearCache`/`toIndex > fromIndex` \u2014 all of which are discoverable by examining the named file and function as directed b"
+      "outcome": "fail",
+      "reason": "Tests assert specific exports like 'export const scrollRestorationCache' and 'export const defaultGetScrollRestorationKey', specific event subscriptions like \"router.subscribe('onBeforeLoad'\", \"window.addEventListener('pagehide'\", and specific cache initialization patterns like 'cache.set((state) => { state[cacheKey] ||='. These literal strings are not mentioned in instruction.md, making them undiscoverable from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (forward navigation doesn't restore scroll position) and gives hints about navigation direction tracking and cache clearing, but never says 'remove the shouldClearCache block' or specifies exact lines/code to change. A developer still needs to reason about what to change."
+      "reason": "The instruction describes the bug (forward navigation doesn't restore scroll position) and gives hints about navigation direction and cache clearing, but does not specify the exact code to change or remove. A developer must still reason about what to modify."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like `test_forward_navigation_does_not_clear_cache` and `test_ignore_scroll_flag_handling` assert on the absence of the specific variable name `shouldClearCache` and the specific pattern `toIndex > fromIndex`. An alternative correct fix could rename these variables, restructure the logic differently (e.g., keep the variable but change its usage), or fix the condition rather than removing the block entirely. Such alternatives would fail the regex-based tests even if they correctly fix the b"
+      "reason": "Tests assert the absence of the specific variable name 'shouldClearCache' in the onRendered section (test_ignore_scroll_flag_handling). An alternative fix that renames the variable but keeps modified logic, or that changes the condition rather than removing the block entirely, would fail these tests even if it correctly fixes the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (`test_forward_navigation_does_not_clear_cache`, `test_scroll_restoration_preserves_cache_structure`, `test_ignore_scroll_flag_handling`) are purely text/regex-based: they read the file and check for string patterns like `shouldClearCache` or `cache.set`. They never import, call, or execute the scroll restoration code. The pass-to-pass tests do run builds/lints, but the core behavioral tests are all `assert 'foo' in open(path).read()` style."
+      "reason": "The fail-to-pass tests (test_forward_navigation_does_not_clear_cache, test_scroll_restoration_preserves_cache_structure, test_ignore_scroll_flag_handling) are purely regex/string searches on source code files. They do not import, call, or execute the scroll restoration logic. While some pass-to-pass tests run builds/linting, the core behavioral verification is text-matching only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for the presence/absence of specific code patterns that exist in the buggy version. A stub/no-op implementation would not have the original buggy code structure, but the tests specifically check that the buggy `shouldClearCache` pattern is removed while the cache initialization pattern is preserved \u2014 this requires actual modification of the existing file, not a blank stub."
+      "reason": "The f2p tests check for the absence of specific buggy code patterns (shouldClearCache logic) and presence of cache initialization patterns. A stub or no-op implementation would not pass these tests since the original buggy code contains these patterns and must be actively removed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/router/` accessible path as `solution/solve.sh` in the task structure. An agent could read the solution file or the gold patch directly. Additionally, since tests are regex-based on file content, an agent could grep test files to discover exactly what patterns to remove/preserve without understanding the bug."
+      "reason": "The solution directory exists at /workspace with solve.sh containing the exact git patch. An agent could read /solution/solve.sh or simply execute it to pass all tests. The Dockerfile does not remove the solution files from the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes forward navigation failing to restore scroll position. The tests verify this by checking that the cache-clearing-on-forward-navigation logic is removed, that the module structure is intact, and that builds/types/linting/unit tests pass \u2014 covering the described behavior."
+      "reason": "The instruction describes that forward navigation fails to restore scroll position, and the tests verify the removal of the cache-clearing logic on forward navigation and that the module structure remains intact, covering the described behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., `test_forward_navigation_does_not_clear_cache`, `test_scroll_restoration_event_handlers_exist`), have docstrings explaining their purpose, and are categorized as fail-to-pass vs pass-to-pass in comments."
+      "reason": "Tests are well-named (e.g., test_forward_navigation_does_not_clear_cache, test_ignore_scroll_flag_handling), have docstrings explaining fail-to-pass vs pass-to-pass intent, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
+      "reason": "This task involves fixing a bug in scroll restoration logic, not producing structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and commands in the instruction and tests are consistent and correct \u2014 no typos detected."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file `scroll-restoration.ts` and function `setupScrollRestoration`, which is appropriate since the task domain makes this obvious. The hints mention navigation direction and cache clearing conceptually but don't specify exact lines or variable names."
+      "reason": "The instruction names the file (scroll-restoration.ts) and function (setupScrollRestoration), which is appropriate for the task domain. It doesn't specify exact line numbers or the precise code to remove. The hints about navigation direction and cache clearing are conceptual, not line-level."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task involving a TypeScript source file fix, not a configuration edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 6,
+  "fail_count": 4
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details like `utils.escapeRegExp` being exported from `./packages/router-generator/dist/cjs/utils.cjs` (the CJS build output path), and test_escape_regexp_escapes_various_metacharacters checks exact output strings like '\\\\+page'. While instruction.md mentions escapeRegExp and gives examples, it doesn't specify the CJS distribution path. Also test_asterisk_token_in_nested_routes uses `*index` token which is mentioned in instruction but the exact file struct"
+      "reason": "Tests assert specific implementation details like requiring escapeRegExp to be exported from the CJS build path './packages/router-generator/dist/cjs/utils.cjs' and checking exact escaped output strings like '\\\\+page'. While the instruction mentions escapeRegExp and gives examples, it doesn't mention the CJS dist path. Also, test_asterisk_token_in_nested_routes uses '*index' token which is mentioned in instruction but the exact file structure (about/*index.tsx) and assertions about path '/about/"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states 'The generator should export an escapeRegExp function from packages/router-generator/src/utils.ts that escapes regex metacharacters in token strings' and gives exact expected behavior including 'escapeRegExp('+page') should return '\\\\+page''. It also explains the root cause ('uses token values as literal strings in regular expression patterns without escaping'). This tells the developer exactly what to implement (export an escapeRegExp function) and where (utils."
+      "reason": "The instruction explicitly states 'The generator should export an escapeRegExp function from packages/router-generator/src/utils.ts that escapes regex metacharacters in token strings' and provides exact expected behavior including that the function 'must escape all regex metacharacters including: +, *, ?, ., (, ), [, ], $, ^, |, and \\'. It also names the exact file where the bug occurs (getRouteNodes.ts) and explains the fix mechanism (escaping regex metacharacters before using them in patterns)"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests explicitly check for a function named `escapeRegExp` exported from utils (`test_escape_regexp_function_exists`). An alternative correct fix could inline the escaping logic directly in getRouteNodes.ts without exporting a named function from utils, or use a different function name like `escapeRegexSpecialChars`. Such alternatives would fix the bug but fail the tests."
+      "reason": "test_escape_regexp_function_exists explicitly requires a function named 'escapeRegExp' to be exported from utils. An alternative correct fix could escape metacharacters inline in getRouteNodes.ts without exporting a named escapeRegExp function, or could use a different function name, or could use a library like lodash.escapeRegExp. All such alternatives would fail the test despite correctly fixing the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import and call the escapeRegExp function via Node.js subprocess execution, run the Generator to produce route trees, and then inspect both the return codes and the generated file content. The integration tests (test_nested_route_with_plus_layout_token, etc.) actually execute the route generator."
+      "reason": "Tests actually execute Node.js scripts via subprocess (run_node), call the escapeRegExp function, run the Generator to produce route trees, and check both return codes and generated file content. While some tests do read generated files, they also execute the generator code to produce those files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_escape_regexp_function_exists checks that the function exists and is callable (a stub module without it fails). test_escape_regexp_escapes_plus checks the output contains escaped +. test_escape_regexp_escapes_various_metacharacters checks exact output for 10 different inputs. The integration tests verify that route generation produces correct paths. None can be satisfied by a no-op or default return."
+      "reason": "A stub escapeRegExp returning empty string or the input unchanged would fail test_escape_regexp_escapes_plus (checks for '\\\\+' in output) and test_escape_regexp_escapes_various_metacharacters (checks exact output strings). The integration tests would also fail since the actual regex replacement bug wouldn't be fixed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/router and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh (if accessible in the container) to see the exact patch. Additionally, the agent could grep the test file at tests/test_outputs.py to discover expected values and reverse-engineer the solution."
+      "reason": "The solution file exists at /workspace/router in the container as solve.sh shows 'cd /workspace/router' and applies a patch. The agent could read /solution/solve.sh or the gold patch to extract the exact fix. Additionally, the test file at tests/test_outputs.py is accessible and reveals exact assertions the agent needs to satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires: (1) escapeRegExp exported from utils.ts, (2) escaping all listed metacharacters, (3) correct path generation with +page/+layout tokens. All three are tested: test_escape_regexp_function_exists, test_escape_regexp_escapes_various_metacharacters, and the integration tests for nested routes."
+      "reason": "The instruction describes escapeRegExp function behavior, correct path generation for +page/+layout tokens, and handling of various metacharacters. All of these are tested: escapeRegExp export/behavior tests, integration tests with +page/+layout tokens, and asterisk token tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names (test_escape_regexp_function_exists, test_nested_route_with_plus_layout_token, etc.), docstrings explaining what each tests and why, and comments marking fail_to_pass tests. Well organized."
+      "reason": "Tests are well-named (test_escape_regexp_function_exists, test_nested_route_with_plus_layout_token, etc.), have descriptive docstrings explaining the bug scenario, and are logically grouped from unit tests (escapeRegExp function) to integration tests (route generation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB output; it modifies source code to fix a bug."
+      "reason": "The task produces generated TypeScript files and function outputs, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files to modify ('packages/router-generator/src/utils.ts - Utility functions (where escapeRegExp must be exported)') and specifies the exact function name and its expected behavior. It also names getRouteNodes.ts. This goes beyond describing what's broken and tells the agent exactly where and what to implement."
+      "reason": "The instruction names exact files: 'packages/router-generator/src/filesystem/physical/getRouteNodes.ts' and 'packages/router-generator/src/utils.ts - Utility functions (where escapeRegExp must be exported)'. It also specifies the exact function name and that it must be exported, which is essentially telling the agent the fix rather than just describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config-edit task."
+      "reason": "This is a code-only task, not an agent config editing task."
     }
   },
   "tier_a_fails": [

@@ -28,21 +28,10 @@ After fixing, error creation functions that encounter a JS exception during mess
 formatting should complete gracefully without crashing — the pending exception must
 be cleared before the fallback error is returned.
 
-## Scope
+Four error-creation functions need this fix:
+1. A generic error creation function that should return a generic Error instance from its catch block
+2. A TypeError creation function that should return a TypeError-typed instance from its catch block
+3. A SyntaxError creation function that should return a SyntaxError-typed instance from its catch block
+4. A RangeError creation function that should return a RangeError-typed instance from its catch block
 
-The four functions that create error instances in `src/bun.js/bindings/JSGlobalObject.zig`
-are in scope: `createErrorInstance`, `createTypeErrorInstance`, `createSyntaxErrorInstance`,
-`createRangeErrorInstance`.
-
-The `createDOMExceptionInstance` function is **not** in scope and should not be modified.
-
-## Valid Solution
-
-A correct fix must satisfy all of the following:
-
-1. The catch block in each of the four error functions clears any pending JS exception
-   before returning the fallback error instance.
-2. `createTypeErrorInstance` returns a TypeError-typed instance from its catch block.
-3. `createSyntaxErrorInstance` returns a SyntaxError-typed instance from its catch block.
-4. `createRangeErrorInstance` returns a RangeError-typed instance from its catch block.
-5. `createErrorInstance` returns an appropriate generic error from its catch block.
+Note: There is a separate DOMException creation function that should NOT be modified.

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_double_push_eliminated checks that workbuf.append count is <11 (the exact number 11 is not in the instruction); test_workitem_tracks_multiple_indices checks for removal of 'idx: u32' field and presence of specific type names like BitSet, AutoBitSet, ArrayList, BoundedArray, etc.; test_pattern_matching_iterates_active_indices checks for iteration patterns like .iterator(), findFirstSet, etc. These specific identifiers and thresho"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: WorkItem struct must not have 'idx: u32' (test_workitem_tracks_multiple_indices), workbuf.append count must be <11 (test_double_push_eliminated), specific function names like matchPatternDir/matchPatternFile (test_both_match_functions_present), specific identifiers like GlobWalker/workbuf/patternComponents (test_core_api_preserved), and iteration patterns near match calls (test_pattern_matching_iterates_active_indic"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly describes the fix approach: 'The standard approach is to carry a set of active component indices per work item, so that when a boundary is crossed, both indices are tracked together and the directory is iterated only once.' This tells the agent exactly WHAT to change (replace single index with a set of indices in WorkItem), not just what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (directories visited twice at **/X boundaries due to NFA state handling) and expected behavior (each directory opened once) but does not prescribe a specific fix like 'use a bitset in WorkItem' or 'replace idx:u32 with ComponentSet'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_workitem_tracks_multiple_indices asserts idx:u32 is gone and checks for specific type names (BitSet, AutoBitSet, ArrayList, etc.). An alternative correct fix that uses a different mechanism (e.g., a deduplication cache/hashmap on directory paths, or a 'visited' set to skip already-opened dirs without changing WorkItem's idx field) would fail these tests despite correctly fixing the bug."
+      "reason": "test_workitem_tracks_multiple_indices checks for specific patterns like 'BitSet', 'AutoBitSet', 'ArrayList', 'BoundedArray', etc. in WorkItem struct body. An alternative fix that deduplicates at the workbuf level (e.g., using a visited hashset to skip already-seen directories) without changing WorkItem's fields would fail this test. test_double_push_eliminated requires workbuf.append count < 11, which assumes consolidation approach rather than dedup-on-pop."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_workitem_tracks_multiple_indices, test_double_push_eliminated, test_pattern_matching_iterates_active_indices) all use regex pattern matching on source code text (e.g., re.search(r'\\bidx\\s*:\\s*u32', body)). They inspect source structure via string/regex matching, not by compiling or executing the code. The comment in the test file explicitly states 'AST-only because: Zig code requires Zig compiler + WebKit/JSC; not available in container'."
+      "reason": "The fail-to-pass tests (test_workitem_tracks_multiple_indices, test_double_push_eliminated, test_pattern_matching_iterates_active_indices) are purely text/regex searches on source code\u2014they read the file and check for string patterns. They do not compile, execute, or test actual behavior. The comment in test_outputs.py explicitly states 'AST-only because: Zig code requires Zig compiler + WebKit/JSC; not available in container'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op solution would leave the original code unchanged, which has idx:u32 in WorkItem and 11 workbuf.append calls. test_workitem_tracks_multiple_indices would fail (idx:u32 still present), test_double_push_eliminated would fail (count=11 not <11), and test_pattern_matching_iterates_active_indices would fail (no iteration patterns). So stubs cannot pass."
+      "reason": "The f2p tests check structural properties that would not be satisfied by a stub: test_workitem_tracks_multiple_indices verifies WorkItem no longer has 'idx: u32' and has a multi-value field; test_double_push_eliminated checks workbuf.append count changed from 11; test_pattern_matching_iterates_active_indices checks for iteration near match calls. A no-op or stub change would leave the original code intact and fail these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/bun or could be accessed. The test file itself is at tests/test_outputs.py and readable, which reveals exactly what regex patterns and counts the tests check for. An agent could read test_outputs.py to craft a minimal source edit that passes all regex checks without understanding the bug."
+      "reason": "The solution is in /workspace/bun as a git repo and solve.sh contains the full patch. The agent could run 'cat /solution/solve.sh' or find the gold patch. Additionally, since tests are pure source inspection, the agent could reverse-engineer exact expected patterns from test_outputs.py if accessible (though it's described as hidden)."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires 'Correctness must be preserved: all matches found by the old code must still be found' and 'Patterns without **/X boundaries should be unaffected.' No test verifies actual glob matching correctness or that non-boundary patterns still work. Tests only check source code structure."
+      "reason": "Instruction says 'Correctness must be preserved: all matches found by the original code must still be found' and 'The scan should complete in time proportional to the number of files', but no test verifies correctness of glob matching results or performance. Tests only check source code structure."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks and why."
+      "reason": "Tests are well-organized with clear section headers (Gates/pass_to_pass/static, Fail-to-pass/pr_diff, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "File paths (src/glob/GlobWalker.zig, src/collections/bit_set.zig), function names, and commands appear correct with no typos."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact struct ('WorkItem'), the exact field causing the bug ('two separate WorkItems'), the exact function ('matchPatternDir'), and prescribes the exact solution approach ('carry a set of active component indices per work item'). This goes well beyond identifying the buggy module."
+      "outcome": "pass",
+      "reason": "Instruction mentions only the two relevant files (GlobWalker.zig, bit_set.zig) which are natural for the task domain. It describes the bug mechanism (NFA states causing double visits) but doesn't point to specific lines, structs like WorkItem, or fields like idx."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,16 +52,14 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 5
 }

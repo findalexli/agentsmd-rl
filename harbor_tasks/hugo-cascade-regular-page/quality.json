@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_code_change_removes_isbranchnode_check asserts on the exact string 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil' and 'if m.pageConfigSource.Frontmatter != nil {'. While the instruction mentions 'cnh.isBranchNode(m)' pattern, it does not specify the exact fixed pattern string 'if m.pageConfigSource.Frontmatter != nil {' that the test checks for. Also, test_cascade_frontmatter_on_regular_page asserts on specific file paths like 'public/s2/p2/index.html' and 'public/s2/p3/inde"
+      "reason": "test_code_change_removes_isbranchnode_check asserts on exact strings like 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil' and 'if m.pageConfigSource.Frontmatter != nil {' which are not literally stated in instruction.md. The instruction mentions 'cnh.isBranchNode(m)' pattern generally but not the exact fixed line. Also, test_cascade_to_self_multiple_environments tests specific environment names (prod, staging, dev, testing) which are mentioned in instruction.md but the exact test "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states 'The problematic pattern involves a check like `cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil`' and 'The fix should involve removing the branch node restriction from the cascade frontmatter processing logic.' This tells the agent exactly what code to change and how to change it (remove the isBranchNode check), leaving no reasoning required."
+      "reason": "instruction.md explicitly states 'The fix should involve removing the branch node restriction from the cascade frontmatter processing logic' and describes the exact buggy pattern 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil'. This tells the developer exactly what to change (remove the isBranchNode check from that conditional), leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_code_change_removes_isbranchnode_check asserts the exact string 'if m.pageConfigSource.Frontmatter != nil {' must be present in the file, and that 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil' must be absent. An alternative correct fix (e.g., adding a separate code path for regular pages, or restructuring the conditional differently like 'if !cnh.isBranchNode(m) || m.pageConfigSource.Frontmatter != nil {') would fail this structural test even if behaviorally correct."
+      "reason": "test_code_change_removes_isbranchnode_check asserts the exact string 'if m.pageConfigSource.Frontmatter != nil {' must be present and 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil' must be absent. An alternative correct fix (e.g., adding a separate code path for regular pages, or restructuring the conditional differently like 'if !cnh.isBranchNode(m) || m.pageConfigSource.Frontmatter != nil') would fail this structural test even if behaviorally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_code_change_removes_isbranchnode_check is purely textual: it reads page__meta.go and checks for string patterns with 'buggy_pattern in content' and 'fixed_pattern in content'. However, other tests (test_cascade_frontmatter_on_regular_page, test_cascade_to_self_multiple_environments, test_repo_go_test_hugolib, etc.) do execute subprocess calls and verify behavior. Since the rubric says 'FAIL if every test is assert in open(path).read()', this passes because not every test is textual. But one"
+      "reason": "test_code_change_removes_isbranchnode_check is purely a text-matching test that reads page__meta.go and checks for exact string patterns. While other tests do execute code (go test, go build), this test is solely 'assert pattern in open(path).read()' style."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_cascade_frontmatter_on_regular_page, test_cascade_to_self_multiple_environments) compile and run Go integration tests that verify files are NOT created (AssertFileExists false), which requires the actual cascade logic to be fixed. A stub or no-op would not cause Hugo to skip rendering those pages."
+      "reason": "The f2p tests (test_cascade_frontmatter_on_regular_page, test_cascade_to_self_multiple_environments) execute actual Go integration tests that build Hugo sites and check whether files exist or not. A stub/no-op implementation would still render the pages, causing AssertFileExists(..., false) to fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/hugo's sibling or the solve.sh is accessible. More critically, test_code_change_removes_isbranchnode_check reveals the exact fix pattern ('if m.pageConfigSource.Frontmatter != nil {') that the agent could grep from the test file or solution. The agent could also read /solution/solve.sh if it exists in the container to get the exact patch."
+      "reason": "The solution file exists at /workspace/hugo's sibling or the solve.sh is accessible. The agent could read solution/solve.sh which contains the exact patch. Additionally, the test file test_code_change_removes_isbranchnode_check contains the exact strings needed for the fix, so grepping test_outputs.py reveals the answer."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: regular pages with cascade (p2.md), leaf bundles with cascade (p3/index.md), sections with cascade (s1/_index.md), multiple environment values, existing cascade tests continuing to pass, and the code building/compiling successfully."
+      "reason": "All behaviors described in instruction.md are tested: regular pages with cascade (p2.md), leaf bundles with cascade (p3/index.md), sections with cascade (s1/_index.md), multiple environment values, existing cascade tests still passing, and code compilation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cascade_frontmatter_on_regular_page, test_cascade_to_self_multiple_environments, etc.), have docstrings explaining purpose, and are logically grouped by concern (behavioral tests, structural tests, pass-to-pass regression tests)."
+      "reason": "Tests are well-named (test_cascade_frontmatter_on_regular_page, test_cascade_to_self_multiple_environments, etc.) with docstrings explaining each test's purpose and categorization (fail-to-pass vs pass-to-pass)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a bug fix in Go code, not producing structured data output."
+      "reason": "This task is a bug fix in Go code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the buggy code pattern 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil' and states the fix is to remove the branch node restriction. This reveals the exact location and nature of the fix, going well beyond describing what's broken."
+      "reason": "instruction.md names the exact buggy code pattern 'cnh.isBranchNode(m) && m.pageConfigSource.Frontmatter != nil' and explicitly states 'The fix should involve removing the branch node restriction from the cascade frontmatter processing logic.' This effectively identifies the exact line and the exact change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only fix task, not an agent config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

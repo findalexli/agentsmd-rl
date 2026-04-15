@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for multiple specific behaviors not mentioned in instruction.md: (1) test_freethreaded_abi_via_sysconfig checks detection via sysconfig.get_config_var('Py_GIL_DISABLED'), which is never mentioned in the instruction; (2) test_freethreaded_abi_via_env_var checks detection via MATRIX_PYTHON_VERSION ending in 't', never mentioned; (3) test_mac_minos_mode2_attempted checks that check_mac_wheel_minos attempts Mode 2 fallback and asserts 'skipping wheel minos' is NOT in output, but instruct"
+      "reason": "Tests assert specific behaviors not fully described in instruction.md. For example: test_mac_minos_mode2_attempted checks that output must not contain 'skipping wheel minos' (exact string), and test_dead_code_removed checks for unreachable 'continue' after 'raise' in loop body via AST. While the instruction mentions these broadly, it doesn't specify: (1) the exact detection order/priority of the three free-threaded sources, (2) that Mode 2 should attempt reading from installed torch package spec"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (sys.abiflags is empty on free-threaded Python, dead code after raise, missing Mode 2 fallback) but doesn't specify exact code changes, line numbers, or implementation details for the fix."
+      "outcome": "fail",
+      "reason": "The instruction explicitly prescribes the implementation: 'The detection mechanism must check three sources: sysconfig.get_config_var(\"Py_GIL_DISABLED\") returning a truthy value, Environment variable MATRIX_PYTHON_VERSION ending with the letter \"t\", sys._is_gil_enabled() returning False when the function exists.' This tells the agent exactly WHAT to implement, not just what's broken. It also says to remove unreachable dead code (continue after raise) and add Mode 2 fallback to check_mac_wheel_mi"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_freethreaded_abi_via_sysconfig patches sysconfig.get_config_var specifically for 'Py_GIL_DISABLED' key, requiring the solution to use this exact config var. test_freethreaded_abi_via_env_var requires detection via MATRIX_PYTHON_VERSION ending in 't'. test_mac_minos_mode2_attempted asserts 'skipping wheel minos' is not in output, which constrains the implementation to not print that specific message. An alternative correct fix that uses a different detection mechanism (e.g., checking sys.ver"
+      "reason": "test_freethreaded_abi_via_sysconfig patches sysconfig.get_config_var specifically expecting the code to call sysconfig.get_config_var('Py_GIL_DISABLED'). test_freethreaded_abi_via_env_var sets _is_gil_enabled to True but MATRIX_PYTHON_VERSION to 'X.Yt', requiring the code to check the env var independently. An alternative correct fix that uses only one detection method (e.g., only _is_gil_enabled) would fail these tests. The tests enforce specific implementation details about which detection sou"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests actually import and call check_wheel_platform_tag() and check_mac_wheel_minos(), create real wheel files, and verify behavioral outcomes (success or RuntimeError). test_dead_code_removed uses AST inspection which is structural but still programmatic. test_freethreaded_abi_subprocess runs a subprocess."
+      "reason": "Tests import and call the actual functions (check_wheel_platform_tag, check_mac_wheel_minos), run subprocesses, create actual wheel files, and verify behavioral outcomes (success/RuntimeError). Only test_dead_code_removed uses AST inspection, but that's checking structural code properties, not just string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub check_wheel_platform_tag() that does nothing would fail test_freethreaded_wrong_tag_rejected (which expects RuntimeError). A stub check_mac_wheel_minos() that just returns would fail test_mac_minos_mode2_attempted (which checks output doesn't contain 'skipping'). The dead code test checks AST structure of the actual source file."
+      "reason": "The fail-to-pass tests create wheels with 't' ABI suffix and verify the validation function accepts them under free-threaded conditions. A stub that always passes would fail test_freethreaded_wrong_tag_rejected (which expects RuntimeError). A stub that always raises would fail the acceptance tests. The tests form a meaningful discriminating set."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace as solve.sh and the gold patch is readable. The Dockerfile doesn't remove /solution/ or restrict access. An agent could read the solution directly or grep for the expected patch content."
+      "reason": "The solution file exists at /workspace as part of the git checkout, and the solve.sh with the complete gold patch is in solution/solve.sh. The Dockerfile doesn't remove these. An agent could read /solution/solve.sh or look at git history. Also, the tests file at tests/test_outputs.py reveals the exact expected behaviors which could be reverse-engineered."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three issues mentioned in instruction.md are tested: free-threaded ABI tag validation (multiple tests), dead code removal (test_dead_code_removed), and Mode 2 fallback for check_mac_wheel_minos (test_mac_minos_mode2_attempted)."
+      "reason": "All behaviors mentioned in instruction.md are tested: free-threaded ABI detection via three sources, dead code removal, Mode 2 fallback for check_mac_wheel_minos, and standard wheel validation regression."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named, have docstrings, and are grouped by section (gates/static, fail-to-pass, pass-to-pass) with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -42,21 +42,24 @@
       "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (.ci/pytorch/smoke_test/check_wheel_tags.py) and the two functions, which is appropriate for the task domain. It doesn't specify exact line numbers or exact code changes."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (.ci/pytorch/smoke_test/check_wheel_tags.py) and exact functions (check_wheel_platform_tag, check_mac_wheel_minos), describes the exact variable (sys.abiflags), and specifies the exact three detection mechanisms to implement. This goes well beyond describing the bug and into specifying the solution architecture."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config-editing task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
 }

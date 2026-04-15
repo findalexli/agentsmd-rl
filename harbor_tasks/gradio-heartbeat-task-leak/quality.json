@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (gradio/routes.py), the function (sse_stream), the heartbeat() coroutine, the three exit paths (disconnect, normal completion, exception), and the core issue (create_task result not stored, .cancel() never called). All test assertions check for these named elements. The tests also check ruff linting/formatting and py_compile, which are standard repo CI checks discoverable from the repo structure."
+      "reason": "instruction.md names the file (gradio/routes.py), the function (sse_stream), the heartbeat() coroutine, asyncio.create_task, the three exit paths (disconnect, normal completion, exception), and the need for .cancel(). All test assertions check for these elements which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the bug (heartbeat task reference discarded, cancel never called, three exit paths) but does not specify the exact fix (e.g., doesn't say 'move create_task before the try block' or 'add heartbeat_task.cancel() in three places or a finally block'). A developer must still reason about the implementation."
+      "reason": "instruction.md describes the bug (task reference discarded, cancel never called, three exit paths) but does not specify the exact fix (e.g., 'move create_task before try', 'add heartbeat_task.cancel() at lines X, Y, Z'). A developer must reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_heartbeat_task_created_before_try requires create_task to be a direct child statement of sse_stream's body AND before the try block. An alternative correct fix using a finally block with create_task inside the try block (but before the while loop) would fail this test. test_heartbeat_cancelled_all_exit_paths requires either >=3 cancel() calls or a finally-block cancel, rejecting valid approaches like using asyncio.TaskGroup or contextlib patterns. The tests enforce a specific implementation"
+      "reason": "test_heartbeat_task_created_before_try requires create_task to be at the top level of sse_stream body BEFORE the try block. test_heartbeat_cancelled_all_exit_paths requires either 3+ .cancel() calls OR a finally-block cancel. An equally correct alternative fix using try/finally with create_task inside the try block (but before any awaits that could fail) would fail test_heartbeat_task_created_before_try. Another valid fix using contextlib or asyncio.TaskGroup would also fail. The tests enforce t"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_heartbeat_task_reference_stored, test_heartbeat_cancelled_all_exit_paths, test_heartbeat_task_created_before_try) use AST inspection only \u2014 they parse the source code and check structural patterns. They never execute sse_stream, never create an SSE connection, and never verify that tasks are actually cancelled at runtime. The pass-to-pass tests do run subprocesses (ruff, py_compile) but the core behavioral tests are purely text/structure inspection."
+      "outcome": "pass",
+      "reason": "Tests use AST parsing (ast.parse, ast.walk) to inspect the code structure, run subprocess calls for ruff and py_compile, and verify structural properties of the code. This is behavioral inspection of code structure, not simple string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass the f2p tests. The original code has a bare asyncio.create_task() expression, which test_heartbeat_task_reference_stored would detect as missing an assignment. test_heartbeat_cancelled_all_exit_paths requires cancel() calls that don't exist in the original. test_heartbeat_task_created_before_try requires the create_task assignment to precede the try block. These tests require actual code changes to pass."
+      "reason": "The f2p tests (test_heartbeat_task_reference_stored, test_heartbeat_cancelled_all_exit_paths, test_heartbeat_task_created_before_try) check for specific AST patterns that don't exist in the original code. A stub/no-op would not pass since the original code has a bare create_task expression and no cancel calls."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/gradio's git history or could be read from the solution/solve.sh file if it exists in the container. The Dockerfile doesn't remove the solution directory. An agent could read the gold patch directly and apply it."
+      "reason": "The solution file exists at /workspace/gradio's sibling or the container contains solution/solve.sh. An agent could read /solution/solve.sh (or the gold patch within it) to see the exact diff and apply it directly. The Dockerfile doesn't remove solution files from the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires: (1) heartbeat task reference stored, (2) cancellation in all three exit paths, (3) no leaked background tasks. Tests cover all three: test_heartbeat_task_reference_stored, test_heartbeat_cancelled_all_exit_paths, and test_no_bare_create_task_in_sse_stream verify these requirements."
+      "reason": "instruction.md requires cancellation in all three exit paths and proper task reference storage. Tests verify: task reference stored (test_heartbeat_task_reference_stored), cancellation in all paths (test_heartbeat_cancelled_all_exit_paths), and proper ordering (test_heartbeat_task_created_before_try)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test checks and why."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in Python source code, not producing structured data output."
+      "reason": "This task involves fixing a bug in Python code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (gradio/routes.py) and function (sse_stream) which is appropriate for a bug fix task. It describes the symptom (task reference discarded, cancel never called) but doesn't specify exact line numbers or the precise fix pattern."
+      "reason": "instruction.md names the file (routes.py) and function (sse_stream) which is reasonable for the task domain. It describes the bug pattern but doesn't specify exact line numbers or the precise fix structure (e.g., 'move create_task before try')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,11 +52,10 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 8,
+  "fail_count": 2
 }

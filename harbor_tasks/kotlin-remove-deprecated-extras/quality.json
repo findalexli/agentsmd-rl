@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific file paths (ExtrasProperty.kt, ExtrasPropertyTest.kt), the deprecated functions (extrasReadProperty, extrasFactoryProperty, extrasNullableLazyProperty), interfaces (ExtrasReadOnlyProperty, ExtrasFactoryProperty, NullableExtrasLazyProperty), extension properties (readProperty, factoryProperty, nullableLazyProperty), the import to remove (java.util.*), and the annotation to remove (@Suppress(\"DEPRECATION_ERROR\")). The test assertions check for these same strings "
+      "reason": "The instruction names all deprecated APIs (extrasReadProperty, extrasFactoryProperty, extrasNullableLazyProperty, ExtrasReadOnlyProperty, ExtrasFactoryProperty, NullableExtrasLazyProperty, readProperty, factoryProperty, nullableLazyProperty), the specific files, the import to remove, and the @Suppress annotation. The test checks for these same specific strings and file paths, all discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly says to migrate 'readProperty' to non-deprecated equivalents, and given tests like test_test_file_uses_readwrite_property assert 'keyA.readProperty' not in source and test_test_file_uses_lazy_property asserts 'keyList.factoryProperty' not in source, the agent needs to figure out the exact replacement names. However, the instruction says 'Examine the remaining non-deprecated APIs in ExtrasProperty.kt to identify the correct replacements' which requires reasoning. But th"
+      "reason": "The instruction explicitly says to replace 'readProperty' with 'readWriteProperty' (step 3 says 'migrate all usages of deprecated APIs to their non-deprecated equivalents') and the test test_test_file_uses_readwrite_property checks for 'readWriteProperty', and test_test_file_uses_lazy_property checks for 'lazyProperty'. While the instruction doesn't literally say 'replace X with Y', the test names and the combination of instruction step 3 ('Examine the remaining non-deprecated APIs') with specif"
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The f2p tests like test_test_file_uses_readwrite_property assert 'keyA.readProperty' not in source and 'keyB.readProperty' not in source - these check for specific variable names (keyA, keyB, keyList) that come from the existing test file. However, they don't verify what the replacement IS, only that the deprecated usage is gone. An agent could simply delete those test methods rather than migrating them, and these f2p tests would pass. But the p2p tests (test_extras_property_tests_pass) run the "
+      "outcome": "pass",
+      "reason": "The tests check for absence of deprecated patterns and presence of non-deprecated API usage patterns. The f2p tests mostly check that deprecated code is removed (not how it's removed). The migration tests check that deprecated extensions like 'keyA.readProperty' are not present, but don't assert exact replacement code structure. Alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "While f2p tests are text-based (checking source content), the p2p tests actually compile the Kotlin sources (test_main_sources_compile, test_extras_property_test_compiles, test_all_sources_compile) and run JUnit tests (test_extras_property_tests_pass, test_extras_tests_pass, etc.). The combination of text checks for removal and compilation/execution tests provides behavioral verification."
+      "reason": "While f2p tests are text-based checks for removal of deprecated code, the p2p tests actually compile the Kotlin sources (test_main_sources_compile, test_extras_property_test_compiles) and run JUnit tests (test_extras_property_tests_pass, test_extras_tests_pass, etc.), verifying actual behavior through execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that specific deprecated code patterns are absent from source files. A stub/no-op wouldn't pass because the original files contain the deprecated code. The agent must actively remove the deprecated APIs and migrate tests. The p2p compilation and test execution tests further ensure the changes are correct."
+      "reason": "The f2p tests check that specific deprecated patterns are absent from source files that initially contain them. A stub/no-op solution (not modifying files) would fail these tests since the deprecated code is present in the original files. The compilation tests also verify the migrated test code actually compiles and passes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/kotlin (the REPO path) as a git repo, and solve.sh applies a git patch. The agent could potentially read the solution/solve.sh if it exists in the container, or could inspect git log/reflog. Also, the Dockerfile downloads files from a specific commit (BASE_COMMIT=95085a77af52e78028044f0ea5404803232ad697) and the PR reference (JetBrains/kotlin#5809) is in the test file comments, which an agent could use to look up the exact solution."
+      "reason": "The solution is in /workspace/kotlin as solve.sh applies a git patch there. The agent could read the solution file at the path specified in solution/solve.sh which contains the full gold patch. Additionally, the test file tests/test_outputs.py is accessible and reveals exactly what strings to remove and what replacements to make (e.g., 'readWriteProperty', 'lazyProperty')."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five requirements from the instruction are tested: (1) deprecated section removal, (2) java.util.* import removal, (3) migration of test usages, (4) removal of nullableLazyProperty tests, (5) removal of @Suppress annotation. The compilation and runtime tests verify everything still works."
+      "reason": "All five instruction steps are tested: removal of deprecated section, removal of deprecated functions/interfaces/extensions, removal of java.util.* import, migration of test usages, removal of nullableLazyProperty tests, and removal of @Suppress annotation. Compilation and test execution are also verified."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,28 +35,29 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code editing/refactoring, not producing structured data output."
+      "reason": "This task involves source code editing, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and API names in the instruction and tests are consistent and correct."
+      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file and the deprecated APIs to remove, which is appropriate since the task is about removing specific deprecated code. It doesn't specify exact line numbers or the exact replacement code, telling the agent to 'examine the remaining non-deprecated APIs' to find replacements."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (ExtrasProperty.kt), the exact comment block ('DEPRECATED APIs'), specific function names, specific interface names, and the exact import line to remove. While some specificity is needed, telling the agent to look for 'DEPRECATED APIs' comment section and listing every single deprecated API by name goes beyond describing what's broken\u2014it precisely localizes every change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 7,
   "fail_count": 3
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions check for strings/patterns explicitly mentioned in instruction.md: '.continue/checks' path, Set patterns ('seen = new Set<string>()', 'seen.has(file)', 'seen.add(file)'), try/catch blocks, JSDoc references to '.continue/checks/*.md' and '.continue/agents/*.md', precedence comment phrases, file paths, ESLint and Vitest commands. Every asserted literal is discoverable from the instruction."
+      "reason": "All test assertions reference paths, strings, and concepts explicitly named in instruction.md: `.continue/checks`, `.continue/agents`, `path.join`/`path.resolve`, `new Set`/deduplication, `try`/`catch`, precedence documentation, the file path `src/commands/review/resolveReviews.ts`, `resolveReviews.test.ts`, ESLint, and Vitest. No undiscoverable specifics."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: use a Set with specific patterns like 'seen = new Set<string>()', 'seen.has(file)', 'seen.add(file)'; exact precedence comment phrases like 'Agents take precedence'; exact path construction patterns like 'path.join(cwd, \".continue\", \"checks\")'. This goes beyond describing what's broken and prescribes HOW to implement the fix at a very specific code level."
+      "reason": "instruction.md prescribes exact implementation details: use a Set for deduplication, use try/catch blocks around directory reads, use path.join() for path construction, document precedence in JSDoc. These are not just behavioral requirements but specific implementation choices that dictate HOW to write the code, not just WHAT behavior is expected."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string patterns like 'seen = new Set<string>()', specific path construction patterns like '\".continue\", \"checks\"', exact comment phrases like 'Agents take precedence'. An alternative correct fix using a Map for dedup, or using 'filter' with 'indexOf', or different variable names, or different comment phrasing would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests like test_resolveFromLocal_deduplication assert specific implementation details: `'new Set' in content or 'seen' in content or 'has(' in content or 'add(' in content`. A correct alternative using e.g. `Map`, `filter`, `reduce`, or `includes()` for deduplication would fail. Similarly, test_resolveFromLocal_error_handling requires literal `try {` and `catch` strings, failing for alternatives using `.catch()` promise chains or `fs.existsSync` guards."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_resolveFromLocal_checks_directory, test_resolveFromLocal_deduplication, test_resolveFromLocal_error_handling, test_comments_updated, and test_agents_precedence_comment ALL exclusively use 'Path(TARGET_FILE).read_text()' and string matching (assert '...' in content). None import, call, or execute the actual function. Only test_repo_review_linting and test_repo_vitest_version run subprocesses, but those are pass-to-pass tests."
+      "reason": "Tests test_resolveFromLocal_checks_directory, test_resolveFromLocal_deduplication, test_resolveFromLocal_error_handling, test_comments_updated, and test_agents_precedence_comment all use `Path(target_file).read_text()` and string matching (`'new Set' in content`, `'try {' in content`, etc.) with NO execution of the actual code. Only test_vitest_resolveReviews_tests actually runs code via vitest, but most f2p tests are pure text inspection."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All f2p tests are pure text-matching against file content. An agent could write a file containing all the required string literals as dead code comments without implementing any actual functionality, and all f2p tests would pass. For example, adding '// .continue/checks/*.md seen = new Set<string>() try { catch Agents take precedence' as a comment block would satisfy every f2p assertion."
+      "reason": "test_comments_updated just checks that '.continue/checks' and '.continue/agents' appear in the file \u2014 adding two comment lines without any functional change passes it. test_agents_precedence_comment just checks for the word 'precedence' in any case \u2014 a single comment satisfies it. These tests can be passed by stub implementations that add comments but don't implement actual functionality."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution files exist at /solution/resolveReviews.ts and /solution/resolveReviews.test.ts in the container (per solve.sh). An agent could simply 'cat /solution/resolveReviews.ts' and copy it. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the exact expected strings and insert them as comments."
+      "reason": "The solution files exist at /solution/resolveReviews.ts and /solution/resolveReviews.test.ts in the container (as referenced by solve.sh: `cp /solution/resolveReviews.ts`). An agent could simply `cat /solution/resolveReviews.ts` and copy it. There's no evidence these files are removed after setup."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires 5 unit test cases (discovery from agents/ only, checks/ only, both with dedup, empty result, error handling) and that 'npm test -- resolveReviews.test.ts --run' passes. The hidden tests never execute the unit tests or verify they exist with correct content, only checking that the implementation file has certain strings and ESLint/Vitest work generically."
+      "reason": "instruction.md requires 5 specific test cases (agents-only, checks-only, both with dedup, empty result, graceful error handling) and that `npm test` passes them. The hidden tests only check that the vitest file exists and passes, plus do text inspection. The actual behavioral scenarios (e.g., checks-only discovery, empty directories) are not directly verified by the Python test suite \u2014 they rely entirely on the agent's own test file being correct."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each tests (e.g., 'Fail-to-pass: Implementation must scan .continue/checks/ directory'), grouped by concern (structural, linting, file existence), and clearly commented at the top of the file."
+      "reason": "Tests are well-named with descriptive function names (test_resolveFromLocal_checks_directory, test_resolveFromLocal_deduplication, etc.) and have docstrings explaining their purpose and whether they are fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code and doesn't produce structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and string literals in instruction.md are consistent and correctly spelled throughout."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact function ('resolveFromLocal()'), exact file path ('extensions/cli/src/commands/review/resolveReviews.ts'), exact code patterns to use ('seen = new Set<string>()', 'path.join(cwd, \".continue\", \"checks\")'), and exact comment phrases. This prescribes the solution at implementation detail level rather than describing behavior."
+      "reason": "instruction.md explicitly names the exact function (`resolveFromLocal()`), exact file (`extensions/cli/src/commands/review/resolveReviews.ts`), and prescribes specific implementation details (use Set for deduplication, try/catch blocks, path.join). This goes beyond describing what's broken and specifies exactly where and how to fix it."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript source files, not configuration files."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [

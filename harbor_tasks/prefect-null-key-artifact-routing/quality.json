@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'const getArtifactId = ' (exact function name), 'Boolean(artifact.key)' (exact check pattern), 'hasKey = ' (exact variable name), 'artifact.key as string' (exact type assertion syntax), 'id: getArtifactId(artifact)' (exact call pattern), and 'linkProps' (exact variable name). The instruction describes desired behavior but does not specify these exact strings that tests check for."
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'const getArtifactId = ' (exact function name), 'Boolean(artifact.key)' (exact pattern), 'hasKey = ' (exact variable name), 'artifact.key as string' (exact type assertion), 'id: getArtifactId(artifact)' (exact call pattern), 'linkProps' (exact variable name). While the instruction describes the general approach (duck-typing, route selection), it never specifies these exact variable/function names or the 'as string"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies implementation details like 'Use duck-typing with \"latest_id\" in artifact', 'use artifact.key as string', the exact variable name 'hasKey', the exact conditional pattern 'Boolean(artifact.key)', and the exact route strings. This goes beyond describing what's broken and prescribes the exact fix."
+      "reason": "The instruction explicitly prescribes the implementation: use duck-typing with '\"latest_id\" in artifact', use Boolean(artifact.key) for hasKey, route to '/artifacts/artifact/$id' vs '/artifacts/key/$key', use a getArtifactId helper. This goes far beyond describing what's broken \u2014 it describes exactly what to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_artifact_card_has_getartifactid_function checks for 'const getArtifactId = ', test_artifact_card_has_haskey_check checks for 'Boolean(artifact.key)' and 'hasKey = ', test_artifact_card_routes_to_key_page_when_key_present checks for 'artifact.key as string', test_artifact_card_routes_to_id_page_when_key_missing checks for 'id: getArtifactId(artifact)'. An alternative correct fix using different variable names, a switch statement, or inline l"
+      "reason": "Tests assert gold-specific implementation details: test_artifact_card_has_getartifactid_function checks for 'const getArtifactId = ', test_artifact_card_has_haskey_check checks for 'Boolean(artifact.key)' and 'hasKey = ', test_artifact_card_routes_to_key_page_when_key_present checks for 'artifact.key as string', test_artifact_card_routes_to_id_page_when_key_missing checks for 'id: getArtifactId(artifact)'. An alternative correct fix using different variable names (e.g., 'keyExists', 'resolveId')"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_artifact_card_has_getartifactid_function, test_artifact_card_has_haskey_check, test_artifact_card_routes_to_key_page_when_key_present, test_artifact_card_routes_to_id_page_when_key_missing, test_artifact_card_does_not_use_old_fallback, test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, and test_keyed_artifact_uses_key_route ALL use `assert 'string' in open(path).read()` pattern \u2014 pure text matching with no code execution. While test_vitest_tests_"
+      "reason": "Tests test_artifact_card_has_getartifactid_function, test_artifact_card_has_haskey_check, test_artifact_card_routes_to_key_page_when_key_present, test_artifact_card_routes_to_id_page_when_key_missing, test_artifact_card_does_not_use_old_fallback, test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, and test_keyed_artifact_uses_key_route are ALL pure string-matching on file contents ('assert X in content'). While some tests do run subprocesses (vitest, tsc, bu"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, test_keyed_artifact_uses_key_route) only check for string presence in the source file. A stub that simply appends a comment containing the expected strings (e.g., '// \"/artifacts/artifact/$id\" \"latest_id\" in artifact artifact.latest_id') would pass all these tests without implementing any actual fix."
+      "reason": "The f2p tests (test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, test_keyed_artifact_uses_key_route) only check for string presence in source code. An agent could satisfy them by adding dead code comments containing the expected strings without actually implementing the fix. For example, adding '// \"/artifacts/artifact/$id\"' and '// \"latest_id\" in artifact' as comments would pass the text checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/prefect (same container) at the path solve.sh references. The agent could read /solution/solve.sh or the gold patch directly. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact strings expected and insert them as comments."
+      "reason": "The solution exists at /workspace/prefect and solve.sh is accessible in the container. The agent could read the solution patch directly. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the exact strings being asserted and inject them as comments or dead code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover the key behaviors: routing with key present, routing with key absent, handling ArtifactCollection vs Artifact types, removal of old pattern, and build/lint/type checks all pass."
+      "reason": "All behaviors described in instruction.md (route selection based on key truthiness, ArtifactCollection vs Artifact handling with latest_id, removal of old fallback pattern) are covered by tests, plus the vitest/typecheck/lint/build tests verify overall correctness."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, and they are logically grouped by concern (implementation checks, build checks, f2p behavioral checks)."
+      "reason": "Tests are well-named with descriptive docstrings explaining each test's purpose, grouped logically (static checks, behavioral checks, toolchain checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a React component's routing logic, not producing structured data output."
+      "reason": "Task is about fixing a React component's routing logic, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'Use duck-typing with \"latest_id\" in artifact', the exact variable pattern 'hasKey', 'Boolean(artifact.key)', 'artifact.key as string', and the exact route strings. This goes well beyond identifying the buggy file and leaks the exact solution approach."
+      "reason": "Instruction.md specifies exact implementation details: 'Use duck-typing with \"latest_id\" in artifact', 'use Boolean(artifact.key)', specific variable names like 'hasKey', the exact ternary routing pattern with linkProps. This goes beyond naming the file and describes the exact code structure to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

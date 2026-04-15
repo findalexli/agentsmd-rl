@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (e.g., packages/excalidraw/components/dropdownMenu/DropdownMenuItem.tsx, packages/excalidraw/actions/shortcuts.ts, etc.), component names (DropdownMenuItemCheckbox, Preferences), string literals ('preferences', 'Tool lock', 'toolLock', 'Q'), icon names (settingsIcon), type names (DropdownMenuItemProps, ShortcutName), and action names (actionToggleGridMode, etc.) that are asserted in the tests. The test for settingsIcon checks for 'adjustments-horizontal' or '"
+      "reason": "The instruction.md names all specific file paths (e.g., packages/excalidraw/components/dropdownMenu/DropdownMenuItem.tsx, packages/excalidraw/actions/shortcuts.ts), component names (DropdownMenuItemCheckbox, Preferences), literal strings ('preferences', 'Tool lock', 'Q'), type names (ShortcutName, DropdownMenuItemProps), and action names (actionToggleGridMode, etc.) that the tests assert on. The test for settingsIcon checks for 'adjustments-horizontal' or 'M14 6m-2' which aren't explicitly in th"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, specifying exact component names (DropdownMenuItemCheckbox), exact file locations for new files, exact type export names (DropdownMenuItemProps), exact assignment syntax patterns (DropdownMenu.ItemCheckbox), exact sub-component naming (Preferences.ToggleToolLock, Preferences.ToggleSnapMode, etc.), and exact locale keys. While it doesn't give line numbers, it effectively dictates the implementation rather than describing behavior. For example, 'The type "
+      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: specific component names (DropdownMenuItemCheckbox), exact file locations, exact type names to export (DropdownMenuItemProps), exact sub-component attachment pattern (Preferences.ToggleToolLock), exact import requirements. However, it describes WHAT to build rather than giving line-by-line code changes, so a developer still needs to write the actual implementation. On balance, the instruction describes req"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'DropdownMenu.ItemCheckbox = DropdownMenuItemCheckbox' in test_dropdown_menu_exports_checkbox, exact subcomponent names like 'Preferences.ToggleToolLock' in test_preferences_component_exists, exact string 'export type DropdownMenuItemProps' in test_dropdown_menu_item_props_type_exported, and file existence at exact path 'DropdownMenuItemCheckbox.tsx'. An alternative correct implementation using different naming conventions (e.g.,"
+      "reason": "Tests assert on very specific implementation details like exact string 'DropdownMenu.ItemCheckbox = DropdownMenuItemCheckbox' (test_dropdown_menu_exports_checkbox), exact variable names 'checkIcon' and 'emptyIcon' (test_dropdown_menu_item_checkbox_exists), exact component names 'Preferences.ToggleToolLock' etc. (test_preferences_component_exists), and exact type export syntax 'export type DropdownMenuItemProps' (test_dropdown_menu_item_props_type_exported). An alternative correct implementation "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The majority of fail_to_pass tests (test_toollock_shortcut_exists, test_settings_icon_exists, test_dropdown_menu_item_checkbox_exists, test_dropdown_menu_exports_checkbox, test_preferences_component_exists, test_preferences_uses_checkbox_items, test_locale_entries_exist, test_app_main_menu_uses_preferences, test_dropdown_menu_item_props_type_exported, test_required_actions_imported) are purely text-matching with 'assert X in open(path).read()'. Only the pass_to_pass tests (typecheck, eslint, pre"
+      "reason": "The fail_to_pass tests (test_toollock_shortcut_exists, test_settings_icon_exists, test_dropdown_menu_item_checkbox_exists, test_dropdown_menu_exports_checkbox, test_preferences_component_exists, test_preferences_uses_checkbox_items, test_locale_entries_exist, test_app_main_menu_uses_preferences, test_dropdown_menu_item_props_type_exported, test_shortcut_name_includes_toollock, test_required_actions_imported) are ALL string-matching tests using `assert 'X' in content` patterns on file contents. N"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While the f2p tests are text-based, they do require actual file creation and content changes (e.g., creating DropdownMenuItemCheckbox.tsx, adding toolLock to shortcuts.ts, adding locale entries). A stub/no-op implementation wouldn't pass since the files don't exist and the strings aren't present in the base commit. Additionally, the pass_to_pass tests (typecheck, eslint) ensure the code actually compiles and passes linting."
+      "reason": "The fail_to_pass tests check for specific strings that don't exist in the base commit (e.g., 'toolLock' in shortcuts.ts, DropdownMenuItemCheckbox file existence, settingsIcon export, Preferences component). A stub/empty implementation wouldn't contain these specific identifiers, so the tests cannot be trivially satisfied."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace and solve.sh contains the complete gold patch. An agent could read /solution/solve.sh (or the git apply patch within it) to get the exact implementation. The tests also check for literal strings that appear in the instruction, making it trivial to pattern-match without understanding."
+      "reason": "The solution is available at /workspace/excalidraw after the solve.sh would be applied, and the agent could read solution/solve.sh if it exists in the container. Additionally, since all tests are text-matching (assert 'X' in open(path).read()), the agent could grep the test file to discover exact strings needed and inject them into files without understanding the feature. The test fixture values are literal strings directly readable from test_outputs.py."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: checkbox component, type export, settings icon, keyboard shortcut, preferences component with all toggles, locale entries, and app main menu integration. The instruction says 'Toggling an item immediately applies the change' which isn't directly tested, but the pass_to_pass typecheck and existing unit tests provide some coverage."
+      "outcome": "fail",
+      "reason": "The instruction requires 'Toggling an item immediately applies the change' and 'Clicking it will open a submenu showing all preference toggles' \u2014 these behavioral requirements about UI interaction are not tested. Tests only verify file contents textually, not actual runtime behavior of the preferences menu."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and have docstrings indicating what they verify and whether they are pass_to_pass or fail_to_pass. Tests are logically grouped by feature area (dropdown menu, shortcuts, preferences, locale, etc.)."
+      "reason": "Tests are well-named with descriptive function names (test_toollock_shortcut_exists, test_preferences_component_exists, etc.), have docstrings indicating pass_to_pass vs fail_to_pass, and are logically grouped by feature area."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The JSON locale file schema is documented in instruction.md with exact key-value pairs: 'preferences': 'Preferences' and 'preferences_toolLock': 'Tool lock' in the labels section."
+      "reason": "The task involves a JSON locale file (en.json), and the instruction specifies the exact keys and values needed: 'preferences': 'Preferences' and 'preferences_toolLock': 'Tool lock' in the labels section."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths, variable names, component names, and commands in the instruction are consistent with the test assertions and the codebase structure. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact file paths, exact component names, exact type names, exact assignment patterns, and exact sub-component naming conventions. For example, specifying 'DropdownMenu.ItemCheckbox = DropdownMenuItemCheckbox' pattern and 'Preferences.ToggleToolLock' naming goes beyond describing the task domain and into dictating the implementation."
+      "reason": "The instruction names exact files to modify, exact component names to create (DropdownMenuItemCheckbox), exact type names to export (DropdownMenuItemProps), exact sub-component patterns (Preferences.ToggleToolLock), and exact import requirements. While it doesn't give line numbers, it essentially prescribes the complete architecture and naming, leaving very little for the agent to discover."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not a config-edit task."
+      "reason": "This is a code-only task involving creation of new components and modifications to existing source files, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -58,8 +58,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 6
 }

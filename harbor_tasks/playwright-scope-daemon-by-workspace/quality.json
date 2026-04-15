@@ -3,62 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all relevant file paths (program.ts, commands.ts, SKILL.md, session-management.md), function names (findWorkspaceDir, createClientInfo, daemonProfilesDir, daemonSocketPath), variable names (workspaceDirHash, installationDirHash), command names (session-kill-all, install, install-browser, install-skills), string literals (.playwright/cli.config.json, 'Open the browser', 'Close the browser'), and structural changes that the tests assert on. Each test's asserted specifics a"
+      "reason": "The instruction.md explicitly names all key identifiers tested: workspaceDirHash, installationDirHash, findWorkspaceDir, .playwright, ClientInfo fields, session-kill-all, install/install-browser commands, skills option, 'Open the browser'/'Close the browser' descriptions, .playwright/cli.config.json, PLAYWRIGHT_DAEMON_SESSION_DIR, path.join usage, SKILL.md sections, session-management.md references, and the specific file paths. All test assertions map to something described in the instructions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact changes like 'Replace installationDir and installationDirHash with workspaceDir and workspaceDirHash in ClientInfo type', 'Rename kill-all command to session-kill-all', 'Update default config file path from playwright-cli.json to .playwright/cli.config.json', and 'Update open command description to \"Open the browser\"'. These are not descriptions of what's broken but exact prescriptions of what to change to what."
+      "reason": "The instruction explicitly dictates exact implementation details like 'A function called findWorkspaceDir must exist', 'ClientInfo type must contain workspaceDirHash', 'case session-kill-all:', 'path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash)', and 'if (args.skills)'. These are not just behavioral requirements but exact code patterns, telling the agent precisely WHAT to write rather than describing broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'function findWorkspaceDir' (test_find_workspace_dir_function_exists), exact string 'path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash)' (test_daemon_profiles_dir_scoped), exact string 'if (args.skills)' (test_install_function_handles_skills_flag), exact string 'description: \\'Open the browser\\'' (test_open_description_updated). An alternative correct implementation using different variable names or code struc"
+      "reason": "Tests assert on exact implementation details like 'function findWorkspaceDir' (exact function name), 'if (args.skills)' (exact conditional pattern), 'path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash)' (exact expression), specific variable names within function bodies like daemonSocketPath. An alternative correct implementation using e.g. 'locateWorkspace' or 'args.skills !== undefined' or a different path construction would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads file content and asserts on string presence (e.g., 'assert \"workspaceDirHash\" in content', 'assert \"function findWorkspaceDir\" in content'). The only behavioral test (test_typescript_syntax_valid) runs tsc but only checks for syntax errors. No test actually executes the CLI, imports modules, or verifies runtime behavior."
+      "reason": "Every test except test_typescript_syntax_valid is purely text-matching via read_text() and string assertions (e.g., 'assert \"workspaceDirHash\" in content'). No test imports, calls, or executes the actual code to verify behavior. The single subprocess test only checks for syntax errors, not functional behavior."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific strings that don't exist in the original codebase (e.g., 'workspaceDirHash', 'function findWorkspaceDir', 'session-kill-all', '.playwright/cli.config.json'). A stub or unchanged file would fail these assertions, so the agent must actually make code changes."
+      "outcome": "fail",
+      "reason": "Since all tests (except the syntax check) merely assert string presence in files, an agent could satisfy them by inserting comment blocks containing all required strings (e.g., '// workspaceDirHash, findWorkspaceDir, session-kill-all, ...') without implementing any actual functionality. The tests don't verify that the code works, only that certain strings appear."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/playwright's solution/solve.sh path (or wherever mounted), and the tests only check file content via string matching. An agent could read the test file at tests/test_outputs.py to discover exact expected strings, or read solution/solve.sh to get the exact patch. The tests are pure text-matching so the agent could just write the expected strings without understanding the code."
+      "reason": "The solution patch exists at /tmp/gold.patch created by solve.sh, and also the solve.sh itself is in /solution/solve.sh in the container. An agent could read /solution/solve.sh or the generated patch files to extract the exact expected changes. Additionally, since tests are pure string-matching, the agent could grep test files for expected strings and insert them."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires '.playwright folder creation during install command' and 'isolate sessions between different workspaces', but no test verifies actual .playwright folder creation or session isolation behavior. test_close_description_updated has a syntax error (mismatched brackets in slice) and would likely fail or not test properly."
+      "outcome": "pass",
+      "reason": "Most behaviors specified in instruction.md are covered by tests: workspace scoping, findWorkspaceDir, ClientInfo changes, config path, session-kill-all, install restructuring, open/close descriptions, SKILL.md updates, session-management.md updates, daemon profiles dir, socket path, and skills flag handling."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_workspace_dir_hash_used, test_find_workspace_dir_function_exists, etc.), have docstrings explaining what they check, and are logically grouped by concern (type changes, function existence, command restructuring, documentation updates)."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They are logically organized by concern (workspace scoping, commands, documentation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code and documentation changes, not structured data output."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "test_close_description_updated has a Python syntax error: 'close_section = content[content.find(\"const close = declareCommand\"):content[content.find(\"const close = declareCommand\") + 300]' uses incorrect bracket nesting (content[...] inside a slice), which would cause a runtime error."
+      "reason": "test_close_description_updated has a Python syntax error: 'close_section = content[content.find(\"const close = declareCommand\"):content[content.find(\"const close = declareCommand\") + 300]' uses nested content[] instead of content.find() + 300, which would cause a TypeError at runtime."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact function names to create/modify (findWorkspaceDir, createClientInfo, daemonProfilesDir, daemonSocketPath), exact type field replacements (installationDir -> workspaceDir), exact command renames, and exact string values. This goes far beyond identifying the problem area."
+      "reason": "The instruction specifies exact code patterns like 'case session-kill-all:', 'if (args.skills)', 'path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash)', and the exact function name 'findWorkspaceDir'. It also names the exact files to modify. This goes well beyond describing the problem domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-change task, not a config-edit task."
+      "reason": "This is a code refactoring task, not an agentmd-edits/config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "no_typos",
     "instruction_no_hint_leakage"
   ],

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions LanceFtsQueryBuilder, fast_search(), _fast_search attribute initialized to None, returning self, docstring with 'unindexed'/'flat search', to_query_object() passing fast_search to Query, and the target file path. All test-asserted specifics (class name, method name, attribute name, file path, docstring content keywords) are discoverable from instruction.md."
+      "reason": "The instruction names the class (LanceFtsQueryBuilder), the method (fast_search), the file (python/python/lancedb/query.py), the attribute (_fast_search initialized to None), the to_query_object method, the Query constructor, and the builder pattern with return self. The return type annotation (LanceFtsQueryBuilder) is implied by the builder pattern reference. The docstring requirement mentioning 'unindexed' or 'flat search' is stated ('Has a proper docstring explaining that this skips flat sear"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'Sets an internal _fast_search attribute to True', 'Returns self', 'Passes the _fast_search value to the Query constructor in to_query_object()'. It even specifies initializing the attribute and provides the exact usage pattern. This leaves no reasoning for the developer about WHAT to change."
+      "reason": "The instruction explicitly states the exact implementation steps: 'Sets an internal _fast_search attribute to True when called', 'Returns self to allow method chaining', 'Passes the _fast_search value to the Query constructor in to_query_object()'. It also says to initialize _fast_search to None (implied by hints). This is essentially the complete solution specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use AST inspection to check exact implementation details: test_fast_search_init_attribute checks for self._fast_search = None specifically in __init__, test_fast_search_sets_true checks self._fast_search = True via AST, test_fast_search_return_annotation requires the exact string 'LanceFtsQueryBuilder' in the return annotation. An alternative correct implementation using e.g., a different internal attribute name or a parameter-based approach would fail."
+      "reason": "Tests use AST inspection to check very specific implementation details: test_fast_search_init_attribute checks for exactly 'self._fast_search = None' in __init__, test_fast_search_sets_true checks for exactly 'self._fast_search = True', test_fast_search_return_annotation checks for the specific return type annotation 'LanceFtsQueryBuilder'. An alternative correct implementation using e.g. a different attribute name like '_skip_flat_search', or using a parameter default like fast_search(self, ena"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All F2P tests use AST parsing (ast.parse + ast.walk) to inspect source code structure rather than importing and executing the code. No test actually instantiates LanceFtsQueryBuilder, calls fast_search(), or verifies runtime behavior. This is essentially structural text inspection, not behavioral testing."
+      "reason": "All f2p tests (test_fast_search_method_exists, test_fast_search_init_attribute, test_fast_search_sets_true, test_fast_search_returns_self, test_fast_search_to_query_object, test_fast_search_docstring, test_fast_search_return_annotation) use AST parsing to inspect the source code structure. None of them import the module, instantiate LanceFtsQueryBuilder, call fast_search(), or verify runtime behavior. This is essentially a sophisticated form of text matching via AST, not behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty fast_search returning None, no __init__ changes) would fail tests like test_fast_search_sets_true (checks AST for _fast_search = True), test_fast_search_returns_self (checks for return self), and test_fast_search_to_query_object (checks Query call has fast_search kwarg). These require actual implementation."
+      "reason": "The tests check for specific AST structures (assignment of _fast_search = True, return self, keyword argument in Query constructor). A stub implementation (empty method, pass, return None) would fail test_fast_search_sets_true (no assignment to _fast_search=True), test_fast_search_returns_self (no return self), and test_fast_search_to_query_object (no fast_search kwarg in Query call)."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/lancedb's solve.sh (solution/solve.sh is mounted or available in the container). An agent could read /solution/solve.sh to get the exact patch. Additionally, since tests only do AST inspection of the source file, the agent could simply pattern-match the expected structure without understanding the bug."
+      "reason": "The solution is in /workspace/lancedb's container at solution/solve.sh (or accessible from the Dockerfile context). The agent could read /solution/solve.sh or the gold patch to get the exact implementation. Additionally, the tests only do AST inspection of the source file, so the agent could simply pattern-match the expected code structure without understanding the feature."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors specified in the instruction (sets _fast_search to True, returns self, has docstring about unindexed/flat search, passes to Query in to_query_object) are tested by the F2P tests."
+      "reason": "All four requirements from instruction.md are tested: (1) _fast_search attribute initialized to None (test_fast_search_init_attribute), (2) returns self (test_fast_search_returns_self), (3) proper docstring (test_fast_search_docstring), (4) passes to Query constructor (test_fast_search_to_query_object). The sets-to-True behavior is also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly separated into 'Pass-to-Pass Tests: Repo CI Checks' and 'Fail-to-Pass Tests: Functional Tests for the Feature' sections with descriptive names and comments."
+      "reason": "Tests are well-organized with clear sections (Pass-to-Pass vs Fail-to-Pass), descriptive names (test_fast_search_method_exists, test_fast_search_returns_self, etc.), and docstrings with F2P/pass_to_pass labels."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves adding a method to a Python class, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the target file (python/python/lancedb/query.py), the exact class (LanceFtsQueryBuilder), and even specifies internal implementation details like '_fast_search attribute', 'to_query_object()' method, and 'Query constructor'. The Hints section further pinpoints phrase_query() as a reference pattern."
+      "reason": "The instruction explicitly names the target file (python/python/lancedb/query.py), the exact class (LanceFtsQueryBuilder), and gives detailed implementation steps including attribute names (_fast_search), initialization value (None), and where to pass it (to_query_object's Query constructor). While the target file is somewhat obvious from the task domain, the level of detail about internal implementation goes well beyond what's needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

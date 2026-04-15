@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific internal identifiers not mentioned in instruction.md: test_maybe_build_native_has_rust_detection checks for 'hasRustChanges' and 'getVersionBumpCommit' as exact variable/function names. The instruction says 'Detect whether any .rs files changed since the last version bump' but never specifies these exact function names. Also, test_agents_md_simplified_rebuild checks for a line containing both 'Turbopack' and 'Rust' and 'pnpm build' \u2014 this specific combination is not explici"
+      "reason": "Tests assert specific internal identifiers like 'hasRustChanges' and 'getVersionBumpCommit' (test_maybe_build_native_has_rust_detection), but instruction.md never mentions these exact function names. The instruction describes behavior (detect Rust changes, detect version bump) but doesn't specify these identifiers, making them undiscoverable from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (detect Rust changes, skip in CI, wire into turborepo pipeline) but does not give exact code lines or diffs. A developer must still design the implementation."
+      "reason": "The instruction describes what behavior is needed (CI skip message, Rust change detection, turbo.json config, prettier stdin usage, AGENTS.md updates) but does not give exact code or line-level fixes. A developer must still reason about implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_maybe_build_native_has_rust_detection asserts exact function names 'hasRustChanges' and 'getVersionBumpCommit' via string search in the file. A correct alternative implementation using different names (e.g., 'checkForRustFileChanges', 'findLastVersionCommit') would fail these assertions. This forces the agent to use gold-specific internal helper names."
+      "reason": "test_maybe_build_native_has_rust_detection asserts exact function names 'hasRustChanges' and 'getVersionBumpCommit' via string matching. An alternative correct implementation using different function names (e.g., 'detectRustChanges', 'findLastVersionBump') would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several core fail-to-pass tests are purely text-matching: test_maybe_build_native_has_rust_detection checks 'hasRustChanges' and 'getVersionBumpCommit' in file text; test_build_native_uses_stdin_prettier checks for '--stdin-filepath' string presence; test_agents_md_simplified_rebuild checks for string patterns. While test_maybe_build_native_skips_in_ci does execute the script, the majority of f2p tests are text-based assertions."
+      "reason": "Several critical tests are purely text-matching: test_maybe_build_native_has_rust_detection checks for string literals 'hasRustChanges', 'getVersionBumpCommit', '*.rs' in file content. test_build_native_uses_stdin_prettier checks for '--stdin-filepath' and absence of '--write' as strings. test_agents_md_simplified_rebuild is pure text search. While test_maybe_build_native_skips_in_ci does execute the script, a majority of f2p tests are text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty file would not pass: test_maybe_build_native_skips_in_ci actually executes the script and checks for specific stdout output; test_package_json_build_script requires a JSON key to exist; test_turbo_json_build_task requires specific JSON structure. These require meaningful implementation."
+      "reason": "A stub/empty file would not pass the tests. test_maybe_build_native_skips_in_ci requires actual execution with CI=1 and specific output. test_package_json_build_script requires a real build script entry. test_turbo_json_build_task requires specific JSON structure. These cannot be satisfied by default/empty implementations."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/next.js might be accessible if the agent looks at solve.sh. The Dockerfile doesn't show any cleanup of solution files. Also, the expected test strings like 'Skipping swc-build-native in CI' are visible in the instruction.md itself, so an agent could trivially produce a script that just prints that string."
+      "reason": "The solution exists at /workspace/next.js as solve.sh mentions 'cd /workspace/next.js'. The agent could potentially read the test file at tests/test_outputs.py to discover exact expected strings like 'hasRustChanges', 'getVersionBumpCommit', 'Skipping swc-build-native in CI', and craft a script matching those literal strings without understanding the problem."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'Clear stale .node binaries when no Rust changes exist' but no test verifies this clearing behavior. Also, 'Rebuild native binaries only when Rust changes are detected' is not tested beyond checking function name strings exist."
+      "outcome": "pass",
+      "reason": "All major behaviors from the instruction are tested: CI skip behavior, Rust detection logic, package.json build script, turbo.json task config, prettier stdin usage, AGENTS.md updates, and clearing stale binaries logic (implicitly via hasRustChanges/clearNativeBinaries detection)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with section comments (Gates, Fail-to-pass, Config-edit, Pass-to-pass), each test function has a descriptive docstring, and naming follows a clear convention."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Config-edit, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the exact JSON schema needed: turbo.json must have 'tasks' key with 'build' task containing 'inputs' and 'env' arrays; package.json must have 'scripts.build'. These are documented in the instruction."
+      "reason": "The instruction specifies the exact schema for turbo.json (tasks key with build task containing inputs array and env array) and package.json (scripts with build key), which are the structured data outputs of this task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files to modify (which is appropriate given the task domain) but doesn't specify exact line numbers or exact code changes. The file paths mentioned are necessary context for the task."
+      "reason": "The instruction specifies file locations and behavioral requirements but doesn't give exact line numbers or specific code to write. The files mentioned (packages/next-swc/, scripts/build-native.ts, AGENTS.md) are naturally part of the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff for AGENTS.md is localized (removes 2 lines, adds 1 line in the rebuild section). Config edits to package.json and turbo.json are similarly small, targeted additions."
+      "reason": "The gold diff shows localized changes: adding a build script to package.json, adding a build task to turbo.json, creating a new file, modifying a few lines in AGENTS.md, and a targeted change in build-native.ts. No full-file rewrites."
     }
   },
   "tier_a_fails": [
@@ -57,9 +57,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 7,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 4
 }

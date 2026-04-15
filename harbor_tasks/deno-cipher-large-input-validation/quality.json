@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (ext/node/polyfills/internal/crypto/cipher.ts), the classes (Cipheriv, Decipheriv), the threshold (2^31-1), the exact error message ('Trying to add data in unsupported state'), the native op names (op_node_cipheriv_encrypt, op_node_decipheriv_decrypt), and the requirement that the check be before the native call. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "instruction.md names the file path (ext/node/polyfills/internal/crypto/cipher.ts), the classes (Cipheriv, Decipheriv), the threshold (2^31-1), the exact error message ('Trying to add data in unsupported state'), the native op names (op_node_cipheriv_encrypt, op_node_decipheriv_decrypt), and the requirement that the check must be before the native call. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: check `buf.length >= 2 ** 31 - 1`, throw `Error('Trying to add data in unsupported state')`, and do it before `op_node_cipheriv_encrypt`/`op_node_decipheriv_decrypt`. This is essentially the complete implementation, not just a description of what's broken."
+      "reason": "instruction.md explicitly states the exact implementation: check 'buf.length >= 2 ** 31 - 1', throw 'Error(\"Trying to add data in unsupported state\")', and do it before calling the native crypto operation. It also names the exact file and methods. This is essentially the complete fix specification, leaving no reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to match specific patterns like `.length >= 2**31-1` and `throw new Error('Trying to add data in unsupported state')`. An alternative correct fix using a different threshold expression (e.g., `buf.length > 2147483646`) or different error construction (e.g., `throw Error(...)` without `new`, or using a variable for the message) would fail. The regex `_THRESHOLD_RE` does allow some variants (decimal, hex, Math.pow), but `throw new Error` with exact string is mandatory."
+      "reason": "Tests use regex patterns that require very specific syntax: '.length >= 2**31-1' or equivalent numeric literals, and 'throw new Error(\"Trying to add data in unsupported state\")'. An alternative correct fix using e.g. a constant like 'const INT_MAX = 2147483647' with 'buf.length >= INT_MAX' would fail the threshold check regex since the comparison pattern requires the literal threshold value immediately after '>=' on the same expression with '.length'. Similarly, using 'buf.byteLength' would pass"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests read the source file as text and use regex pattern matching (e.g., `re.search(check_re, body)`, `re.search(throw_pattern, body)`). No test actually imports, calls, or executes the TypeScript code. The tests are fundamentally string/text matching on source code, not behavioral verification."
+      "reason": "All fail-to-pass tests are purely textual/structural analysis \u2014 they read the source file, parse it with regex, and check for string patterns. No test actually imports or executes the cipher code, creates a cipher instance, or calls update() with a large buffer. This is essentially 'assert pattern in open(path).read()' with extra regex steps."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass because the tests check for specific code patterns (threshold check, error throw) that must be present in the update method bodies. The unmodified source lacks these patterns, so the tests correctly fail without the fix."
+      "reason": "The base commit does not contain the size check code, so a stub or no-op would not pass the tests. The tests check for specific code patterns that must be added to the source file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/deno in the container (via solve.sh). The agent could read solution/solve.sh which contains the exact patch. The tests only do regex matching on source text, so the agent could also grep test files or solution files for the exact strings to insert. The fixture strings ('Trying to add data in unsupported state', '2 ** 31 - 1') are directly in the instruction."
+      "reason": "The agent can read /workspace/deno's solution/solve.sh if it exists in the container, or simply grep the test file at tests/test_outputs.py to discover the exact regex patterns and error message being checked. Since tests are pure text matching, the agent could write exactly the matched patterns without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in the instruction (threshold check for both Cipheriv and Decipheriv, exact error message, check before native op call) are tested."
+      "reason": "All behaviors specified in instruction.md are tested: threshold check (2^31-1), error message correctness, check ordering before native ops, and both Cipheriv and Decipheriv implementations."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_cipheriv_update_rejects_large_input, test_size_check_before_encrypt_call, etc.), docstrings, and clear section comments separating fail-to-pass from pass-to-pass tests."
+      "reason": "Tests are well-organized with clear docstrings, descriptive function names (test_cipheriv_update_rejects_large_input, test_size_check_before_encrypt_call, etc.), and sections labeled fail_to_pass and pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modification, not structured data output."
+      "reason": "Task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (ext/node/polyfills/internal/crypto/cipher.ts), the exact methods (Cipheriv.prototype.update, Decipheriv.prototype.update), the exact native op names to check ordering against (op_node_cipheriv_encrypt, op_node_decipheriv_decrypt), the exact threshold expression, and the exact error message. This goes well beyond describing what's broken and essentially specifies the implementation."
+      "reason": "instruction.md names the exact file (ext/node/polyfills/internal/crypto/cipher.ts), the exact methods (Cipheriv.prototype.update, Decipheriv.prototype.update), the exact threshold expression (buf.length >= 2 ** 31 - 1), the exact error message, and the exact native op names. This goes well beyond describing what's broken and essentially specifies the exact code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

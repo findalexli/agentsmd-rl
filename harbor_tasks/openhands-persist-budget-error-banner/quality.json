@@ -2,60 +2,58 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details like the exact helper function name 'handleNonErrorEvent', the exact condition string 'isBudgetError && !isAgentEvent', and the exact comment '// Keep budget error visible'. While instruction.md does mention these patterns in its Acceptance Criteria section, it also doesn't mention the specific file path 'frontend/src/contexts/conversation-websocket-context.tsx' which tests reference via CONTEXT_FILE. The agent would need to discover this file path in"
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: `handleNonErrorEvent` helper function, `isBudgetError && !isAgentEvent` condition, `return; // Keep budget error visible` comment, `handleNonErrorEvent(event)` call sites (at least 2), removal of nested `isBudgetOrCreditError(event.error)` with `setErrorMessage(I18nKey.STATUS$ERROR_LLM_OUT_OF_CREDITS)`, `STATUS$ERROR_LLM_OUT_OF_CREDITS` i18n key, `event.source === \"agent\"`, and the requirement for typecheck/lint/build/tests to pass."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md Acceptance Criteria section explicitly specifies the exact implementation: 'A helper function named handleNonErrorEvent must be present', 'The condition isBudgetError && !isAgentEvent must appear', 'The early return must include the comment return; // Keep budget error visible', and 'The handleNonErrorEvent(event) call must replace direct removeErrorMessage() calls'. This tells the agent exactly WHAT to change, including specific function names, variable names, and even commen"
+      "reason": "The instruction explicitly states the exact implementation: 'A helper function named handleNonErrorEvent must be present', 'The condition isBudgetError && !isAgentEvent must appear', 'The early return must include the comment return; // Keep budget error visible', and 'The handleNonErrorEvent(event) call must replace direct removeErrorMessage() calls'. This prescribes the exact solution rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: the exact helper function name 'handleNonErrorEvent', the exact variable names 'isBudgetError && !isAgentEvent', and the exact comment string 'return; // Keep budget error visible'. An alternative correct fix could use a different function name (e.g., 'clearErrorIfNotBudget'), different variable names, or different comments, and would fail these tests despite correctly fixing the bug."
+      "reason": "Tests assert on gold-specific implementation details: exact helper function name `handleNonErrorEvent`, exact variable names `isBudgetError && !isAgentEvent`, exact comment text `return; // Keep budget error visible`, and exact call pattern `handleNonErrorEvent(event)`. An alternative correct fix (e.g., using a different function name like `clearErrorIfNotBudget`, or using inline logic, or a different condition structure) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_budget_error_persistence_logic_exists, test_non_error_events_use_helper, test_legacy_error_clearing_removed, test_agent_error_budget_check_removed) are entirely text-matching tests using 'assert X in content' patterns on the source file. They never import, call, or execute the code to verify behavior. The pass-to-pass tests do run builds/lints/existing tests, but the core f2p tests are purely textual."
+      "reason": "Tests `test_budget_error_persistence_logic_exists`, `test_non_error_events_use_helper`, `test_legacy_error_clearing_removed`, and `test_agent_error_budget_check_removed` are purely text-matching tests using `assert 'string' in content` and regex on file contents. While some tests do run subprocesses (typecheck, lint, build), the core fail-to-pass tests only inspect source text, not behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply adds the exact strings the tests look for (e.g., adding a dead-code comment block containing 'handleNonErrorEvent', 'isBudgetError && !isAgentEvent', 'return; // Keep budget error visible') without actually fixing the bug would pass the f2p tests, since they only check for string presence in the file content."
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass the f2p tests because they check for specific strings and patterns that don't exist in the original source file (e.g., `handleNonErrorEvent`, `isBudgetError && !isAgentEvent`), and the build/typecheck tests would fail if invalid code were added."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/OpenHands (or /solution/solve.sh in the container). The agent could read solve.sh to get the exact patch. Additionally, the tests only check for literal strings in the source file, so the agent could grep test_outputs.py for the expected strings and paste them into the file without understanding the bug."
+      "reason": "The solution file exists at `/workspace/OpenHands` in the container (via the gold patch in solve.sh), and the agent could read the test file at `tests/test_outputs.py` to discover exact string patterns to insert. Since tests are purely text-matching, the agent could trivially grep for expected strings and insert them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requirement #2 ('Budget/credit errors SHOULD be cleared when an agent event arrives') is not behaviorally tested - the f2p tests only check for string patterns. Requirement #3 ('Non-budget errors should continue to be cleared normally') is also not behaviorally verified."
+      "reason": "The instruction requires 'Budget/credit errors must persist \u2014 they should NOT be cleared by non-error events' and 'Budget/credit errors SHOULD be cleared when an agent event arrives'. These behavioral requirements are only verified via text pattern matching, not by actually testing that the banner persists or clears correctly in a runtime scenario."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_budget_error_persistence_logic_exists, test_non_error_events_use_helper, etc.) with docstrings explaining fail-to-pass vs pass-to-pass categorization."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test checks and the before/after fix distinction (e.g., 'Fail-to-pass: The handleNonErrorEvent helper must exist...')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies frontend TypeScript code and does not produce structured data output."
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The Acceptance Criteria section names exact implementation details: specific helper function name 'handleNonErrorEvent', exact condition 'isBudgetError && !isAgentEvent', exact comment text 'return; // Keep budget error visible', and specifies that 'at least 2 call sites' must use the helper. This goes far beyond describing the bug and into prescribing the exact solution."
+      "reason": "The instruction's Acceptance Criteria section explicitly names the exact helper function `handleNonErrorEvent`, the exact condition `isBudgetError && !isAgentEvent`, the exact comment `return; // Keep budget error visible`, and specifies exact call sites. This goes far beyond describing the bug and prescribes the exact implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -63,6 +61,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 4,
+  "fail_count": 6
 }

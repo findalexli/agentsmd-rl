@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Every assert in the tests checks for file paths, function names, type names, and string literals that are explicitly specified in instruction.md (e.g., getUniqueProgramIdentifier, ReferenceRouteCompilerPlugin, createReactRefreshRouteComponentsPlugin, specific file paths, parameter names like programPath/baseName, suffix/while/hasBinding keywords, etc.)."
+      "reason": "Every file path, function name, type name, and string literal asserted in the tests (e.g., getUniqueProgramIdentifier, programPath, baseName, suffix, hasBinding, while, plugins.ts, ReferenceRouteCompilerPlugin, ReferenceRouteCompilerPluginContext, onUnsplittableRoute, createReactRefreshRouteComponentsPlugin, component/pendingComponent/errorComponent/notFoundComponent, hoistedDeclarations/variableDeclaration, getReferenceRouteCompilerPlugins, compilerPlugins, etc.) is explicitly named in instruct"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: specific function names (getUniqueProgramIdentifier), exact file paths for new files, exact type names (ReferenceRouteCompilerPlugin, ReferenceRouteCompilerPluginContext), exact parameter names (programPath, baseName), implementation details (suffix counter, while loop, hasBinding), and exact integration points. This leaves virtually no reasoning about WHAT to change \u2014 it's a specification of the exact solution."
+      "reason": "The instruction specifies exact implementation details: function names (getUniqueProgramIdentifier), parameter names (programPath, baseName), internal variable names (suffix), loop structure (while loop), exact file paths for new files, exact type names, and even how functions should use hasBinding/hasGlobal. This is essentially a complete specification of the solution rather than a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function name 'getUniqueProgramIdentifier', exact type names 'ReferenceRouteCompilerPlugin'/'ReferenceRouteCompilerPluginContext', exact variable name 'suffix', exact string 'while', exact hook name 'onUnsplittableRoute', exact function 'createReactRefreshRouteComponentsPlugin', exact function 'getReferenceRouteCompilerPlugins'. An alternative correct fix (e.g., using a different naming strategy, different plugin architecture, or inline"
+      "reason": "Tests assert on gold-specific implementation details like exact variable names ('suffix', 'hoistedDeclarations'), exact function names ('getUniqueProgramIdentifier', 'createReactRefreshRouteComponentsPlugin'), exact parameter names ('programPath', 'baseName'), and exact type names ('ReferenceRouteCompilerPlugin'). An alternative correct fix using different naming (e.g., 'generateUniqueId', 'counter' instead of 'suffix', 'liftedDecls' instead of 'hoistedDeclarations') would fail these tests despi"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_get_unique_program_identifier_function_exists through test_router_hmr_plugin_uses_plugins) are ALL text-matching tests using patterns like `assert 'string' in content` after reading files. None of them import, call, or execute the code. The pass_to_pass tests do run subprocesses (build, eslint, unit tests, type check), but every f2p test is purely textual grep."
+      "reason": "The fail_to_pass tests (test_get_unique_program_identifier_function_exists through test_router_hmr_plugin_uses_plugins) are all purely text-matching: they open files and assert string containment (e.g., assert 'suffix' in content, assert 'while' in content). None of these tests import, call, or execute the code. Only the pass_to_pass tests (eslint, build, unit tests, type check) execute subprocesses."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation could pass most f2p tests. For example, creating a file at plugins/react-refresh-route-components.ts containing comments or dead code with the strings 'createReactRefreshRouteComponentsPlugin', 'component', 'pendingComponent', 'errorComponent', 'notFoundComponent', 'hoistedDeclarations', 'getUniqueProgramIdentifier' would pass test_react_refresh_plugin_hoists_component_identifiers without implementing any actual functionality."
+      "reason": "A stub implementation that simply creates files with the required string literals (e.g., a file containing comments or dead code with 'suffix', 'while', 'hasBinding', 'getUniqueProgramIdentifier', etc.) would pass all fail_to_pass tests since they only check for string presence in file content, not actual functionality."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/router with solve.sh containing the full gold patch. The agent could read solution/solve.sh to extract the exact patch. Additionally, since tests only check for string presence in files, the agent could grep the test file to discover exactly which strings need to appear where."
+      "reason": "The solution file exists at /workspace/router with solve.sh containing the complete gold patch. An agent could read solution/solve.sh or simply execute it. Additionally, since tests only check for string presence in files, the agent could grep the test file for expected strings and insert them as comments."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behavioral requirements from instruction.md are tested: the utility function, plugin types, react-refresh plugin with all four component identifiers, framework plugin factory, integration with compilers.ts, router-code-splitter-plugin.ts, and router-hmr-plugin.ts, plus quality requirements (eslint, build, build validation, unit tests, type check)."
+      "reason": "All behaviors required by instruction.md are tested: the utility function, plugin types, react refresh plugin, framework plugin factory, integration with compilers/splitter/hmr, and quality requirements (eslint, build, tests, types)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, and they are logically grouped (utility, types, plugin, framework, integration, quality checks)."
+      "reason": "Tests are well-named with descriptive docstrings indicating what each tests (e.g., 'fail_to_pass' vs 'pass_to_pass' annotations), grouped logically from utility functions to integration to quality checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "No typos found in file paths, function names, variable names, or commands across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact file paths for new files (e.g., packages/router-plugin/src/core/code-splitter/plugins.ts), exact function names, exact parameter names, exact implementation details (suffix counter in while loop using hasBinding), and exact integration files. This goes far beyond describing what's broken \u2014 it's a detailed implementation specification."
+      "reason": "instruction.md specifies exact file paths for new files (e.g., packages/router-plugin/src/core/code-splitter/plugins.ts), exact function signatures (getUniqueProgramIdentifier with programPath and baseName), exact internal implementation details (suffix counter, while loop, hasBinding), and exact type names. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

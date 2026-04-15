@@ -3,63 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names all file paths, function names (install_rustup), SHA256 checksums (4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10, 9732d6c5e2a098d3521fca8145d826ae0aaa067ef2385ead08e6feac88fa5792 are discoverable from the rustup archive URL pattern given), variable names (RUSTUP_HOME, CARGO_HOME, RUSTUP_VERSION, RUSTUP_DEFAULT_TOOLCHAIN), architecture targets, curl flags, timeout values (25, 1320), and PATH cleanup details. The specific SHA256 checksums are not"
+      "reason": "All test-asserted specifics (SHA256 checksums, target strings like x86_64-unknown-linux-gnu, file paths, env var names like RUSTUP_HOME/CARGO_HOME, timeout value 25, max-time >=1200, /root/.cargo/bin bug, dpkg --print-architecture, sha256sum --check, curl flags, rustup-init) are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially gives the complete solution: exact function structure (install_rustup), exact variable names (rustup_sha256s, rustup_targets), exact environment variables with exact values, exact curl flags, exact sha256sum command, exact architecture detection method, exact cleanup steps, exact timeout values, exact PATH changes. It reads like a step-by-step implementation guide rather than a problem description."
+      "outcome": "pass",
+      "reason": "The instruction describes requirements (what env vars to set, what checksums to verify, what timeout to use) but does not specify exact line numbers, exact patch diffs, or the precise implementation approach (e.g., associative arrays vs case statements)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details like 'rustup_sha256s=' (variable name), 'rustup_targets=' (variable name), exact SHA256 hex strings, exact curl flag syntax (\"--proto '=https'\"), exact default value syntax ('RUSTUP_VERSION=${RUSTUP_VERSION:-1.29.0}'), and exact PATH string ('ENV PATH=\"/usr/python/bin:/root/.local/bin:${PATH}\"'). An alternative correct implementation using different variable names (e.g., 'RUSTUP_CHECKSUMS' instead of 'rustup_sha256s') or different default syntax would"
+      "reason": "Tests use `sed -n '/^function install_rustup/,/^}/p'` to extract the function body, requiring the function to be named exactly `install_rustup` and defined with `function install_rustup` syntax starting at column 0. An alternative correct implementation using `install_rustup()` syntax or placing logic inline without a function would fail. Additionally, tests check for specific patterns like `re.search(r'\\[\\[.*-z.*\\]\\]|if.*\\[.*-z', body)` which enforces a specific bash idiom for empty-string chec"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_install_rustup_function_in_script, test_dockerfile_has_rustup_install, etc.) are almost entirely 'assert X in open(path).read()' string-matching tests. The pass-to-pass tests do run shellcheck, bash -n, yamllint, and pytest as subprocesses which verify behavior, but the core f2p tests only check text content of files, never executing the install_rustup function or building any Docker image."
+      "reason": "Nearly all tests are text-pattern matching: reading file contents and checking for string presence (e.g., `assert 'sha256sum --check' in body`, `assert re.search(r'RUSTUP_HOME', content)`). No test actually executes the install_rustup function, builds a Docker image, or verifies runtime behavior. The tests are essentially `assert 'foo' in open(path).read()` with minor regex variations."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings (SHA256 hashes, function definitions, variable names) that would not exist in the base commit files. A stub/empty implementation would not pass since the base files don't contain 'install_rustup', 'rustup_sha256s', etc."
+      "reason": "The base commit lacks the install_rustup function entirely, lacks RUSTUP_HOME/CARGO_HOME in Dockerfiles, has the old timeout values, and has /root/.cargo/bin in PATH. A stub/no-op would not pass these tests since the function body and env vars must contain specific strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/airflow accessible in the container (the Dockerfile clones the repo and checks out a specific commit). The agent could read solution/solve.sh if it exists in the test environment, or could simply look at the gold patch commit (1b2893300d8b6c3ae656b8e7d9a44138b663d633) which is fetched in the Dockerfile. The agent could run 'git diff c4a209ba..1b289330' to see the exact solution."
+      "reason": "The solution file exists at /workspace/airflow accessible to the agent (solution/solve.sh is mounted or available). The agent could read it or run it. Additionally, the Dockerfile environment clones the repo at the base commit, and the agent could inspect the test file at tests/test_outputs.py to reverse-engineer exact expected patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: SHA256 verification, architecture handling, curl security flags, environment variables in both Dockerfiles, PATH cleanup in Dockerfile.ci, timeout updates in CI workflow, and the install_rustup function definition."
+      "reason": "All 15 requirements from instruction.md are covered by tests: SHA256 verification, architecture support, env vars, CI timeout/max-time updates, and the /root/.cargo/bin PATH bug fix."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_install_rustup_function_in_script, test_dockerfile_has_rustup_install, etc.), have docstrings with f2p/pass_to_pass annotations, and are logically grouped by file/concern."
+      "reason": "Tests are well-organized into descriptive classes (TestInstallRustupFunction, TestDockerfileRustupEnv, TestDockerfileCiRustupEnv, TestCIWorkflowTimeout, TestPassToPass) with clear method names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces shell scripts and Dockerfiles, not structured data like JSON/CSV/API/DB."
+      "reason": "The task involves shell scripts and Dockerfiles, not structured data output like JSON/CSV/API."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, commands, variable names, or SHA256 checksums across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: exact function name 'install_rustup()', exact variable names, exact curl flags, exact sha256sum command, exact architecture detection method, exact cleanup steps. This goes well beyond naming the file and describes the exact solution line by line."
+      "outcome": "pass",
+      "reason": "The instruction describes what to fix (PATH should not include /root/.cargo/bin, timeout should be 25 minutes) but doesn't specify exact line numbers or the precise diff. The files to modify are listed but that's appropriate given the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to 4 files (adding functions, environment variables, and updating timeout values) without full-file rewrites, and doesn't contradict other tier-1 files."
+      "reason": "The gold patch makes localized additions/changes to specific sections of each file (env var blocks, function definitions, timeout values) without full-file rewrites, and changes don't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
 }

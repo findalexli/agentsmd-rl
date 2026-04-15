@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four files (DevEnv.ts, BundlerController.ts, build-failures.ts, logger.ts), the method handleErrorEvent, the class BundlerController, the functions isBuildFailure/isBuildFailureFromCause/logBuildFailure, and the behavioral requirements (no double-logging, esbuild formatting, non-esbuild fallback). Tests check for these same elements, all discoverable from instruction.md."
+      "reason": "The instruction names all four files (DevEnv.ts, BundlerController.ts, build-failures.ts, logger.ts), the method handleErrorEvent, the key concepts (BundlerController source check, isBuildFailure/isBuildFailureFromCause guards, logBuildFailure formatting function), and the double-logging issue with logger.error before emitErrorEvent. All test-asserted specifics (file paths, function names, import sources, behavioral expectations) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (errors fall through, double-logging occurs) and what the expected behavior should be, but does not specify exact code changes, line numbers to modify, or the specific implementation (e.g., it doesn't say 'add an else-if for BundlerController' or 'remove logger.error calls at lines X, Y, Z')."
+      "reason": "The instruction describes what's broken (BundlerController errors fall through, double-logging occurs) and expected behavior, but does not specify exact code changes like 'add this if-block' or 'remove line X'. A developer must still reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_devenv_handles_bundler_errors requires the exact regex pattern `event.source === 'BundlerController'` in handleErrorEvent; test_devenv_formats_esbuild_failures requires imports from a path matching 'build-failures' AND a specific function name like logBuildFailure; test_devenv_handles_non_esbuild_bundler_errors requires both an isBuildFailure check and a specific else-block pattern with logger.error. An alternative correct fix (e.g., handli"
+      "reason": "Tests assert very specific implementation patterns: test_devenv_handles_bundler_errors requires regex match for `event.source === 'BundlerController'` in handleErrorEvent; test_devenv_formats_esbuild_failures requires importing from 'build-failures' AND using logBuildFailure specifically; test_devenv_handles_non_esbuild_bundler_errors requires both isBuildFailure check AND an else branch with logger.error. An alternative correct fix (e.g., using a different function name, handling errors in a se"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test is purely text/regex inspection of source files. test_devenv_handles_bundler_errors reads DevEnv.ts and regex-matches for string patterns. test_devenv_formats_esbuild_failures does `re.search` on file contents. test_bundler_no_duplicate_error_logging scans lines for patterns. No test imports, instantiates, or calls any code, and no subprocess actually runs the modified code to verify behavior."
+      "reason": "All fail-to-pass tests are pure text/AST inspection: they read source files and regex-match for specific patterns (import statements, string literals like 'BundlerController', function names like logBuildFailure). No test imports the modules, instantiates DevEnv, triggers an actual error event, or verifies runtime behavior. test_bundler_no_duplicate_error_logging scans lines for logger.error before emitErrorEvent patterns. These are all 'assert pattern in open(path).read()' style checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (no BundlerController branch in handleErrorEvent, logger.error calls before emitErrorEvent exist). A stub/no-op change would not add these patterns, so the tests would fail on unmodified code."
+      "reason": "The fail-to-pass tests would not pass on the unmodified codebase: there's no BundlerController branch in handleErrorEvent, no build-failures import in DevEnv.ts, and logger.error calls exist before emitErrorEvent in BundlerController.ts. A stub/no-op wouldn't satisfy these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/workers-sdk (accessible in the container) and the agent could read solve.sh or the solution directory. Additionally, since tests are pure text-matching on source files, the agent could grep the test file or solve.sh to find the exact patterns being checked and write them verbatim without understanding the bug."
+      "reason": "The solution exists at /workspace/workers-sdk as a git repo and solution/solve.sh contains the exact patch. An agent could read solve.sh or the PATCH content directly. Additionally, since tests are pure text-matching, an agent could grep test files to discover exactly which patterns to insert into the source files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three expected behaviors from the instruction are tested: esbuild BuildFailure formatting (test_devenv_formats_esbuild_failures), non-esbuild error logging (test_devenv_handles_non_esbuild_bundler_errors), and no double-logging (test_bundler_no_duplicate_error_logging)."
+      "reason": "All three behavioral requirements from the instruction are tested: (1) esbuild BuildFailure formatting via logBuildFailure (test_devenv_formats_esbuild_failures), (2) non-esbuild error logging (test_devenv_handles_non_esbuild_bundler_errors), (3) no double-logging (test_bundler_no_duplicate_error_logging). The 'errors logged exactly once' requirement maps to the duplicate logging test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (fail-to-pass and pass-to-pass), each has a descriptive name and docstring explaining what it verifies."
+      "reason": "Tests are well-organized with clear sections (fail_to_pass vs pass_to_pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "This task modifies TypeScript source code behavior; no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths (DevEnv.ts, BundlerController.ts, build-failures.ts, logger.ts), function names (handleErrorEvent, logBuildFailure, isBuildFailure, isBuildFailureFromCause), and class names are correctly spelled throughout instruction.md."
+      "reason": "All file paths, function names, and variable names in the instruction and tests are accurate and match the actual repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact method to modify (handleErrorEvent), the exact class that needs a new branch (BundlerController), describes the exact control flow issue ('fall through to the catch-all else'), and says BundlerController has 'redundant logger.error() calls before each emitErrorEvent() call.' This narrows the solution to the exact changes needed."
+      "reason": "The instruction explicitly names the exact method to modify (handleErrorEvent), the exact class causing issues (BundlerController), the exact functions to use (isBuildFailure, isBuildFailureFromCause, logBuildFailure), and even describes the exact architectural change needed ('Needs a new branch for BundlerController errors' and 'Has redundant logger.error() calls before each emitErrorEvent()'). This goes beyond describing what's broken into prescribing the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config-editing task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

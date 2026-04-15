@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (constants.ts, fixture-utils.ts, runner.ts, runner-watch.ts), function/variable names (FILTER_FILENAME, FILTER_PATH, readTestFilter, subscribeFilterFile, TestFilter debug property, makeWatchRunner, inputMode, inputBuffer), CLI flags (--debug/-d, --pattern/-p, --update/-u), key handlers ('p','d','a'), the CLAUDE.md file at compiler/CLAUDE.md, and yargs API calls like .boolean('debug') and .alias('d','debug'). All test assertions map to items discovera"
+      "reason": "The instruction names all file paths (constants.ts, fixture-utils.ts, runner.ts, runner-watch.ts), specific identifiers to remove (FILTER_FILENAME, FILTER_PATH, readTestFilter, subscribeFilterFile, testfilter.txt, debug property on TestFilter), specific identifiers to add (.boolean('debug'), .alias('d','debug'), inputMode, inputBuffer, key handlers for 'p','d','a', debugMode: boolean, initialPattern), and the CLAUDE.md file at compiler/CLAUDE.md with content requirements. All test assertions map"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact yargs API calls (.boolean('debug'), .alias('d', 'debug')), exact field names (inputMode, inputBuffer), exact function signature parameters (debugMode: boolean, initialPattern), and exact key handler comparisons (key.name === 'p'). This goes beyond describing what's broken and tells the agent exactly WHAT code to write and HOW."
+      "reason": "The instruction explicitly tells the agent exactly what to do: 'Register as .boolean(\"debug\") with short alias via .alias(\"d\", \"debug\")', 'RunnerState type should include inputMode and inputBuffer', 'Remove the subscribeFilterFile function entirely', etc. This specifies the exact implementation rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact yargs syntax like .boolean('debug') and .alias('d','debug') (test_debug_cli_option), exact variable names inputMode/inputBuffer (test_interactive_watch_mode), exact regex patterns for key.name === 'p'/'d'/'a', and exact parameter signatures debugMode: boolean / initialPattern?: string. Alternative valid implementations (e.g., using yargs .option() builder syntax, different state variable names, different key handling patterns) would fai"
+      "reason": "Tests assert on exact implementation details like .boolean('debug'), .alias('d','debug') syntax, exact field names 'inputMode' and 'inputBuffer' in RunnerState, exact regex patterns like /debugMode\\s*:\\s*boolean/ and /initialPattern\\s*\\??\\s*:\\s*string/. An alternative correct implementation using e.g. yargs .option('debug', {type:'boolean', alias:'d'}) syntax would fail the test_debug_cli_option test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_filter_file_mechanism_removed, test_filter_option_removed, test_debug_cli_option, test_interactive_watch_mode, test_watch_runner_signature_updated, test_claudemd_documents_cli) all exclusively use string matching on file contents (includes(), regex tests). None of them import modules, call functions, or execute the CLI. The pass-to-pass tests do run builds/compiles but those test existing behavior, not new behavior."
+      "reason": "Most fail-to-pass tests (test_filter_file_mechanism_removed, test_filter_option_removed, test_debug_cli_option, test_interactive_watch_mode, test_watch_runner_signature_updated, test_claudemd_documents_cli) are purely text-based: they read file contents and check for string inclusion or regex matches. While some pass-to-pass tests do compile/build/run tests, the core behavioral tests are all string-in-file checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation wouldn't pass because the tests check both for removal of old code (e.g., FILTER_FILENAME, readTestFilter, subscribeFilterFile must not be present) AND addition of new code (e.g., .boolean('debug'), inputMode, key.name === 'p' must be present), plus TypeScript must compile. You can't satisfy both by doing nothing."
+      "reason": "The f2p tests check both for removal of old code (e.g., FILTER_FILENAME must not exist) and addition of new code (e.g., .boolean('debug') must exist, inputMode/inputBuffer must exist). A stub or no-op implementation that leaves files unchanged would fail the removal checks, and an empty file would fail the addition checks. The TypeScript compilation test also prevents trivially broken code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available in /workspace/react via git fetch of the merge commit (solve.sh shows 'git fetch origin 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b'). An agent could run the same git commands to obtain the exact gold patch. The Dockerfile doesn't remove .git or restrict network access."
+      "reason": "The solution/solve.sh is present in the container and reveals the exact git commit (03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b) to cherry-pick from. An agent could read /workspace/react's filesystem to find solve.sh or the solution directory and simply execute it. The solve.sh does a git fetch and checkout of specific files from the gold commit."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behavioral requirements from the instruction are tested: removal of filter file mechanism, addition of --debug/-d CLI option, interactive watch mode with p/d/a keys, updated makeWatchRunner signature, and CLAUDE.md creation with required content."
+      "reason": "All major behaviors from the instruction are tested: removal of filter file mechanism, removal of --filter option, addition of --debug/-d, interactive watch mode keys (p/d/a), updated makeWatchRunner signature, CLAUDE.md creation with required content. The -p/--pattern option is less explicitly tested but is covered indirectly through the broader compilation and build tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff code behavior, Fail-to-pass/pr_diff CLAUDE.md), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass/static vs Fail-to-pass/pr_diff), descriptive function names (test_filter_file_mechanism_removed, test_debug_cli_option, etc.), and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves code refactoring and documentation, not producing structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, and variable names in the instruction appear correct and consistent with the test expectations."
+      "reason": "File paths, variable names, commands, and identifiers in the instruction are consistent and correct throughout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact API calls to use (.boolean('debug'), .alias('d', 'debug')), exact state field names (inputMode, inputBuffer), exact function parameter signatures (debugMode: boolean, initialPattern?: string), and exact key comparison patterns (key.name). This is excessive localization that removes the need for the agent to reason about implementation."
+      "reason": "The instruction explicitly names exact yargs API calls to use (.boolean('debug'), .alias('d', 'debug')), exact field names for RunnerState (inputMode, inputBuffer), exact function signatures (debugMode: boolean, initialPattern), and exact key.name checks. This goes beyond describing behavior to specifying implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code editing task, not an agentmd-edits or config-only task."
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
     }
   },
   "tier_a_fails": [

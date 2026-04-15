@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific patterns like `UncheckedKeyHashMap<BroadcastChannelIdentifier, ...>` regex, `releaseAssertOrSetThreadUID` function name, `mayBeGCThread` or `isGCThread`, `m_threadUID` member name, and the base commit SHA `639bc4351cd7b5daa38b99d47a506dec68e95353`. While instruction.md mentions some of these (e.g., `releaseAssertOrSetThreadUID`, `m_threadUID`, `mayBeGCThread`/`isGCThread`), it does not mention the base commit SHA which is used in git diff comparisons, nor does it mention"
+      "reason": "Tests assert on specific patterns like `UncheckedKeyHashMap<BroadcastChannelIdentifier, ...>` regex, `releaseAssertOrSetThreadUID` function name, `Thread::mayBeGCThread()` call, `m_threadUID` member name, and the base commit SHA `639bc4351cd7b5daa38b99d47a506dec68e95353`. While the instruction mentions some of these concepts (e.g., `releaseAssertOrSetThreadUID`, `m_threadUID`, `mayBeGCThread()`), the exact regex pattern for the map declaration (`UncheckedKeyHashMap<BroadcastChannelIdentifier, .."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md is extremely prescriptive about the exact fix: 'The guard must use a computed (non-hardcoded) index', 'The resulting diff should contain m_isClosed and return false', 'signal() and reason() chained in the same expression and the result passed to the visitor', 'The map declaration should use ThreadSafeWeakPtr<BroadcastChannel>', 'It requires a helper function (e.g., releaseAssertOrSetThreadUID) and a thread UID member (e.g., uint32_t m_threadUID)'. These go beyond describing what's"
+      "reason": "The instruction essentially describes the exact fix for each bug. For example: Bug 1 says 'The guard must use a computed (non-hardcoded) index' and 'The resulting diff should contain m_isClosed and return false'. Bug 2 says 'signal() and reason() chained in the same expression and the result passed to the visitor'. Bug 3 says 'use ThreadSafeWeakPtr<BroadcastChannel> as its value type'. Bug 4 says 'add releaseAssertOrSetThreadUID helper and m_threadUID member, must call mayBeGCThread()'. These ar"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_eventlistenermap_thread_affinity_cpp checks for the exact function name `releaseAssertOrSetThreadUID`; test_broadcast_channel_weak_ptr checks for `ThreadSafeWeakPtr` specifically in the map declaration regex; test_abort_signal_reason_visited requires `signal()` and `reason()` chained in a specific pattern. An alternative correct fix using different function names (e.g., `assertThreadAffinity`), different weak pointer types, or visiting t"
+      "reason": "Tests assert on gold-specific implementation details: test_eventlistenermap_thread_affinity checks for the exact helper name `releaseAssertOrSetThreadUID`, exact member name `m_threadUID`, and exact call `mayBeGCThread`. test_abort_signal_reason_visited requires `signal().reason()` chained in the same expression. test_broadcast_channel_weak_ptr checks for the exact type `ThreadSafeWeakPtr`. An alternative correct fix using different naming (e.g., `checkThreadOwnership`, `m_ownerThread`, `isGCThr"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The 'behavioral' C++ concept tests (e.g., test_message_port_closed_guard, test_broadcast_channel_weak_ptr) compile and run standalone toy programs that demonstrate the concept but do NOT test the actual modified source files. The actual verification of the fix is entirely text-based: reading source files, extracting functions via regex, and checking for string patterns like `m_isClosed`, `ThreadSafeWeakPtr`, `releaseAssertOrSetThreadUID`. The C++ concept tests are tautological \u2014 they test self-c"
+      "reason": "While a few tests compile and run standalone C++ concept programs (behavioral), the core assertions for each bug fix are purely textual: regex searches on source files (e.g., `re.search(r'signal\\(\\)\\s*...reason\\(\\)', body)`), git diff string matching (`assert 'ThreadSafeWeakPtr' in diff`), and function body text extraction. The actual WebCore C++ code is never compiled or executed. The concept tests (e.g., MockChannel, std::weak_ptr) test toy programs unrelated to the actual codebase."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The C++ concept tests in test_message_port_closed_guard and test_broadcast_channel_weak_ptr compile and run standalone programs that are hardcoded to PASS \u2014 they don't depend on the agent's changes at all. While the git diff and source analysis parts do check for actual changes, the 'behavioral' portions are tautological. A stub that simply applies the exact text patterns to the source files (without understanding the bugs) would pass all tests."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., m_isClosed guard in postMessageToRemote, reason() visit in visitChildrenImpl, ThreadSafeWeakPtr in BroadcastChannel, releaseAssertOrSetThreadUID in EventListenerMap). A stub or no-op wouldn't add these patterns to the source files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun (the solve.sh writes to the repo). The agent could read the test file at tests/test_outputs.py to discover exactly what patterns are checked (e.g., `releaseAssertOrSetThreadUID`, `ThreadSafeWeakPtr<BroadcastChannel>`, `m_isClosed`), then simply inject those strings into the source files without understanding the bugs. The solution/solve.sh contains the exact patch. While these are described as 'hidden', there's no evidence of runtime protection preventing file a"
+      "reason": "The solution directory contains solve.sh with the complete gold patch. The Dockerfile doesn't remove /solution/ from the container. An agent could read /solution/solve.sh and apply the exact patch. Additionally, the tests check for specific string patterns in diffs, so an agent could grep test files (if accessible) for the expected patterns and reverse-engineer the solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four bugs described in instruction.md have corresponding test functions: MessagePortChannel (test_message_port_closed_guard, test_message_port_variable_index), JSAbortController (test_abort_signal_reason_visited), BroadcastChannel (test_broadcast_channel_weak_ptr), EventListenerMap (tests for both .cpp and .h)."
+      "reason": "All four bugs described in instruction.md have corresponding test functions: test_message_port_closed_guard and test_message_port_variable_index for Bug 1, test_abort_signal_reason_visited for Bug 2, test_broadcast_channel_weak_ptr for Bug 3, and test_eventlistenermap_thread_affinity for Bug 4."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear function names mapping to each bug fix, descriptive docstrings, and helper functions separated at the top. Comments indicate test categories like [pr_diff] fail_to_pass and [static] pass_to_pass."
+      "reason": "Tests are well-organized with descriptive function names, docstrings, section headers (Gate, Fail-to-pass), helper functions, and comments explaining pass_to_pass vs fail_to_pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves C++ source code modifications, not structured data output."
+      "reason": "This task involves C++ source code fixes, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in instruction.md appear correct and consistent with the test file and solution."
+      "reason": "File paths, function names, variable names, and commands in instruction.md appear consistent with the test expectations and the actual codebase structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies exact file paths, exact member variable names (m_isClosed, m_threadUID, m_pendingMessages), exact function names (releaseAssertOrSetThreadUID, visitChildrenImpl, postMessageToRemote), exact type names (ThreadSafeWeakPtr<BroadcastChannel>), and describes what the resulting diff should contain. This goes far beyond identifying the buggy module and effectively specifies the solution."
+      "reason": "The instruction specifies exact implementation details: 'The resulting diff should contain m_isClosed and return false', 'signal() and reason() chained in the same expression', 'ThreadSafeWeakPtr<BroadcastChannel> as its value type', 'releaseAssertOrSetThreadUID helper and m_threadUID member'. These go well beyond identifying the buggy file/area and prescribe exact variable names and code patterns."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a configuration editing task."
     }
   },
   "tier_a_fails": [
@@ -55,13 +55,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 6
 }

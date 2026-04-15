@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths (load-matches.ts, router.ts), variable names (prevLoadPromise, previousCommitPromise, loaderPromise, loadPromise), function names (executeBeforeLoad, loadRouteMatch), and patterns asserted in tests are explicitly described in instruction.md."
+      "reason": "The instruction names all file paths (load-matches.ts, router.ts), variable names (prevLoadPromise, previousCommitPromise, loadPromise, loaderPromise), function names (executeBeforeLoad, loadRouteMatch), property paths (match._nonReactive.loadPromise, this.commitLocationPromise), and patterns (let vs const, setting to undefined) that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'declared with let (not const)', 'prevLoadPromise = undefined inside the callback', 'match._nonReactive.loadPromise = undefined should appear together with loaderPromise', etc. This is not describing what's broken but prescribing the exact code changes."
+      "reason": "The instruction explicitly states the exact fix: 'declared with let (not const) to allow reassignment', 'prevLoadPromise = undefined inside the callback', 'match._nonReactive.loadPromise = undefined alongside loaderPromise', etc. It specifies exactly what code changes to make, leaving no reasoning for the developer."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific patterns like 'let prevLoadPromise' (regex for exact variable name and let keyword), 'prevLoadPromise = undefined' as literal string, and proximity of 'match._nonReactive.loadPromise = undefined' to 'match._nonReactive.loaderPromise = undefined'. An alternative correct fix (e.g., using WeakRef, different variable naming, or a cleanup utility function) would fail these text-matching tests."
+      "reason": "Tests use regex like r\"let\\s+prevLoadPromise\\s*=\\s*match\\._nonReactive\\.loadPromise\" and exact string matches like 'prevLoadPromise = undefined'. An alternative correct fix (e.g., using a WeakRef, or a cleanup function, or nulling via a different mechanism) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The four fail_to_pass tests (test_load_matches_prevLoadPromise_cleanup, test_load_matches_loadPromise_cleanup_in_try_block, test_load_matches_loadPromise_cleanup_after_sync_load, test_router_previousCommitPromise_cleanup) all use `read_text()` and regex/string matching on source files. They never import, call, or execute the code to verify the memory leak is fixed."
+      "reason": "The first 4 fail-to-pass tests (test_load_matches_prevLoadPromise_cleanup, test_load_matches_loadPromise_cleanup_in_try_block, test_load_matches_loadPromise_cleanup_after_sync_load, test_router_previousCommitPromise_cleanup) are purely text-matching with regex/string searches on file contents. They do not execute any code or test actual memory behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All four f2p tests are pure text-matching assertions (regex on file content, string 'in' checks). A stub that simply writes the expected strings into the files would pass without fixing any actual memory leak behavior."
+      "reason": "The f2p tests only check for text patterns in source files (e.g., 'let prevLoadPromise', 'prevLoadPromise = undefined'). A trivial approach of adding these exact strings as dead code comments would pass the text-matching tests without actually fixing the memory leak."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/router with solve.sh containing the exact patch. The agent could read /solution/solve.sh or simply execute it. Tests are text-matching so the agent could also just insert the expected literal strings."
+      "reason": "The solution exists at /workspace/router with solve.sh containing the exact patch. The agent could read solution/solve.sh or grep for the expected patterns. Also, since tests are pure text-matching, the agent could just insert the expected strings as comments."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four cleanup locations (A-D) described in instruction.md are tested, plus build/type-check/lint/unit-test pass_to_pass tests cover the 'maintain existing functionality' requirement."
+      "reason": "All four cleanup locations (A-D) described in the instruction are tested, plus build/type/lint/unit tests verify existing functionality is maintained."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_load_matches_prevLoadPromise_cleanup), have docstrings explaining what they verify, and are tagged with fail_to_pass/pass_to_pass annotations."
+      "reason": "Tests are well-named (e.g., test_load_matches_prevLoadPromise_cleanup), have docstrings explaining what they verify, and are logically grouped by location in the codebase."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves source code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and tests."
+      "reason": "File paths, variable names, and function names in the instruction match those in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files, exact function names, exact variable names, and prescribes exact code patterns (e.g., 'let prevLoadPromise = match._nonReactive.loadPromise followed later by prevLoadPromise = undefined'). This goes far beyond describing the bug and effectively provides the solution."
+      "reason": "The instruction specifies exact variable names, exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', exact locations within specific functions, and exact cleanup patterns. This goes far beyond describing what's broken and essentially dictates the exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

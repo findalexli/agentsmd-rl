@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'retries_ctl.isRetry()', and the specific variable name 'current_zookeeper'. While the instruction mentions getZooKeeper().first and 'is retry' method conceptually, it never names the variable 'current_zookeeper' nor the exact method 'isRetry()'. These test-specific identifiers are not fully discoverable from instruction.md alone."
+      "reason": "Tests assert on specific literal strings like 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'retries_ctl.isRetry()', variable name 'current_zookeeper', and exact function call patterns like 'getObjectNamesAndSetWatch(current_zookeeper' and 'tryLoadObject(current_zookeeper'. While instruction.md mentions these methods exist, it does not explicitly name the variable 'current_zookeeper' that the tests require. A developer could reasonably choose 'fresh_zookeeper', 'new_zk', or 'zk' a"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'A fresh ZooKeeper session should be obtained via the getter's getZooKeeper().first method', 'session renewal should happen BEFORE calling getObjectNamesAndSetWatch', 'The retry control provides a method to detect when this is a retry attempt', and 'The object list must be re-fetched inside the retry loop'. This describes exactly WHAT to change rather than just describing what's broken."
+      "reason": "instruction.md explicitly states the fix: 'A fresh ZooKeeper session should be obtained via the getter's getZooKeeper().first method', 'session renewal should happen BEFORE calling getObjectNamesAndSetWatch', 'The retry control provides a method to detect when this is a retry attempt', and 'The object list must be re-fetched inside the retry loop'. This is not just describing what's broken\u2014it describes exactly what to change and how."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: 'current_zookeeper' is checked as an exact literal string in multiple tests (e.g., test_zookeeper_session_renewal_in_retry_loop checks 'current_zookeeper = zookeeper_getter.getZooKeeper().first', test_session_renewal_timing checks 'getObjectNamesAndSetWatch(current_zookeeper'). An alternative correct fix using a different variable name like 'fresh_zookeeper' or 'active_zk' would fail all tests."
+      "reason": "Tests assert on the exact variable name 'current_zookeeper' (e.g., test_zookeeper_session_renewal_in_retry_loop checks 'current_zookeeper = zookeeper_getter.getZooKeeper().first' as a literal string, and regex patterns like 'getObjectNamesAndSetWatch\\(\\s*current_zookeeper'). An alternative correct fix using a different variable name like 'fresh_zk' or 'active_zookeeper' would fail all tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test (test_zookeeper_session_renewal_in_retry_loop, test_object_names_fetched_inside_retry_loop, test_no_stale_zookeeper_parameter_in_loop, test_session_renewal_timing) reads the source file and uses string matching / regex on the file content. No test actually compiles or runs the code to verify behavior. test_file_compiles attempts compilation but explicitly allows non-zero return codes."
+      "reason": "Almost every test (test_zookeeper_session_renewal_in_retry_loop, test_object_names_fetched_inside_retry_loop, test_no_stale_zookeeper_parameter_in_loop, test_session_renewal_timing) reads the source file and checks for specific string patterns using 'in content' or regex searches. test_file_compiles attempts compilation but even acknowledges it may fail due to missing deps. No test actually executes the fixed code or tests runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op would not pass - the tests check for specific code patterns that must be present in the source file (e.g., 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'retries_ctl.isRetry()'). The original unmodified file would fail these checks since these strings don't exist in it."
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original file (e.g., 'current_zookeeper' variable, 'retries_ctl.isRetry()' call, 'Strings object_names' inside the retry loop). A stub or no-op would not satisfy these assertions since the original file lacks these patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/clickhouse's solve.sh which contains the exact patch. An agent could read /tmp/fix.patch or the solution/solve.sh file (if accessible) to extract the exact changes. Additionally, since tests are pure string matching, the agent could grep for the expected strings in test files and insert them mechanically."
+      "reason": "The solution is in /workspace/clickhouse's solve.sh which contains the exact patch. An agent could read /tmp/fix.patch or the solution/solve.sh file to see the exact variable names and code changes expected. Additionally, since tests only check string patterns in the source file, the agent could grep test files or solution files and reverse-engineer the expected strings."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: session renewal on retry, object names re-fetched inside loop, use of current session variable, session renewal before getObjectNamesAndSetWatch. All of these are tested in the corresponding test functions."
+      "reason": "The instruction describes session renewal on retry, re-fetching object names inside the loop, using current session for all operations, and renewal before fetch\u2014all of which are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_zookeeper_session_renewal_in_retry_loop, test_object_names_fetched_inside_retry_loop, etc.), have docstrings explaining what they check, and are grouped logically by the aspect of the fix they verify."
+      "reason": "Tests are well-named (test_zookeeper_session_renewal_in_retry_loop, test_object_names_fetched_inside_retry_loop, etc.), have docstrings explaining what they verify, and are labeled as FAIL-TO-PASS or PASS-TO-PASS."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, function names, and commands in instruction.md appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file and function, names the exact API methods to use (getZooKeeper().first, isRetry()), and describes the exact ordering of operations. This goes beyond localizing the bug and essentially prescribes the implementation."
+      "reason": "instruction.md names the exact file, function, specific methods to call (zookeeper_getter.getZooKeeper().first, retries_ctl.isRetry()), and describes the exact code structure of the fix including ordering constraints. This goes well beyond identifying the bug location."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -1,60 +1,74 @@
-# Task: Add Table `column` Prop for Shared Column Defaults
+# Table `column` Prop for Shared Column Defaults
 
 ## Problem
 
-The Table component currently requires developers to repeat the same column properties (like `align: 'center'` or `ellipsis: true`) on every column when they want consistent styling across multiple columns. This is tedious and error-prone.
+The Table component requires developers to repeat the same column properties (like `align: 'center'` or `ellipsis: true`) on every column for consistent styling. This is tedious and error-prone.
 
 ## Goal
 
-Add a `column` prop to the Table component that allows setting default column properties that apply to all columns unless explicitly overridden.
+Add a `column` prop to the Table component that sets default column properties applying to all columns unless explicitly overridden.
 
-## Requirements
+## Functional Requirements
 
-1. **Add the `column` prop to TableProps interface**: Add a new optional `column` property typed as `Partial<ColumnType<RecordType>>` to the TableProps interface in `InternalTable.tsx`.
+The implementation must satisfy the following behavioral specifications:
 
-2. **Create a `useFilledColumns` hook**: Create a new hook at `components/table/hooks/useFilledColumns.ts` that:
-   - Takes `columns` and `column` (defaults object) as parameters
-   - Returns columns with defaults applied when `column` is provided
-   - Uses `mergeProps` from `@rc-component/util` to merge (column defaults come first, individual column props override)
-   - Returns original columns unchanged when `column` is not provided
-   - Preserves `SELECTION_COLUMN` and `EXPAND_COLUMN` unchanged (check with `===`)
-   - Recursively handles nested column groups (columns with `children` arrays)
-   - Omits `children` from the defaults when merging to avoid structure issues
+1. **Type definition**: The `TableProps` interface must include a `column` property typed as `Partial<ColumnType<RecordType>>`.
 
-3. **Integrate in InternalTable**:
-   - Import the `useFilledColumns` hook
+2. **Hook behavior**: A hook at `components/table/hooks/useFilledColumns.ts` must:
+   - Accept `columns` and an optional `column` defaults object
+   - Return columns with defaults applied when the `column` parameter is provided
+   - Return the original columns array unchanged when `column` is not provided (check with `if (!column)`)
+   - Use `mergeProps` from `@rc-component/util` for merging, with individual column props taking precedence over defaults
+   - Preserve system columns (`SELECTION_COLUMN`, `EXPAND_COLUMN`) using `===` identity checks
+   - Recursively handle nested column groups (columns with `children` arrays) via a `fillColumns` function
+   - Omit the `children` property from the defaults object before merging
+
+3. **Integration**: In `InternalTable.tsx`:
+   - Import the hook as `import useFilledColumns from './hooks/useFilledColumns'`
    - Destructure the `column` prop from component props
-   - Rename the existing `baseColumns` memo to `rawColumns` and create a new `baseColumns` using `useFilledColumns(rawColumns, column)`
-   - Add `'column'` to the `omit()` call that creates `tableProps` to avoid passing it to rc-table
+   - Pass both the base columns and `column` defaults to the hook
+   - Omit `'column'` from props passed to rc-table
 
-4. **Add tests**: Add a test in `components/table/__tests__/Table.test.tsx` that verifies:
-   - Default alignment from `column` is applied to columns without explicit alignment
-   - Per-column override takes precedence over defaults
-   - Special columns (EXPAND_COLUMN, SELECTION_COLUMN) work correctly alongside regular columns
+4. **Tests**: Add tests verifying alignment inheritance, per-column override precedence, and correct handling of special columns alongside regular columns.
 
-5. **Add demo**: Create a demo at `components/table/demo/column-defaults.tsx` showing the feature with at least 3 columns where:
-   - Some inherit defaults (e.g., `align: 'center'`)
-   - At least one overrides (e.g., `align: 'left'`)
+5. **Demo**: Create a demo file demonstrating the feature with at least 3 columns showing both inherited defaults and per-column overrides.
 
-## Important Notes
+## Required String Patterns
 
-- **Demo imports**: Use absolute imports (`from 'antd'`, `from 'antd/es/table'`) in demo files, never relative imports (`../`, `./`)
-- **Test imports**: Use relative imports (`from '..'`, `from '../index'`) in test files, never absolute imports (`from 'antd'`)
-- Use the existing utilities: `mergeProps` and `omit` from `@rc-component/util`
-- The constants `SELECTION_COLUMN` and `EXPAND_COLUMN` are available from `../hooks/useSelection` and `@rc-component/table`
-- Refer to the PR description in the task files for more implementation details if needed
+The following exact strings must appear in the specified files for the implementation to pass validation:
 
-## Files to Modify
+**In `InternalTable.tsx`:**
+- `column?: Partial<ColumnType<RecordType>>`
+- `import useFilledColumns from './hooks/useFilledColumns'`
+- `useFilledColumns(rawColumns, column)`
+- `column,` (destructuring)
+- `rawColumns`
+- `'column',` (in omit call)
 
-- `components/table/InternalTable.tsx` - Add prop type, destructuring, hook usage
-- `components/table/hooks/useFilledColumns.ts` - Create new file (main implementation)
-- `components/table/__tests__/Table.test.tsx` - Add tests
-- `components/table/demo/column-defaults.tsx` - Create demo
-- `components/table/demo/column-defaults.md` - Create demo description
+**In `useFilledColumns.ts`:**
+- `mergeProps`
+- `SELECTION_COLUMN`
+- `EXPAND_COLUMN`
+- `col === SELECTION_COLUMN || col === EXPAND_COLUMN`
+- `fillColumns`
+- `if (!column)`
+- `return columns`
+- `'children' in col`
+- `Array.isArray(col.children)`
+- `fillColumns(col.children)`
+- `omit(column` and `'children'`
+
+## Import Conventions
+
+- **Demo files**: Use absolute imports (`from 'antd'`, `from 'antd/es/table'`), never relative imports
+- **Test files**: Use relative imports (`from '..'`, `from '../index'`), never absolute imports from `'antd'`
 
 ## Verification
 
-After implementation, the following should work:
+After implementation:
 - TypeScript compilation passes
-- A Table with `column={{ align: 'center' }}` should center-align all columns without explicit alignment
-- Columns with explicit `align: 'right'` should right-align despite the default
+- `npx biome lint components/table/` passes
+- `npx eslint components/table/InternalTable.tsx` passes
+- `npm test -- components/table/__tests__/Table.test.tsx` passes
+- A Table with `column={{ align: 'center' }}` centers all columns without explicit alignment
+- Columns with explicit `align: 'right'` right-align despite the default

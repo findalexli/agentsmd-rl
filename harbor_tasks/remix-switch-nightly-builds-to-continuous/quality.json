@@ -3,59 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions map to specifics stated in instruction.md: file paths (.github/workflows/nightly.yml, preview.yml, scripts/setup-installable-branch.ts, README.md, CONTRIBUTING.md), literal strings ('remix#preview&path:packages/remix', 'remix#nightly', 'allowedOverwrites', '## Preview builds'), the --branch flag removal, positional branch name requirement, push trigger on main, and 'setup-installable-branch preview' / 'git push origin preview' are all discoverable from the instruction's Requi"
+      "reason": "All asserted file paths (.github/workflows/nightly.yml, .github/workflows/preview.yml, scripts/setup-installable-branch.ts, README.md, CONTRIBUTING.md), literal strings (remix#preview&path:packages/remix, remix#nightly, allowedOverwrites, ## Preview builds, setup-installable-branch preview, git push.*origin preview), and behavioral requirements (no --branch flag, positional branch name required, no silent default) are explicitly stated in instruction.md under the Required End State section."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired end state (what must be true) rather than giving exact code changes. It says things like 'branch name must be a required positional argument' and 'The string allowedOverwrites must not appear' without specifying exact line changes or replacement code."
+      "reason": "The instruction describes the desired end state (what the files should contain/not contain, behavioral properties) but does not give exact code changes, line numbers, or diffs. A developer must reason about how to implement the changes to the workflow, script, and documentation files."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_preview_workflow_builds_on_push asserts 'setup-installable-branch preview' must appear literally in the workflow file, and asserts a regex 'git push.*origin preview'. An alternative correct implementation might use a variable like `$BRANCH_NAME` or use `npx tsx scripts/setup-installable-branch.ts preview` instead of the exact string 'setup-installable-branch preview'. The instruction says the script must accept a positional argument but doesn't mandate the exact invocation string in the wor"
+      "reason": "test_preview_workflow_builds_on_push asserts the exact string 'setup-installable-branch preview' must appear in the workflow and uses regex 'git push.*origin preview'. These are implementation-specific: an alternative correct solution could use a variable like `git push origin $BRANCH` or call the script differently (e.g., via an environment variable or different argument passing). test_script_no_branch_flag extracts and evals the parseArgs config, which assumes a specific implementation pattern"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Several tests execute subprocesses: test_script_no_branch_flag and test_script_requires_branch_name run Node.js to actually parse the script's parseArgs config and test runtime behavior. test_preview_workflow_push_trigger runs a Python subprocess that parses YAML structure. test_repo_format_check, test_repo_lint, and test_repo_typecheck execute actual build tools. While some tests do string matching (test_script_removes_overwrite_protection, test_readme_nightly_to_preview, etc.), the overall tes"
+      "outcome": "fail",
+      "reason": "Most tests are string-presence checks (assert 'X' in file.read()). While test_script_no_branch_flag and test_script_requires_branch_name do execute Node.js subprocesses to parse and evaluate the script's parseArgs configuration, tests like test_script_removes_overwrite_protection, test_script_comments_reference_preview, test_readme_nightly_to_preview, test_contributing_nightly_to_preview, and test_preview_workflow_builds_on_push are purely text-matching assertions with no execution of actual beh"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests cannot be satisfied by stub implementations. For example, test_nightly_workflow_removed requires deleting an existing file. test_script_no_branch_flag dynamically evaluates the parseArgs config and would fail against the original code. test_preview_workflow_push_trigger parses the actual YAML for a push trigger. These require real modifications to the codebase."
+      "reason": "The fail-to-pass tests check for specific changes from the base commit state. For example, test_nightly_workflow_removed checks a file that exists at the base commit is deleted, test_script_no_branch_flag verifies the parseArgs config rejects --branch (which it currently accepts), and test_script_requires_branch_name verifies no silent default to 'nightly'. A stub/no-op would not pass these tests since the base repo has nightly.yml, has the --branch flag, and has 'nightly' defaults."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh and /solution/solve.py in the container (as shown in solve.sh which runs 'python3 /solution/solve.py'). The Dockerfile doesn't remove /solution after use, so the agent could read /solution/solve.py to get the exact gold patch. There's no evidence of /solution being removed or permissions being restricted."
+      "reason": "The solution exists at /solution/solve.sh and /solution/solve.py in the container. The agent could read these files to obtain the exact gold patch. The Dockerfile and environment don't restrict access to /solution/. Additionally, the test file at tests/test_outputs.py contains all the exact literal strings being checked, which the agent could grep for."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are covered: nightly.yml deletion, preview.yml push trigger on main, script --branch flag removal, positional argument requirement, allowedOverwrites removal, JSDoc preview reference, README and CONTRIBUTING updates. The preview workflow still supporting PR preview branches is implicitly preserved since the tests check the workflow file exists and has specific content."
+      "reason": "All requirements from instruction.md are covered: nightly.yml deletion, push trigger on main, no --branch flag, positional branch name required, no allowedOverwrites, JSDoc preview reference, README and CONTRIBUTING content changes. The workflow PR preview functionality (preview/{number} and cleanup) isn't explicitly tested but is implicitly preserved by not breaking the existing workflow structure."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_nightly_workflow_removed, test_script_no_branch_flag, etc.), and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into sections (Gates/pass_to_pass, Fail-to-pass/behavioral, Pass-to-pass/repo_tests) with clear comments, descriptive function names, and docstrings explaining each check's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying CI workflows, scripts, and documentation files\u2014not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves modifying CI workflows, scripts, and documentation files \u2014 not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, literal strings, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "All filenames, paths, commands, variable names, and literal strings in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies files to modify and desired end-state properties, which is appropriate for this task. It doesn't specify exact line numbers or internal implementation details like parseArgs config structure."
+      "reason": "The instruction specifies which files to modify (which is appropriate for a task of this nature) and the desired end-state properties, but doesn't leak specific line numbers or exact code to write. The files listed are the obvious targets given the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it involves code and config file modifications across multiple files."
+      "reason": "This is not an agentmd-edits task; it involves code and configuration file modifications across multiple files."
     }
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 7,
+  "fail_count": 3
 }

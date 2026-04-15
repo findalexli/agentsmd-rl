@@ -3,55 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all 6 target files, the variable `currentYear`, the placement requirement (after `theme.useToken()`), and the component name `App`. Tests check these same specifics. The test for consistent structure, TypeScript compilation, ESLint, Biome, Prettier, and Jest tests are all standard CI checks that a developer working on the named files would expect."
+      "reason": "The instruction names all 6 target files, the variable `currentYear`, the `theme.useToken()` call, the `App` component, and the exact before/after pattern. All test assertions (file paths, variable names, structural requirements) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
       "reason": "The instruction provides an explicit before/after code example showing exactly what to change: move `const currentYear = new Date().getFullYear();` from module level to after `theme.useToken()`. This is the complete solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "The tests check structural properties (no module-level currentYear, currentYear inside component after useToken) via text parsing that would accept any correct implementation of moving the variable. They don't assert exact line numbers or specific whitespace patterns beyond what Prettier enforces."
+      "outcome": "fail",
+      "reason": "The tests in `test_consistent_component_structure` assert that `currentYear` must appear after `theme.useToken()` by line order. An alternative valid fix placing `currentYear` before `theme.useToken()` but still inside the component would fail this test. The tests enforce a specific ordering detail rather than just testing the behavioral requirement."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (`test_no_module_level_current_year`, `test_current_year_inside_component`, `test_consistent_component_structure`) are purely text-based: they read file contents and check string patterns like `'const currentYear' in stripped`. However, there are also execution-based tests (tsc, eslint, jest, biome, prettier) that compile and run the code, so it's a mix. But the primary task-specific tests are purely textual assertions."
+      "reason": "The core fail-to-pass tests (`test_no_module_level_current_year`, `test_current_year_inside_component`, `test_consistent_component_structure`) are purely text-based: they read file content and check string patterns like `'const currentYear' in stripped`. However, there are also pass-to-pass tests that run `tsc`, `eslint`, `jest`, and `prettier` as subprocesses, which do execute the code. Since the f2p tests are entirely text-matching, this is a FAIL."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (`test_no_module_level_current_year`, `test_current_year_inside_component`) would fail on the base commit where `currentYear` is at module level. A stub/no-op solution would not move the variable and would fail these tests."
+      "reason": "The fail-to-pass tests (`test_no_module_level_current_year`, `test_current_year_inside_component`) check that `currentYear` is NOT at module level and IS inside the component. A stub or no-op would fail because the base code has `currentYear` at module level, which would be detected by `has_module_level_current_year`."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/tests/test_outputs.py` (copied into container) and contains the complete test logic including exactly what patterns to match. The agent could also read the solution patch from `/solution/solve.sh` if it exists in the container (the Dockerfile doesn't explicitly copy it, but the build context includes it). Additionally, the agent can read the test file to see exactly what string patterns are checked."
+      "reason": "The solution file exists at `/workspace/tests/../solution/solve.sh` and the Dockerfile copies test files but doesn't explicitly prevent access to `/solution/`. An agent could read the gold patch from the solution directory or grep test files to find the expected patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from the instruction are tested: (1) currentYear not at module level, (2) currentYear after useToken(), (3) all 6 files consistent, (4) Footer still works (via Jest demo tests)."
+      "reason": "All requirements from instruction.md are tested: moving currentYear inside App (test_no_module_level_current_year, test_current_year_inside_component), placing after useToken (test_consistent_component_structure), all 6 files (TARGET_FILES list), Footer still referencing currentYear (test_footer_contains_current_year), and TypeScript/lint checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Pass-to-Pass Tests' and 'Original Task Tests'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-structured with section comments separating 'Pass-to-Pass Tests' and 'Original Task Tests', descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "The task involves code style changes to TSX files, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in the instruction and tests are correct and consistent."
+      "reason": "All filenames, paths, variable names, and commands in instruction.md and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact variable (`currentYear`), exact placement (after `theme.useToken()`), and provides a complete before/after code example. This goes beyond naming files that need fixing and provides the full solution pattern."
+      "reason": "The instruction explicitly names every file to edit and provides exact before/after code snippets showing the precise transformation needed. This goes beyond identifying the buggy area \u2014 it gives the complete fix pattern."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying TSX demo files, not configuration files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
@@ -59,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

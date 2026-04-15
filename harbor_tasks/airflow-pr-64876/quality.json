@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the migration file path, the disable_sqlite_fkeys context manager, the import statement, both UPDATE statements, and their required positioning relative to batch_alter_table. All test-asserted specifics (file paths, function names, string literals like 'with disable_sqlite_fkeys(op):', 'UPDATE log SET event', 'UPDATE dag SET is_stale', 'batch_alter_table(\"log\")') are discoverable from the instruction."
+      "reason": "The instruction names the migration file path, the disable_sqlite_fkeys context manager, the import statement, both UPDATE statements, and the root cause about PRAGMA being ignored in active transactions. All assert'd specifics in tests (file path, function name 'upgrade', UPDATE strings, disable_sqlite_fkeys name) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'Both UPDATE statements must be inside the disable_sqlite_fkeys context manager block' and 'The UPDATE statements must appear before batch_alter_table operations within the context manager.' This directly describes exactly what code change to make (move the UPDATE statements inside the context manager), leaving no reasoning for the agent."
+      "reason": "The instruction explicitly states the root cause: 'UPDATE statements trigger SQLAlchemy's autobegin, starting a transaction before the PRAGMA foreign_keys=off can take effect.' This essentially tells the agent the fix is to move the UPDATE statements inside the disable_sqlite_fkeys context manager. While it doesn't say 'move line X to line Y', the diagnosis is so specific that the solution is trivially implied."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check structural properties (UPDATE statements inside the disable_sqlite_fkeys with block, ordering relative to batch_alter_table) rather than exact line numbers or specific formatting. Alternative correct fixes that move the UPDATE statements inside the context manager in different ways would all pass."
+      "reason": "test_update_statements_inside_disable_sqlite_fkeys uses AST analysis to check that UPDATE statements are inside the disable_sqlite_fkeys context and not before it. Any correct fix that moves both UPDATEs inside the context manager (regardless of exact ordering, comments, whitespace) would pass. The tests don't assert on line positions or gold-specific details."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_update_statements_inside_disable_sqlite_fkeys, test_update_statements_order_in_context) use AST parsing and string position checks on the source file rather than executing the migration or importing/calling the code. Several p2p tests are pure text checks like 'assert \"UPDATE log SET event\" in source'. No test actually runs the migration against a database."
+      "outcome": "pass",
+      "reason": "Tests execute subprocess Python scripts that actually run SQLite operations (test_sqlite_foreign_key_pragma_behavior, test_migration_data_update_behavior) and use AST parsing (test_update_statements_inside_disable_sqlite_fkeys) rather than simple string matching on file contents."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests specifically verify that UPDATE statements are NOT before the context manager (updates_before_context == 0) and ARE inside it (updates_inside_context >= 2). The unpatched code has them outside, so a stub or no-op would fail these assertions."
+      "reason": "test_update_statements_inside_disable_sqlite_fkeys asserts that 0 UPDATE statements are before the context manager and >=2 are inside it - this fails on the original code which has both UPDATEs before the context manager. A stub/no-op would not pass. The SQLite behavior tests also verify actual database operations succeed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/airflow with solve.sh containing the exact patch. An agent could read /solution/solve.sh or simply apply it. The Dockerfile doesn't remove or protect the solution files."
+      "reason": "The solution file exists at /workspace/airflow's solve.sh path, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh (or the solve.sh file) to see the exact patch needed. There's no evidence the /solution/ directory is excluded from the agent's filesystem access."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from the instruction (disable_sqlite_fkeys usage, import statement, UPDATE statements inside context manager, UPDATE before batch_alter_table) are tested."
+      "reason": "The instruction requires: (1) disable_sqlite_fkeys usage - tested by AST check, (2) import statement present - tested implicitly by AST parsing the file, (3) both UPDATE statements present - tested by AST analysis counting >=2 UPDATEs, (4) migration completes without FK errors - tested by SQLite behavior tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_update_statements_inside_disable_sqlite_fkeys, test_update_statements_order_in_context, etc.), have docstrings explaining the rationale, and are annotated with (fail_to_pass) and (pass_to_pass) markers."
+      "reason": "Tests have descriptive names (test_sqlite_foreign_key_pragma_behavior, test_update_statements_inside_disable_sqlite_fkeys, test_migration_data_update_behavior), clear docstrings explaining what each tests and why, and are tagged with (fail_to_pass) markers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,26 +39,25 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction are all correct and consistent with the actual repository structure."
+      "reason": "File paths, function names, PRAGMA statements, and variable names in the instruction are all correct and consistent with the actual codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file, the exact function (upgrade()), the exact context manager, and precisely states the fix: 'Both UPDATE statements must be inside the disable_sqlite_fkeys context manager block' and 'The UPDATE statements must appear before batch_alter_table operations within the context manager.' This is essentially a step-by-step description of the solution."
+      "reason": "The instruction names the exact file path and explains the precise root cause mechanism (UPDATE statements trigger autobegin before PRAGMA can take effect), which strongly implies the fix is to reorder the statements. This goes beyond describing what's broken into describing where and why in a way that makes the fix obvious."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task involving a migration file fix, not a config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 3
 }

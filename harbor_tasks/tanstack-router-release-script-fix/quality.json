@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully specified in instruction.md. For example, test_latest_flag_conditional checks for the exact string \"const latestFlag = isPrerelease ? '' : ' --latest'\", test_non_conventional_commit_uses_split checks for exact variable names like 'const parts = line.split(\\' \\')' and 'const hash = parts[0]', test_range_from_logic checks for 'rangeFrom = previousRelease ||'. While the instruction describes the general approach, it doesn't specify these e"
+      "reason": "Tests assert very specific string literals not mentioned in instruction.md, e.g., test_latest_flag_conditional asserts the exact string \"const latestFlag = isPrerelease ? '' : ' --latest'\", test_non_conventional_commit_uses_split asserts \"const parts = line.split(' ')\", \"const hash = parts[0]\", \"const email = parts[1]\", \"parts.slice(2).join(' ')\". While the instruction describes the behavior, it doesn't specify these exact variable names and exact code patterns. Also test_range_from_logic assert"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially describes the exact implementation: 'split each log line on spaces and extract the hash from the first element, the email from the second element, and the subject from the remaining elements joined back together with spaces', 'parse the output into an array by splitting on newlines and removing empty entries', 'use the first two entries to identify the current and previous release commits'. This is a step-by-step implementation guide, not a description of what's broke"
+      "reason": "The instruction explicitly states the fix in great detail: 'split each log line on spaces and extract the hash from the first element, the email from the second element, and the subject from the remaining elements joined back together with spaces', 'parse the output into an array by splitting on newlines and removing empty entries', 'use the first two entries to identify the current and previous release commits'. This describes exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_non_conventional_commit_uses_split requires exact strings 'const parts = line.split(\\' \\')' and 'const hash = parts[0]'. test_latest_flag_conditional requires exact string \"const latestFlag = isPrerelease ? '' : ' --latest'\". test_range_from_logic requires 'rangeFrom = previousRelease ||'. An alternative correct fix using destructuring, different variable names, or different formatting would fail."
+      "reason": "Tests assert exact variable names and code patterns: 'const parts = line.split(\\' \\')' in test_non_conventional_commit_uses_split, 'const currentRelease' and 'const previousRelease' in test_range_from_logic, 'rangeFrom = previousRelease ||' exact string match, \"const latestFlag = isPrerelease ? '' : ' --latest'\" exact string. An alternative correct fix using different variable names (e.g., 'prevRelease', 'tokens' instead of 'parts') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all f2p tests (test_release_logs_uses_array_parsing, test_range_from_logic, test_commit_range_uses_current_release, test_non_conventional_commit_uses_split, test_latest_flag_conditional, test_prerelease_flag_unchanged, test_comments_explain_changes, test_conventional_commit_regex_comment) are purely text-matching with 'assert X in content' patterns. Only test_script_syntax_valid actually executes the code via subprocess. The tests verify text presence, not behavior."
+      "reason": "The fail-to-pass tests (test_release_logs_uses_array_parsing, test_range_from_logic, test_commit_range_uses_current_release, test_non_conventional_commit_uses_split, test_latest_flag_conditional, test_prerelease_flag_unchanged, test_comments_explain_changes, test_conventional_commit_regex_comment) are ALL text-matching tests using 'assert X in content' on the file text. Only test_script_syntax_valid runs the code via subprocess. No tests actually execute the script's logic or verify behavioral o"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the base file (e.g., '.split(\\n)', '.filter(Boolean)', 'const currentRelease', 'const latestFlag'). A stub/default implementation would not pass these tests - actual code changes are required."
+      "reason": "The f2p tests check for specific string patterns that are NOT present in the original file, so a stub/unmodified file would fail them. The base file contains the old patterns (indexOf, HEAD~1, unconditional --latest) which the tests check are absent."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/router and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact gold patch. Additionally, since tests are pure string matching, the agent could grep test files (if accessible) for the exact strings being asserted and insert them verbatim without understanding the bug."
+      "reason": "The solution is in /workspace/router after solve.sh runs, and the agent could read /solution/solve.sh or the gold patch directly. The tests are pure text-matching so the agent could also grep test_outputs.py for the exact strings expected and write them verbatim without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: array-based parsing (test_release_logs_uses_array_parsing), split-based non-conventional commit parsing (test_non_conventional_commit_uses_split), conditional --latest flag (test_latest_flag_conditional), comments (test_comments_explain_changes, test_conventional_commit_regex_comment), syntax validation (test_script_syntax_valid), and prereleaseFlag preservation (test_prerelease_flag_unchanged)."
+      "reason": "All requirements from the instruction are tested: array-based parsing, currentRelease/previousRelease logic, split-based non-conventional parsing, conditional --latest flag, prereleaseFlag unchanged, comments about timing/format/non-conventional commits, and syntax validation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped logically (f2p tests for each fix area, then p2p repo-level tests), and include docstrings explaining what each test verifies."
+      "reason": "Tests are well-named (test_release_logs_uses_array_parsing, test_latest_flag_conditional, etc.), grouped with comments separating pass-to-pass from fail-to-pass tests, and each has a docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a shell/JS script, not structured data output."
+      "reason": "The task involves modifying a script file, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, variable names, or commands in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction identifies the single file to modify (scripts/create-github-release.mjs) which is appropriate since it's the only relevant file. It doesn't cite specific line numbers."
+      "reason": "The instruction names only the single file to modify (scripts/create-github-release.mjs) which is the obvious target given the task domain. It doesn't reference specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

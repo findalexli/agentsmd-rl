@@ -3,62 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all specific file paths (chart/values.yaml, chart/values.schema.json, chart/templates/NOTES.txt, chart/newsfragments/62048.significant.rst, test_worker.py, test_worker_sets.py), exact field names (workers.celery.volumeClaimTemplates), literal strings (DEPRECATION WARNING:, data-volume-1, storage-class-1, etc.), schema keys (type, default, description, examples), and volume details that the tests assert on. All test-specific values are discoverable from the instruction."
+      "reason": "The instruction names all key paths (workers.celery.volumeClaimTemplates, workers.volumeClaimTemplates), file paths (values.yaml, values.schema.json, NOTES.txt, newsfragments/62048.significant.rst, test_worker.py, test_worker_sets.py), schema keys (io.k8s.api.core.v1.PersistentVolumeClaimTemplate), literal strings (DEPRECATION WARNING, data-volume-1, data-volume-2, storage-class-1, storage-class-2), and parametrize requirements that correspond to what the tests assert. The tests use behavioral c"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact field names, exact example values (data-volume-1, storage-class-1, 10Gi, data-volume-2, storage-class-2, 20Gi), exact description strings, exact conditional template syntax ('if not (empty .Values.workers.volumeClaimTemplates)'), exact deprecation warning text, and exact newsfragment content. This effectively tells the agent WHAT to write rather than describing a problem to solve."
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT needs to change (add new field, deprecate old one, add warnings, update tests) but does not give exact code diffs, line numbers to change, or verbatim replacement text. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests mostly check for the presence of keys, field types, and string containment rather than exact line positions or whitespace. Alternative implementations (different comment styles, different ordering of JSON properties, different exact wording as long as it contains required substrings) would still pass."
+      "reason": "Tests check behavioral outcomes: helm template rendering of VCTs, schema structure via JSON parsing, AST-based detection of parametrized tests. They use unique test values (behav-test-vol, legacy-test-vol) not from the gold patch. Alternative correct implementations (different comment wording, different deprecation message phrasing, different test organization) would pass as long as they achieve the same behavior."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Nearly every test is purely text-based: reading files and checking string containment (e.g., 'assert \"data-volume-1\" in content', 'assert \"DEPRECATION WARNING\" in content', 'assert \"pytest.mark.parametrize\" in content'). The TestHelmChartValidation class does parse YAML/JSON to verify structure, but no test actually renders the Helm chart, runs helm template, or executes the test suite. All tests are essentially 'assert X in open(path).read()' or 'assert key in parsed_dict'."
+      "outcome": "pass",
+      "reason": "Tests execute helm template via subprocess, parse YAML/JSON structured data, and use Python AST parsing to inspect test files. The test_worker.py/test_worker_sets.py checks use AST walking rather than text grep. Schema tests parse JSON and navigate property trees. This is behavioral verification, not text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific new content that doesn't exist in the base commit (e.g., workers.celery.volumeClaimTemplates field, DEPRECATION WARNING block for this specific field, newsfragment file 62048.significant.rst). A stub/no-op implementation would fail these checks since the fields and files don't exist yet."
+      "reason": "A stub/NOP implementation would fail: test_celery_volume_claim_templates_exists checks workers.celery.volumeClaimTemplates == [] (doesn't exist in base), test_deprecation_warning_in_notes checks rendered helm output for DEPRECATION WARNING when legacy VCT is set (no such warning in base NOTES.txt), test_celery_volume_claim_templates_in_schema checks schema has the new property (absent in base). These all fail on the unmodified codebase."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/airflow via solve.sh which applies a patch. The agent could potentially read the solution/solve.sh file or examine the gold patch. Additionally, the test file test_outputs.py is visible in the task description with all expected strings, so the agent could simply pattern-match the fixture strings without understanding the task."
+      "reason": "The solution/solve.sh file exists in the container at /workspace/airflow (or could be accessed from the test environment). The Dockerfile copies repo contents and the solve.sh contains the complete gold patch. An agent could read /solution/solve.sh or the test file itself at tests/test_outputs.py to extract expected values and implementation details."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors from instruction.md are tested: new field in values.yaml with default [], examples, deprecation comments, schema updates with type/description/examples, NOTES.txt deprecation warning with conditional, newsfragment existence and content, and test file parametrization for both paths."
+      "reason": "All 7 acceptance criteria are tested: new field in values.yaml (test_celery_volume_claim_templates_exists), legacy deprecation (test_legacy_volume_claim_templates_deprecated_comment), JSON schema (TestValuesSchema class), NOTES.txt warning (TestNotesTxt class), newsfragment (TestNewsfragment class in truncated tests), test updates (TestHelmTests class), and chart validity (TestChartValidity class)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into named classes (TestValuesYaml, TestValuesSchema, TestNotesTxt, TestHelmTests, TestNewsfragment, TestHelmChartValidation) with descriptive method names and docstrings."
+      "reason": "Tests are well-organized into descriptive classes (TestValuesYaml, TestValuesSchema, TestNotesTxt, TestHelmTests) with clear docstrings and meaningful test method names. The module docstring explains the testing approach."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the exact JSON schema structure for values.schema.json (type, default, description, examples, items with $ref) and the YAML structure for values.yaml."
+      "reason": "The instruction specifies the JSON schema structure (volumeClaimTemplates as array type, examples with data-volume-1/2, io.k8s.api.core.v1.PersistentVolumeClaimTemplate definition) and YAML structure (workers.celery.volumeClaimTemplates defaulting to [])."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, field names, and variable names in the instruction are consistent and correct (chart/values.yaml, chart/values.schema.json, workers.celery.volumeClaimTemplates, etc.)."
+      "reason": "All file paths, variable names, schema keys, and commands in the instruction are correct and consistent with the codebase and test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact file paths, exact field locations, exact example values, exact conditional template syntax, and essentially the complete implementation. For example, it gives the exact Helm template conditional '{{- if not (empty .Values.workers.volumeClaimTemplates) }}' and exact schema description text."
+      "outcome": "pass",
+      "reason": "The instruction names files that are domain-obvious for a Helm chart deprecation task (values.yaml, schema, NOTES.txt, test files, newsfragments). It doesn't specify exact line numbers or verbatim code to insert, just behavioral requirements."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized to specific sections in each file (adding new fields, updating descriptions, adding conditional blocks) without full-file rewrites, and the changes don't contradict other files."
+      "reason": "The gold patch makes localized additions to specific sections of values.yaml, values.schema.json, NOTES.txt, and test files. Changes are scoped additions (new fields, new deprecation blocks, new parametrize cases) without full-file rewrites."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 1
 }

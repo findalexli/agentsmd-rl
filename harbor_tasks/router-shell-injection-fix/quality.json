@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert very specific patterns like the exact import statement format `import { execSync, execFileSync } from 'node:child_process'` (test_execfilesync_imported), the exact function name `execFileSync` with `'git'` as first arg and `['show', ...]` as second (test_git_show_uses_execfilesync), and ESLint/Prettier passing (test_repo_eslint_scripts, test_repo_prettier_scripts). While the instruction mentions 'include the necessary function from node:child_process' and 'safer alternative that"
+      "reason": "The tests assert very specific patterns like the exact import statement format `import { execSync, execFileSync } from 'node:child_process'` (test_execfilesync_imported), the exact function name `execFileSync` with `'git'` as first arg and array with `'show'` (test_git_show_uses_execfilesync), and ESLint/Prettier checks. While the instruction mentions 'include the necessary function from node:child_process' and 'safer alternative that bypasses shell interpretation', it never explicitly names `ex"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: '1. Modify the import statement at the top of the file to include the necessary function from node:child_process' and '2. Replace the vulnerable shell command execution with a safer alternative that bypasses shell interpretation' and '3. Ensure the fix maintains the same functionality (retrieving file content from a specific git commit)'. Combined with 'The import statement includes the necessary security function' and 'The git show command uses the safe execut"
+      "reason": "The instruction explicitly says 'Modify the import statement at the top of the file to include the necessary function from node:child_process' and 'Replace the vulnerable shell command execution with a safer alternative that bypasses shell interpretation' and 'uses the safe execution method with array arguments'. Combined with the context of replacing execSync for shell injection, this effectively tells the developer exactly what to do: import execFileSync and use it with array arguments. The Te"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce a very specific implementation: test_execfilesync_imported requires the exact regex pattern `import { execSync, execFileSync } from 'node:child_process'` (ordering matters). A correct alternative using `spawnSync` or importing `execFileSync` on a separate line, or importing in different order like `{ execFileSync, execSync }`, would fail. The tests are implementation-specific, not behavior-specific."
+      "reason": "test_execfilesync_imported uses a regex requiring exactly `import { execSync, execFileSync }` in that order. An alternative correct fix could import them in reverse order (`execFileSync, execSync`) or on separate lines, or use `import * as cp from 'node:child_process'` and call `cp.execFileSync(...)`. These would all be correct fixes but would fail the test. The tests are over-fitted to the gold solution's specific import syntax."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_execfilesync_imported, test_git_show_uses_execfilesync, test_no_shell_injection_in_rel_path, test_execfilesync_has_array_args) are ALL regex-based text matching on the source file content using `open(TARGET_FILE).read()`. They never execute the script or test that shell injection is actually prevented. Only the p2p tests (syntax check, eslint, prettier) actually execute anything."
+      "reason": "The f2p tests (test_execfilesync_imported, test_git_show_uses_execfilesync, test_no_shell_injection_in_rel_path, test_execfilesync_has_array_args) are ALL text-matching via regex on file content (`open(TARGET_FILE).read()` with `re.search`). They never execute the script or test actual behavior. The p2p tests do run `node --check` and linting, but the core security fix verification is purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns (execFileSync import, execFileSync('git', ['show'...]) call, absence of vulnerable execSync pattern) that would not be present in the original unmodified file. A stub or no-op would not pass since the original file contains the vulnerable pattern that test_git_show_uses_execfilesync asserts must be absent."
+      "reason": "The f2p tests check for specific patterns (execFileSync import, array arguments to execFileSync for git show, absence of vulnerable execSync pattern). A stub/default file without the fix would still have the vulnerable execSync pattern and lack execFileSync, so these tests would correctly fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is stored at /workspace/router accessible from the container via the solve.sh approach. The agent could read the gold patch from solution/solve.sh if mounted, or could grep test files to discover the exact regex patterns being tested (e.g., the exact import format `import { execSync, execFileSync } from 'node:child_process'`) and match them without understanding the vulnerability."
+      "reason": "The solution file exists at /workspace/router (accessible in the container) and solve.sh contains the exact patch. The agent could read /tmp/fix.patch or the solution directory. Additionally, since tests are purely regex-based text matching, the agent could grep test files to discover the exact patterns expected and replicate them without understanding the vulnerability."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: modifying imports (tested), replacing vulnerable execution (tested), maintaining functionality (syntax check tests), and preventing shell metacharacter interpretation (tested via pattern absence). All explicitly required behaviors are covered."
+      "reason": "The instruction requires: (1) modifying import to include necessary function \u2014 tested by test_execfilesync_imported, (2) replacing vulnerable execution \u2014 tested by test_git_show_uses_execfilesync, (3) no shell metacharacter interpretation \u2014 tested by test_no_shell_injection_in_rel_path, (4) valid JS \u2014 tested by test_file_is_valid_javascript. All stated requirements are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (import validation, vulnerability pattern checks, syntax validation, tooling checks), and annotated with f2p/p2p labels."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into f2p (security fix verification) and p2p (syntax/linting checks), with comments explaining the PR context."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a JavaScript script file, not producing structured data output."
+      "reason": "This task involves modifying a JavaScript script, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction says 'Look at the code around line 80-85 in scripts/create-github-release.mjs' which is very precise line-number localization. It also specifies exactly which file to modify and describes the three-step fix in detail, leaving minimal localization or reasoning work for the agent."
+      "reason": "The instruction says 'Look at the code around line 80-85 in scripts/create-github-release.mjs' which pinpoints the exact location of the bug. While the file is already specified, giving line numbers when localization could be part of the task is leakage. The instruction also effectively names the solution approach ('safe execution method with array arguments')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a JavaScript file, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact function names 'isRolldown', 'bundlerOptionsKey', 'getBundlerOptions'; exact string \"'rolldownVersion' in vite\"; exact expressions like \"build?.rolldownOptions\" and \"build?.rollupOptions\"; exact import paths \"from './utils'\" and \"from '../utils'\"; exact usage pattern \"getBundlerOptions(serverEnv?.build)\"; exact syntax \"[bundlerOptionsKey]\". The instruction says 'detect at runtime which bundler is in use' but"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact function names 'isRolldown', 'bundlerOptionsKey', 'getBundlerOptions'; exact string \"'rolldownVersion' in vite\"; exact expression \"build?.rolldownOptions\" and \"build?.rollupOptions\"; exact usage pattern \"getBundlerOptions(serverEnv?.build)\"; exact import path \"from './utils'\" and \"from '../utils'\". The instruction says to detect the bundler and use correct keys but never specifies these exact names or patter"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the files to modify, that detection should check for rolldown vs rollup, that 'build.rolldownOptions' (Vite 8) and 'build.rollupOptions' (Vite 7) must be handled, and that detection logic should be centralized in utilities. This significantly narrows the solution space beyond just describing what's broken."
+      "reason": "The instruction explicitly states the exact files to modify, describes the exact mechanism ('detect at runtime which bundler is in use', 'use the correct configuration key'), and the requirements section effectively describes the solution architecture (centralized detection logic, runtime detection, correct key selection). While it doesn't give line numbers, it strongly constrains the solution shape."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact function name 'isRolldown' (test_utils_exports_exist), exact string \"'rolldownVersion' in vite\" (test_isRolldown_logic), exact variable name 'bundlerOptionsKey' (test_bundlerOptionsKey_logic), exact expression 'build?.rolldownOptions' (test_getBundlerOptions_logic), exact syntax '[bundlerOptionsKey]' (test_plugin_uses_bundlerOptionsKey), exact call 'getBundlerOptions(serverEnv?.build)' (test_preview_plugin_uses_getBundlerOptions). An alter"
+      "reason": "Tests assert exact variable names like 'isRolldown', 'bundlerOptionsKey', 'getBundlerOptions', exact detection string \"'rolldownVersion' in vite\", exact expressions like \"build?.rolldownOptions\" and \"build?.rollupOptions\", and exact usage patterns like \"[bundlerOptionsKey]\" and \"getBundlerOptions(serverEnv?.build)\". An alternative correct fix using different names (e.g., 'useRolldown', 'getBundlerKey', 'readBundlerConfig') or different detection logic (e.g., checking vite.version) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_utils_exports_exist, test_isRolldown_logic, test_bundlerOptionsKey_logic, test_getBundlerOptions_logic, test_plugin_imports_utils, test_plugin_uses_bundlerOptionsKey, test_plugin_uses_getBundlerOptions, test_preview_plugin_imports_utils, test_preview_plugin_uses_getBundlerOptions) are ALL string-matching tests using patterns like `assert 'X' in content` on file contents. None import or execute the TypeScript code. Only the pass-to-pass tests (test_repo_unit_tests_*, "
+      "reason": "The fail-to-pass tests (test_utils_exports_exist, test_isRolldown_logic, test_bundlerOptionsKey_logic, test_getBundlerOptions_logic, test_plugin_imports_utils, test_plugin_uses_bundlerOptionsKey, test_plugin_uses_getBundlerOptions, test_preview_plugin_imports_utils, test_preview_plugin_uses_getBundlerOptions) are ALL string-matching tests using patterns like `assert 'X' in content` on file reads. They never import, execute, or call the actual code. The few subprocess tests (test_repo_unit_tests_"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in source files. An agent could simply append a dead-code comment block containing all the required strings (e.g., '// isRolldown bundlerOptionsKey getBundlerOptions rolldownVersion in vite build?.rolldownOptions build?.rollupOptions [bundlerOptionsKey]') to each file without implementing the actual fix, and most string-matching tests would pass."
+      "reason": "A stub implementation that simply writes the expected strings into the files (e.g., adding comments containing 'isRolldown', 'bundlerOptionsKey', \"'rolldownVersion' in vite\", etc.) without any actual functional implementation would pass all the fail-to-pass tests since they only do string matching on file contents."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/router's git history or in /solution/solve.sh which contains the complete patch. The agent could read solve.sh or inspect the gold patch directly. Additionally, since tests are pure string matching, the agent could grep test files to discover exact expected strings."
+      "reason": "The solution is available at /workspace/router in the container via solve.sh, and the agent could read the test file at tests/test_outputs.py to see exactly what strings are being asserted. Since tests only check for string presence in files, the agent could trivially satisfy them by grep-ing the test file for expected patterns and inserting those strings as comments."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (runtime detection, correct config key, handling both options, modifying the three specified files) are tested, though only via string matching."
+      "reason": "The tests cover all three files mentioned in the requirements, detection logic, key selection logic, options reading logic, and integration with both plugin.ts and preview-server-plugin/plugin.ts, which maps to the instruction's requirements about runtime detection, correct key usage, and backward compatibility."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped logically by file (utils, plugin, preview-plugin), and annotated with fail-to-pass vs pass-to-pass markers."
+      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass nature, and organized logically by component (utils, plugin, preview plugin, structural validation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces code changes, not structured data output."
+      "reason": "This task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names the three exact files to modify (packages/start-plugin-core/src/utils.ts, plugin.ts, preview-server-plugin/plugin.ts), tells the agent to use 'rolldownOptions' vs 'rollupOptions' keys, and specifies that detection should check the vite module at runtime. This goes beyond describing the bug and essentially outlines the solution architecture."
+      "reason": "The instruction explicitly names the three exact files to modify and describes the specific mechanism (runtime detection of bundler, using correct configuration key). While it doesn't give line numbers, naming exact files when the task domain doesn't make them obvious narrows the solution space significantly."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

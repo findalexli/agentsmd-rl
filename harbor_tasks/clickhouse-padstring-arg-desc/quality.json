@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file implicitly (padString.cpp with leftPad/rightPad functions), the three argument names ('string', 'length', 'pad_string'), their exact description strings ('String or FixedString', 'UInt*', 'String'), the validators (isStringOrFixedString, isInteger, isString), and the API (validateFunctionArguments, FunctionArgumentDescriptors). All test-asserted specifics are discoverable from instruction.md."
+      "reason": "The instruction names the file implicitly (padString.cpp with leftPad/rightPad functions), the three argument descriptors ('string', 'length', 'pad_string'), their exact corrected description strings ('String or FixedString', 'UInt*', 'String'), the validators (isStringOrFixedString, isInteger, isString), and mentions validateFunctionArguments, FunctionArgumentDescriptors, mandatory_args, optional_args. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact new description strings to use: 'String or FixedString' for string arg, 'UInt*' for length arg, 'String' for pad_string arg. It also names the exact validators and argument names. This is effectively telling the agent exactly what to change to what \u2014 no reasoning about the fix is needed."
+      "reason": "The instruction explicitly states the exact new values for each description string: 'The description string should read \"String or FixedString\"', 'should read \"UInt*\"', 'should read \"String\"'. This tells the agent exactly what to change each string to, leaving no reasoning required about the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use regex patterns that match the structure of FunctionArgumentDescriptor entries with TypeValidator casts, extracting the description string. Any correct fix that changes the description strings to the specified values in the same code structure would pass. The tests don't assert on line numbers or other implementation details beyond the descriptor format."
+      "reason": "The tests use regex patterns matching the FunctionArgumentDescriptor structure and extract the description strings. Any correct fix that changes the three description strings to the specified values within that structure would pass. The tests don't assert on line numbers or implementation details beyond the descriptor pattern."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_string_argument_description, test_length_argument_description, test_pad_string_argument_description) are all pure text/regex pattern matching on source code: they read the file and assert string contents. The behavioral test (test_padstring_syntax_valid) only checks syntax validity, not the actual fix. No test executes the functions or checks error messages behaviorally."
+      "reason": "The three f2p tests (test_string_argument_description, test_length_argument_description, test_pad_string_argument_description) are purely static text matching via regex on file content. While test_padstring_syntax_valid runs a subprocess (clang syntax check), the core f2p tests are all 'assert pattern in open(path).read()' style with no execution of the actual functions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that description strings changed from their original wrong values ('Array', 'const UInt*', 'Array') to the correct values ('String or FixedString', 'UInt*', 'String'). A stub or no-op would leave the original wrong values, which would fail the assertions."
+      "reason": "The f2p tests check that specific description strings have been changed from their original values ('Array', 'const UInt*') to corrected values ('String or FixedString', 'UInt*', 'String'). A stub or no-op would leave the original incorrect strings in place, causing these tests to fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or similar path in the container). The agent could read the solution patch directly. Additionally, the test file at tests/test_outputs.py contains explicit comments stating the exact old and new values ('was \"Array\" -> should be \"String or FixedString\"'), so grepping test files reveals the answer trivially."
+      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, the test file at tests/test_outputs.py contains the exact expected strings in assert statements and even comments describing the old->new values (e.g., 'was \"Array\" -> should be \"String or FixedString\"'), which the agent could grep to determine the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires changing three description strings and following existing code style. The tests verify all three description string changes plus code style checks (trailing whitespace, tabs, Allman braces, include format), covering the stated requirements."
+      "reason": "The instruction specifies correcting three description strings, and the tests verify all three corrections plus style/structural requirements mentioned in the instruction (Allman brace style, existing code style)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (BEHAVIORAL TEST, FAIL-TO-PASS TESTS, PASS-TO-PASS TESTS, AGENT CONFIG TESTS), descriptive function names, and detailed docstrings explaining what each test checks and why."
+      "reason": "Tests are well-organized with clear section headers (BEHAVIORAL TEST, FAIL-TO-PASS TESTS, PASS-TO-PASS TESTS, AGENT CONFIG TESTS), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing C++ source code, not producing structured data output."
+      "reason": "This task involves editing C++ source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names in instruction.md or test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or string literals in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function (getReturnTypeImpl implied), the exact argument descriptor names, the exact validator function names, and the exact replacement strings. While it doesn't give line numbers, it specifies the fix so precisely that localization is trivial \u2014 the agent just needs to find FunctionArgumentDescriptors in the leftPad/rightPad implementation file."
+      "reason": "The instruction explicitly names the exact argument descriptor entries ('string', 'length', 'pad_string'), their validators, and the exact corrected description strings. Combined with the function names (leftPad/rightPad) and the mention of FunctionArgumentDescriptors, this pinpoints exactly what to change and to what values."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task editing a C++ source file, not an agent config edit task."
     }
   },
   "tier_a_fails": [

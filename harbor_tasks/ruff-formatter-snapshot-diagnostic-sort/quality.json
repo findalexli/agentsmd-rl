@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the specific files (fixtures.rs, the snapshot file), the function (ensure_unchanged_ast), the data structure (HashMap), and the sorting behavior needed. All test-asserted paths and function names are discoverable from the instruction."
+      "reason": "instruction.md names the specific files (fixtures.rs, the snapshot file), the function (ensure_unchanged_ast), the data structure (HashMap), and the sorting requirement. All test-asserted paths and function names are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the problem (non-deterministic HashMap iteration order) and the expected behavior (sorted by source location) but does not specify the exact code change (e.g., doesn't say 'add .sort_by_key on error.range()' or 'change .values() to .iter()')."
+      "reason": "The instruction describes what's broken (non-deterministic HashMap iteration order) and the expected behavior (sorted by source location), but does not specify exact code changes like 'add .sort_by_key' or 'change .values() to .iter()'. A developer must reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_hashmap_iteration_order_addressed checks specifically for the pattern 'formatted_unsupported_syntax_errors.values().map' and if present requires 'diagnostics.sort'. An alternative correct fix that replaces HashMap with BTreeMap, or uses .into_iter().sorted() without a .sort call on 'diagnostics', or renames the variable, would fail this test despite being correct. test_sort_applied_to_errors requires a '.sort' substring in the function body, which would fail for solutions using a BTreeMap o"
+      "reason": "test_hashmap_iteration_order_addressed checks for the specific pattern 'formatted_unsupported_syntax_errors\\s*\\.\\s*values\\s*\\(\\s*\\)\\s*\\.\\s*map' and if found, requires 'diagnostics\\s*\\.\\s*sort'. An alternative correct fix that collects HashMap values into a BTreeMap, or uses .into_values() instead of .values(), or sorts with a different variable name, would not match these specific regex patterns and could fail. test_sort_applied_to_errors requires '.sort' somewhere in the function, which is reas"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are predominantly text-inspection: test_sort_applied_to_errors does regex search for '.sort' in source text, test_hashmap_iteration_order_addressed does regex on source text, test_snapshot_errors_sorted_by_location parses snapshot file text. While there are pass-to-pass tests that run cargo test/check/clippy, the core fail-to-pass tests only read file contents and check for string patterns, not executing the code."
+      "reason": "The fail-to-pass tests are predominantly text-matching: test_sort_applied_to_errors does `re.search(r'\\.sort', func_body)` on source text, test_hashmap_iteration_order_addressed does regex matching on source text, and test_snapshot_errors_sorted_by_location parses a snapshot file's text. However, test_repo_formatter_tests actually runs `cargo test`, which executes the code. The fail-to-pass tests (the ones that distinguish fixed from unfixed) are all text inspection, not behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op change would fail: test_sort_applied_to_errors requires '.sort' in the function body (not present in base), test_snapshot_errors_sorted_by_location requires errors sorted by line number (not the case in the base snapshot), and test_hashmap_iteration_order_addressed checks that HashMap iteration is addressed."
+      "reason": "A stub/no-op implementation would not pass: test_sort_applied_to_errors requires '.sort' in the function body (not present in base), test_snapshot_errors_sorted_by_location requires errors sorted by line number (not true in base commit's snapshot), and test_repo_formatter_tests requires cargo test to pass (which regenerates snapshots)."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ruff alongside the agent's working directory. The agent could read solution/solve.sh or tests/test_outputs.py to discover exactly what changes are needed. The gold patch is in solve.sh which is accessible in the container."
+      "reason": "The solution is in /workspace/ruff's git history or the agent could read solve.sh at /solution/solve.sh if it exists in the container. The Dockerfile doesn't remove /solution/ and the tests don't verify the agent didn't access it. An agent could grep for the patch content or directly apply the gold solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires sorting diagnostics by source location for deterministic output. Tests verify sorting in the snapshot file, presence of sort call in the function, and that HashMap iteration order is addressed, plus repo tests pass."
+      "reason": "The instruction requires sorted diagnostic output in snapshots and a fix to the HashMap iteration issue in ensure_unchanged_ast. Both behaviors are tested: snapshot ordering (test_snapshot_errors_sorted_by_location), sorting in code (test_sort_applied_to_errors, test_hashmap_iteration_order_addressed), and repo tests passing (test_repo_formatter_tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (fail_to_pass, pass_to_pass for repo_tests and agent_config) with descriptive names and docstrings explaining each check's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config), descriptive function names, and detailed docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names the function and files but these are directly relevant to the task domain. It doesn't specify exact line numbers to change or the specific code fix, only describes the problem area."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact function (ensure_unchanged_ast), the exact file (fixtures.rs), the specific data structure (HashMap of unsupported syntax errors), and even the specific snapshot file. It also explains the root cause (HashMap iteration order). While the function and file are reasonable to mention, specifying that 'formatted_unsupported_syntax_errors' uses HashMap iteration via .values().map() is detailed enough to be hint leakage about localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -56,7 +56,9 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
 }

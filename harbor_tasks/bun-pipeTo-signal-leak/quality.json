@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_abort_signal_header_compiles_with_new_members asserts 'm_abortAlgorithms', 'm_abortAlgorithmsLock', 'wtf/Lock.h', and the exact template signature 'template<typename Visitor> void visitAbortAlgorithms(Visitor&)'. test_add_abort_algorithm_uses_new_vector asserts 'signal.m_abortAlgorithms.append' and 'Locker locker { signal.m_abortAlgorithmsLock }'. test_run_abort_steps_handles_new_vector asserts 'abortAl"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_abort_signal_header_compiles_with_new_members asserts 'm_abortAlgorithms', 'm_abortAlgorithmsLock', 'wtf/Lock.h', and 'template<typename Visitor> void visitAbortAlgorithms(Visitor&)' \u2014 none of these member names or exact signatures are in the instruction. test_add_abort_algorithm_uses_new_vector asserts 'signal.m_abortAlgorithms.append' and 'Locker locker { signal.m_abortAlgorithmsLock }', which are und"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states 'The JSAbortAlgorithm class needs to use a weak reference pattern that allows GC collection' and 'JSAbortAlgorithm currently holds its JS callback via JSCallbackDataStrong' \u2014 this directly tells the agent to switch from JSCallbackDataStrong to a weak pattern. It also names the exact reference pattern to follow (JSPerformanceObserverCallback) and says to add GC visitation. This is effectively describing the fix, not just the bug."
+      "reason": "instruction.md explicitly states 'The fix must break the JSCallbackDataStrong reference cycle' and 'The JSAbortAlgorithm class needs to use a weak reference pattern', directly naming what to change (switch from JSCallbackDataStrong to weak). It also says 'ensuring the callback is marked when the signal is reachable' which describes the implementation strategy. This goes beyond describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details like 'JSCallbackDataWeak* m_data', 'signal.m_abortAlgorithms.append', 'Locker locker { signal.m_abortAlgorithmsLock }', 'abortAlgorithms = std::exchange(m_abortAlgorithms, {})', 'pair.second->visitJSFunction(visitor)', exact visitJSFunction signatures, and 'm_abortAlgorithms.sizeInBytes()'. An alternative correct fix (e.g., using different member names, a different container, or a different synchronization approach) would fail these tests."
+      "reason": "Tests assert extremely specific implementation details: exact member names ('m_abortAlgorithms', 'm_abortAlgorithmsLock'), exact string patterns ('signal.m_abortAlgorithms.append', 'Locker locker { signal.m_abortAlgorithmsLock }', 'abortAlgorithms = std::exchange(m_abortAlgorithms, {})'), exact function signatures ('void visitJSFunction(JSC::AbstractSlotVisitor&) override'), and exact type names ('JSCallbackDataWeak* m_data'). An alternative correct fix (e.g., using a different locking mechanism"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail_to_pass tests are pure text/string matching: they read source files and assert substrings like 'JSCallbackDataWeak* m_data in h_src', 'signal.m_abortAlgorithms.append in src', etc. test_jsabortalgorithm_compiles_with_weak_ref does run clang -fsyntax-only but only checks for syntax errors (and acknowledges it may fail due to missing includes). No test actually compiles the project, runs the binary, or verifies the memory leak is fixed."
+      "reason": "Nearly all tests are pure text-matching: they read file contents and assert substrings like 'assert \"JSCallbackDataWeak* m_data\" in h_src'. The only execution-based test (test_jsabortalgorithm_compiles_with_weak_ref) runs clang but only checks for syntax errors, not behavioral correctness. No test actually runs the code, executes the streams API, or verifies memory leak behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply writes the expected strings into the source files (e.g., adding 'JSCallbackDataWeak* m_data' to the header, 'm_abortAlgorithms' member declarations, etc.) without any functional correctness would pass all tests, since tests only check for string presence in files. No test executes the code or verifies the leak is actually fixed."
+      "reason": "A stub implementation that simply inserts the expected string patterns into the source files (e.g., adding comments containing 'm_abortAlgorithms', 'JSCallbackDataWeak* m_data', etc.) would pass all the text-matching tests without actually fixing the memory leak. The tests don't verify runtime behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun after applying solve.sh, and the gold patch is in solution/solve.sh. The agent could read /solution/solve.sh or the test file tests/test_outputs.py to see exact expected strings and simply write them into the source files. Tests only check string presence, so pattern-matching the fixture strings without understanding the bug would work."
+      "reason": "The solution is in /workspace/bun after applying solve.sh, and the agent could read solution/solve.sh or tests/test_outputs.py to see exactly what strings to put in which files. The tests are pure string-matching, so the agent could grep test_outputs.py for all asserted strings and insert them."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md states the expected behavior is that 'AbortSignal should be garbage collected' and 'No Strong reference cycle should prevent collection.' No test actually verifies GC behavior or memory leak absence \u2014 tests only check source code text patterns."
+      "reason": "instruction.md says 'When all JavaScript references to an AbortSignal are dropped and the pipe never completes, the AbortSignal should be garbage collected.' No test verifies this actual GC behavior \u2014 all tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped into sections (gates/pass_to_pass and fail_to_pass), and each has a docstring explaining its purpose."
+      "reason": "Tests are well-named (e.g., test_jsabortalgorithm_compiles_with_weak_ref, test_abort_signal_visit_abort_algorithms_implemented), grouped into gates vs fail-to-pass vs pass-to-pass sections, and have docstrings explaining their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and function names in the instruction and tests appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files, exact member variables (m_algorithms, JSCallbackDataStrong), the exact reference cycle path, the exact class to modify (JSAbortAlgorithm), the exact pattern to follow (JSPerformanceObserverCallback), and even the exact technique (use weak reference pattern, visit callback from visitAdditionalChildrenInGCThread). This goes well beyond describing the bug."
+      "reason": "instruction.md names exact files (JSAbortAlgorithm.h, JSAbortAlgorithm.cpp, AbortSignal.h, AbortSignal.cpp, JSAbortSignalCustom.cpp), exact class/member names (JSCallbackDataStrong, m_algorithms, JSAbortAlgorithm), and the exact fix strategy ('use a weak reference pattern', 'JSCallbackDataWeak'). It also points to specific reference patterns (JSPerformanceObserverCallback, EventListenerMap::visitJSEventListeners) that are implementation hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

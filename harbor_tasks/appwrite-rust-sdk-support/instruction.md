@@ -1,65 +1,53 @@
-# Task: Add Rust SDK Support
+# Add Rust SDK Support to Appwrite
 
 ## Problem
 
-Appwrite currently supports multiple SDKs for different programming languages, but Rust SDK support is missing. You need to add Rust as a supported server-side SDK platform.
+Appwrite's SDK generation system currently lacks support for Rust. When the SDK generation task runs, Rust is not recognized as a valid server-side SDK platform, causing the generation to fail for Rust.
 
 ## What You Need to Do
 
-### 1. Add Rust SDK configuration to `app/config/sdks.php`
+The SDK generation system must be extended to support Rust as a server-side SDK platform. This requires adding Rust SDK configuration and language handling.
 
-Add a new SDK entry for Rust in the server platform section with the following **exact field names and values**:
+### Rust SDK Configuration
 
-**Complete Rust SDK array structure:**
-```php
-[
-    'key' => 'rust',
-    'name' => 'Rust',
-    'version' => '0.1.0',
-    'url' => 'https://github.com/appwrite/sdk-for-rust',
-    'package' => 'https://crates.io/crates/appwrite',
-    'enabled' => true,
-    'beta' => true,
-    'dev' => true,
-    'hidden' => false,
-    'family' => APP_SDK_PLATFORM_SERVER,
-    'prism' => 'rust',
-    'source' => \realpath(__DIR__ . '/../sdks/server-rust'),
-    'gitUrl' => 'git@github.com:appwrite/sdk-for-rust.git',
-    'gitRepoName' => 'sdk-for-rust',
-    'gitUserName' => 'appwrite',
-    'gitBranch' => 'dev',
-    'changelog' => \realpath(__DIR__ . '/../../docs/sdks/rust/CHANGELOG.md'),
-],
-```
+The Rust SDK must be registered in the SDK configuration with these properties:
 
-**Position requirement:** The Rust SDK entry must be placed **after the Kotlin SDK entry and before the GraphQL SDK entry** in the server platform array.
+| Property | Value |
+|----------|-------|
+| key | `rust` |
+| name | `Rust` |
+| version | `0.1.0` |
+| url | `https://github.com/appwrite/sdk-for-rust` |
+| package | `https://crates.io/crates/appwrite` |
+| enabled | `true` |
+| beta | `true` |
+| dev | `true` |
+| hidden | `false` |
+| family | `APP_SDK_PLATFORM_SERVER` |
+| prism | `rust` |
+| source | `../sdks/server-rust` (relative path) |
+| gitUrl | `git@github.com:appwrite/sdk-for-rust.git` |
+| gitRepoName | `sdk-for-rust` |
+| gitUserName | `appwrite` |
+| gitBranch | `dev` |
+| changelog | `../../docs/sdks/rust/CHANGELOG.md` (relative path) |
 
-### 2. Wire up the Rust language class in `src/Appwrite/Platform/Tasks/SDKs.php`
+### SDK Language Handler
 
-Add the following import statement with the other language imports (alphabetically ordered between Ruby and Swift):
-```php
-use Appwrite\SDK\Language\Rust;
-```
+The SDK generation task must be able to handle Rust code generation. This requires:
+- A Rust language class exists in the SDK language registry
+- The SDK generation task recognizes the `rust` platform
 
-Add a switch case for Rust **after the Kotlin case and before the GraphQL case**:
-```php
-case 'rust':
-    $config = new Rust();
-    break;
-```
+## Files to Examine
 
-## Files to Modify
-
-- `app/config/sdks.php` - Add the complete Rust SDK configuration array with all fields listed above
-- `src/Appwrite/Platform/Tasks/SDKs.php` - Add the import and switch case as specified
+- `app/config/sdks.php` — SDK registry configuration
+- `src/Appwrite/Platform/Tasks/SDKs.php` — SDK generation task handler
 
 ## Verification
 
-Your solution will be tested by:
-1. Checking that Rust SDK configuration exists with all required fields and exact values
-2. Verifying the Rust language class is properly imported with `use Appwrite\SDK\Language\Rust;`
-3. Confirming the Rust switch case exists with `case 'rust':` and `$config = new Rust();`
-4. Validating PHP syntax is valid
-5. Validating the Rust SDK entry is positioned after Kotlin and before GraphQL
-6. Validating the Rust switch case is positioned after Kotlin and before GraphQL
+Your solution will be validated by:
+1. Confirming Rust SDK configuration exists with all required fields
+2. Verifying the Rust language handling exists in the SDK generation task
+3. Checking PHP syntax validity
+4. Verifying correct ordering (Rust after Kotlin, before GraphQL)
+5. Running code style and static analysis checks

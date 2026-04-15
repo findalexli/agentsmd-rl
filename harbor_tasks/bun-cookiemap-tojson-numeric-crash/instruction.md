@@ -2,23 +2,25 @@
 
 ## Bug Description
 
-`Bun.CookieMap.toJSON()` crashes with an assertion failure when cookies have numeric names (e.g., `"0"`, `"1"`, `"42"`). The crash occurs in the JSC object property insertion path because numeric strings are parsed as array indices, which triggers an assertion in `JSObject::putDirectInternal`.
+`Bun.CookieMap.toJSON()` crashes with an assertion failure when cookies have numeric names (e.g., `"0"`, `"1"`, `"42"`). The crash occurs in `JSObjectInlines.h` at line 451 in `putDirectInternal`, which asserts `!parseIndex(propertyName)`.
 
 ## Reproduction
 
 ```js
 const map = new Bun.CookieMap("0=first; 1=second; 42=answer");
-map.toJSON(); // CRASH: ASSERTION FAILED: !parseIndex(propertyName)
+map.toJSON(); // CRASH: ASSERTION FAILED
 ```
 
-The crash fingerprint points to `JSObjectInlines.h(451)`.
+## Required Fix
 
-## Relevant Files
+The `toJSON` method in `src/bun.js/bindings/CookieMap.cpp` must be modified to:
 
-- `src/bun.js/bindings/CookieMap.cpp` — the `toJSON` method constructs a plain JS object from cookie entries. The property insertion calls need to handle the case where cookie names are valid array indices.
+1. **Fix the property insertion crash**: The method creates a plain JS object and sets properties from cookie names. When a cookie name is a numeric string (like `"0"`, `"1"`, `"42"`), the property insertion path must not trigger the array index assertion. Use a property insertion approach that works correctly for both string keys and numeric string keys.
 
-## Context
+2. **Fix the deduplication crash**: The method currently checks for existing properties using an approach that also crashes on numeric keys. The deduplication logic must use a different approach that does not query the target object for property existence.
 
-Other parts of the Bun codebase that deal with user-controlled property names (FormData, FetchHeaders, environment variables) already handle this correctly. The `toJSON` method needs to follow the same pattern.
+## Constraints
 
-Additionally, the current implementation of the deduplication check (skipping original cookies when a modified cookie with the same name exists) could be made more efficient — the current approach queries the object for property existence, but a simpler data structure could avoid the overhead.
+- The fix must still construct a JS object, handle exceptions, and iterate over cookies
+- The fix must use proper JSC exception scope patterns (`DECLARE_THROW_SCOPE` or `RELEASE_AND_RETURN`)
+- The fix must avoid banned C++ anti-patterns (see the repository's ban-words tests)

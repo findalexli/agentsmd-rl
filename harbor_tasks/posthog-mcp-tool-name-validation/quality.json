@@ -2,62 +2,63 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test `test_vitest_file_created` asserts the exact path `services/mcp/tests/unit/tool-name-validation.test.ts`, but instruction.md only says 'services/mcp/tests/unit/' as a directory \u2014 the specific filename `tool-name-validation.test.ts` is not mentioned. Also, tests assert specific constant names like `TOOL_NAME_PATTERN`, `FEATURE_NAME_PATTERN`, and `MAX_TOOL_NAME_LENGTH` which, while inferrable, the exact export names are not explicitly stated in instruction.md. The test also checks for `GE"
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (yaml-config-schema.ts, lint-tool-names.ts, tool-name-validation.test.ts, SKILL.md, implementing-mcp-tools.md), all constant names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH), schema names (CategoryConfigSchema), function names (validateToolName), imports (TOOL_MAP, GENERATED_TOOL_MAP), and JSON filenames (tool-definitions.json, tool-definitions-v2.json, generated-tool-definitions.json) that the tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes WHAT needs to change (add pattern validation, extend lint script, add tests, update docs) but does not specify exact code changes, line numbers, or specific implementations like regex patterns to use."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: the precise regex character classes ('[a-z0-9-]' for TOOL_NAME_PATTERN, '[a-z0-9_]' for FEATURE_NAME_PATTERN), exact constant values (MAX_TOOL_NAME_LENGTH = 52), exact method calls (.regex() with TOOL_NAME_PATTERN), and exact import paths. This leaves very little reasoning for the agent about WHAT to change \u2014 the instruction essentially dictates the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names like `TOOL_NAME_PATTERN` and `FEATURE_NAME_PATTERN` (test_tool_name_pattern_validation, test_feature_name_pattern_validation), and the exact test filename `tool-name-validation.test.ts`. A correct alternative using different constant names (e.g., `TOOL_NAME_REGEX`, `FEATURE_NAME_REGEX`) or a different test file name would fail. Also, test_lint_uses_pattern_validation checks for literal string `validateToolName` or `TOOL_NAME_PATTERN.test`, constraining implem"
+      "reason": "Tests like test_zod_schema_validates_tool_name_keys assert specific string presence like '.regex(' and 'TOOL_NAME_PATTERN' in the schema section. test_lint_uses_pattern_validation asserts either 'validateToolName' or 'TOOL_NAME_PATTERN.test' \u2014 an alternative using e.g. 'TOOL_NAME_PATTERN.exec' or 'match(TOOL_NAME_PATTERN)' would fail. test_tool_name_pattern_validation extracts the regex by looking for '= /' syntax, so a regex defined differently (e.g., via new RegExp()) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several fail-to-pass tests are purely text-based: test_zod_schema_validates_tool_name_keys checks `'.regex(' in schema_section` and `'TOOL_NAME_PATTERN' in schema_section`; test_zod_schema_validates_feature_field checks `'FEATURE_NAME_PATTERN' in schema_section`; test_lint_validates_json_definitions checks for literal strings in file content; test_lint_uses_pattern_validation checks for string presence; test_vitest_file_created reads file text and checks for string presence. Only test_tool_name_"
+      "outcome": "pass",
+      "reason": "Several tests execute actual behavior: test_tool_name_pattern_validation and test_feature_name_pattern_validation run Node.js to extract and test regex patterns against actual inputs. test_repo_typecheck, test_repo_lint_tool_names, test_repo_unit_tests, test_repo_build, test_repo_format all run subprocess commands. While some tests (test_zod_schema_validates_tool_name_keys, test_lint_validates_json_definitions, etc.) do text-matching, the majority verify behavior through execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The regex extraction tests (test_tool_name_pattern_validation, test_feature_name_pattern_validation) actually run the regex against valid/invalid inputs and verify correct accept/reject behavior \u2014 a stub regex like /.*/ would fail. The text-matching tests require specific patterns to be present in files, which wouldn't exist without implementation. The pass-to-pass tests (typecheck, build, lint, unit tests) verify the code compiles and runs correctly."
+      "reason": "The fail-to-pass tests require substantive implementation: test_tool_name_pattern_validation requires a working regex that accepts/rejects specific names; test_vitest_file_created requires a new file with specific imports; test_repo_unit_tests/test_repo_build require the code to actually compile and pass. A stub implementation would not satisfy these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/posthog (solve.sh is visible in the container context), and the agent could read the hidden solution/solve.sh or tests/test_outputs.py to reverse-engineer the exact expected implementation. The Dockerfile doesn't remove /solution/ after setup, and the test file paths and expected strings are fully discoverable."
+      "reason": "The solution exists at /workspace/posthog as a git repo and solve.sh applies a patch. The agent could potentially read the solution/solve.sh file or inspect the test file at tests/test_outputs.py to see exact expected values. The test for TOOL_NAME_PATTERN extracts the regex by parsing the source file \u2014 an agent could reverse-engineer the exact expected regex from the test's acceptance/rejection lists."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: pattern constants exported from yaml-config-schema.ts, CategoryConfigSchema validation, lint script covering JSON files, vitest test for TOOL_MAP, and documentation updates for SKILL.md and handbook (truncated tests suggest these exist based on test_skill_md_documents_naming)."
+      "reason": "All major behaviors from the instruction are tested: pattern constants export, Zod schema validation, lint script JSON coverage, lint pattern usage, vitest file creation, SKILL.md documentation, and handbook documentation updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff/core behavioral tests, Fail-to-pass/pr_diff/documentation updates), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff) \u2014 core behavioral tests' and 'documentation updates' sections with clear docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data output like JSON/CSV/API responses; it's about adding validation patterns and documentation."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, variable names, and commands in instruction.md are consistent with the test expectations and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names specific files to modify which is appropriate for the task domain, but doesn't specify exact line numbers or exact code to write. The file list is natural for a task scoping document."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact regex patterns ('[a-z0-9-]', '[a-z0-9_]'), exact constant values (52), exact method names (.regex()), exact variable names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH), and exact schema modification approaches. This goes beyond describing what's broken and into specifying the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it's a code and documentation editing task."
+      "reason": "This is primarily a code task, not an agent config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 6,
   "fail_count": 4
 }

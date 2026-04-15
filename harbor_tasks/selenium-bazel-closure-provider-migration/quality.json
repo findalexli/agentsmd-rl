@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names the file (javascript/private/header.bzl), the load statement, the exact provider check pattern ('ClosureJsBinaryInfo in d'), the exact access pattern ('d[ClosureJsBinaryInfo].bin'), the binaries.update call, the deprecated patterns to remove, the loop variable 'd' from 'for d in ctx.attr.deps:', and the bazel build/query commands. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction explicitly names the file path (javascript/private/header.bzl), the load statement, the exact patterns required (ClosureJsBinaryInfo in d, d[ClosureJsBinaryInfo].bin, binaries.update({name: d[ClosureJsBinaryInfo].bin})), the deprecated patterns to remove, the loop variable 'for d in ctx.attr.deps:', and the bazel build/query commands. All test assertions match these specified patterns."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact replacement patterns: 'load(\"@rules_closure//closure/private:defs.bzl\", \"ClosureJsBinaryInfo\")', 'ClosureJsBinaryInfo in d', 'd[ClosureJsBinaryInfo].bin', and 'binaries.update({name: d[ClosureJsBinaryInfo].bin})'. It also names the exact deprecated patterns to remove. This is effectively giving the complete solution line-by-line, leaving no reasoning for the agent."
+      "reason": "The instruction explicitly states the exact fix: 'add a load statement to import ClosureJsBinaryInfo from @rules_closure//closure/private:defs.bzl', replace with 'ClosureJsBinaryInfo in d', replace with 'd[ClosureJsBinaryInfo].bin', and even specifies the exact binaries.update() call. This is a complete specification of the solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact literal strings like 'ClosureJsBinaryInfo in d' and regex patterns like 'binaries\\.update\\(\\{name:\\s*d\\[ClosureJsBinaryInfo\\]\\.bin\\}\\)'. An alternative correct fix using a different variable name (e.g., 'dep' instead of 'd') or different whitespace in the update call would fail. The tests are locked to one specific implementation."
+      "reason": "Tests like test_load_statement_present use a regex matching the exact load statement format, test_new_provider_check_present checks for the literal string 'ClosureJsBinaryInfo in d', and test_binary_dict_update_correct uses a regex for the exact update pattern. An alternative correct fix using e.g. a different variable name or slightly different formatting would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_load_statement_present, test_no_deprecated_getattr, test_new_provider_check_present, test_no_deprecated_field_access, test_new_provider_access_present, test_bazel_syntax_valid, test_binary_dict_update_correct, and test_provider_check_in_loop all exclusively use string/regex matching on file content. While test_repo_bazel_build and test_repo_bazel_query do execute subprocesses, the majority of fail-to-pass tests are purely textual checks."
+      "reason": "The fail-to-pass tests (test_load_statement_present, test_no_deprecated_getattr, test_new_provider_check_present, test_no_deprecated_field_access, test_new_provider_access_present, test_bazel_syntax_valid) are ALL text-matching tests using string search or regex on file content. While there are some execution tests (test_repo_bazel_build, test_repo_bazel_query), the core f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific new patterns (load statement, 'ClosureJsBinaryInfo in d', 'd[ClosureJsBinaryInfo].bin') and absence of deprecated patterns. A stub or no-op would not satisfy these since the original file contains the deprecated patterns and lacks the new ones."
+      "reason": "The f2p tests check for specific content that must be added (load statement, new provider patterns) and specific content that must be removed (deprecated patterns). A stub or no-op cannot satisfy both the presence and absence assertions simultaneously \u2014 the original file contains the deprecated patterns that must be removed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/selenium's git history accessible via solve.sh, and the agent could read solution/solve.sh directly (it exists in the container). The agent could also grep the test file for the exact expected strings and replicate them. The instruction itself provides the exact strings to insert, making it trivial to match fixture values without understanding."
+      "reason": "The solution is in /workspace/selenium's git history accessible via solution/solve.sh, and the instruction.md essentially provides the exact strings to write. An agent could read solution/solve.sh or simply grep the test file for the expected patterns and write them verbatim into header.bzl without understanding the migration."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: the load statement, provider check pattern, provider access pattern, absence of deprecated patterns, binaries.update call, bazel build commands, and buildifier check."
+      "reason": "All behaviors specified in instruction.md (load statement, provider check pattern, provider access pattern, no deprecated patterns, bazel build verification, buildifier check) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_load_statement_present, test_no_deprecated_getattr, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and include descriptive assertion messages."
+      "reason": "Tests are well-named with descriptive docstrings, labeled as FAIL-TO-PASS or PASS-TO-PASS, and grouped logically from content checks to build verification to linting."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing a Starlark (.bzl) file, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task modifies a Bazel Starlark file, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, variable names, and patterns in the instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, variable names, provider names, and commands in the instruction match those used in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (javascript/private/header.bzl), provides the exact load statement to add, the exact patterns to use ('ClosureJsBinaryInfo in d', 'd[ClosureJsBinaryInfo].bin'), and the exact deprecated patterns to remove. This goes well beyond identifying what's broken and specifies the complete solution."
+      "reason": "The instruction names the exact file (javascript/private/header.bzl), the exact patterns to add and remove, and the exact load path. It essentially provides the complete diff as prose, leaving no localization or reasoning work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is a small, localized patch to javascript/private/header.bzl (adding 2 lines, modifying 2 lines) and does not contradict other files."
+      "reason": "The gold diff is a localized 6-line change (2 additions, 2 removals, 2 context changes) to a single file, consistent with the task scope."
     }
   },
   "tier_a_fails": [

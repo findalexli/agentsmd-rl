@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names like 'prevLoadPromise', 'previousCommitPromise', exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', 'match._nonReactive.loadPromise = undefined' (with count >= 2), and 'let previousCommitPromise = this.commitLocationPromise'. The instruction.md mentions the general concepts (loadPromise, commitLocationPromise) but does not specify these exact variable names (prevLoadPromise, previousCommitPromise) or the exact pattern of using 'let' i"
+      "reason": "Tests assert specific variable names like 'prevLoadPromise', 'previousCommitPromise', exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', and require at least 2 occurrences of 'match._nonReactive.loadPromise = undefined'. The instruction mentions 'match._nonReactive.loadPromise' and 'this.commitLocationPromise' but never names the local variables 'prevLoadPromise' or 'previousCommitPromise', nor specifies 'let' vs 'const' change, nor specifies the exact clearing pattern '"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (promise references retained after resolution) and which functions/files to look at, but does not prescribe the exact fix (e.g., doesn't say 'change const to let', 'add prevLoadPromise = undefined'). It only describes the symptom."
+      "reason": "The instruction describes the problem (promise references retained after resolution) without specifying exact code changes like 'change const to let' or 'add prevLoadPromise = undefined'. It describes what's broken, not the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: 'let prevLoadPromise' (test_load_matches_prev_promise_cleared), 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', 'previousCommitPromise = undefined' (test_router_commit_promise_cleared). An alternative correct fix that clears the promise reference using different variable names or a different approach (e.g., setting match._nonReactive.loadPromise directly to undefined without an intermediate variable, or using "
+      "reason": "Tests assert gold-specific variable names: 'let prevLoadPromise' (test_load_matches_prev_promise_cleared), 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', 'previousCommitPromise = undefined'. An alternative correct fix could use different variable names (e.g., 'oldLoadPromise') or clear the reference differently (e.g., setting match._nonReactive.loadPromise directly in a different pattern) and would fail these exact string checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_load_matches_prev_promise_cleared, test_load_matches_load_promise_cleared_in_loader, test_router_commit_promise_cleared) are entirely text-matching: they read file contents and assert on string patterns like 'let prevLoadPromise' and 'prevLoadPromise = undefined'. They do not import, call, or execute any code to verify the memory leak is actually fixed. The p2p tests do run builds/tests but the core behavioral verification is pure text matching."
+      "reason": "The f2p tests (test_load_matches_prev_promise_cleared, test_load_matches_load_promise_cleared_in_loader, test_router_commit_promise_cleared) are purely text-matching: they read file contents and check for string patterns like 'let prevLoadPromise' and 'prevLoadPromise = undefined' without executing the code or testing actual memory behavior. The p2p tests do execute builds/tests, but the core f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the base commit (e.g., 'let prevLoadPromise' instead of 'const prevLoadPromise', 'prevLoadPromise = undefined'). A stub or no-op implementation wouldn't add these strings to the source files, so they would fail."
+      "reason": "The f2p tests check for specific patterns (e.g., 'let prevLoadPromise', 'prevLoadPromise = undefined', at least 2 occurrences of loadPromise = undefined) that don't exist in the original codebase. A stub or no-op implementation would fail these checks since the original code uses 'const' not 'let' and doesn't have the clearing assignments."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace's solution/solve.sh (accessible in the container as part of the task setup). The agent could read it directly. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact strings to insert (e.g., 'let prevLoadPromise', 'prevLoadPromise = undefined') without understanding the bug."
+      "reason": "The solution exists at /workspace/router with solve.sh available in the container's /solution/ directory. The agent could read solve.sh or the gold patch directly. Additionally, since tests are pure string matching, the agent could grep test files or environment for the expected patterns and insert them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three areas mentioned in instruction.md (executeBeforeLoad loadPromise, loadRouteMatch loadPromise, commitLocation commitLocationPromise) are tested, plus build/type/unit/lint checks."
+      "reason": "All three behaviors described in the instruction (clearing loadPromise in executeBeforeLoad, clearing loadPromise in loadRouteMatch, clearing commitLocationPromise in commitLocation) are tested, plus build/type/unit/lint checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and grouped by concern: separate functions for each fix location (prev_promise_cleared, load_promise_cleared_in_loader, commit_promise_cleared) plus separate p2p checks. Each has a docstring explaining what it verifies."
+      "reason": "Tests are well-named (test_load_matches_prev_promise_cleared, test_router_commit_promise_cleared, etc.), grouped by concern, and have docstrings explaining what each verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code modifications, not structured data output."
+      "reason": "This task involves code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "In test_load_matches_prev_promise_cleared, the final assert message says 'execute_before_load' (Python snake_case) but the actual function is 'executeBeforeLoad' (camelCase). This is a minor inconsistency in the test message but not in the test logic itself."
+      "reason": "In test_load_matches_prev_promise_cleared, the final assert message says 'execute_before_load' (Python snake_case) instead of 'executeBeforeLoad' (the actual function name). Minor but technically a typo in the assertion message."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the functions (executeBeforeLoad, loadRouteMatch, commitLocation) and files, which is appropriate for narrowing scope. It doesn't specify exact line numbers or the exact code changes needed. The functions are the natural unit of localization for this task."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact functions (executeBeforeLoad, loadRouteMatch, commitLocation), the exact files, and the exact field paths (match._nonReactive.loadPromise, this.commitLocationPromise) where changes should be made. This significantly narrows the search space beyond what's needed for task description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -58,8 +58,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "no_typos"
+    "no_typos",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

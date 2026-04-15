@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (js/core/src/init.svelte.ts), class (AppTree), field (#pending_updates), methods (update_state, register_component, render_previously_invisible_children), patterns (for...in with new_props.props, tick().then, _set(pending), find_node_by_id, #hidden_on_startup.has), and all helper functions tested. The tests check for these exact names/patterns, all of which are explicitly described in instruction.md."
+      "reason": "The instruction names the file path (js/core/src/init.svelte.ts), the class (AppTree), all method names (update_state, register_component, render_previously_invisible_children), the field name (#pending_updates), the patterns (for...in, find_node_by_id, tick().then, _set(pending), #hidden_on_startup.has), and all helper functions checked by the tests. Every assert'd specific in the tests is discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: use '#pending_updates = new Map<number, Record<string, unknown>>()', use 'this.#pending_updates.get(id)', 'this.#pending_updates.set(id, { ...existing, ...new_state })', 'tick().then(() => { ... })', '_set(pending)', 'for (const key in new_props.shared_props)', 'find_node_by_id(this.root!, id)', '#hidden_on_startup.has(node.id)'. This is not describing what's broken \u2014 it's specifying the exact code to write."
+      "reason": "The instruction explicitly dictates the exact implementation: use '#pending_updates = new Map<number, Record<string, unknown>>()', use 'this.#pending_updates.get(id)', 'this.#pending_updates.set(id, { ...existing, ...new_state })', 'tick().then(() => { ... })', '_set(pending)', 'for (const key in new_props.shared_props)', 'find_node_by_id(this.root!, id)', '#hidden_on_startup.has(node.id)'. This is not describing what's broken \u2014 it's prescribing the exact code to write, line by line."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact private field name '#pending_updates', exact regex patterns like '_set\\s*\\(\\s*pending\\s*\\)', 'tick\\s*\\(\\s*\\)\\.then', 'for\\s*\\(\\s*const\\s+key\\s+in\\s+new_props\\.props\\s*\\)', '#hidden_on_startup\\.has'. An alternative correct fix using different variable names (e.g., #deferred_state), different application patterns (e.g., queueMicrotask instead of tick().then), or different iteration (Object.keys().forEach) would fail these tests despite be"
+      "reason": "Tests assert on gold-specific implementation details: exact variable name '#pending_updates', exact regex for 'this.#pending_updates.set(', 'this.#pending_updates.get(', '_set\\s*\\(\\s*pending\\s*\\)', 'tick\\s*\\(\\s*\\)\\.then', 'for\\s*\\(\\s*const\\s+key\\s+in\\s+new_props\\.props\\s*\\)', 'find_node_by_id\\(', '#hidden_on_startup\\.has'. A correct alternative fix using different variable names (e.g., #deferredState), different deferral mechanisms (e.g., queueMicrotask), or different apply patterns would fail t"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_spread_replace_bug_removed, test_deferred_state_stored, test_register_component_applies_deferred, test_no_full_tree_traversal_in_render) only read the source file and check regex patterns against the text content. None of them import, instantiate, or execute the code to verify actual behavior. They are purely textual/structural checks."
+      "reason": "All fail-to-pass tests (test_spread_replace_bug_removed, test_deferred_state_stored, test_register_component_applies_deferred, test_no_full_tree_traversal_in_render) only read the source file and match regex patterns against the text. They never import, instantiate, or execute the code. They are pure text-matching tests."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "While the tests are text-based, they do check for specific non-default patterns (e.g., #pending_updates Map, for...in loops, find_node_by_id usage) that would not be present in a stub or the original unpatched file. A no-op or empty implementation would fail these regex checks."
+      "outcome": "fail",
+      "reason": "Since all f2p tests are text-matching (regex on source code), the agent can satisfy them by inserting dead code comments or unused code blocks containing the expected patterns (e.g., a comment with 'this.#pending_updates.set(') without actually fixing the bug. No behavioral verification exists."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/gradio after applying solve.sh, and the agent could read solution/solve.sh if it exists in the container. Additionally, since the instruction.md essentially dictates the exact code patterns to write, the agent could pattern-match without understanding the bug."
+      "reason": "The solution is in /workspace/gradio's git history or solve.sh. The agent could also read test_outputs.py (if accessible) to see exact regex patterns and craft matching text. The instruction itself essentially provides the complete solution code patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four technical requirements from instruction.md (deferred state storage, deferred state application on registration, in-place property modification, targeted node lookup) are tested by corresponding test functions."
+      "reason": "All four technical requirements from the instruction (deferred state storage, deferred state application, in-place property modification, targeted node lookup) are each tested by dedicated test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gate, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each check's purpose."
+      "reason": "Tests are well-organized with section comments (Gate, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying TypeScript source code, not producing structured data outputs like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file (js/core/src/init.svelte.ts), exact method names to modify (update_state, register_component, render_previously_invisible_children), exact private field name (#pending_updates), and exact code patterns to use. This goes far beyond identifying the buggy module \u2014 it dictates the implementation line by line."
+      "reason": "The instruction specifies the exact file (js/core/src/init.svelte.ts) and exact method names to modify, exact field names to add (#pending_updates), exact code patterns to use (for...in loops, tick().then, _set(pending)), and exact functions to call (find_node_by_id). This goes far beyond identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -54,12 +54,13 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

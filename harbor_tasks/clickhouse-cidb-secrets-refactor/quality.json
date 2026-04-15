@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (ci/jobs/collect_statistics.py), the hardcoded strings to remove, the imports needed (Info from ci.praktika.info, Settings from ci.praktika.settings), the Settings constants (SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD), the Info().get_secret() pattern, and references to QUANTILES/DAYS constants. All test assertions check for these named elements."
+      "reason": "The instruction names the target file (ci/jobs/collect_statistics.py), the hardcoded strings to remove, the imports needed (Info from ci.praktika.info, Settings from ci.praktika.settings), the Settings constants (SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD), and the Info().get_secret() pattern. All test assertions reference these named elements. The test for get_job_stat_for_interval and QUANTILES/DAYS are implied by the 'maintain same overall structure' and 'Constants QUANTILES a"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Import Info from ci.praktika.info and Settings from ci.praktika.settings', 'Retrieve secrets using Settings.SECRET_CI_DB_URL, Settings.SECRET_CI_DB_USER, Settings.SECRET_CI_DB_PASSWORD', and 'Initialize the CIDB object with the retrieved credentials'. It also names specific reference files for the exact pattern to follow. This goes beyond describing what's broken and prescribes the solution implementation."
+      "reason": "The instruction explicitly states the exact fix: remove specific hardcoded strings, import Info and Settings from specific modules, use Settings.SECRET_CI_DB_URL/USER/PASSWORD, and use Info().get_secret(). The Requirements section is essentially a step-by-step implementation guide (items 1-4), leaving very little reasoning for the agent to do about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_uses_info_get_secret checks for 'info.get_secret(' or 'Info().get_secret(' as literal strings in source. An alternative correct fix using a different variable name (e.g., 'ci_info.get_secret(') would fail. test_cidb_initialization_pattern checks for 'url_secret' or 'user_secret' as literal variable names. An alternative using 'db_url' or 'cidb_url' variable names would potentially fail the 'url_secret' check (though 'url' alone would pass the fallback)."
+      "reason": "Tests assert on gold-specific implementation details: test_uses_info_get_secret checks for literal 'info.get_secret(' or 'Info().get_secret(' in source text. test_cidb_initialization_pattern checks for 'url_secret' or 'url' variable names. An alternative correct fix using different variable names (e.g., 'db_url = Info().get_secret(...)') or a different retrieval pattern (e.g., 'secrets = Info()' then 'secrets.get_secret(...)') could fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_no_hardcoded_secret_config, test_uses_settings_constants, test_uses_info_get_secret, test_cidb_initialization_pattern) are primarily text/AST scanning of source code. While some pass-to-pass tests do subprocess execution (test_repo_praktika_settings_importable, test_repo_praktika_info_importable), the f2p tests never import or execute the modified code to verify actual behavior."
+      "reason": "Most tests are pure text/AST inspection: test_no_hardcoded_secret_config checks 'pattern not in source', test_uses_settings_constants walks AST for attribute names, test_uses_info_get_secret checks 'info.get_secret(' in source text. While some tests do subprocess execution (test_repo_praktika_settings_importable, test_repo_praktika_info_importable), the core f2p tests are all text-matching with no actual code execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for removal of hardcoded strings and presence of Settings constants/Info.get_secret patterns. A stub or no-op implementation (empty file, pass-only) would fail test_no_hardcoded_secret_config (trivially passes but test_uses_settings_constants and test_uses_info_get_secret would fail), and test_file_structure_unchanged requires get_job_stat_for_interval to exist. The tests require substantive changes."
+      "reason": "The f2p tests (test_no_hardcoded_secret_config, test_no_secret_config_usage, test_uses_settings_constants, test_uses_info_get_secret) would fail on the original base code which contains the hardcoded strings and Secret.Config usage. A stub/no-op implementation would not pass because the tests require specific patterns to be present AND specific patterns to be absent."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted). The agent could read /solution/solve.sh to see the exact gold patch and apply it directly. There's no evidence the solution directory is excluded from the agent's filesystem access."
+      "reason": "The solution is available at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted). The agent could read the solution file directly. Additionally, the tests are purely text-matching, so the agent could just pattern-match the expected strings without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: removal of hardcoded strings (test_no_hardcoded_secret_config), import of Info and Settings (test_imports_correct_classes), use of Settings constants (test_uses_settings_constants), and CIDB initialization with retrieved credentials (test_cidb_initialization_pattern)."
+      "reason": "All four requirements from instruction.md are tested: removal of hardcoded strings (test_no_hardcoded_secret_config), importing Info and Settings (test_imports_correct_classes), using Settings constants (test_uses_settings_constants), and using Info().get_secret() (test_uses_info_get_secret). The note about not modifying QUANTILES/DAYS is tested in test_quantiles_and_days_unchanged."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped into fail-to-pass and pass-to-pass categories with clear comments explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive names (test_imports_correct_classes, test_no_hardcoded_secret_config, etc.), docstrings explaining each test's purpose, and clear comments distinguishing 'fail-to-pass' from 'pass-to-pass' tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "This task involves refactoring Python source code, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and constant names in the instruction match those used in the tests and solution without typos."
+      "reason": "All filenames (ci/jobs/collect_statistics.py, ci/praktika/cidb_cluster.py, etc.), variable names (SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD), and class names (Info, Settings, CIDB) are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file to modify (ci/jobs/collect_statistics.py), the exact hardcoded strings to remove, the exact imports to add, and the exact Settings constants to use. It also points to reference files (ci/praktika/cidb_cluster.py, ci/praktika/runner.py) showing the exact pattern. This is essentially a step-by-step implementation guide rather than a problem description."
+      "reason": "The instruction explicitly names the exact file to modify (ci/jobs/collect_statistics.py), the exact section ('CIDB initialization section'), the exact strings to remove, and provides step-by-step implementation instructions (Requirements 1-4). This goes well beyond identifying what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not an agent config edit task."
+      "reason": "This is a code-only refactoring task, not a config edit task."
     }
   },
   "tier_a_fails": [

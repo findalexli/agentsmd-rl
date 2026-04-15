@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both file paths, the exact patterns (FLOW_CLASS_IDS, internal companion object, classType.classId in SirTypeProviderImpl.FLOW_CLASS_IDS, return@let false), the class names (SirTypeProviderImpl, SirVisibilityCheckerImpl), and the function name (hasUnboundInputTypeParameters). All specifics checked by tests are discoverable from the instruction."
+      "reason": "The instruction names both file paths, the exact patterns to use (e.g., `if (kaType.classId in FLOW_CLASS_IDS)`), the companion object visibility change (`internal companion object`), the cross-file reference pattern (`SirTypeProviderImpl.FLOW_CLASS_IDS`), and the visibility checker pattern (`if (classType.classId in SirTypeProviderImpl.FLOW_CLASS_IDS) return@let false`). All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact code patterns to use, e.g., 'if (kaType.classId in FLOW_CLASS_IDS)' without the COVARIANT check, 'internal companion object', and 'if (classType.classId in SirTypeProviderImpl.FLOW_CLASS_IDS) return@let false'. It prescribes the exact fix rather than describing the broken behavior."
+      "reason": "The instruction explicitly states the exact code patterns to use, e.g., 'if (kaType.classId in FLOW_CLASS_IDS)' without the COVARIANT check, 'internal companion object', and 'if (classType.classId in SirTypeProviderImpl.FLOW_CLASS_IDS) return@let false'. It tells the agent exactly WHAT to change and HOW, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use rigid regex patterns like r\"if\\s*\\(\\s*kaType\\.classId\\s+in\\s+FLOW_CLASS_IDS\\s*\\)\" and r\"if\\s*\\(\\s*classType\\.classId\\s+in\\s+SirTypeProviderImpl\\.FLOW_CLASS_IDS\\s*\\)\\s*return@let\\s*false\". An alternative correct fix (e.g., using a different variable name, a when-expression, or a helper function) would fail these regex checks despite being functionally correct."
+      "reason": "Tests use exact regex patterns like `r\"if\\s*\\(\\s*kaType\\.classId\\s+in\\s+FLOW_CLASS_IDS\\s*\\)\"` and `r\"if\\s*\\(\\s*classType\\.classId\\s+in\\s+SirTypeProviderImpl\\.FLOW_CLASS_IDS\\s*\\)\\s*return@let\\s*false\"`. An alternative correct fix (e.g., using a different variable name, a when-expression, extracting a helper function, or a different early-return mechanism) would fail these regex checks even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all tests are text/regex pattern matching on file contents (e.g., re.search on read_text()). The only execution-based test (test_compilation_with_cross_file_reference) skips on timeout via pytest.skip. No test actually imports, calls, or executes the Kotlin code to verify behavioral correctness."
+      "reason": "Almost every test is purely text/regex matching on file contents (e.g., `re.search(pattern, content)`). The only behavioral test (`test_compilation_with_cross_file_reference`) attempts gradle compilation but skips on timeout via `pytest.skip`. No test actually imports, calls, or executes the Kotlin code to verify functional behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_flow_type_check_removed, test_companion_object_is_internal, test_visibility_checker_flow_support) check for specific text patterns in source files. An agent could simply perform string replacements matching the prescribed patterns without understanding the bug \u2014 effectively a stub-level text edit passes all tests."
+      "reason": "A stub that simply writes the expected string patterns into the files (without understanding the bug) would pass all fail-to-pass tests. The tests only check for regex patterns in file content, not actual behavior. For example, test_flow_type_check_removed just checks that a specific regex matches in the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/kotlin's solve.sh (solution/solve.sh is available in the container). The agent could also read test_outputs.py to extract the exact regex patterns expected and craft matching text without understanding the bug. The tests check literal strings that are fully specified in the instruction."
+      "reason": "The solution is in /workspace/kotlin's solve.sh (accessible in the container at solution/solve.sh). The agent could read the gold patch directly. Additionally, since tests are pure text matching, the agent could grep test files to find exact expected patterns and write them verbatim."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by the instruction are tested: Flow type interception without COVARIANT check, internal companion object, Flow support in visibility checker, cross-file reference, and FLOW_CLASS_IDS contents."
+      "reason": "All requirements from instruction.md are tested: Flow type interception without COVARIANT check (test_flow_type_check_removed), internal companion object (test_companion_object_is_internal), Flow support in visibility checker (test_visibility_checker_flow_support), and cross-file reference (test_compilation_with_cross_file_reference)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_flow_type_check_removed, test_companion_object_is_internal, etc.), have docstrings explaining before/after fix, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining before/after behavior, grouped into fail-to-pass and pass-to-pass categories with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing Kotlin source files, not producing structured data output."
+      "reason": "This task involves Kotlin source code edits, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, class names, and patterns in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, class names, and patterns are all consistent and correctly spelled throughout the instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact code snippets for the fix, including 'if (kaType.classId in FLOW_CLASS_IDS)' and 'if (classType.classId in SirTypeProviderImpl.FLOW_CLASS_IDS) return@let false', plus specifies 'internal companion object'. This goes beyond naming the buggy file/area and gives the complete solution."
+      "reason": "The instruction provides exact code snippets to write, including `if (kaType.classId in FLOW_CLASS_IDS)`, `internal companion object`, and `if (classType.classId in SirTypeProviderImpl.FLOW_CLASS_IDS) return@let false`. This goes far beyond naming the buggy file \u2014 it specifies exact line-level changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task editing Kotlin source files, not configuration files."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

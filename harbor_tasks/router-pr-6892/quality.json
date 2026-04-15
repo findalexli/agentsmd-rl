@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies: script path `scripts/update-example-deps.mjs`, reading from `packages/*/package.json`, updating `examples/**/package.json`, outputting `Done`, using caret `^` format, handling `dependencies` and `devDependencies`, and integrating with `changeset:version` script. All test assertions check these elements which are discoverable from the instruction."
+      "reason": "The instruction specifies the script path (scripts/update-example-deps.mjs), the packages/ and examples/ directories, reading package.json files, the version field, dependencies/devDependencies, caret format (^x.y.z), outputting 'Done', and integrating with changeset:version script. All test assertions reference these elements which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT the solution should do (create a script, integrate with changeset:version) but does not specify exact code, line numbers, or the precise implementation. A developer must still reason about how to implement the script."
+      "reason": "The instruction describes what needs to be built (a script that updates example deps) and its requirements, but does not give the exact implementation, specific code, or line-by-line changes. A developer must reason about how to implement the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_script_uses_caret_version_format checks for specific string patterns like `\\`^${` in the source code. An alternative correct implementation using string concatenation like `'^' + version` or `\"^\" + packageMap[name]` would fail the assertion `\"`^${\" in content or '`^$' in content or '\"^\"' in content or \"'^'\" in content`. Also test_script_reads_workspace_packages does text-matching for 'packages', 'package.json', 'version' in script content, which is fragile to alternative implementations."
+      "reason": "test_script_uses_caret_version_format checks for specific string patterns like '`^${' in the source code. An alternative correct implementation using string concatenation (e.g., '^' + version) instead of template literals would fail this test. Similarly, test_script_reads_workspace_packages checks for 'packages' in content.lower() and 'package.json' in content - alternative implementations using different variable names or glob patterns could fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several fail_to_pass tests are purely text-inspection: test_script_reads_workspace_packages checks `'packages' in content.lower()`, test_script_uses_caret_version_format checks for `'^' in content` and template literal patterns, test_script_handles_both_dep_types checks `'devDependencies' in content`. These inspect source text without executing behavior."
+      "reason": "Several fail_to_pass tests are purely text-matching on source code: test_script_reads_workspace_packages asserts 'packages' in content.lower() and 'version' in content; test_script_uses_caret_version_format asserts '`^${' in content; test_script_handles_both_dep_types asserts 'devDependencies' in content. These inspect source text rather than behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_script_updates_example_dependencies runs the script but only asserts `returncode == 0` and has an early return if no example uses the package. A script that simply exits 0 without doing any updating would pass. Similarly test_script_runs_without_error only checks returncode == 0."
+      "reason": "test_script_updates_example_dependencies finds an example using a workspace package but only asserts the script exits with returncode 0 - it never checks that any dependency was actually updated. A script that does nothing but exits 0 would pass this test. Similarly test_script_runs_without_error only checks returncode 0."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/router` after solve.sh runs, and the gold patch is visible in solve.sh. An agent could read `solution/solve.sh` (or the PATCH content embedded in it) to extract the exact solution. The Dockerfile and test files are supposedly hidden but the solution directory may be accessible in the container."
+      "reason": "The solution file exists at /workspace/router after solve.sh runs, but even before that, the agent could read the test file at tests/test_outputs.py to see exactly what strings and patterns are checked (e.g., 'Done' in stdout, '`^${' in source), then craft a minimal script that passes all text-matching tests without actually implementing the functionality correctly."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says the script should 'output which examples were updated (one per line, e.g., Updated examples/foo/package.json)' but no test verifies the 'Updated ...' per-line output. Also no test verifies that example package.json files actually have their versions changed to the correct caret versions after running."
+      "reason": "The instruction requires 'Output which examples were updated (one per line, e.g., Updated examples/foo/package.json)' but no test verifies this output format. Also, no test verifies that example package.json files actually have their versions updated to the correct caret versions after script execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names, docstrings indicating their purpose, and are clearly separated by concern (script existence, execution, output, integration, code inspection, linting)."
+      "reason": "Tests are well-named with descriptive function names and docstrings that include fail_to_pass/pass_to_pass annotations, clearly grouped by what they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a script and modified package.json files, not a structured data output like an API or CSV schema."
+      "reason": "The task produces a script and modifies JSON files, but the schema of package.json is a well-known standard and doesn't need explicit documentation."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the task at an appropriate level - it names the script file to create and the npm script to modify, but these are natural requirements of the task, not localization hints for a bugfix."
+      "reason": "The instruction describes the problem and requirements without revealing specific implementation details like exact line numbers, variable names, or code snippets from the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff in package.json is a single-line change to the changeset:version script, which is localized and doesn't contradict other files."
+      "reason": "The gold patch makes a minimal, localized change to package.json (one line in the changeset:version script) and adds one new file, which is consistent with the task requirements."
     }
   },
   "tier_a_fails": [

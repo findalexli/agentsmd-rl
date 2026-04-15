@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both helper functions (`_infer_runtime_lora_path`, `_register_runtime_lora_name`), their signatures, the target file, the `xccl://` synthetic path format, the success gating with `all(success for success, _ in ret_list)`, `base_model_name` propagation, stale alias removal logic, and the `LoRARequest` construction. All test-asserted specifics (function names, path format, behavior) are discoverable from instruction.md."
+      "reason": "The instruction names the exact function names (_infer_runtime_lora_path, _register_runtime_lora_name), their parameter signatures, the target file path, the xccl:// prefix, the success gating pattern with ret_list, the LoRARequest import, and all behavioral requirements that tests assert on. All test-specific literals and identifiers are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: specific helper names, their exact signatures, step-by-step logic (e.g., 'iterate over all entries... delete any entry whose lora_int_id matches but lora_name differs'), the exact fallback path format `xccl://{lora_name}`, and the exact success gating condition `all(success for success, _ in ret_list)`. A developer doesn't need to reason about what to change \u2014 the instruction is a detailed implementation spec."
+      "reason": "The instruction specifies exact function names (_infer_runtime_lora_path, _register_runtime_lora_name), exact parameter lists, exact logic (e.g., 'gated inside an if all(success for success, _ in ret_list):' check), exact return values ('xccl://' prefix followed by lora_name), and step-by-step implementation details. This is essentially a full specification of the solution rather than a description of what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests search for functions by exact name patterns ('register' and 'lora' in name, 'infer' or 'path' and 'lora' in name) via AST extraction. test_success_gating checks for exact string patterns like 'all(' in func_src, 'req.lora_name = ' not present, and regex for helper call patterns. An alternative correct implementation using different function names (e.g., `update_lora_registry`) or a different success-checking pattern (e.g., `if not any(not s for s, _ in ret_list)`) would fail these tests."
+      "outcome": "pass",
+      "reason": "The tests use signature-based discovery (_extract_all_funcs) to find helper functions by parameter sets, not just by exact names. They also test behavior (e.g., stale alias removal, path inference) rather than exact implementation details. The success gating test checks for structural patterns rather than exact code. Alternative implementations with different function names but matching signatures would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests use subprocess execution to actually call the extracted functions with mock objects and assert on behavioral outcomes (registry contents, path values, base_model_name). test_success_gating uses AST inspection which is structural rather than purely text-based. The tests are not purely string-matching."
+      "reason": "Tests execute the helper functions via subprocess with mocked dependencies, call register_fn and infer_fn with real arguments, and verify behavioral outputs (registry contents, returned paths). The success_gating test does use AST inspection of source structure, but most tests are behavioral execution tests, not simple string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests assert specific non-trivial outcomes: test_register_helper_creates_lora_request checks that entries appear in registry with correct attributes, test_stale_aliases_removed checks deletion of old entries, test_infer_path_synthetic_fallback checks the xccl:// format, test_infer_path_preserves_existing checks path preservation logic. A stub returning None/empty would fail all of these."
+      "reason": "A stub implementation returning None or empty values would fail: test_register_helper_creates_lora_request checks that the registry contains entries with correct fields; test_stale_aliases_removed checks that old entries are deleted; test_infer_path_synthetic_fallback checks for 'xccl://' in the result; test_infer_path_preserves_existing checks for exact path values. These cannot be satisfied by trivial stubs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/AReaL/_eval_tmp.py during test runs, and more critically, the gold patch is in solve.sh which could be read from the container. The agent could also read the test file at the tests path to reverse-engineer expected behavior. No measures prevent reading /solution/solve.sh."
+      "reason": "The solution file exists at /workspace/AReaL/_eval_tmp.py during test runs, and more importantly, solution/solve.sh is present in the container (the Dockerfile doesn't remove it). An agent could read solve.sh to obtain the exact gold patch and apply it directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: path inference with existing path, fallback to xccl://, stale alias removal, new LoRARequest creation, base_model_name propagation, success gating, and no inline mutation."
+      "reason": "All major required behaviors are tested: path inference with existing path and synthetic fallback, registration creating new LoRARequest objects, stale alias removal, success gating, and the LoRARequest import (implicitly tested through behavioral tests that create LoRARequest objects)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_register_helper_creates_lora_request, test_stale_aliases_removed, etc.), have docstrings explaining intent, and are grouped into gate tests (pass_to_pass) and behavioral tests (fail_to_pass) with clear section comments."
+      "reason": "Tests are well-named (test_syntax_check, test_register_helper_creates_lora_request, test_stale_aliases_removed, etc.), have docstrings explaining their purpose, and are grouped with comments indicating pass_to_pass vs fail_to_pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Python code behavior, not structured data output like JSON/CSV/API schemas."
+      "reason": "The task involves modifying Python code for runtime LoRA adapter management, not producing structured data outputs like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,22 +43,21 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact target file (`areal/engine/vllm_ext/areal_vllm_server.py`), exact function names to create, exact signatures, and the exact location in `update_weight_lora_xccl` where changes should be made. This goes beyond describing what's broken and essentially localizes and prescribes the fix."
+      "reason": "The instruction specifies the exact target file (areal/engine/vllm_ext/areal_vllm_server.py), exact function names to create, exact parameter signatures, exact conditional check syntax ('if all(success for success, _ in ret_list):'), and exact import statement. This goes well beyond identifying what's broken and essentially dictates the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a configuration editing task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 3
 }

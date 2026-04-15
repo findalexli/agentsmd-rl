@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both relevant files (slime/rollout/data_source.py and slime/ray/rollout.py), the RolloutDataSource class, the constructor crash with None dataset path, the __len__ TypeError, the AttributeError on shuffle during checkpoint load, and the router health check issue. The test for router health check uses AST inspection for 'disable_health_check' attribute, which is implied by the instruction's mention of disabling the health check. All key behavioral specifics are discoverable "
+      "reason": "The instruction names the relevant files (slime/rollout/data_source.py, slime/ray/rollout.py), the class (RolloutDataSource), the crash scenarios (constructor with None path, __len__ TypeError, checkpoint load AttributeError), and the router health check issue. The test for disable_health_check uses AST inspection of _start_router which is discoverable from the instruction's mention of router launch configuration in slime/ray/rollout.py. All test-asserted specifics (dataset=None, len returning 0"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (crashes when path is None, __len__ crashes, load crashes with shuffle, health check not disabled) but does not specify exact code changes like 'add a None check on line X' or 'change condition to include args.prompt_data is not None'. A developer must reason about how to implement the guards."
+      "reason": "The instruction describes symptoms (crashes, TypeError, AttributeError, health check not disabled) without specifying exact code changes like 'add a None check on line X' or 'change condition to include args.prompt_data is not None'. A developer must reason about what guards to add."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_router_disables_health_check uses AST inspection to look for a specific attribute assignment 'router_args.disable_health_check = True' with exact attribute name 'disable_health_check' and value True. An alternative correct fix might use a different mechanism (e.g., passing it as a constructor argument, setting it in a dict, or using a different attribute name). Additionally, the test checks for the exact string 'disable_health_check' as an ast.Attribute attr value, which constrains the impl"
+      "reason": "test_router_disables_health_check uses AST inspection to check for an exact attribute assignment 'router_args.disable_health_check = True' with specific attribute name matching. An alternative correct fix that uses a different variable name (e.g., passing disable_health_check as a constructor kwarg, or setting it via a dict) would fail the AST check. Also, test_len_returns_zero_when_dataset_none creates an object via object.__new__ and sets ds.dataset = None directly, which constrains the implem"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests actually instantiate RolloutDataSource, call len(), call load(), and execute the code. The router test uses AST parsing (not just string matching) to verify structural code properties. Pass-to-pass tests compile files and run linters/test suites as subprocesses. Tests are behavioral, not pure text matching."
+      "reason": "The fail-to-pass tests instantiate the RolloutDataSource class, call len(), call load(), and execute the code. The router test uses AST parsing to verify structural presence rather than simple string matching. Linting tests run actual tools (ruff, black, isort, autoflake). The tests genuinely execute or structurally analyze code behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_constructor_none_prompt_data creates a RolloutDataSource with None prompt_data and checks ds.dataset is None \u2014 a stub that always sets self.dataset=None would pass this, but would fail the existing repo tests (test_repo_chunked_gae, test_repo_plugin_contracts). test_len_returns_zero_when_dataset_none checks len() returns 0 when dataset is None \u2014 the original code crashes here. test_load_no_crash_when_dataset_none_shuffle_true verifies no AttributeError on shuffle \u2014 the original code crashes"
+      "reason": "test_constructor_none_prompt_data would fail on the original code which crashes with ValueError when prompt_data=None. test_len_returns_zero_when_dataset_none would fail because the original __len__ doesn't handle None dataset. test_load_no_crash_when_dataset_none_shuffle_true would fail because the original load() tries to call shuffle on None. test_router_disables_health_check would fail because the original code doesn't set disable_health_check. A stub/pass implementation wouldn't satisfy the"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/slime's container as solve.sh in the solution/ directory. An agent could potentially read /solution/solve.sh (if accessible) to get the exact patch. The Dockerfile doesn't explicitly remove or protect the solution directory from agent access."
+      "reason": "The solution directory exists at /solution/solve.sh in the container (based on the Dockerfile and task structure). An agent could read this file to obtain the exact patch. There's no evidence of the solution being removed or protected from agent access."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four bugs described in the instruction are tested: constructor crash (test_constructor_none_prompt_data), __len__ TypeError (test_len_returns_zero_when_dataset_none), checkpoint load AttributeError (test_load_no_crash_when_dataset_none_shuffle_true), and router health check (test_router_disables_health_check)."
+      "reason": "All four bugs described in the instruction are tested: (1) constructor crash with None prompt_data, (2) __len__ TypeError, (3) checkpoint load AttributeError with shuffle, (4) router health check not disabled."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff), descriptive function names, and docstrings explaining each test's purpose. Helper functions are separated at the top."
+      "reason": "Tests are clearly grouped with section headers ('Gates', 'Fail-to-pass'), descriptive function names (test_constructor_none_prompt_data, test_len_returns_zero_when_dataset_none), and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Python code bugs, not producing structured data like JSON/CSV/API/DB outputs."
+      "reason": "The task involves fixing Python code bugs, not producing structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (slime/rollout/data_source.py, slime/ray/rollout.py), class names (RolloutDataSource), and attribute names are consistent across instruction, tests, and solution."
+      "reason": "File paths (slime/rollout/data_source.py, slime/ray/rollout.py), class names (RolloutDataSource), and variable names are consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files and class but doesn't specify exact line numbers or exact code changes. Mentioning 'RolloutDataSource class in slime/rollout/data_source.py' and '_start_router in slime/ray/rollout.py' is appropriate given the task domain \u2014 the agent still needs to find the specific lines and determine the fix."
+      "reason": "The instruction names the files and class (which is appropriate for a bug report) but doesn't specify exact line numbers or the precise code changes needed. Mentioning 'the constructor unconditionally attempts to load' is a symptom description, not a fix specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Python source file modifications, not configuration file edits."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

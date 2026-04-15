@@ -25,18 +25,22 @@ with fixture reuse and must be removed.
 
 1. Fixtures that are expensive to create should be scoped to the module level
    (`scope="module"`), so they are created once per file rather than once per test.
-   The `local_scheduler` fixture must use `tmp_path_factory` parameter (not `tmp_path`)
-   to be compatible with module scope.
+   The `local_scheduler` fixture must be changed to use `tmp_path_factory` parameter
+   instead of `tmp_path` to be compatible with module scope.
 
-2. Each of the three test files should have a module-level pytest marker
-   (`pytestmark = pytest.mark.<marker_name>`) to enable group selection in CI.
+2. Each of the three test files should have a module-level `pytestmark` variable
+   assigned to a `pytest.mark.<marker>` expression, where `<marker>` is the identifier
+   registered for this test suite. The marker must be accessible as `pytest.mark.<marker>`
+   at runtime when the assignment is evaluated.
 
 3. Per-class `@pytest.mark.slow` decorators should be removed from all test classes,
    as the module-level marker replaces them.
 
-4. Controller fixture settings need sufficient values to avoid throttling:
-   - `consumer_batch_size` must be >= 3
-   - `max_head_offpolicyness` must be >= 100
+4. Controller fixture settings need sufficient values to avoid throttling when fixtures
+   are shared across multiple tests:
+   - `gateway_controller` fixture: `consumer_batch_size` argument must be >= 3
+   - `gateway_controller_full_init` fixture: `max_head_offpolicyness` argument must be >= 100
 
 5. Tests that cannot be shared across module-scoped fixtures due to stateful
    trajectory filtering must be removed from the controller integration tests.
+   Specifically, any test method whose name contains `should_accept_fn` must be removed.

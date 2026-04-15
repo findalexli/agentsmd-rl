@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md explicitly names all asserted strings: 'statementNameGenerator', 'this.pgOptions?.statementNameGenerator?.(query)', 'StatementNameGenerator = (query: SqlQuery) => string', 'import type { SqlQuery }', both test case names, file paths, and the JSDoc requirement. The ESLint/Prettier/vitest tests check general repo health which is implicitly expected. All specific asserted values are discoverable from the instruction."
+      "reason": "instruction.md explicitly names all asserted strings: 'statementNameGenerator', 'this.pgOptions?.statementNameGenerator?.(query)', 'StatementNameGenerator = (query: SqlQuery) => string', 'import type { SqlQuery }', both test case names, file paths, and the JSDoc requirement. The ESLint, Prettier, and vitest tests operate on the repo structure which is described. All test-specific literals are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact implementation line 'this.pgOptions?.statementNameGenerator?.(query)' and the exact type alias 'StatementNameGenerator = (query: SqlQuery) => string', plus the exact test case names. This tells the agent precisely WHAT code to write rather than just describing the broken behavior."
+      "reason": "instruction.md literally states the exact implementation strings: 'this.pgOptions?.statementNameGenerator?.(query)' as the call expression, 'StatementNameGenerator = (query: SqlQuery) => string' as the type alias, and the exact test case names. This tells the agent exactly WHAT to write, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'this.pgOptions?.statementNameGenerator?.(query)' via substring matching. An alternative correct implementation such as 'const name = this.pgOptions?.statementNameGenerator?.(query)' followed by passing `name` separately, or using a different optional chaining style, would fail the test despite being functionally correct."
+      "reason": "Tests assert exact strings like 'this.pgOptions?.statementNameGenerator?.(query)' via substring matching in source code. An alternative correct implementation using e.g. 'const name = this.pgOptions?.statementNameGenerator?.(query)' on a separate line before the query call, or using a different optional chaining pattern, would fail the test even though it's functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three f2p tests (test_statementNameGenerator_option_exists, test_statementNameGenerator_called_in_query, test_statementNameGenerator_type_defined) all use 'assert STRING in open(path).read()' \u2014 pure text matching with no code execution. The p2p tests for ESLint/vitest/prettier do execute subprocesses, but every fail-to-pass test is text-based."
+      "reason": "The three f2p tests (test_statementNameGenerator_option_exists, test_statementNameGenerator_called_in_query, test_statementNameGenerator_type_defined) all just do `assert 'exact string' in content` by reading source files as text. They never import, compile, or execute the TypeScript code. While some p2p tests run ESLint/vitest/prettier subprocesses, the core f2p tests are purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All three f2p tests check only for string presence in source files. An agent could simply append a comment like '// this.pgOptions?.statementNameGenerator?.(query) StatementNameGenerator = (query: SqlQuery) => string' to pg.ts and pass all f2p tests without implementing any actual functionality."
+      "reason": "All three f2p tests check for literal strings in source files. An agent could simply append the exact strings as comments (e.g., '// this.pgOptions?.statementNameGenerator?.(query)') to pg.ts without implementing any actual functionality, and all f2p tests would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/prisma with solve.sh containing the exact patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover the exact strings being asserted and simply inject them as comments. The tests only check string presence, not behavior."
+      "reason": "The solution directory exists at /workspace/prisma with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or simply grep for the expected fixture strings in test_outputs.py (which are in the container) and paste them into the source files."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says the generator result should be passed as 'name' property to pg.Client#query() and that name should be absent when no generator is provided. These behavioral requirements are only checked as text patterns in source files, not actually tested by executing the code."
+      "reason": "instruction.md says 'When a statementNameGenerator function is provided, it is called with the query and its result is passed as the name property to pg.Client#query()'. This behavioral requirement is not tested by any f2p test - they only check for string presence in source code, not actual runtime behavior of passing the name property."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped logically (f2p vs p2p as noted in the module docstring), and each test function has a clear purpose."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. The file header documents f2p vs p2p categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "All filenames, paths, variable names, and commands in instruction.md and tests match correctly with no typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly provides the exact implementation expression 'this.pgOptions?.statementNameGenerator?.(query)' and the exact type definition 'StatementNameGenerator = (query: SqlQuery) => string', which are implementation details beyond what's needed to describe the problem."
+      "reason": "instruction.md provides the exact implementation expression 'this.pgOptions?.statementNameGenerator?.(query)' and exact type signature 'StatementNameGenerator = (query: SqlQuery) => string', which are specific implementation details beyond what's needed to understand the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

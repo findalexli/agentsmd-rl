@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'sourceEndPos = 0', 'sourceEndPos = sourceByteLen', 'if (pos < sourceEndPos)', 'fromCharCode.apply(null, arr)', 'sourceTextLatin,' declaration, 'sourceTextLatin.substr(', 'sourceTextLatin = void 0', '{ latin1Slice } = Buffer.prototype', 'latin1Slice.call(uint8', 'if (len > 64)', and 'STRING_DECODE_CROSSOVER = 64'."
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'sourceEndPos = 0', 'sourceEndPos = sourceByteLen', 'if (pos < sourceEndPos)', 'fromCharCode.apply(null, arr)', 'sourceTextLatin,' (with comma), 'sourceTextLatin.substr(', 'latin1Slice.call(uint8', '{ latin1Slice } = Buffer.prototype', 'if (len > 64)', and 'STRING_DECODE_CROSSOVER = 64'. The instruction mentions c"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the solution approach in detail: use latin1Slice from Buffer.prototype, pre-allocate reusable arrays, increase threshold substantially, use sourceTextLatin variable, clear it in resetBuffer. While it doesn't give exact line numbers, it describes WHAT to change rather than just WHAT is broken."
+      "reason": "The instruction explicitly states the exact implementation approach: 'Buffer prototype provides an efficient method for extracting latin1-encoded substrings', 'Pre-allocated reusable arrays would eliminate allocation overhead', 'threshold should be increased substantially' (tests check for exactly 64), 'batch the character code generation using pre-allocated arrays', and 'sourceTextLatin' variable naming is effectively leaked through the detailed description of what to implement."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names like 'sourceTextLatin', 'stringDecodeArrays', 'sourceEndPos', exact expressions like 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'fromCharCode.apply(null, arr)', exact threshold 'if (len > 64)'. An alternative correct fix using different variable names (e.g., 'latin1Source'), different array sizes, or different threshold values would fail these tests despite being functionally cor"
+      "reason": "Tests assert exact variable names like 'sourceTextLatin', 'stringDecodeArrays', 'sourceEndPos', exact array size 'Array(65).fill(null)', exact threshold 'if (len > 64)', exact method call 'fromCharCode.apply(null, arr)', exact destructuring '{ latin1Slice } = Buffer.prototype'. An alternative correct fix using different variable names (e.g., 'latinSourceText'), different array sizes (e.g., 128), or different thresholds (e.g., 48 or 128) would fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_latin1slice_usage, test_source_text_latin_variable, test_string_decode_arrays, test_64_byte_threshold, test_from_char_code_apply, test_source_end_pos, test_raw_transfer_generator_updated) are ALL pure text-matching assertions using 'assert \"...\" in content'. Only the pass-to-pass tests (test_napi_parser_tests, test_napi_parser_esm, test_napi_parser_visit) actually execute the code."
+      "reason": "The fail-to-pass tests (test_latin1slice_usage, test_source_text_latin_variable, test_string_decode_arrays, test_64_byte_threshold, test_from_char_code_apply, test_source_end_pos, test_raw_transfer_generator_updated) are ALL text-matching assertions using 'assert \"...\" in content'. Only the pass-to-pass tests (test_napi_parser_tests, test_napi_parser_esm, test_napi_parser_visit) execute actual code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply writes the expected string patterns into the target files (e.g., appending comments containing '{ latin1Slice } = Buffer.prototype', 'stringDecodeArrays = Array(65).fill(null)', etc.) would pass all f2p tests since they only check for string presence in files. No behavioral validation is done in f2p tests."
+      "reason": "The f2p tests only check for string presence in files. An agent could simply insert comments or dead code containing the required strings (e.g., '// stringDecodeArrays = Array(65).fill(null)') into the generated files without implementing any actual optimization, and all f2p tests would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/oxc with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to extract every exact string pattern being asserted, then mechanically insert those patterns into the target files."
+      "reason": "The solution is in /workspace/oxc (the solve.sh shows 'cd /workspace/oxc' and applies a git patch). The agent could read the solution file at /solution/solve.sh or inspect the test file at /tests/test_outputs.py to discover the exact string patterns being checked, then insert those patterns without understanding the optimization."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction mentions testing for 'All-ASCII source files', 'Source files with non-ASCII characters (UTF-8)', 'Empty strings', 'Very long strings', 'Short strings in various positions' but no f2p test verifies these specific behaviors. The p2p tests run general test suites but don't specifically target these edge cases."
+      "reason": "Instruction mentions 'Source files with non-ASCII characters (UTF-8)', 'Empty strings', 'Very long strings', 'Short strings in various positions' as testing requirements, but no f2p tests verify these behaviors - only text pattern matching is done."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings, and clear separation between fail-to-pass and pass-to-pass categories marked by comments."
+      "reason": "Tests are well-organized with clear section comments ('FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS'), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names implementation details: 'latin1Slice', 'Buffer prototype', 'pre-allocated reusable arrays', 'threshold of 9 bytes should be increased substantially', 'sourceTextLatin'. These are solution-specific choices, not just descriptions of what's broken."
+      "reason": "The instruction gives very specific implementation hints: 'Buffer prototype provides an efficient method for extracting latin1-encoded substrings from byte buffers', 'Pre-allocated reusable arrays would eliminate allocation overhead', 'current threshold of 9 bytes should be increased substantially', 'batch the character code generation using pre-allocated arrays'. These effectively describe the exact solution approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

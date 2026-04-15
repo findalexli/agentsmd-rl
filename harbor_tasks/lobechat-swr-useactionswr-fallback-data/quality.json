@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific strings like 'alwaysApply: true', 'Linear Issue Management', 'Completion Comment', 'Per-Issue Completion Rule', 'In Review' in linear.mdc, and 'Retrieve issue details' / 'Per-Issue Completion Rule' as absent from CLAUDE.md. The instruction never specifies these exact strings or the frontmatter format ('alwaysApply: true'). The instruction also doesn't mention the '.cursor/rules/' pattern requiring 'alwaysApply' frontmatter. Additionally, test_claude_md_references_linear_"
+      "outcome": "pass",
+      "reason": "The instruction names the file path `src/libs/swr/index.ts`, the hooks `useActionSWR`/`useClientDataSWR`/`useOnlyFetchOnceSWR`, the config options `fallbackData`/`revalidateOnMount`, the constraint against `useSWRMutation`, English-only comments, `CLAUDE.md`, `.cursor/rules/linear.mdc`, `alwaysApply: true`, 'Linear Issue Management', 'Completion Comment', 'Per-Issue Completion Rule', 'In Review', and the strings that must not appear in CLAUDE.md ('Retrieve issue details', 'Per-Issue Completion R"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'switch useActionSWR to use useSWR with fallbackData set to an empty object' and 'Combined with revalidateOnMount: false'. It also specifies extracting Linear rules into '.cursor/rules/linear.mdc'. This is not just describing what's broken\u2014it prescribes the exact implementation approach."
+      "reason": "The instruction explicitly states the fix must 'Use the SWR configuration options `fallbackData` and `revalidateOnMount`' and 'Not use `useSWRMutation`'. This tells the agent exactly what mechanism to use (fallbackData + revalidateOnMount with useSWR instead of useSWRMutation), leaving very little reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_use_action_swr_uses_fallback_data uses regex to extract the useActionSWR function and checks for specific strings 'fallbackData', 'revalidateOnMount', absence of 'useSWRMutation'. An alternative correct fix might use a different mechanism (e.g., a wrapper, conditional fetching, or a different SWR config option) that wouldn't contain 'fallbackData' as a literal string. The test also uses a specific regex pattern that assumes particular code formatting."
+      "reason": "test_use_action_swr_uses_fallback_data uses regex to extract the useActionSWR function body and asserts specific strings like 'fallbackData', 'revalidateOnMount', absence of 'useSWRMutation', and presence of 'useSWR'. An alternative correct fix that prevents auto-fetch using a different mechanism (e.g., a conditional fetcher, a custom middleware, or a wrapper with a ref guard) would fail these text-matching assertions even if it correctly solves the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are text-matching: test_use_action_swr_uses_fallback_data checks for string presence via regex, test_swr_comments_english_only checks character ranges, test_claude_md_references_linear_mdc and test_linear_mdc_exists_with_rules check for literal strings in files. While test_repo_swr_unit_tests, test_repo_swr_lint, and test_repo_swr_prettier do execute subprocesses, the core behavioral tests (the fix itself) are purely text-based assertions."
+      "reason": "Tests test_use_action_swr_uses_fallback_data, test_swr_comments_english_only, test_claude_md_references_linear_mdc, and test_linear_mdc_exists_with_rules are purely text-matching (reading file content and asserting string presence/absence). While test_repo_swr_unit_tests and test_repo_swr_lint do execute code/tools, the core behavioral tests for the bug fix (test_use_action_swr_uses_fallback_data) only check text patterns, not actual runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_use_action_swr_uses_fallback_data, test_swr_comments_english_only, test_claude_md_references_linear_mdc, test_linear_mdc_exists_with_rules) cannot pass with a stub/no-op implementation. The original code uses useSWRMutation and has Chinese comments, so the agent must actively change code. The linear.mdc file doesn't exist initially, so it must be created."
+      "reason": "The existing repo at the base commit uses useSWRMutation in useActionSWR and has Chinese comments. A stub or no-op would not pass test_use_action_swr_uses_fallback_data (which checks for fallbackData and absence of useSWRMutation), test_swr_comments_english_only (which checks for absence of Chinese characters), or the CLAUDE.md restructuring tests. The agent must make substantive changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /solution/solve.sh and /solution/apply_fix.py in the container. An agent could simply read and execute these files. There's no evidence of measures to prevent access to the /solution/ directory."
+      "reason": "The /solution/solve.sh and /solution/apply_fix.py files exist in the container. The agent could read /solution/apply_fix.py to get the exact gold patch and apply it directly, bypassing any need to understand the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: switching from useSWRMutation to useSWR with fallbackData, English-only comments, CLAUDE.md referencing linear.mdc, and the linear.mdc file creation with rules content."
+      "reason": "All requirements from the instruction are tested: fallbackData usage, revalidateOnMount usage, no useSWRMutation, English-only comments, CLAUDE.md restructuring, linear.mdc creation with required content, and the SWR module exports/lint/tests passing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_use_action_swr_uses_fallback_data, test_swr_comments_english_only, etc.), each has a docstring explaining its purpose, and they map logically to different aspects of the fix."
+      "reason": "Tests are well-named (test_swr_module_loads, test_use_action_swr_uses_fallback_data, etc.), each has a descriptive docstring, and they are logically grouped by concern (SWR module, CLAUDE.md, linear.mdc)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names 'src/libs/swr/index.ts' and 'CLAUDE.md', but these are the obvious files given the task domain. The file path is part of the bug description context, not an unnecessary localization hint."
+      "reason": "The instruction names the file `src/libs/swr/index.ts` which is reasonable given the task domain. It describes the bug conceptually without pointing to specific line numbers or exact code to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The CLAUDE.md and linear.mdc changes are localized: extracting a section from one file into another and adding a reference. The SWR code change is also localized to one hook definition."
+      "reason": "The CLAUDE.md edit is a localized change (replacing inline rules with a reference) and the linear.mdc creation is a new file. Both are bounded and don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -59,6 +58,6 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 4
 }

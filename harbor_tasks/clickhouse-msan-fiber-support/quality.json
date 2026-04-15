@@ -3,64 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All asserted file paths (contrib/boost-cmake/CMakeLists.txt, src/Common/Fiber.h, src/Common/FiberStack.cpp, src/Common/tests/gtest_dragonbox_msan.cpp), literal strings ('BOOST_USE_MSAN', 'elseif (SANITIZE MATCHES \"memory\")', 'defines.h should be included before fiber.hpp', 'are defined via CMake for sanitizer builds', 'struct padding', 'per-field', 'LLVM IR', 'stack slots are reused across function calls', 'TEST(DragonboxMSan, ReturnValuePaddingShadowIsLost)', 'MEMORY_SANITIZER', 'dragonbox'), a"
+      "reason": "Every test-asserted literal string, file path, test name, and schema key is explicitly mentioned in instruction.md: file paths (contrib/boost-cmake/CMakeLists.txt, src/Common/Fiber.h, src/Common/FiberStack.cpp, src/Common/tests/gtest_dragonbox_msan.cpp), exact strings ('BOOST_USE_MSAN', 'elseif (SANITIZE MATCHES \"memory\")', 'defines.h should be included before fiber.hpp', 'are defined via CMake for sanitizer builds', 'struct padding', 'per-field', 'LLVM IR', 'stack slots are reused across functi"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction tells the agent exactly what to change: add 'elseif (SANITIZE MATCHES \"memory\")' with 'target_compile_definitions(_boost_context PUBLIC BOOST_USE_MSAN)', remove the old comment text and replace with specific new text, remove the old explanation and replace with specific new wording mentioning 'struct padding' and 'per-field', and create a test file with exact test name and structure. This is effectively a detailed specification of the fix, not just a description of what's broken."
+      "reason": "The instruction provides exact replacement text: the precise CMake condition pattern 'elseif (SANITIZE MATCHES \"memory\")', the exact compile definition line, the exact new comment text 'are defined via CMake for sanitizer builds', the exact test name, and specifies exactly what old text to remove and what new text to add. This is essentially a complete specification of the patch rather than a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'are defined via CMake for sanitizer builds', 'per-field' or 'LLVM IR' in comments, exact ordering of ASAN/MSAN/TSAN definitions, and exact test name 'TEST(DragonboxMSan, ReturnValuePaddingShadowIsLost)'. An alternative correct fix that used different comment wording (e.g., 'per-byte shadow tracking' instead of 'per-field') or different ordering would fail even if functionally correct."
+      "reason": "Tests assert exact literal strings like 'are defined via CMake for sanitizer builds', 'elseif (SANITIZE MATCHES \"memory\")', exact ordering of ASAN/MSAN/TSAN definitions, and exact test name 'TEST(DragonboxMSan, ReturnValuePaddingShadowIsLost)'. An alternative correct fix using different comment wording or a different CMake pattern (e.g., 'if(SANITIZE STREQUAL \"memory\")') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The four fail-to-pass tests (test_cmake_boost_use_msan_defined, test_fiber_h_comment_updated, test_fiber_stack_cpp_comment_explains_msan_unpoison, test_dragonbox_msan_test_file_exists) are all purely text-matching assertions: they read files and check for presence/absence of literal strings. None import, compile, or execute the code to verify behavior. The pass-to-pass tests do run subprocesses but don't test the actual fix behavior."
+      "reason": "The four f2p tests (test_cmake_boost_use_msan_defined, test_fiber_h_comment_updated, test_fiber_stack_cpp_comment_explains_msan_unpoison, test_dragonbox_msan_test_file_exists) are purely text-matching: they open files and check for substring presence/absence with 'assert X in content' or 'assert X not in content'. No code is compiled, executed, or tested for behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply writes files containing the expected literal strings (e.g., appending 'BOOST_USE_MSAN' to CMakeLists.txt, writing a file with the expected test name and keywords) would pass all f2p tests without understanding or implementing the actual bug fix. The tests only check for string presence, not functional correctness."
+      "outcome": "pass",
+      "reason": "The f2p tests check for content that does not exist in the base commit (e.g., BOOST_USE_MSAN in CMakeLists.txt, new comment text in Fiber.h, updated comment in FiberStack.cpp, entirely new test file). A stub/no-op solution would not pass these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly (cat /workspace/ClickHouse/../solution/solve.sh or similar path traversal). Additionally, since tests only check for literal strings, the agent could grep test_outputs.py for the expected strings and write them verbatim."
+      "reason": "The solution is in /workspace/ClickHouse's container at solution/solve.sh. An agent could read or execute this file to obtain the exact patch. Additionally, the test file tests/test_outputs.py contains all the exact strings being checked, so grepping it reveals the expected fixture values."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (CMake MSAN definition with ordering, Fiber.h comment update, FiberStack.cpp comment update, new test file with specified structure) are tested by corresponding test functions."
+      "reason": "All behaviors described in instruction.md are tested: CMake MSAN definition and ordering, Fiber.h comment update, FiberStack.cpp comment correction, and the new test file with its required contents."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cmake_boost_use_msan_defined, test_fiber_h_comment_updated, etc.), have docstrings explaining their purpose, and are logically grouped by the file/component they verify."
+      "reason": "Tests are well-structured with descriptive names (test_cmake_boost_use_msan_defined, test_fiber_h_comment_updated, etc.), grouped logically by file/concern, and include docstrings explaining purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in instruction.md match those used in the tests and solution without typos."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact file paths and exact string replacements: 'The CMake condition pattern elseif (SANITIZE MATCHES \"memory\")', 'target_compile_definitions(_boost_context PUBLIC BOOST_USE_MSAN)', the exact old comment text to remove, and exact new comment content. This goes beyond describing the bug to specifying the exact fix."
+      "reason": "The instruction names exact files, exact old comment text to remove ('defines.h should be included before fiber.hpp', 'stack slots are reused across function calls'), exact new comment text to add, and exact CMake patterns. This goes beyond identifying the buggy area and specifies the exact changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch in solve.sh shows localized changes: 2 lines added to CMakeLists.txt, 2 lines changed in Fiber.h, a comment block replaced in FiberStack.cpp, and a new test file. No full-file rewrites or contradictions."
+      "reason": "The gold diff is localized: 2 lines added to CMakeLists.txt, 2 lines changed in Fiber.h, a comment block replaced in FiberStack.cpp, and one new test file. No full-file rewrites or contradictions with other files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 5
 }

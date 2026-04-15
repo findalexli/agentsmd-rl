@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (commands.ts, help.json, tab.ts, tool.ts, evaluate.ts, config.ts, response.ts, program.ts, build.js), the specific renamed commands (press, keydown, keyup, mousemove, mousedown, mouseup, mousewheel), the clearedBy object structure ({tool: string; skill: string}), skillMode config flag, renderModalStates config parameter, auto-wrap logic for evaluate, SKILL.md path and frontmatter requirements, and build copy rules. The test for tests/mcp/cli.spec.ts in test_r"
+      "reason": "The instruction names all file paths (commands.ts, help.json, tab.ts, tool.ts, evaluate.ts, config.ts, response.ts, program.ts, build.js), the specific field names (clearedBy, skillMode, tool, skill), the command renames (press, keydown, etc.), the SKILL.md path and frontmatter requirements (name: playwright-cli), and the auto-wrap behavior. All assert'd specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details: 'clearedBy field must be changed from a plain string to an object typed as { tool: string; skill: string }', 'renderModalStates function must accept a config parameter (of type FullConfig)', 'check a boolean config flag named skillMode', 'automatically wrap it as () => (expression)', 'set config.skillMode to true'. These are not just descriptions of broken behavior but precise code-level fixes telling the agent exactly what to imple"
+      "reason": "The instruction gives very precise implementation details: 'clearedBy field must be changed from a plain string to an object typed as { tool: string; skill: string }', 'renderModalStates function must accept a config parameter (of type FullConfig)', 'check a boolean config flag named skillMode', 'wrap it as () => (expression)', 'set config.skillMode to true'. These are explicit code-level fixes, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_modal_state_dual_format assert specific string patterns like 'renderModalStates(config:' and 'config.skillMode' and 'clearedBy.skill' via text search. An alternative correct implementation using a different parameter name (e.g., 'options' or 'ctx') or different property access patterns would fail. test_eval_auto_wraps_expression asserts the literal string '() => (' must appear in the file, ruling out alternatives like template literals or different wrapping approaches."
+      "reason": "test_modal_state_dual_format asserts exact strings like 'renderModalStates(config:' and 'config.skillMode' and 'clearedBy.skill'/'clearedBy.tool' in the source text. An alternative correct implementation using a different parameter name (e.g., 'renderModalStates(options:') or a different access pattern (e.g., destructuring) would fail. test_eval_auto_wraps_expression asserts the literal string '() => (' must appear in source, ruling out alternative wrapping like '() => { return ... }'."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests are pure text matching: test_modal_state_dual_format does `assert 'renderModalStates(config:' in content`, test_eval_auto_wraps_expression does `assert '() => (' in content`, test_clearedby_type_is_object does `assert 'tool: string' in content`, test_skill_md_documents_cli checks file content strings, test_build_copies_terminal_md checks file content. None of these import/call code or test runtime behavior. The pass_to_pass tests do run builds but the core f2p tests are a"
+      "reason": "Most fail-to-pass tests are text-matching: test_modal_state_dual_format checks 'renderModalStates(config:' in source text, test_eval_auto_wraps_expression checks '() => (' in source text, test_clearedby_type_is_object checks 'tool: string' in source text, test_skill_md_documents_cli checks file content strings, test_build_copies_terminal_md checks build.js text. None of these execute the code to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific content that doesn't exist in the base commit - e.g., 'press' command in help.json, 'skillMode' in tab.ts, SKILL.md file existence, '() => (' in evaluate.ts. A stub/no-op implementation wouldn't add these strings to the relevant files."
+      "reason": "The fail-to-pass tests require actual file modifications: creating SKILL.md, renaming commands in help.json, modifying type definitions, adding config parameters. A stub/no-op implementation on the base commit would fail since the original files don't contain the required strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it, and the hidden section shows it). An agent could read /solution/solve.sh and execute it directly. Additionally, since tests are purely text-based assertions, the agent could grep test files (if accessible) for exact strings like 'renderModalStates(config:' and insert them mechanically."
+      "reason": "The solution is in /workspace/playwright accessible via solve.sh, and the tests primarily check for literal strings in source files. An agent could read the solution patch or simply grep the test file to discover exact strings needed (e.g., 'renderModalStates(config:', '() => (', 'tool: string', 'skill: string') and insert them."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires 'When daemon mode is enabled in program.ts, set config.skillMode to true' but no test verifies program.ts sets skillMode. Instruction requires commands.ts command declarations to be updated (not just help.json) but no test checks commands.ts content. The skill command values like 'dialog-accept or dialog-dismiss' and 'upload' mentioned in the solution are not tested."
+      "outcome": "pass",
+      "reason": "All four major requirements are tested: command renames (test_commands_renamed_in_help, test_help_global_text_updated), modal state skill mode (test_modal_state_dual_format, test_clearedby_type_is_object), auto-wrap eval (test_eval_auto_wraps_expression), and SKILL.md creation (test_skill_md_documents_cli, test_build_copies_terminal_md)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, command renames, modal state skill mode, SKILL.md), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (Gates, command renames, modal state skill mode, SKILL.md), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for clearedBy ({tool: string; skill: string}), the help.json command structure with specific key names, and the SKILL.md frontmatter format. These are adequately specified."
+      "reason": "The instruction documents the exact schema for clearedBy ({ tool: string; skill: string }), the FullConfig skillMode field, and the SKILL.md frontmatter format with specific field names."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, command names, variable names, and type names in the instruction match what's referenced in tests and the solution. No typos detected."
+      "reason": "All file paths, command names, variable names, and field names in the instruction are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact functions (renderModalStates), exact parameter names (config of type FullConfig), exact field names (skillMode, clearedBy.tool, clearedBy.skill), and exact type structures. It goes well beyond naming relevant files and describes the precise implementation changes needed, which is excessive localization for a task that should require the agent to figure out the solution."
+      "reason": "The instruction explicitly names exact files and tells exactly what changes to make: 'The renderModalStates function must accept a config parameter (of type FullConfig)', 'The clearedBy field must be changed from a plain string to an object typed as { tool: string; skill: string }', 'set config.skillMode to true'. This goes well beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-change task, not an agentmd-edits/config-only task."
+      "reason": "This is a code-editing task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
@@ -58,9 +58,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 5
 }

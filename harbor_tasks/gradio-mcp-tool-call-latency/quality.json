@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_session_state_imported checks that 'SessionState' is imported from gradio.state_holder into gradio.mcp namespace; test_nonqueued_extracts_data checks for ['data'] subscript access; test_nonqueued_uses_session_state checks for 'SessionState' Name node in AST; test_queued_preserves_http_loopback checks for 'submit' in queued branch. The instruction mentions 'calls the Gradio blocks processing directly' but never nam"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_session_state_imported checks that SessionState is imported from gradio.state_holder and exists in the mcp module namespace; test_nonqueued_extracts_data checks for a ['data'] subscript access pattern; test_nonqueued_uses_session_state checks for SessionState usage in the non-queued branch; test_queued_preserves_http_loopback checks for 'submit' in the else branch. The instruction never mentions SessionState,"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (HTTP loopback overhead for non-queued events) and goals (bypass for non-queued, preserve for queued) but does not specify exact code changes, line numbers, or specific function names like process_api or SessionState."
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states 'Calls the Gradio blocks processing directly' and 'Bypasses the HTTP loopback mechanism for events where queue=False', which strongly hints at calling process_api. Combined with mentioning 'Preserves the existing HTTP loopback behavior for queued events', this effectively describes the solution structure rather than just the bug symptoms."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce very specific implementation choices: test_nonqueued_calls_process_api requires 'process_api' in attrs of the non-queued branch; test_nonqueued_uses_session_state requires 'SessionState' as a Name node; test_nonqueued_extracts_data requires ['data'] subscript; test_queued_preserves_http_loopback requires 'submit' in the else branch; _find_if_branch requires the if-test to contain 'block_fn' in ast.dump. An alternative correct fix (e.g., using a different internal API, or structurin"
+      "reason": "Tests enforce very specific implementation choices: test_nonqueued_calls_process_api requires 'process_api' in non-queued branch attrs; test_nonqueued_uses_session_state requires 'SessionState' in non-queued names; test_session_state_imported requires SessionState imported into gradio.mcp namespace from gradio.state_holder; test_nonqueued_extracts_data requires ['data'] subscript. An alternative correct fix (e.g., using a different internal API, or extracting data differently) would fail these A"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Tests use AST parsing (structural code analysis), subprocess compilation checks, and actual module imports \u2014 not simple string matching on file contents. The AST checks verify structural properties of the code rather than raw text patterns."
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_nonqueued_calls_process_api, test_nonqueued_extracts_data, test_nonqueued_uses_session_state, test_queued_preserves_http_loopback, test_queued_no_process_api) are ALL AST-based text/structure checks \u2014 they parse the source file and check for the presence of specific names/attributes in specific branches. None of them actually execute call_tool or verify runtime behavior. This is essentially 'assert pattern in source' with extra steps."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_nonqueued_calls_process_api, test_nonqueued_extracts_data, test_session_state_imported, test_nonqueued_uses_session_state, test_queued_preserves_http_loopback) check for specific AST structures that don't exist in the original code. A stub or no-op implementation would not have these structures. test_call_tool_not_stub explicitly requires >= 6 meaningful statements."
+      "reason": "A stub implementation (e.g., empty call_tool with just 'pass') would fail test_call_tool_not_stub (requires >= 6 meaningful statements), test_nonqueued_calls_process_api (requires block_fn.queue branch with process_api), and other structural checks. The tests do require non-trivial code structure."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is stored at /workspace/gradio as part of the solve.sh script content visible in solution/solve.sh. While the agent supposedly doesn't see solution/, the Dockerfile and environment setup could allow the agent to inspect /solution/ or /workspace/ for hints. Additionally, the test file at tests/test_outputs.py contains detailed AST patterns that effectively describe the exact solution structure."
+      "reason": "The solution exists at /workspace/gradio in the container, and solve.sh is a shell script that applies the exact patch. An agent could read /solution/solve.sh or the PATCH content within it to extract the exact fix. The Dockerfile doesn't remove the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from instruction.md are tested: (1) bypass HTTP loopback for non-queued (test_nonqueued_calls_process_api), (2) direct blocks processing (process_api check), (3) preserve HTTP loopback for queued (test_queued_preserves_http_loopback), (4) progress token only for queued path (test_queued_no_process_api), (5) syntactic validity (test_syntax_valid, test_mcp_py_compiles)."
+      "reason": "The instruction requires: (1) bypass HTTP loopback for non-queued \u2192 tested by test_nonqueued_calls_process_api, (2) direct blocks processing \u2192 tested, (3) preserve HTTP loopback for queued \u2192 tested by test_queued_preserves_http_loopback, (4) progress token handling only for queued \u2192 implicitly tested, (5) file validity \u2192 tested by syntax/import tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, anti-stub), descriptive function names, and detailed docstrings explaining what each test checks and why it's AST-only."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names, and detailed docstrings explaining why AST-only approach is used."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Python source code, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves modifying Python source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the file 'gradio/mcp.py' and the exact call path including 'Client._get_or_create_client', 'client.submit', 'run_sync(job.result)', and mentions checking 'queue=False' on events. While it doesn't give exact line numbers, naming the specific file and the exact internal API path significantly narrows the solution space."
+      "reason": "instruction.md explicitly names the file 'gradio/mcp.py', the function 'call_tool()', and describes that the fix should 'Call the Gradio blocks processing directly' \u2014 essentially specifying the solution approach. It also names specific internal APIs like 'gradio_client.Client.submit()' and 'Client._get_or_create_client'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,13 +52,15 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 6
 }

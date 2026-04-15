@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific function names 'appendTitleSuffix' and 'getTitleString' must exist in meta.ts (test_appendTitleSuffix_function_exists, test_getTitleString_function_exists). These function names are never mentioned in instruction.md, making them undiscoverable from the instruction alone."
+      "reason": "Tests assert specific function names 'appendTitleSuffix' and 'getTitleString' must exist in meta.ts (test_appendTitleSuffix_function_exists, test_getTitleString_function_exists). The instruction.md never mentions these helper function names. Tests also assert specific test description strings like 'should apply titleSuffix to default and template fields' which must match exactly in the spec file the agent writes, but instruction.md doesn't specify these test names."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the bug (TemplateString objects becoming [object Object]) and the three cases to handle, but does not specify exact code changes, line numbers, or helper function names to implement."
+      "reason": "The instruction describes the bug (TemplateString object becomes [object Object]) and the three cases to handle, but does not specify exact code changes, line numbers, or specific function implementations to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_appendTitleSuffix_function_exists and test_getTitleString_function_exists assert that specific gold-solution helper function names ('appendTitleSuffix', 'getTitleString') exist in meta.ts. A correct alternative fix that handles TemplateString objects inline or with differently-named helpers would fail these tests."
+      "reason": "test_appendTitleSuffix_function_exists and test_getTitleString_function_exists assert exact function names 'appendTitleSuffix' and 'getTitleString' via string search in meta.ts. An equally correct alternative fix could use different helper names (e.g., 'addSuffix', 'extractTitle') or inline the logic without helpers, and would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_appendTitleSuffix_function_exists and test_getTitleString_function_exists are pure text-matching tests ('assert \"appendTitleSuffix\" in content') with no execution. While other tests do execute code via vitest subprocess calls, these two are purely textual assertions."
+      "reason": "test_appendTitleSuffix_function_exists and test_getTitleString_function_exists are purely textual checks ('assert \"appendTitleSuffix\" in content') with no execution. While most other tests run vitest subprocess commands that execute code, these two structural tests are pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (e.g., test_generateMetadata_templateString_default_and_template) run vitest tests that check specific object fields and string values. A stub returning default/empty values would not produce 'Dashboard - My CMS' in the correct object structure."
+      "reason": "The fail-to-pass tests (e.g., test_generateMetadata_templateString_default_and_template) run vitest tests that check specific output values like 'Dashboard - My CMS' from TemplateString objects. A stub returning None or empty values would not produce these expected outputs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/payload after solve.sh runs, and the agent could potentially read the gold patch from solution/solve.sh if accessible in the container. Also, the test file meta.spec.ts must be created by the agent, but its exact expected test names are visible in test_outputs.py subprocess calls, which the agent could discover by examining the test runner expectations."
+      "reason": "The solution exists at /workspace/payload after solve.sh runs via git apply. The agent could potentially read the solution patch or the test file at packages/next/src/utilities/meta.spec.ts (once created) to discover exact test names and expected function names. Also, the vitest tests require specific test description strings that could be reverse-engineered from the test_outputs.py file if accessible."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: string titles with suffix, TemplateString with default/template fields, TemplateString with absolute field, and titleSuffix appending."
+      "reason": "The instruction specifies handling string titles, TemplateString with default/template, TemplateString with absolute, and titleSuffix appending. All these behaviors are tested through the vitest subprocess tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies and whether it's fail-to-pass or pass-to-pass."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, whether it's fail-to-pass or pass-to-pass, and the expected behavior."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a bug in metadata generation, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves fixing a bug in metadata generation, not producing structured data output with a documented schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, commands, and variable names in instruction.md and tests are consistent and correct."
+      "reason": "File paths, function names, and commands in both instruction.md and test files are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the relevant file (meta.ts) which is natural for the task domain, and describes the bug conceptually without naming specific lines or internal implementation details like helper function names."
+      "reason": "The instruction names meta.ts as the relevant file, which is appropriate given the task domain. It describes what's broken without specifying exact line numbers or the specific code fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-fix task, not an agentmd-edits/config-edit task."
+      "reason": "This is a code-fix task, not an agent config-edit task."
     }
   },
   "tier_a_fails": [

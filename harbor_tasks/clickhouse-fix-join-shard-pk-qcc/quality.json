@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_fix_comment_present asserts the exact string 'Renumber part_index_in_query to be contiguous starting from added_parts' which is not present verbatim in instruction.md. test_contiguous_index_assignment asserts 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' - while instruction.md mentions local_idx, it doesn't specify the exact loop signature. The exact comment text is not discoverable from the instruction alone."
+      "reason": "test_fix_comment_present asserts the exact string 'Renumber part_index_in_query to be contiguous starting from added_parts' which is not present verbatim in instruction.md. test_contiguous_index_assignment asserts the exact loop signature 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' and 'part_index_in_query = added_parts + local_idx' - while instruction.md mentions local_idx and the assignment pattern, the exact comment string is not fully spec"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix: 'Change the loop to use an index-based iteration with local_idx' and 'Assign part_index_in_query = added_parts + local_idx (contiguous)'. It even shows the before/after code pattern. This leaves no reasoning for the agent to do about WHAT to change."
+      "reason": "instruction.md explicitly states the fix: 'Change the loop to use an index-based iteration with local_idx', 'Assign part_index_in_query = added_parts + local_idx', and even shows the before/after code pattern. This leaves no reasoning for the agent - it's a direct specification of exactly what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_contiguous_index_assignment checks for exact string 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' and 'part_index_in_query = added_parts + local_idx'. An alternative correct fix using a different variable name (e.g., 'i' or 'idx') or a range-based for with a separate counter would fail these tests despite being functionally correct."
+      "reason": "test_contiguous_index_assignment asserts the exact string 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' and 'part_index_in_query = added_parts + local_idx'. An alternative correct fix using a different variable name (e.g., 'i' or 'idx') or a range-based for with a separate counter would fail these tests. test_fix_comment_present requires the exact comment string 'Renumber part_index_in_query to be contiguous starting from added_parts'."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_fix_comment_present, test_contiguous_index_assignment) are purely text-matching: they open the file and assert specific strings exist in the content. No code is compiled, executed, or behaviorally tested. Every f2p test is literally 'assert X in open(path).read()'."
+      "reason": "The two fail-to-pass tests (test_fix_comment_present and test_contiguous_index_assignment) are purely text-matching: they read the file and assert specific strings are present/absent. No code is compiled, executed, or behaviorally tested. All tests are essentially 'assert string in open(path).read()' pattern."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests check for specific string patterns in source code. An agent could satisfy them by simply inserting the exact comment text and loop pattern anywhere in the file without understanding or actually fixing the bug. No behavioral verification occurs."
+      "reason": "The f2p tests (test_fix_comment_present and test_contiguous_index_assignment) check for specific text patterns in the source file. An agent could satisfy them by simply inserting the exact expected comment and loop pattern as dead code or in a comment block, without actually fixing any bug or understanding the logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/ClickHouse's git history or solution/solve.sh. The agent could read solve.sh to get the exact patch. Additionally, the test assertions contain the exact strings needed, so grepping test_outputs.py reveals the expected fixture values directly."
+      "reason": "The solution is in /workspace/ClickHouse accessible via solve.sh. The agent could read solution/solve.sh to see the exact patch, or grep test_outputs.py for the exact strings being asserted (e.g., 'Renumber part_index_in_query to be contiguous starting from added_parts') and just insert them verbatim."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'Ensure the fix follows ClickHouse code style' and describes the actual behavioral bug (JOIN returning 0 rows). The tests only check for specific text patterns, not that the JOIN query actually works correctly."
+      "outcome": "pass",
+      "reason": "The instruction requires: modifying the loop, adding a comment about filterPartsByQueryConditionCache, and using contiguous index assignment. All three are tested (test_fix_comment_present, test_contiguous_index_assignment check these requirements)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_fix_comment_present, test_contiguous_index_assignment, etc.), have docstrings explaining their purpose, and are grouped logically with fail-to-pass vs pass-to-pass annotations."
+      "reason": "Tests are well-named (test_fix_comment_present, test_contiguous_index_assignment, etc.), have docstrings explaining fail-to-pass vs pass-to-pass, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data output."
+      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and function names in instruction.md and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, and function names in instruction.md and tests appear correct and consistent with the actual codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (optimizeJoinByShards.cpp), exact function (apply()), exact variable names (added_parts, local_idx), and shows the exact before/after code diff. This goes far beyond identifying the buggy component."
+      "reason": "instruction.md names the exact file (optimizeJoinByShards.cpp), the exact function (apply()), the exact variable names (added_parts, local_idx, part_index_in_query), and shows the before/after code changes. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -60,9 +60,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 3,
+  "fail_count": 7
 }

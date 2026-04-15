@@ -3,55 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (HeaderUpgradeButton.tsx, LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), the event name 'header_upgrade_cta_clicked', the interface name 'HeaderUpgradeCtaClickedEvent', the experiment ID 'headerUpgradeCta', the hooks useTrack/usePHFlag/useTrackExperimentExposure, the free plan check, the @group Events JSDoc, and the onClick prop. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names all file paths (HeaderUpgradeButton.tsx, LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), the event name 'header_upgrade_cta_clicked', the interface name 'HeaderUpgradeCtaClickedEvent', the experiment ID 'headerUpgradeCta', the hook names (useTrack, usePHFlag, useTrackExperimentExposure), the plan check ('free'), the @group Events JSDoc annotation, and the TelemetryEvent union type \u2014 all of which are checked by the tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially specifies the complete implementation: exact interface shape with code snippet, exact file locations, exact prop name 'onClick', exact component name, exact experiment gating logic ('test' variant shows button, 'control' tracks but shows nothing), and exact hook usage. A developer reading this has very little reasoning to do about WHAT to change \u2014 it's all prescribed. The instruction even specifies the exact TypeScript interface definition as a code block."
+      "outcome": "pass",
+      "reason": "The instruction describes what to build and where, but does not give exact code lines, diffs, or literal implementation. A developer must still reason about how to wire up the component, hooks, and telemetry."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_header_upgrade_tracks_click_event checks for a specific pattern: a click handler function where 'handle' and 'click' appear in the same line (case-insensitive), with 'track(' and 'header_upgrade_cta_clicked' within the next 5 lines. An alternative correct implementation using an inline arrow function like `onClick={() => track('header_upgrade_cta_clicked')}` without a named handleClick function would fail this test. The test also checks exact variable naming patterns rather than behavior."
+      "reason": "test_header_upgrade_tracks_click_event checks for a click handler with 'handle' and 'click' in the name (case-insensitive) AND requires track() to appear within 5 lines of it with the exact event name. An alternative implementation using an inline arrow function like `onClick={() => track('header_upgrade_cta_clicked')}` without a named handler containing 'handle' and 'click' would fail this test despite being a correct solution. The test also uses regex on track() call syntax that assumes string"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is pure text/pattern matching: reading file contents and checking for string presence or regex matches. For example, test_header_upgrade_button_component checks if strings like 'headerUpgradeCta', 'free', 'UpgradePlanButton' exist in the file. test_telemetry_event_interface_defined uses regex on file content. No test imports, compiles, or executes the TypeScript code to verify actual behavior."
+      "reason": "All tests are text/pattern matching: reading file contents and checking for string presence, regex matches, or running Node scripts that do fs.readFileSync and string includes checks. No test actually imports, renders, or executes the React components. Every test is fundamentally `assert 'foo' in open(path).read()` or equivalent Node string inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests require creating a new file (HeaderUpgradeButton.tsx) that doesn't exist yet, modifying UpgradePlanButton.tsx to add onClick prop, adding a new interface to telemetry-constants.ts, and modifying LayoutHeader.tsx and MobileNavigationBar.tsx. A stub or no-op wouldn't satisfy the file existence checks and content requirements."
+      "reason": "The tests check for specific file existence, specific string patterns, interface definitions, and structural properties that would not be satisfied by stub/empty implementations. For example, HeaderUpgradeButton.tsx must exist and contain 'headerUpgradeCta', 'free', 'UpgradePlanButton', 'useTrack', and 'header_upgrade_cta_clicked' in specific patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/supabase in the container after solve.sh runs, and there's a solution/solve.sh file. An agent could potentially read /solution/solve.sh (the gold patch) or examine the git history after the patch is applied. The tests only check file contents, so copying the solution directly would work."
+      "reason": "The solution exists at /workspace/supabase after solve.sh runs (or the agent could read the Dockerfile/test file paths). The agent could also read test_outputs.py to discover exactly what strings and patterns are checked and craft minimal files containing those strings without understanding the actual task. No measures prevent reading /solution/ or test files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) HeaderUpgradeButton component - tested, (2) experiment gating with headerUpgradeCta - tested, (3) experiment exposure tracking - partially tested via presence of useTrackExperimentExposure, (4) click telemetry - tested, (5) UpgradePlanButton reuse with onClick - tested, (6) presence in LayoutHeader and MobileNavigationBar - tested, (7) telemetry interface definition - tested. All major behaviors are covered."
+      "reason": "The instruction's key requirements are tested: component existence with experiment gating and free-plan check, click tracking with useTrack, onClick prop on UpgradePlanButton, telemetry interface definition, rendering in both LayoutHeader and MobileNavigationBar, and naming conventions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_header_upgrade_button_component, test_header_upgrade_tracks_click_event, etc.), have docstrings explaining what they verify, and are logically grouped with section comments separating 'fail-to-pass (pr_diff)' from 'fail-to-pass (agent_config)' tests."
+      "reason": "Tests are well-named (test_header_upgrade_button_component, test_header_upgrade_tracks_click_event, etc.), grouped into 'fail-to-pass (pr_diff)' and 'fail-to-pass (agent_config)' sections with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction provides the exact TypeScript interface shape for HeaderUpgradeCtaClickedEvent as a code block, documenting the structured data schema for the telemetry event."
+      "reason": "The instruction provides the exact TypeScript interface shape for HeaderUpgradeCtaClickedEvent including the action field value and groups type."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, event names, and component names in the instruction are consistent and correctly spelled, matching what the tests expect."
+      "reason": "All file paths, variable names, event names, and hook names in the instruction match those checked in the tests without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names every file to modify, the exact prop to add ('onClick?: () => void'), where to forward it ('to the rendered Button'), and provides the exact interface definition. This goes beyond describing the problem and specifies the implementation details, though the 'Files to Look At' section is somewhat justified for a large repo."
+      "reason": "The instruction explicitly names the exact files to modify (LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), specifies adding an 'onClick?: () => void' prop to UpgradePlanButton and forwarding it to Button, and gives the exact interface shape. This goes beyond describing what's needed and into specifying implementation details like 'add an onClick?: () => void prop and forward it to the rendered Button'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
@@ -60,6 +59,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 4
 }

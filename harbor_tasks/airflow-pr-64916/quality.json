@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_console_print_called_on_failure asserts 'auto-fixes' must appear in a console_print call within the except block. The instruction says 'inform the user about retrying after auto-fixes' but doesn't mandate the exact lowercase string 'auto-fixes'. Also, test_original_commit_uses_message_flag asserts '\"--message\"' must appear, which the instruction does mention. However, test_repo_black_check, test_repo_breeze_unit_tests, and test_repo_breeze_git_worktree_tests reference specific test files (t"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: (1) test_both_commits_use_same_message checks for exactly 'CI: Upgrade important CI environment' as a substring in run_command calls, but the actual gold patch uses f'[{target_branch}] CI: Upgrade important CI environment' \u2014 the instruction only mentions 'CI: Upgrade important CI environment' without the target_branch prefix. (2) test_git_commit_uses_message_flag asserts '--message' flag and no '-m', which i"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent to use '--message' flag (not '-m'), use '--no-verify' flag, catch subprocess.CalledProcessError, use console_print, re-stage with 'git add', and retry with the same commit message. This is a near-complete specification of the exact code to write, not just a description of what's broken."
+      "reason": "The instruction explicitly describes the exact fix: catch the error, call console_print with 'auto-fixes', re-stage with git add, retry commit with --no-verify and --message flag. It even specifies the exact commit message string 'CI: Upgrade important CI environment'. This is essentially a step-by-step implementation guide, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on highly specific implementation details: exact string '\"--message\"' (test_original_commit_uses_message_flag), exact string '\"--no-verify\"' (test_retry_commit_with_no_verify), 'git\", \"add\"' pattern after except block (test_git_add_before_retry_commit), 'console_print' with 'auto-fixes' in the except block (test_console_print_called_on_failure). An alternative correct fix using '-m' instead of '--message', or using get_console().print() instead of console_print, or printing 'auto-fi"
+      "reason": "Tests are highly specific to the gold implementation: test_both_commits_use_same_message requires exactly 2 run_command calls with ast.List args containing 'git', 'commit' and the exact message string. test_git_commit_uses_message_flag requires '--message' not '-m'. An alternative correct fix using subprocess.run directly, or using a helper function, or using '-m' flag, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_commit_wrapped_in_try_except, test_retry_commit_with_no_verify, test_git_add_before_retry_commit, test_original_commit_uses_message_flag, test_console_print_called_on_failure, test_retry_commit_has_same_message, test_upgrade_function_contains_error_handling) are ALL string-matching on file content via read_text() with no execution or behavioral verification. Only pass_to_pass tests do execution (syntax check, black, pytest)."
+      "reason": "All behavioral tests (test_upgrade_function_has_try_except, test_except_handler_has_git_retry, test_console_print_in_error_handler, test_both_commits_use_same_message, test_git_commit_uses_message_flag, test_git_commands_structured_correctly) use AST parsing and string matching on the source code rather than executing the upgrade function or testing actual behavior. No test actually calls the upgrade function or simulates a pre-commit hook failure. They are structural/textual checks dressed up a"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not contain the required strings like 'except subprocess.CalledProcessError:', '\"--no-verify\"', '\"--message\"', or 'console_print' with 'auto-fixes'. The agent must actually add meaningful code to pass."
+      "reason": "The f2p tests (test_ci_commands_syntax, test_subprocess_import_in_ci_commands, test_repo_black_check) check properties that already hold in the base code, which is correct for pass-to-pass tests. The f2f tests require actual code changes (try/except block, --no-verify, console_print) that cannot be satisfied by a stub."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow (solution/solve.sh is accessible in the container), and since tests only check for string presence in the file, the agent could simply read the solution patch and apply it. The solve.sh file contains the exact diff to apply."
+      "reason": "The solution exists at /workspace/airflow and solve.sh is in /solution/. The agent could read the solution file or the gold patch directly. Additionally, since tests only do AST analysis of the source file, the agent could grep test files to discover exactly what patterns are expected."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (catch CalledProcessError, console_print about auto-fixes, git add, retry with --message and --no-verify, same commit message) are tested."
+      "reason": "All behaviors described in instruction.md (try/except for CalledProcessError, console_print with auto-fixes message, git add re-staging, git commit --no-verify retry, --message flag, same commit message) are tested, though via structural analysis rather than execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, clearly separated into individual aspects of the fix (try/except, no-verify, git add ordering, console_print, commit message)."
+      "reason": "Tests are well-named with descriptive docstrings and grouped into PASS_TO_PASS and BEHAVIORAL sections with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "This task modifies Python source code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (ci_commands.py), the exact function (upgrade), and provides extremely detailed implementation steps including specific flag names (--message not -m, --no-verify), the exact exception class (subprocess.CalledProcessError), and the exact function to call (console_print). This goes well beyond identifying the buggy area."
+      "reason": "The instruction names the exact file (ci_commands.py), the exact function (upgrade), the exact flag (--message not -m), the exact commit message, and the exact retry mechanism (--no-verify). This goes well beyond naming the buggy file \u2014 it describes the implementation in detail."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

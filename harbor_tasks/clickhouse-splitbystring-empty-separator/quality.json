@@ -3,56 +3,55 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact error message strings like 'the empty string cannot be used as a separator' and 'the separators argument cannot be empty', and also assert the old message 'separators cannot be empty' is NOT present. The instruction.md does not specify these exact strings; it only says to 'update the existing error message for consistency' and gives a general pattern format. The variable name 'value_as_string' is also asserted but not mentioned in instruction.md."
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name 'value_as_string' (test_validation_logic_structure), the method 'values.emplace_back' (test_validation_logic_structure), the lambda name 'split_by_string_creator' (multiple tests), 'castAs' function (test_required_components_exist), and the exact file path 'src/Interpreters/TokenizerFactory.cpp' (used as TARGET_FILE). The instruction never mentions the file path, variable names, or internal functio"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly describes the fix steps: 'Check each separator string in the array to ensure it's not empty', 'Throw an exception with ErrorCodes::BAD_ARGUMENTS', and 'Update the existing error message'. The hints section further specifies 'add a similar check inside the loop' and the exact error message format pattern. This describes WHAT to change, not just what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (empty string separators are silently accepted) and the expected error messages, but does not specify exact code changes, line numbers, or implementation details like variable names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable name 'value_as_string' (test_validation_logic_structure), exact error message strings (test_error_messages_exact), and that 'value_as_string.empty()' appears before 'values.emplace_back' (test_validation_logic_structure). An alternative correct fix using e.g. 'separator_str' as the variable name, or 'castAs<String>(value, ...).empty()' inline, would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific variable names like 'value_as_string' (test_validation_logic_structure, test_empty_string_validation_compiles), exact method call 'values.emplace_back' (test_validation_logic_structure), and require the empty check to use specifically 'value_as_string.empty()'. An alternative correct fix using a different variable name (e.g., 'sep_str') or different approach (e.g., filtering empties then checking) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All F2P tests (test_empty_string_validation_compiles, test_validation_logic_structure, test_error_messages_exact) are purely textual: they read the source file as a string and use 'in' checks or string position comparisons. test_cpp_code_compiles does run clang but only on a mocked snippet with fake types, not actually testing runtime behavior. No test executes the actual ClickHouse code or validates that empty separators actually cause errors."
+      "reason": "Almost every test is purely text/regex matching on source file content (e.g., 'assert \"value_as_string.empty()\" in creator', 'assert msg in creator'). test_cpp_code_compiles does run clang syntax check but only on an extracted snippet with mock types, not actual behavioral execution. No test actually runs the tokenizer or checks runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_cpp_code_compiles uses a mock snippet with fake type definitions that doesn't actually verify the real code compiles. The MockResult class returns returncode=0 when clang is unavailable, making the test pass trivially. The other F2P tests are string matching that could be satisfied by inserting the exact expected strings as comments without implementing any real logic."
+      "reason": "The F2P tests (test_empty_string_validation_compiles, test_validation_logic_structure, test_error_messages_exact) are all string-matching tests. An agent could satisfy them by inserting dead code comments or unreachable code containing the expected strings like 'value_as_string.empty()' and the error messages without actually implementing the validation logic correctly."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact gold patch. An agent could read it directly (cat /workspace/ClickHouse/solution/solve.sh or similar paths). Additionally, the test file itself contains the expected strings, so an agent could grep test_outputs.py for the exact error messages to insert."
+      "reason": "The solution is in /workspace/ClickHouse accessible via solve.sh. The agent could read solution/solve.sh which contains the exact gold patch. The tests only check for string patterns in the source file, so the agent could also grep test files for expected strings and insert them verbatim."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says the fix should cause queries like 'SELECT tokens(..., [' '])' to be 'rejected with an error', but no test actually runs these SQL queries or verifies runtime error behavior. Only static text matching is performed."
+      "reason": "The instruction says queries like 'SELECT tokens(...)' should be rejected with BAD_ARGUMENTS errors, but no test actually executes these SQL queries or verifies runtime behavior. The instruction also says the old message 'separators cannot be empty' must no longer appear 'anywhere in the tokenizer implementation' \u2014 test_error_messages_exact only checks within the extracted lambda, not the entire file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names, docstrings explaining what each test checks, and comments separating F2P from P2P tests."
+      "reason": "Tests are well-named, grouped into F2P and P2P categories with clear docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces C++ source code modifications, not structured data like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (TokenizerFactory.cpp), the exact lambda (split_by_string_creator), mentions the existing check 'values.empty()', and says to 'add a similar check inside the loop'. This is highly specific localization guidance that goes beyond naming the buggy module."
+      "outcome": "pass",
+      "reason": "The instruction does not mention the specific file path (src/Interpreters/TokenizerFactory.cpp), line numbers, variable names, or internal implementation details. It only describes the feature and expected error messages."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -60,9 +59,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 4,
+  "fail_count": 6
 }

@@ -2,62 +2,63 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Several test-specific details are not discoverable from instruction.md: (1) test_relative_imports_resolve checks for exact strings '../../package.json' and '../platform/_lib/help' in MCP.ts \u2014 the instruction mentions relative paths change but doesn't specify these exact import paths; (2) test_mcp_readme_created checks that README mentions both 'mcp'/'model context protocol' AND 'prisma' \u2014 the instruction says to document what Prisma MCP is but doesn't specify these exact content requirements; (3"
+      "outcome": "pass",
+      "reason": "The instruction names all key paths (packages/cli/src/MCP.ts, packages/cli/src/mcp/MCP.ts, packages/cli/src/bin.ts, packages/cli/package.json, packages/cli/src/mcp/README.md), the class name 'Mcp', 'McpServer', the import paths './mcp/MCP', '../../package.json', '../platform/_lib/help', the three PDP tool names, the four core tool names, the keyword 'MCP', and the README content requirements. The pass-to-pass tests (prettier, eslint, check-engines-override) are standard repo CI checks that a dev"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes WHAT should change (move file, update imports, remove tools, add keyword, create README) but doesn't give exact code changes like specific line numbers or replacement strings. The agent still needs to reason about the implementation."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: move MCP.ts to packages/cli/src/mcp/MCP.ts, change import in bin.ts to './mcp/MCP', change relative imports to '../../package.json' and '../platform/_lib/help', remove three specific PDP tools, add 'MCP' to keywords, create README.md. This is a step-by-step implementation guide, not a problem description. A developer doesn't need to reason about what to change \u2014 every change is spelled out."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_relative_imports_resolve asserts exact import path strings '../../package.json' and '../platform/_lib/help' must appear in MCP.ts. An alternative correct fix might use different import styles (e.g., path aliases, index files, or different relative notation). test_mcp_module_at_new_location checks for exact string 'export class Mcp' \u2014 an alternative might use 'export default class Mcp' or re-export. The README test is lenient enough to allow alternatives though."
+      "outcome": "pass",
+      "reason": "The tests check for structural properties (file exists at new path, old file removed, import path contains 'mcp/MCP', tool names not registered, relative imports present and resolve, keyword in array, README contains certain words). Alternative implementations that achieve the same goals (e.g., different README wording, different formatting, different ordering of tool removals) would all pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text/string matching: test_mcp_module_at_new_location checks if file contains 'export class Mcp' and 'McpServer'; test_pdp_tools_not_registered uses regex on file content; test_relative_imports_resolve checks string presence and file existence but never executes the code; test_bin_import_targets_mcp_dir regex-matches import statements. The pass-to-pass tests (prettier, eslint, check-engines-override) do execute tools, but the core fail-to-pass tests are all text "
+      "reason": "The fail-to-pass tests are almost entirely text-matching: readFileSync + includes/match checks for string patterns like 'export class Mcp', 'McpServer', regex for server.tool registrations, checking import paths via regex. The pass-to-pass tests do run prettier/eslint/check-engines-override as subprocesses, but the core f2p tests never import or execute the MCP module \u2014 they only inspect file contents as text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation cannot pass these tests \u2014 test_old_mcp_file_removed requires the original file to be deleted, test_mcp_module_at_new_location requires specific content at a new path, test_pdp_tools_not_registered requires removal of specific tool registrations from an existing file. These require actual file manipulation."
+      "reason": "A stub implementation (empty files, default returns) would not pass: test_mcp_module_at_new_location requires 'export class Mcp' and 'McpServer' in the file content, test_old_mcp_file_removed requires the original file to not exist, test_bin_import_targets_mcp_dir requires a specific import pattern, test_pdp_tools_not_registered checks that specific tool registrations are absent, test_relative_imports_resolve checks both string presence and file existence on disk. These require actual code chang"
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/prisma (or could be placed there) as solve.sh. The Dockerfile doesn't prevent reading /solution/ directory. An agent could potentially read the solution script and apply it directly. Also, the test fixture values (exact strings like 'export class Mcp', tool names) could be discovered by grepping the test files if accessible."
+      "reason": "The solution file exists at /workspace/prisma (the solve.sh is placed in solution/ which may be accessible in the container). An agent could read solution/solve.sh to see the exact patch. Additionally, test_outputs.py is in a tests/ directory that might be accessible. The agent could also grep for test fixture values (tool names, import paths) in the test file to reverse-engineer the exact expected output."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from instruction.md are tested: (1) move to mcp/ directory \u2014 test_mcp_module_at_new_location + test_old_mcp_file_removed, (2) update imports \u2014 test_bin_import_targets_mcp_dir + test_relative_imports_resolve, (3) remove PDP tools \u2014 test_pdp_tools_not_registered, (4) add MCP keyword \u2014 test_mcp_keyword_in_package_json, (5) create README \u2014 test_mcp_readme_created."
+      "reason": "All five explicitly required behaviors are tested: (1) file move \u2014 test_mcp_module_at_new_location + test_old_mcp_file_removed, (2) import path updates \u2014 test_bin_import_targets_mcp_dir + test_relative_imports_resolve, (3) PDP tool removal \u2014 test_pdp_tools_not_registered, (4) keyword addition \u2014 test_mcp_keyword_in_package_json, (5) README creation \u2014 test_mcp_readme_created. Core tools preservation is also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names, docstrings, and section comments separating 'Fail-to-pass' from 'Pass-to-pass' categories."
+      "reason": "Tests are well-organized with descriptive function names and docstrings, grouped into 'Fail-to-pass' and 'Pass-to-pass' sections with clear comment headers."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task involves editing package.json (adding 'MCP' to keywords array), and the instruction specifies this clearly. The schema requirement is simple and documented."
+      "reason": "The task involves editing package.json (structured data). The instruction specifies the exact key ('keywords' array) and exact value ('MCP') to add, which constitutes sufficient schema documentation."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "All filenames, paths, tool names, class names, and commands in the instruction are consistent with the test assertions and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the files that need modification (MCP.ts, bin.ts, package.json) which is appropriate for a refactoring task \u2014 the agent still needs to understand the codebase structure and implement changes correctly. It doesn't specify exact line numbers or exact code to write."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact relative import paths after the move ('../../package.json' and '../platform/_lib/help'), exact new import path in bin.ts ('./mcp/MCP'), and exact tool names to remove. This goes well beyond describing what's broken \u2014 it tells the agent exactly what the changed lines should contain, removing the need for the agent to figure out the correct relative path adjustments."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code reorganization task, not an agentmd-edits config task."
+      "outcome": "pass",
+      "reason": "The package.json edit is minimal (adding one keyword to an array). The gold patch's config changes are localized and don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
+    "no_solution_leakage",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
   "fail_count": 4
 }

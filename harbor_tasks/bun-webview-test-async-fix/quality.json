@@ -3,64 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: the exact variable name 'itRendering' (test_itrendering_helper_defined), the exact definition 'const itRendering = isMacOS ? test.todoIf(isCI) : test.skip' (regex pattern in test), the exact variable name 'itPersistentDataStore' (test_itpersistent_data_store_defined), and the exact pattern 'isMacOSVersionAtLeast(15.2)'. The instruction only vaguely hints at 'A helper similar to const it = isMacOS ? test : test.ski"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: the exact variable name 'itRendering' (test_itrendering_helper_defined), the exact definition 'const itRendering = isMacOS ? test.todoIf(isCI) : test.skip' (regex pattern in test), the exact variable name 'itPersistentDataStore' (test_itpersistent_data_store_defined), and specific test names like 'click(selector) waits for actionability, clicks center' that must use itRendering. The instruction only vaguely sugges"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (double await, rAF hangs, version guards missing, encoding issues) but does not prescribe exact code changes like 'remove await on line X' or 'rename variable to Y'. It provides guidance patterns but leaves implementation to the agent."
+      "reason": "The instruction describes what is broken (double await, rAF-dependent tests, version guards) and gives guidance about available harness utilities, but does not specify exact line changes or the precise fix. The suggestion about a helper is illustrative, not prescriptive of the exact solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names: test_itrendering_helper_defined checks for exact regex 'const\\s+itRendering\\s*=\\s*isMacOS\\s*\\?\\s*test\\.todoIf\\s*\\(\\s*isCI\\s*\\)\\s*:\\s*test\\.skip', test_itpersistent_data_store_defined checks for exact 'const\\s+itPersistentDataStore\\s*=\\s*isMacOS\\s*&&\\s*isMacOSVersionAtLeast\\s*\\(\\s*15\\.2\\s*\\)\\s*\\?\\s*test\\s*:\\s*test\\.skip'. An alternative correct fix using different helper names (e.g., 'skipOnCIRendering', 'testIfPersistent') or slightly different conditio"
+      "reason": "Tests assert gold-specific variable names: test_itrendering_helper_defined requires exactly 'const itRendering = isMacOS ? test.todoIf(isCI) : test.skip', test_itpersistent_data_store_defined requires exactly 'const itPersistentDataStore = isMacOS && isMacOSVersionAtLeast(15.2) ? test : test.skip'. An alternative correct fix using different helper names (e.g., 'rafTest', 'persistentTest') or a different but equivalent pattern would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test function uses regex pattern matching on file content (e.g., re.findall on _read_file output). None of the tests actually execute the test suite, import modules, or verify runtime behavior. They are purely text-matching assertions like 'assert len(matches) >= 1'."
+      "reason": "Every test in test_outputs.py reads file content and does regex matching (e.g., re.findall, re.search) on source text. No test actually executes the test suite, imports modules, or checks runtime behavior. For example, test_chrome_test_async_fix just checks 'await expect(await view.click' is absent via regex, and test_itrendering_helper_defined checks for a regex pattern in the file content."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply writes the exact expected text patterns into the files would pass all tests. For example, adding 'const itRendering = isMacOS ? test.todoIf(isCI) : test.skip;' as a dead variable and doing find-replace of test names would pass without actually fixing any behavioral bug, since no test execution occurs."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that differ from the base commit. For example, test_chrome_test_async_fix checks that the double-await bug pattern is removed, and test_itrendering_helper_defined checks for a new helper that doesn't exist in the original code. A stub/no-op would not pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, test_outputs.py is accessible and contains all the exact regex patterns being checked, allowing the agent to reverse-engineer the expected output."
+      "reason": "The solution file exists at /workspace/bun's solve.sh (copied into container). The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected patterns like 'itRendering', 'itPersistentDataStore', and the precise regex patterns being checked. No measures prevent reading these files."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Issue 4 (WebView.closeAll() test with proper encoding and stderr config) is mentioned in instruction.md but test_outputs.py (as shown) does not appear to have tests verifying encodeURIComponent usage or stderr:'inherit' change, though the file is truncated so this may be partially tested."
+      "reason": "Instruction Issue 4 mentions encoding HTML in data URLs and avoiding unnecessary stderr configuration, but the test file (truncated) does not appear to include tests for the closeAll data URL encoding fix or the stderr configuration change."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_chrome_test_async_fix, test_itrendering_helper_defined, etc.) and have docstrings explaining what each test verifies. The file header also provides a clear summary."
+      "reason": "Tests are well-named and grouped into sections with comments (Gates/pass_to_pass for syntax checks, Fail-to-pass for behavioral tests). Each test function has a descriptive docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying test files, not producing structured data output."
+      "reason": "This task involves fixing test files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct with no typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two files to investigate (webview-chrome.test.ts and webview.test.ts), which is appropriate given the task domain. It describes patterns and issues but doesn't point to exact line numbers or specify exact variable names for the fix."
+      "reason": "The instruction names the two files to investigate (which is appropriate for the task domain) but doesn't specify exact line numbers or the precise fix. The helper suggestion uses 'similar to' language rather than prescribing exact names."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying test files, not a configuration edit task."
+      "reason": "This is a code-only task editing test files, not configuration files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

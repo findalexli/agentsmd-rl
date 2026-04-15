@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path docs/contribute/doc-style-guide.md, mentions Docusaurus frontmatter conventions, specifies the sections (tone/voice, formatting, writing practices, code snippets, word list with specific terms like TechDocs/Scaffolder/Software Catalog), references microsite/sidebars.ts for sidebar updates, and mentions AGENTS.md and CONTRIBUTING.md. The test-specific requirements (frontmatter id 'doc-style-guide', title containing 'style' or 'guide', specific section headings,"
+      "reason": "The instruction names the file path docs/contribute/doc-style-guide.md, references microsite/sidebars.ts, AGENTS.md, CONTRIBUTING.md, and describes the required sections (tone, formatting, writing practices, code snippets, word list with specific terms like TechDocs, Scaffolder, Software Catalog). The frontmatter id 'doc-style-guide' and Docusaurus conventions are implied by the instruction's mention of Docusaurus and the file naming. The specific test assertions (e.g., id must be 'doc-style-gui"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to create (a style guide with specific sections) and WHERE to put it, but does not specify exact content, exact wording, or line-level changes. A developer must reason about the actual content, frontmatter structure, and sidebar integration details."
+      "reason": "The instruction describes WHAT to create (a style guide with specific sections) and WHERE to put it, but does not specify exact content, exact lines to change, or the specific wording to use. A developer must reason about how to write the guide content and how to wire it into the sidebar."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for behavioral properties: frontmatter id='doc-style-guide', title containing 'style' or 'guide', presence of a '## Tone' section with friendly/professional keywords, presence of formatting/writing practice concepts, a word list with Backstage terms, and sidebar inclusion. These are flexible enough that many different valid implementations would pass \u2014 the tests don't assert exact prose, line positions, or specific helper functions."
+      "reason": "Tests check for behavioral properties: frontmatter id equals 'doc-style-guide', title contains 'style' or 'guide', presence of a '## Tone' section with friendly/professional keywords, presence of formatting/code/bold guidance, active voice/present tense mentions, word list with at least 2 Backstage terms, and sidebar inclusion. These are flexible enough to accept many different valid implementations \u2014 the content just needs to cover the right topics with the right structure."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are essentially text-matching: test_style_guide_covers_tone splits content by '## ' and checks for keywords like 'friendly'/'approachable' in the section; test_style_guide_covers_formatting checks 'backtick' in content.lower(); test_style_guide_covers_writing_practices checks 'active voice' in content.lower(). While some tests use Node.js to parse frontmatter (test_style_guide_exists_with_frontmatter) and validate sidebar structure (test_sidebar_includes_style_guide), the"
+      "reason": "Most fail-to-pass tests are essentially string/pattern matching: test_style_guide_covers_tone splits by '## ' and checks for keywords like 'friendly', 'professional'; test_style_guide_covers_formatting checks 'backtick' in content.lower(); test_style_guide_covers_writing_practices checks 'active voice' in content.lower(). While test_style_guide_exists_with_frontmatter and test_sidebar_includes_style_guide use Node.js subprocess execution, the core content tests are purely `assert X in open(path)"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub file would fail: test_style_guide_exists_with_frontmatter requires >2000 chars and valid frontmatter with specific id/title; test_style_guide_covers_tone requires a '## Tone' section with specific keywords; test_style_guide_has_word_list requires at least 2 Backstage terms; test_sidebar_includes_style_guide requires actual sidebar modification. An empty or minimal stub cannot satisfy these."
+      "reason": "A stub/empty file would fail: the guide must be >2000 chars, must have valid frontmatter with specific id/title, must contain a ## Tone section with specific keywords, must mention active voice/present tense, must have a word list with at least 2 Backstage terms, and sidebar must be updated. An empty or minimal stub cannot satisfy these requirements."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/backstage (solution/solve.sh is mounted or accessible). The agent could potentially read the hidden test file at tests/test_outputs.py to discover exact assertion strings (e.g., 'doc-style-guide', keyword lists like 'friendly', 'approachable', 'welcoming') and craft content to match. There are no apparent measures preventing the agent from accessing /solution/ or test files in the container."
+      "reason": "The solution is available at /workspace/backstage in the container environment via the solve.sh script contents. The agent could potentially read the test file at tests/test_outputs.py to discover exact assertions (keyword lists like 'friendly', 'approachable', 'welcoming', specific frontmatter id 'doc-style-guide') and craft content to match without understanding the task. The solution/solve.sh is described as 'hidden' but may exist in the container filesystem."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: tone/voice section, formatting standards, writing practices, code snippet formatting, Backstage terminology word list, sidebar update, and reference updates. Tests cover all of these except code snippet formatting as a distinct check (though it's partially covered under formatting) and the AGENTS.md/CONTRIBUTING.md updates (test_repo_doc_references_valid partially checks CONTRIBUTING.md references). Most explicit requirements are tested."
+      "reason": "The instruction requires tone/voice, formatting standards, writing practices, code snippet formatting, Backstage terminology word list, sidebar update, and project config updates. Tests cover all major areas: tone (test_style_guide_covers_tone), formatting (test_style_guide_covers_formatting), writing practices (test_style_guide_covers_writing_practices), word list (test_style_guide_has_word_list), sidebar (test_sidebar_includes_style_guide), and the AGENTS.md/CONTRIBUTING.md references (test_re"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff)', 'Pass-to-pass (repo_tests)'), descriptive function names (test_style_guide_covers_tone, test_sidebar_includes_style_guide), and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive names (test_style_guide_covers_tone, test_sidebar_includes_style_guide, etc.), grouped into 'fail-to-pass' and 'pass-to-pass' categories with clear section comments, and each has a docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a Markdown documentation file and sidebar config edits, not structured data like JSON/CSV/API/DB."
+      "reason": "The task produces a Markdown documentation file and sidebar configuration edits, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "All filenames, paths, and references in the instruction are correct: docs/contribute/doc-style-guide.md, microsite/sidebars.ts, AGENTS.md, CONTRIBUTING.md, TechDocs, Scaffolder, Software Catalog."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the task at a high level without naming specific line numbers, exact frontmatter field values, or exact keyword lists that tests check for. It mentions general section topics but doesn't leak the exact test assertions."
+      "reason": "The instruction describes the task at a high level (create a style guide, update config files) without naming exact lines, specific code changes, or implementation details. The files mentioned (AGENTS.md, CONTRIBUTING.md, sidebars.ts) are natural references for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold solution makes localized edits: adds a section to AGENTS.md, inserts a line in CONTRIBUTING.md, creates a new file, and adds an entry to sidebars.ts. These are bounded, non-contradictory changes."
+      "reason": "The gold solution makes localized edits: adding a few lines to AGENTS.md, a small text change in CONTRIBUTING.md, adding a sidebar entry in sidebars.ts, and creating a new file. These are bounded, non-contradictory changes."
     }
   },
   "tier_a_fails": [

@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all key details tested: the file paths (enterprise/storage/user.py, enterprise/migrations/versions/104_add_disabled_skills_to_user.py), the exact column definition pattern (disabled_skills = Column(JSON, nullable=True)), revision ID 104, down_revision '103', the upgrade/downgrade operations with exact function signatures, and the JSON import requirement. All asserted specifics in tests are discoverable from instruction.md."
+      "reason": "The instruction specifies all key details tested: the file paths (enterprise/storage/user.py, enterprise/migrations/versions/104_add_disabled_skills_to_user.py), the exact column definition pattern (disabled_skills = Column(JSON, nullable=True)), revision ID 104, down_revision '103', the upgrade/downgrade operations with exact function signatures, JSON type from sqlalchemy, and the migration filename pattern. The ruff config path and pyproject.toml validation are pass-to-pass tests on existing r"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'disabled_skills = Column(JSON, nullable=True)', specifies the exact migration filename '104_add_disabled_skills_to_user.py', the exact revision IDs, and the exact upgrade/downgrade operations. This is essentially a copy-paste specification rather than a bug description requiring reasoning."
+      "reason": "The instruction explicitly states the exact fix: 'disabled_skills = Column(JSON, nullable=True)', the exact migration filename '104_add_disabled_skills_to_user.py', exact revision ID '104', exact down_revision '103', and exact upgrade/downgrade operations. This leaves essentially no reasoning for the agent\u2014it's a copy-paste task, not a debugging task."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'disabled_skills = Column(JSON, nullable=True)' in content, 'JSON,' in imports, exact op.add_column call format, and exact migration filename. An alternative correct fix using e.g. Column(type_=JSON) or mapped_column or different import style would fail despite being functionally correct."
+      "reason": "Tests assert exact string matches like 'op.add_column(\"user\", sa.Column(\"disabled_skills\", sa.JSON(), nullable=True))' and 'disabled_skills = Column(JSON, nullable=True)' and 'JSON,' in imports. Alternative correct implementations (e.g., using sa.JSON instead of JSON in the model, different import styles, or using server_default) would fail these exact string checks despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_user_model_has_disabled_skills_column, test_migration_file_exists_and_valid, test_disabled_skills_column_attributes) exclusively use string matching on file contents (assert pattern in content). test_user_model_column_can_store_and_return_data only does AST parsing, not actual execution. No test actually instantiates a User object, runs migration, or tests database behavior."
+      "reason": "The core fail-to-pass tests (test_user_model_has_disabled_skills_column, test_migration_file_exists_and_valid, test_disabled_skills_column_attributes) are purely text-matching: they read file contents and assert exact strings like 'disabled_skills = Column(JSON, nullable=True)' in content. test_user_model_column_can_store_and_return_data uses AST parsing but never actually instantiates or tests the model. No test actually creates a database, runs the migration, or tests persistence behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests check for the presence of specific strings/AST patterns in files. An agent could pass all tests by simply adding the exact string 'disabled_skills = Column(JSON, nullable=True)' to user.py and creating a migration file with the expected strings, without any understanding of SQLAlchemy, database persistence, or the actual bug."
+      "outcome": "pass",
+      "reason": "A stub implementation (empty file or default User class) would not contain the required string patterns like 'disabled_skills = Column(JSON, nullable=True)' or the migration file with correct Alembic structure. The agent must actually create/modify files with specific content."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file and apply the exact patch. Additionally, the test file at tests/test_outputs.py contains all expected string patterns that could be reverse-engineered."
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file directly to obtain the exact solution. Additionally, the test file at tests/test_outputs.py contains the exact expected strings, which the agent could grep to construct the solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (User model column, migration file with correct revision IDs and operations) are covered by tests. The ruff linting and format checks also ensure code quality requirements are met."
+      "reason": "All behaviors described in instruction.md are tested: the User model having disabled_skills column with JSON type and nullable=True, the migration file with revision 104 and down_revision 103, and the correct upgrade/downgrade operations."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_user_model_has_disabled_skills_column, test_migration_file_exists_and_valid, etc.), each has a docstring explaining what it checks and whether it's fail-to-pass or pass-to-pass, and they're logically grouped by concern."
+      "reason": "Tests are well-named (test_user_model_has_disabled_skills_column, test_migration_file_exists_and_valid, etc.), have docstrings explaining their purpose, and are labeled as fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema: disabled_skills column of JSON type, nullable=True, on the user table. The migration operations are also precisely specified."
+      "reason": "The instruction documents the exact schema for the database column (JSON type, nullable=True) and the migration structure (revision ID, down_revision, upgrade/downgrade operations)."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,24 +43,23 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact column definition 'disabled_skills = Column(JSON, nullable=True)', the exact migration filename, exact revision IDs, and exact upgrade/downgrade operations. This goes far beyond describing what's broken - it provides the complete implementation specification."
+      "reason": "The instruction provides the exact column definition 'disabled_skills = Column(JSON, nullable=True)', exact migration filename '104_add_disabled_skills_to_user.py', exact revision IDs, and exact upgrade/downgrade SQL operations. This goes far beyond describing the bug\u2014it provides the complete implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving adding a column to a Python model and creating a migration file, not a config edit task."
+      "reason": "This is a code-only task involving Python model and migration files, not configuration edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 5
 }

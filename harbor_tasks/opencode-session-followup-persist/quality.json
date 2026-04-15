@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file path 'packages/app/src/pages/session.tsx', require imports from modules containing 'persist', check for '.workspace()' API, require 'createStore' not 'createSignal', check for 'export default function Page', and require specific field names (items, failed, paused, edit). While instruction.md mentions the store fields and createStore requirement, it never names the file 'session.tsx' or its path, never mentions 'Page' as the default export, and never mentions the '.w"
+      "reason": "Tests assert on specific file path 'packages/app/src/pages/session.tsx', specific function names like 'persisted', 'createStore', 'Persist.workspace', specific store fields 'items/failed/paused/edit', and SolidJS primitives. The instruction.md never mentions the file path 'packages/app/src/pages/session.tsx', never mentions the 'persisted' function name, never mentions 'Persist.workspace()' API specifically (only '.workspace() API or equivalent'), and never names the specific file to edit. An ag"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (followup queue lost on project switch) and technical requirements (use persist, workspace scoping, createStore, etc.) but does not specify exact code changes, line numbers, or the specific implementation pattern. A developer must still reason about what file to change and how to wire up persistence."
+      "outcome": "fail",
+      "reason": "Instruction.md requirement #3 specifies 'any import from a module whose name contains persist that is applied to the store', requirement #4 specifies 'using .workspace() API or equivalent workspace/directory-based scoping'. These are very specific implementation directives that describe HOW to fix the bug (wrap store with persistence from a persist module, use .workspace() API), not just WHAT is broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are quite prescriptive about implementation details. test_followup_store_wrapped_with_persistence requires imports from a module whose name contains 'persist' and looks for specific patterns like persist function calls near createStore+followup. test_persistence_workspace_scoped specifically looks for '.workspace(' API. An alternative correct fix using a different persistence mechanism (e.g., localStorage directly, or a custom persistence wrapper not imported from a 'persist'-named module)"
+      "reason": "test_followup_store_wrapped_with_persistence requires imports from a module containing 'persist' and a persist function call near 'createStore' and 'followup'. test_persistence_workspace_scoped requires '.workspace(' pattern or specific keywords. An alternative correct fix using e.g. localStorage directly, or a custom serialization approach not involving a module named with 'persist', or using a different persistence API that doesn't use '.workspace()', would fail these tests despite correctly f"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests use static file/AST analysis \u2014 regex matching on source code text, checking for string patterns like 'createStore', '.workspace(', import names, etc. The only 'execution' is parsing the file with Babel to verify syntax. No test actually runs the component, simulates project switching, or verifies that followups persist. Every f2p test is essentially 'assert pattern in open(path).read()'."
+      "reason": "Every test reads the file as text and uses regex/string matching (e.g., 'assert \"as any\" not in block', regex for '.workspace(', checking for 'createStore' in text context). No test actually imports, executes, or calls the code. The test_file_parses_as_tsx only validates syntax parsing, not behavior. This is purely text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_followup_store_wrapped_with_persistence, test_persistence_workspace_scoped) check for persistence wrapping and workspace scoping that don't exist in the base commit. A stub or no-op implementation wouldn't add persist imports or .workspace() calls, so these tests would fail on unmodified code."
+      "reason": "The fail-to-pass tests (test_followup_store_wrapped_with_persistence, test_persistence_workspace_scoped) check for persistence wrapping and workspace scoping that don't exist in the base commit. A stub or no-op wouldn't add persist imports or .workspace() calls, so these tests would fail on the unmodified file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/opencode's git history or potentially accessible via solution/solve.sh. The agent could read the solve.sh script directly or inspect the gold patch to know exactly what changes to make. The Dockerfile doesn't remove or protect the solution directory."
+      "reason": "The solution file exists at /solution/solve.sh in the container and contains the exact gold patch. An agent could simply read this file (cat /solution/solve.sh) and apply the patch directly. No measures prevent this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: store fields (test_followup_store_core_fields), createStore usage (test_followup_uses_create_store_not_signal), persistence layer (test_followup_store_wrapped_with_persistence), workspace scoping (test_persistence_workspace_scoped), no 'any' type (test_no_any_type_in_followup_block), and no try/catch/else/for (test truncated but referenced in the test file)."
+      "reason": "All requirements from instruction.md are tested: store fields (test_followup_store_core_fields), createStore usage (test_followup_uses_create_store_not_signal), persistence layer (test_followup_store_wrapped_with_persistence), workspace scoping (test_persistence_workspace_scoped), no 'any' type (test_no_any_type_in_followup_block), and no try/catch/else/for (test_no_trycatch_else_for_in_followup_block)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test checks. Comments indicate test categories like [static], [pr_diff], [agent_config]."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings, and comments indicating test categories like [static], [pr_diff], [agent_config]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data output."
+      "reason": "The task involves modifying a UI component file, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the bug and requirements at a conceptual level without naming the specific file (session.tsx), line numbers, or exact API calls like 'Persist.workspace()'. The agent must locate the relevant code themselves."
+      "reason": "instruction.md does not name the specific file (session.tsx) or exact line numbers. It describes requirements at a conceptual level (followup store, persistence, workspace scoping) without pinpointing the exact location in the codebase."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,12 +52,13 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact import strings like 'from integrations.resolver_org_router import resolve_org_for_repo', 'from storage.saas_conversation_store import SaasConversationStore', 'from openhands.integrations.provider import ProviderHandler', 'from openhands.utils.conversation_summary import get_default_conversation_title', and exact string literals like 'Failed to resolve org'. While instruction.md mentions the function/class names, it does not specify the exact import paths (e.g., 'integrations.r"
+      "reason": "Tests assert on exact strings like 'Failed to resolve org', specific method names like 'provider_handler.verify_repo_provider', 'SaasConversationStore.get_resolver_instance', 'uuid4().hex', 'ConversationTrigger.LINEAR', 'store.save_metadata', and 'await start_conversation('. While some are mentioned in instruction.md, many specific implementation details like 'provider_handler.verify_repo_provider', 'uuid4().hex', 'store.save_metadata', 'ConversationMetadata(' instantiation with 'trigger=Convers"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md essentially provides a step-by-step implementation guide: 'Use ProviderHandler.verify_repo_provider()', 'Call resolve_org_for_repo()', 'Use SaasConversationStore.get_resolver_instance()', 'Generate conversation ID with uuid4().hex', 'Create ConversationMetadata with trigger=LINEAR', 'Call start_conversation()'. It specifies exactly what to replace (create_new_conversation with start_conversation), the exact new imports needed, and the exact pattern to follow. This is a complete so"
+      "reason": "instruction.md explicitly lists the exact import paths to use (e.g., 'from integrations.resolver_org_router import resolve_org_for_repo', 'from storage.saas_conversation_store import SaasConversationStore'), names the exact function replacements (start_conversation instead of create_new_conversation), and specifies exact error messages ('Failed to resolve org'). This tells the agent WHAT to change rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests check for exact source text patterns like 'await resolve_org_for_repo(' (test_resolve_org_for_repo_called), 'SaasConversationStore.get_resolver_instance' (test_get_resolver_instance_called), 'uuid4().hex' (test_conversation_id_generation), 'trigger=ConversationTrigger.LINEAR' (test_conversation_metadata_created), 'provider_handler.verify_repo_provider' (test_provider_handler_verify_repo_provider_called), exact import paths, and specific variable names like 'resolved_org_id'. An alternative"
+      "reason": "Tests assert on gold-specific implementation details: exact string 'uuid4().hex' (test_conversation_id_generation), exact string 'trigger=ConversationTrigger.LINEAR' (test_conversation_metadata_created), exact call pattern 'await start_conversation(' (test_start_conversation_called), 'store.save_metadata(' (test_save_metadata_called), 'SaasConversationStore.get_resolver_instance' (test_get_resolver_instance_called). An alternative correct fix using different variable names or call patterns would"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the source file as text and checks for string patterns: 'assert \"...\" in source'. No test imports the module, instantiates the class, calls any method, or verifies runtime behavior. Examples: test_resolve_org_for_repo_imported does 'assert \"from integrations.resolver_org_router import resolve_org_for_repo\" in source', test_start_conversation_called does 'assert \"await start_conversation(\" in source'."
+      "reason": "Every single test reads the source file as text and checks for string presence (e.g., 'assert \"from integrations.resolver_org_router import resolve_org_for_repo\" in source'). No test imports the module, instantiates classes, calls functions, or verifies runtime behavior. This is purely textual pattern matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all tests are pure text-matching on source code, a stub implementation that simply contains the right import statements and comment strings with the expected patterns (e.g., a file with all the right imports and a method body containing 'await resolve_org_for_repo(', 'SaasConversationStore.get_resolver_instance', etc. as dead code or comments) would pass all tests without implementing any actual functionality."
+      "reason": "An agent could satisfy all tests by simply adding the required import statements and code strings to the file without any of them being functionally correct. For example, adding dead code containing 'await resolve_org_for_repo(', 'uuid4().hex', 'SaasConversationStore.get_resolver_instance', etc. as comments or unreachable code would pass all text-matching assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/OpenHands after the gold patch is applied via solve.sh. The agent could read the solution file or the patch directly. Additionally, since tests only check for string patterns in source code, the agent could grep the test file for expected strings and inject them without understanding the problem."
+      "reason": "The solution patch exists at /workspace/OpenHands (solve.sh patches files there), and tests only do text matching on the target file. An agent could read test_outputs.py to discover exactly which strings need to appear in the file, or read /solution/solve.sh to get the exact patch. The Dockerfile doesn't prevent access to these paths."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all behaviors described in instruction.md: imports, provider resolution, org routing, resolver instance creation, conversation ID generation, metadata creation, error handling with logging, and the switch from create_new_conversation to start_conversation."
+      "reason": "The instruction mentions org routing, fallback to personal workspace, error logging, and specific imports \u2014 all of which have corresponding test assertions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into descriptive classes (TestLinearViewImports, TestLinearViewRoutingLogic, TestLinearViewErrorHandling, TestLinearViewStructure) with clear method names and docstrings explaining each assertion's purpose."
+      "reason": "Tests are well-organized into classes (TestLinearViewImports, TestLinearViewRoutingLogic, TestLinearViewErrorHandling, TestLinearViewStructure) with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Python source code, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in instruction.md."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact method to modify (create_or_update_conversation), the exact file path, the exact functions to call (verify_repo_provider, resolve_org_for_repo, get_resolver_instance, start_conversation), exact imports needed, and the exact pattern to follow. This goes far beyond identifying the buggy component \u2014 it's a complete implementation specification."
+      "reason": "instruction.md explicitly names the exact import paths, module names, and function signatures needed (e.g., 'from integrations.resolver_org_router import resolve_org_for_repo', 'from storage.saas_conversation_store import SaasConversationStore'), which reveals the exact implementation rather than letting the agent discover what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

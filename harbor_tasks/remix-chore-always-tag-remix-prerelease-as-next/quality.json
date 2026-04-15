@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (prerelease.json, changes.ts, publish.ts, AGENTS.md, CONTRIBUTING.md), field names (channel, tag), variable names (remixPrereleaseChannel), literal strings ('channel' in obj, obj.channel, --tag next, \"channel\": \"alpha\", semver.inc, pnpm publish), interface names (RemixPrereleaseConfig), and function names (readRemixPrereleaseConfig, getNextVersion) that the tests assert on. All test-specific details are discoverable from instruction.md."
+      "reason": "The instruction names all file paths (prerelease.json, changes.ts, publish.ts, AGENTS.md, CONTRIBUTING.md), field names (channel, tag), variable names (remixPrereleaseChannel), literal strings ('--tag next', 'channel: string', obj.channel, etc.), and interface names (RemixPrereleaseConfig) that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details like 'must check for \\'channel\\' in obj', 'must validate with .trim()', 'must return an object containing config: { channel: ... }', 'must use variable remixPrereleaseChannel', 'publish command must use --tag next'. These are precise code-level fixes, not just descriptions of what's broken. A developer doesn't need to reason about what to change - it's spelled out line by line."
+      "reason": "The instruction explicitly states exact implementation details like 'must check for \\'channel\\' in obj', 'must validate with .trim()', 'must return config: { channel: ... }', 'variable remixPrereleaseChannel', and '--tag next'. This tells the agent exactly WHAT to change line-by-line rather than describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_changes_ts_reads_channel_field checks for exact strings like \"config: { channel:\" and \"obj.channel.trim()\"; test_publish_uses_next_dist_tag checks for exact variable name 'remixPrereleaseChannel'; test_not_stub checks for exact string 'obj.channel.trim()'. An alternative correct implementation using e.g. 'config: {channel:' (no space) or 'config: { channel :' or a different variable name like 'prereleaseChannel' would fail despite being "
+      "reason": "Tests assert on gold-specific implementation details: exact string 'config: { channel:' in source (test_changes_ts_reads_channel_field), exact variable name 'remixPrereleaseChannel' (test_publish_uses_next_dist_tag), exact string 'obj.channel.trim()' (test_not_stub). An alternative correct implementation using e.g. 'prereleaseChannel' variable name, or 'config: {channel:' (different spacing), or 'obj.channel?.trim()' would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text matching: test_changes_ts_reads_channel_field does `assert 'channel: string' in source`, test_publish_uses_next_dist_tag does `assert '--tag next' in source`, test_not_stub does `assert 'obj.channel.trim()' in changes_src`. While some pass-to-pass tests run subprocesses (test_changes_validate, test_repo_lint, test_repo_typecheck), the core f2p tests are entirely string-in-file checks with no execution."
+      "reason": "The fail-to-pass tests (test_changes_ts_reads_channel_field, test_publish_uses_next_dist_tag, test_not_stub) are purely text-matching with 'assert X in source' patterns. They read source files as strings and check for literal substrings rather than importing/calling the code or executing it. Only the pass-to-pass gates (lint, typecheck, changes:validate) actually execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty files or pass/return) would fail these tests because they check for specific content in files (e.g., 'channel: string' in changes.ts, '--tag next' in publish.ts, '\"channel\": \"alpha\"' in CONTRIBUTING.md) and the pass-to-pass tests run real tooling (typecheck, lint, format) that would fail on stubs."
+      "reason": "The f2p tests check for specific strings like 'channel: string', 'remixPrereleaseChannel', '--tag next' that don't exist in the original codebase (which uses 'tag'). A stub or no-op wouldn't contain these strings, so the tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is at /workspace/remix and the solve.sh is in solution/solve.sh. The Dockerfile doesn't remove solution/ from the container. An agent could potentially read test files or grep for expected strings. Additionally, since tests are pure text matching, an agent could just insert the exact expected strings without understanding the codebase."
+      "reason": "The solution exists at /workspace/remix accessible to the agent via solve.sh. The agent could also grep the test file patterns (e.g. 'config: { channel:') and insert them verbatim into source files to pass the text-matching tests without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: prerelease.json field rename (test_prerelease_json_uses_channel), changes.ts interface/function updates (test_changes_ts_reads_channel_field), publish.ts --tag next and variable rename (test_publish_uses_next_dist_tag), AGENTS.md docs (test_agents_md_documents_channel_and_next), CONTRIBUTING.md docs (test_contributing_md_uses_channel), and anti-stub checks (test_not_stub)."
+      "reason": "All behaviors specified in instruction.md are tested: prerelease.json channel field, changes.ts interface/function updates, publish.ts variable rename and --tag next, AGENTS.md documentation, CONTRIBUTING.md documentation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass, Fail-to-pass/code changes, Fail-to-pass/documentation, Pass-to-pass/anti-stub), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into labeled sections (Gates/pass_to_pass, Fail-to-pass code changes, Fail-to-pass config/docs, Anti-stub) with descriptive function names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact JSON schema for prerelease.json: { \"channel\": \"alpha\", ... }, and this is tested in test_prerelease_json_uses_channel."
+      "reason": "The prerelease.json schema is documented in the instruction: it must have a 'channel' field with value 'alpha', and the test verifies this exact schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "All file paths, variable names, commands, and field names in the instruction are correct and consistent with the test assertions."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like 'must check for \\'channel\\' in obj and read obj.channel', 'must validate the channel value with .trim()', 'must return an object containing config: { channel: ... }'. These are line-level implementation hints that go far beyond describing the task domain."
+      "reason": "The instruction specifies exact implementation patterns like 'must check for \\'channel\\' in obj', 'must validate with .trim()', 'must return config: { channel: ... }', and exact variable name 'remixPrereleaseChannel'. These are line-level implementation hints that go far beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diff for prerelease.json is a minimal single-field rename from 'tag' to 'channel', and other file changes are similarly localized. No full-file rewrites or contradictions."
+      "reason": "The gold config diff (prerelease.json) is a single-field rename from 'tag' to 'channel', which is a localized edit consistent with the instruction."
     }
   },
   "tier_a_fails": [

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Several test-specific details are not discoverable from instruction.md: (1) test_handler_not_stub checks for specific keywords like 'CachedRouteKind', 'generateEtags', 'poweredByHeader' which aren't mentioned in instruction.md; (2) test_handler_not_stub asserts line count thresholds (>200 lines, >100 code lines) not mentioned anywhere; (3) test_repo_lint_ast_grep, test_repo_lint_handler, test_repo_typescript, test_repo_unit_tests run specific repo CI commands not mentioned in instruction.md; (4)"
+      "reason": "Tests assert specific patterns like 'Buffer.from(JSON.stringify(result.value.pageData))' and 'Buffer.from(previousCacheEntry.value.html)' which are not mentioned in instruction.md. The instruction says to inspect code paths but never names these exact string patterns. Also, test_agents_md_smoke_test_gotchas_syntax checks for 'Quick smoke testing' text and 'new-test --args true' which aren't quoted in the instruction. The test_handler_not_stub checks for specific keywords like 'CachedRouteKind' a"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly says 'verify that the response body is in the correct form that enables header generation' and points to specific line numbers (~740, ~526). Combined with the test name 'test_string_render_result_enables_headers' mentioned in instruction.md and the explanation about Buffer.from causing isDynamic=true, the instruction effectively tells the agent to remove Buffer.from wrapping. For AGENTS.md, the instruction literally states the exact fix: 'The correct syntax must includ"
+      "reason": "The instruction explicitly states the fix: 'verify that the response body is in the correct form that enables header generation' and directly tells the agent that Buffer.from wrapping is the problem (by saying 'passed to RenderResult in a way that allows Content-Length and ETag headers to be generated'). For AGENTS.md, it literally states the exact corrected syntax: 'The correct syntax must include a double-dash (--) separator: pnpm new-test -- --args' and says 'These must be corrected to pnpm n"
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for absence of specific buggy patterns (Buffer.from wrapping) and presence of specific strings in AGENTS.md, which any correct fix would satisfy. The fix is essentially unique: remove Buffer.from() in two places and add '--' in two AGENTS.md locations. Alternative correct fixes would all result in the same textual changes."
+      "reason": "The tests check for absence of specific buggy patterns (Buffer.from wrapping) rather than asserting a specific fix implementation. An agent could theoretically use toString(), or pass the string directly, or use any other non-Buffer approach. The AGENTS.md tests check for presence of correct syntax which is the only valid fix."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax) are purely text-matching: they read file contents and check for string presence/absence. test_string_render_result_enables_headers does execute a subprocess but it runs a self-contained Node script that doesn't import the actual codebase - it recreates a simplified model. The repo lint/typecheck/unit tests do execute real checks,"
+      "reason": "Most fail-to-pass tests (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax) are purely text-matching with 'assert X not in code' or 'assert X in content'. test_string_render_result_enables_headers does execute a subprocess but it runs a self-contained Node script that doesn't import or test actual project code\u2014it recreates a simplified mock. The repo lint/typecheck/unit tests do execute real code bu"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for absence of specific buggy patterns ('Buffer.from(JSON.stringify(result.value.pageData))') that exist in the original code. A stub or no-op would fail these tests since the original file contains those patterns, and the handler anti-stub test requires >200 lines with specific keywords present."
+      "reason": "The f2p tests check for absence of specific buggy patterns (Buffer.from(...)) and presence of specific corrected strings in AGENTS.md. A stub implementation (empty file or default returns) would fail test_handler_not_stub which requires >200 lines and specific keywords. The AGENTS.md tests require specific string patterns that wouldn't exist by default."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/next.js as a git repo where the agent could potentially access solve.sh or solution/ directory if mounted. More critically, the test file test_outputs.py contains the exact expected patterns, and the instruction.md itself contains the exact fix strings (e.g., 'pnpm new-test -- --args'). An agent could grep for test expectations without understanding the bug."
+      "reason": "The solution is in /workspace/next.js's git history or the solve.sh file contains the exact patch. The agent could read solution/solve.sh which contains the complete diff. Also, the test fixtures (exact strings like 'Buffer.from(JSON.stringify(result.value.pageData))') are greppable from test_outputs.py, and the instruction itself literally states the exact fix for AGENTS.md."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires fixing Buffer.from wrapping in two code paths and fixing AGENTS.md in two places. All four changes are tested by corresponding test functions (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax)."
+      "reason": "The instruction describes fixing Buffer.from wrapping in two code paths and fixing AGENTS.md syntax in two places\u2014all four are tested. The behavioral verification test (test_string_render_result_enables_headers) is also mentioned in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (fail-to-pass pr_diff, fail-to-pass config fix, pass-to-pass behavioral, pass-to-pass repo tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, fail-to-pass AGENTS.md, pass-to-pass behavioral, pass-to-pass repo tests) and descriptive docstrings for each test function."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code and config file edits, not structured data output."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the test file references."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact line numbers ('around line 740', 'around line 526'), names the exact code paths to modify, specifies the exact correct syntax for AGENTS.md ('pnpm new-test -- --args'), and even names the specific test to run. This goes well beyond describing what's broken and effectively prescribes the solution."
+      "reason": "The instruction gives exact line numbers ('around line 740', 'around line 526'), exact variable names ('previousCacheEntry.value.html'), exact code paths ('isNextDataRequest code path'), and the exact fix for AGENTS.md ('must include a double-dash (--) separator: pnpm new-test -- --args'). This eliminates the need for any bug localization reasoning."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md gold diff is localized to two specific lines/sections, not a full-file rewrite, and doesn't contradict other files."
+      "reason": "The gold AGENTS.md diff is localized to specific lines (syntax corrections in two sections) and doesn't contradict other files. The code diff is similarly scoped to removing Buffer.from wrapping in two locations."
     }
   },
   "tier_a_fails": [

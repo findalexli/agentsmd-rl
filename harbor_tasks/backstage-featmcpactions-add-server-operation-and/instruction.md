@@ -25,20 +25,35 @@ The operation duration histogram requires these attributes on each recorded valu
 The session duration histogram requires these attributes:
 - `mcp.protocol.version` — the MCP protocol version in use
 - `network.transport` — the transport layer (e.g., HTTP)
+- `error.type` — the error type when an error occurs
 
 ### Bucket Boundaries
 
-The histograms must use OTel-standard bucket boundaries for duration histograms: `[0.01, 0.05, 0.1, 1, 10, 60, 300]` (seconds), sorted ascending, minimum `0.01`, maximum `300`.
+The histograms must use OTel-standard bucket boundaries for duration histograms. The shared `metrics.ts` module must export a `bucketBoundaries` constant containing an array that includes at minimum these values (sorted ascending): `0.01`, `0.05`, `0.1`, `1`, `10`, `60`, `300`. The minimum boundary must be `0.01` seconds and the maximum must be `300` seconds.
+
+### Interface Definitions
+
+The `metrics.ts` module must define two TypeScript interfaces:
+
+- `McpServerOperationAttributes` — extending `MetricAttributes` from `@backstage/backend-plugin-api/alpha`, with required field `mcp.method.name: string`, optional fields `error.type?: string` and `gen_ai.tool.name?: string`, and recommended field `gen_ai.operation.name?: 'execute_tool'`
+
+- `McpServerSessionAttributes` — extending `MetricAttributes` from `@backstage/backend-plugin-api/alpha`, with optional fields `mcp.protocol.version?: string`, `network.transport?: string`, and `error.type?: string`
 
 ### Instrumented Handlers
 
-In `McpService`, both `tools/list` and `tools/call` handlers must record operation duration. The timing mechanism must capture high-resolution wall-clock time. The duration must be computed as the difference between the end time and start time, and recorded in a `finally` block to ensure it fires even on error.
+In `McpService`, both `tools/list` and `tools/call` handlers must record operation duration using the `MetricsServiceHistogram.record()` method. The timing must use `performance.now()` from `node:perf_hooks` to capture high-resolution wall-clock time, stored in a variable that captures the start time before the operation begins. The duration must be computed as the difference between the current time and the start time, divided by 1000 to convert to seconds, and recorded in a `finally` block to ensure it fires even on error.
 
-In the streamable router, session duration is measured from request start to connection close, using the same high-resolution timing approach and bucket boundaries.
+For the `tools/call` handler, the `error.type` attribute must be determined as follows:
+- When an exception is thrown, use the error's `name` property
+- When a `CallToolResult` has `isError=true`, use the string `'tool_error'`
+
+The operation duration histogram is created via `metrics.createHistogram<McpServerOperationAttributes>()`, passing `'mcp.server.operation.duration'` as the metric name and an object with `advice: { explicitBucketBoundaries: bucketBoundaries }`.
+
+In the streamable router, session duration is measured using `performance.now()` in the same manner as the operation handlers. The session duration histogram is created via `metrics.createHistogram<McpServerSessionAttributes>()`, passing `'mcp.server.session.duration'` as the metric name. Session attributes must include `'mcp.protocol.version'` (from `LATEST_PROTOCOL_VERSION` in `@modelcontextprotocol/sdk/types.js`) and `'network.transport'` set to `'tcp'`.
 
 ### Metrics Service Integration
 
-The Backstage `MetricsService` is accessed via `metricsServiceRef`. Both `McpService.create()` and `createStreamableRouter()` must accept a `metrics` parameter and use it to create histograms. The `plugin.ts` file must inject `metricsServiceRef` and pass the metrics service to both.
+The Backstage `MetricsService` is accessed via `metricsServiceRef` imported from `@backstage/backend-plugin-api/alpha`. Both `McpService.create()` and `createStreamableRouter()` must accept a `metrics: MetricsService` parameter and use it to create histograms via `metrics.createHistogram()`. The `plugin.ts` file must import `metricsServiceRef`, declare a `metrics` dependency in the plugin options, and pass the metrics service to both `McpService.create()` and `createStreamableRouter()`.
 
 ## Files to Look At
 

@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions all key specifics tested: the file path Header.svelte, click_nav variable, {#if click_nav} block, fixed/inset-0/lg:hidden classes, hidden lg:flex pattern, $: show_nav reactive statement removal, class:hidden={!show_nav} removal, aria-label with 'menu', <button> wrapper, {#each} loops with {label, href} destructuring, nav_links arrays with /docs /guides /custom-components/html-gallery, and community links. The 'Gradio logo' alt text checked in test_header_svelte_structure"
+      "reason": "The instruction names the file path (Header.svelte), the variable names (click_nav, show_nav), the Tailwind classes (fixed, inset-0, lg:hidden, hidden lg:flex, z-50), the {#if click_nav} block syntax, the {#each} loop syntax with destructuring, the aria-label requirement, the button wrapper requirement, and the nav link URLs (/docs, /guides, /custom-components/html-gallery). All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: use '{#if click_nav}' conditional block, 'fixed' positioning, 'inset-0' class, 'lg:hidden' class, 'z-50' z-index, 'hidden lg:flex' on desktop nav, remove '$: show_nav = click_nav || ...' reactive statement, remove 'class:hidden={!show_nav}', use 'click_nav = false' handlers, wrap in '<button>' with aria-label containing 'menu', define arrays with 'label' and 'href' keys, use '{#each nav_links as { label, h"
+      "reason": "The instruction explicitly states the exact implementation details: use '{#if click_nav}' conditional block, use 'fixed' positioning with 'inset-0', use 'hidden lg:flex' classes, remove '$: show_nav = click_nav || ...' reactive statement, remove 'class:hidden={!show_nav}' pattern, use '{#each nav_links as { label, href }}' syntax. This is not describing what's broken but prescribing exactly what to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: exact string '{#if click_nav}' (test_mobile_fullscreen_overlay), regex for array with 'label' and 'href' keys containing '/docs' (test_nav_links_data_driven), regex for '{#each ... as { label' destructuring syntax (test_nav_links_data_driven), exact pattern 'hidden lg:flex' on <nav> (test_desktop_nav_decoupled), exact regex 'on:click={.*?click_nav\\s*=\\s*false' for close handlers (test_mobile_nav_closes_on_navigate). Alternative correct fixes "
+      "reason": "Tests assert very specific implementation patterns: test_mobile_fullscreen_overlay checks for literal '{#if click_nav}' string and 'fixed'/'inset-0'/'lg:hidden' within 600 chars; test_desktop_nav_decoupled uses regex for exact 'hidden lg:flex' pattern on <nav>; test_nav_links_data_driven requires specific destructuring syntax '{#each \\w+ as { label'; test_mobile_nav_closes_on_navigate requires 'on:click={.*click_nav\\s*=\\s*false' pattern. Alternative correct implementations (e.g., using 'absolute"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_mobile_fullscreen_overlay, test_nav_links_data_driven, test_desktop_nav_decoupled, test_mobile_menu_accessibility, test_mobile_nav_closes_on_navigate) are all text/regex-based checks on the source file content. None of them render the component, simulate clicks, or test actual runtime behavior. Even the Node.js subprocess calls just parse the file text with regex, not execute the Svelte component. The pass-to-pass tests do run builds/format checks, but the core behav"
+      "reason": "The fail-to-pass tests (test_mobile_fullscreen_overlay, test_nav_links_data_driven, test_desktop_nav_decoupled, test_mobile_menu_accessibility, test_mobile_nav_closes_on_navigate) all work by reading file content and checking for string/regex patterns. None render the component, simulate clicks, or test actual behavior. They are purely text-matching tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific patterns that don't exist in the base commit (e.g., '{#if click_nav}' block with 'fixed inset-0', data arrays with {#each} loops, 'hidden lg:flex' on nav, aria-label with 'menu'). A stub or no-op wouldn't pass these since the original file has different patterns."
+      "reason": "A stub or empty file would not pass these tests - they check for specific patterns like '{#if click_nav}', 'fixed', 'inset-0', data arrays with label/href, {#each} loops, aria-label with 'menu', and on:click handlers. The base file at the given commit would fail these tests since it uses the old patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/gradio as a git repo, and solve.sh is in /solution/solve.sh which the agent could potentially access. The agent could also read the test file at tests/test_outputs.py to see exact patterns being checked and craft a solution that matches those regexes without understanding the UX issues."
+      "reason": "The solution is available at /workspace/gradio and the solve.sh patch is in /solution/solve.sh. An agent could read the solution file or simply apply the git patch. The Dockerfile doesn't remove /solution/ access, and the tests don't prevent this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from the instruction (full-screen overlay, desktop decoupled, close-on-navigate, accessibility button+aria-label, data-driven nav links) have corresponding test functions."
+      "reason": "All five requirements from the instruction (full-screen overlay, desktop decoupling, close-on-navigate, accessibility button/aria-label, data-driven nav with {#each}) have corresponding test functions that check for them."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names (test_mobile_fullscreen_overlay, test_nav_links_data_driven, etc.), and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass, fail_to_pass), descriptive function names (test_mobile_fullscreen_overlay, test_nav_links_data_driven, etc.), and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact reactive statement to remove ('$: show_nav = click_nav || ...'), the exact class binding to remove ('class:hidden={!show_nav}'), exact Tailwind classes to use ('fixed', 'inset-0', 'lg:hidden', 'z-50', 'hidden lg:flex'), exact Svelte syntax ('{#if click_nav}', '{#each nav_links as { label, href }}'), and exact variable assignments ('click_nav = false'). This goes far beyond identifying the file \u2014 it specifies implementation details."
+      "reason": "The instruction names exact code patterns to remove ('$: show_nav = click_nav || ...', 'class:hidden={!show_nav}') and exact replacements ('hidden lg:flex', '{#each nav_links as { label, href }}'), which goes beyond describing what's broken and reveals the exact lines/patterns of the buggy code and their fixes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Svelte component, not a config-edit task."
+      "reason": "This is a code-only task modifying a Svelte component, not a config edit task."
     }
   },
   "tier_a_fails": [

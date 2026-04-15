@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all key specifics tested: PaddedPODArray<UInt8> pad_string (req 1), insert() method (req 5 via insertFromItself), pad_string.size() vs .length() (req 3), pad_string.data() without casting (req 4), validateFunctionArguments (req 6), chassert (req 7), 1'000'000 digit separator (req 8), headers <memory> and <DataTypes/IDataType.h> (req 9), void init() removal (req 11), utf8_offsets.reserve with pad_string.size() + 1 (req 13). All test-asserted specifics are disco"
+      "reason": "The instruction.md explicitly names all key specifics tested: PaddedPODArray<UInt8> pad_string (req 1), insert() method (req 5 via insertFromItself), pad_string.size() vs .length() (req 3), pad_string.data() without casting (req 4), validateFunctionArguments (req 6), chassert (req 7), 1'000'000 digit separator (req 8), headers <memory> and <DataTypes/IDataType.h> (req 9), void init() removal (req 11), utf8_offsets.reserve with pad_string.size() + 1 (req 13), and other details. All asserted strin"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: use PaddedPODArray<UInt8>, use insertFromItself, use chassert, use validateFunctionArguments with FunctionArgumentDescriptors, use pad_string.data() directly, use 1'000'000, remove void init(), use insert() for initialization, etc. These are not descriptions of what's broken but precise prescriptions of what to change to what. A developer doesn't need to reason about the fix at all."
+      "reason": "The instruction explicitly dictates the exact implementation: use PaddedPODArray<UInt8> for pad_string, use insertFromItself for expansion, use chassert, use validateFunctionArguments with FunctionArgumentDescriptors, use pad_string.data() directly, use .size() not .length(), remove void init(), use 1'000'000 digit separator, etc. These are not descriptions of what's broken but precise prescriptions of what to change to what."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details like exact string 'PaddedPODArray<UInt8> pad_string', 'pad_string.insert(pad_string_.begin(), pad_string_.end())', 'pad_string.insertFromItself(pad_string.begin(), pad_string.end())', 'writeSlice(StringSource::Slice{pad_string.data(),'. An alternative correct fix (e.g., using a different buffer type, or allocating extra bytes manually on std::string) would fail these tests despite being functionally correct."
+      "reason": "Tests assert on exact implementation details like 'PaddedPODArray<UInt8> pad_string', 'pad_string.insert(pad_string_.begin(), pad_string_.end())', 'pad_string.insertFromItself(pad_string.begin(), pad_string.end())', 'validateFunctionArguments(*this, arguments, mandatory_args, optional_args)', specific variable names, and exact string patterns. Alternative correct fixes (e.g., using a different buffer type, different initialization method, or different validation approach) would fail these text-m"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test function reads the source file and does string/regex matching on its content (e.g., assert 'PaddedPODArray<UInt8> pad_string' in content). No test compiles, executes, or calls the code. All tests are purely textual assertions."
+      "reason": "Every test function reads the source file and checks for literal string patterns using assertions like 'assert \"PaddedPODArray<UInt8> pad_string\" in content'. No test compiles, executes, or tests runtime behavior of the code. All tests are pure text-matching on file contents."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply writes a file containing all the expected strings (PaddedPODArray<UInt8> pad_string, insertFromItself, etc.) would pass all tests. The tests don't verify any runtime behavior, only text presence in the source file."
+      "reason": "Since all tests are text-matching (assert 'X' in file_content), an agent could simply write a file containing all the expected strings without implementing any actual fix. The tests don't verify compilation or runtime behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse and the gold patch is applied via solve.sh. An agent could read the solution directory or grep for expected test strings in test_outputs.py (which contains all literal strings being checked) and reproduce them without understanding the bug."
+      "reason": "The solution is in /workspace/ClickHouse accessible in the container. The agent could read solution/solve.sh which contains the complete gold patch. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for all asserted strings and paste them into the target file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 13 requirements from instruction.md have corresponding test assertions: PaddedPODArray storage (req 1), empty pad default (req 2), .size() usage (req 3), .data() direct call (req 4), insertFromItself (req 5), validateFunctionArguments (req 6), chassert (req 7), digit separator (req 8), headers (req 9), error message (req 10), init removal (req 11), constructor style (req 12), utf8_offsets.reserve (req 13)."
+      "reason": "All 13 requirements from instruction.md have corresponding test assertions: PaddedPODArray storage (req 1), empty pad default (req 2), .size() usage (req 3), .data() direct usage (req 4), insertFromItself (req 5), validateFunctionArguments (req 6), chassert (req 7), digit separator (req 8), headers (req 9), error message (req 10), init removal (req 11), constructor style (req 12), utf8_offsets.reserve (req 13)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_pad_string_uses_padded_pod_array, test_argument_validation_updated), each has a docstring explaining the rationale, and they're labeled as fail-to-pass or pass-to-pass."
+      "reason": "Tests are well-organized with descriptive function names (e.g., test_pad_string_uses_padded_pod_array, test_argument_validation_updated) and include docstrings explaining the rationale and marking tests as 'fail-to-pass' or 'pass-to-pass'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves fixing C++ source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task involves fixing a C++ source file, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (padString.cpp) and prescribes exact implementation changes: specific type names (PaddedPODArray<UInt8>), exact method names (insertFromItself, chassert, validateFunctionArguments), exact headers to include, and exact patterns to use. This goes far beyond identifying the buggy component."
+      "reason": "The instruction specifies exact implementation details: exact type names (PaddedPODArray<UInt8>), exact method names (insertFromItself, chassert, validateFunctionArguments), exact patterns (pad_string.size() + 1), and exact formatting (1'000'000). This goes far beyond identifying the buggy file/area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a C++ source file, not a configuration edit task."
     }
   },
   "tier_a_fails": [

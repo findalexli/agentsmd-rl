@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_annotated_value_anyhow_import_removed checks for removal of 'use anyhow::Result as AResult;' which is not mentioned in the instructions; (2) test_value_test_has_helper_function checks for 'fn deser_annotated_value' - while instruction.md mentions the name, the exact function signature pattern 'fn deser_annotated_value' is testable; (3) test_event_imports_bounded_visitor checks for exact import path 'sui_types::object::bounde"
+      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_annotated_value_anyhow_import_removed checks for removal of 'use anyhow::Result as AResult;' - instruction doesn't mention this specific import. (2) test_value_test_has_helper_function checks for 'fn deser_annotated_value' - while instruction mentions using a helper named 'deser_annotated_value', the exact function signature pattern 'fn deser_annotated_value' is discoverable. (3) test_event_imports_bounded_visitor checks for"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly states the fix: 'Should be updated to use BoundedVisitor::deserialize_value() from sui_types::object::bounded_visitor', 'Update value_test.rs tests to use a helper function named deser_annotated_value', and 'Remove all simple_deserialize methods'. These are direct instructions on what to change and what to replace them with, not just descriptions of what's broken."
+      "reason": "Instruction.md explicitly states the fix: 'Update event.rs to use BoundedVisitor::deserialize_value() from sui_types::object::bounded_visitor instead of MoveValue::simple_deserialize()', 'Update value_test.rs tests to use a helper function named deser_annotated_value'. It names the exact replacement function, exact import path, and exact helper function name, leaving minimal reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_value_test_has_helper_function asserts 'fn deser_annotated_value' must exist - an alternative correct fix could use a different helper name (e.g., 'deserialize_annotated_value') or inline the bcs::from_bytes_seed call. test_annotated_value_anyhow_import_removed asserts the exact string 'use anyhow::Result as AResult;' must be absent - a valid fix might keep the import if used elsewhere or rename it differently."
+      "reason": "test_value_test_has_helper_function asserts 'fn deser_annotated_value' must exist - an alternative correct fix could use a different helper name (e.g., 'deserialize_annotated_value') or inline the deserialization. test_event_imports_bounded_visitor asserts the exact import path string 'sui_types::object::bounded_visitor::BoundedVisitor' - a 'use sui_types::object::bounded_visitor::*' would fail. test_annotated_value_anyhow_import_removed asserts exact string 'use anyhow::Result as AResult;' is g"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are purely text-based: test_annotated_value_movevalue_simple_deserialize_removed, test_event_uses_bounded_visitor, test_value_test_has_helper_function, test_annotated_value_anyhow_import_removed, and test_event_imports_bounded_visitor all just read files and check string presence/absence. However, test_move_core_types_compiles, test_move_core_types_tests_pass, test_move_fmt, test_move_clippy, and test_move_core_types_value_tests do execute subprocesses. Since not EVERY test is text-on"
+      "reason": "Most tests (8 of 14) are purely text-based: they open files and check for presence/absence of strings (e.g., 'simple_deserialize' not in content, 'BoundedVisitor::deserialize_value' in content). While there are compilation and test-execution tests (test_move_core_types_compiles, test_move_core_types_tests_pass, test_move_fmt, test_move_clippy, test_move_core_types_value_tests), the majority of f2p tests are text-matching only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The text-based tests check for removal of specific methods and addition of specific replacements that don't exist in the base commit. The compilation and test-execution tests (test_move_core_types_compiles, test_move_core_types_tests_pass) would fail if the agent just deleted methods without updating call sites. A stub implementation cannot pass these."
+      "reason": "The text-matching tests check for removal of specific methods and addition of specific replacements, which cannot be satisfied by a stub. The compilation and test-pass tests require actual working code. A no-op change would fail because simple_deserialize would still be present."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/sui with the solve.sh script accessible in the container's /solution/ directory (if mounted). The agent could read the patch from solve.sh to determine exact changes needed. Additionally, the test file at tests/test_outputs.py reveals exact strings being checked, allowing the agent to match fixture strings without understanding the task."
+      "reason": "The solution exists at /workspace/sui with solve.sh containing the complete patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings like 'fn deser_annotated_value', 'use anyhow::Result as AResult;', and 'sui_types::object::bounded_visitor::BoundedVisitor'. No access restrictions are evident in the Dockerfile."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: removal of simple_deserialize from both files (tests 1-5), updating event.rs to use BoundedVisitor (test 6), adding deser_annotated_value helper (test 7), removing unused imports (test 8), compilation (test 10), tests passing (tests 11, 13), and code quality (tests 12, 13)."
+      "reason": "All requirements from instruction.md are tested: removal of simple_deserialize from both files (tests 1-5), updating event.rs (tests 6,9), updating value_test.rs (test 7), compilation (test 10), tests passing (tests 11,14), formatting (test 12), and clippy (test 13). The anyhow import test (8) goes beyond instruction but doesn't leave requirements untested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They are logically grouped by the file being modified."
+      "reason": "Tests are well-named with descriptive function names (e.g., test_annotated_value_movevalue_simple_deserialize_removed) and have docstrings explaining what each test verifies. They're logically grouped by file/concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and commands in instruction.md and tests appear correct and consistent with the repository structure."
+      "reason": "File paths, function names, and variable names in instruction.md and tests appear correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names exact files, exact method names to remove, exact replacement function names (BoundedVisitor::deserialize_value), exact helper function name (deser_annotated_value), and exact import path (sui_types::object::bounded_visitor). This goes beyond describing the problem and essentially prescribes the solution."
+      "reason": "Instruction.md names exact replacement functions ('BoundedVisitor::deserialize_value()'), exact import paths ('sui_types::object::bounded_visitor'), and exact helper function names ('deser_annotated_value'). It also identifies all four specific files that need changes, going well beyond what's needed for task description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

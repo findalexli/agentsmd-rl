@@ -2,55 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: `_PendingWeightUpdateBucket` dataclass with `handles` and `fut` fields, async method with 'async' and 'bucket'/'weight' in name with `stream` parameter, `_update_weights_from_distributed` method name, try/finally with drain/wait pattern, `torch.cuda.Stream()`, `_update_bucket_weights_from_distributed` and `_init_weight_update_from_distributed` methods, and the file path `areal/engine/fsdp_engine.py`. All test assertions correspond to items describe"
+      "outcome": "fail",
+      "reason": "Tests check for specific names like `_PendingWeightUpdateBucket` (exact dataclass name), `_update_weights_from_distributed` (exact method name), `_wait` pattern in method names combined with `bucket`, `_update_bucket_weights_from_distributed` (exact sync wrapper name), `_init_weight_update_from_distributed` (exact method name). While instruction.md mentions `_PendingWeightUpdateBucket` by name and describes `_wait` helpers, several test specifics like the exact method name `_update_weights_from_"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the dataclass must be named `_PendingWeightUpdateBucket` with specific fields `handles` and `fut`, the async method must contain 'async' and 'bucket'/'weight' in its name, the method must have a `stream` parameter, must use `async_op=True`, the finally block must call a helper containing '_wait', and `torch.cuda.Stream()` must be present. This goes well beyond describing what's broken \u2014 it prescribes the exact solution structure, naming con"
+      "reason": "The instruction explicitly names the exact dataclass (`_PendingWeightUpdateBucket`), its exact fields (`handles`, `fut`), the exact pattern (try/finally with `_wait` helper), `torch.cuda.Stream()` creation, and the async method naming convention. It essentially describes the complete implementation architecture rather than just describing what's broken. Section 'Required implementation components' is a detailed specification of the solution, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact dataclass name `_PendingWeightUpdateBucket`, exact field names `handles` and `fut`, method name must contain 'async', `_wait` substring in helper name, exact method name `_update_weights_from_distributed`. An alternative correct implementation using different naming (e.g., `_InFlightBucket`, `pending_ops` field, `_drain_pending` helper) would fail despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: test_pending_state_dataclass checks for a @dataclass with fields named 'handles' and 'fut'; test_pipelined_main_loop checks for a method with both 'bucket' and 'weight' in the name plus a 'stream' parameter; test_error_safety checks for try/finally with a self._wait* call. An alternative correct fix using e.g. an asyncio.Task wrapper, a different naming scheme (e.g. `_async_broadcast`), or a context manager pattern instead of try/finally woul"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests use AST parsing (static code analysis) rather than executing the code. `test_pipelined_main_loop` walks the AST for structural patterns, `test_async_bucket_method` inspects AST for method signatures, `test_pending_state_dataclass` extracts and exec's just the class definition. None of these tests actually run the pipelining logic, broadcast operations, or verify runtime behavior. They are sophisticated text/structure checks, not behavioral tests."
+      "reason": "All fail-to-pass tests (test_pipelined_main_loop, test_async_bucket_method, test_pending_state_dataclass, test_error_safety, test_cuda_stream_creation, test_backward_compat_sync_wrapper) use AST analysis to check code structure rather than executing the code and verifying runtime behavior. They check for the presence of AST nodes (method names, parameters, decorators, try/finally blocks) rather than actually running the pipelining logic or verifying concurrent execution. This is essentially soph"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests have anti-stub checks: `test_pipelined_main_loop` requires >= 15 meaningful AST nodes, `test_async_bucket_method` requires >= 8 meaningful nodes and `async_op` usage, `test_pending_state_dataclass` requires instantiation with >= 3 fields. A simple stub (pass/return None) would fail these minimum complexity thresholds."
+      "reason": "The tests do require substantial structural changes - a stub wouldn't pass because tests check for specific AST patterns like a dataclass with 3+ fields, methods with >=8 meaningful AST nodes, try/finally blocks, async_op=True keywords, and Stream() instantiation. A trivial `pass` or `return None` implementation would fail these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/repo` accessible path as `solution/solve.sh` (if mounted), and the instruction itself essentially prescribes the exact solution. The agent could also read the test file at `tests/test_outputs.py` to reverse-engineer exactly what AST patterns are checked and produce code that matches those patterns without understanding the underlying distributed systems problem."
+      "reason": "The solution is available at /repo after `git apply` from solve.sh. The agent could potentially read the solution patch or the test file itself (tests/test_outputs.py) to reverse-engineer the exact expected structure. Since tests only do AST analysis, an agent could craft code that satisfies the AST checks without understanding the actual performance bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires 'broadcast of bucket i must run concurrently with preparation of bucket i+1' and 'bound memory usage to one in-flight bucket', but no test verifies actual concurrency, timing overlap, or memory bounds. Tests only check static code structure via AST analysis."
+      "reason": "The instruction requires 'broadcast of bucket i must run concurrently with preparation of bucket i+1' and 'at most one bucket in flight at any time to bound memory usage', but no test verifies actual concurrent execution or memory bounding. Tests only check structural AST patterns, not runtime pipelining behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear separation between pass_to_pass gate tests (syntax, linting, formatting) and fail_to_pass behavioral tests, each with descriptive names and detailed docstrings explaining what they verify."
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass and fail-to-pass), descriptive function names (test_pipelined_main_loop, test_async_bucket_method, etc.), and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact method names (`_update_bucket_weights_from_distributed`, `_init_weight_update_from_distributed`, `_update_weights_from_distributed`), exact dataclass name (`_PendingWeightUpdateBucket`), exact field names (`handles`, `fut`), and the exact file to modify (`areal/engine/fsdp_engine.py`). This is excessive localization that removes the need for the agent to understand and locate the problem."
+      "reason": "The instruction explicitly names the exact dataclass `_PendingWeightUpdateBucket`, its exact field names (`handles`, `fut`), the exact file to modify (`areal/engine/fsdp_engine.py`), and the exact existing method names (`_update_bucket_weights_from_distributed`, `_init_weight_update_from_distributed`). This goes well beyond identifying the buggy module and essentially provides the implementation blueprint."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +62,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

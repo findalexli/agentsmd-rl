@@ -2,62 +2,59 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific undiscoverable details: (1) newsfragment file named '62054.significant.rst' (test_newsfragment_exists) is never mentioned in instruction.md; (2) the specific PR number 62054 is not in instruction.md (instruction references no PR number); (3) the exact deprecation warning text patterns checked in NOTES.txt tests are not specified in instructions; (4) schema requirement that 'enabled' type must allow 'null' is not mentioned in instruction.md."
+      "outcome": "pass",
+      "reason": "The instruction names all key paths (workers.celery.waitForMigrations, workers.waitForMigrations), file paths (values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml), the newsfragment filename (62054.significant.rst), the null type requirement for enabled, and the deprecation string requirements. All test assertions reference discoverable specifics from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be done at a high level (add new config path, deprecate old one, update templates) without specifying exact line changes or literal replacement strings."
+      "reason": "The instruction describes WHAT needs to be done (add new config path, deprecate old, update templates) but doesn't specify exact line numbers, exact code snippets, or exact patch content. A developer must still reason about how to implement the changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: (1) test_newsfragment_exists requires exact filename '62054.significant.rst' - an alternative could use a different number; (2) test_celery_wait_for_migrations_enabled_in_schema requires 'null' in the type for enabled, which is one specific approach to handling inheritance; (3) NOTES.txt tests check for exact string patterns like 'workers.waitForMigrations.enabled' which could be formatted differently in a valid alternative."
+      "outcome": "pass",
+      "reason": "Tests check for schema structure (properties exist, types are correct), string presence in NOTES.txt, behavioral helm template rendering, and newsfragment content. Alternative implementations with different wording, ordering, or template logic would still pass as long as they produce the correct behavior and contain the required strings."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Many tests are purely text/file content checks: test_deprecation_notice_in_schema_description checks 'deprecated' in description string; test_notes_has_wait_for_migrations_deprecation_warning and test_notes_has_env_deprecation_warning just check string presence in NOTES.txt; test_newsfragment_content checks strings in file content. However, TestHelmTemplateRendering does execute helm template subprocess, so it's a mix - but the majority of fail_to_pass tests are text-only asserts."
+      "outcome": "pass",
+      "reason": "Several tests (TestCeleryWaitForMigrationsBehavior) actually run `helm template` via subprocess and inspect rendered YAML output, verifying that init containers are present/absent and env vars are set. This is genuine behavioral testing, not just text matching. Some tests do check file contents (schema, NOTES.txt), but these are appropriate for config/template files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for the existence of new schema keys, new values.yaml sections, deprecation notices, and a newsfragment file - none of these exist in the base commit, so a stub/no-op implementation wouldn't pass them."
+      "reason": "The fail_to_pass tests check for new schema entries (workers.celery.waitForMigrations) that don't exist in the base commit, helm template behavior that requires template changes, deprecation strings in NOTES.txt that don't exist yet, and a newsfragment file that doesn't exist. A stub/no-op solution would fail all of these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow (solve.sh is in solution/ directory which the Dockerfile doesn't explicitly prevent access to). The agent could read solution/solve.sh to see the exact patch and apply it. Additionally, the gold patch content including the newsfragment number '62054' could be discovered by reading the solution."
+      "reason": "The solution file exists at /workspace/airflow (or could be accessed via the solve.sh path). The Dockerfile doesn't remove the /solution directory or tests directory. An agent could read solution/solve.sh which contains the full gold patch, or read tests/test_outputs.py to reverse-engineer exact requirements."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: new config section in values.yaml and schema, backward compatibility via template rendering, deprecation warnings in NOTES.txt, and schema deprecation descriptions."
+      "reason": "All explicit acceptance criteria from instruction.md are tested: new schema section, null type for enabled, backward compatibility (old path still works), deprecation warnings in NOTES.txt, behavioral helm template tests, and newsfragment existence."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into descriptive classes (TestCeleryWaitForMigrationsConfig, TestDeprecationWarnings, TestNewsfragment, TestHelmTemplateRendering) with clear docstrings and method names."
+      "reason": "Tests are well-organized into logical classes (TestCeleryWaitForMigrationsConfig, TestDeprecationWarnings, TestNewsfragment, TestCeleryWaitForMigrationsBehavior) with descriptive docstrings and method names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task involves JSON schema (values.schema.json) and YAML (values.yaml) structured data, and the instruction describes the required schema keys and structure adequately."
+      "reason": "The task produces structured data (JSON schema in values.schema.json, YAML in values.yaml). The instruction documents the exact schema keys needed (enabled with null type, env as array, securityContexts.container)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, config keys, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md lists files to examine (values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml) which are natural for the task domain, without specifying exact lines or detailed implementation."
+      "reason": "The instruction mentions which files to examine but doesn't specify exact line numbers or exact code changes. The file list (values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml) is natural for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized to specific sections in values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml, and a new newsfragment file - not full-file rewrites."
+      "reason": "The gold patch is localized to specific sections of values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml, and a new newsfragment file. Changes are scoped and don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 4
+  "pass_count": 11,
+  "fail_count": 1
 }

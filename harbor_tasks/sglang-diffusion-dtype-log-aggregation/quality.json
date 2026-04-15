@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific structural details not fully discoverable from instruction.md: test_no_per_param_warnings_in_loop checks for ast.Name with id 'logger' and attr 'warning' with literal 'Dtype mismatch for'; test_quantized_dtypes_not_redefined_in_loop checks for variable names containing 'quantiz' in loop assignments; test_aggregated_summary_after_loop checks for logger calls with attrs in ('debug','warning','info') containing keywords like 'dtype','mismatch','cast','summary' in AST dump. The"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_quantized_dtypes_not_redefined_in_loop checks for variable names containing 'quantiz' (line: 'if \"quantiz\" in target.id.lower()'), test_no_per_param_warnings_in_loop checks for the exact string 'Dtype mismatch for' in logger.warning calls inside the loop, and the formatter extraction in _FORMATTER_PREAMBLE explicitly excludes functions named '_make_param_like', 'load_model_from_full_model_state_dict', 'shard_mo"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (per-parameter warnings flooding logs) and expected behavior (aggregated summary, module-level function, loop-invariant hoisting) but does not specify exact code changes, line numbers, or variable names to use."
+      "reason": "instruction.md describes the desired behavior (aggregated summaries, module-level function, no per-param warnings, loop-invariant hoisting) but doesn't specify exact code changes, line numbers, or variable names to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_quantized_dtypes_not_redefined_in_loop asserts that no variable with 'quantiz' in its name is assigned inside the loop. An alternative fix might use a different variable name (e.g., 'quant_types' or 'low_precision_dtypes') for the hoisted constant, which would pass this test vacuously but might fail other tests. More critically, the formatter discovery logic in _FORMATTER_PREAMBLE excludes specific function names and probes with string-typed tuple keys - an alternative that uses actual torc"
+      "reason": "The _FORMATTER_PREAMBLE in tests excludes specific function names ('_make_param_like', 'load_model_from_full_model_state_dict', 'shard_model') and probes for the first module-level function that accepts (Counter, defaultdict) and returns a string. An alternative that names the formatter function differently would still work, but test_quantized_dtypes_not_redefined_in_loop requires the variable name to contain 'quantiz' \u2014 an alternative using e.g. 'quant_dtypes' without the substring 'quantiz' wo"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use a mix of AST parsing (structural behavioral checks) and subprocess execution (test_summary_formatter_* actually execute the formatter function with real inputs and check outputs). They don't just grep for text in source files."
+      "reason": "Tests use a mix of AST parsing (structural analysis of code) and subprocess execution (running the formatter function with actual inputs and checking outputs). The formatter tests execute the function via subprocess and check return values. This is behavioral verification, not mere text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The formatter tests actually call the discovered function with Counter/defaultdict inputs and assert specific strings appear in the output (counts like '50', '12', dtype names, example parameter names). A stub returning None or empty string would fail these assertions. AST tests check for structural absence/presence of specific patterns that require actual code changes."
+      "reason": "The formatter tests execute the extracted function with specific Counter/defaultdict inputs and assert the output string contains specific counts, dtype names, and example parameter names. A stub returning None or empty string would fail these assertions. The AST tests check for absence of per-param warnings and presence of aggregated logs, which require actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sglang/_eval_formatter_test.py during test execution (though temporarily), and more importantly solve.sh is at solution/solve.sh in the container. The Dockerfile doesn't remove the solution directory. An agent could read solution/solve.sh to get the exact patch. Also the test file itself at tests/test_outputs.py contains the complete gold patch pattern that could be reverse-engineered."
+      "reason": "The solution is available at /workspace/sglang as a git repo, and the gold patch is in solution/solve.sh. An agent could read solution/solve.sh or the Dockerfile to discover the exact patch. The Dockerfile is at a known path and solve.sh contains the complete diff."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md are tested: (1) no per-param warnings in loop (test_no_per_param_warnings_in_loop), (2) module-level summary formatter (test_summary_formatter_*), (3) aggregated summary after loop (test_aggregated_summary_after_loop), (4) loop-invariant hoisting (test_quantized_dtypes_not_redefined_in_loop)."
+      "reason": "All four behavioral requirements from instruction.md are tested: (1) no per-param warnings in loop (test_no_per_param_warnings_in_loop), (2) module-level summary formatter (test_summary_formatter_*), (3) aggregated summary after loop (test_aggregated_summary_after_loop), (4) loop-invariant values not in loop (test_quantized_dtypes_not_redefined_in_loop)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff behavioral, Fail-to-pass/pr_diff structural), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive function names, docstrings, and clear comments separating 'Gates (pass_to_pass, static)' from 'Fail-to-pass (pr_diff)' sections. Helper functions are clearly separated."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names 'the FSDP weight loader in the multimodal runtime loader directory' which maps directly to the target file fsdp_load.py. It also specifies exact implementation details like 'Accept a Counter as its first argument, keyed by (checkpoint_dtype, target_dtype) tuples' and 'logged at debug level' vs 'logged at warning level', which are implementation-level hints that go beyond describing the bug."
+      "reason": "instruction.md specifies 'The FSDP weight loader in the multimodal runtime loader directory' which narrows down to the exact file fsdp_load.py. While it doesn't give the exact filename, it's very specific about the directory path ('multimodal runtime loader directory'). More importantly, it gives very detailed implementation instructions (e.g., 'Accept a Counter as its first argument, keyed by (checkpoint_dtype, target_dtype) tuples') that essentially specify the solution's interface."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

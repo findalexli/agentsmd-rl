@@ -3,63 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file paths like 'areal/api/cli_args.py', function names like 'validate_fp8_shard_alignment', class names like 'ArchonFP8Config', attribute names like '_fp8_block', 'enabled', weight names 'w1'/'w2'/'w3', dtype names like 'float8_e4m3fn'/'float8_e5m2'/'float8_e4m3fnuz'/'float8_e5m2fnuz', module type 'GroupedExperts', function '_check_fp8_shard_compatibility', 'Shard(1)') are all explicitly mentioned in instruction.md."
+      "reason": "All test-specific identifiers (ArchonFP8Config, enabled property, validate_fp8_shard_alignment, GroupedExperts, w1/w2/w3, _fp8_block, dequant_fp8_state_dict, float8_e4m3fn, float8_e5m2, _check_fp8_shard_compatibility, Shard(1), _fp8_linear_fwd, DTensor, to_local(), file paths) are explicitly named in instruction.md under 'Key Types and Names', 'Files to Examine', 'Acceptance Criteria', and 'Detailed Symptom Descriptions'."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'All FP8-active checks should use a consistent predicate rather than raw mode != \"disabled\" comparisons', 'Expert forward patching must mark expert modules with the _fp8_block attribute', 'The FP8 linear forward path must handle DTensor weights gracefully' with 'to_local()' method named in Key Types section, and 'dequant_fp8_state_dict only accepts torch.float8_e4m3fn'. These are specific fixes, not just symptoms."
+      "reason": "The instruction explicitly states the fix in multiple places: 'All FP8-active checks should use a consistent predicate rather than raw mode != \"disabled\" comparisons' (telling the agent to add an `enabled` property), 'The FP8 linear forward path must handle DTensor weights gracefully' combined with 'DTensor method: to_local()' (telling the agent exactly what method to call), 'Expert forward patching must mark expert modules with the _fp8_block attribute' (telling exactly what attribute to set). "
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_fp8_config_post_init_uses_enabled assert 'self.enabled' appears in __post_init__ source, test_validate_alignment_not_linear_only asserts 'hasattr' and '_fp8_block' in source, and test_fp8_linear_fwd_calls_to_local asserts 'to_local' in source. An alternative correct fix using e.g., a different property name, a different DTensor handling method, or a different attribute marker would fail these AST/string checks."
+      "reason": "test_fp8_config_enabled_property explicitly asserts `hasattr(cfg_blockwise, 'enabled')` and checks `cfg_blockwise.enabled is True` \u2014 this mandates a specific property name 'enabled'. An alternative correct fix could use 'is_active', 'is_enabled', or 'active' as the predicate name and would fail. Similarly, test_fp8_linear_fwd_calls_to_local asserts the exact method name 'to_local' via AST inspection. test_expert_patch_sets_fp8_block checks for the specific attribute '_fp8_block'."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The majority of tests (test_validate_alignment_handles_grouped_experts, test_validate_alignment_not_linear_only, test_dequant_only_accepts_e4m3fn, test_fp8_linear_fwd_calls_to_local, test_expert_patch_sets_fp8_block, test_engine_uses_enabled_predicate, test_utils_uses_enabled_predicate, test_check_fp8_shard_compatibility_exists) are pure text/AST inspection ('assert X in func_src'). Only test_fp8_config_enabled_property and test_fp8_config_post_init_uses_enabled actually instantiate objects and "
+      "outcome": "pass",
+      "reason": "Most tests are behavioral: test_fp8_config_enabled_property instantiates the dataclass and checks return values, test_fp8_config_post_init_uses_enabled instantiates and catches ValueError, test_dequant_only_accepts_e4m3fn calls the actual function. Some tests (test_fp8_linear_fwd_calls_to_local, test_engine_init_uses_enabled) use AST/source inspection as fallback when imports fail, but the primary path attempts behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for code that doesn't exist in the base commit (e.g., 'enabled' property, GroupedExperts handling in validate_fp8_shard_alignment, _check_fp8_shard_compatibility function). A stub/no-op wouldn't add these constructs to the source files, so the tests would fail."
+      "reason": "The fail-to-pass tests require non-trivial implementations: test_fp8_config_enabled_property requires a working 'enabled' property returning True/False based on mode; test_validate_alignment_handles_grouped_experts requires raising ValueError for misaligned expert weights; test_dequant_only_accepts_e4m3fn requires rejecting float8_e5m2. A stub returning None/pass would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/AReaL as a git repo and solve.sh applies a patch. An agent could read the solution/solve.sh file if it exists in the container, or simply inspect the test file at tests/test_outputs.py to see exact string assertions (like 'self.enabled', 'to_local', 'GroupedExperts') and mechanically satisfy them without understanding the bugs."
+      "reason": "The solution is in /workspace/AReaL as solve.sh and the gold patch could potentially be accessed. The Dockerfile does not remove /solution/ or tests/ directories. An agent could read test_outputs.py at /workspace or through the environment to discover exact assertions and fixture values."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six acceptance criteria from instruction.md are tested: expert alignment validation (#1), DTensor to_local handling (#2), consistent enabled predicate (#3), dtype restriction (#4), shard compatibility check (#5), and _fp8_block marking (#6)."
+      "reason": "All six acceptance criteria from instruction.md are tested: (1) validate_fp8_shard_alignment for GroupedExperts, (2) to_local() on DTensor in FP8 forward, (3) consistent enabled predicate, (4) dequant dtype restriction, (5) shard placement validation before DCP I/O, (6) _fp8_block attribute on expert modules."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass groups), descriptive function names, and detailed docstrings explaining each test's purpose and connection to the fix."
+      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass sections), descriptive function names (test_validate_alignment_handles_grouped_experts), and detailed docstrings explaining what each test verifies and the mapping to the fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes to Python source files, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves code fixes to Python modules, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction are consistent with the codebase and test expectations. No typos detected."
+      "reason": "File paths, function names, variable names, and config field names in the instruction all match the actual codebase and test expectations without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction names exact functions to modify (e.g., 'validate_fp8_shard_alignment', '_patch_fp8_experts_forward', '_fp8_linear_fwd', '_check_fp8_shard_compatibility'), exact files, exact attributes ('_fp8_block', '_fp8_use_triton'), and exact methods ('to_local()'). This goes well beyond describing symptoms\u2014it pinpoints the exact locations and mechanisms of the fix."
+      "reason": "The instruction names exact function names to modify (validate_fp8_shard_alignment, _patch_fp8_experts_forward, _fp8_linear_fwd, dequant_fp8_state_dict, _check_fp8_shard_compatibility), exact attribute names to add (_fp8_block), exact method to call (to_local()), and exact files. This goes beyond describing symptoms \u2014 it localizes the bug to specific functions and specifies implementation details like 'Expert forward patching must mark expert modules with the _fp8_block attribute'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task involving config file changes."
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 4
 }

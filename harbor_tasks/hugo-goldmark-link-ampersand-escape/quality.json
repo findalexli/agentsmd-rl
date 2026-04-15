@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_render_hooks_no_double_escape checks for the specific pattern 'util.EscapeHTML(util.EscapeHTML(dest))' and 'w.Write(util.EscapeHTML(dest))' in render_hooks.go. The instruction.md never mentions the file render_hooks.go, the function renderLinkDefault, or the util.EscapeHTML function. Also test_goldmark_package_subtests checks specific subpackages like blockquotes, codeblocks, etc. that are not mentioned in instruction.md. The test also checks specific file path 'markup/goldmark/render_hooks"
+      "reason": "test_render_hooks_no_double_escape checks for specific patterns like 'util.EscapeHTML(util.EscapeHTML(dest))' and '_, _ = w.Write(util.EscapeHTML(dest))' in render_hooks.go. The instruction.md never mentions the file render_hooks.go, the function util.EscapeHTML, or the variable 'dest'. These specifics are undiscoverable from instruction.md alone."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the symptom (double-escaping of ampersands producing &amp;amp; instead of &amp;) and hints that 'HTML escaping is being applied twice to the link destination', but does not specify the exact file, line, or code change needed. A developer must still locate and reason about the fix."
+      "reason": "instruction.md only describes the symptom (double-escaping of ampersands) and expected vs actual behavior. It does not name the specific file, function, or code change needed."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_render_hooks_no_double_escape directly asserts the absence of 'util.EscapeHTML(util.EscapeHTML(dest))' and the presence of 'util.EscapeHTML(dest)' or 'w.Write(util.EscapeHTML(dest))' in render_hooks.go. An alternative correct fix (e.g., using a different escaping function, modifying the caller, or restructuring the code differently) would fail this text-matching test even if it correctly fixes the behavior."
+      "reason": "test_render_hooks_no_double_escape explicitly checks for the absence of 'util.EscapeHTML(util.EscapeHTML(dest))' and the presence of 'util.EscapeHTML(dest)' or 'w.Write(util.EscapeHTML(dest))'. An alternative correct fix (e.g., using a different escaping approach, or fixing the issue in a different location/manner) would fail this source-code-inspection test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_render_hooks_no_double_escape is purely text-matching: it reads render_hooks.go and asserts on specific string patterns like 'util.EscapeHTML(util.EscapeHTML(dest))' without executing any code. While other tests do execute code (test_link_ampersand_escaping runs go test), this test is purely a textual grep."
+      "reason": "test_render_hooks_no_double_escape is purely a text-inspection test that reads render_hooks.go and checks for string patterns like 'util.EscapeHTML(util.EscapeHTML(dest))' without any execution. While other tests do execute code, this test is entirely 'assert pattern in open(path).read()' style."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_link_ampersand_escaping runs an actual Go integration test that checks the rendered HTML output contains '&amp;b=2' rather than '&amp;amp;b=2'. A stub or no-op implementation would not pass this test since the base commit has the double-escaping bug."
+      "reason": "test_link_ampersand_escaping runs an actual Go integration test that checks the rendered HTML output contains '&amp;b=2' not '&amp;amp;b=2'. A stub or no-op would not pass this test since the buggy base commit produces double-escaped output."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/hugo (solution/solve.sh is mounted or available). The solve.sh contains the exact sed command showing the fix: replacing 'util.EscapeHTML(util.EscapeHTML(dest))' with 'util.EscapeHTML(dest)'. An agent could read /solution/solve.sh or grep for the expected patterns in test_outputs.py to find the exact fix without understanding the bug."
+      "reason": "The solution is in /workspace/hugo's container at the path referenced by solve.sh. The agent could read solution/solve.sh (if accessible) or simply grep for the pattern 'util.EscapeHTML(util.EscapeHTML(dest))' in the codebase and replace it, which is exactly what the gold solution does. The test_render_hooks_no_double_escape test essentially tells the agent the exact fix by checking for specific string patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires fixing double-escaping of ampersands in link URLs and running integration tests. The tests verify this behavior (test_link_ampersand_escaping), check for regressions (test_goldmark_package_subtests, test_repo_convert_tests, test_repo_link_tests), and verify the build compiles (test_goldmark_render_hooks_compile)."
+      "reason": "instruction.md requires fixing double-escaping of ampersands in link URLs and running integration tests. The tests cover this behavior (test_link_ampersand_escaping) plus regression tests and compilation checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_link_ampersand_escaping, test_goldmark_render_hooks_compile, etc.), have docstrings explaining their purpose, and are logically grouped into fail-to-pass and pass-to-pass categories with clear comments."
+      "reason": "Tests are well-named with descriptive docstrings, grouped by purpose (fail_to_pass behavior tests, pass_to_pass regression tests, source inspection), and have clear comments like '# Issue 14715'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the symptom ('HTML escaping is being applied twice') but doesn't name the specific file (render_hooks.go), function (renderLinkDefault), or the exact buggy line. It only provides test commands pointing to the goldmark package directory."
+      "reason": "instruction.md describes the bug symptom and mentions only the goldmark package/test paths, which are natural for the task domain. It does not name render_hooks.go, util.EscapeHTML, or specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only bug fix task, not a configuration editing task."
+      "reason": "This is a code-only bug fix task, not a config-edit task."
     }
   },
   "tier_a_fails": [

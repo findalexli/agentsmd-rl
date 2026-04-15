@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details not fully discoverable from instruction.md alone. For example, test_incremental_decoder_usage checks for the exact string 'decoder.decode(log_chunk, final=False)' and 'decoder.decode(b\"\", final=True)' \u2014 while instruction.md does mention these patterns, test_codecs_import_present checks that 'import codecs' appears in the first 20 lines specifically with `lines[:20]`, a constraint not mentioned. More critically, tests like test_incomplete_utf8_at_end_repl"
+      "reason": "Tests assert exact implementation details not fully discoverable from instruction.md alone: test_incremental_decoder_usage checks for the exact string 'decoder.decode(log_chunk, final=False)' and 'decoder.decode(b\"\", final=True)' - while instruction.md mentions these patterns, the variable name 'log_chunk' specifically matching the test assertion requires the agent to use that exact variable name. Also test_codecs_import_present checks for 'import codecs' in the first 20 lines specifically, whic"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md section 'Implementation Requirements' directly specifies the fix: use codecs.getincrementaldecoder('utf-8'), create decoder with errors='replace', call decoder.decode(log_chunk, final=False), flush with decoder.decode(b'', final=True). This is not describing what's broken \u2014 it's prescribing the exact solution approach and API calls to use, leaving no reasoning for the agent."
+      "reason": "instruction.md section 'Implementation Requirements' explicitly dictates the exact fix: use codecs.getincrementaldecoder('utf-8'), decode with decoder.decode(log_chunk, final=False), flush with decoder.decode(b'', final=True), and import codecs. This is not describing what's broken but prescribing the exact code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_incremental_decoder_usage asserts exact strings like 'codecs.getincrementaldecoder', 'decoder.decode(log_chunk, final=False)', and 'decoder.decode(b\"\", final=True)'. test_codecs_import_present requires 'import codecs' in the first 20 lines. A correct alternative using e.g. a manual byte buffer, or naming the variable 'utf8_decoder' instead of 'decoder', or using 'chunk' instead of 'log_chunk', would fail these text-matching tests despite being functionally correct."
+      "reason": "test_incremental_decoder_usage asserts exact strings like 'decoder.decode(log_chunk, final=False)' and 'decoder.decode(b\"\", final=True)' and 'codecs.getincrementaldecoder'. test_codecs_import_present checks for exact 'import codecs' in first 20 lines. An alternative correct fix using e.g. a manual byte buffer, or using a different variable name like 'chunk' instead of 'log_chunk', or using codecs.open or other approaches would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_codecs_import_present and test_incremental_decoder_usage are purely text-matching tests (reading source file and checking for string presence). While other tests do execute the function, these two tests are pure 'assert X in open(path).read()' checks with no execution."
+      "reason": "test_codecs_import_present and test_incremental_decoder_usage are purely text-matching tests (assert 'import codecs' in file, assert exact strings in source code) with no execution of the code. While other tests do execute the function, these two are purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p behavioral tests (e.g., test_utf8_char_split_across_two_chunks) check that split UTF-8 byte sequences produce correct decoded strings. A stub returning empty list or None would fail the len(items)==1 assertion. The original buggy code would raise UnicodeDecodeError on these inputs."
+      "reason": "The behavioral tests (test_utf8_char_split_across_two_chunks, etc.) assert specific decoded output from split UTF-8 byte sequences. A stub returning None/empty would fail these assertions on len(items)==1 and specific string content."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/dagster and solve.sh is available in the container's solution/ directory. The agent could read the gold patch directly. Also, test_incremental_decoder_usage reveals the exact strings needed, so the agent could pattern-match without understanding the bug."
+      "reason": "The solution exists at /workspace/dagster and solve.sh is a hidden file but the agent could potentially read the test file at tests/test_outputs.py to discover exact assertions, or look at the gold patch. The solution directory with solve.sh may be accessible in the container. Additionally, the instruction.md already reveals the exact implementation pattern needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: split UTF-8 across chunks, incomplete sequences at stream end, backward compatibility with single-chunk processing, continuation lines, and the codecs import/usage requirements."
+      "reason": "All behaviors described in instruction.md are tested: split UTF-8 across chunks, incomplete sequences at stream end with replacement chars, backward compatibility, multiple lines, CJK characters, codecs import, and incremental decoder usage."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_utf8_char_split_across_two_chunks, test_incomplete_utf8_at_end_replaced, etc.) with docstrings explaining the scenario and UTF-8 byte values being tested."
+      "reason": "Tests are well-named with descriptive docstrings explaining each scenario (e.g., test_utf8_char_split_across_two_chunks, test_incomplete_utf8_at_end_replaced). Clear grouping by scenario."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task produces code changes, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly names the exact file (python_modules/libraries/dagster-k8s/dagster_k8s/pipes.py), the exact function (_process_log_stream), and prescribes exact implementation details (codecs.getincrementaldecoder, decoder.decode with specific parameters). This removes the localization and design challenge from the task."
+      "reason": "instruction.md names the exact file (python_modules/libraries/dagster-k8s/dagster_k8s/pipes.py) and exact function (_process_log_stream), and prescribes the exact implementation approach including specific API calls (codecs.getincrementaldecoder, decoder.decode with specific parameters). This goes well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -3,27 +3,27 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file path 'src/bun.js/bindings/BunPlugin.cpp' and function name 'JSMock__jsModuleMock', neither of which appears in instruction.md. The instruction only mentions mock.module() behavior without naming the source file or C++ function. Tests also check for specific patterns like 'argumentCount()' and 'isEmpty()' which are not mentioned in the instruction."
+      "reason": "Tests assert on specific file path 'src/bun.js/bindings/BunPlugin.cpp', function name 'JSMock__jsModuleMock', specific guard patterns like 'argumentCount()' and 'isEmpty()', and exact regex patterns for type guards \u2014 none of which are mentioned in instruction.md. The instruction only mentions mock.module() crashing and needing a TypeError, not the specific C++ file, function name, or existing guards."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md Requirements section explicitly lists acceptable type guard patterns (isString, isCell, isObject, etc.), error-throwing patterns (throwException, createTypeError, etc.), and return patterns (return JSValue, RETURN_IF_EXCEPTION, etc.). This essentially prescribes the exact implementation approach rather than just describing the bug."
+      "reason": "instruction.md Requirements section explicitly lists acceptable type guard patterns ('isString(', 'isCell(', etc.), error throwing patterns ('throwException', 'createTypeError', etc.), and return patterns ('return JSValue', 'RETURN_IF_EXCEPTION', etc.). It also states 'Type validation must occur before string conversion' and 'argumentCount() and isEmpty() validation guards must remain in place'. This essentially specifies the implementation approach, not just the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use regex patterns that accept multiple alternative type guards (isString, isCell, isObject, isSymbol, isNumber, etc.), multiple error-throwing mechanisms (throwException, createTypeError, throwTypeError, etc.), and multiple return patterns. Different correct implementations using different guard/error combinations would pass."
+      "reason": "The tests use broad regex pattern lists for type guards, error patterns, and return patterns. An alternative fix using e.g. isCell() instead of isString(), or createError instead of createTypeError, would still pass. The tests check for categories of patterns rather than exact code."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_type_guard_before_tostring, test_type_guard_error_path, test_error_message_descriptive) are purely text/regex-based AST checks reading the source file with Path(TARGET).read_text() and searching for string patterns. They never compile or execute the C++ code. The pass-to-pass tests do run subprocesses, but the core fix verification is text-only."
+      "reason": "The fail-to-pass tests (test_type_guard_before_tostring, test_type_guard_error_path, test_error_message_descriptive) are purely text/regex searches on source code \u2014 they use re.search on file contents without any compilation or execution. The pass-to-pass tests do run subprocesses, but the core fail-to-pass tests only do 'assert regex in open(path).read()' style checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/default BunPlugin.cpp without the isString guard, throwException, and early return would fail the f2p tests since those regex patterns wouldn't match in the function body. The tests require specific code patterns to exist that don't exist in the base commit."
+      "reason": "A stub/no-op wouldn't pass the fail-to-pass tests because they check for the presence of specific type guard patterns before toString() in the function body, error throwing code, and early return patterns \u2014 none of which exist in the base code at the specified commit."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun's solve.sh (or solution/solve.sh in the container). An agent could read it to see the exact patch. Additionally, the tests are purely text-matching on source code, so an agent could grep test_outputs.py to discover exactly which patterns are checked and insert minimal matching text."
+      "reason": "The solution is in /workspace/bun alongside the agent's working directory via solve.sh. The agent could read solution/solve.sh to see the exact git patch. Additionally, the tests are pure text pattern matching on source code, so the agent could craft code that matches the regex patterns without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
@@ -31,7 +31,7 @@
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass vs pass_to_pass, pr_diff vs repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The Requirements section in instruction.md explicitly names internal C++ patterns like 'isString(', 'isCell(', 'toStringOrNull', 'throwException', 'createTypeError', 'RETURN_IF_EXCEPTION', and 'JSType::' \u2014 these are implementation-level details that reveal the exact file and code patterns needed, making localization trivial."
+      "reason": "instruction.md Requirements section names exact internal C++ patterns like 'isString(', 'isCell(', 'toStringOrNull', 'throwException', 'createTypeError', 'RETURN_IF_EXCEPTION', and mentions 'argumentCount()' and 'isEmpty()' guards. These are implementation-level details that leak the solution location and approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

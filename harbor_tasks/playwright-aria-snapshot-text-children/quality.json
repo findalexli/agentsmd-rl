@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes the file (packages/injected/src/ariaSnapshot.ts), function (textContributesInfo), utility (longestCommonSubstring), and all the specific test cases (name/text pairs and expected inclusion/exclusion outcomes) that the tests assert. The test cases in test_outputs.py map directly to the tables in instruction.md."
+      "reason": "The instruction names the file (packages/injected/src/ariaSnapshot.ts), the function (textContributesInfo), the utility (longestCommonSubstring), and provides concrete test cases with expected inclusion/exclusion behavior that map directly to the test assertions. The test for function existence checks 'function textContributesInfo' and 'longestCommonSubstring' \u2014 both explicitly mentioned. All behavioral test cases (numeric/code/symbol, partial overlap, exclusions) are enumerated in the instructi"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (text children silently dropped when they shouldn't be) and points to the responsible function, but does not specify the exact fix (removing the `node.name.length > text.length` early return). A developer must reason about why the function incorrectly excludes valid text."
+      "reason": "The instruction describes the buggy behavior (text children dropped when they shouldn't be) and provides expected input/output cases, but does not specify the exact fix (removing the `node.name.length > text.length` guard). The agent must reason about what condition in textContributesInfo is wrong."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_function_exists asserts both 'function textContributesInfo' and 'longestCommonSubstring' must be present as literal strings in the source. While instruction.md mentions preserving longestCommonSubstring, an alternative correct fix that renames or inlines the function, or restructures textContributesInfo differently, would fail these static checks. More critically, the JS harness uses a regex `function textContributesInfo\\([^)]*\\)[^{]*\\{([\\s\\S]*?)\\n\\}` to extract the function body and eval i"
+      "reason": "test_function_exists asserts 'longestCommonSubstring' must remain in the source, and the JS harness extracts textContributesInfo via regex 'function textContributesInfo\\([^)]*\\)[^{]*\\{([\\s\\S]*?)\\n\\}'. An alternative correct fix that renames the function, restructures it (e.g., inlines it into a lambda or moves it), or uses a different overlap-detection approach (e.g., Set-based word comparison) would fail these tests even if behaviorally correct. However, the instruction does say 'This utility a"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core behavioral tests (test_text_contributes_unique_short_text, test_text_contributes_partial_overlap, test_preserved_exclusions) extract the function via regex, eval it in Node.js, and call it with test inputs to check return values. Only test_function_exists is a static text check; the rest execute the code."
+      "reason": "The core behavioral tests (test_text_contributes_unique_short_text, test_text_contributes_partial_overlap, test_preserved_exclusions) extract the function from source, execute it via Node.js subprocess, and check return values. test_function_exists is text-based but is a gate/static check, not the main behavioral verification. The repo tests actually run npm commands."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub that always returns True would fail test_preserved_exclusions (which asserts False for covered_hello, covered_foo, empty_text). A stub that always returns False would fail test_text_contributes_unique_short_text and test_text_contributes_partial_overlap. No trivial default can pass all fail-to-pass tests."
+      "reason": "A stub that always returns True would fail test_preserved_exclusions (which expects False for covered_hello, covered_foo, empty_text). A stub that always returns False would fail test_text_contributes_unique_short_text and test_text_contributes_partial_overlap. A stub returning None fails both. The f2p tests require genuine logic changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/playwright (reachable from the container) and solve.sh is in /solution/solve.sh. The agent could read or execute it. Additionally, test_outputs.py is at tests/test_outputs.py and contains the exact test cases and expected values, which the agent could grep for. The gold patch is a simple 3-line deletion that could be directly copied."
+      "reason": "The solution file exists at /workspace/playwright as solve.sh content could potentially be accessed. More critically, the test file test_outputs.py with the JS harness and all expected values is accessible at the standard path. The agent could read /solution/solve.sh (if mounted) or grep for the patch content. The Dockerfile doesn't show evidence of removing the solution directory from the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All inclusion cases (short unique text, partial overlap with unique info) and exclusion cases (text covered by name, empty text, no name) from instruction.md are tested in the corresponding test functions."
+      "reason": "All inclusion cases (short unique text, partial overlap) and exclusion cases (text subsumed by name, empty text, no name) from the instruction tables are tested. The requirement that longestCommonSubstring remain is also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with clear section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff, Pass-to-pass/pr_diff, Repo CI/CD), have descriptive names (test_text_contributes_unique_short_text, test_preserved_exclusions), and include docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it's about fixing a function's boolean return behavior."
+      "reason": "The task is about fixing a function's behavior, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "All filenames, paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function, which is appropriate for the task scope. It does not specify the exact buggy line or the fix. Mentioning textContributesInfo and longestCommonSubstring is necessary context, not solution leakage."
+      "reason": "The instruction names the file and function (which is appropriate since the task domain is specific), but does not identify the exact buggy line or the specific condition to remove. The agent must analyze the function logic to determine the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

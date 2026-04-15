@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific strings not fully discoverable from instruction.md alone. For example, test_download_catalog_method_exists checks for exact signature 'def _download_catalog(cls, bucket, suffix=\"\"):', test_ci_settings_uses_new_name checks for exact string 'S3_REPORT_BUCKET = S3_REPORT_BUCKET_NAME', test_collect_statistics_uses_settings checks for 'from ci.praktika.settings import Settings' (instruction says 'import from praktika.settings' without the 'ci.' prefix), and test_issue_to_s3"
+      "outcome": "pass",
+      "reason": "The instruction names all specific file paths (ci/praktika/settings.py, ci/praktika/issue.py, ci/jobs/collect_statistics.py, ci/settings/settings.py, ci/praktika/validator.py, etc.), variable names (S3_REPORT_BUCKET, S3_UPSTREAM_REPORT_BUCKET, HTML_S3_PATH), method signatures (_download_catalog(cls, bucket, suffix=\"\")), error messages ('S3_REPORT_BUCKET Setting must be defined'), import statements, and class names that the tests assert on. All tested specifics are discoverable from the instructi"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exactly what to rename (HTML_S3_PATH -> S3_REPORT_BUCKET), which files to modify, what methods to add (_download_catalog with specific signature), and the exact merge logic. It tells the agent precisely WHAT to change in each file, e.g., 'ci/jobs/collect_statistics.py - should import from praktika.settings instead of ci.settings.settings and use Settings.S3_REPORT_BUCKET'."
+      "reason": "The instruction explicitly states the exact fix: rename HTML_S3_PATH to S3_REPORT_BUCKET, specifies exact attribute declarations ('S3_REPORT_BUCKET: str = \"\"'), exact import statements ('from ci.praktika.settings import Settings'), exact method signatures ('def _download_catalog(cls, bucket, suffix=\"\")'), exact export lines ('S3_REPORT_BUCKET = S3_REPORT_BUCKET_NAME'), and exact error messages. This is essentially a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_download_catalog_method_exists checks for exact method signature 'def _download_catalog(cls, bucket, suffix=\"\"):', test_from_s3_merge_logic checks for 'if Settings.S3_UPSTREAM_REPORT_BUCKET:' and 'cls._download_catalog('. An alternative correct implementation could use a different helper method name, different parameter names, or inline the download logic without a separate method, but would fail these tests."
+      "reason": "Tests assert on exact implementation details that alternative correct fixes wouldn't share. For example, test_download_catalog_method_exists checks for the exact string 'def _download_catalog(cls, bucket, suffix=\"\"):' \u2014 an alternative using a different parameter name or default would fail. test_from_s3_merge_logic checks for exact string 'cls._download_catalog(' and 'if Settings.S3_UPSTREAM_REPORT_BUCKET:'. A correct implementation using a different helper method name or different conditional st"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is purely text-based file content checking (e.g., `assert 'S3_REPORT_BUCKET' in content`). The tests read files and check for string presence/absence. While test_settings_importable does import Settings, the fail-to-pass tests are all `assert 'string' in open(path).read()` patterns with no execution of the actual code logic."
+      "reason": "Nearly every test is purely text-based: they read files and assert substrings exist (e.g., 'assert \"S3_REPORT_BUCKET: str = \"\"\" in content'). The test_settings_importable test does import the module, but the fail-to-pass tests are all string matching on file contents with no behavioral execution of the changed code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings that don't exist in the base commit (e.g., S3_REPORT_BUCKET, S3_UPSTREAM_REPORT_BUCKET, _download_catalog). A stub/no-op implementation wouldn't add these strings to the files, so the tests would fail without actual changes being made."
+      "reason": "The tests check for specific strings that don't exist in the base commit (e.g., S3_REPORT_BUCKET, S3_UPSTREAM_REPORT_BUCKET, _download_catalog). A stub or no-op implementation would not contain these strings, so the tests cannot be trivially satisfied without making actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/ClickHouse and the solve.sh script is accessible. An agent could read the solution/solve.sh file or grep for expected test strings in test_outputs.py to determine exactly what changes to make. The tests only check file contents, so matching the literal fixture strings would pass without understanding."
+      "reason": "The solution file exists at /workspace/ClickHouse (or could be accessed via the solve.sh in /solution/). The agent could read /solution/solve.sh to get the exact patch. Additionally, since tests are purely text-matching, the agent could just insert the required strings into files without understanding the task."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies renaming HTML_S3_PATH to S3_REPORT_BUCKET across all files, adding S3_UPSTREAM_REPORT_BUCKET, adding _download_catalog method, and merge logic in from_s3. All of these are tested via the various test functions."
+      "reason": "All requirements from instruction.md are tested: the rename across all files, new settings, _download_catalog method, from_s3 merge logic, validator error message, collect_statistics import changes, and ci/settings/settings.py export line."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_html_s3_path_removed, test_s3_report_bucket_exists_in_settings, etc.), include a module-level docstring explaining the test categories, and have clear FAIL-TO-PASS / PASS-TO-PASS sections."
+      "reason": "Tests are well-named (test_html_s3_path_removed, test_s3_report_bucket_exists_in_settings, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by the component they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring and renaming, not producing structured data output."
+      "reason": "This task involves code refactoring and renaming, not producing structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and settings names are consistent between instruction.md and the test file. No typos detected."
+      "reason": "All filenames, paths, variable names, and commands in the instruction match those used in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names every file to modify, the exact old and new variable names, the exact method signature to add ('_download_catalog(cls, bucket, suffix=\"\")'), and specific import changes ('should import from praktika.settings instead of ci.settings.settings'). This goes beyond describing the problem and essentially provides the solution blueprint."
+      "reason": "The instruction explicitly names every file that needs modification, exact attribute declarations, exact method signatures, exact import statements, and exact string values. For example, it specifies 'The file ci/jobs/collect_statistics.py currently imports S3_REPORT_BUCKET_NAME from ci.settings.settings and uses it to build S3 paths. It must be updated to import Settings via from ci.praktika.settings import Settings'. This removes all localization challenge from the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code refactoring task, not a config-edit task."
+      "reason": "This is a code refactoring task, not a configuration edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact files (component.py, dbt_event_iterator.py), classes (DbtProjectComponent, DbtEventIterator), methods (_get_dbt_event_iterator, fetch_row_counts, fetch_column_metadata, with_insights), and types (DbtEventIterator, DbtDagsterEventType) that the tests check. The tests assert on these same names and types, all discoverable from the instruction."
+      "reason": "The instruction names the exact files (component.py, dbt_event_iterator.py), classes (DbtProjectComponent, DbtEventIterator), methods (_get_dbt_event_iterator, fetch_row_counts, fetch_column_metadata, with_insights), type aliases (DbtDagsterEventType, DbtDagsterEventType: TypeAlias), and the target return type (DbtEventIterator[DbtDagsterEventType]). All test assertions check for these named entities. The pass_to_pass tests check ruff, py_compile, format, package structure, and pyproject validit"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: change return types from 'Iterator' to 'DbtEventIterator[DbtDagsterEventType]' and simplify the verbose union types to 'DbtEventIterator[DbtDagsterEventType]' for three specific methods. It even specifies the import path. This is a direct description of WHAT to change, not just what's broken."
+      "reason": "The instruction explicitly states the exact fix: change return types from Iterator to DbtEventIterator[DbtDagsterEventType], and change verbose union types to DbtDagsterEventType for three specific methods. It even specifies 'The necessary types (DbtEventIterator, DbtDagsterEventType) can be imported from dagster_dbt.core.dbt_event_iterator'. This is a complete specification of WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The f2p tests check for the presence of 'DbtEventIterator' and 'DbtDagsterEventType' in the AST-unparsed return type annotations. Alternative implementations (e.g., different import styles, different placement of imports) would all pass as long as the return type annotations contain these type names, which is the core semantic requirement."
+      "reason": "The f2p tests use AST parsing to check that return type annotations contain 'DbtEventIterator' and 'DbtDagsterEventType'. Alternative implementations (e.g., different import styles, different line positions, with or without quotes around the annotation) would all pass as long as the AST unparsed annotation contains these strings."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_component_iterator_return_type, test_iterator_fetch_row_counts_return_type, etc.) use AST parsing to extract return type annotations and check for string substrings like 'DbtEventIterator' and 'DbtDagsterEventType' in the unparsed AST. They never import or call the actual code. The pass-to-pass tests do run subprocesses (ruff, py_compile), but the core behavioral tests are purely text/AST inspection."
+      "reason": "The f2p tests (test_component_iterator_return_type, test_iterator_fetch_row_counts_return_type, etc.) use AST parsing to check string content of return type annotations \u2014 they do `assert 'DbtEventIterator' in return_type` on the unparsed AST string. They don't import or call the code, don't check that the types actually resolve, and don't verify runtime behavior. The pass_to_pass tests do run subprocesses (ruff, py_compile) but those aren't the fail_to_pass tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that the return type annotations contain 'DbtEventIterator' and 'DbtDagsterEventType' and do NOT contain the verbose union types. A stub or no-op implementation would leave the original 'Iterator' or verbose union types in place, which would fail these assertions."
+      "reason": "The f2p tests check that specific return type annotations contain 'DbtEventIterator' and 'DbtDagsterEventType'. The original code has 'Iterator' as the return type for _get_dbt_event_iterator and verbose union types for the other methods. A stub/no-op change wouldn't pass these assertions since the original annotations don't contain the required strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/dagster's solve.sh (solution/solve.sh is mounted/available), and the agent could read it. Additionally, the tests check for simple string patterns ('DbtEventIterator', 'DbtDagsterEventType') in AST output, which could be matched by grepping test files to discover the expected values without understanding the bug."
+      "reason": "The solution is in /workspace/dagster's solve.sh (solution/solve.sh is visible in the container). The agent could read the solution file directly. Additionally, the tests check for literal strings ('DbtEventIterator', 'DbtDagsterEventType') that are explicitly named in the instruction, making it trivial to pattern-match without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four return type changes specified in the instruction (1 in component.py, 3 in dbt_event_iterator.py) are tested by corresponding f2p tests, and additionally the no-verbose-union constraint is tested."
+      "reason": "All four return type changes specified in the instruction (1 in component.py, 3 in dbt_event_iterator.py) are tested by individual f2p test functions, plus the import requirement is implicitly tested via ruff/py_compile checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments (PASS_TO_PASS TESTS - Repo CI commands, PASS_TO_PASS TESTS - Static checks, FAIL_TO_PASS TESTS) and have descriptive docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (PASS_TO_PASS TESTS - Repo CI commands, PASS_TO_PASS TESTS - Static checks, FAIL_TO_PASS TESTS), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves changing type annotations in Python source code, not producing structured data like JSON/CSV/API/DB output."
+      "reason": "This task modifies type annotations in Python source code; it does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, class names, method names, and type names in the instruction are all correct and match the actual codebase and test expectations."
+      "reason": "File paths, class names, method names, type aliases, and commands are all correctly spelled and consistent across instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files, exact methods, and exact type changes needed. For example, it specifies 'DbtProjectComponent._get_dbt_event_iterator() should return DbtEventIterator[DbtDagsterEventType] instead of Iterator' \u2014 this is precise localization of the fix, not just a description of the problem."
+      "reason": "The instruction names the exact files, exact methods, exact current return types, and exact target return types. For example, it says '_get_dbt_event_iterator() should return DbtEventIterator[DbtDagsterEventType] instead of Iterator' and lists each method in DbtEventIterator that needs changing. This goes beyond describing what's broken and specifies the exact localization and fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Python type annotation changes, not a configuration edit task."
+      "reason": "This is a code-only task modifying Python type annotations, not a config-edit task."
     }
   },
   "tier_a_fails": [

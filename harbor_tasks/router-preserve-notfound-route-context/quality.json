@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths (packages/react-router/src/Match.tsx, packages/solid-router/src/Match.tsx, packages/solid-router/src/not-found.tsx, packages/vue-router/src/Match.tsx), function names (getNotFound), and literal string patterns (error.routeId ??= matchState.routeId, notFoundError.routeId ??=, etc.) checked in tests are explicitly named in instruction.md."
+      "reason": "All file paths (packages/react-router/src/Match.tsx, packages/solid-router/src/Match.tsx, packages/solid-router/src/not-found.tsx, packages/vue-router/src/Match.tsx), function names (getNotFound), and literal patterns (error.routeId ??= matchState.routeId, notFoundError.routeId ??=, etc.) checked in test assertions are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies exact implementation details: 'error.routeId ??= matchState.routeId' appearing twice, 'getNotFound' function name, '(error as any)?.cause' pattern, 'error.routeId ??= matchData.value?.routeId as any' - these are the exact code changes, not just a description of what's broken."
+      "reason": "instruction.md specifies the exact fix: 'error.routeId ??= matchState.routeId' appearing twice in React, 'getNotFound' function with specific cause-checking logic in Solid, and exact patterns like 'error.routeId ??= matchData.value?.routeId as any' for Vue. This tells the agent exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_react_match_assigns_routeId_onCatch assert exact string 'error.routeId ??= matchState.routeId' via _file_contains. An alternative correct fix using e.g. 'error.routeId = error.routeId ?? matchState.routeId' or a different variable name would fail. test_solid_notFound_exports_getNotFound checks for exact string 'export function getNotFound' and '(error as any)?.cause'. test_vue_match_assigns_routeId checks for exact string 'error.routeId ??= matchData.value?.routeId as any'."
+      "reason": "Tests like test_react_match_assigns_routeId_onCatch assert exact string 'error.routeId ??= matchState.routeId', test_solid_notFound_exports_getNotFound checks for 'export function getNotFound' and '(error as any)?.cause', test_vue_match_assigns_routeId checks 'error.routeId ??= matchData.value?.routeId as any'. An alternative correct fix using different variable names, helper patterns, or assignment approaches would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_react_match_assigns_routeId_onCatch, test_react_match_assigns_routeId_in_fallback, test_solid_match_uses_getNotFound_helper, test_solid_notFound_exports_getNotFound, test_vue_match_assigns_routeId) are ALL text-matching via _file_contains checking for literal strings in source files. While pass-to-pass tests run actual test suites, the core f2p tests are purely text-based."
+      "reason": "The fail-to-pass tests (test_react_match_assigns_routeId_onCatch, test_react_match_assigns_routeId_in_fallback, test_solid_match_uses_getNotFound_helper, test_solid_notFound_exports_getNotFound, test_vue_match_assigns_routeId) are all string-in-file checks using _file_contains. They do 'assert content_check' where content_check = _file_contains(filepath, \"error.routeId ??= matchState.routeId\"). While pass-to-pass tests run actual test suites, the core f2p tests are pure text matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check if specific strings exist in files (e.g., test_react_match_assigns_routeId_onCatch checks 'error.routeId ??= matchState.routeId' in Match.tsx). An agent could simply append a comment containing that string to the file, or add dead code containing the pattern, without actually fixing the bug."
+      "reason": "The f2p tests check for string patterns in files (e.g., test_react_match_assigns_routeId_onCatch checks if 'error.routeId ??= matchState.routeId' exists in Match.tsx). An agent could simply append a dead-code comment containing the exact string to each file without implementing any actual fix, and the f2p tests would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/router accessible to the agent. The agent could read solve.sh or the gold patch from /solution/ directory. Also, since f2p tests are pure string matching, the agent could grep test files to find the exact strings being checked and insert them as dead code."
+      "reason": "The solution is in /workspace/router accessible to the agent. The agent could read solution/solve.sh or the gold patch. Additionally, since f2p tests are pure string matching, the agent could just insert the expected strings as comments without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (React routeId assignment in onCatch and fallback, Solid getNotFound helper with cause unwrapping, Vue routeId assignment) are tested, plus pass-to-pass tests verify existing test suites, types, and eslint pass."
+      "reason": "All behaviors described in instruction.md are tested: React routeId assignment in onCatch and fallback, Solid getNotFound helper with cause checking, Solid Match.tsx integration, Vue routeId assignment in both handlers, plus pass-to-pass tests for unit tests, types, and eslint."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments ('Fail-to-pass tests' and 'Pass-to-pass tests'), each has a descriptive docstring explaining purpose, and naming follows clear conventions."
+      "reason": "Tests are clearly grouped with comments ('Fail-to-pass tests' and 'Pass-to-pass tests'), well-named (test_react_match_assigns_routeId_onCatch, test_solid_notFound_exports_getNotFound, etc.), and include docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md and tests appear correct and consistent."
+      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files, exact code patterns ('error.routeId ??= matchState.routeId'), exact function names to create ('getNotFound'), and exact locations within those files (onCatch handler, fallback handler). This goes far beyond describing what's broken."
+      "reason": "instruction.md specifies exact file paths AND exact code patterns to insert: 'error.routeId ??= matchState.routeId appearing twice', 'error.routeId ??= matchData.value?.routeId as any', 'export function getNotFound', '(error as any)?.cause'. This goes far beyond identifying buggy files and gives the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [

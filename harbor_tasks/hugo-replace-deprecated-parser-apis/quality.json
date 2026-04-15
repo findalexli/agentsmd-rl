@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names the target file (tpl/internal/templatefuncsRegistry.go), the deprecated APIs (parser.ParseDir, doc.New), the required new function signature (func parseDir(fset *token.FileSet, dir string) returning []*ast.File), the required patterns (parser.ParseFile(fset, with parser.ParseComments, doc.NewFromFiles(fset, astFiles,), the required import (go/ast), and all build/test/vet/gofmt commands. Every string and pattern checked in the tests is discoverable from instruc"
+      "reason": "The instruction.md explicitly names the target file (tpl/internal/templatefuncsRegistry.go), the deprecated APIs (parser.ParseDir, doc.New), the required new function signature (func parseDir(fset *token.FileSet, dir string) returning []*ast.File), the required patterns (parser.ParseFile(fset, with parser.ParseComments, doc.NewFromFiles(fset, astFiles,), the required import (go/ast), and all build/test/vet/fmt commands. Every string and pattern asserted in the tests is discoverable from the inst"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies the exact function signature 'func parseDir(fset *token.FileSet, dir string)' returning '[]*ast.File', the exact call patterns 'parser.ParseFile(fset,' with 'parser.ParseComments', and 'doc.NewFromFiles(fset, astFiles,'. This tells the agent exactly WHAT to write rather than just describing what's broken. The verification criteria essentially dictate the implementation."
+      "reason": "The instruction specifies the exact function signature 'func parseDir(fset *token.FileSet, dir string)' returning '[]*ast.File', the exact call patterns 'parser.ParseFile(fset,' with 'parser.ParseComments', and 'doc.NewFromFiles(fset, astFiles,'. This essentially dictates the implementation rather than just describing what's broken. A competent developer doesn't need to reason about WHAT to change \u2014 the instruction tells them exactly what code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_parse_dir_helper_exists checks for exact string 'func parseDir(fset *token.FileSet, dir string)', test_uses_doc_new_from_files checks for exact string 'doc.NewFromFiles(fset, astFiles,' (requiring the variable name 'astFiles'), test_parse_dir_uses_parser_parse_file checks for 'parser.ParseFile(fset,'. A correct alternative using e.g. 'parsedFiles' instead of 'astFiles', or a different helper signature, would fail."
+      "reason": "Tests assert on gold-specific implementation details: test_parse_dir_helper_exists checks for exact signature 'func parseDir(fset *token.FileSet, dir string)', test_uses_doc_new_from_files checks for exact string 'doc.NewFromFiles(fset, astFiles,', and test_parse_dir_uses_parser_parse_file checks for 'parser.ParseFile(fset,'. An alternative correct fix could use a different helper name (e.g., parseDirFiles), different parameter names (e.g., 'files' instead of 'astFiles'), or inline the logic wit"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_parse_dir_helper_exists, test_uses_doc_new_from_files, test_parse_dir_uses_parser_parse_file, test_no_deprecated_parser_parse_dir, test_no_deprecated_doc_new, test_ast_import_added, and test_parse_dir_not_exported are all pure text-matching (reading file content and checking for string presence). While some tests do execute subprocesses (go build, go test, go vet, gofmt), the majority of fail-to-pass tests are text assertions only."
+      "reason": "Tests test_no_deprecated_parser_parse_dir, test_no_deprecated_doc_new, test_parse_dir_helper_exists, test_parse_dir_uses_parser_parse_file, test_uses_doc_new_from_files, and test_ast_import_added are purely text-matching tests (reading file content and checking for string presence). While tests like test_code_compiles, test_package_tests_pass, test_repo_go_vet do execute subprocesses, the majority of fail-to-pass tests are pure text assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original file (e.g., parseDir helper, doc.NewFromFiles, go/ast import). A stub or no-op wouldn't add these patterns. Additionally, go build and go test must pass, ensuring the code actually compiles and functions."
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original file (e.g., parseDir helper, doc.NewFromFiles, go/ast import). A stub or no-op cannot satisfy these since the original file contains parser.ParseDir and doc.New which would trigger failures. The build tests also ensure the code actually compiles."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/hugo's container at solution/solve.sh. The agent could read this file or the test file at tests/test_outputs.py to see exactly what strings are checked. The Dockerfile doesn't remove or protect these paths."
+      "reason": "The solution file exists at /workspace/hugo's solution/solve.sh path (or more precisely at the task's solution/ directory). The agent could potentially read the solution script. Additionally, the test file at tests/test_outputs.py contains all the exact strings being checked, so grepping for expected patterns would reveal the solution. The instruction itself also largely reveals the solution via the exact patterns specified in verification criteria."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 11 verification criteria listed in instruction.md are tested: deprecated API removal (tests 1-2), new code patterns (tests 3-6), and build/quality checks (tests 7-11)."
+      "reason": "All 11 verification criteria listed in instruction.md are covered by corresponding tests: deprecated API removal (tests 1-2), new code patterns (tests 3-6), and build/quality checks (tests 7-11)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_no_deprecated_parser_parse_dir, test_code_compiles), include docstrings with fail-to-pass/pass-to-pass annotations, and are logically grouped by concern."
+      "reason": "Tests are well-named (e.g., test_no_deprecated_parser_parse_dir, test_code_compiles), have docstrings indicating fail-to-pass vs pass-to-pass nature, and are logically grouped by concern (deprecated removal, new patterns, build quality)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, function names, and variable names in instruction.md are all correct and consistent with the test file."
+      "reason": "File paths, commands, function names, and variable names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names the exact file (tpl/internal/templatefuncsRegistry.go) and specifies exact function signatures, call patterns, and variable names (e.g., 'astFiles'). This goes well beyond identifying what's broken and dictates the precise implementation, which is hint leakage for what should be a coding task."
+      "reason": "The instruction specifies the exact file (tpl/internal/templatefuncsRegistry.go) AND the exact function signature, exact call patterns, and exact variable names to use (e.g., 'doc.NewFromFiles(fset, astFiles,'). This goes beyond identifying the buggy file and essentially provides the implementation details, making localization and solution design trivial."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

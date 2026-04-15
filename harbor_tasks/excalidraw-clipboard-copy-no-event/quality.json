@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both file paths (packages/excalidraw/clipboard.ts, packages/excalidraw/components/FilledButton.scss), the function name (copyTextToSystemClipboard), the variable (plainTextEntry), the const vs let change, the removal of plainTextEntry=undefined, the return placement logic, the SCSS selector and background-color property. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names both file paths (packages/excalidraw/clipboard.ts, packages/excalidraw/components/FilledButton.scss), the function name (copyTextToSystemClipboard), the variable (plainTextEntry), the const vs let change, the removal of plainTextEntry = undefined, the return placement logic, the SCSS selector and background-color property. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix details: 'plainTextEntry variable should be declared with const rather than let', 'should not set plainTextEntry = undefined', and describes the exact three-tier fallback with return behavior. It also gives the exact SCSS property to add ('background-color: var(--color-success)'). These are implementation-level fixes, not just descriptions of broken behavior."
+      "reason": "The instruction explicitly states the fix details: 'plainTextEntry variable should be declared with const rather than let', 'should not set plainTextEntry = undefined', and describes the exact three-tier fallback with return behavior. It also gives the exact SCSS property to add ('background-color: var(--color-success)'). These are implementation-level fix instructions, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_clipboard_flow_control uses regex patterns like 'await navigator\\.clipboard\\.writeText\\([^)]*\\);\\s*return;' that assert exact syntax. test_no_redundant_undefined checks for literal string 'plainTextEntry = undefined'. test_plain_text_const checks for literal 'const plainTextEntry'. An alternative correct fix (e.g., using a boolean flag instead of return statements, or renaming the variable) would fail these text-matching tests."
+      "reason": "Tests use regex to assert very specific code patterns like 'return;' after 'await navigator.clipboard.writeText', 'const plainTextEntry' as a literal string, and absence of 'plainTextEntry = undefined'. An alternative correct fix (e.g., using a different variable name, using a flag variable instead of return, or restructuring the control flow differently) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2f tests (test_clipboard_flow_control, test_plain_text_const, test_no_redundant_undefined, test_scss_success_color) all use regex/string matching on file contents (e.g., 'assert \"const plainTextEntry\" in func_body'). They never import, compile, or execute the TypeScript code to verify actual clipboard behavior. The pass-to-pass tests only check syntax validity via prettier, not behavior."
+      "reason": "The core f2p tests (test_clipboard_flow_control, test_plain_text_const, test_no_redundant_undefined, test_scss_success_color) all read file contents and match regex/string patterns. None import or execute the TypeScript/SCSS code to verify runtime behavior. The p2p tests only run prettier for syntax validation, not behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (syntax validation via prettier, Node.js return placement check) would not pass with a stub implementation - they require the actual source files to be valid TypeScript/SCSS and have specific structural properties. The buggy original file would fail the f2f tests since it has 'let plainTextEntry' and 'plainTextEntry = undefined' and incorrect return placement."
+      "reason": "The f2p tests check for specific code patterns that differ from the base commit (e.g., 'const plainTextEntry' vs 'let plainTextEntry', return placement inside if block, absence of 'plainTextEntry = undefined', background-color in SCSS). A stub or unmodified file would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace with solve.sh containing the exact patch. The agent could read solution/solve.sh to get the gold patch. Additionally, tests use simple string/regex matching on file contents, so the agent could grep test files (if accessible) to extract expected patterns like 'const plainTextEntry' and 'return;' placement."
+      "reason": "The solution directory exists at /workspace with solve.sh containing the exact patch. The agent could read solution/solve.sh to get the gold patch. Additionally, since tests are purely text-matching, the agent could grep test files (if accessible) to discover the exact regex patterns expected."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: the three-tier fallback with returns (test_clipboard_flow_control), const vs let (test_plain_text_const), no redundant undefined assignment (test_no_redundant_undefined), and SCSS background-color (test_scss_success_color)."
+      "reason": "All behaviors described in instruction.md are tested: return inside if(clipboardEvent) block, return after writeText, const vs let for plainTextEntry, no plainTextEntry = undefined, and SCSS background-color for success state."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_clipboard_flow_control, test_plain_text_const, etc.), have docstrings explaining what they verify, and are logically grouped into f2f and pass-to-pass categories with clear comments."
+      "reason": "Tests are well-named (test_clipboard_flow_control, test_plain_text_const, test_no_redundant_undefined, test_scss_success_color), grouped by concern, and include docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and CSS properties in the instruction are all correct and match the actual codebase."
+      "reason": "File paths, variable names, function names, and SCSS selectors in the instruction all match what's used in the tests and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'plainTextEntry variable should be declared with const rather than let', 'should not set plainTextEntry = undefined', and provides the exact SCSS property 'background-color: var(--color-success)'. These go beyond describing the bug and specify the exact code changes needed."
+      "reason": "The instruction explicitly names the exact variable to change (plainTextEntry), the exact keyword change (let\u2192const), the exact line to remove (plainTextEntry = undefined), and the exact CSS property to add (background-color: var(--color-success)). This goes beyond describing the bug and specifies the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-fix task, not an agentmd-edits/config task."
+      "reason": "This is a code-fix task, not a config-edit task."
     }
   },
   "tier_a_fails": [

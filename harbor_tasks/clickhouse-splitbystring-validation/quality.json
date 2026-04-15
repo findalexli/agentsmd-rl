@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert on the specific file path 'src/Interpreters/TokenizerFactory.cpp' (TARGET_FILE), which is never mentioned in instruction.md. The instruction only mentions 'splitByString' and 'tokenizer' generically without specifying the file path. Tests also check for 'SplitByStringTokenizer' class name, 'getExternalName', 'for (const auto & value : array)' loop pattern, and '#include' header structure \u2014 none of which are mentioned in the instruction."
+      "reason": "Tests assert on many specifics not mentioned in instruction.md: (1) test_clang_format_valid checks BasedOnStyle=='WebKit' and BreakBeforeBraces in .clang-format; (2) test_clang_tidy_valid checks 'Checks' key in .clang-tidy; (3) test_git_log_shows_base_commit checks for SHA '7dad4d8'; (4) test_separator_extracted_before_validation requires 'const auto & <var> = castAs<String>' pattern; (5) test_file_headers_present checks first non-empty line starts with '#include'; (6) test_yaml_config_valid che"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact variable name ('value_as_string'), the exact method to call ('castAs<String>'), the exact check ('value_as_string.empty()'), the exact error message strings, and the step-by-step implementation (extract, check, throw). This is essentially dictating the solution rather than describing the problem."
+      "reason": "Instruction.md specifies the exact location ('for (const auto & value : array)' loop in 'src/Interpreters/TokenizerFactory.cpp'), the exact error messages, and the exact validation logic (check empty before adding to result vector). This is essentially dictating the fix rather than describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: the exact variable name 'value_as_string' (test_validation_inside_loop_structure uses regex for 'const auto & value_as_string = castAs<String>'), the exact loop pattern 'for (const auto & value : array)' (test_allman_brace_style), and specific proximity of throw to empty check. An alternative correct fix using a different variable name or loop structure would fail."
+      "reason": "Tests assert on gold-specific implementation details: test_separator_extracted_before_validation requires 'const auto & <var> = castAs<String>' pattern via regex. test_for_loop_has_block_structure requires specific for-loop signature. An alternative correct fix that validates differently (e.g., using value.get<String>() or a helper function) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is purely textual: they read the file with open(FULL_PATH) and use string/regex matching (e.g., 'assert \"the empty string cannot be used as a separator\" in content'). test_code_compiles attempts compilation but tolerates failures. No test actually executes the tokenizer or tests runtime behavior."
+      "reason": "The majority of f2p tests (TestEmptyStringValidation, TestErrorMessageImprovement, TestValidationStructure) are text-pattern matching via regex on source file content. They do not execute the code, call functions, or verify runtime behavior. The compilation tests only check syntax, not actual exception-throwing behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_empty_string_separator_validation_present, test_exception_thrown_for_empty_separator) only check for text patterns in the source file. An agent could simply insert a dead-code comment containing 'the empty string cannot be used as a separator' and 'if (value_as_string.empty())' with a nearby 'throw Exception' to pass without actually implementing the fix correctly."
+      "reason": "Many tests like test_git_log_shows_base_commit, test_yaml_config_valid, test_clang_format_valid, test_clang_tidy_valid, test_file_headers_present pass on the unmodified repo without any changes. These are tautological - they test pre-existing repo state, not the bug fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/ClickHouse/solution/solve.sh (if present in container) or the test file itself at tests/test_outputs.py to discover exact expected strings like 'the empty string cannot be used as a separator' and 'the separators argument cannot be empty', then insert them as dead text to pass all tests."
+      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted). The agent could read the gold patch from solve.sh. Also, the tests check for literal strings ('the empty string cannot be used as a separator', 'the separators argument cannot be empty') that are provided verbatim in instruction.md, so the agent can just pattern-match without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (empty string validation, array element validation with value_as_string, improved error message, Allman braces, exception terminology, no trailing whitespace) are tested."
+      "outcome": "fail",
+      "reason": "Instruction.md requires validation for direct (non-array) empty string separators, but the tests only check within the array iteration loop (_get_split_by_string_section). The single-separator case is not tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_empty_string_separator_validation_present, test_allman_brace_style, etc.), grouped by concern, and have docstrings explaining their purpose including fail-to-pass vs pass-to-pass classification."
+      "reason": "Tests are well-organized into named classes (TestEmptyStringValidation, TestErrorMessageImprovement, TestValidationStructure, TestCodeStyle, TestRepoStructure) with descriptive method names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "While the instruction doesn't name the exact file, it specifies the exact variable name 'value_as_string', exact method 'castAs<String>', and the exact step-by-step code structure to implement, which constitutes significant implementation leakage beyond just describing the bug."
+      "reason": "Instruction.md explicitly names the file 'src/Interpreters/TokenizerFactory.cpp' and the exact loop signature 'for (const auto & value : array)', which is excessive localization detail that removes the need for the agent to find the buggy code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent configuration edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -60,8 +60,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 2,
+  "fail_count": 8
 }

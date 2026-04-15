@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'orphaned view would keep refreshing indefinitely', 'Don't ignore `DROP` for refreshable materialized views', specific variable name 'is_refreshable_view', exact pattern '!is_refreshable_view && settings[Setting::ignore_drop_queries_probability]', and 'dynamic_cast<StorageMaterializedView *>'. While instruction.md mentions some concepts (isRefreshable, StorageMaterializedView, is_refreshable_view), it does not specify the exact comment text 'orphaned view would ke"
+      "reason": "Tests assert on specific strings like 'orphaned view would keep refreshing indefinitely', exact variable name 'is_refreshable_view', exact pattern '!is_refreshable_view && settings[Setting::ignore_drop_queries_probability]', and the target file path 'src/Interpreters/InterpreterDropQuery.cpp'. While instruction.md mentions isRefreshable() and dynamic_cast, it never specifies the exact variable name 'is_refreshable_view', the exact comment text 'orphaned view would keep refreshing indefinitely', "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the implementation: 'Get a pointer to the table and check if it's a StorageMaterializedView', 'Check if the view is refreshable using isRefreshable()', 'Add !is_refreshable_view to the condition'. It also names the exact variable 'is_refreshable_view' and gives the exact file and line number (~line 199). This leaves essentially no reasoning for the agent."
+      "reason": "instruction.md explicitly states: 'Detect when the table being dropped is a refreshable materialized view', 'Skip the DROP-to-TRUNCATE conversion for such views', 'The repository uses dynamic_cast for type checking', 'The check should use the isRefreshable() method'. This describes exactly WHAT to change and HOW to change it, leaving minimal reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'is_refreshable_view', exact cast syntax 'dynamic_cast<StorageMaterializedView *>', exact regex pattern '!is_refreshable_view\\s*&&\\s*settings[Setting::ignore_drop_queries_probability]', and exact comment strings. An alternative correct fix using e.g. 'is_refreshable' as variable name, or using a different check order, or a helper function, would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'is_refreshable_view' (test_refreshable_view_check_exists), exact regex pattern '!is_refreshable_view\\s*&&\\s*settings[Setting::ignore_drop_queries_probability]', exact string 'orphaned view would keep refreshing indefinitely' (test_truncate_behavior_documented), and 'auto * materialized_view = dynamic_cast' (test_logic_structure). An alternative correct fix using different variable names or comment wording would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_refreshable_view_check_exists, test_truncate_behavior_documented) are purely text-matching: they open the file and assert substrings/regex patterns in the source code. No compilation, no execution, no behavioral verification. Even test_logic_structure just checks line ordering in source text."
+      "reason": "The f2p tests (test_refreshable_view_check_exists, test_truncate_behavior_documented) exclusively use pattern matching on file content via regex and string 'in' checks. No test imports, compiles, or executes the modified code to verify actual behavior. The clang-tidy tests are p2p and only check syntax, not behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply inserts the expected comment text and variable declarations (without any actual logic integration or compilation) would pass all f2p tests, since they only check for string presence in the source file, not actual behavior."
+      "reason": "The f2p tests (test_refreshable_view_check_exists, test_truncate_behavior_documented) are pure text-matching tests. An agent could simply insert the exact expected comment text and variable declarations as dead code (never executed) and pass all f2p tests without actually fixing the bug."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/ClickHouse's solution/solve.sh (if accessible) or simply grep the test file at tests/test_outputs.py to discover the exact strings being asserted (e.g., 'orphaned view would keep refreshing indefinitely') and insert them verbatim without understanding the bug."
+      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or similar path accessible in the container). The agent could read it directly. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the exact expected strings and insert them verbatim without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires checking for refreshable views, skipping DROP-to-TRUNCATE conversion, and adding a comment. Tests cover all three requirements (comment check, dynamic_cast check, condition check)."
+      "outcome": "fail",
+      "reason": "instruction.md requires that 'DROP TABLE statement must not be converted to TRUNCATE TABLE for refreshable materialized views' \u2014 the actual runtime behavior. No test verifies this behavioral requirement; tests only check for specific text patterns in the source file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_refreshable_view_check_exists, test_truncate_behavior_documented, test_logic_structure, etc.) with docstrings indicating f2p vs p2p classification."
+      "reason": "Tests are well-named (test_refreshable_view_check_exists, test_truncate_behavior_documented, test_logic_structure, etc.), grouped by concern, and include docstrings with f2p/p2p annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces C++ source code modifications, not structured data like JSON/CSV/API/DB."
+      "reason": "This task produces a C++ code patch, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies 'src/Interpreters/InterpreterDropQuery.cpp - The executeToTableImpl function around line 199', which is precise localization that removes the need for the agent to find the buggy location."
+      "reason": "instruction.md specifies implementation-level details: use dynamic_cast, use isRefreshable() method, include specific comment content, and the exact pattern of the fix. While it doesn't name the exact file, it effectively dictates the implementation approach, which is leakage when the task should require the agent to reason about the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -60,8 +60,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 2,
+  "fail_count": 8
 }

@@ -2,56 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md names all file paths, method names (hasExplicitCliParams, performInstallation, trackSelfHostedInstall), key names ('ip' vs 'hostIp'), specific calls (Runtime::enableCoroutine(SWOOLE_HOOK_ALL), setConnectTimeout(5000), setTimeout(5000), Coroutine::getCid(), go()), and UI changes that the tests assert on. Every test-asserted specific is discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_cli_params_skip_web_installer checks for 'function hasExplicitCliParams' and 'str_starts_with' by name; test_oncomplete_callback_structure checks for '$responseSent' variable name and 'writeSseEvent' method; test_tracking_uses_coroutine checks for 'Coroutine::getCid()' and 'go(function' patterns; test_swoole_coroutine_enabled checks for 'use Swoole\\Runtime' import. These specific function/variable names are not di"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'Add Runtime::enableCoroutine(SWOOLE_HOOK_ALL)', 'Add setConnectTimeout(5000) and setTimeout(5000)', 'Change the key from hostIp to ip', 'Add a $responseSent flag', 'wrap the tracking call in a go() coroutine', and 'Add a hasExplicitCliParams() method'. These are exact fixes, not just descriptions of what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken and what the fix must achieve (e.g., 'use setConnectTimeout and setTimeout', 'check Coroutine::getCid()') but doesn't specify exact line numbers or complete code to write. It describes desired behavior rather than exact patches."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact method signature 'private function hasExplicitCliParams(): bool', exact parameter '?callable $onComplete = null', exact variable name '$responseSent', exact string 'go(function ()' in content, 'Coroutine::getCid()' literal, '$hostIp !== false' exact string. Alternative correct fixes (e.g., using a different method name, different parameter approach, different coroutine detection) would fail."
+      "reason": "Tests assert gold-specific implementation details: test_cli_params_skip_web_installer requires a method named exactly 'hasExplicitCliParams'; test_oncomplete_callback_structure requires variable named '$responseSent' and method 'writeSseEvent'; test_tracking_uses_coroutine requires exact pattern 'Coroutine::getCid()'. Alternative correct implementations using different names/approaches would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are pure text searches: reading file content and asserting substrings like 'assert \"Runtime::enableCoroutine(SWOOLE_HOOK_ALL)\" in content', 'assert \"@gethostbyname\" in content', 'assert \"go(function ()\" in content'. No tests import/call the PHP code or execute it to verify behavior. Only p2p tests run 'php -l' for syntax checking."
+      "reason": "Most fail-to-pass tests are pure text/regex searches on source files: test_gethostbyname_error_suppression checks '@gethostbyname' in file text; test_tracking_payload_uses_correct_ip_key uses regex on source; test_http_client_has_timeouts uses regex for 'setConnectTimeout'; test_oncomplete_callback_structure reads file text for '$responseSent'. None of these execute the code paths they test."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all f2p tests are text-matching (e.g., checking if a string like 'Runtime::enableCoroutine(SWOOLE_HOOK_ALL)' exists in a file), an agent could simply append the required strings as comments or dead code to pass all tests without actually implementing any bug fix."
+      "reason": "Most fail-to-pass tests check for string presence in source files (e.g., test_gethostbyname_error_suppression just checks '@gethostbyname' exists in source text). An agent could add a dead-code comment containing '@gethostbyname' without actually fixing the bug and pass the test."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, since tests are pure string matching, the agent could grep test files for expected strings and insert them verbatim."
+      "reason": "The solution/solve.sh exists in the container at /workspace and contains the complete gold patch. An agent could read this file to extract exact variable names, function names, and code patterns that tests assert on (e.g., 'hasExplicitCliParams', '$responseSent', 'writeSseEvent')."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All 11 issues described in instruction.md have corresponding test coverage: coroutine enabling, CLI params, DNS error suppression, IP key, timeouts, onComplete callback, coroutine tracking, upgrade detection, step-4 template, step-5 text, and CSS upgrade mode."
+      "outcome": "fail",
+      "reason": "Issue #11 (upgrade mode CSS with min-height:0 on [data-upgrade='true'] .installer-step) is described in instruction.md but the test file is truncated and no CSS test is visible. Issue #9 (step 4 secret key conditional) and Issue #10 (step 5 text) appear to have tests but verifying full coverage is impossible due to truncation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (PASS-TO-PASS TESTS, FAIL-TO-PASS TESTS), descriptive function names (test_swoole_coroutine_enabled, test_has_explicit_cli_params_method), and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped into 'PASS-TO-PASS TESTS' and 'FAIL-TO-PASS TESTS' sections with descriptive docstrings and comments explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing PHP code/templates/CSS, not producing structured data output like JSON/CSV/API schemas."
+      "reason": "This task involves fixing installer code, not producing structured data output like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, method names, and commands in the instruction are consistent with the actual repository structure and test expectations."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact method signatures ('hasExplicitCliParams()'), exact variable names ('$responseSent'), exact API calls ('setConnectTimeout(5000)'), and exact implementation patterns ('wrap in go() coroutine'). This goes well beyond identifying what's broken and essentially dictates the solution."
+      "reason": "Instruction.md specifies exact method names to use: 'setConnectTimeout and setTimeout methods', 'Coroutine::getCid()', 'go(function () { ... })', and exact key names like \"'ip' (not 'hostIp')\". It also specifies exact CSS selectors '[data-upgrade=\"true\"]' and '.installer-step'. These are implementation-level hints beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a configuration-editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -59,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

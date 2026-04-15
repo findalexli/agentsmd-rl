@@ -2,25 +2,31 @@
 
 ## Problem
 
-In the History view of this VS Code extension, the "Workspace" and "Favorites" filter toggles are mutually exclusive — selecting one deselects the other. This is incorrect behavior: both filters should work as independent toggles that can be active simultaneously.
+In the History view of this VS Code extension, the "Workspace" and "Favorites" filter toggles are mutually exclusive with the sort options — selecting one deselects all others. This is incorrect behavior: the Workspace and Favorites filters should work as independent toggles that can be active simultaneously, while only the sort options (Newest, Oldest, Most Relevant) remain mutually exclusive.
 
-The Workspace filter is controlled by the `showCurrentWorkspaceOnly` state and the Favorites filter is controlled by the `showFavoritesOnly` state. Currently, these two toggle filters behave as if they're part of a radio button group where only one can be selected at a time, when they should behave like independent checkboxes that can both be active.
+The Workspace filter is controlled by `showCurrentWorkspaceOnly` state and the Favorites filter is controlled by `showFavoritesOnly` state. Currently both filter types behave like radio buttons when the filters should be checkboxes.
 
 ## Expected Behavior
 
-- Workspace and Favorites should be independent toggle filters (both can be active at the same time)
-- Sort options (Newest, Oldest, Most Relevant) should remain as mutually exclusive radio options
-- The Workspace and Favorites filters should be wrapped in a container div that uses both `marginTop` and `flex` CSS properties to maintain visual continuity with the existing layout
-- The container div should have a negative top margin to align visually with the radio group above it
+- Workspace and Favorites filters must be independent toggle filters (both can be active at the same time)
+- Sort options (Newest, Oldest, Most Relevant) must remain as mutually exclusive radio options within VSCodeRadioGroup
+- The HistoryView.tsx file must have at least 5 `<VSCodeRadio` elements
+- After the fix, the file should contain a line with both `marginTop` and `flex` properties set, with `marginTop` set to `-8`
+- Both `showCurrentWorkspaceOnly` and `showFavoritesOnly` filter controls must appear after the closing `</VSCodeRadioGroup>` tag
+
+## Visual Alignment Issue
+
+The filter controls currently appear misaligned relative to the sort options above them. The fix must address this visual alignment while allowing the filters to function as independent toggles.
 
 ## Files to Look At
 
-- `webview-ui/src/components/history/HistoryView.tsx` — contains the filter UI logic with `showCurrentWorkspaceOnly` and `showFavoritesOnly` state
+- `webview-ui/src/components/history/HistoryView.tsx` — contains the filter UI logic
+- `package.json` — for discovering available scripts
 
 ## Documentation Update Requirement
 
 After fixing the code, update `CLAUDE.md`:
 
-- Add a "Miscellaneous" section to `CLAUDE.md`
-- Include a tip that `npm run compile` is the correct command (not `npm run build`)
-- Mention checking `package.json` for discovering available scripts
+- Add a "Miscellaneous" section
+- Include a tip about checking `package.json` for available scripts
+- Mention that `npm run compile` is the correct build command (not `npm run build`)

@@ -3,64 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (packages/config-yaml/src/schemas/models.ts, packages/config-yaml/src/validation.ts, gui/src/redux/slices/configSlice.ts, core/config/yaml/models.ts), the specific fields (contextLength, baseModelFields, defaultCompletionOptions), the constants (DEFAULT_MAX_TOKENS, DEFAULT_CONTEXT_LENGTH), and the schema detail (z.number().optional()). All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names all key file paths (config.yaml schema, validation.ts, configSlice.ts, core/config/yaml/models.ts), field names (contextLength, baseModelFields, defaultCompletionOptions), constants (DEFAULT_MAX_TOKENS, DEFAULT_CONTEXT_LENGTH), and the concepts tested (Zod schema stripping, effective context length computation, GUI fallback constant, core config conversion). The specific variable names like 'effectiveContextLength' and 'effectiveMaxTokens' tested in test_validation_uses_eff"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix in multiple places: 'The schema must accept contextLength: z.number().optional() as a valid model-level field', 'The validation should compute an effective context length (preferring model-level value, falling back to defaultCompletionOptions.contextLength)', 'should use DEFAULT_CONTEXT_LENGTH (32768) instead', and 'reads contextLength only from defaultCompletionOptions.contextLength, not from the model level.' These are implementation-level prescr"
+      "reason": "The instruction explicitly states the fix: 'The schema must accept contextLength: z.number().optional() as a valid model-level field', 'The validation should compute an effective context length (preferring model-level value, falling back to defaultCompletionOptions.contextLength)', 'it should use DEFAULT_CONTEXT_LENGTH (32768) instead', and describes exact code patterns needed. This goes beyond describing what's broken to prescribing the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names like 'effectiveContextLength' and 'effectiveMaxTokens' (test_validation_uses_effective_context_length, test_validation_warning_uses_effective_values) and exact patterns like 'const contextLength =' (test_core_models_reads_contextlength_from_model_level). An alternative correct fix using different variable names (e.g., 'resolvedContextLength', 'ctxLen', or inline expressions without named variables) would fail these regex-based tests."
+      "reason": "Tests assert on gold-specific implementation details: test_validation_uses_effective_context_length requires a variable named exactly 'effectiveContextLength' via regex 'const\\s+effectiveContextLength\\s*=\\s*model\\.contextLength\\s*\\?\\?\\s*model\\.defaultCompletionOptions'. An alternative fix using a different variable name (e.g., 'resolvedContextLength' or 'ctxLen') or inline expression would fail. Similarly test_core_models_reads_contextlength_from_model_level requires 'const\\s+contextLength\\s*=' "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all f2p tests (TestContextLengthYamlSchema, TestContextLengthValidation, TestConfigSliceConstants, TestCoreConfigYaml) are purely text/regex searches on source files (e.g., re.search on file content). None of them import, call, or execute the code to verify behavior. The TypeScript compilation test and vitest tests are pass_to_pass, not f2p."
+      "reason": "The f2p tests (TestContextLengthYamlSchema, TestContextLengthValidation, TestConfigSliceConstants, TestCoreConfigYaml) are all purely text-matching via regex on source files (e.g., re.search on file content). None of them import, call, or execute the code to verify behavior. The p2p tests do run tsc and vitest, but the core f2p tests are all 'assert pattern in open(path).read()' style."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All f2p tests are regex-based source code inspections, not behavioral tests. An agent could simply insert the exact expected string patterns (e.g., 'const effectiveContextLength = model.contextLength ?? model.defaultCompletionOptions') as dead code or comments in the target files without actually implementing the fix, and all tests would pass."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns that don't exist in the base commit (e.g., 'contextLength' in baseModelFields, 'effectiveContextLength' variable). A stub/no-op implementation wouldn't add these patterns, so the tests would fail without actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory contains solve.sh and gold.patch at /solution/. The agent could read /solution/gold.patch to see the exact fix. The Dockerfile and environment don't restrict access to /solution/. Additionally, since tests are pure regex matches, the agent could grep test files or solution files for expected patterns."
+      "reason": "The solution directory contains solve.sh and gold.patch at /solution/. The agent could read /solution/gold.patch to see the exact fix. The Dockerfile doesn't restrict access to /solution/. Additionally, since tests are pure regex matching on source files, the agent could grep test files to discover exact patterns needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four symptoms described in instruction.md (Zod schema stripping, validation ignoring model-level contextLength, GUI wrong fallback constant, core config ignoring model-level contextLength) have corresponding test classes that check for the fix."
+      "reason": "All four symptoms described in instruction.md are tested: (1) Zod schema baseModelFields in TestContextLengthYamlSchema, (2) validation effective context length in TestContextLengthValidation, (3) GUI fallback constant in TestConfigSliceConstants, (4) core config model-level contextLength in TestCoreConfigYaml."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into descriptive classes (TestContextLengthYamlSchema, TestContextLengthValidation, TestConfigSliceConstants, TestCoreConfigYaml, TestRepoLint, TestRepoTests) with detailed docstrings explaining what each test checks and why."
+      "reason": "Tests are well-organized into descriptive classes (TestContextLengthYamlSchema, TestContextLengthValidation, TestConfigSliceConstants, TestCoreConfigYaml, TestRepoLint, TestRepoTests) with docstrings explaining the bug and expected fix for each test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing source code configuration handling, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves fixing code configuration handling, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent (e.g., contextLength, baseModelFields, defaultCompletionOptions, DEFAULT_CONTEXT_LENGTH, DEFAULT_MAX_TOKENS)."
+      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact file locations and exact code patterns: 'z.number().optional() in baseModelFields' in 'packages/config-yaml/src/schemas/models.ts', 'DEFAULT_CONTEXT_LENGTH (32768)' vs 'DEFAULT_MAX_TOKENS (4096)' in the GUI, and the precise fallback logic 'model.contextLength ?? defaultCompletionOptions.contextLength'. This goes well beyond describing symptoms and into prescribing the exact implementation."
+      "reason": "The instruction explicitly names the exact fix patterns: 'The schema must accept contextLength: z.number().optional() as a valid model-level field' (exact Zod code), 'should use DEFAULT_CONTEXT_LENGTH (32768) instead' (exact constant name and value), and describes the exact fallback chain 'model.contextLength ?? defaultCompletionOptions.contextLength'. This constitutes solution leakage beyond identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-fix task, not an agent config editing task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

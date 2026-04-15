@@ -13,9 +13,17 @@ const server = Bun.serve({
     return new Response("ok");
   },
 });
-server.url; // crashes the process
+server.url; // crashes the process instead of throwing a JavaScript error
 ```
 
 ## Expected Behavior
 
-Accessing `server.url` when the URL is invalid should throw a proper JavaScript error, not crash the process. The crash occurs in `src/bun.js/bindings/BunString.cpp` in the `BunString__toJSDOMURL` function: when `DOMURL::create()` fails to parse a string and returns an exception, the code proceeds to dereference a null pointer. Adding a guard that returns early on exception before the dereference prevents the crash.
+Accessing `server.url` when the URL is invalid should throw a proper JavaScript error (e.g., a JavaScript exception that can be caught with try/catch), not crash the entire process with a segmentation fault.
+
+## Requirements
+
+When the fix is applied:
+1. Accessing `server.url` with an invalid URL must throw a JavaScript exception instead of crashing
+2. The git diff for the fix should show additions only (no deletions of existing code)
+3. The success path through the code must still reach `jsCast<JSDOMURL*>`, then `reportExtraMemoryAllocated`, then `RELEASE_AND_RETURN` — in that order after `toJSNewlyCreated`
+4. The file `src/bun.js/bindings/BunString.cpp` must continue to include `"root.h"` at the top

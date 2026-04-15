@@ -6,11 +6,9 @@ When using Microsoft Edge (Chromium-based), closing a browser context while down
 
 ## Expected Behavior
 
-1. **Add a `cancel()` method to the `Download` class.** The browser context already exposes a `cancelDownload(uuid)` method that cancels a download given its UUID. The new `cancel()` method should delegate to this by accessing the page's browser context and calling `cancelDownload` with the download's UUID. The UUID must be accessed as a stored instance field (via `this.<field>`) rather than as a closure-captured constructor parameter.
+1. **The `Download` class should expose a way to cancel an ongoing download programmatically.** The browser context already exposes a `cancelDownload(uuid)` method that cancels a download given its UUID. The `Download` class should provide a public method (no underscore prefix, as it will be called from other files per the project's `CLAUDE.md` conventions) that cancels the download by delegating to this browser context method, using a stored instance field (not a closure-captured constructor argument).
 
-2. **Use public naming for the cancel method.** Per the project's `CLAUDE.md` (lines 99-102), methods that are used in other files must use public naming — no underscore prefix. Since `cancel()` will be called from `crBrowser.ts`, it must be `cancel()` not `_cancel()`.
-
-3. **Cancel all downloads before context disposal.** In `CRBrowserContext`, before sending the `Target.disposeBrowserContext` command, iterate over the context's `_downloads` collection (a `Set` of `Download` instances that each download registers itself in during construction) and call `cancel()` on each one.
+2. **Before disposing the browser context, all ongoing downloads should be cancelled.** In `CRBrowserContext`, before the context is fully disposed via `Target.disposeBrowserContext`, any active downloads associated with that context must be cancelled first to prevent Edge-specific crashes. The cancellation should iterate through all tracked downloads and attempt to cancel each one.
 
 ## Files to Look At
 

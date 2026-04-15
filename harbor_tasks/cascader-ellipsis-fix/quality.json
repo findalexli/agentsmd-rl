@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific values like `maxWidth: 400` (test_item_has_max_width checks for 'maxWidth' in &-item) and `minWidth: 0` (test_content_has_min_width_zero). The instruction.md mentions maxWidth and minWidth: 0 should be present but never specifies the exact value 400 for maxWidth. Also, tests check for 'GenerateStyle', 'CascaderToken', 'getColumnsStyle' strings which are mentioned in instruction.md. The test test_repo_biome_lint and test_repo_eslint run specific npm scripts ('lint:biome', 'l"
+      "reason": "Tests assert specific values like `maxWidth: 400` (test_item_has_max_width checks for 'maxWidth' in &-item), but instruction.md never mentions the specific value 400. Also, tests check for `GenerateStyle`, `CascaderToken`, and `getColumnsStyle` (test_style_structure_valid), which are mentioned in instruction.md. However, the exact maxWidth value of 400 is undiscoverable from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md explicitly states the fix: '&-item block should constrain its width', '&-content block should have min-width: 0 and the ellipsis styles applied to it', 'textEllipsis mixin should be on the text container, not the flex container', and 'maxWidth property is present in &-item'. This tells the agent exactly what to change \u2014 move textEllipsis from &-item to &-content, add minWidth: 0 to &-content, and add maxWidth to &-item."
+      "reason": "instruction.md explicitly states the fix: '&-content block should have min-width: 0 and the ellipsis styles applied to it', 'textEllipsis mixin should be on the text container, not the flex container', 'maxWidth property is present in &-item'. This tells the agent exactly what to change and where, leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use text-based parsing to check that textEllipsis is in &-content and not in &-item, that minWidth: 0 is in &-content, and maxWidth is in &-item. An alternative correct fix might use different property names (e.g., 'overflow: hidden' + 'text-overflow: ellipsis' directly instead of the textEllipsis mixin spread), or use a different maxWidth value, or structure the CSS-in-JS differently. The test_text_ellipsis_moved_to_content specifically searches for the string 'textEllipsis' which locks i"
+      "reason": "Tests use text-matching (e.g., test_text_ellipsis_moved_to_content parses brace-depth to find 'textEllipsis' in specific blocks, test_item_has_max_width checks for literal string 'maxWidth' in &-item block). An alternative fix using a different approach (e.g., using explicit CSS properties instead of the textEllipsis mixin, or using a different width constraint mechanism) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_text_ellipsis_moved_to_content, test_content_has_min_width_zero, test_item_has_max_width) are purely text-based: they read the file content and search for string patterns like 'textEllipsis', 'minWidth', 'maxWidth'. They do not import, compile, render, or execute the component to verify actual ellipsis behavior. While some pass-to-pass tests run TypeScript compilation and test suites, the core behavioral tests are string matching."
+      "reason": "The fail-to-pass tests (test_text_ellipsis_moved_to_content, test_content_has_min_width_zero, test_item_has_max_width) are purely text-matching tests using `assert 'textEllipsis' in stripped`, `assert 'minWidth' in stripped`, etc. They read the file and parse strings rather than executing the code or testing rendered behavior. While there are some pass-to-pass tests that run tsc and test suites, the core f2p tests are all text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that textEllipsis was moved from &-item to &-content and that minWidth: 0 was added. A stub or no-op would not pass these tests since the base commit has textEllipsis in &-item (not &-content) and lacks minWidth: 0 in &-content."
+      "reason": "A stub/no-op implementation would leave the original file unchanged, which has textEllipsis in &-item (not &-content) and lacks minWidth:0 and maxWidth in the respective blocks. The f2p tests would fail on the unmodified file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh in the container, and the agent could read it to find the exact patch. The gold patch is literally present showing 'maxWidth: 400', 'minWidth: 0', and the textEllipsis move. An agent could simply cat /solution/solve.sh and apply the patch."
+      "reason": "The solution file exists at /workspace/ant-design (solution/solve.sh is mounted or accessible). The agent could read /solution/solve.sh or the patch file at /tmp/cascader_fix.patch to see the exact fix. Additionally, the tests themselves contain the exact expected patterns in their docstrings and assertions, which the agent could grep for."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (textEllipsis in &-content not &-item, minWidth: 0 in &-content, maxWidth in &-item, TypeScript compilation, file structure) are tested."
+      "reason": "All behaviors described in instruction.md (textEllipsis in &-content not &-item, minWidth:0 in &-content, maxWidth in &-item, TypeScript compilation, file structure) are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_text_ellipsis_moved_to_content, test_content_has_min_width_zero, etc.), have docstrings explaining the purpose, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and why (e.g., 'Fail-to-pass test: The textEllipsis should be in &-content, not &-item'). Tests are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves CSS-in-JS style changes, not structured data output."
+      "reason": "This task involves CSS-in-JS style fixes, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and commands in instruction.md appear correct and consistent with the actual codebase structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (components/cascader/style/columns.ts), the exact function (getColumnsStyle), and the exact CSS blocks (&-item, &-content) to modify, plus exactly what properties to add/move (textEllipsis, minWidth: 0, maxWidth). This is effectively the complete solution specification."
+      "reason": "instruction.md names the exact file (components/cascader/style/columns.ts), the exact function (getColumnsStyle), and specifies exactly which CSS blocks (&-item, &-content) need which properties (textEllipsis, minWidth:0, maxWidth). This goes well beyond identifying what's broken and tells the agent the precise fix locations and changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a TypeScript style file, not a config edit task."
     }
   },
   "tier_a_fails": [

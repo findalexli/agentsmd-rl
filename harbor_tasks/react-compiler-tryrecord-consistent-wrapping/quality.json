@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant files (Pipeline.ts, BuildHIR.ts, three Validation files), describes the specific patterns to change (tryRecord wrapping, recordErrors batch method, instanceof ternary, merged guard blocks). The test-specific details like function names (validateContextVariableLValues, validateUseMemo, etc.), the recordErrors vs recordError pattern, the instanceof CompilerDiagnostic check, and the enableValidations guard merging are all discoverable from the instruction's descri"
+      "reason": "The instruction names all relevant files (Pipeline.ts, BuildHIR.ts, ValidateNoDerivedComputationsInEffects.ts, ValidatePreservedManualMemoization.ts, ValidateSourceLocations.ts), describes the specific patterns to change (tryRecord wrapping, recordErrors batch method, redundant instanceof ternary, merged enableValidations blocks), and the specific function names referenced in tests (validateContextVariableLValues, validateUseMemo, etc.) are discoverable from the named files. The test for merged "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (inconsistent error handling, manual for-loop instead of batch method, redundant ternary, duplicate guard blocks) and the expected behavior pattern (use tryRecord, use recordErrors, simplify ternary, merge blocks), but does not specify exact line numbers or exact code to write. A developer still needs to reason about the specific wrapping syntax, which calls to wrap, and how to simplify the ternary."
+      "reason": "The instruction describes what is broken (inconsistent wrapping, manual for-loops instead of batch method, redundant ternary, duplicate guard blocks) and what the expected behavior should be, but does not specify exact line numbers or exact code to write. A developer must still figure out exactly which calls to wrap, how to simplify the ternary, and how to merge the blocks."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests check for very specific patterns: test_build_hir_simplified_conditional asserts the exact string 'detail.category === ErrorCategory.Invariant' must be present and 'detail instanceof CompilerDiagnostic' must be absent. An alternative correct simplification (e.g., using a different but equivalent condition or variable name) would fail. Similarly, test_merged_validation_guard_blocks checks for the absence of 'if (env.enableValidations)' in a specific section, which is implementation-specific "
+      "reason": "Tests are highly specific about implementation details. For example, test_build_hir_simplified_conditional checks for the exact string 'detail.category === ErrorCategory.Invariant' - an alternative correct simplification (e.g., using a different but equivalent check) would fail. test_merged_validation_guard_blocks asserts there is no 'if (env.enableValidations)' string between two specific function calls, which constrains the exact merge approach. test_record_errors_normalization checks for the "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text/string matching: checking if 'tryRecord' appears near function calls, if '.recordErrors(' is in file content, if 'detail instanceof CompilerDiagnostic' is absent from text, if 'if (env.enableValidations)' appears in a substring. Only the pass-to-pass tests (test_repo_lint, test_repo_typecheck, test_repo_jest_unit) actually execute code. The f2p tests are all `assert 'foo' in open(path).read()` style checks."
+      "reason": "Most fail-to-pass tests are pure text/string matching: they read file contents and check for string presence/absence (e.g., 'tryRecord' in context, '.recordErrors(' in content, 'detail instanceof CompilerDiagnostic' not in content). Tests like test_repo_lint, test_repo_typecheck, and test_repo_jest_unit do execute subprocesses, but the core fail-to-pass tests (test_tryrecord_wraps_*, test_record_errors_normalization, test_build_hir_simplified_conditional, test_merged_validation_guard_blocks) are"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific changes that are not present in the base commit: tryRecord wrapping around validation/inference calls, recordErrors batch usage, absence of instanceof ternary, merged guard blocks. A stub or no-op implementation would not pass these since the base code lacks these patterns."
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., tryRecord wrapping around validation calls, .recordErrors( in validation files, absence of instanceof CompilerDiagnostic). A stub or no-op implementation would not pass these tests since the base files must be actively modified."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/react/_eval_check.mjs (temporarily) and solve.sh contains the full patch. An agent could read the solution directory or the gold patch. The Docker setup doesn't appear to remove /solution/ access. Additionally, since tests are pure text matching, an agent could grep test files (if accessible) for the expected strings and make targeted text substitutions without understanding the bug."
+      "reason": "The solution exists at /workspace/react/_eval_check.mjs (temporarily) and solve.sh is in /solution/. The agent could read /solution/solve.sh to get the exact patch. Additionally, the test file itself at tests/test_outputs.py contains all the exact strings being checked, so grepping for expected values is trivial."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors described in the instruction are tested: tryRecord wrapping (tests 1-3), recordErrors batch normalization (test 4), simplified BuildHIR conditional (test 5), and merged enableValidations guard blocks (test 6)."
+      "reason": "All four behaviors described in the instruction (tryRecord wrapping, batch recordErrors, simplified ternary, merged guard blocks) have corresponding test functions that verify them."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections with clear comments (fail-to-pass tryRecord wrapping, fail-to-pass recordErrors normalization, fail-to-pass BuildHIR, fail-to-pass merged guards, pass-to-pass structural integrity, pass-to-pass CI/CD). Each test has a descriptive docstring."
+      "reason": "Tests are well-organized with clear section headers (comments separating fail-to-pass from pass-to-pass), descriptive function names (test_tryrecord_wraps_early_and_hook_validations, test_record_errors_normalization, etc.), and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, function names, and variable names in instruction.md and tests match the actual repository structure correctly."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files and specific patterns to change: 'ValidateNoDerivedComputationsInEffects.ts use manual for-loop... instead of batch method env.recordErrors(errors)', 'redundant conditional in BuildHIR.ts where instanceof CompilerDiagnostic ternary evaluates to same expression', 'Two consecutive if(env.enableValidations) guard blocks'. This goes beyond describing the bug domain and into specifying exact locations and patterns, reducing the localization challenge t"
+      "reason": "The instruction names exact files AND describes the exact patterns to change (e.g., 'for (const detail of errors.details) { env.recordError(detail); }' should become 'env.recordErrors(errors)', 'instanceof CompilerDiagnostic ternary evaluates to the same expression on both branches'). This is quite specific about what to change in each file, reducing the localization challenge significantly."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

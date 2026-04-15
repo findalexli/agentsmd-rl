@@ -2,56 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_http_parser_has_duplicate_content_length_check asserts exact strings like 'for (HttpRequest::Header *h = req->headers;', 'contentLengthString.data() == nullptr', 'h->value.length() != contentLengthString.length()'. test_http_parser_rejects_empty_content_length asserts 'h->value.length() == 0'. test_http_parser_returns_400_on_conflict asserts 'HTTP_ERROR_400_BAD_REQUEST' (instruction says 'HTTP 400' but not th"
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all file paths (HttpParser.h, CLAUDE.md, package.json, scripts/pr-comments.ts), variable names (contentLengthString), error codes (HTTP_ERROR_400_BAD_REQUEST, HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH), literal strings (content-length, RFC 9112/9110), bloom filter usage (req->bf.mightHave), loop pattern (for (HttpRequest::Header *h = req->headers;...)), and documentation requirements (Reading PR Feedback section, footgun/silently omits, --json, jq, resolved/outdat"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (duplicate Content-Length headers not checked) and the desired behavior (reject conflicting ones per RFC 9112 6.3), but does not specify exact code lines, variable names, or specific implementation patterns to use."
+      "outcome": "fail",
+      "reason": "The instruction provides extremely detailed implementation steps: exact variable name 'contentLengthString' of type 'std::string_view', exact bloom filter call 'req->bf.mightHave(\"content-length\")', exact loop pattern 'for (HttpRequest::Header *h = req->headers; ...)', exact checks like 'contentLengthString.data() == nullptr' and 'h->value.length() == 0' and 'h->value.length() != contentLengthString.length()'. This is essentially dictating the exact code to write, not just describing what's brok"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: 'for (HttpRequest::Header *h = req->headers;' (exact loop syntax), 'contentLengthString.data() == nullptr' (exact null check), 'h->value.length() != contentLengthString.length()' (exact comparison pattern), 'h->value.length() == 0' (exact empty check). An alternative correct fix using different variable names, iterators, or comparison logic would fail these string-matching tests."
+      "reason": "Tests assert gold-specific implementation details: test_http_parser_has_duplicate_content_length_check asserts 'for (HttpRequest::Header *h = req->headers;' and 'contentLengthString.data() == nullptr' and 'h->value.length() != contentLengthString.length()'. An alternative correct fix using different variable names, std::find_if, or a different iteration pattern would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test is a text-matching test using patterns like `'string' in content` or checking for exact substrings in file contents. No test compiles the C++ code, runs the HTTP parser, sends actual HTTP requests, or executes the TypeScript script. All tests are purely `assert 'foo' in open(path).read()` style."
+      "reason": "Every single test is a text-matching test using patterns like 'assert X in content' or string searches on file contents. No test compiles the C++ code, sends HTTP requests, runs the TypeScript script, or verifies any actual behavior. For example, test_http_parser_has_duplicate_content_length_check just checks for string patterns in the source file."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply writes the expected string patterns into the files (e.g., adding comments containing 'for (HttpRequest::Header *h = req->headers;' and 'contentLengthString.data() == nullptr' etc.) would pass all tests without implementing any actual security fix. The tests only check for text presence, not behavior."
+      "reason": "Since all tests are pure text-matching, an agent could create files containing the exact expected strings without implementing any real logic. For example, pr-comments.ts could contain the strings 'gh api', '--paginate', 'graphql', '/issues/', '/pulls/', '/reviews', '/comments' as comments without any actual implementation and pass all tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it). The agent could read this file to discover exact code patterns. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the exact strings being asserted and insert them as comments without understanding the bug."
+      "reason": "The solution/solve.sh is present in the container at /solution/solve.sh and contains the gold patch. An agent could read this file to extract exact changes. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the expected strings and embed them without understanding the vulnerability."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires the script to 'support both human-readable and JSON output modes', 'handle pagination manually for GraphQL', 'show summary counts by type', 'label each entry with its kind', etc. Tests only check for presence of '--paginate' and 'graphql' strings, not actual script behavior. The HTTP fix behavior (actually rejecting requests) is also not tested via execution."
+      "reason": "The instruction requires the script to support 'both human-readable and JSON output modes', 'can be called with PR number, URL, or defaults to current branch's PR', 'shows summary counts by type', 'handles pagination manually for GraphQL', but tests only check for string presence in files. The actual runtime behavior of the TypeScript script (pagination, output formatting, argument handling) is never tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into two categories ('Code behavior tests' and 'Config/documentation update tests') with clear comments, descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized into two categories with clear comments ('Category 1: Code behavior tests (HTTP parser)' and 'Category 2: Config/documentation update tests'), each test has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
-      "outcome": "fail",
-      "reason": "The instruction specifies JSON output fields (when, user, kind, location, body, url, resolved, outdated) for the pr-comments script, but tests only check for 'resolved' and 'outdated' strings in CLAUDE.md, not that the actual script produces this schema. The schema is documented but not validated."
+      "outcome": "pass",
+      "reason": "The instruction documents the JSON output fields for the pr-comments script: 'when, user, kind, location, body, url, resolved, outdated' and explains their semantics including that 'resolved == false' unambiguously means 'confirmed open thread'."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction. All paths (packages/bun-uws/src/HttpParser.h, scripts/pr-comments.ts, CLAUDE.md, package.json) and identifiers are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (HttpParser.h) which is appropriate for the task domain, but does not specify exact line numbers or exact code patterns to use. The file path is necessary context, not leakage."
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (packages/bun-uws/src/HttpParser.h), exact variable names (contentLengthString), exact type (std::string_view), exact conditional checks (contentLengthString.data() == nullptr, h->value.length() == 0, h->value.length() != contentLengthString.length()), and exact loop pattern. This goes far beyond identifying the buggy module \u2014 it prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch for CLAUDE.md appends a new section (localized addition), package.json adds one line, and HttpParser.h modifies a specific section. These are localized changes that don't contradict other files."
+      "reason": "The gold patch for CLAUDE.md appends a new section at the end of the file, and package.json adds a single line. Both are localized changes that don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -60,7 +60,7 @@
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
-    "structured_data_schema"
+    "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
   "fail_count": 7

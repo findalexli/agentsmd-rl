@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the exact function name 'resolveEntityDisplay' (test_resolve_entity_display_added), the exact removal of 'extractTeamIdFromApiKeyBreakdown' (test_extract_team_id_from_api_key_breakdown_removed), exact test names like 'should fall back to the entity key when there is no team alias mapping' and 'should use entity key as alias when no team alias map is provided', and exact entity key strings 'team-1'/'team-2'. The instruc"
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_extract_team_id_from_api_key_breakdown_removed checks that 'extractTeamIdFromApiKeyBreakdown' is removed from utils.ts, and test_resolve_entity_display_added checks that 'resolveEntityDisplay' exists in utils.ts. Neither function name ('extractTeamIdFromApiKeyBreakdown' or 'resolveEntityDisplay') appears in instruction.md. The instruction only describes symptoms and expected behavior, not these specific function n"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The hints section in instruction.md essentially describes the fix: 'The fix likely involves a function that resolves entity display values differently based on entity type' and 'For non-team exports, the entity key itself should be used as the display ID, not data extracted from API key metadata.' Combined with naming the buggy function 'extractTeamIdFromApiKeyBreakdown' pattern, this narrows the solution significantly."
+      "reason": "Instruction.md does not explicitly state the fix, but the hidden tests effectively require a very specific implementation (removing extractTeamIdFromApiKeyBreakdown and adding resolveEntityDisplay). However, judging only instruction.md: it describes symptoms and expected behavior without naming the fix. But the verification section item 2 ('should fall back to the entity key when there is no team alias mapping') and item 3 ('should use entity key as alias when no team alias map is provided') are"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: test_extract_team_id_from_api_key_breakdown_removed requires the exact string 'extractTeamIdFromApiKeyBreakdown' to be absent, test_resolve_entity_display_added requires the exact function name 'resolveEntityDisplay' to be present, and test_test_file_uses_entity_keys_not_entity1_entity2 requires exact strings 'team-1'/'team-2'. An alternative correct fix (e.g., named 'getEntityDisplayInfo' or using different test entity keys) would fail."
+      "reason": "test_extract_team_id_from_api_key_breakdown_removed asserts 'extractTeamIdFromApiKeyBreakdown' not in utils.ts, and test_resolve_entity_display_added asserts 'resolveEntityDisplay' in utils.ts. An alternative correct fix could rename the function differently (e.g., 'getEntityDisplay' or 'resolveEntityId') or refactor inline without a named helper, and it would fail these tests despite correctly fixing the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "4 out of 9 tests (test_extract_team_id_from_api_key_breakdown_removed, test_resolve_entity_display_added, test_entity_usage_export_test_file_updated, test_test_file_uses_entity_keys_not_entity1_entity2) are purely text-matching with `assert 'string' in open(path).read()`. While 5 tests do run vitest, the structural tests are pure string checks."
+      "reason": "Tests test_extract_team_id_from_api_key_breakdown_removed, test_resolve_entity_display_added, test_entity_usage_export_test_file_updated, and test_test_file_uses_entity_keys_not_entity1_entity2 are purely text-matching (assert string in/not in file content). While test_new_fallback_test_runs_and_passes, test_alias_test_runs_and_passes, test_vitest_suite_passes, test_vitest_entity_usage_export_all_tests, and test_vitest_utils_module_tests do execute code, a significant portion (4 of 9) are pure t"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests that run vitest (test_new_fallback_test_runs_and_passes, test_alias_test_runs_and_passes) require actual test code to exist and pass with correct assertions, not just stubs. The structural tests require specific code changes that can't be satisfied by no-ops."
+      "reason": "The f2p tests (structural ones checking file content and behavioral ones running vitest) cannot be satisfied by a stub. The vitest tests run actual test suites that check entity display logic, and the structural tests check for specific refactoring. A no-op or stub would leave the old function in place and fail test_extract_team_id_from_api_key_breakdown_removed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution files are copied from /solution/fixed_utils.ts and /solution/fixed_utils.test.ts as shown in solve.sh. An agent could simply run 'cp /solution/fixed_utils.ts ...' and 'cp /solution/fixed_utils.test.ts ...' to pass all tests. The /solution/ directory exists in the container with the gold patch files."
+      "reason": "The solution files are copied from /solution/fixed_utils.ts and /solution/fixed_utils.test.ts as shown in solve.sh. The Dockerfile doesn't remove /solution/ from the container, so the agent could simply read /solution/fixed_utils.ts and /solution/fixed_utils.test.ts and copy them, bypassing any reasoning about the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes that entity ID and alias columns should show correct values for non-team types, and the vitest behavioral tests verify this through the test suite execution."
+      "reason": "The instruction specifies: tests pass (83 tests, 63 in utils.test.ts), specific test names exist and pass, entity keys 'team-1'/'team-2' used in test data. All of these are tested by the hidden test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Structural f2p', 'Behavioral f2p', 'Pass-to-pass'), descriptive function names, and docstrings explaining base vs fixed behavior."
+      "reason": "Tests are well-organized with clear section comments (Structural f2p, Behavioral f2p, Pass-to-pass) and descriptive function names and docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing export utility functions but the instruction doesn't need to document CSV/JSON schema since this is a bug fix task, not a data format specification task."
+      "reason": "The task involves fixing a UI component's export logic but doesn't require the agent to produce a specific structured data schema as output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in file paths, function names, or test names across the task files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and the test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names specific functions: 'getEntityBreakdown', 'generateDailyData', 'generateDailyWithKeysData', 'generateDailyWithModelsData', and describes the bug pattern of extracting 'team_id' from 'api_key_breakdown'. The hints section further narrows by saying 'Look for functions that extract team_id or key_alias from api_key_breakdown'. This over-localizes the bug."
+      "outcome": "pass",
+      "reason": "instruction.md describes the symptom and expected behavior without naming the buggy file/line or the specific functions to change. It only references test file names and test names for verification, which is acceptable."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -58,9 +58,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
 }

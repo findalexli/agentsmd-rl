@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the exact destructuring pattern `const [value, handle] = yield* Effect.cachedInvalidateWithTTL`, the variable name `invalidateGlobal`, `Duration` import from 'effect', `Duration.infinity` as TTL argument, `tapError` before `orElseSucceed` in the pipe chain, and `Effect.fn('Config.getGlobal')`/`Effect.fn('Config.invalidate')` named wrappers. The instruction mentions 'idiomatic Effect cache invalidation primitive' but ne"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_invalidate_dispatches_dispose_all checks for 'Instance.disposeAll', test_no_else_statements_near_cache_code and test_no_try_catch_in_changed_code reference AGENTS.md coding guidelines, test_effect_fn_domain_naming_retained checks for Effect.fn('Config.getGlobal') and Effect.fn('Config.invalidate') patterns (partially mentioned but the test for their retention as pass-to-pass is based on AGENTS.md:21 which is not cited in instruc"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (mutable let reassignment, silent error swallowing) and expected behavior (idiomatic cache invalidation, error logging before fallback) without specifying the exact API calls or code changes needed."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix: 'Use const [cachedGlobal, invalidateGlobal] = yield* Effect.cachedInvalidateWithTTL(...) destructuring pattern', 'use Duration.infinity as the TTL argument', 'Add Effect.tapError before Effect.orElseSucceed', 'yield invalidateGlobal rather than reassigning cachedGlobal', and 'use Effect.fn(\"Config.getGlobal\") and Effect.fn(\"Config.invalidate\")'. This is a complete specification of the solution, not a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: the exact pattern `const [value, handle] = yield* Effect.cachedInvalidateWithTTL`, the specific variable name from destructuring being used in invalidate body (`invUsesHandle` cross-references the handle name), `tapError` specifically (not other logging approaches like `Effect.tap` + `Effect.catchAll`), and `Duration.*` as TTL argument. An alternative correct fix using e.g. `Effect.cachedInvalidate` (without TTL), or using `Effect.logError` inst"
+      "reason": "Tests assert on gold-specific variable names and implementation details. The Node.js analysis script checks for the exact destructuring pattern 'const [X, Y] = yield* Effect.cachedInvalidateWithTTL', then cross-references the handle name Y in the invalidate body. An alternative correct fix using a different variable name pattern (e.g., storing the handle in a separate const) or using a Ref-based approach would fail. test_cache_uses_cached_invalidate_with_ttl requires the specific const destructu"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests are text/pattern-matching on source code via regex and AST-like analysis. No test actually imports, compiles, or executes the TypeScript code. Tests like `test_cache_uses_cached_invalidate_with_ttl` just check for string patterns in the source file, not runtime behavior."
+      "reason": "All tests are text/pattern-matching based. They run a Node.js script that parses the source text with regex and brace-counting, or use Python regex on file contents. No test actually imports, compiles, or executes the TypeScript code. Every assertion is essentially 'assert pattern in source_text' or 'assert analysis_of_source_text[key]'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific structural changes (cachedInvalidateWithTTL pattern, removal of let, tapError usage, Duration import) that cannot be satisfied by a stub or no-op implementation. The original code would fail these tests."
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original source (e.g., cachedInvalidateWithTTL, tapError, Duration import). A stub or no-op would not introduce these patterns, so the tests would fail on unmodified code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /repo/_eval_analysis.cjs or can be inferred from solve.sh. More critically, the agent could read the test file at tests/test_outputs.py (if accessible) or the solution directory to discover the exact expected patterns. The gold patch is in solution/solve.sh which may be accessible in the container."
+      "reason": "The solution file exists at /repo (solve.sh is meant to be hidden but the gold patch content including the exact diff is available). The agent could also read the test file at tests/test_outputs.py (if accessible in the container) to see exactly what patterns are checked. The ANALYSIS_SCRIPT in the test file contains the exact regex patterns being matched, making it trivial to reverse-engineer the expected solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) idiomatic cache invalidation primitive \u2014 tested via cachedInvalidateWithTTL checks, (2) error logging before fallback \u2014 tested via tapError checks, (3) proper invalidation mechanism \u2014 tested via handle usage checks. All explicitly stated requirements are covered."
+      "reason": "All behaviors mentioned in instruction.md are tested: cachedInvalidateWithTTL usage, const destructuring, Duration.infinity TTL, tapError before orElseSucceed, invalidate yielding the handle, Effect.fn naming."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear grouping comments (fail_to_pass pr_diff, fail_to_pass agent_config, pass_to_pass pr_diff, pass_to_pass agent_config), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear sections (fail_to_pass pr_diff, fail_to_pass agent_config, pass_to_pass pr_diff, pass_to_pass agent_config), descriptive function names, and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not structured data output."
+      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,15 +43,16 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact line numbers ('around line 1244' and 'line 1449') and shows the exact code pattern being used, which over-localizes the problem. However, it does not name the specific replacement API, so this is borderline. The line numbers are unnecessary hints."
+      "reason": "instruction.md specifies the exact file (packages/opencode/src/config/config.ts), the exact function names, and provides the exact replacement API calls with specific parameter values (Duration.infinity, Effect.cachedInvalidateWithTTL, Effect.tapError, Effect.fn('Config.getGlobal')). This goes well beyond naming the file \u2014 it specifies the complete solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-only task, not an agentmd-edits task. The solve.sh does append to AGENTS.md but that's ancillary."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
@@ -60,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

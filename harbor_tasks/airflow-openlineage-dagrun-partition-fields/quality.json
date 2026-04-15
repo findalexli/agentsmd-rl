@@ -2,56 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction specifies the exact field names ('partition_key', 'partition_date'), exact version comments ('# Airflow 3.2+'), exact ordering constraints (after 'logical_date', before 'run_after'), the formatting convention, and the file location (OpenLineage utils). All test assertions check these exact details which are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert very specific details not mentioned in instruction.md: exact version comment format '# Airflow 3.2+' (test_partition_fields_have_version_comments), exact ordering relative to 'logical_date' and 'run_after' (test_partition_fields_ordering), and the exact comment strings like '\"partition_key\",  # Airflow 3.2+'. The instruction says 'study the existing entries to determine the correct format' but doesn't specify the exact comment convention '# Airflow 3.2+' nor the exact placement betw"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially gives the complete solution: exact field names, exact comment text ('# Airflow 3.2+'), exact formatting ('string value, comma, two spaces, version comment'), exact ordering (after logical_date, before run_after, partition_key before partition_date). A developer doesn't need to reason about what to change \u2014 the instruction is a precise specification of the patch."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (missing partition_key and partition_date from DagRunInfo.includes) and expected behavior, but does not specify exact lines to change or exact code to write. The developer must still determine the correct format and placement."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_partition_fields_ordering assert exact line positions relative to other entries (logical_date before partition_key before partition_date before run_after) and test_partition_fields_have_version_comments checks exact strings like '\"partition_key\",  # Airflow 3.2+'. While these match the instruction, they are extremely implementation-specific \u2014 checking exact whitespace patterns in source text rather than behavior. An alternative correct fix that used different spacing or placed en"
+      "reason": "Tests enforce very specific implementation details: test_partition_fields_have_version_comments requires exact string '\"partition_key\",  # Airflow 3.2+' and test_partition_fields_ordering requires partition_key before partition_date, both after logical_date and before run_after. A correct alternative using '# Added in Airflow 3.2' or placing them after run_after would fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering, test_partition_fields_only_in_dagrun_info, test_no_duplicate_partition_fields) ALL use `assert '...' in open(path).read()` pattern \u2014 they read the source file as text and search for string patterns. They never import or call the code. The pass-to-pass tests do run subprocesses (unit tests, ruff, mypy),"
+      "reason": "The fail-to-pass tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering, test_partition_fields_only_in_dagrun_info, test_no_duplicate_partition_fields) ALL use string matching via 'in content' or regex on the source file text. They never import or instantiate DagRunInfo. The pass-to-pass tests do run unit tests/linting as subprocesses, but the core fail-to-pass tests are pu"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that do not exist in the base commit file. A stub or no-op would not add these strings to the source file, so the tests would fail without the actual fix being applied."
+      "reason": "The fail-to-pass tests check for specific strings ('partition_key', 'partition_date') that are genuinely absent from the base commit file. A stub or no-op implementation would not add these strings to the source file, so the tests would still fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/airflow's container at the path referenced by solve.sh. The agent could read solution/solve.sh if it exists in the container, or simply grep the test file (test_outputs.py) for the exact strings being asserted (e.g., '\"partition_key\",  # Airflow 3.2+'). Since tests only check for text presence in a file, the agent could match the literal fixture strings without understanding the bug."
+      "reason": "The solution file exists at /workspace/airflow as solution/solve.sh is applied there. An agent could read the test file to see the exact expected strings like '\"partition_key\",  # Airflow 3.2+' and simply insert them. The tests check for literal fixture strings in the source file, so matching the literal string without understanding the bug works perfectly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from the instruction (field names, version comments, ordering, no duplicates) are tested. The pass-to-pass tests also verify existing tests and linting continue to pass."
+      "reason": "The instruction requires: (1) adding partition_key and partition_date to DagRunInfo.includes, (2) correct version annotation, (3) proper positioning, (4) existing tests and linting pass. All of these are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings distinguishing fail-to-pass vs pass-to-pass scenarios, and each test focuses on a specific aspect of the requirement."
+      "reason": "Tests are well-named with clear docstrings indicating their purpose, and organized into logical groupings (content checks, ordering, syntax, linting, unit tests)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing source code entries in a list, not producing structured data output like JSON/CSV/API responses."
+      "reason": "The task involves editing a Python source file's list, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, field names, commands, and variable names in the instruction and tests are consistent and free of typos."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact formatting pattern ('string value, comma, two spaces, version comment'), exact anchor lines ('logical_date' with '# Airflow 3' comment, 'run_after' with '# Airflow 3' comment), and exact version comment text '# Airflow 3.2+'. This essentially pinpoints the exact location and format of the change, making localization trivial."
+      "reason": "The instruction explicitly names the class 'DagRunInfo' and its 'includes' list attribute, and tells the agent exactly what to add ('partition_key' and 'partition_date'). While it doesn't give exact line numbers, it essentially specifies the exact fix location and content, making localization trivial."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"

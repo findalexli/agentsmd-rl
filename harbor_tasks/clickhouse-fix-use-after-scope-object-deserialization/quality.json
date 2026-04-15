@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific patterns like the exact SCOPE_EXIT body structure `SCOPE_EXIT(for (const auto & task : tasks) task->tryExecute(); for (const auto & task : tasks) task->wait(););` and a specific comment pattern `Ensure all already-scheduled tasks are drained.*exit path.*exception`. While instruction.md mentions using SCOPE_EXIT, tryExecute(), wait(), and adding a comment about exception safety, it does not specify the exact regex-matchable comment text or the exact loop structure (e.g."
+      "reason": "Tests assert very specific patterns not mentioned in instruction.md: the exact SCOPE_EXIT macro name, `task->tryExecute()`, `task->wait()`, the exact comment text 'Ensure all already-scheduled tasks are drained.*exit path.*exception', and the full_pattern regex requiring `for (const auto & task : tasks)` loops. The instruction says 'Use RAII patterns' but never specifies SCOPE_EXIT, tryExecute(), or wait() by name."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'Add cleanup code after the task_size calculation (around line 553)', 'Ensure the cleanup runs on all exit paths using appropriate RAII mechanisms', 'Call tryExecute() and wait() on all tasks to ensure completion', and even specifies to use SCOPE_EXIT macro. This is essentially telling the agent exactly what code to write, not just describing what's broken."
+      "reason": "The instruction explicitly says 'Use RAII patterns for automatic cleanup', 'Ensure all scheduled tasks complete or are cleaned up before stack frame destruction', and 'Use ClickHouse's RAII cleanup mechanisms'. Combined with the specific function name and file path, this strongly guides toward the exact SCOPE_EXIT solution. However, it doesn't spell out the exact code. Borderline, but the instruction describes WHAT to change (add RAII cleanup) rather than just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_scope_exit_added uses `full_pattern` regex that asserts the exact structure: `SCOPE_EXIT\\s*\\(\\s*for\\s*\\(const\\s+auto\\s+&\\s+task\\s+:\\s+tasks\\)\\s+task->tryExecute\\(\\);\\s*for\\s*\\(const\\s+auto\\s+&\\s+task\\s+:\\s+tasks\\)\\s+task->wait\\(\\);\\s*\\);` \u2014 this rejects alternatives like using index-based loops, separate helper functions, try-catch with RAII wrapper, or even adding braces around the for loop bodies."
+      "reason": "test_scope_exit_added uses a full_pattern regex requiring exactly `SCOPE_EXIT( for (const auto & task : tasks) task->tryExecute(); for (const auto & task : tasks) task->wait(); );` \u2014 this rejects alternatives like using a custom RAII guard class, using different loop syntax (range-based with auto&&), adding the loops in different order, or using a lambda-based cleanup. The test also requires a specific comment matching 'Ensure all already-scheduled tasks are drained.*exit path.*exception'."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The primary fail-to-pass tests (test_scope_exit_added, test_fix_positioned_correctly, test_raii_cleanup) all use regex pattern matching on source file text content (`re.search(pattern, content)`). They never compile, execute, or test runtime behavior. test_file_compiles attempts a clang syntax check but the test comments acknowledge it will fail due to missing includes and only checks for specific error strings in stderr."
+      "reason": "The core fail-to-pass tests (test_scope_exit_added, test_no_sleep_for_race_fix, test_raii_cleanup, test_fix_positioned_correctly) all use regex pattern matching on source code text (`re.search` on file content). They never compile, link, or execute the code to verify the fix actually prevents use-after-scope. test_file_compiles attempts a clang syntax check but even acknowledges it will likely fail due to missing headers."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass since the tests check for specific code patterns (SCOPE_EXIT, tryExecute, wait, specific comment text) that don't exist in the original file. The agent must actually add the specific code to pass."
+      "reason": "A stub/no-op change would not pass because the unmodified file lacks SCOPE_EXIT, tryExecute(), and wait() calls. The fail-to-pass tests require specific code patterns to be present in the file that don't exist in the base commit."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace solution/solve.sh in the container and contains the exact patch. An agent could read this file directly (`cat /workspace/solution/solve.sh` or similar) to discover the exact fix. The tests also contain the exact regex patterns the agent could grep for."
+      "reason": "The solution is in /workspace/ClickHouse accessible from the container (solution/solve.sh applies a patch). An agent could read the gold patch file or the test file to discover the exact expected patterns. The tests match literal strings like 'Ensure all already-scheduled tasks are drained' which can be trivially copied."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: SCOPE_EXIT usage, tryExecute/wait calls, explanatory comment, correct positioning after task_size, RAII pattern, Allman brace style, and no sleep usage."
+      "outcome": "fail",
+      "reason": "Instruction says 'Ensure all scheduled tasks complete or are cleaned up before stack frame destruction' \u2014 actual runtime behavior (no use-after-scope) is never tested. Tests only check for textual patterns in source code."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_scope_exit_added, test_no_sleep_for_race_fix, test_allman_braces, etc.), docstrings explaining what each test verifies, and labels like 'Fail-to-pass' and 'Pass-to-pass'."
+      "reason": "Tests are well-named (test_scope_exit_added, test_no_sleep_for_race_fix, etc.), have docstrings explaining purpose, and are categorized as fail_to_pass vs pass_to_pass in comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data output."
+      "reason": "Task produces a code fix, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, function names, and variable names in instruction.md and tests are consistent and correct (SerializationObject.cpp, deserializeBinaryBulkStatePrefix, etc.)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies 'around line 553', names the exact function `deserializeBinaryBulkStatePrefix`, tells to add code 'immediately after' the `task_size` calculation, specifies using `SCOPE_EXIT` macro, and even lists the exact method calls (`tryExecute()` and `wait()`). This goes well beyond describing the bug and effectively prescribes the exact solution."
+      "reason": "Instruction names the exact file (SerializationObject.cpp), exact function (deserializeBinaryBulkStatePrefix), exact variables ('tasks and caches vectors'), and tells the agent to use 'RAII patterns' and 'ClickHouse's RAII cleanup mechanisms'. This leaves very little localization or design work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -59,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

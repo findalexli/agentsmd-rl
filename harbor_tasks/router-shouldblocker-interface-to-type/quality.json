@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three file paths (packages/react-router/src/useBlocker.tsx, packages/solid-router/src/useBlocker.tsx, packages/vue-router/src/useBlocker.tsx), the specific declaration to change (ShouldBlockFnLocation interface\u2192type), and the TS4023 error. The tests check these same files and this same transformation. The TS4023 regression test creates a temporary test file, but its logic follows directly from the described bug scenario (wrapping useBlocker in a custom hook). The tsconf"
+      "reason": "The instruction names all three file paths (packages/react-router/src/useBlocker.tsx, packages/solid-router/src/useBlocker.tsx, packages/vue-router/src/useBlocker.tsx), the exact change (interface to type for ShouldBlockFnLocation), and the TypeScript error TS4023. The tests check these same files and this same transformation. The TS4023 regression test and compilation tests use tsconfig.legacy.json which isn't mentioned in instruction.md, but that's an infrastructure detail not a behavioral spe"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly shows the exact before/after code transformation: change 'interface ShouldBlockFnLocation<...> {' to 'type ShouldBlockFnLocation<...> = {'. This is the complete solution with no reasoning required\u2014the agent just needs to do a mechanical find-and-replace."
+      "reason": "The instruction explicitly shows the exact before/after code transformation: 'interface ShouldBlockFnLocation<...> {' \u2192 'type ShouldBlockFnLocation<...> = {'. This is the complete solution, not just a description of what's broken. A competent developer doesn't need to reason about what to change at all."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The fix is essentially unique\u2014changing interface to type alias is the only reasonable way to fix TS4023 for an unexported interface used in a public API return type. The regex `type ShouldBlockFnLocation\\s*<[^>]+>\\s*=\\s*\\{` is flexible enough to match any whitespace variation of this single correct approach."
+      "reason": "The tests use regex `r'type ShouldBlockFnLocation\\s*<[^>]+>\\s*=\\s*\\{'` which matches the canonical way to convert an interface to a type alias in TypeScript. There's essentially only one correct way to make this change (interface\u2192type alias), so the regex doesn't over-constrain alternative valid solutions because there aren't meaningfully different alternatives."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The first three f2p tests (test_react_router_interface_to_type, test_solid_router_interface_to_type, test_vue_router_interface_to_type) are purely text-matching: they read file content and check for regex patterns. While test_useblocker_type_export_regression does run tsc compilation, three of the four f2p tests are string-in-file checks with no execution."
+      "reason": "The first three f2p tests (test_react_router_interface_to_type, test_solid_router_interface_to_type, test_vue_router_interface_to_type) are purely text-matching: they read file content and assert regex patterns. While test_useblocker_type_export_regression does execute TypeScript compilation, 3 of the 4 f2p tests are pure text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by a stub. The text-matching tests require the specific syntactic change from interface to type in the source files. The TS4023 regression test compiles actual TypeScript code and checks for zero errors. A no-op or stub would not pass these."
+      "reason": "The f2p tests check that 'interface ShouldBlockFnLocation' is NOT in the file and that 'type ShouldBlockFnLocation' IS present. A stub/no-op wouldn't pass because the original files contain the interface declaration. The TS4023 regression test compiles actual TypeScript code that would fail without the fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/router with solve.sh containing the exact patch. The agent could read /solution/solve.sh (or the gold patch) to get the answer. Additionally, the text-matching tests (checking for 'type ShouldBlockFnLocation') could be satisfied by grepping the test file itself to discover exactly what string pattern to produce."
+      "reason": "The solution is in /workspace/router's solve.sh (accessible in the container at solution/solve.sh or via the Dockerfile). The agent could read the gold patch directly. Additionally, the text-based tests (regex matching in files) could be satisfied by simple sed/regex replacement matching the literal fixture strings without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) converting interface to type in three files, (2) TypeScript type checking should pass, (3) TS4023 error should not occur. All three are tested via text checks, tsc compilation tests, and the TS4023 regression test."
+      "reason": "The instruction requires: (1) converting interface to type in three files, (2) TypeScript type checking should pass, (3) TS4023 error resolved. All three are tested via text checks, compilation tests, and the TS4023 regression test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass categories, and are logically grouped by package (react-router, solid-router, vue-router) and check type (interface-to-type, compilation, unit tests, eslint, publint, attw)."
+      "reason": "Tests are well-organized with descriptive names (e.g., test_react_router_interface_to_type, test_useblocker_type_export_regression) and docstrings indicating whether they are fail-to-pass or pass-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code modification, not structured data output."
+      "reason": "This task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and TypeScript identifiers in the instruction are all correct and match the actual repository structure."
+      "reason": "File paths, commands, variable names, and TypeScript identifiers are all correct and consistent across instruction.md and the test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files to modify, the exact declaration (ShouldBlockFnLocation), and shows the precise before/after code. Since the task is supposedly about fixing a bug, this level of specificity eliminates any need for the agent to localize or diagnose the problem."
+      "reason": "The instruction names the exact files, the exact declaration name (ShouldBlockFnLocation), and provides the complete before/after code snippets showing exactly what to change. This goes well beyond identifying the bug \u2014 it provides the full solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

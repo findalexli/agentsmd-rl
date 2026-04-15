@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths, class names (Qwen2VLTextConfig, Qwen2_5_VLTextConfig, ColQwen2Config, ColModernVBertConfig, ModernVBertForMaskedLM), field names (tie_word_embeddings), and method names (__post_init__, __init__) referenced in the tests are explicitly named in instruction.md's 'Files to investigate' and 'Expected behavior' sections."
+      "reason": "All file paths, class names (Qwen2VLTextConfig, Qwen2_5_VLTextConfig, ColQwen2Config, ColModernVBertConfig, ModernVBertForMaskedLM), and the attribute/field names (tie_word_embeddings, config parameter type annotation) referenced in tests are explicitly mentioned in instruction.md's 'Files to investigate' and 'Expected behavior' sections."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (tie_word_embeddings shouldn't be on text sub-configs, hack is dead code, type annotation is missing) but doesn't specify exact line numbers or the precise code to write. A developer still needs to figure out how to remove the field, which lines constitute the 'hack', and what type annotation to use."
+      "reason": "The instruction describes what is broken (tie_word_embeddings incorrectly defined, hack in __post_init__, missing type annotation) but does not specify exact line numbers to change or the precise code to write. The agent must still determine the exact edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check structural properties via AST (no tie_word_embeddings field in class body, presence of type annotation on config param) and text-based checks (no 'tie_word_embeddings' string in downstream configs). Any correct fix that removes the field, removes the hack, and adds a type annotation would pass regardless of implementation details."
+      "reason": "The tests check structural properties via AST (no tie_word_embeddings field in text configs, type annotation present on config param) and text presence checks for the hack removal. Any correct fix that removes the field, adds the annotation, and removes the hack would pass regardless of implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_downstream_no_tie_propagation_hack (truncated but visible from its docstring: 'Source text check because: hack removal is dead-code cleanup with no distinct behavioral effect') explicitly does a source text search for 'tie_word_embeddings' strings rather than importing/calling code. Several other tests use AST parsing which is structural inspection not behavioral execution. However, the repo CI tests (test_repo_lint, test_repo_format, etc.) do execute subprocesses, so it's a mix \u2014 but the c"
+      "reason": "test_downstream_no_tie_propagation_hack (truncated but visible pattern) checks source text for 'tie_word_embeddings' string presence rather than executing behavioral code. The core fail-to-pass tests (test_qwen2vl_text_no_own_tie_field, test_qwen2_5_vl_text_no_own_tie_field) use AST inspection rather than importing/calling the classes. test_modernvbert_init_type_hint also uses AST only. While some tests run subprocesses (ruff, check_copies), the fail-to-pass tests are all static/text-based with "
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the absence of tie_word_embeddings in class definitions and presence of type annotations \u2014 the base commit has these fields present and annotations missing, so a stub/no-op would fail. The agent must actually modify the source files."
+      "reason": "The fail-to-pass tests check for the presence of tie_word_embeddings fields that exist in the original code and must be removed, check for a type annotation that is missing in the original code, and check for hack code that exists in the original. A stub/no-op change would not pass these tests; actual code modifications are required."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /repo as solve.sh could be present, and the gold patch is in solution/solve.sh which may exist in the container. The agent could read /solution/solve.sh or the Dockerfile references the exact commit SHA. More importantly, the tests check for specific string patterns (absence of 'tie_word_embeddings' in certain files) that an agent could discover by reading test_outputs.py if accessible."
+      "reason": "The solution/solve.sh file exists in the container at /repo or could be accessible. The Dockerfile doesn't explicitly remove it, and the agent could potentially read /solution/solve.sh which contains the complete git patch with exact changes needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three expected behaviors from instruction.md are tested: (1) text sub-configs not defining tie_word_embeddings (test_qwen2vl_text_no_own_tie_field, test_qwen2_5_vl_text_no_own_tie_field), (2) no hack in composite configs (test_downstream_no_tie_propagation_hack), (3) type annotation on ModernVBertForMaskedLM.__init__ (test_modernvbert_init_type_hint, test_modular_init_type_hint)."
+      "reason": "All three expected behaviors from instruction.md are tested: text sub-configs not defining tie_word_embeddings (test_qwen2vl_text_no_own_tie_field, test_qwen2_5_vl_text_no_own_tie_field), composite configs not having hack (test_downstream_no_tie_propagation_hack), and type annotation on ModernVBertForMaskedLM.__init__ (test_modernvbert_init_type_hint, test_modular_init_type_hint)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass repo_tests, Gates pass_to_pass static, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining what each test checks and why the approach was chosen."
+      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass repo_tests, Gates pass_to_pass static, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining what each test verifies and why the approach was chosen."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves removing fields and adding type annotations in Python config/model files, not producing structured data output."
+      "reason": "This task involves code/config changes, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, class names, method names, and field names in instruction.md match those in the actual codebase and test files without typos."
+      "reason": "All file paths, class names, attribute names, and commands in instruction.md match the actual repository structure and test references without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact files, exact classes, and exact fields to modify (e.g., 'Qwen2VLTextConfig defines tie_word_embeddings as a class-level dataclass field', 'ColQwen2Config.__post_init__ workaround hack', 'ModernVBertForMaskedLM.__init__ is missing a type annotation on its config parameter'). The 'Files to investigate' section with specific class/method references goes beyond describing what's broken and essentially localizes every change needed."
+      "reason": "The instruction explicitly names the exact files, exact class names, exact method names (__post_init__), and the exact attribute (tie_word_embeddings as a class-level dataclass field) to change. It also specifies removing the 'workaround hack in __post_init__' and adding 'type annotation on its config parameter'. This goes beyond describing what's broken and effectively localizes all changes precisely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Python source file modifications, not configuration file edits."
+      "reason": "This is a code-only task involving Python source file edits, not configuration file edits in the agentmd-edits sense."
     }
   },
   "tier_a_fails": [

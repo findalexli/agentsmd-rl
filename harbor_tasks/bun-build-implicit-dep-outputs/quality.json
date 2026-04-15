@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific variable names like `depOutputs`, `codegenOrderOnly`, `depOrderOnly`, `codegen.cppAll`, and specific patterns like `implicitInputs = depOutputs`, `orderOnlyInputs = codegenOrderOnly`, `const codegenOrderOnly = codegen.cppAll`. The instruction.md never mentions `codegenOrderOnly`, `depOrderOnly`, or `codegen.cppAll`. It also doesn't mention the specific variable assignment patterns tested. The CLAUDE.md gotchas test asserts the exact string 'implicit dep on `depOutputs`' "
+      "outcome": "pass",
+      "reason": "The instruction names all critical variable names (depOutputs, codegen.cppAll, codegenOrderOnly, depOrderOnly), field names (implicitInputs, orderOnlyInputs), assignment patterns, file paths (bun.ts, compile.ts, CLAUDE.md relative to scripts/build/), and documentation requirements that the tests check. Every test-asserted literal string and pattern is discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'C compilation and no-PCH C++ compilation should use implicit dependencies on dep outputs' and 'Codegen headers should remain order-only.' It also says 'implicit dep makes the library itself the invalidation signal.' This tells the developer exactly what to change (move dep outputs from order-only to implicit dependencies) rather than just describing what's broken."
+      "reason": "The instruction explicitly states the exact fix: 'depOrderOnly must be removed', 'codegenOrderOnly defined as codegen.cppAll must exist', 'C compilation must pass depOutputs via implicitInputs and codegenOrderOnly via orderOnlyInputs', exact assignment patterns like 'implicitInputs: depOutputs' and 'orderOnlyInputs = codegenOrderOnly'. This is not just describing what's broken \u2014 it prescribes the exact variable names, exact assignment syntax, and exact code changes required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: `codegenOrderOnly` (test_codegen_order_only_separate checks `const codegenOrderOnly = codegen.cppAll`), `depOrderOnly` must not exist, `implicitInputs: depOutputs` exact pattern in cc() call, `implicitInputs = depOutputs` in the no-PCH else branch. An alternative correct fix using different variable names (e.g., `codegenOnlyDeps` instead of `codegenOrderOnly`) would fail these tests."
+      "reason": "Tests assert on gold-specific variable names (codegenOrderOnly, depOrderOnly), exact assignment patterns (e.g., 'const codegenOrderOnly = codegen.cppAll'), exact field names in cc() calls ('implicitInputs: depOutputs'), and exact documentation phrases ('implicit dep on `depOutputs`', 'PCH, cc, and no-PCH cxx'). An alternative correct fix using different variable names or structuring the implicit deps differently would fail these tests even if it correctly solves the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Despite using Node.js subprocess execution, the tests fundamentally perform text/pattern matching on source code: regex matching for variable names (`/const\\s+codegenOrderOnly\\s*=\\s*codegen\\.cppAll/`), checking string patterns in cc() call bodies (`/implicitInputs\\s*:\\s*depOutputs/`), and scanning CLAUDE.md for specific phrases. No actual build system execution or ninja graph generation occurs. The brace-counting extraction is just a more sophisticated form of text search."
+      "reason": "While some tests use Node.js brace-counting extraction (a step above raw grep), they still fundamentally check for text patterns like regex matches on 'implicitInputs: depOutputs' and 'const codegenOrderOnly = codegen.cppAll'. The CLAUDE.md tests (test_claude_md_gotchas_implicit_deps, test_claude_md_ninja_primer_implicit_example) are pure text matching. No test actually runs the build system, compiles code, or verifies behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The base commit has `depOrderOnly` (not `codegenOrderOnly`), uses order-only deps for C/no-PCH paths, and the CLAUDE.md has different text. A stub or no-op would not pass these tests; actual code modifications matching the expected patterns are required."
+      "reason": "The base commit has depOrderOnly (not codegenOrderOnly), uses orderOnlyInputs for depOutputs in cc/no-PCH paths, and CLAUDE.md doesn't exist or lacks the required content. A stub/no-op would not pass these tests since they check for specific code transformations absent in the base commit."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/bun as a git repo where the agent operates, and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact patch. Additionally, since tests are pure regex/pattern matching on source files, the agent could grep test files (if accessible) for the exact patterns and write code to match them without understanding the bug."
+      "reason": "The solution is available at /workspace/bun after applying solve.sh, and the agent could read solution/solve.sh which contains the complete gold patch. The agent could also grep test_outputs.py to discover exact expected patterns and replicate them without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says to verify by running 'build:release:local twice after rebuilding a sub-build that updates forwarding headers' and checking recompilation. No test actually verifies this build behavior \u2014 tests only check source code patterns and documentation text."
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: removal of depOrderOnly, creation of codegenOrderOnly, C compilation implicit deps, no-PCH C++ implicit deps, and all CLAUDE.md documentation requirements have corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_cc_implicit_dep_outputs, test_no_pch_cxx_implicit_dep_outputs, etc.), grouped into 'Gates' and 'Fail-to-pass' sections with clear docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear sections (gates/pass_to_pass, fail-to-pass behavioral, fail-to-pass config/documentation), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying build system TypeScript code and documentation, not producing structured data outputs."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names specific files to inspect (`scripts/build/bun.ts`, `scripts/build/compile.ts`) and specific interfaces/functions (`emitBun`, `CompileOpts`, `implicitInputs`, `orderOnlyInputs`), and explicitly describes the exact nature of the fix (change order-only to implicit for dep outputs). This goes beyond describing the bug to describing the solution location and mechanism."
+      "reason": "The instruction provides exact variable names to create/remove (codegenOrderOnly, depOrderOnly), exact assignment patterns ('const codegenOrderOnly = codegen.cppAll'), exact field assignments for cc() calls, and exact documentation phrases. This goes well beyond describing the bug domain and effectively prescribes the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch modifies localized sections in bun.ts and CLAUDE.md \u2014 specific variable declarations, dependency assignments, and documentation paragraphs \u2014 not full-file rewrites."
+      "reason": "The gold diff is localized to specific sections in bun.ts (variable definitions, cc/cxx call sites), compile.ts (interface fields), and CLAUDE.md (documentation sections). No full-file rewrites."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -59,9 +58,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 7
+  "pass_count": 6,
+  "fail_count": 5
 }

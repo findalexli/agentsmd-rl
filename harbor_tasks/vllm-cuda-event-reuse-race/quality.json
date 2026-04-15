@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact files (async_utils.py, model_runner.py), class names (AsyncOutput, AsyncPoolingOutput, GPUModelRunner), attribute names (output_copy_event, copy_event), and the behavioral requirements (no copy_event parameter, create own Event internally, no self.output_copy_event). All test assertions check these same specifics which are discoverable from the instruction."
+      "reason": "The instruction names all relevant classes (AsyncOutput, AsyncPoolingOutput, GPUModelRunner), the parameter to remove (copy_event), the attribute to remove (self.output_copy_event), the files (async_utils.py, model_runner.py), and the behavior of creating own torch.cuda.Event() internally. All test assertions check these exact items which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'AsyncOutput must not accept a copy_event parameter; it must create its own torch.cuda.Event() internally', 'AsyncPoolingOutput must not accept a copy_event parameter; it must create its own torch.cuda.Event() internally', 'GPUModelRunner must not store self.output_copy_event'. This is not just describing what's broken \u2014 it's prescribing exactly what to change in each class."
+      "reason": "The instruction explicitly states the exact fix: 'AsyncOutput must not accept a copy_event parameter; it must create its own torch.cuda.Event() internally in __init__', 'AsyncPoolingOutput must not accept a copy_event parameter; it must create its own torch.cuda.Event() internally in __init__', and 'GPUModelRunner must not store self.output_copy_event'. This tells the agent precisely WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check structural properties (no required copy_event param, presence of torch.cuda.Event() creation in __init__, absence of self.output_copy_event assignment) that any correct fix addressing the race condition would need to satisfy. Alternative implementations (e.g., creating the event in different ways or with different variable names internally) would still pass as long as they meet these structural requirements."
+      "reason": "The tests check structural properties (no copy_event required parameter, presence of torch.cuda.Event() creation in __init__, no self.output_copy_event assignment) that any correct fix must satisfy. Alternative implementations (e.g., different variable names for the event, different placement within __init__) would all pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_async_output_no_shared_event_param, test_async_pooling_no_shared_event_param, test_async_output_creates_own_event, test_async_pooling_creates_own_event, test_model_runner_no_shared_event) all use AST parsing of source files \u2014 they never import, instantiate, or call the actual classes. They inspect code structure rather than executing behavior. The repo_tests run linters/formatters but don't test runtime behavior either."
+      "reason": "The core fail-to-pass tests (test_async_output_no_shared_event_param, test_async_pooling_no_shared_event_param, test_async_output_creates_own_event, test_async_pooling_creates_own_event, test_model_runner_no_shared_event) all use AST parsing to inspect source code structure rather than importing/calling the code or executing behavior. They are essentially sophisticated text/structure checks, not behavioral tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty __init__ with just pass) would fail test_async_output_init_not_stub (requires >= 5 real statements) and test_async_output_creates_own_event (requires torch.cuda.Event() call in body). The f2p tests require specific structural changes that stubs cannot satisfy."
+      "reason": "The anti-stub test (test_async_output_init_not_stub) requires at least 5 real statements in AsyncOutput.__init__. The fail-to-pass tests check that copy_event is NOT a required parameter AND that torch.cuda.Event() IS created internally. A stub (pass/return None) would fail both the anti-stub check and the event creation check."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/vllm in the container (via solve.sh applying a patch), and the agent could read /solution/solve.sh or examine the gold patch directly. The Dockerfile doesn't restrict access to these paths. Additionally, the instruction itself essentially gives away the complete solution."
+      "reason": "The solution exists at /workspace/vllm as a git repo, and solve.sh with the exact patch is in solution/solve.sh. An agent could read /solution/solve.sh or the hidden test file to discover exactly what changes to make. The Dockerfile doesn't prevent access to these paths."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from instruction.md are tested: AsyncOutput not accepting copy_event and creating own Event, AsyncPoolingOutput not accepting copy_event and creating own Event, GPUModelRunner not storing self.output_copy_event."
+      "reason": "All three behaviors specified in the instruction are tested: AsyncOutput not accepting copy_event and creating its own event, AsyncPoolingOutput not accepting copy_event and creating its own event, and GPUModelRunner not storing self.output_copy_event."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (repo_tests, gates, fail-to-pass, pass-to-pass), descriptive docstrings, and clear naming conventions indicating what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (repo_tests, gates, fail-to-pass, pass-to-pass anti-stub), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modification, not structured data output."
+      "reason": "This task involves modifying Python source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, class names, or variable names across instruction.md and test files."
+      "reason": "All file paths (vllm/v1/worker/gpu/async_utils.py, vllm/v1/worker/gpu/model_runner.py), class names (AsyncOutput, AsyncPoolingOutput, GPUModelRunner), and attribute names (output_copy_event, copy_event) are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact classes (AsyncOutput, AsyncPoolingOutput, GPUModelRunner), exact attributes (self.output_copy_event, copy_event parameter), and exact files, plus prescribes exactly what to do in each location. This goes beyond identifying the buggy file \u2014 it fully localizes and specifies the fix."
+      "reason": "The instruction explicitly names the exact files, classes, methods (__init__), parameter names (copy_event), and attribute names (self.output_copy_event) to modify. The 'Expected Behavior' section prescribes the exact solution implementation rather than just describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

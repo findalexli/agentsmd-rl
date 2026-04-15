@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all key paths (skills/inference-server/SKILL.md, skills/toml-config/SKILL.md, .claude/skills symlink to ../skills, AGENTS.md), required frontmatter fields (name, description), content requirements (vLLM, entry point, @ syntax, TOML, etc.), the Skills section heading, maintenance responsibilities, and toml-config references. The tests check for these same elements. Specific strings like 'inference-server', 'toml-config', 'vllm', '## Skills', '.claude/skills', 'maintainin"
+      "reason": "The instruction specifies all required file paths (skills/inference-server/SKILL.md, skills/toml-config/SKILL.md, .claude/skills symlink, AGENTS.md), required content (YAML frontmatter with name/description, vLLM references, @ syntax, maintenance responsibilities), and the symlink target (../skills). The tests check for these same elements. Specific strings like 'inference-server', 'toml-config', 'vllm', '@', '## Skills', '.claude/skills', 'maintaining', 'responsible for' are all discoverable fr"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to create (skills directory, symlink, AGENTS.md updates) and what content to include, but does not give exact line-by-line changes, specific wording, or the precise patch. The agent must still decide how to phrase the documentation, structure the markdown, and integrate the Skills section into AGENTS.md."
+      "reason": "The instruction describes WHAT to create (skills directory, symlink, AGENTS.md updates) and the general content requirements, but does not specify exact wording, line numbers, or verbatim text to use. The agent must reason about how to structure the markdown, what exact wording to use, and how to integrate the Skills section into AGENTS.md."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for reasonable invariants: directory existence, file existence, presence of key terms (vllm, @, TOML, inference-server, toml-config), section headers (## Skills), and conceptual content (maintaining, responsible for). Alternative correct implementations with different wording, ordering, or structure would pass as long as they include these required elements."
+      "reason": "Tests check for reasonable content markers (e.g., 'vllm' case-insensitive, '@' symbol, 'toml-config' string, '## Skills' header, 'maintaining'/'responsible for' keywords) rather than exact gold-patch text. Alternative implementations with different wording would pass as long as they include these conceptual elements, which are inherent to any correct solution."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are purely text-matching: they read file contents and check for substring presence (e.g., 'assert \"## Skills\" in content', 'assert \"toml-config\" in content', 'assert \"vllm\" in content.lower()'). The symlink test uses os.readlink but still just checks a substring. No test imports code, executes behavior, or runs subprocesses against the created artifacts. The pass-to-pass tests do run ruff/syntax checks but those aren't testing the new functionality."
+      "reason": "Nearly every fail-to-pass test is purely text-matching: reading files and asserting substrings exist (e.g., test_agents_md_documents_skills_section checks '## Skills' in content, test_inference_server_skill_exists checks 'vllm' in content.lower()). The symlink test does check os.readlink behavior, and pass-to-pass tests run ruff/ast checks, but the core fail-to-pass tests are all 'assert X in open(path).read()' style with no execution or behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would not pass: tests check for specific file existence (skills/inference-server/SKILL.md, skills/toml-config/SKILL.md), symlink existence, specific content within files (frontmatter, keywords like vllm, TOML, @), and specific sections in AGENTS.md (## Skills, maintaining, responsible for). An empty file or directory wouldn't satisfy the content assertions."
+      "reason": "A stub/empty implementation would fail because: test_skills_directory_exists requires the directory to exist, test_inference_server_skill_exists requires specific content about vLLM and entry points, test_claude_skills_symlink_exists requires an actual symlink, test_agents_md_documents_skills_section requires '## Skills' header. These cannot be satisfied by default/empty returns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/prime-rl accessible via solve.sh which is in solution/solve.sh. The Dockerfile doesn't remove the solution directory. An agent could potentially read the test file at tests/test_outputs.py to see exact assertions and craft minimal files to pass them, or read solution/solve.sh directly if it's mounted in the container."
+      "reason": "The solution file exists at /workspace/prime-rl/../solution/solve.sh (or wherever Harbor mounts it). The agent could potentially read the solution directory if it exists in the container. Additionally, the test file at tests/test_outputs.py contains all the exact strings being checked (e.g., '## Skills', 'toml-config', '.claude/skills'), and an agent could grep for these fixture values to construct a minimal passing solution without understanding the task."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: skills directory existence, both SKILL.md files with frontmatter and content checks, symlink creation, AGENTS.md Skills section, maintenance responsibility documentation, and toml-config skill reference. The instruction's requirements map well to the test coverage."
+      "outcome": "fail",
+      "reason": "The instruction requires documenting custom endpoints (/v1/chat/completions/tokens, /update_weights, /load_lora_adapter, /init_broadcaster), curl examples, config inheritance with toml_files, boolean flag handling, and listing available commands with config classes. None of these specific content requirements are tested \u2014 tests only check for broad markers like 'vllm' and '@'."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,19 +35,19 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces markdown documentation files and a symlink, not structured data like JSON/CSV/API/DB."
+      "reason": "This task produces markdown files and a symlink, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and references are consistent between instruction.md and the test file. No typos detected in paths like skills/inference-server/SKILL.md, skills/toml-config/SKILL.md, .claude/skills, AGENTS.md."
+      "reason": "All filenames, paths, commands, and variable names in the instruction are consistent and correctly spelled (skills/inference-server/SKILL.md, skills/toml-config/SKILL.md, .claude/skills, AGENTS.md, ../skills)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to create and what content to include at a requirements level, without specifying exact line numbers, exact wording, or implementation details that would bypass the need for the agent to reason about the solution."
+      "reason": "The instruction describes what sections and content to create but doesn't specify exact line numbers or verbatim text to insert. It gives high-level requirements ('Add a Skills section', 'reference the toml-config skill') without dictating the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md edit is localized: add a Skills section and replace detailed CLI bullet points with a skill reference. The gold diff shows a small, bounded change to AGENTS.md, not a full rewrite. New files are created but don't contradict existing content."
+      "reason": "The gold diff for AGENTS.md is localized \u2014 it replaces two bullet points with a skill reference and adds a new Skills section. It doesn't rewrite the entire file or contradict other files."
     }
   },
   "tier_a_fails": [
@@ -55,7 +55,9 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 2
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 8,
+  "fail_count": 3
 }

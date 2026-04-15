@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names createRafWithFallbackTimer, the 'called' flag, cancelAnimationFrame, clearTimeout, the exact invocation string 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)', the 100ms timeout, the file path src/autoBatchEnhancer.ts, and the test commands. All asserted specifics in the tests are discoverable from the instruction."
+      "reason": "The instruction.md explicitly names: the file path `src/autoBatchEnhancer.ts`, the helper function `createRafWithFallbackTimer`, the flag name `called`, the cleanup functions `cancelAnimationFrame` and `clearTimeout`, the invocation `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`, the 100ms timeout value, and the test commands. All assert'd specifics in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The 'Implementation Requirements' section in instruction.md specifies the exact function name 'createRafWithFallbackTimer', the exact flag name 'called', the exact cleanup calls, and the exact invocation 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)'. This effectively dictates the solution rather than describing the problem."
+      "reason": "The 'Implementation Requirements' section in instruction.md explicitly dictates the exact solution: create a function named `createRafWithFallbackTimer`, use a flag named `called`, call specific cleanup functions, and invoke `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`. This is the complete solution specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, and test_100ms_timeout_value assert on gold-specific implementation details: the exact helper function name 'createRafWithFallbackTimer', the exact variable name 'called', the exact string 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)'. An alternative correct fix (e.g., using a different function name like 'rafWithTimeout', or using a different flag name, or inlining the logic) would fail these tests despi"
+      "reason": "Tests assert on gold-specific implementation details: test_raf_fallback_function_exists checks for exact string 'createRafWithFallbackTimer' and 'called' flag name; test_raf_strategy_uses_fallback checks for exact string 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)'. An alternative correct fix using different function/variable names (e.g., `rafWithTimeout`, `alreadyNotified`) would fail these tests despite correctly fixing the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, and test_100ms_timeout_value are purely text-matching tests using 'assert X in content' on the source file without any behavioral execution. While test_unit_tests_pass and test_full_test_suite do run code, the fail-to-pass tests are entirely string-based."
+      "reason": "Tests test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, and test_100ms_timeout_value are purely text-matching (`assert 'createRafWithFallbackTimer' in content`, `assert 'called' in content`, etc.) with no execution or behavioral verification. The f2p tests are entirely `open(file).read()` string checks."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, test_100ms_timeout_value) only check for the presence of specific strings in the source file. An agent could simply append a dead-code comment block containing all required strings (e.g., '// createRafWithFallbackTimer called cancelAnimationFrame clearTimeout') without implementing any actual fix, and the f2p tests would pass."
+      "reason": "The f2p tests (test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, test_100ms_timeout_value) only check for string presence in the source file. An agent could simply add a comment containing `createRafWithFallbackTimer(window.requestAnimationFrame, 100)` with `called`, `cancelAnimationFrame`, `clearTimeout` strings without implementing any actual logic, and all three f2p tests would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/redux-toolkit/packages/toolkit/../../../solution/solve.sh (or wherever mounted). The agent could read solve.sh or the gold patch directly. Additionally, since the instruction.md already contains the exact strings being tested ('createRafWithFallbackTimer(window.requestAnimationFrame, 100)'), the agent can trivially match the fixture strings without understanding the bug."
+      "reason": "The solution file exists at /workspace/redux-toolkit/packages/toolkit (the working directory) as solution/solve.sh which contains the exact gold patch. An agent could read this file or grep for the expected strings. Additionally, since f2p tests only check for string presence, the agent could grep test_outputs.py for the exact strings to insert."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: the helper function existence, the RAF+setTimeout pattern, the 100ms fallback, the called flag, cleanup functions, the exact invocation, unit tests passing, full test suite, and TypeScript compilation."
+      "outcome": "fail",
+      "reason": "The instruction requires that 'notification should still happen at ~16ms via RAF' in foreground and that 'exactly one notification occurs per batch', but no test verifies these behavioral properties. The f2p tests only check string presence in source code."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names and docstrings that explain purpose. They are categorized as 'fail-to-pass' and 'pass-to-pass' in the comments."
+      "reason": "Tests are well-named (test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, etc.) with docstrings explaining their purpose and whether they are fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code and does not produce structured data output."
+      "reason": "This task modifies source code and does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The 'Implementation Requirements' section specifies exact function name 'createRafWithFallbackTimer', exact variable name 'called', exact cleanup calls, and the exact invocation line. This goes well beyond identifying the file to modify and essentially provides the complete solution structure."
+      "reason": "The instruction.md's 'Implementation Requirements' section specifies exact function name `createRafWithFallbackTimer`, exact variable name `called`, exact invocation syntax `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`, and exact cleanup calls \u2014 this is complete solution leakage beyond just identifying the buggy file."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single TypeScript source file, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -59,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

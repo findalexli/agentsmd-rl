@@ -3,60 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes all key behavioral requirements tested: workers.kubernetes.affinity precedence over workers.affinity in pod-template-file, deprecation warning in NOTES.txt mentioning workers.celery.affinity and workers.kubernetes.affinity, and JSON schema updates for both new fields. The specific values paths, field names, and file types (NOTES.txt, values.schema.json, pod-template-file) are all mentioned or discoverable from the instruction."
+      "reason": "The instruction names all key schema keys (workers.kubernetes.affinity, workers.celery.affinity, workers.affinity), the NOTES.txt deprecation warning behavior, the pod-template-file precedence logic, and the values.schema.json updates. The test assertions check for these same named fields and behaviors. Specific paths like 'templates/configmaps/configmap.yaml' and 'templates/NOTES.txt' are discoverable from standard Helm chart conventions referenced in the instructions."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (precedence, deprecation warnings, schema updates) without specifying exact code changes. It doesn't say 'change line X' or 'add workers.kubernetes.affinity to the or chain in pod-template-file.kubernetes-helm-yaml'. The developer must figure out what files to modify and how."
+      "reason": "The instruction describes what behavior is expected (precedence, deprecation warning, schema updates) but does not specify exact lines to change, exact template syntax like '$affinity := or ...', or the specific files to modify. A developer must reason about where and how to implement the changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "TestDeprecationWarning.test_deprecation_warning_in_notes checks for exact literal strings in NOTES.txt source code (e.g., '.Values.workers.affinity', 'workers.celery.affinity', 'workers.kubernetes.affinity'). An alternative correct implementation that uses different template syntax (e.g., checking `.Values.workers.affinity` via a different Go template pattern or using different warning text) could fail these string-matching assertions. Similarly, TestSchemaValidation checks that the description "
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes: rendered Helm template affinity values, presence of deprecation text in NOTES.txt, and schema structure in values.schema.json. Alternative implementations (e.g., using different Helm template logic like 'coalesce' instead of 'or', different warning text formatting, different schema description wording) would all pass as long as the behavior is correct. The NOTES.txt test checks for substring presence, not exact formatting."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "TestDeprecationWarning.test_deprecation_warning_in_notes is purely text-matching: it reads NOTES.txt as a file and asserts literal strings are present with no execution. TestSchemaValidation tests also just parse JSON and check for key/description presence. While TestKubernetesWorkerAffinityPrecedence and TestHelmTemplateBasic actually execute helm template, the deprecation and schema tests are pure text inspection."
+      "reason": "TestDeprecationWarning.test_deprecation_warning_in_notes reads NOTES.txt as raw text and asserts substrings like '.Values.workers.affinity' and 'workers.celery.affinity' without executing the template. TestSchemaValidation tests load JSON and check structure but don't execute helm lint or schema validation. The deprecation test is purely text-matching: `assert '.Values.workers.affinity' in notes_content`."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The core fail_to_pass tests (TestKubernetesWorkerAffinityPrecedence) render the actual helm chart and verify that workers.kubernetes.affinity takes precedence over workers.affinity. On the base commit, this fails because the pod-template-file doesn't check workers.kubernetes.affinity. A stub/no-op implementation would not pass these tests since the helm template rendering produces real output from the actual chart files."
+      "reason": "The main fail_to_pass tests (TestKubernetesWorkerAffinityPrecedence) render the actual Helm chart with conflicting affinity values and verify the kubernetes-specific one wins. On the base commit, workers.kubernetes.affinity is ignored, so the test would fail with 'deprecated-affinity-key' instead of 'kubernetes-specific-key'. A stub/no-op implementation cannot pass these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow (accessible in the container after the Dockerfile clones the repo), and solve.sh is at a predictable path. The agent could read /solution/solve.sh or the test file at /tests/test_outputs.py to extract exact fixture values like 'kubernetes-specific-key' and 'deprecated-affinity-key'. The tests also contain the exact patch description in the docstring comments."
+      "reason": "The solution file exists at /workspace/airflow after the Dockerfile sets up the repo, and solution/solve.sh contains the exact gold patch. An agent could read /solution/solve.sh (if mounted) or discover it. Additionally, the test file itself at tests/test_outputs.py contains detailed comments like 'Before: $affinity := or .Values.workers.affinity .Values.affinity / After: $affinity := or .Values.workers.kubernetes.affinity .Values.workers.affinity .Values.affinity' which an agent could grep for."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five requirements from the instruction are tested: (1) kubernetes affinity precedence via TestKubernetesWorkerAffinityPrecedence, (2) celery worker affinity support implied by schema tests, (3) backward compatibility via TestHelmTemplateBasic, (4) deprecation warning via TestDeprecationWarning, (5) JSON schema via TestSchemaValidation."
+      "reason": "All five requirements from instruction.md are tested: (1) kubernetes affinity precedence in pod-template, (2) celery affinity support via schema, (3) backward compatibility when only workers.affinity is set, (4) deprecation warning in NOTES.txt, (5) JSON schema updates for both new fields."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into named classes (TestKubernetesWorkerAffinityPrecedence, TestDeprecationWarning, TestSchemaValidation, TestHelmTemplateBasic) with descriptive docstrings and method names explaining what each test verifies."
+      "reason": "Tests are well-organized into clearly named classes (TestKubernetesWorkerAffinityPrecedence, TestDeprecationWarning, TestSchemaValidation, TestHelmTemplateBasic) with descriptive docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the JSON schema structure required (workers.kubernetes.affinity and workers.celery.affinity properties with appropriate descriptions), and the values.schema.json is the structured data being modified."
+      "reason": "The instruction documents the exact schema keys to add (workers.kubernetes.affinity, workers.celery.affinity) and their expected descriptions/properties in the JSON schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands throughout the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem at a behavioral level without naming exact buggy files or lines. It mentions 'pod-template-file' which is a standard Helm chart concept, and 'NOTES.txt' which is the standard post-install notes file. These are domain-appropriate references, not implementation hints."
+      "reason": "The instruction mentions 'workers.kubernetes.affinity is ignored and only workers.affinity is used' which describes the bug symptom, but does not name the exact buggy file (pod-template-file.kubernetes-helm-yaml) or the specific template line to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized: one line change in pod-template-file.kubernetes-helm-yaml, additions to NOTES.txt, schema additions in values.schema.json, and comments in values.yaml. All changes are scoped and don't contradict other files."
+      "reason": "The gold patch is localized to specific sections of 5 files (one line change in pod-template-file, additions to NOTES.txt, schema additions, values.yaml comments, and a newsfragment). Changes are minimal and don't contradict other files."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 3
+  "pass_count": 10,
+  "fail_count": 2
 }

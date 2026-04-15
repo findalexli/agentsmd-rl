@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific file paths (e.g., src/types/v1/core/events/conversation-state-event.ts, src/types/v1/type-guards.ts, src/contexts/conversation-websocket-context.tsx, src/types/v1/core/openhands-event.ts, src/mocks/mock-ws-helpers.ts, __tests__/conversation-websocket-handler.test.tsx), specific function names (isServerErrorEvent, isDisplayableErrorEvent, createMockServerErrorEvent), and specific literal strings (e.g., 'should update error message store on ServerErrorEvent'). The ins"
+      "reason": "Tests assert specific file paths (e.g., 'src/types/v1/core/events/conversation-state-event.ts', 'src/types/v1/type-guards.ts', 'src/contexts/conversation-websocket-context.tsx', 'src/types/v1/core/openhands-event.ts', 'src/mocks/mock-ws-helpers.ts', '__tests__/conversation-websocket-handler.test.tsx'), specific function names (isServerErrorEvent, isDisplayableErrorEvent, isConversationErrorEvent, createMockServerErrorEvent), specific test description strings ('should update error message store o"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (error banner, analytics, budget errors, clearing) without specifying exact code changes, line numbers, or specific implementation details like function names or file paths to modify."
+      "reason": "The instruction describes what's broken (ServerErrorEvent is ignored) and what behavior is expected (error banners, analytics, budget errors, error clearing), without specifying exact code changes, line numbers, or specific function implementations."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names like 'isDisplayableErrorEvent' and 'isServerErrorEvent', exact file locations like 'src/types/v1/type-guards.ts', exact mock helper name 'createMockServerErrorEvent', and exact test description strings like 'should update error message store on ServerErrorEvent'. An alternative correct implementation (e.g., using a different guard name like 'isErrorEvent', putting the guard in a different file, or naming the mock differen"
+      "reason": "Tests assert gold-specific implementation details: exact function names like 'isDisplayableErrorEvent' and 'isServerErrorEvent' (test_is_server_error_event_guard_exists, test_is_displayable_error_event_guard_exists), exact file locations (conversation-state-event.ts for the type), exact mock helper name 'createMockServerErrorEvent', and exact test description strings. An alternative correct implementation using different names (e.g., 'isServerError', 'isAnyErrorEvent') or different file organiza"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests (test_server_error_event_type_exists, test_is_server_error_event_guard_exists, test_is_displayable_error_event_guard_exists, test_websocket_context_uses_displayable_error, test_openhands_event_includes_server_error, test_mock_helper_includes_server_error, test_websocket_handler_tests_exist) are purely text-based: they read files and assert on string contents like 'assert \"ServerErrorEvent\" in content'. Only the pass_to_pass tests (typecheck, lint, build, vitest run) actua"
+      "reason": "Most fail_to_pass tests (test_server_error_event_type_exists, test_is_server_error_event_guard_exists, test_is_displayable_error_event_guard_exists, test_websocket_context_uses_displayable_error, test_openhands_event_includes_server_error, test_mock_helper_includes_server_error, test_websocket_handler_tests_exist) are purely text-matching with patterns like `assert 'ServerErrorEvent' in content`. Only the pass_to_pass tests (typecheck, lint, build, vitest run) actually execute the code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests only check for string presence in files. For example, test_server_error_event_type_exists just checks that 'ServerErrorEvent' appears in a file. An agent could add a comment containing the literal strings (e.g., '// ServerErrorEvent kind: \"ServerErrorEvent\" source: \"environment\" code: string detail: string') without implementing any actual functionality, and the text-matching tests would pass. The behavioral tests (vitest run) are pass_to_pass, not fail_to_pass."
+      "reason": "The text-matching tests (e.g., test_server_error_event_type_exists, test_is_server_error_event_guard_exists) could be satisfied by adding stub code that contains the right string patterns without implementing actual functionality. For example, adding `export function isServerErrorEvent(event: any): event is ServerErrorEvent { return false; }` would pass the text checks. However, the vitest run tests (test_repo_websocket_handler_tests) do execute behavior, partially mitigating this."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/OpenHands with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what strings and file paths to target, then create stub files matching those patterns without understanding the bug."
+      "reason": "The solution exists at /workspace/OpenHands after the Dockerfile clones the repo, and solve.sh applies a git patch. An agent could potentially read /solution/solve.sh or the test file itself to discover exact expected strings, file paths, and function names. The test file at tests/test_outputs.py contains all the exact strings needed to pass the text-matching tests."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction mentions analytics/telemetry tracking and budget/credit error i18n handling as required behaviors, but no tests verify analytics tracking or i18n localized message substitution for budget/credit errors."
+      "outcome": "pass",
+      "reason": "The instruction specifies error banner display, analytics tracking, budget/credit error handling, and error clearing. Tests cover error banner display (test_websocket_handler_tests, test_repo_error_message_banner_tests), error clearing (test for clearing after ServerErrorEvent), and the type/guard infrastructure. Analytics tracking is less directly tested but the vitest tests likely cover it."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings that explain what each test verifies, including tags like (fail_to_pass) and (pass_to_pass)."
+      "reason": "Tests are well-organized with descriptive names, docstrings explaining what each test checks and whether it's pass_to_pass or fail_to_pass, and logical grouping by concern (type definitions, guards, context usage, build checks, etc.)."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the ServerErrorEvent schema with its four fields (kind, source, code, detail) and their types/values."
+      "reason": "The instruction.md documents the ServerErrorEvent schema with its four fields (kind, source, code, detail) and their types/values."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem and expected behavior without naming specific internal files, line numbers, or exact function names to create. It mentions ConversationErrorEvent as context but doesn't prescribe the exact implementation structure."
+      "reason": "The instruction describes the problem domain and expected behavior without naming specific files to modify, exact function names to create, or line numbers. It stays at the architectural/behavioral level."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task involving TypeScript source modifications, not config file edits."
     }
   },
   "tier_a_fails": [
@@ -58,9 +58,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 5,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 5
 }

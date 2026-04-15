@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the target file path, the buildStableSplitComponentStatements template, the exact patterns (import.meta.hot?.data?.[%%hotDataKey%%], import.meta.hot.data[%%hotDataKey%%]), the initialization requirement, and the test file path. All asserted specifics in tests are discoverable from the instruction."
+      "reason": "The instruction names the target file path, the template name `buildStableSplitComponentStatements`, the specific patterns (`import.meta.hot?.data?.[%%hotDataKey%%]`, `import.meta.hot.data[%%hotDataKey%%]`, `import.meta.hot.data ??= {}`), the test file path, and the build/test commands. All assert'd specifics in the tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md states 'Before writing to import.meta.hot.data[key], the import.meta.hot.data object must be initialized' and 'The tests verify these exact string patterns exist in the source file' \u2014 combined with the explicit mention of ??= initialization pattern and the ordering requirement, this essentially tells the agent to add `import.meta.hot.data ??= {}` before the write. The instruction describes the fix, not just the bug."
+      "reason": "instruction.md explicitly states the three required patterns including 'import.meta.hot.data ??= {}' initialization and that it must come before the data access. Combined with naming the exact file and template, this essentially tells the agent exactly what line to add and where, leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_source_code_initializes_hot_data asserts the exact string 'import.meta.hot.data ??= {}' must appear in the source. Alternative valid fixes like `if (!import.meta.hot.data) import.meta.hot.data = {}` or `import.meta.hot.data = import.meta.hot.data || {}` would fail the test despite being correct."
+      "reason": "test_source_code_initializes_hot_data asserts the exact string 'import.meta.hot.data ??= {}' must appear in the source. An alternative correct fix like `if (!import.meta.hot.data) import.meta.hot.data = {}` or `import.meta.hot.data = import.meta.hot.data || {}` would fail the F2P tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two F2P tests (test_source_code_initializes_hot_data and test_source_has_correct_template_structure) are purely string-matching on file content with `assert '...' in content`. While P2P tests do run builds/tests via subprocess, the core F2P tests are entirely text-matching without executing the code."
+      "reason": "The two F2P tests (test_source_code_initializes_hot_data and test_source_has_correct_template_structure) exclusively use `assert 'string' in open(path).read()` pattern matching on source file content. They never import, call, or execute the code. The P2P tests do run builds/tests, but the F2P tests are pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The F2P tests check for a specific string ('import.meta.hot.data ??= {}') that does not exist in the original source file and check ordering. A stub or no-op would not pass since the base commit lacks this initialization line."
+      "reason": "The F2P tests check for the specific string 'import.meta.hot.data ??= {}' which does not exist in the original source file (the gold patch adds it). A stub or unmodified file would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router (solution/solve.sh shows the exact patch). An agent could read the Dockerfile or solution directory. Additionally, the F2P tests assert exact literal strings ('import.meta.hot.data ??= {}') that the agent could simply grep for or insert without understanding the bug."
+      "reason": "The solution file exists at /workspace/router and solve.sh contains the exact patch. The agent could read solution/solve.sh or simply grep for the literal string 'import.meta.hot.data ??= {}' in test files to discover the exact fix needed. The F2P tests assert exact literal strings that are trivially discoverable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires: (1) optional chaining read pattern, (2) write pattern, (3) initialization before write. All three are tested in test_source_has_correct_template_structure and test_source_code_initializes_hot_data. Build and unit test pass requirements are also tested."
+      "reason": "The instruction requires initialization before data access, correct template structure, and that builds/tests pass. All of these are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_source_code_initializes_hot_data, test_source_has_correct_template_structure, etc.), have docstrings explaining F2P vs P2P purpose, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_source_code_initializes_hot_data, test_source_has_correct_template_structure, etc.), include docstrings with F2P/P2P labels, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task involves source code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and patterns in instruction.md match those in tests and solution without typos."
+      "reason": "File paths, commands, variable names, and patterns are all correct and consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (react-stable-hmr-split-route-components.ts), the exact template (buildStableSplitComponentStatements), and describes the exact fix pattern needed ('import.meta.hot.data object must be initialized' before writing). This goes beyond describing symptoms to specifying the exact location and nature of the fix."
+      "reason": "instruction.md names the exact file (react-stable-hmr-split-route-components.ts), the exact template (buildStableSplitComponentStatements), and the exact fix pattern ('import.meta.hot.data ??= {}' before writing). This is excessive localization that eliminates the need for the agent to diagnose the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

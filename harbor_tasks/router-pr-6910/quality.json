@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), function name (deepEqual), and describes all tested behaviors: promises not equal unless same reference, thenable detection, promise vs regular object comparison, and regular object comparison still working. The tests operate on these exact artifacts."
+      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), and describes the expected behavior for promises, thenables, and regular objects. All test-asserted behaviors (native promises not equal, same-reference equal, nested promises, arrays with promises, regular objects still work, custom thenables, promise vs regular object) are discoverable from the instruction's description of expected behavior."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (deepEqual doesn't handle promise-like objects) and gives hints about detection strategy, but doesn't specify exact code changes, line numbers to modify, or the exact implementation (e.g., doesn't say 'add an isPromiseLike function' or 'add a check after Object.is')."
+      "reason": "The instruction describes what's broken and gives hints about detecting promise-like values via .then method, but doesn't specify exact code changes, line numbers to modify, or the specific implementation (e.g., doesn't say 'add isPromiseLike function' or 'add check after Object.is'). A developer still needs to reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests use regex to extract functions by name: `src.match(/function isPromiseLike\\(value: unknown\\)[^{]*\\{([\\s\\S]*?)^\\}/m)`. This means the tests specifically look for a function named 'isPromiseLike' with a specific signature. An alternative correct fix that inlines the promise check directly in deepEqual (e.g., `if (typeof a?.then === 'function' || typeof b?.then === 'function') return false`) without creating a separate `isPromiseLike` function would fail the regex extraction in the test, "
+      "reason": "The tests use regex to extract functions by name: `src.match(/function isPromiseLike\\(value: unknown\\)[^{]*\\{([\\s\\S]*?)^\\}/m)`. This means the tests specifically look for a function named 'isPromiseLike' with the exact TypeScript signature `(value: unknown)`. An alternative correct fix that inlines the promise check directly in deepEqual (without a separate isPromiseLike function) or uses a differently-named helper would cause the regex extraction to fail or return empty, potentially breaking th"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract the deepEqual function from source, construct it dynamically via `new Function()`, and actually execute it with Promise objects, checking return values. This is behavioral testing, not text matching."
+      "reason": "Tests extract the deepEqual function from source, construct executable JavaScript via `new Function()`, and run it with `node -e`. They actually execute the comparison logic and check return values, not just text patterns."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check that deepEqual(Promise.resolve(1), Promise.resolve(1)) returns false. A stub that always returns true would fail (the test asserts result should not be true). A stub returning false would fail the regular objects test (test_deepequal_regular_objects_still_work expects deepEqual({a:1}, {a:1}) === true). No trivial stub satisfies all tests."
+      "reason": "The fail_to_pass tests check that deepEqual(Promise.resolve(1), Promise.resolve(1)) returns false. A stub that always returns true would fail (same-reference test expects true but different-reference expects false). A stub returning false would fail on regular object equality tests. The tests require actual bug-fix logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/router's solve.sh which is accessible in the container at the path implied by the Dockerfile. The agent could read /solution/solve.sh or the gold patch to see the exact fix. Additionally, the tests themselves are in tests/test_outputs.py which could be read to reverse-engineer the expected implementation pattern (specifically the isPromiseLike function name)."
+      "reason": "The solution file exists at /workspace/router and solve.sh is in /solution/solve.sh. The agent could read the solution patch from the container's filesystem (e.g., cat /solution/solve.sh or similar paths) to discover the exact fix. There are no apparent measures preventing access to the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors from instruction.md are tested: different promises not equal (test_deepequal_native_promises), same-reference promises equal (within same test), thenable/promise-like handling (implicit via Promise objects), promise vs regular object (test_deepequal_promise_vs_non_promise in truncated portion), and regular objects still work (test_deepequal_regular_objects_still_work)."
+      "reason": "All four behaviors listed in instruction.md are tested: different promises not equal (test_deepequal_native_promises), thenables handled (test_deepequal_custom_thenables in truncated tests), promise vs regular object returns false (test_deepequal_promise_vs_regular_object in truncated tests), regular objects still work (test_deepequal_regular_objects_still_work)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_deepequal_native_promises, test_deepequal_nested_promises, etc.), have docstrings explaining what they test including fail_to_pass/pass_to_pass annotations, and the module has a top-level docstring."
+      "reason": "Tests are well-named (test_deepequal_native_promises, test_deepequal_nested_promises, etc.), have docstrings explaining the scenario and whether it's fail_to_pass or pass_to_pass, and the file has a module-level docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a comparison function, not producing structured data output."
+      "reason": "This task involves fixing a comparison function, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and variable names in the instruction and tests are correct and consistent."
+      "reason": "File paths, function names, and commands in the instruction and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function which is appropriate for the task scope. It gives conceptual hints about detection strategy but doesn't specify exact lines or implementation details like helper function names."
+      "reason": "The instruction names the file and function which is appropriate for the task domain. It gives conceptual hints about detecting promise-like objects but doesn't specify exact line numbers or the precise code to add."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

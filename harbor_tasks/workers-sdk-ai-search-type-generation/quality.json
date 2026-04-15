@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the exact file paths (packages/wrangler/src/type-generation/index.ts, packages/wrangler/src/__tests__/type-generation.test.ts), the two functions (collectCoreBindings, collectCoreBindingsPerEnvironment), the config keys (ai_search_namespaces, ai_search), the type strings (AiSearchNamespace, AiSearchInstance), and the helper patterns (addBinding, bindings.push with bindingCategory/name/type). All test assertions check for these same identifiers."
+      "reason": "The instruction names the exact file paths (packages/wrangler/src/type-generation/index.ts, packages/wrangler/src/__tests__/type-generation.test.ts), function names (collectCoreBindings, collectCoreBindingsPerEnvironment), config keys (ai_search_namespaces, ai_search), type strings (AiSearchNamespace, AiSearchInstance), and the helper patterns (addBinding, bindings.push with bindingCategory/name/type). All specifics checked by the tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly tells the agent the exact implementation pattern: for collectCoreBindings use 'addBinding(binding, \"Fetcher\", \"vpc_services\", envName)' and for collectCoreBindingsPerEnvironment use 'bindings.push({ bindingCategory: \"vpc_services\", name: binding, type: \"Fetcher\" })'. It also specifies the exact type mappings and config keys. This essentially spells out the fix \u2014 add analogous calls for the two new binding types with the specified type strings."
+      "reason": "The instruction explicitly tells the developer HOW to fix it: 'vpc_services bindings call addBinding(binding, \"Fetcher\", \"vpc_services\", envName)' as a template, and 'They need to handle: ai_search_namespaces config \u2192 type \"AiSearchNamespace\"' and 'ai_search config \u2192 type \"AiSearchInstance\"'. It also specifies the exact pattern for collectCoreBindingsPerEnvironment with bindings.push({bindingCategory, name, type}). This is a recipe, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (e.g., test_core_bindings_ai_search_namespace, test_per_env_bindings_ai_search) do text scanning of the source file, checking for exact strings like '\"AiSearchNamespace\"', 'addBinding', 'ai_search_namespaces' within specific function boundaries, and 'bindingCategory' patterns. An alternative correct implementation that used a different helper function name or different internal structure (e.g., a lookup table approach) would fail these text-matching tests even if it produc"
+      "reason": "Tests like test_core_bindings_ai_search_namespace and test_core_bindings_ai_search_instance do text-based searches for specific patterns: they look for 'ai_search_namespaces' within the collectCoreBindings function body, check for '\"AiSearchNamespace\"' string literal, and require 'addBinding' call nearby. test_per_env_bindings_ai_search checks for 'bindingCategory' and specific string patterns. An alternative correct implementation using a different internal structure (e.g., a lookup table or di"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_core_bindings_ai_search_namespace, test_core_bindings_ai_search_instance, test_per_env_bindings_ai_search, test_per_env_bindings_ai_search_instance) all work by reading the source file as text and checking for string patterns using indexOf and regex \u2014 they never import, compile, or execute the code. Only the pass-to-pass tests (test_repo_wrangler_type_generation_tests) actually run the code via vitest."
+      "reason": "The fail-to-pass tests (test_core_bindings_ai_search_namespace, test_core_bindings_ai_search_instance, test_per_env_bindings_ai_search_namespace, test_per_env_bindings_ai_search) all read the source file as text and use string matching (indexOf, includes, regex) to verify the presence of specific patterns. They never import, execute, or call the functions. The pass-to-pass tests do run the actual test suite (test_repo_wrangler_type_generation_tests), but the core fail-to-pass tests are purely te"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings ('AiSearchNamespace', 'AiSearchInstance', 'addBinding', 'ai_search_namespaces', 'ai_search') within specific function boundaries of the source file. A stub or no-op implementation would not contain these strings, so the tests would fail. Additionally, test_repo_wrangler_type_generation_tests runs the actual test suite which checks generated output."
+      "reason": "A stub implementation would not pass these tests. The f2p tests check that specific strings like 'AiSearchNamespace', 'AiSearchInstance', 'ai_search_namespaces', 'addBinding', 'bindingCategory' appear within specific function bodies in the source file. A default/empty implementation wouldn't contain these strings. Additionally, test_repo_wrangler_type_generation_tests runs the actual test suite which checks generated output."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file solve.sh exists at /workspace/workers-sdk or could be accessed if mounted. More importantly, the tests do pure text matching on source files \u2014 an agent could grep the test file (test_outputs.py) to discover exactly which strings are checked and insert them mechanically without understanding the bug. The solution patch is also accessible if the agent reads /solution/solve.sh."
+      "reason": "The solution file exists at /workspace/workers-sdk and the agent could potentially access the git history or solution artifacts. More critically, the f2p tests are pure text-matching on the source file \u2014 an agent could grep the test file itself (test_outputs.py is hidden, but the test expectations in type-generation.test.ts are visible) and mechanically insert the expected strings without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires handling ai_search_namespaces\u2192AiSearchNamespace and ai_search\u2192AiSearchInstance in both collectCoreBindings and collectCoreBindingsPerEnvironment. All four combinations are tested by fail-to-pass tests, plus the repo's own type-generation test suite is run."
+      "reason": "The instruction requires both collectCoreBindings and collectCoreBindingsPerEnvironment to handle ai_search_namespaces\u2192AiSearchNamespace and ai_search\u2192AiSearchInstance. Tests cover both functions for both binding types, plus the actual test suite runs which verify end-to-end behavior including per-environment mode."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/static, Pass-to-pass/repo_tests, Fail-to-pass/pr_diff), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-structured with clear names (test_core_bindings_ai_search_namespace, test_per_env_bindings_ai_search_instance, etc.), docstrings explaining what each checks, and clear separation between pass-to-pass (gates/static checks) and fail-to-pass (core behavioral) tests with section headers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces TypeScript type declarations, not structured data like JSON/CSV/API/DB."
+      "reason": "The task produces TypeScript type declarations, not structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "All filenames, paths, function names, config keys, and type names in the instruction are correct and consistent with the codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the two functions to modify (collectCoreBindings, collectCoreBindingsPerEnvironment), describes their internal patterns (addBinding helper, bindings.push with specific property names), and shows the exact analogous code for vpc_services as a template. This goes beyond identifying the bug domain and essentially provides a code template for the fix."
+      "reason": "The instruction explicitly names both functions to modify (collectCoreBindings, collectCoreBindingsPerEnvironment), describes the exact pattern to follow ('vpc_services bindings call addBinding(binding, \"Fetcher\", \"vpc_services\", envName)'), and maps config keys to exact types. This goes beyond naming obvious files and essentially provides the implementation template."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

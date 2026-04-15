@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific identifiers like 'runResponsesAgentCommand', 'agentCommandFromIngress', 'handleOpenResponsesHttpRequest', 'senderIsOwner', and the exact file path 'src/gateway/openresponses-http.ts'. While the file path and 'senderIsOwner' concept are not mentioned in instruction.md, the function names 'runResponsesAgentCommand' and 'agentCommandFromIngress' are never named in the instructions. The instruction only refers to 'the helper function' and 'agent command dispatcher' generical"
+      "reason": "Tests assert on specific identifiers like 'runResponsesAgentCommand', 'agentCommandFromIngress', 'handleOpenResponsesHttpRequest', 'senderIsOwner', and the exact file path 'src/gateway/openresponses-http.ts'. While the file path and 'senderIsOwner' concept are implied, the instruction never names 'runResponsesAgentCommand' or 'agentCommandFromIngress' explicitly. These function names are critical to passing the AST-based tests (e.g., test_sender_is_owner_flows_from_params, test_no_hardcoded_send"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (owner-level privileges granted to HTTP callers) and constraints the fix must satisfy, but does not specify exact code changes like 'change line X to Y' or 'replace true with params.senderIsOwner'. The developer must still reason about the implementation."
+      "reason": "The instruction describes the bug (owner-level privileges granted to HTTP callers) and lists constraints (non-owner indicator, strict boolean typing, no sentinel defaults, both call sites), but does not specify exact line changes, sed commands, or the precise code to write. A developer must still reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: the function must be named 'runResponsesAgentCommand', it must call 'agentCommandFromIngress', and the property must be named 'senderIsOwner'. An alternative correct fix that, for example, uses a wrapper function with a different name, renames the property to 'isOwner', or uses a different dispatch pattern would fail these AST-based tests even if it correctly prevents owner escalation."
+      "reason": "Tests use AST analysis to check for specific identifiers: 'senderIsOwner' as a property name, 'agentCommandFromIngress' as the callee, 'runResponsesAgentCommand' as the helper function name. An alternative correct fix that used a different parameter name (e.g., 'isOwner' or 'callerIsOwner') or restructured the code differently would fail these tests. The tests are tightly coupled to the gold solution's naming conventions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use TypeScript AST parsing via Node.js subprocess execution to inspect the code structure, not just raw text matching. They parse the AST to check property assignments, function parameters, call expressions, and type annotations. While some tests do use text search (test_ingress_call_preserved, test_model_override_preserved), the core f2p tests use AST analysis which is a form of structural verification."
+      "reason": "Tests use TypeScript AST parsing via Node.js subprocess execution to analyze the code structure, checking for specific AST node kinds (TrueKeyword, PropertyAssignment, etc.). Some tests also do text matching (e.g., test_ingress_call_preserved, test_model_override_preserved), but the core fail-to-pass tests use genuine AST analysis which goes beyond simple text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check specific AST properties: test_no_hardcoded_sender_is_owner_true verifies the literal 'true' is removed, test_sender_is_owner_flows_from_params checks both parameter declaration and body usage, test_call_sites_pass_non_owner checks both call sites pass non-true values. A stub or no-op implementation would fail these since the original code has hardcoded 'true'."
+      "reason": "The fail-to-pass tests check that senderIsOwner is NOT hardcoded as true (test_no_hardcoded_sender_is_owner_true), that it flows from params (test_sender_is_owner_flows_from_params), and that both call sites pass non-owner values (test_call_sites_pass_non_owner). A stub or no-op would not pass these since the original code has hardcoded 'true' and the tests specifically detect this pattern."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/openclaw (or could be placed there) and solve.sh is in /solution/solve.sh. An agent could potentially read the solution directory if it exists in the container. The Dockerfile doesn't show any step to remove the solution directory, and the agent could run 'cat /solution/solve.sh' or inspect it to find the exact patch."
+      "reason": "The solution file exists at /workspace/openclaw's solve.sh path could potentially be read if the agent has access to /solution/solve.sh in the container. The Dockerfile doesn't explicitly remove or protect the solution directory. An agent could read the gold patch and apply it directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All seven implementation requirements from instruction.md are covered: non-owner from params (test_sender_is_owner_flows_from_params), strict boolean typing (test_strict_boolean_typing), no sentinel defaults (test_no_sentinel_default_for_sender_is_owner - truncated but referenced), both call sites (test_call_sites_pass_non_owner), allowModelOverride preserved (test_model_override_preserved), no suppressions (test_no_ts_nocheck), no stub (test_not_stub)."
+      "reason": "All requirements from instruction.md are tested: non-owner indicator from params (test_sender_is_owner_flows_from_params), strict boolean typing (test_strict_boolean_typing), no hardcoded true (test_no_hardcoded_sender_is_owner_true), both call sites (test_call_sites_pass_non_owner), allowModelOverride preserved (test_model_override_preserved), no suppressions (test_no_ts_nocheck), not a stub (test_not_stub). The 'no sentinel defaults' requirement is the only one not explicitly tested with a ded"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining each check, and comments mapping to eval_manifest.yaml categories."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining each test's purpose. Comments indicate categories like [static], [pr_diff], [repo_tests], [agent_config]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a TypeScript source file, not producing structured data output."
+      "reason": "This task involves fixing a TypeScript source file, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file 'src/gateway/openresponses-http.ts' and describes it as 'the helper function' in the context of dispatching agent commands. While the file is somewhat obvious from the task domain, the instruction also specifies exact implementation details like 'must not use silent sentinel defaults like ?? true or ?? false' and 'must be explicitly typed as boolean', which significantly narrows the solution space beyond just describing the bug."
+      "outcome": "pass",
+      "reason": "The instruction names the file 'src/gateway/openresponses-http.ts' which is reasonable for the task domain, and describes the bug conceptually (owner-level privileges, streaming/non-streaming paths) without specifying exact line numbers or the precise code fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -56,9 +56,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
 }

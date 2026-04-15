@@ -2,63 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests require specific undiscoverable details: a function named 'infer_token_denominator' in 'areal/trainer/ppo/stats.py', specific parameter names ('input_data', 'fallback'), specific fallback chain logic (attention_mask\u2192cu_seqlens\u2192input_ids\u2192fallback), exact old buggy patterns like 'torch.ones_like(loss_mask, dtype=torch.bool)' and 'torch.ones(value.shape[0], dtype=torch.bool', type annotations, no print/wildcard/hardcoded paths rules from AGENTS.md. None of these specifics are mentioned in ins"
+      "outcome": "pass",
+      "reason": "The instruction names the file paths (areal/trainer/ppo/stats.py, areal/trainer/ppo/actor.py, areal/trainer/ppo/critic.py), the function name (infer_token_denominator), the required signature (input_data: dict[str, Any], fallback: torch.Tensor -> torch.Tensor of bool dtype), the metadata keys (attention_mask, cu_seqlens, input_ids), the fallback logic, and constraints (no wildcard imports, no bare print, no hardcoded paths). All test-asserted specifics are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes only the problem (incorrect n_tokens under context parallelism) and expected behavior (use full-batch metadata), without specifying exact code changes, file paths, or function names."
+      "reason": "The instruction describes what the function should do (accept metadata dict + fallback tensor, return boolean tensor with fallback logic) and where it should live, but does not give the exact code, line numbers to change, or the specific sed commands. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce a specific function name 'infer_token_denominator' in a specific file 'areal/trainer/ppo/stats.py' with specific parameter names and signatures. An alternative correct fix (e.g., inline fix in actor.py/critic.py, or a differently-named helper, or a helper in a different module) would fail test_actor_critic_use_helper, test_not_stub, test_type_hints_on_helper, etc."
+      "reason": "test_actor_critic_integration uses regex `r'infer_token_denominator\\s*\\('` to check that actor.py and critic.py call a function with this exact name. test_infer_token_denominator_behavior dynamically discovers a function but then the integration test hardcodes the name. Also test_not_stub requires specific AST structure (>=3 non-docstring statements with conditional logic). While instruction.md does name `infer_token_denominator`, an alternative correct fix using a different function name (e.g.,"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests execute subprocess Python code that imports and calls infer_token_denominator, checking actual return shapes and dtypes. test_actor_critic_use_helper does string checks but is supplemented by behavioral tests."
+      "reason": "test_infer_token_denominator_behavior dynamically imports and calls the function with various inputs, checking shapes and dtypes. test_actor_critic_integration compiles the files. test_repo_ruff_lint_ppo and test_repo_ruff_format_ppo run linting tools. Tests go well beyond simple text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_attention_mask_preferred checks specific shape [2,3] derived from attention_mask rather than fallback shape, test_cu_seqlens_fallback checks shape [4] from cu_seqlens, test_not_stub requires conditional logic with >=3 body statements. A stub returning None or empty would fail these assertions."
+      "reason": "test_infer_token_denominator_behavior makes 9 substantive assertions about return shapes, dtypes, and values for different metadata combinations. A stub returning None, empty tensor, or ones_like(fallback) would fail tests involving attention_mask shape [2,3] when fallback is zeros(5), or cu_seqlens producing shape [4] from [0,4]."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/AReaL/../solution/solve.sh (or wherever mounted). The Dockerfile does not remove /solution/. The agent could read solve.sh to see the exact gold patch and replicate it."
+      "reason": "The solution is in /workspace/AReaL's container at solve.sh (solution/solve.sh is mounted or available). An agent could potentially read the Dockerfile or solution directory. Additionally, the test file test_outputs.py contains the complete expected behavior and even the full test code inline, which the agent could grep for to extract the exact expected implementation."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'The fix must work correctly under context parallelism where intermediate tensors are sliced per-rank' but no test actually simulates context parallelism with sliced tensors to verify the fix works in that scenario."
+      "outcome": "pass",
+      "reason": "All explicit requirements from instruction.md are tested: the function signature, boolean return type, attention_mask priority, cu_seqlens fallback, input_ids fallback with shape matching, ones_like fallback for unrecognized keys, type annotations, conditional logic with >=3 statements, import in actor/critic, no wildcard imports, no print, no hardcoded paths."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass behavioral, integration, anti-stub, config-derived), descriptive function names, and docstrings."
+      "reason": "Tests are well-named (test_syntax_check, test_infer_token_denominator_behavior, test_actor_critic_integration, test_not_stub, etc.) with docstrings explaining each test's purpose. The behavioral test has numbered sub-tests with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md does not name specific files, line numbers, or function names. It describes only the conceptual problem and expected behavior at a high level."
+      "reason": "The instruction names the files to modify (stats.py, actor.py, critic.py) and the function to create, but these are natural from the task domain. It doesn't reveal specific line numbers or the exact old code patterns to replace (like `torch.ones_like(loss_mask, dtype=torch.bool)`)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

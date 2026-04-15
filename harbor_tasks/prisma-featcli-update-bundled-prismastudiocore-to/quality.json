@@ -2,63 +2,64 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_react_version_constant checks for the exact string '${REACT_VERSION}' and 'const REACT_VERSION' in Studio.ts; test_transaction_procedure_handler checks for 'executeTransaction' method name and specific error handling pattern 'if (error)'; test_favicon_endpoint checks for 'app.get' and specific link/rel/icon tag patterns; test_import_map_includes_radix_toggle checks for 'deps=react@' pinning syntax; test_impor"
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: transaction procedure with executeTransaction, error handling pattern, @radix-ui/react-toggle and chart.js/auto import map entries, deps=react@ pinning, /favicon.ico GET route with SVG and link tag, REACT_VERSION constant with ${REACT_VERSION} template literals, AGENTS.md documentation requirements, and preservation of existing BFF procedures (query, sequence, sql-lint). All asserted strings and patterns in tests are discoverable from the instructi"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what is broken and what the expected behavior should be, but does not specify exact code changes like specific line numbers, variable values, or exact code snippets to write."
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, essentially dictating the implementation: use 'const REACT_VERSION', reference via '${REACT_VERSION}', call 'executor.executeTransaction', check 'if (error)', use 'serializeBffError', add 'app.get' for '/favicon.ico', add '<link rel=\"icon\">' tag, use 'esm.sh/chart.js@<version>/auto' URL pattern, use '?deps=react@' query parameters. This leaves very little reasoning for the developer about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_react_version_constant asserts the exact variable name 'REACT_VERSION' and template literal syntax '${REACT_VERSION}'. An equally valid alternative using 'REACT_VER', 'reactVersion', or a different interpolation pattern would fail. test_transaction_procedure_handler asserts exact string 'executeTransaction' and 'if (error)' pattern - an alternative using try/catch or different method names would fail."
+      "reason": "Tests assert on gold-specific implementation details: test_react_version_constant checks for exact strings '${REACT_VERSION}' and 'const REACT_VERSION'; test_transaction_procedure_handler checks for exact string 'executeTransaction' and 'if (error)'; test_import_map_includes_chartjs checks for 'esm.sh/chart.js@'. An alternative correct fix using e.g. 'REACT_VER', 'const reactVersion', or a different error-handling pattern would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_transaction_procedure_handler, test_favicon_endpoint, test_import_map_includes_radix_toggle, test_import_map_includes_chartjs, test_react_version_constant, test_agents_md_studio_import_map_docs, test_agents_md_react_pinning_docs) are ALL purely text-based assertions using 'assert X in content' pattern with no code execution, subprocess calls, or behavioral verification. The pass_to_pass tests do run subprocesses (prettier, lint, vitest), but every f2p test is pure st"
+      "reason": "The fail_to_pass tests (test_transaction_procedure_handler, test_favicon_endpoint, test_import_map_includes_radix_toggle, test_import_map_includes_chartjs, test_react_version_constant, test_agents_md_*) are ALL purely text-based: they read file contents and check for string patterns with 'assert X in content'. None execute the server, make HTTP requests, or call any functions. The pass_to_pass tests do run linting/prettier/vitest but the core behavioral tests are pure text matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_agents_md_studio_import_map_docs and test_agents_md_react_pinning_docs can be trivially satisfied by appending a few sentences containing the keywords 'import map', '@radix-ui', 'esm.sh', and 'pin' to AGENTS.md without any meaningful documentation. Similarly, text-matching tests could be gamed by adding dead-code comments containing the asserted strings."
+      "outcome": "pass",
+      "reason": "While tests are text-based, they cannot be satisfied by a stub/empty implementation. The agent must actually add specific code patterns (executeTransaction, transaction procedure handler, import map entries, REACT_VERSION constant, favicon route, AGENTS.md content) to the existing files. A no-op or default return wouldn't pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/prisma/_eval_tmp.mjs path area and solve.sh is in /solution/solve.sh. An agent could read /solution/solve.sh (if accessible in the container) to get the exact patch. Additionally, since all f2p tests are pure string-matching, the agent could insert the exact asserted strings as comments without understanding the actual bug."
+      "reason": "The solution is available at /workspace/prisma as solve.sh could be read, and the test file at tests/test_outputs.py reveals all exact strings being checked. An agent could grep for expected patterns in the test file and simply insert those exact strings into Studio.ts and AGENTS.md without understanding the underlying problem. The solution directory with solve.sh containing the full patch is also accessible in the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five expected behaviors from the instruction are tested: transaction handling, import map entries for radix-toggle and chart.js, React version pinning, favicon endpoint, REACT_VERSION constant, and AGENTS.md documentation updates."
+      "reason": "All behaviors described in instruction.md are covered by tests: transaction handling, favicon endpoint, import map entries for radix-toggle and chart.js, React version pinning, REACT_VERSION constant, AGENTS.md documentation, and preservation of existing BFF procedures."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into pass_to_pass and fail_to_pass sections with clear comments, descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear grouping comments (pass_to_pass static checks vs fail_to_pass behavioral tests), descriptive function names (test_transaction_procedure_handler, test_favicon_endpoint, etc.), and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names Studio.ts and AGENTS.md as files to modify, which is appropriate given the task domain. It doesn't specify exact line numbers or internal implementation details beyond describing the problems and expected behaviors."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (packages/cli/src/Studio.ts) and describes very specific implementation details like using 'const REACT_VERSION', '${REACT_VERSION}' template literals, 'executor.executeTransaction', 'serializeBffError', and 'app.get' route pattern. It goes beyond describing what's broken and prescribes the exact implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold AGENTS.md diff is a localized addition of 4 bullet points in the existing 'CLI commands' section, not a full-file rewrite, and it doesn't contradict other files."
+      "reason": "The AGENTS.md edit in the gold solution is localized - adding a few bullet points to the existing 'CLI commands' section, not a full-file rewrite. It doesn't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 6,
   "fail_count": 5
 }

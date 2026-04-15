@@ -2,62 +2,61 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check specific skill doc files (.agents/skills/react/SKILL.md, .agents/skills/spa-routes/SKILL.md, .agents/skills/code-review/SKILL.md) for specific keywords like 'desktopRouter.config.desktop', 'SPA', 'routing', 'sync', 'drift', 'parity', 'both'. The instruction.md only vaguely mentions 'update the relevant agent skill documentation' in the '.agents/skills/' directory but never names these three specific skill files or the specific keywords/phrases the tests assert on."
+      "outcome": "pass",
+      "reason": "The instruction names all four file paths tested (componentMap.desktop.ts, componentMap.ts, desktopRouter.config.desktop.tsx, desktopRouter.config.tsx), the specific missing entries (Stats, Creds), the missing route (/onboarding), and the three skill files (.agents/skills/react/SKILL.md, .agents/skills/spa-routes/SKILL.md, .agents/skills/code-review/SKILL.md) with their required content keywords (sync/pair/drift, desktopRouter.config.desktop, both/parity/drift, desktopRouter, SPA/routing). All a"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (blank pages, missing route, drift between desktop/web files) and which files to look at, but does not specify exact code changes like 'add import Stats from ...' or 'add desktopRoutes.push(...)'. The developer must reason about what to add."
+      "reason": "The instruction describes what's broken (missing entries for Stats/Creds, missing /onboarding route, skill docs need updating) and what the expected behavior should be, but does not specify exact code changes like 'add this import on line X' or 'insert this exact code block'. The agent must still reason about HOW to implement the fixes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_react_skill_documents_desktop_sync_rule check for '.desktop' AND ('sync'|'pair'|'drift') in content; test_spa_routes_skill_documents_desktop_parity checks for 'desktopRouter.config.desktop' AND ('both'|'parity'|'drift'); test_code_review_skill_has_spa_routing_check checks for 'desktopRouter' AND ('SPA'|'routing'). These assert on specific keyword combinations that alternative valid documentation could miss (e.g., using 'mirror' or 'match' instead of 'sync/pair/drift')."
+      "reason": "Tests like test_react_skill_documents_desktop_sync_rule check for '.desktop' in content AND ('sync'|'pair'|'drift'), and test_spa_routes_skill_documents_desktop_parity checks for 'desktopRouter.config.desktop' AND ('both'|'parity'|'drift'). These are flexible keyword checks. However, test_componentmap_desktop_imports_stats asserts 'import Stats from' or 'import Stats' as literal strings, and test_componentmap_desktop_imports_creds similarly. An alternative correct fix using re-exports (e.g., `ex"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The skill doc tests (test_react_skill_documents_desktop_sync_rule, test_spa_routes_skill_documents_desktop_parity, test_code_review_skill_has_spa_routing_check) and the import tests (test_componentmap_desktop_imports_stats, test_componentmap_desktop_imports_creds) are purely text-matching assertions using string-in-file checks. While some tests use Node.js regex extraction, the documentation tests are entirely 'assert X in open(path).read()'."
+      "reason": "Several key tests are pure text-matching: test_componentmap_desktop_imports_stats/creds use `assert 'import Stats from' in content`, test_react_skill_documents_desktop_sync_rule checks for keyword presence in markdown, test_spa_routes_skill_documents_desktop_parity and test_code_review_skill_has_spa_routing_check also just check string presence. The componentMap key extraction tests use regex via Node.js (not actual imports), and the ESLint/Prettier tests verify syntax but not runtime behavior. "
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific entries (Stats, Creds keys in componentMap, /onboarding in router paths) that are genuinely missing from the base commit. A stub/no-op implementation would not add these entries, so the tests would fail without a real fix."
+      "reason": "The fail-to-pass tests check for content that doesn't exist in the base commit (Stats/Creds entries in componentMap.desktop.ts, /onboarding route in desktop router, skill file content). A stub or no-op implementation would not add these entries, so the tests cannot be trivially satisfied without making actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/lobe-chat's solution/solve.sh (mounted in container) and the agent could potentially read it. Additionally, the agent could grep test files in tests/test_outputs.py to discover exact expected keywords like 'Stats', 'Creds', 'desktopRouter.config.desktop', 'sync', 'drift', 'parity' and match them without understanding the bug."
+      "reason": "The solution file exists at /workspace/lobe-chat's parent or solution/solve.sh in the container. The agent could potentially read the solve.sh script to see the exact sed commands and reproduce them. Additionally, the test fixture values (keyword strings like 'Stats', 'Creds', '/onboarding', '.desktop', 'sync', 'desktopRouter.config.desktop') are all explicitly named in instruction.md, so the agent could match these literals without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: fixing blank settings tabs (Stats, Creds), adding /onboarding route, and updating skill docs. All these behaviors are tested: componentMap keys/imports, router paths, and skill doc content checks."
+      "reason": "All behaviors described in instruction.md are tested: Stats and Creds entries in componentMap.desktop.ts, superset check against web componentMap, /onboarding route in desktop router, superset check against web router paths, and all three skill file documentation requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Fail-to-pass code behavior, Fail-to-pass agent_config, Pass-to-pass static, Pass-to-pass repo_tests) and descriptive function names and docstrings."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass code behavior, fail-to-pass agent_config, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "The task involves code fixes and documentation updates, not producing structured data like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in the instruction and tests appear correct and consistent with the repository structure."
+      "reason": "All file paths, component names (Stats, Creds), route paths (/onboarding), and skill file paths are consistently spelled correctly throughout instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files that need fixing, but this is appropriate since identifying the desktop vs web file pairs is the core domain context. It doesn't specify exact lines or exact code to add."
+      "reason": "The instruction names the files involved (which is necessary context) but doesn't specify exact line numbers or exact code to write. It describes the problem at a high level (missing entries, missing routes) and points to reference files for comparison."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold solution makes localized additions (imports, map entries, route push, doc sections) without full-file rewrites, and doesn't contradict other files."
+      "reason": "The gold solution makes localized additions (adding imports and map entries, appending a route, adding sections to skill docs). The skill file edits are bounded to adding specific paragraphs/sections rather than full rewrites."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 4
+  "pass_count": 8,
+  "fail_count": 3
 }

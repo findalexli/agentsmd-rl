@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions map to specifics mentioned in instruction.md: the exact file paths for dead code files, the console.log strings in App.tsx, the tracing::debug! to tracing::warn! change in extensions.rs, and the TODO comment in experiments.rs. Every asserted literal string and file path is discoverable from the instruction."
+      "reason": "All test assertions map to items described in instruction.md: the specific console.log strings ('reactReady signal', 'keyboard shortcuts'), the TODO comment text, the tracing::warn! with 'Failed to save extensions config', the three dead files (InterruptionHandler.tsx, useRecipeManager.ts, WaveformVisualizer.tsx), and all file paths are explicitly named in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'tracing::debug! changed to tracing::warn!' which is the exact fix, not just a description of the problem. It also says 'All 8 dead code files removed' naming each file, and 'All debug console.log statements removed'. While the dead file removal and console.log removal are somewhat obvious fixes, the debug\u2192warn change is a specific implementation directive rather than a behavioral description of what's broken."
+      "reason": "The instruction explicitly states the fix for item 3: 'these should be logged at a more visible level like tracing::warn!' and specifies the exact expected log message content 'Failed to save extensions config'. It also tells exactly which console.log strings to remove and which files to delete. This goes beyond describing what's broken and prescribes the exact changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for file absence (dead files), absence of specific strings (console.log, TODO comment), and presence of tracing::warn! with a specific message string. Any correct alternative that achieves the same cleanup would pass \u2014 e.g., different formatting of the warn! call, different approaches to removing console.log lines. The tests don't assert on exact line numbers or gold-specific implementation details."
+      "reason": "The tests check for reasonable behavioral outcomes: file existence/non-existence, presence of tracing::warn! with a specific message string (which is already in the code, just at wrong level), absence of specific strings. Alternative correct implementations (e.g., using warn! macro differently, removing the TODO comment with surrounding whitespace differently) would all pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely text-based: test_log_level_upgraded_to_warn reads file content and checks for 'tracing::warn!' string; test_stale_todo_comment_removed checks string absence; test_debug_console_log_removed_from_app checks string absence. However, there are also compilation/execution tests (cargo check, cargo clippy, cargo fmt, tsc --noEmit) that verify the code actually compiles. The core behavioral tests are text-inspection only, not execution-based."
+      "reason": "The fail-to-pass tests are almost entirely text-matching: test_log_level_upgraded_to_warn checks for 'tracing::warn!' string in file, test_stale_todo_comment_removed checks string absence, test_debug_console_log_removed_from_app checks string absence, and dead file tests check file existence. However, there are also compilation tests (cargo check, cargo clippy, tsc) that actually execute the code. The core behavioral tests (f2p) are purely text-based though."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests cannot be satisfied by stub/no-op implementations. The dead file tests check that files DON'T exist (they exist in the base repo). The console.log test checks strings are absent (they exist in the base repo). The warn test checks for tracing::warn! which doesn't exist in the base repo (it's tracing::debug!). The TODO test checks the comment is absent (it exists in the base repo). All require actual changes."
+      "reason": "A stub/no-op implementation would not pass these tests. The dead file tests check that files DON'T exist (they do by default in the repo). The log level test checks for tracing::warn! which isn't present by default (it's tracing::debug!). The TODO test checks for absence of a string that exists by default. The console.log test checks for absence of strings that exist by default."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/goose/../solution/solve.sh (or wherever Harbor mounts it). The Dockerfile doesn't remove or restrict access to /solution/. An agent could read solve.sh to get the exact patch. Additionally, the test file at tests/test_outputs.py contains all the exact strings being checked, so grepping for fixture values is trivially possible."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact git patch and commands needed. An agent could read /workspace/goose's git history or the solve.sh file directly. Additionally, the test file itself at tests/test_outputs.py contains all the exact strings being checked."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction.md lists 8 dead code files to remove, but tests only check 3 of them (InterruptionHandler.tsx, useRecipeManager.ts, WaveformVisualizer.tsx). The remaining 5 dead files (ScheduleFromRecipeModal.tsx, sessionCache.ts, RecipeExpandableInfo.tsx, RecipeInfoModal.tsx, CustomRadio.tsx) are not tested."
+      "outcome": "pass",
+      "reason": "All four categories of changes described in instruction.md are tested: console.log removal (test_debug_console_log_removed_from_app), TODO removal (test_stale_todo_comment_removed), log level upgrade (test_log_level_upgraded_to_warn), and dead file removal (three separate tests for the three named files)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose. Each test maps to a specific cleanup item."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and string literals in the instruction match those in the tests and solution. No typos detected."
+      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are correct and consistent with each other."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files and exact changes: 'tracing::debug! changed to tracing::warn!' in extensions.rs, specific console.log strings like 'reactReady signal' and 'keyboard shortcuts' in App.tsx, and the exact TODO comment text. This goes beyond describing what's broken and specifies the exact lines/changes needed."
+      "reason": "The instruction names exact files, exact function names (save_extensions_map), exact string content of console.log statements, exact TODO text, and even specifies the replacement (tracing::warn!). For a cleanup task, identifying the specific locations IS part of the challenge, so naming 'save_extensions_map' and the exact console.log strings is excessive hint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -57,9 +57,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 4
 }

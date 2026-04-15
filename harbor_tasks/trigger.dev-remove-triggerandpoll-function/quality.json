@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all files tested (shared.ts, tasks.ts, sdkUsage.ts, writing-tasks.mdc, triggering.mdx), specifies the function to remove (triggerAndPoll), lists the methods that must remain (trigger, batchTrigger, triggerAndWait, batchTriggerAndWait), and describes what must happen (remove implementation, export, imports, references, documentation). The test for 'tasks.trigger()' and 'batch.trigger()' in the docs table is slightly implicit but follows from 'other SDK methods must remain in"
+      "reason": "The instruction names all five files that tests check (shared.ts, tasks.ts, sdkUsage.ts, writing-tasks.mdc, triggering.mdx), describes removing `triggerAndPoll` from implementation/export/import/docs/references, and lists the methods that must be preserved (trigger, batchTrigger, triggerAndWait). The test for `tasks.trigger()` and `batch.trigger()` in the docs table is implicitly covered by 'other SDK methods must remain intact' and the docs file being listed. The changeset file created in solve"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to remove (the triggerAndPoll function, its exports, references, and documentation) but does not specify exact line numbers, sed commands, or the precise edits to make. A developer must still reason about how to find and remove the relevant code."
+      "reason": "The instruction describes what to remove (the triggerAndPoll function, its export, references, and documentation) but does not specify exact line numbers, sed commands, or specific replacement text. A developer must still figure out how to locate and remove each reference."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for absence of 'triggerAndPoll' in various files, presence of other methods, valid syntax, and formatting. Any correct removal approach (whether via sed, manual editing, or IDE refactoring) that removes triggerAndPoll references while preserving other methods would pass. Tests don't assert on specific line numbers, variable names, or implementation details unique to the gold solution."
+      "reason": "Tests check for absence of 'triggerAndPoll' in specific files and presence of other method names. Any correct removal approach (manual editing, sed, programmatic rewrite) would pass as long as triggerAndPoll is gone and other methods remain. Tests don't assert on specific line numbers, variable names, or implementation details unique to the gold solution."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The vast majority of tests are text/string-based checks: searching for 'triggerAndPoll' in file contents, regex matching exports, checking 'import' keyword presence. While some tests run Node.js syntax checks (--check) and Prettier formatting, the core fail_to_pass tests (test_triggerandpoll_function_removed, test_triggerandpoll_not_exported, test_sdk_usage_no_triggerandpoll, etc.) are all `assert 'X' not in open(path).read()` pattern. No test actually imports/calls the SDK to verify the method "
+      "reason": "Nearly all tests are text/string-matching checks: `assert 'triggerAndPoll' not in content`, regex searches on file contents, and string presence checks. While some use `subprocess.run(['node', ...])` to execute Node.js, those Node scripts themselves just do `fs.readFileSync` and string matching. No test actually imports the module, instantiates the SDK, or verifies that calling `tasks.triggerAndPoll` raises an error. Tests like test_repo_prettier_check and test_repo_ts_node_syntax do execute too"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check that 'triggerAndPoll' is absent from specific files where it currently exists in the base commit. A stub/no-op change would leave the original code intact, and these tests would fail because triggerAndPoll would still be present. The agent must actually remove the function and references."
+      "reason": "The fail_to_pass tests check that 'triggerAndPoll' is absent from files where it currently exists in the base commit. A stub/no-op solution (doing nothing) would fail because the string is present in the original files. The agent must actively remove the references to pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/trigger.dev's solution/solve.sh (or wherever Harbor mounts it), and there's no evidence the container prevents the agent from reading files outside the workspace. The agent could read the gold patch solution/solve.sh which contains exact sed commands with line numbers. Additionally, the Dockerfile and test files are accessible in the container."
+      "reason": "The solution file exists at /workspace/trigger.dev's sibling or within the container at a predictable path. The solve.sh is described as 'hidden' but if it's mounted in the container, the agent could read it. Additionally, since tests are purely string-matching, the agent could grep test files (if accessible) to discover exactly which strings must be absent/present and make minimal targeted edits."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: function removal from shared.ts, export removal from tasks.ts, import removal from tasks.ts, reference removal from sdkUsage.ts, doc updates in triggering.mdx and writing-tasks.mdc, and preservation of other methods (trigger, batchTrigger, triggerAndWait, batchTriggerAndWait)."
+      "reason": "All behaviors described in instruction.md are tested: function removal from shared.ts, export removal from tasks.ts, import removal from tasks.ts, reference removal from sdkUsage.ts, doc updates in writing-tasks.mdc and triggering.mdx, and preservation of other methods."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_triggerandpoll_function_removed, test_other_task_methods_preserved, etc.), have docstrings explaining what they check, and are annotated with categories like [static] pass_to_pass, [pr_diff] fail_to_pass, and [repo_tests] pass_to_pass."
+      "reason": "Tests are well-named with descriptive docstrings, categorized by type (static pass_to_pass, pr_diff fail_to_pass, repo_tests pass_to_pass), and each test has a clear single responsibility."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code and documentation removal, not producing structured data output."
+      "reason": "This task involves removing code/documentation, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and method names in the instruction match those used in tests and the actual repository structure."
+      "reason": "All file paths, function names, and commands in the instruction and tests are correctly spelled and match the actual repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction lists the files to look at (which is appropriate given the task is about removing a specific function across the codebase) but doesn't specify exact line numbers or the precise edits to make. The files listed are the natural places where the function would exist."
+      "outcome": "fail",
+      "reason": "The instruction explicitly lists all five exact file paths to modify under 'Files to Look At', including non-obvious ones like '.cursor/rules/writing-tasks.mdc'. This removes the need for the agent to locate affected files, which is a significant part of the task's reasoning challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code and documentation removal task, not a config-edit task."
+      "reason": "This is a code/documentation removal task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -55,7 +55,9 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
 }

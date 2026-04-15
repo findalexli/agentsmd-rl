@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific strings not mentioned in instruction.md: e.g., test_constants_file_has_expected_values checks for 'Pagination defaults' or '# Pagination' comment; test_mcp_core_clamps_page_size checks for exact string 'min(page_size, MAX_PAGE_SIZE)' and 'defense-in-depth' comment; test_main_py_has_middleware checks for '_add_default_middlewares', 'create_response_size_guard_middleware', 'GlobalErrorHandlerMiddleware', 'LoggingMiddleware', and that _add_default_middlewares() is called "
+      "reason": "Tests assert very specific strings not mentioned in instruction.md: e.g., test_constants_file_has_expected_values checks for 'Pagination defaults' or '# Pagination' comment; test_mcp_core_clamps_page_size checks for exact string 'min(page_size, MAX_PAGE_SIZE)' and 'defense-in-depth' or 'Clamp page_size' comments; test_main_py_has_middleware checks for '_add_default_middlewares' function name, 'create_response_size_guard_middleware', 'GlobalErrorHandlerMiddleware', 'LoggingMiddleware' \u2014 none of t"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (constants with specific values, schema validation constraints, runtime clamping, middleware) but does not specify exact code changes like 'change line X to Y'. A developer still needs to reason about implementation."
+      "reason": "The instruction describes what behavior is expected (constants, schema validation, runtime capping, middleware) but does not specify exact code changes like 'change line X to Y'. It describes the fix at a requirements level."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'min(page_size, MAX_PAGE_SIZE)', 'from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE', 'le=MAX_PAGE_SIZE', 'default=DEFAULT_PAGE_SIZE', '_add_default_middlewares', and require specific comment text like 'defense-in-depth' or 'Clamp page_size'. Alternative correct implementations (e.g., using max_page_size variable, different import style, different clamping pattern like 'page_size = MAX_PAGE_SIZE if page_size > MAX_PAGE_SIZE else p"
+      "reason": "Tests assert exact strings like 'min(page_size, MAX_PAGE_SIZE)', 'from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE', 'le=MAX_PAGE_SIZE', 'default=DEFAULT_PAGE_SIZE', '_add_default_middlewares', exact comment text 'Pagination defaults' or '# Pagination'. An alternative correct implementation using e.g. 'page_size = min(page_size, constants.MAX_PAGE_SIZE)' or a different import style would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test uses file text inspection (read_text(), AST parsing of source files, string containment checks). No test imports the actual modules, instantiates schemas, calls validation, or executes any code behavior. All tests are variations of `assert 'foo' in open(path).read()`."
+      "reason": "Every single test uses only file content string matching (assert 'X' in content) or AST inspection of static file contents. No test imports, instantiates, or calls any code. For example, test_chart_schema_page_size_validation just checks 'le=MAX_PAGE_SIZE' in file content rather than actually constructing a schema object with page_size=200 and checking it raises a validation error."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific strings and patterns that don't exist in the original codebase (e.g., MAX_PAGE_SIZE=100, DEFAULT_PAGE_SIZE=10, le=MAX_PAGE_SIZE). A stub/no-op implementation would not have these strings in the files, so the tests would fail."
+      "outcome": "fail",
+      "reason": "Since tests only check file content strings and AST structure, an agent could simply insert the exact expected strings as comments or dead code without implementing actual validation logic, and all tests would pass. For example, adding '# min(page_size, MAX_PAGE_SIZE)' as a comment in mcp_core.py would satisfy test_mcp_core_clamps_page_size."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/superset as solve.sh is applied there. The agent could read the solution directory if it exists in the container. Also, since tests are purely text-matching, the agent could grep test files (if accessible) for the exact strings being asserted and write them verbatim without understanding the problem."
+      "reason": "The solution file exists at /workspace/superset's solution directory (solve.sh is present in the container). The agent could read it. Additionally, since tests only check for literal strings in files, the agent could grep test_outputs.py for expected strings and insert them without understanding the problem."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'Confirm oversized page sizes are rejected with validation errors' and 'Confirm valid page sizes are accepted', but no test actually validates schema behavior by instantiating schemas with oversized values. The test_chart_schema_rejects_oversized_page_size and test_chart_schema_accepts_valid_page_size (visible in truncated test file) likely only do text matching, not actual validation testing."
+      "reason": "Instruction says 'Confirm oversized page sizes are rejected with validation errors' and 'Confirm valid page sizes are accepted' \u2014 but no test actually validates that schema validation rejects/accepts page sizes. Tests only check static file content for string patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_constants_defined, test_chart_schema_page_size_validation, test_mcp_core_clamps_page_size, etc.), grouped by concern, and have docstrings explaining their purpose."
+      "reason": "Tests are well-named (test_constants_defined, test_chart_schema_page_size_validation, etc.), have docstrings, and are logically grouped by component."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves code changes to enforce pagination limits, not producing structured data output like JSON/CSV/API responses."
+      "reason": "Task involves code changes to enforce validation, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos observed in filenames, paths, variable names, or commands in instruction.md."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly names exact files (constants.py, chart/schemas.py, dashboard/schemas.py, dataset/schemas.py, mcp_core.py, __main__.py), exact constant names (MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE), exact values (100, 10), exact constraint syntax (le, gt=0), and exact field names (page_size). This goes beyond describing what's broken and specifies the implementation in detail."
+      "outcome": "pass",
+      "reason": "Instruction mentions file paths that are the natural domain of the task (constants.py, schemas.py, mcp_core.py, __main__.py) but doesn't specify exact line numbers or exact code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -54,12 +54,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
   "pass_count": 4,
   "fail_count": 6

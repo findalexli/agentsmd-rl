@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific functions (`_validate_reconnect_location`, `_default_port`), file paths (`langgraph_sdk/_shared/utilities.py`, etc.), version string `0.3.13`, error message requirements ('cross-origin' or 'refusing'), port values (443/80), and all behavioral requirements tested. The no-quadruple-backtick requirement is also stated. All test specifics are discoverable from the instruction."
+      "reason": "The instruction names all key specifics tested: function names `_validate_reconnect_location` and `_default_port`, module path `langgraph_sdk._shared.utilities`, version `0.3.13`, file paths for async/sync HTTP clients, the ValueError with 'cross-origin'/'refusing' message, and the no-quadruple-backtick requirement. All assert targets in tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what functions to create and their behavioral contracts but does not give the exact implementation (e.g., no line-by-line code, no 'change line X to Y'). A developer must still reason about how to implement parsing, port normalization, and wiring."
+      "reason": "The instruction describes what functions to create and their behavior (same-origin validation, default port handling) but does not give exact implementation code, line numbers to change, or specific code snippets to insert. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests directly import `_validate_reconnect_location` and `_default_port` by exact name from `langgraph_sdk._shared.utilities`. An alternative correct fix that uses different function names (e.g., `validate_redirect_url`, `get_default_port`) or places them in a different module would fail. The tests enforce gold-specific internal helper function names."
+      "reason": "Tests assert on specific function names `_validate_reconnect_location` and `_default_port` imported from `langgraph_sdk._shared.utilities`. However, the instruction explicitly mandates these exact names and locations, so alternative implementations must use them. The real issue is that `test_import_validation_function` checks that `HttpClient` and `SyncHttpClient` can be imported but doesn't actually verify the validation is wired in (called). An agent could add the functions but wire them diffe"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import and call `_validate_reconnect_location` and `_default_port`, check return values and exceptions, run subprocess commands (`make format`, `make lint`, `make test`, etc.), and verify actual behavior rather than just grepping file contents. The `test_no_double_backticks` test does use regex on file content, but the majority of tests execute code."
+      "reason": "Tests import and call `_validate_reconnect_location` and `_default_port`, check ValueError exceptions are raised, run subprocess commands (`make format`, `make lint`, `make test`, etc.), and verify version via import. Only `test_no_double_backticks` does text-based file inspection, but other tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (`test_cross_origin_reconnect_blocked`, `test_same_origin_reconnect_allowed`, `test_import_validation_function`, `test_version_updated`) cannot be passed by stub implementations. A stub returning None/empty would fail the cross-origin test (expects ValueError), the same-origin test (expects the URL string back), and the version test (expects '0.3.13')."
+      "reason": "The f2p tests (`test_cross_origin_reconnect_blocked`, `test_same_origin_reconnect_allowed`, `test_import_validation_function`, `test_version_updated`) cannot be passed by stubs: a stub returning None wouldn't raise ValueError for cross-origin URLs, returning empty string wouldn't match the expected URL strings, and `__version__` must be exactly '0.3.13'."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at `/workspace/langgraph/` in the container (via the gold patch in `solution/solve.sh`). An agent could read `solution/solve.sh` to see the exact patch and apply it directly. There's no protection against reading `/solution/` or the solve script."
+      "reason": "The solution exists at `/workspace/langgraph/` in the container (the Dockerfile clones the repo and the solve.sh applies a patch there). An agent could read `/solution/solve.sh` or the gold patch to extract the exact implementation. The Dockerfile doesn't remove the solution directory, and the agent could `cat` the solve script to get the answer."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: `_default_port` returns correct values, `_validate_reconnect_location` handles cross-origin/same-origin/relative URLs and port normalization, version is 0.3.13, no quadruple backticks, and the validation is wired into HTTP clients (verified indirectly via import tests and repo test suite passing)."
+      "reason": "All behaviors in instruction.md are tested: `_default_port` returns correct values, `_validate_reconnect_location` handles relative/same-origin/cross-origin URLs, version is 0.3.13, imports work in async/sync clients, formatting/linting/tests pass, and no quadruple backticks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings that include category labels like '(f2p)' and '(p2p)'. They are logically grouped by concern (cross-origin, same-origin, relative, ports, imports, version, repo checks)."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, including f2p/p2p annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, function names, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact methods (`request_reconnect`, `stream`) and the exact line of code pattern (`response.headers.get('location')`) where the validation must be wired in, plus the exact function names and module paths. This goes beyond describing what's broken and tells the agent exactly where and how to fix it."
+      "outcome": "pass",
+      "reason": "The instruction names methods (`request_reconnect`, `stream`) and files to modify, but this is appropriate for the task domain \u2014 it describes what's broken and where, not exact line numbers or code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -55,9 +55,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

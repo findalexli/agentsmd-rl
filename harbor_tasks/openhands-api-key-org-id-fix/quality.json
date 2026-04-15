@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests import specific modules like 'server.utils.saas_app_conversation_info_injector.SaasSQLAppConversationInfoService', 'storage.stored_conversation_metadata_saas.StoredConversationMetadataSaas', 'storage.org.Org', 'storage.user.User', and use specific attributes like 'user_auth', 'get_api_key_org_id', 'current_org_id'. The instruction.md never names SaasSQLAppConversationInfoService, StoredConversationMetadataSaas, or the specific file path 'server/utils/saas_app_conversation_info_injector.py'"
+      "reason": "Tests import specific modules like `server.utils.saas_app_conversation_info_injector.SaasSQLAppConversationInfoService`, `storage.stored_conversation_metadata_saas.StoredConversationMetadataSaas`, `storage.org.Org`, `storage.user.User`, and use specific attributes like `user_auth`, `get_api_key_org_id()`, `current_org_id`. The instruction.md does not name the file `saas_app_conversation_info_injector.py`, the class `SaasSQLAppConversationInfoService`, nor the specific attribute names `user_auth`"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (conversation saved to wrong org when using API key auth) and the expected behavior, but does not specify which file to change, which line to modify, or the exact code fix. The agent must locate the relevant code and determine the implementation."
+      "reason": "The instruction describes the bug scenario (wrong org association) and requirements (use API key's org, fall back to current_org_id) but does not specify exact code changes, line numbers, or specific implementation details like 'check hasattr for user_auth'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests create MockUserAuth with 'get_api_key_org_id' method and MockAuthUserContext with 'user_auth' attribute, then assert the service uses these. The tests specifically require the implementation to check 'hasattr(self.user_context, \"user_auth\")' or similar duck-typing on user_context. An alternative fix that, say, passed api_key_org_id as a parameter to save_app_conversation_info or used a different interface pattern would fail these tests because the mocks are hardcoded to a specific interfac"
+      "reason": "Tests create `MockUserAuth` with a `get_api_key_org_id()` method and `MockAuthUserContext` with a `user_auth` attribute. The tests rely on the production code checking `hasattr(self.user_context, 'user_auth')` and then calling `user_auth.get_api_key_org_id()`. An alternative correct fix that uses a different interface (e.g., a method directly on user_context like `get_api_key_org_id()`) would fail because the mock objects are structured to match only the gold solution's expected interface patter"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests instantiate SaasSQLAppConversationInfoService, call save_app_conversation_info(), and query the database to verify the org_id on the saved metadata. This is behavioral testing through actual code execution, not text matching."
+      "reason": "Tests instantiate `SaasSQLAppConversationInfoService`, call `save_app_conversation_info()`, and query the database to verify the saved `org_id`. They execute actual code behavior, not text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation that always returns None or does nothing would fail because the tests assert that saas_metadata is not None and that saas_metadata.org_id equals specific values. The key test (test_api_key_org_id_used_when_available) sets user's current_org to ORG2 but expects ORG1 \u2014 a naive implementation using current_org_id would fail."
+      "reason": "The tests verify that `saas_metadata.org_id == ORG1_ID` after saving, which requires the code to correctly determine the org_id based on the API key context. A stub that always uses `user.current_org_id` would fail `test_api_key_org_id_used_when_available` where `current_org_id` is set to ORG2 but the expected result is ORG1."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/openhands (the solve.sh is in solution/solve.sh which would be accessible in the container). The agent could read the gold patch directly. Additionally, the Dockerfile doesn't remove the solution directory, so the agent could inspect it."
+      "reason": "The solution exists at `/workspace/openhands` in the container and the gold patch is in `solution/solve.sh`. An agent could read the solution file or grep for the exact fix pattern. The Dockerfile doesn't remove or protect the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies four behaviors: (1) API key org binding used for conversation, (2) legacy keys fall back to current_org_id, (3) cookie auth uses current_org_id, (4) cross-org visibility. All four are tested: test_api_key_org_id_used_when_available, test_legacy_api_key_without_org_uses_user_current_org, test_cookie_auth_without_api_key_uses_user_current_org, and test_org_isolation_with_api_key_org."
+      "reason": "All four requirements from instruction.md are tested: API key org binding (test 1), legacy key fallback (test 2), cookie auth fallback (test 3), and cross-org visibility/isolation (test 4)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, include docstrings explaining the scenario, and are logically grouped by authentication type (API key, legacy API key, cookie auth, cross-org isolation)."
+      "reason": "Tests are well-named (`test_api_key_org_id_used_when_available`, `test_legacy_api_key_without_org_uses_user_current_org`, etc.), have docstrings explaining the scenario, and are organized with clear fixtures."
     },
     "structured_data_schema": {
-      "outcome": "fail",
-      "reason": "The task involves database records (StoredConversationMetadataSaas with fields like conversation_id, user_id, org_id) but instruction.md does not document the schema of these records or reference any specification that does."
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing a bug in existing code, not producing structured data output like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the bug conceptually (conversation metadata uses wrong org) without naming the specific file (saas_app_conversation_info_injector.py) or the specific line/function to change. The agent must locate the buggy code."
+      "reason": "The instruction describes the bug at a high level (conversation metadata uses wrong org) without naming the exact buggy file or line. The agent must locate the relevant code themselves."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -56,9 +56,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "structured_data_schema"
-  ],
+  "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 4
+  "fail_count": 3
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/vite-plugin-cloudflare/src/workers/runner-worker/module-runner.ts), the function (runInRunnerObject), the class (__VITE_RUNNER_OBJECT__), the method (executeCallback), and the module-scope variables (pendingCallbacks, callbackResults, nextCallbackId). All assert'd specifics in the tests \u2014 file path, function names, variable names, class name \u2014 are discoverable from instruction.md."
+      "reason": "The instruction names the file path (packages/vite-plugin-cloudflare/src/workers/runner-worker/module-runner.ts), the function names (runInRunnerObject, executeCallback), the class name (__VITE_RUNNER_OBJECT__), and the module-scope variables (pendingCallbacks, callbackResults, nextCallbackId) \u2014 all of which are referenced in the tests. The tests check for these exact identifiers, and they are all discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (entries leak when executeCallback throws) and the expected behavior (cleanup regardless of success/failure within runInRunnerObject), but does not prescribe the exact fix (e.g., it doesn't say 'add try/finally' or 'move pendingCallbacks.delete from executeCallback to runInRunnerObject'). A developer must reason about the implementation."
+      "reason": "The instruction describes the bug (entries not cleaned up on error) and the expected behavior (cleanup in runInRunnerObject regardless of success/failure), but does not specify the exact fix (e.g., 'add try/finally'). A developer must still reason about the implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_error_handling_around_rpc_call asserts 'has_try and (has_finally or has_catch)', which rejects valid alternatives like using .then()/.catch() promise chaining or an async wrapper pattern. test_caller_cleans_up_pending_callbacks asserts 'pendingCallbacks.delete' must appear literally in runInRunnerObject's text, which would fail if someone used pendingCallbacks.clear() or a helper function that encapsulates the cleanup. These are implementation-specific assertions that reject correct alterna"
+      "reason": "test_error_handling_around_rpc_call requires 'try' in the function body and either 'finally' or 'catch'. An alternative correct fix using .then()/.catch() promise chaining without the keyword 'try' would fail this test. test_caller_cleans_up_pending_callbacks asserts 'pendingCallbacks.delete' must appear literally in runInRunnerObject \u2014 an alternative that uses pendingCallbacks.clear() or reconstructs the Map would fail. These tests over-constrain to the gold solution's specific implementation p"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_cleanup_on_error extracts the function body, constructs a runnable JS script with mock environments, executes it via Node.js subprocess, and checks that Maps are empty after error/success paths. While test_caller_cleans_up_pending_callbacks and test_error_handling_around_rpc_call are text-based, the primary behavioral test does execute the code. The mix includes real behavioral execution."
+      "reason": "test_cleanup_on_error extracts the function body, builds a runnable JS file with mocked environments, executes it via Node.js subprocess, and checks that Maps are empty after both error and success paths. This is genuine behavioral testing. While test_caller_cleans_up_pending_callbacks and test_error_handling_around_rpc_call are text-matching, test_cleanup_on_error actually executes the code, so not every test is purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub runInRunnerObject that just returns undefined or does nothing would fail: test_cleanup_on_error checks that the success path returns 42 and 'hello', and test_not_stub asserts that pendingCallbacks.set, callbackResults, nextCallbackId, and executeCallback are all referenced. A trivial stub cannot pass these checks."
+      "reason": "A stub implementation (e.g., empty function) would fail test_not_stub (requires pendingCallbacks.set, callbackResults, nextCallbackId, executeCallback in the body) and test_cleanup_on_error (which checks that the function returns 42 and 'hello' on success path). The f2p tests require actual working logic plus cleanup behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/workers-sdk (the solve.sh and its patch content). An agent could read solution/solve.sh if it's mounted in the container, or look at /solution/ directory. The Dockerfile doesn't explicitly prevent access to solution files, and the gold patch is available as a shell script."
+      "reason": "The solution file exists at /workspace/workers-sdk (the solve.sh is in solution/solve.sh which is in the container). An agent could potentially read the solution directory or the gold patch. Additionally, the Dockerfile doesn't remove the solution directory from the container image."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires cleanup of both Maps on success and failure within runInRunnerObject. The tests verify: (1) cleanup on error path, (2) cleanup on success path, (3) pendingCallbacks.delete is in runInRunnerObject, (4) error handling wraps the RPC call, (5) the build and typecheck still pass. All required behaviors are tested."
+      "reason": "The instruction requires cleanup of both pendingCallbacks and callbackResults on success and error, within runInRunnerObject itself. Tests verify: cleanup on error (test_cleanup_on_error error path), cleanup on success (test_cleanup_on_error success path), cleanup in runInRunnerObject specifically (test_caller_cleans_up_pending_callbacks), and error handling (test_error_handling_around_rpc_call). All stated requirements are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub), descriptive function names (test_cleanup_on_error, test_caller_cleans_up_pending_callbacks, etc.), and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub), descriptive function names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a memory leak in TypeScript code; it does not produce structured data like JSON/CSV/API/DB."
+      "reason": "The task involves fixing a memory leak in TypeScript code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are correct and consistent with the actual repository structure."
+      "reason": "All filenames, paths, variable names, and function names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function, which is appropriate since there's only one relevant file. It describes the bug conceptually (entries not cleaned up when executeCallback throws) without specifying exact line numbers or the exact code change needed."
+      "reason": "The instruction names the specific file, which is appropriate since the task is about fixing a specific bug. It describes the bug mechanism in detail but this is necessary context, not localization leakage \u2014 the file is already obvious from the task domain. It does not specify exact line numbers or the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

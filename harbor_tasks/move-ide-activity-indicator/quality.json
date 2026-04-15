@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert many specifics not in instruction.md: exact file paths like 'src/symbols/runner.rs', 'src/analyzer.rs', 'src/context.ts', 'src/activity_monitor.ts'; exact enum name 'SymbolicatorMessage' with specific variant strings like 'Diagnostics(BTreeMap<PathBuf, Vec<Diagnostic>>)' and 'FatalError(anyhow::Error)'; exact constant 'const PROGRESS_TOKEN: &str = \"symbolication\"'; exact class name 'ServerActivityMonitor'; exact type definition 'type ServerState = \\'starting\\' | \\'idle\\' | \\'busy\\' "
+      "reason": "Tests assert many specific details not in instruction.md: exact file paths like 'src/symbols/runner.rs', 'src/analyzer.rs', 'src/context.ts', 'src/activity_monitor.ts'; exact enum name 'SymbolicatorMessage' with exact variant signatures like 'Diagnostics(BTreeMap<PathBuf, Vec<Diagnostic>>)' and 'FatalError(anyhow::Error)'; exact constant 'const PROGRESS_TOKEN: &str = \"symbolication\"'; exact class name 'ServerActivityMonitor'; exact type definition 'type ServerState = \\'starting\\' | \\'idle\\' | \\'"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what features to implement (activity indicator, state machine, progress notifications) but does not specify exact code changes, line numbers, or specific variable names to use. A developer would still need to design the implementation."
+      "reason": "The instruction describes what behavior to implement (activity indicator, state machine, progress notifications) but does not specify exact code changes like 'change line X to Y'. It describes requirements at a feature level."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact enum variant signatures like 'Diagnostics(BTreeMap<PathBuf, Vec<Diagnostic>>)', exact type definition string 'type ServerState = \\'starting\\' | \\'idle\\' | \\'busy\\' | \\'slow\\' | \\'stopped\\'', exact class name 'ServerActivityMonitor', exact method names 'onCompilationStart'/'onCompilationEnd'/'transitionTo', exact string 'client.sendRequest ='. An alternative correct implementation using different names (e.g., 'ActivityIndicator' class, '"
+      "reason": "Tests assert gold-specific implementation details: exact enum variant names and signatures ('SymbolicatorMessage' with specific variants), exact method names ('onClientStateChange', 'onCompilationStart', 'transitionTo'), exact type string ('type ServerState = \\'starting\\' | \\'idle\\' | \\'busy\\' | \\'slow\\' | \\'stopped\\''), exact class name 'ServerActivityMonitor', exact field 'Sender<SymbolicatorMessage>'. An alternative correct implementation using different naming or structure would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all tests are pure text-matching: reading file contents and checking for string presence (e.g., 'assert \"SymbolicatorMessage\" in content'). The only behavioral test is test_rust_code_compiles which runs 'cargo check'. No TypeScript tests are executed, no state machine behavior is tested, no imports or function calls are made."
+      "reason": "Almost every test is purely textual grep: 'assert X in content' where content is read_text() from files. Only test_rust_code_compiles actually executes code (cargo check). No tests import/call TypeScript code, run the extension, or verify runtime behavior. The vast majority are string-matching tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests would not pass with stub implementations. test_rust_code_compiles requires actual valid Rust code that compiles. test_symbolicator_message_enum_exists requires the specific enum with all variants. The base commit lacks these, so empty/stub files won't pass."
+      "reason": "The f2p tests check for content that does not exist in the base commit (e.g., SymbolicatorMessage enum, activity_monitor.ts file, progress notification handling). A stub/empty implementation would not contain these specific strings, so the tests cannot be trivially satisfied."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sui with solve.sh containing the full gold patch. The agent could read solve.sh or the patch content directly. Additionally, since tests are purely text-matching, the agent could grep test files to find expected strings and write them verbatim without understanding the feature."
+      "reason": "The solution exists at /workspace/sui with solve.sh applying a git patch. An agent could read solution/solve.sh (which contains the full gold patch) or simply apply it. The tests are pure text-matching so the agent could also grep test files to discover exact expected strings and place them in files without understanding the problem."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires animated indicator behavior, state promotion to 'slow' after ~10 seconds, tooltip with version and restart command, and request latency tracking. None of these behaviors are actually tested \u2014 tests only check for string presence in source files, not runtime behavior."
+      "reason": "Instruction mentions animated indicator, tooltip with version/restart command, wrapped request latency tracking with timeouts (~10 seconds for slow promotion), and persistent output channel. Tests don't verify animation logic, tooltip content, the 10-second slow promotion timer, or output channel persistence."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_rust_code_compiles, test_symbolicator_message_enum_exists, etc.), docstrings explaining what each tests and noting f2p status, and logical grouping by component (Rust side vs TypeScript side)."
+      "reason": "Tests are well-structured with descriptive function names (test_symbolicator_message_enum_exists, test_activity_monitor_state_methods, etc.) and docstrings explaining what each test verifies and why it's f2p."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the feature at an architectural level without naming specific files like runner.rs or analyzer.rs, specific enum names like SymbolicatorMessage, or exact line locations. It describes what to build, not where to put it."
+      "reason": "Instruction describes the feature at a requirements level without naming exact buggy lines or specific internal implementation details like exact enum names or method signatures."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code implementation task, not a config-edit task."
+      "reason": "This is a code implementation task, not primarily a config-edit task."
     }
   },
   "tier_a_fails": [

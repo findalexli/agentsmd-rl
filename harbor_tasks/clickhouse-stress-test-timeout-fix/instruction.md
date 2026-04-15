@@ -12,21 +12,17 @@ Additionally, the current randomization for `async_load_databases` uses day-of-m
 
 Modify `tests/docker_scripts/stress_runner.sh` to meet the following requirements:
 
-### 1. Use proper per-run randomization for `async_load_databases`
+### 1. Fix the async_load_databases randomization
 
-In the section that randomizes `async_load_databases` settings, the current implementation uses day-of-month based logic that produces identical results for all runs within the same day. Change this to use proper per-run randomization that varies between independent test executions.
+The section that randomizes `async_load_databases` currently produces identical results for all runs within the same day because it uses day-of-month based logic. Change this so that each independent test execution gets a different randomization result.
 
-The randomization check must use a bash randomization mechanism that produces a 0 or 1 result per execution (not per day). The file must not contain any date-based randomization using patterns like `date +%-d`.
+### 2. Extend the post-stress server restart timeout
 
-### 2. Add timeout argument to post-stress server restart
+The server restart that follows the stress test (after removing `cannot_allocate_thread_injection.xml`) needs a longer timeout than the default. Under TSan with `async_load_databases=false`, the table loading phase takes several minutes.
 
-After the line that removes `cannot_allocate_thread_injection.xml`, the `start_server` call must include a timeout argument of `30` (increasing retry attempts from the default 6 to 30). This call must appear as `start_server 30`.
+### 3. Add an explanatory comment
 
-### 3. Add explanatory comment for the timeout
-
-The timeout change must include an explanatory comment placed immediately before the `start_server 30` call. The comment must contain the exact phrases:
-- "larger timeout for the post-stress restart"
-- "under sanitizers with"
+Before the restart call in the post-stress section, add a comment explaining why the timeout is larger, referencing the sanitizer context and the table loading behavior.
 
 ## Context
 

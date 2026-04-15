@@ -3,61 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the migration file path, the upgrade() function, the disable_sqlite_fkeys context manager, the UPDATE statements for log and dag tables, and the requirement to move them inside the context block. All test assertions check for these named elements which are discoverable from instruction.md."
+      "reason": "The instruction names the migration file path, the disable_sqlite_fkeys context manager, the UPDATE statements for log and dag tables, and the batch_alter_table operations. All specifics asserted in tests (file path, function name 'upgrade', 'disable_sqlite_fkeys', 'UPDATE log SET', 'UPDATE dag SET', 'batch_alter_table') are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'Consider what operations should happen inside vs outside the `with disable_sqlite_fkeys(op):` block' and explains that PRAGMA is ignored inside transactions and that op.execute() triggers autobegin. Combined with the problem description, this essentially tells the agent the exact fix: move UPDATE statements inside the disable_sqlite_fkeys block. However, the instruction doesn't literally say 'move the UPDATE statements inside' \u2014 it frames it as a question. This"
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (PRAGMA foreign_keys=off not working due to structure of upgrade()) but does not explicitly state 'move the UPDATE statements inside the disable_sqlite_fkeys block'. The developer must reason about what structural change is needed."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests use AST parsing to check very specific structural requirements: UPDATE statements must be direct children of the with disable_sqlite_fkeys block (test_update_statements_inside_disable_sqlite_fkeys checks for ast.Expr containing ast.Call with func.attr=='execute' as direct inner_stmt of the with block). Alternative correct fixes like wrapping UPDATEs in a helper function, using text() instead of string literals, using session.execute(), or restructuring with nested context managers woul"
+      "reason": "The tests use AST parsing to check very specific structural requirements: UPDATE statements must be direct children of the 'with disable_sqlite_fkeys' block as ast.Expr nodes containing op.execute calls with string constants. An alternative correct fix like using text() objects, sa.text(), variable-based SQL, or f-strings for the UPDATE statements would fail test_update_statements_inside_disable_sqlite_fkeys because it checks for ast.Constant with specific string content. Also, wrapping updates "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test uses AST parsing or file reading to inspect the source code structure. No test actually imports the migration, runs it against a SQLite database, or executes any code. Tests like test_update_statements_inside_disable_sqlite_fkeys literally parse the AST looking for specific patterns \u2014 this is textual/structural verification, not behavioral testing."
+      "reason": "Every test reads the file and performs AST or text analysis. No test actually imports/executes the migration, runs it against a database, or verifies runtime behavior. All tests are structural/textual checks (ast.parse + walk, checking node types and string contents)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The original (buggy) file has UPDATE statements outside the disable_sqlite_fkeys block. The tests check that UPDATEs are inside the block (test_update_statements_inside_disable_sqlite_fkeys) and not before it (test_no_updates_before_disable_sqlite_fkeys). A stub/no-op implementation would fail these checks since the original file structure wouldn't match."
+      "reason": "The original buggy code has UPDATE statements outside the disable_sqlite_fkeys block. A stub or no-op implementation would fail test_update_statements_inside_disable_sqlite_fkeys which requires UPDATE statements inside the context. The tests are fail-to-pass: the unmodified code would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/task's solution/solve.sh which is accessible in the container. The agent could read this file directly to see the exact patch. Additionally, since tests are purely AST-based, the agent could grep test files to discover the exact structural pattern expected."
+      "reason": "The solution file exists at /workspace/task's solve.sh (mounted in container per Dockerfile), and the agent could read /solution/solve.sh or inspect the test file at tests/test_outputs.py to discover exactly what structural changes are expected (UPDATE statements inside disable_sqlite_fkeys block)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires moving UPDATE statements inside the disable_sqlite_fkeys block so PRAGMA executes before autobegin. The tests verify this: UPDATEs are inside the context (test_update_statements_inside_disable_sqlite_fkeys), not before it (test_no_updates_before_disable_sqlite_fkeys), and the structure is correct (test_disable_sqlite_fkeys_context_structure)."
+      "reason": "The instruction requires fixing upgrade() so foreign key constraints are properly disabled during SQLite migration. Tests verify UPDATE statements are inside disable_sqlite_fkeys context, not before it, and the structural ordering is correct \u2014 covering the core required behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_migration_file_exists, test_migration_valid_syntax, test_update_statements_inside_disable_sqlite_fkeys, etc.) and have docstrings explaining their purpose. They're logically grouped from basic validation to structural verification."
+      "reason": "Tests are well-named (test_migration_file_exists, test_update_statements_inside_disable_sqlite_fkeys, test_no_updates_before_disable_sqlite_fkeys, etc.) with docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a migration file, not producing structured data output."
+      "reason": "Task produces a Python migration file, not structured data like JSON/CSV/API/DB schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction match those in the actual codebase and tests."
+      "reason": "File paths, function names, and variable names in instruction.md are consistent and correct (verified against the repository structure)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the migration file and utils.py, but these are the only two relevant files for this task and are naturally obvious from the domain. The instruction doesn't specify exact line numbers or the precise code change needed."
+      "reason": "The instruction names the migration file and utils.py which are natural for the task domain. It describes the problem mechanism (PRAGMA not working due to structure) without specifying exact lines or the precise code change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving a migration file fix, not a configuration edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 3
 }

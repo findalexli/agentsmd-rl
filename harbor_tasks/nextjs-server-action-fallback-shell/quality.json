@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (packages/next/src/build/templates/app-page.ts), the handler function, staticPathKey, the relevant variables (isSSG, pageIsDynamic, fallbackRouteParams, isRSCRequest, isDynamicRSCRequest, ssgCacheKey), line numbers (~620, ~570), and the conceptual requirement (server action requests must be excluded from the staticPathKey condition). The repo tests (ESLint, Prettier, error codes) are standard repo CI checks discoverable from the repo. The AGENTS.md config ru"
+      "reason": "The instruction names the target file (packages/next/src/build/templates/app-page.ts), the handler function, the staticPathKey variable, the relevant conditions (isSSG, pageIsDynamic, fallbackRouteParams, routeModule.isDev), and describes the server action characteristics (Next-Action header, isRSCRequest, isPossibleServerAction pattern). The ssgCacheKey hint and line numbers are provided. All test-asserted specifics (file path, function name, variable names like staticPathKey, isSSG, pageIsDyna"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (staticPathKey condition doesn't account for server action requests) and points to the area (~line 620), but does not say exactly what code to write (e.g., it doesn't say 'add !isPossibleServerAction'). It describes the bug pattern and hints at ssgCacheKey as a reference, but the developer still needs to reason about the specific fix."
+      "reason": "The instruction describes the bug (staticPathKey condition doesn't account for server action requests) and points to the area of code, but does not state the exact fix. It hints at the ssgCacheKey pattern as a reference but doesn't say 'add !isPossibleServerAction'. The developer must reason about what guard to add."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_server_action_guard_in_static_path_key and test_server_action_excluded_from_static_path_key) use regex patterns that match specific variable naming conventions like 'is[A-Za-z]*[Ss]erver[Aa]ction', 'actionId', 'actionHeader', 'Next-Action', etc. A correct alternative fix that uses a different approach \u2014 for example, checking the request's Accept header directly (e.g., `headers.get('accept') === 'text/x-component'`) or using a completely different variable name like `"
+      "reason": "test_server_action_guard_in_static_path_key and test_server_action_excluded_from_static_path_key use regex patterns like r'is[A-Za-z]*[Ss]erver[Aa]ction' or r'[Aa]ctionRequest' or r'actionId' etc. A correct alternative fix that uses a different variable name (e.g., checking the 'Next-Action' header directly with req.headers['next-action'] without assigning to a variable matching those patterns) could fail these regex tests. Similarly, an approach that restructures the condition using an early re"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_server_action_guard_in_static_path_key, test_server_action_excluded_from_static_path_key) are purely text/regex-based source analysis \u2014 they read the file and check for string patterns. They do not import, call, or execute the code. While there are some subprocess-based repo tests (ESLint, Prettier, error-codes), ALL fail-to-pass tests are purely 'assert pattern in open(path).read()' style checks."
+      "reason": "The fail-to-pass tests (test_server_action_guard_in_static_path_key, test_server_action_excluded_from_static_path_key) are purely text/regex-based checks on source code content (assert 'pattern' in read_file()). They never import, call, or execute the handler function. While some pass-to-pass tests run subprocesses (eslint, prettier, error-codes), ALL f2p tests are pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty handler function or unchanged file) would fail the f2p tests because the original code at the base commit does NOT contain any server-action reference near the staticPathKey assignment. The tests check for the presence and negation of action-related guards that don't exist in the buggy version, so a no-op would fail."
+      "reason": "A stub implementation (empty file, pass-only handler) would fail because: test_handler_not_stub requires >100 lines and >30KB, test_syntax_check requires balanced braces and export, and the f2p tests require specific action-related references near the staticPathKey declaration which don't exist in the base commit. The base commit specifically lacks these references, so a no-op change fails."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /solution/solve.sh in the container and contains the exact git patch. An agent could read this file to discover the exact fix (adding !isPossibleServerAction to the staticPathKey condition). There's no evidence of measures to prevent reading /solution/."
+      "reason": "The solution file exists at /workspace solution/solve.sh in the container (mounted from the task definition). An agent could read it directly to see the exact patch (adding !isPossibleServerAction). The Dockerfile doesn't remove or protect /solution/. Additionally, the test patterns are visible if the agent can access tests/test_outputs.py to reverse-engineer exactly what regex patterns to satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes: (1) server action requests should bypass fallback rendering block \u2014 tested by test_server_action_guard_in_static_path_key and test_server_action_excluded_from_static_path_key; (2) existing functionality should be preserved \u2014 tested by test_dev_mode_preserved and test_ssg_dynamic_fallback_preserved. All explicitly described behaviors are tested."
+      "reason": "The instruction says server action requests should bypass the fallback rendering block, and the tests verify this by checking that the staticPathKey condition excludes server actions (f2p tests) and preserves existing conditions for dev mode and SSG fallback (p2p tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo tests), descriptive function names, and detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a code bug, not producing structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves fixing a TypeScript source file, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'There is a condition around line 620 that decides when to set staticPathKey' and 'Look at how ssgCacheKey handles this case (around line 570) for a pattern that already correctly accounts for the request type.' This provides exact line numbers and directly points to the pattern to copy, significantly reducing the localization challenge."
+      "reason": "The instruction says 'around line 620', 'specifically the staticPathKey computation around lines 615-627', and 'Look at how ssgCacheKey handles this case (around line 570) for a pattern that already correctly accounts for the request type'. This gives exact line numbers and directly points to the pattern to copy, which is excessive localization beyond what's needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

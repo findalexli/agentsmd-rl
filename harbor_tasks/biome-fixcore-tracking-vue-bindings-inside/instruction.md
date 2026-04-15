@@ -9,96 +9,77 @@ Biome's `noUnusedVariables` lint rule incorrectly reports variables as unused wh
 
 The linter is not extracting and analyzing the JavaScript expressions inside these directive attributes, so variables referenced there are invisible to the usage tracker.
 
-## Expected Behavior
+## Requirements
 
-Variables used inside Vue and Svelte directive attribute values should be recognized as "used" by the linter. Running `biome lint --only=noUnusedVariables` on a `.vue` or `.svelte` file with directive-bound variables should report zero warnings for those variables.
+### Code Changes
 
-## Technical Details
+#### 1. `crates/biome_html_syntax/src/directive_ext.rs` (new file)
 
-### Vue directives
+Create a new module that implements an `initializer()` method on `AnySvelteDirective`. The method must:
+- Return `Option<HtmlAttributeInitializerClause>`
+- Match on all 8 Svelte directive variants: `SvelteBindDirective`, `SvelteClassDirective`, `SvelteInDirective`, `SvelteOutDirective`, `SvelteStyleDirective`, `SvelteTransitionDirective`, `SvelteUseDirective`, `SvelteAnimateDirective`
 
-Vue directive attributes (`@click`, `:prop`, `#slot`, `v-if`, `v-on:`, `v-bind:`, etc.) store their JavaScript expression as a **quoted string** inside `HtmlAttributeInitializerClause`. The value is accessed via `.initializer()` on the directive node.
-
-The parser must:
-1. Cast each Vue directive type using `::cast_ref` and call `.initializer()` to extract the value clause
-2. Use `inner_string_text()` to extract the string content without quotes
-3. Offset the text range by `TextSize::from(1)` for the opening quote character
-4. Tag embedded content with `EmbeddingKind::Vue`
-
-Vue has 4 directive types that need separate handling:
-- `VueVOnShorthandDirective` — `@click`, `@input`, etc.
-- `VueVBindShorthandDirective` — `:disabled`, `:value`, etc.
-- `VueVSlotShorthandDirective` — `#default`, `#header`, etc.
-- `VueDirective` — `v-if`, `v-show`, `v-on:`, `v-bind:`, etc.
-
-### Svelte directives
-
-Svelte directive attributes (`bind:`, `class:`, `style:`, `use:`, `transition:`, `in:`, `out:`, `animate:`) store their JavaScript expression as a **text expression** (curly braces) inside `HtmlAttributeInitializerClause`. The value is accessed via `.initializer()` on the directive node.
-
-The parser must:
-1. Cast using `AnySvelteDirective::cast_ref` and call `.initializer()` to extract the value clause
-2. Use `as_html_attribute_single_text_expression()` then `.expression()` to extract the expression
-3. Tag embedded content with `EmbeddingKind::Svelte`
-
-There are **8 Svelte directive variants** that must all be handled:
-- `SvelteBindDirective`, `SvelteTransitionDirective`, `SvelteInDirective`, `SvelteOutDirective`
-- `SvelteUseDirective`, `SvelteAnimateDirective`, `SvelteStyleDirective`, `SvelteClassDirective`
-
-Each variant must chain `.value().ok()?.initializer()` in a match arm.
-
-## Files to Modify
-
-### New file: `crates/biome_html_syntax/src/directive_ext.rs`
-
-Create a new module that implements `initializer()` on `AnySvelteDirective`. The method returns `Option<HtmlAttributeInitializerClause>` and must have a match with **all 8** Svelte directive variants, each calling `.value().ok()?.initializer()`.
-
-### `crates/biome_html_syntax/src/lib.rs`
+#### 2. `crates/biome_html_syntax/src/lib.rs`
 
 Register the new module by adding `mod directive_ext;`.
 
-### `crates/biome_service/src/file_handlers/html.rs`
+#### 3. `crates/biome_service/src/file_handlers/html.rs`
 
-In the `parse_embedded_nodes` function (under the `HtmlVariant::Vue` and `HtmlVariant::Svelte` match arms), add parsing logic for directive attributes:
+Add directive attribute parsing logic in the `parse_embedded_nodes` function:
 
-- For Vue: handle all 4 Vue directive types. Each case calls `directive.initializer()` to get the value clause, passes it to a helper function that uses `inner_string_text()` and `TextSize::from(1)` to extract the JS expression, and tags it with `EmbeddingKind::Vue`.
-- For Svelte: call `AnySvelteDirective::cast_ref` on each descendant, then `.initializer()` on the result, and pass to a helper that uses `as_html_attribute_single_text_expression()`.
+For Vue directives, handle these 4 directive types:
+- `VueDirective`
+- `VueVOnShorthandDirective`
+- `VueVBindShorthandDirective`
+- `VueVSlotShorthandDirective`
 
-Both helper functions (`parse_directive_string_value` for Vue quoted strings, `parse_directive_text_expression` for Svelte curly braces) take `HtmlAttributeInitializerClause` as their first parameter.
+Vue directive values are quoted strings stored in `HtmlAttributeInitializerClause`. They must be:
+- Extracted and parsed as JavaScript
+- Tagged with `EmbeddingKind::Vue`
 
-## Documentation Updates
+For Svelte directives:
+- Match with `AnySvelteDirective::cast_ref`
+- Call the `initializer()` method to get `HtmlAttributeInitializerClause`
+- Tag with `EmbeddingKind::Svelte`
 
-After fixing the code, update the relevant agent instruction and skill files to document the patterns and lessons from this fix:
+Svelte directive expressions are curly-braced text expressions in `HtmlAttributeInitializerClause`.
 
-### `AGENTS.md`
+Both Vue and Svelte directive handlers require helper functions that:
+- Accept `HtmlAttributeInitializerClause` as parameter
+- For Vue (quoted strings): Use `inner_string_text()` for extraction and offset by `TextSize::from(1)` for the opening quote
+- For Svelte (curly braces): Use `as_html_attribute_single_text_expression()` for extraction
 
-Add guidance that:
-- Do NOT claim patterns are "widely used" or "common" without evidence — ask the user first
-- Do NOT implement legacy/deprecated syntax without checking with the user first
-- Do inspect the AST structure (using the parser crate's `quick_test`) before implementing
-- Reference `.claude/skills/` for implementation details
+### Documentation Updates
 
-### `.claude/skills/testing-codegen/SKILL.md`
+#### `AGENTS.md`
 
-Add a section on **Quick Test for Parser Development** that:
-- Documents the `just qt` command for running quick tests
-- References `biome_html_parser` for HTML/embedded language testing
-- Shows how to use `dbg!` to inspect AST structure
+Add guidance on:
+- Not claiming patterns are "widely used" or "common" without evidence — ask the user first
+- Not implementing legacy/deprecated syntax without checking with the user first
+- Inspecting AST structure (using the parser crate's `quick_test`) before implementing
+- Referencing `.claude/skills/` for implementation details
 
-### `.claude/skills/biome-developer/SKILL.md` (new file)
+#### `.claude/skills/testing-codegen/SKILL.md`
 
-Create a new skill file covering:
+Add a "Quick Test for Parser Development" section covering:
+- The `just qt` command for running quick tests
+- `biome_html_parser` for HTML/embedded language testing
+- Using `dbg!` to inspect AST structure
+
+#### `.claude/skills/biome-developer/SKILL.md` (new file)
+
+Create a skill file with:
 - `inner_string_text()` usage for extracting quoted string content (not `text_trimmed()`)
 - `quick_test` for AST inspection
 - `EmbeddingKind` variants for embedded language tagging
-- A section on "Common Gotchas" or "Common API Confusion"
+- A "Common Gotchas" or "Common API Confusion" section
 
-**Markdown table formatting**: Use spaces around separators (`| --- | --- | --- |`), not compact style (`|---|---|---|`), or CI linting will fail.
+Markdown table formatting must use spaces around separators: `| --- | --- | --- |` (not `|---|---|---|`).
 
-## Test Files
+### Test Fixtures
 
-The following test fixture files must exist after the fix:
-
-- Vue ok specs: `crates/biome_html_parser/tests/html_specs/ok/vue/` — at least 3 `.vue` files
-- Vue error specs: `crates/biome_html_parser/tests/html_specs/error/vue/` — at least 3 `.vue` files
-- Svelte error specs: `crates/biome_html_parser/tests/html_specs/error/svelte/` — at least 5 `.svelte` files
-- Svelte ok specs: `crates/biome_html_parser/tests/html_specs/ok/svelte/` — must exist
+The following test fixture directories must exist:
+- `crates/biome_html_parser/tests/html_specs/ok/vue/` — at least 3 `.vue` files
+- `crates/biome_html_parser/tests/html_specs/error/vue/` — at least 3 `.vue` files
+- `crates/biome_html_parser/tests/html_specs/error/svelte/` — at least 5 `.svelte` files
+- `crates/biome_html_parser/tests/html_specs/ok/svelte/` — must exist

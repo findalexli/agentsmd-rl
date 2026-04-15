@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (js/utils/src/utils.svelte.ts, js/tootils/src/render.ts, js/textbox/shared/Textbox.svelte, js/spa/vite.config.ts, js/tootils/src/index.ts), the Gradio class, __GRADIO_BROWSER_TEST__, register_component, handle_copy, clipboard API, IconButtonWrapper prop mismatch, contextOptions vs instances permissions, and the render() function's return type. All asserted specifics in tests (file paths, function names like handle_copy, listen, register_component, co"
+      "reason": "The instruction names all relevant file paths (js/utils/src/utils.svelte.ts, js/tootils/src/render.ts, js/textbox/shared/Textbox.svelte, js/spa/vite.config.ts, js/tootils/src/index.ts), the Gradio class constructor, __GRADIO_BROWSER_TEST__, register_component, handle_copy, clipboard API, IconButtonWrapper prop mismatch, contextOptions vs instances permissions, and the render() function's event helpers. All assert'd specifics in tests (file paths, function names, concepts like listener Map, liste"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (e.g., 'event dispatcher overridden to no-op', 'clipboard copy crashes without error handling', 'prop name mismatch', 'permissions in wrong location') but does not specify exact code changes like 'change line X to Y' or 'replace foo() with bar()'. A developer must still reason about the specific implementation."
+      "reason": "The instruction describes what is broken (no-op dispatcher, missing event helpers, clipboard crash, prop mismatch, wrong permissions location) but does not specify exact code changes like 'change line X to Y' or 'replace foo with bar'. A developer must still reason about the specific implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_listener_registry requires a 'function listen(' declaration and a Map with specific naming patterns; test_dispatcher_notifies_listeners checks for specific variable naming patterns like 'notify|listener|emit|callback|fn'; test_render_returns_event_helpers requires >=5 return fields; test_register_component_wired checks for specific parameter patterns. An alternative correct fix using different internal names (e.g., 'on' instead of 'listen',"
+      "reason": "Tests assert very specific implementation details that alternative correct fixes might not share. For example: test_listener_registry requires a regex match for 'function listen(' (a named function), and requires a Map with specific naming patterns (listener|event|handler). test_dispatcher_notifies_listeners checks for specific variable naming patterns like 'notify|listener|emit|callback|fn'. test_render_returns_event_helpers checks for >= 5 returned fields. An alternative correct fix using diff"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test uses only file reading and regex matching (e.g., `re.search(r'function\\s+listen', stripped)`, `'__GRADIO_BROWSER_TEST__' not in stripped`). No test imports, executes, or calls any code. All tests are purely textual/structural analysis with no behavioral verification."
+      "reason": "Every single test uses only file reading and regex/string matching (e.g., `re.search(...)`, `'X' in stripped`, `'X' not in stripped`). No test imports, calls, or executes any code. This is purely textual/structural analysis with no behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for absence of buggy patterns (e.g., __GRADIO_BROWSER_TEST__ must not be present, register_component must not be a no-op) and presence of fix patterns (listener Map, listen function, try/catch around clipboard, contextOptions). A stub or no-change would fail because the original buggy code contains __GRADIO_BROWSER_TEST__ and no-op register_component."
+      "reason": "The tests check for specific structural properties that a stub/no-op would not satisfy. For example, test_noop_dispatcher_removed checks that __GRADIO_BROWSER_TEST__ is NOT present and that dispatcher IS assigned; test_listener_registry checks for a Map and listen function; test_clipboard_error_handling checks for try/catch around clipboard. A trivial stub (empty file, pass, etc.) would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/gradio as solve.sh and the gold patch is in solution/solve.sh. An agent could read the solution directory or simply run the solve script. The Dockerfile doesn't remove solution files, and tests only check file contents structurally, so copying the gold patch would trivially pass all tests."
+      "reason": "The solution exists at /workspace/gradio and the agent could read the git history or the solve.sh if accessible. More critically, since tests are purely regex-based on file content, the agent could grep test_outputs.py (if accessible) to discover exact patterns being checked (like 'function listen(', '__GRADIO_BROWSER_TEST__' must be absent, etc.) and satisfy them mechanically without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All five bugs described in instruction.md are tested: noop dispatcher (test_noop_dispatcher_removed), missing event helpers in render (test_listener_registry, test_render_returns_event_helpers, test_dispatcher_notifies_listeners), register_component wiring (test_register_component_wired), clipboard error handling (test_clipboard_error_handling), and vitest permissions config (test_vitest_browser_permissions). The IconButtonWrapper prop mismatch is not explicitly tested but is part of the Textbox"
+      "outcome": "fail",
+      "reason": "Instruction item #4 (IconButtonWrapper prop mismatch - on_custom_button_click vs oncustombuttonclick) is not tested at all. The gold patch changes the prop name in Textbox.svelte but no test verifies this fix. Also, the barrel export change in js/tootils/src/index.ts (removing 'export * from ./render') mentioned in the instruction's files list is not tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_noop_dispatcher_removed, test_listener_registry, etc.), grouped with comments distinguishing 'pass_to_pass' gates from 'fail_to_pass' behavioral checks, and each has a descriptive docstring."
+      "reason": "Tests are well-named (test_noop_dispatcher_removed, test_listener_registry, etc.), each has a docstring explaining what it checks, and they're grouped into gate tests (pass_to_pass) and behavioral tests (fail_to_pass) with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing JavaScript/Svelte source code and configuration files, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing JS/Svelte source code and configuration, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and function names in the instruction match those in the actual codebase (including the intentionally-named 'tootils' directory)."
+      "reason": "File paths, variable names, and commands appear correct. 'tootils' is the actual directory name in the Gradio repo, not a typo."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files and describes the nature of bugs but doesn't specify exact line numbers or exact code to write. Mentioning 'the constructor of the Gradio class' or 'handle_copy function' is reasonable domain-level guidance, not line-level leakage."
+      "reason": "The instruction identifies files and general areas (constructor, render function) but doesn't specify exact line numbers. Mentioning 'the constructor of the Gradio class' is appropriate since the task requires understanding what's broken, not just finding the line."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diff in vite.config.ts is localized to the browser/provider section, changing where permissions are specified. It doesn't rewrite the entire file or contradict other files."
+      "reason": "The gold config diff in vite.config.ts is localized to the browser/provider permissions section, not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
@@ -56,7 +56,9 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
 }

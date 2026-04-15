@@ -9,11 +9,9 @@ The `AwsEventServiceInjector` class in `openhands/app_server/event/aws_event_ser
 3. The configuration cannot be customized per-instance because it's read directly from environment at client creation time
 4. When `AWS_S3_SECURE` is not set, the code doesn't default to secure connections
 
-## Your Task
+Specifically, the expected behavior should be:
 
-Fix `openhands/app_server/event/aws_event_service.py` so that:
-
-1. **Create a helper function** `_get_default_aws_endpoint_url()` that:
+1. A helper function named `_get_default_aws_endpoint_url()` that:
    - Returns `None` if `AWS_S3_ENDPOINT` environment variable is not set
    - Reads the `AWS_S3_SECURE` environment variable (defaults to `true` when not set)
    - Returns a URL with `https://` prefix when `AWS_S3_SECURE` is `true` (case-insensitive)
@@ -21,16 +19,12 @@ Fix `openhands/app_server/event/aws_event_service.py` so that:
    - Converts between `http://` and `https://` if the endpoint URL protocol doesn't match the secure setting
    - Preserves URLs that already have the correct protocol prefix
 
-2. **Add an `endpoint_url` field** to the `AwsEventServiceInjector` class:
+2. An `endpoint_url` field on the `AwsEventServiceInjector` class:
    - Type: `str | None`
-   - Must use Pydantic's `Field` with `default_factory=_get_default_aws_endpoint_url`
+   - Should use Pydantic's `Field` with `default_factory=_get_default_aws_endpoint_url`
    - This allows per-instance customization while defaulting from environment
 
-3. **Update the S3 client creation** in `AwsEventServiceInjector.inject()`:
-   - The current code passes `endpoint_url=os.getenv('AWS_S3_ENDPOINT')` to `boto3.client('s3', ...)`
-   - Change this to use `endpoint_url=self.endpoint_url` instead
-
-## Testing
+3. The S3 client creation in `AwsEventServiceInjector.inject()` should use the instance's `endpoint_url` field instead of calling `os.getenv('AWS_S3_ENDPOINT')` directly.
 
 The implementation should correctly handle:
 - Endpoints without protocol prefixes (adds `https://` when secure, `http://` when insecure)

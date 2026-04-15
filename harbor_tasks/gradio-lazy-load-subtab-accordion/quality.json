@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both files (js/core/src/init.svelte.ts and js/core/src/_init.ts), the function names (make_visible_if_not_rendered, determine_visible_components), parameter names (is_target_node), variable names (selectedId), type checks (node.type === 'tabs', node.type === 'accordion', child.type === 'tabitem'), property paths (node.props.props.selected, node.props.props.initial_tabs, node.props.props.open, child.props.props.id, child.id), and the exact logic patterns that the tests asser"
+      "reason": "The instruction names the exact file paths (js/core/src/init.svelte.ts, js/core/src/_init.ts), function names (make_visible_if_not_rendered, determine_visible_components), parameter names (is_target_node), variable names (selectedId), type checks (node.type === 'tabs', node.type === 'accordion', child.type === 'tabitem'), property accesses (node.props.props.selected, node.props.props.initial_tabs, node.props.props.open, child.props.props.id, child.id), and logic patterns (open === false, ?? oper"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to change: add 'is_target_node' parameter, check 'node.type === \"tabs\"', use 'node.props.props.selected ?? node.props.props.initial_tabs?.[0]?.id' for selectedId, check 'child.type === \"tabitem\"' and 'child.props.props.id === selectedId || child.id === selectedId', check 'node.props.props.open === false' with 'is_target_node' for accordions. This is essentially pseudocode for the solution, not a description of what's broken."
+      "reason": "The instruction explicitly dictates the exact implementation: 'Accept an is_target_node parameter', 'Determine the selected tab ID using node.props.props.selected ?? node.props.props.initial_tabs?.[0]?.id', 'only recurse into tabitem children whose ID matches the selected ID', etc. This is a step-by-step coding recipe, not a description of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'selectedId' (test_tabs_selective_visibility), exact parameter name 'is_target_node' (test_closed_accordion_lazy_load, test_tabs_selective_visibility), exact string 'child.type === \"tabitem\"', exact string 'child.props.props.id === selectedId', exact string 'initial_tabs', exact string 'node.children.forEach'. An alternative correct fix using different variable names (e.g., 'activeTabId' instead of 'selectedId') or differe"
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'selectedId' (test_tabs_selective_visibility), exact parameter name 'is_target_node' (test_closed_accordion_lazy_load, test_tabs_selective_visibility), exact string patterns like 'child.type === \"tabitem\"', 'child.props.props.id === selectedId', 'node.children.forEach', 'initial_tabs', '??' operator. An alternative correct implementation using different variable names (e.g., 'activeTabId'), different logic structure, or di"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_tabs_selective_visibility, test_closed_accordion_lazy_load, test_tab_initial_tabs_fallback, test_open_accordion_children_visible, test_not_stub) all exclusively use string matching on file contents (e.g., 'assert \"is_target_node\" in content', 'assert \"selectedId\" in content'). None of them import, call, or execute the modified code. While pass-to-pass tests do run vitest and builds, every f2p test is purely textual."
+      "reason": "The fail-to-pass tests (test_tabs_selective_visibility, test_closed_accordion_lazy_load, test_tab_initial_tabs_fallback, test_open_accordion_children_visible) exclusively use string matching via 'in content' checks on source files. They never import, call, or execute the modified code. They are pure text-matching tests."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds comments or dead code containing the expected strings ('is_target_node', 'selectedId', 'node.type === \"tabs\"', 'initial_tabs', 'child.type === \"tabitem\"', 'open === false', 'node.children.forEach', etc.) without any real logic would pass all f2p tests. The tests only check for string presence in the file, not actual behavior."
+      "reason": "A stub that simply writes the expected string patterns into the file (e.g., comments containing 'is_target_node', 'node.type === \"tabs\"', 'selectedId', 'initial_tabs', '??', 'open === false', 'node.children.forEach', 'child.type === \"tabitem\"') without any real implementation logic would pass all fail-to-pass tests since they only check for string presence in the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/gradio's solution/solve.sh if it exists in the container (the Dockerfile doesn't remove it). Additionally, since f2p tests only check for specific strings in file content, the agent could grep the test file to discover the exact strings needed and paste them as comments without understanding the bug."
+      "reason": "The solution file exists at /workspace/gradio as solve.sh could be inferred, and the tests are pure text-matching on source files. An agent could read /solution/solve.sh (if accessible) or simply grep the test file to discover exactly which strings need to appear in the source file, then insert those strings as comments to pass all tests without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies changes to js/core/src/_init.ts (determine_visible_components function with accordion handling and process_children_visibility calls), but no f2p test checks this file at all. The behavioral requirement about initial page load accordion handling is untested."
+      "reason": "The instruction requires behavioral changes to _init.ts (determine_visible_components handling of accordion type), but no fail-to-pass test verifies the _init.ts changes. Also, the actual lazy-loading behavior (components not being loaded) is never tested through execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Tabs node only makes selected tab's children visible', 'Closed accordion does not eagerly load its children'), clearly grouped into pass-to-pass and fail-to-pass categories."
+      "reason": "Tests are well-named with descriptive function names and docstrings distinguishing pass-to-pass from fail-to-pass tests, and each test focuses on a specific aspect of the fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction are consistent with the test expectations and solution patch. No typos detected."
+      "reason": "File paths, variable names, commands, and property accesses in the instruction are consistent with the test assertions and solution patch."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (js/core/src/init.svelte.ts, js/core/src/_init.ts), exact function names (make_visible_if_not_rendered, determine_visible_components), exact parameter names to add (is_target_node), exact variable names (selectedId via the expression given), and exact property access paths. This goes far beyond identifying what's broken."
+      "reason": "The instruction names exact file paths (js/core/src/init.svelte.ts, js/core/src/_init.ts), exact function names (make_visible_if_not_rendered, determine_visible_components), exact parameter names to add (is_target_node), exact variable names (selectedId), and exact property access chains. This goes far beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

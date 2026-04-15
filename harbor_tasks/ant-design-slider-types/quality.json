@@ -2,66 +2,64 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact literal strings like \"(onChangeComplete as RcSliderProps['onChangeComplete'])?.(nextValues)\" and \"...(restProps as Omit<SliderProps, 'onAfterChange' | 'onChange'>)\". instruction.md says 'Replace the as any type assertion with a proper type cast on the function itself' and 'Add proper type casting to the restProps spread to exclude conflicting properties' but never specifies these exact cast expressions. The agent cannot discover from instruction.md alone that the precise cast "
+      "outcome": "pass",
+      "reason": "All test assertions reference file paths (components/slider/index.tsx), commands (npx tsc --noEmit, npx eslint, npx biome lint, npx jest), patterns (@ts-ignore, @ts-expect-error, as any), and function names (onInternalChangeComplete) that are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md states specific implementation steps: 'Replace the as any type assertion with a proper type cast on the function itself' and 'Add proper type casting to the restProps spread to exclude conflicting properties'. While not giving exact code, it describes the specific transformation approach (cast the function vs cast the argument, use Omit on the spread), which significantly narrows the solution space."
+      "reason": "Instruction.md essentially describes the exact fix approach: it says restProps should be handled so 'TypeScript should understand that onAfterChange and onChange are not part of the spread' and mentions eliminating 'as any' while using 'proper type casting'. Combined with the three specific issues described, this heavily constrains the solution space to exactly what the gold patch does (Omit type assertion and recasting onChangeComplete)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_onchangecomplete_type_cast asserts the exact string \"(onChangeComplete as RcSliderProps['onChangeComplete'])?.(nextValues)\" and test_restprops_type_cast asserts the exact string \"...(restProps as Omit<SliderProps, 'onAfterChange' | 'onChange'>)\". An alternative correct fix (e.g., using a type guard, defining a separate typed variable, casting to a different but equivalent type, or using Omit with different property names that also resolve the conflict) would fail these exact-string tests."
+      "reason": "test_restprops_type_narrowing asserts specific implementation patterns: 'as Omit<SliderProps' or 'as Pick<' or that '{...restProps}' is not in content. An alternative valid fix like destructuring onAfterChange/onChange from restProps before spreading (e.g., `const {onAfterChange, onChange, ...rcProps} = restProps; <RcSlider {...rcProps}`) would fail this test since it wouldn't match any of the three conditions (it would still contain 'restProps' and '{...rcProps}' not '{...restProps}')."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_no_ts_ignore_comment, test_onchangecomplete_type_cast, test_restprops_type_cast, and test_no_explicit_any all exclusively use string matching on file contents (reading the file and checking for substrings). While test_repo_tsc, test_repo_eslint_slider, etc. do run subprocesses, the core f2p tests (the first three) are purely textual assertions with no code execution."
+      "reason": "Tests test_no_ts_ignore_comment, test_onchangecomplete_no_any, test_restprops_type_narrowing, and test_no_explicit_any are purely text-based assertions (reading file content and checking for string patterns). While test_repo_tsc, test_repo_eslint_slider, etc. do execute subprocesses, the f2p tests (1-3) are entirely text-grep based with no execution."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_no_ts_ignore_comment, test_onchangecomplete_type_cast, test_restprops_type_cast) check for exact string patterns in the source file. A trivial text replacement (sed-like substitution of the exact expected strings) without understanding the bug would pass all three tests. The tests don't verify the code compiles correctly in isolation \u2014 test_repo_tsc does that but is a pass_to_pass test."
+      "outcome": "pass",
+      "reason": "The f2p tests check for removal of specific patterns (@ts-ignore, as any) that exist in the base commit, and test_repo_tsc verifies tsc --noEmit passes. A stub or no-op wouldn't remove these patterns from the existing file, and wouldn't make tsc pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/ant-design's git history or /solution/solve.sh which contains the exact patch. The agent could read solve.sh (cat /tmp/patch.diff after running it, or directly read the solution file) to get the exact strings the tests check for. Additionally, the test file itself contains the exact expected strings, so grepping test_outputs.py would reveal the precise code changes needed."
+      "reason": "The solution exists at /workspace/ant-design (the repo) and solve.sh is in /solution/solve.sh within the container. An agent could read /solution/solve.sh or the patch file to discover the exact fix. No measures prevent access to these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three requirements from instruction.md (remove @ts-ignore, replace 'as any', add type casting to restProps spread) are tested, plus tsc compilation, eslint, biome lint, and unit/type tests."
+      "reason": "All requirements from instruction.md are tested: removal of @ts-ignore (test_no_ts_ignore_comment), elimination of 'as any' (test_onchangecomplete_no_any, test_no_explicit_any), restProps type narrowing (test_restprops_type_narrowing), tsc passing (test_repo_tsc), eslint (test_repo_eslint_slider), biome (test_repo_biome_lint_slider), and jest tests (test_repo_slider_type_tests, test_repo_slider_unit_tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_no_ts_ignore_comment, test_onchangecomplete_type_cast, etc.), each has a docstring explaining the origin and purpose, and they are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining origin (behavior, agent_config, repo_tests) and what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about TypeScript type fixes, not producing structured data output."
+      "reason": "This task involves fixing TypeScript type errors in a component file, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "All file paths, commands, variable names, and references in instruction.md and tests are correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function 'onInternalChangeComplete' and tells the agent to look at the 'component's return statement', effectively pinpointing the exact locations of the three changes. It also describes the specific transformation pattern (cast on the function itself, exclude conflicting properties), going beyond describing what's broken."
+      "reason": "Instruction.md names specific implementation details: 'onInternalChangeComplete callback', 'onChangeComplete?.(nextValues) uses as any', 'restProps includes onAfterChange and onChange properties'. These are specific code-level details that essentially locate and describe the exact lines to change, going beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 5
 }

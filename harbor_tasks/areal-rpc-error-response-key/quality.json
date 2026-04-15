@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (rpc_server.py, local.py, slurm.py), the function (configure()), the key names ('error' vs 'detail'), the exact error message strings, and the requirement for >=2 error-extraction call sites in each scheduler. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "The instruction names the specific files (rpc_server.py, local.py, slurm.py), the /configure endpoint, the JSON keys ('error' vs 'detail'), the exact error messages ('Invalid JSON in request body', etc.), the .get(..., 'Unknown error') pattern, the count of 42+1 endpoints, and proxy_gateway.py exclusion. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: change 'detail' to 'error' in configure() responses, and change .get('detail', ...) to .get('error', ...) in local.py and slurm.py. It even gives the exact error message strings. A developer doesn't need to reason about what to change \u2014 the instruction tells them precisely."
+      "reason": "The instruction effectively states the fix: change 'detail' to 'error' in the /configure endpoint and in the scheduler clients' .get() calls. Section 3 says '42 endpoints use one key, but /configure uses a different key' which, combined with Section 1 requiring the key to be 'error' and Section 2 specifying the .get('error', 'Unknown error') pattern, leaves no reasoning for the agent \u2014 it's told exactly what to change to what."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use regex to find expressions matching specific patterns like `response.json().get(\"[^\"]+\", \"Unknown error\")` and then eval them. An alternative correct fix that uses a different extraction pattern (e.g., `response.json()[\"error\"]` with a try/except, or a helper function) would fail the regex-based tests even though it correctly extracts the error. The tests are tightly coupled to the gold patch's implementation style."
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties (server returns {'error': msg}, clients extract with .get('error', 'Unknown error')) via regex and exec, not gold-specific line positions or variable names. An alternative implementation that achieves the same key alignment would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_server_configure_uses_error_key actually executes the configure() function with mocked Flask objects and checks the returned dict. test_local_scheduler_reads_error_key and test_slurm_scheduler_reads_error_key eval() extracted expressions against a mock response. test_server_client_key_consistency does a round-trip execution test. These go beyond pure text matching."
+      "reason": "Tests use ast.parse, exec() to execute the configure() function with mock objects, and eval() to test error extraction expressions. They go beyond simple text matching \u2014 they actually execute code paths and verify return values."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass: test_server_configure_uses_error_key requires configure() to return specific error messages under the 'error' key. test_not_stub requires >=250/200 statements. The scheduler tests require >=2 matching extraction expressions that successfully retrieve the error string. None of these can be satisfied by trivial stubs."
+      "reason": "The f2p tests would fail on the original code: configure() uses 'detail' key which fails the 'error in resp' assertion, and scheduler clients use .get('detail', 'Unknown error') which returns 'Unknown error' instead of the actual error message. A stub/no-op wouldn't pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/solution/solve.sh in the container (from the Dockerfile setup), and the agent could read it directly to see the exact patch. There's no evidence the solution directory is removed or made inaccessible. Additionally, the test fixture strings (exact error messages) are spelled out in instruction.md, making pattern-matching trivial."
+      "reason": "The solution file exists at /workspace/AReaL as solve.sh could be found, and the tests directory is accessible in the container. An agent could read /solution/solve.sh or the test files to discover the exact expected changes. The Dockerfile doesn't remove these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three requirements from instruction.md are tested: (1) configure() uses 'error' key with specific messages, (2) local.py has >=2 extraction sites using 'error', (3) slurm.py has >=2 extraction sites using 'error'. The consistency test also verifies round-trip alignment."
+      "reason": "All four behavioral requirements from the instruction are tested: (1) /configure error key consistency, (2) local.py and slurm.py error extraction, (3) round-trip key consistency, (4) proxy_gateway.py is excluded from modified files list."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with descriptive function names (test_server_configure_uses_error_key, test_local_scheduler_reads_error_key, etc.), grouped by category (gates, fail-to-pass, pass-to-pass, config-derived), and have docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The JSON response schema is documented in instruction.md: error responses must use an 'error' key with specific string values. The exact schema keys and messages are specified."
+      "reason": "The JSON error response schema is documented in instruction.md: the key must be 'error' with specific message strings for each error path."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or error message strings across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files (rpc_server.py, local.py, slurm.py), the exact function (configure()), the exact key change ('detail' \u2192 'error'), and the exact error message strings. This goes well beyond describing what's broken and essentially provides the complete fix specification, removing the need for the agent to localize the bug."
+      "reason": "The instruction explicitly names the /configure endpoint as the buggy location, states that 42 endpoints use 'error' while /configure uses a different key, and specifies the exact .get() pattern with fallback value. This narrows localization to essentially pointing at the exact lines to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,13 +52,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 4
+  "pass_count": 8,
+  "fail_count": 3
 }

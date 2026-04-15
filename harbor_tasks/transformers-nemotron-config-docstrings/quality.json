@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path, the class NemotronHConfig, the four deprecated parameter names (mamba_dt_min, mamba_dt_max, mamba_dt_limit, mamba_dt_init_floor), the four replacement parameter names (n_groups, expand, use_conv_bias, chunk_size) with their defaults, and mentions that existing documented parameters must remain intact. The tests check these exact things. The backward-compat aliases in __post_init__ and annotation defaults are discoverable from the instruction's mention of 'bac"
+      "reason": "The instruction names the file path, class name (NemotronHConfig), the four deprecated parameter names to remove, the four new parameter names to add with their defaults, and mentions the check_docstrings/check-repo context. All test-asserted specifics (parameter names, defaults like n_groups=8, expand=2, use_conv_bias=True, chunk_size=128, existing params like mamba_hidden_act, etc.) are discoverable from the instruction or from inspecting the file as directed."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states exactly which four parameter names to remove and which four to add, along with their default values. It says 'The four deprecated names (mamba_dt_min, mamba_dt_max, mamba_dt_limit, mamba_dt_init_floor) must be removed from the docstring and replaced with documentation for the four actual attributes (n_groups, expand, use_conv_bias, chunk_size).' This is essentially the complete fix specification, leaving almost no reasoning for the agent."
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (docstring documents wrong parameter names) and what to fix (replace four deprecated names with four actual attribute names), but does not give exact line numbers, exact replacement text, or the precise patch. The agent must still inspect the file and craft the correct docstring entries."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check that (1) documented params match class annotations, (2) the four new params appear in the docstring, (3) old deprecated names are removed, (4) existing params are preserved, and (5) annotation defaults are correct. The tests use regex pattern matching for param names and don't assert exact line positions or specific wording of descriptions. Alternative correct fixes with different description text would all pass."
+      "reason": "Tests check that (1) documented params match class annotations, (2) four new params appear in docstring, (3) four old params are removed, (4) existing params preserved, (5) annotations have correct defaults, (6) formatting passes. These are behavioral checks - any correct docstring rewrite with different wording/formatting would pass, as tests use regex to extract param names rather than checking exact text."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_docstring_params_match_class_annotations, test_new_mamba_params_documented, test_old_deprecated_names_removed) all use regex on file text and AST parsing to check docstring content. They do not import or call the class. While some tests run subprocesses (ruff, check_inits, check_dummies), the primary behavioral tests are purely text-inspection via regex and AST. This is essentially 'assert pattern in open(path).read()' with slightly more sophistication."
+      "reason": "The core fail-to-pass tests (test_docstring_params_match_class_annotations, test_new_mamba_params_documented, test_old_deprecated_names_removed) all work by regex-matching text in the docstring via _docstring_param_names() which does `re.findall(r'^\\s{4}(\\w+)\\s*\\(', ...)`. They never import or call NemotronHConfig. While some tests run subprocess linters (ruff), the primary behavioral tests are purely text-inspection of the source file, not execution of the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests would fail on the original file because the original docstring contains mamba_dt_min etc. which don't match class annotations, and lacks n_groups/expand/use_conv_bias/chunk_size. A stub or no-op change would not pass these tests."
+      "reason": "The fail-to-pass tests cannot be satisfied without actually modifying the docstring: test_old_deprecated_names_removed will fail on the original file (which has mamba_dt_min etc.), test_new_mamba_params_documented will fail without adding n_groups/expand/use_conv_bias/chunk_size to the docstring, and test_docstring_params_match_class_annotations checks all documented params against annotations. A stub/no-op won't pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/transformers (the solve.sh and the gold patch are described in the task). The agent could potentially read solution/solve.sh if it's mounted in the container, which contains the exact patch. The Dockerfile doesn't show any explicit removal of the solution directory from the container."
+      "reason": "The solution file exists at /workspace/transformers (accessible in container) as solve.sh with the exact patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to extract the exact expected parameter names and their required format. The Dockerfile does not remove or protect these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: removing 4 deprecated names from docstring, adding 4 actual attribute names, preserving existing params. All these behaviors are tested by the test suite (test_old_deprecated_names_removed, test_new_mamba_params_documented, test_existing_params_preserved, test_docstring_params_match_class_annotations)."
+      "reason": "All behaviors from the instruction are tested: removing 4 deprecated names (test_old_deprecated_names_removed), adding 4 new params (test_new_mamba_params_documented), matching annotations (test_docstring_params_match_class_annotations), preserving existing params (test_existing_params_preserved), keeping backward compat aliases in __post_init__ (test_backward_compat_aliases_in_post_init), and annotation defaults (test_annotation_defaults_consistent)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo tests), descriptive function names, and docstrings explaining each test's purpose and mapping to check categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,26 +39,23 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, parameter names, class names, and commands in instruction.md are all correct and consistent with the test file and solution."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction. (Note: the gold patch has typos like 'Whetehr' and 'CHunk' but these are in the solution, not the instruction.)"
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (configuration_nemotron_h.py), the exact class (NemotronHConfig), and the exact parameter names to remove and add. Since the task is about a docstring mismatch in a specific class, naming the file is acceptable, but specifying the exact four params to remove and four to add with their defaults leaves virtually no localization or reasoning work for the agent."
+      "outcome": "pass",
+      "reason": "The instruction names the specific file, which is appropriate since it's a single-file docstring fix task. It doesn't give line numbers or exact replacement text, just identifies the parameter names involved, which is the domain knowledge needed to understand the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (editing a Python source file's docstring), not an agentmd-edits task involving config files."
+      "reason": "This is a code-only task (editing a Python source file's docstring), not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

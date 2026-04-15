@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_media_type_suffix_comparison_logic checks for exact strings like 'slices.Index(suffixes, pi.Ext())', 'slices.Index(suffixes, nkExisting.PathInfo.Ext())', and 'newIdx < existingIdx'. test_issue_13877_comment checks for 'Issue #13877' as a literal comment. test_slices_import_added checks for '\"slices\"' import. The instruction mentions slices as a hint but doesn't require these exact variable names or string pat"
+      "reason": "Tests assert very specific implementation details not discoverable from instruction.md: test_media_type_suffix_comparison_logic checks for exact strings 'slices.Index(suffixes, pi.Ext())', 'slices.Index(suffixes, nkExisting.PathInfo.Ext())', and 'newIdx < existingIdx'. The variable names 'pi', 'nkExisting', 'PathInfo', 'newIdx', 'existingIdx' are not mentioned in instruction.md. Also test_slices_import_added checks specifically templatestore.go which is not named in the instructions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The hints section effectively describes the implementation: use slices.Index, access media type's suffixes list, compare positions, handle when existing template's extension isn't in suffix list. Combined with naming the exact function (insertTemplate2) and the exact file, this is close to prescribing the solution rather than just describing the bug."
+      "reason": "Instruction.md requirement #3 explicitly states: 'get the index of each template's extension in the media type's suffix list using slices.Index(suffixes, ext). The template with the smaller index (earlier in the suffix list) should be kept.' This describes the exact implementation, not just the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_media_type_suffix_comparison_logic asserts exact variable names 'newIdx < existingIdx' and exact expressions 'slices.Index(suffixes, pi.Ext())' and 'slices.Index(suffixes, nkExisting.PathInfo.Ext())'. test_slices_import_added requires '\"slices\"' import. test_issue_13877_comment requires 'Issue #13877' comment. An alternative correct fix using a loop instead of slices.Index, or different variable names, or sort.Search, would fail these tests despite being functionally correct."
+      "reason": "test_media_type_suffix_comparison_logic asserts exact strings like 'slices.Index(suffixes, pi.Ext())', 'slices.Index(suffixes, nkExisting.PathInfo.Ext())', and 'newIdx < existingIdx'. An alternative correct fix using different variable names (e.g., 'idxNew', 'idxOld') or a different approach (e.g., sort.Search, a loop, or a helper function) would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Three tests (test_slices_import_added, test_media_type_suffix_comparison_logic, test_issue_13877_comment) are pure text-matching assertions that read file contents and check for literal strings. They do not execute code or verify behavior. While other tests do execute code (test_template_selection_first_media_type_suffix, test_hugolib_package_tests), the criterion says FAIL if 'every test is assert in open(path).read()' \u2014 here it's not every test but a significant portion (3 of 9) are pure text "
+      "reason": "Multiple tests are pure text matching: test_slices_import_added checks '\"slices\"' in file content, test_media_type_suffix_comparison_logic checks exact code strings, test_issue_13877_comment checks for 'Issue #13877' string. These are not behavioral tests. However, some tests (test_template_selection_first_media_type_suffix, test_hugolib_package_tests) do execute code, so it's not ALL text-matching, but a significant portion is."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_template_selection_first_media_type_suffix runs a Go test that verifies the actual template selection behavior with specific media type suffix ordering. A stub or no-op implementation would not pass this behavioral test. The Go test asserts 'page.html.b' content in the output file, which requires the actual fix."
+      "reason": "test_template_selection_first_media_type_suffix runs an actual Go test that exercises the template selection logic with specific suffix ordering. A stub or no-op implementation would not produce the correct template selection behavior, so this test requires genuine implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/hugo's parent or solution/solve.sh in the task directory. The agent could read solution/solve.sh to get the exact patch. Additionally, test_media_type_suffix_comparison_logic contains the exact strings needed, so the agent could grep test files to discover the expected implementation patterns and variable names."
+      "reason": "The solution is in /workspace/hugo's container at solution/solve.sh. An agent could read this file to see the exact sed commands and patch. The test file references are also readable. No measures prevent reading /solution/."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The core behavior described in instruction.md (prefer earlier suffixes in media type list for template selection) is tested by test_template_selection_first_media_type_suffix, which runs the exact scenario described in the instruction."
+      "reason": "All requirements from instruction.md are tested: comment referencing Issue #13877 (test_issue_13877_comment), slices import (test_slices_import_added), comparison logic (test_media_type_suffix_comparison_logic), specific test passing (test_template_selection_first_media_type_suffix), gofmt/vet/tests (test_repo_gofmt, test_repo_go_vet_tplimpl, test_repo_tplimpl_tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_template_selection_first_media_type_suffix, test_template_store_compiles, etc.), have docstrings explaining their purpose, and are logically grouped by concern (behavioral, compilation, formatting, static analysis)."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies. They are logically grouped into behavioral tests, compilation checks, code quality checks, and implementation verification."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (tpl/tplimpl/templatestore.go) and exact function (insertTemplate2), and the hints further specify using slices.Index and comparing suffix positions. This goes beyond identifying the problem domain and into localization/implementation guidance."
+      "reason": "Instruction.md requirement #2 specifies using 'slices' package, requirement #3 specifies using 'slices.Index(suffixes, ext)' and comparing with 'smaller index'. This is detailed implementation guidance beyond what's needed for understanding the bug. The instruction also says to find code that 'handles template selection when a template already exists for a given path' which narrows the search significantly."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits configuration task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

@@ -2,18 +2,18 @@
 
 ## Problem
 
-The DNS lookup functionality in Bun has a buffer overflow vulnerability. The `LibInfo.lookup` function in the DNS module uses a fixed 1024-byte stack buffer (`var name_buf: [1024]u8 = undefined`) to store the hostname before passing it to `getaddrinfo_async_start`. When resolving hostnames longer than 1024 bytes, the code copies data past the end of this buffer, causing memory corruption, crashes, or potential security issues.
+The DNS lookup functionality in Bun has a buffer overflow vulnerability when resolving hostnames longer than 1024 bytes. When processing DNS queries for very long hostnames, the code copies data past the end of a fixed-size stack buffer, causing memory corruption.
 
 ## Expected Behavior
 
-The `LibInfo.lookup` function should safely handle hostnames of any length. Hostnames longer than 1024 bytes must not overflow the stack buffer. The fix should:
+The DNS resolution code in `src/bun.js/api/bun/dns.zig` must safely handle hostnames of arbitrary length. The fix must use the following specific patterns:
 
-1. Remove the fixed 1024-byte stack buffer
-2. Use a memory allocation strategy that keeps short hostnames efficient (on the stack) but safely handles longer ones (spilling to heap)
-3. Properly clean up any dynamically allocated memory after use
+- Allocate using `std.heap.stackFallback(1024, bun.default_allocator)` for stack-to-heap spilling
+- Copy the hostname using `name_allocator.dupeZ(u8, query.name)` for null-terminated dynamic allocation
+- Free the allocated memory using `defer name_allocator.free(name_z)` to prevent memory leaks
+
+The vulnerable fixed-size buffer pattern that overflows must no longer be present in the code.
 
 ## Files to Look At
 
-- `src/bun.js/api/bun/dns.zig` — Contains the `LibInfo` struct and its `lookup` method where the buffer overflow occurs
-  - Look for the fixed-size `name_buf` declaration within `LibInfo.lookup`
-  - The vulnerable code path leads to `getaddrinfo_async_start` on macOS
+- `src/bun.js/api/bun/dns.zig` — Contains the DNS resolution code where the buffer overflow occurs

@@ -3,59 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all five files, the method name `set_numa_affinity`, the base class `Platform`, the subclass `CudaPlatform`, the three engine files/methods, `pynvml`, `os.sched_getaffinity`, NVML init/shutdown, and defensive error handling. The tests check exactly these things. The only items not literally named are mock internals (e.g., `nvmlDeviceGetHandleByIndex`), but these are standard pynvml API calls discoverable from the instruction's mention of 'use pynvml for NVML access'."
+      "reason": "The instruction names all five files modified, the method name `set_numa_affinity`, the base class `Platform`, the subclass `CudaPlatform`, the three engine files/methods, the use of `pynvml`, `os.sched_getaffinity`, defensive error handling, and `nvmlShutdown` in a finally block. All test-asserted specifics (method names, file paths, behavioral expectations) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior to implement (a method with certain properties, defensive handling, engine integration) but does not specify exact code, line numbers to change, or specific implementation details like variable names or control flow."
+      "reason": "The instruction describes what behavior to implement (NUMA affinity binding) and gives hints about patterns to follow, but does not specify exact code changes, line numbers, or literal code to insert. A developer still needs to reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for: (1) a callable `set_numa_affinity` on Platform that returns None, (2) CudaPlatform handling missing pynvml, (3) CudaPlatform calling nvml functions (init, getHandle, affinity), (4) nvmlShutdown being called, (5) error handling, (6) AST presence of `set_numa_affinity` call in engines. These are behavioral checks. Alternative implementations (e.g., using `nvmlDeviceGetCpuAffinityWithinScope` instead of `nvmlDeviceSetCpuAffinity`, different variable names, different try/except stru"
+      "reason": "Tests check for behavioral properties: method existence/callability, graceful handling of missing pynvml, NVML init/shutdown ordering, catching NVML errors, and AST-level presence of `set_numa_affinity` calls in engines. They don't assert on specific variable names, line positions, or internal helpers beyond the public API method name `set_numa_affinity`. Alternative implementations (e.g., different internal structure, different logging, sysfs-based fallback) would pass as long as they use pynvm"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests import and call the actual code (Platform.set_numa_affinity, CudaPlatform.set_numa_affinity) with mock pynvml modules and verify behavior via call tracking. The engine test uses AST parsing (not raw text search) which is reasonable given the distributed setup requirements. Only the engine test is AST-based; the rest are execution-based."
+      "reason": "Most tests import and call the actual code (e.g., `Platform.set_numa_affinity(rank)`, `CudaPlatform.set_numa_affinity(0)`) with mock pynvml modules to verify behavior. The engine test uses AST parsing which is justified by the comment about distributed setup requirements. Tests are not simple text grep checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_platform_base_set_numa_affinity can be satisfied by simply adding `set_numa_affinity = classmethod(lambda cls, rank: None)` or `def set_numa_affinity(cls, local_rank): return None` \u2014 essentially a stub that returns None. However, test_cuda_uses_nvml requires actual NVML calls (nvmlInit, getHandle, affinity calls) which cannot be satisfied by a stub. But the base class test (test_platform_base_set_numa_affinity) is specifically testing for a no-op, so a stub IS the correct implementation the"
+      "outcome": "pass",
+      "reason": "test_cuda_sets_cpu_affinity verifies that nvmlInit, getHandle, set_cpu_affinity, and nvmlShutdown are actually called via mock tracking \u2014 a stub `def set_numa_affinity(cls, local_rank): return None` would fail because no NVML calls would be recorded. test_engines_call_set_numa_affinity does AST checking that can't be satisfied without adding actual calls. test_platform_base_set_numa_affinity requires the method to exist and be callable."
     },
     "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /repo after `solve.sh` runs via `git apply`, but the gold patch is in solution/solve.sh which the agent could potentially read if it exists in the container. The Dockerfile does not explicitly remove the solution directory. An agent could `cat /solution/solve.sh` or similar to get the exact patch."
+      "outcome": "pass",
+      "reason": "The solution directory is referenced in solve.sh but the tests don't read from it. The tests use dynamic imports, mock modules, and behavioral assertions that require actual code changes. An agent cannot simply grep for expected values or read the solution file to pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: base class no-op method, CUDA NVML implementation, defensive handling of missing pynvml, catching NVML errors, NVML shutdown in finally block, and engine integration calls."
+      "reason": "All explicitly required behaviors are tested: base class no-op method, CUDA implementation with pynvml, defensive handling of missing pynvml, catching NVML errors, NVML shutdown in finally block, engine integration calls, and existing method preservation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped with section comments (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests), have descriptive function names, and include docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output (JSON/CSV/API/DB)."
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB); it's a code implementation task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, method names, and variable names in the instruction are correct and match the repository structure."
+      "reason": "All file paths, method names, class names, and commands in the instruction are correct and match the actual codebase structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files and methods but doesn't specify exact line numbers or exact code changes. The files listed are the natural scope of the task, and the hints describe patterns to follow rather than exact fixes."
+      "reason": "The instruction names files and methods but doesn't specify exact line numbers or literal code to insert. The 'Files of Interest' section lists relevant files which is appropriate for the task scope, and the hints describe patterns rather than exact implementations."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "test_not_tautological",
-    "anti_cheating_measures"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

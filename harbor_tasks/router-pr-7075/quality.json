@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific regex patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and 'inner.firstBadMatchIndex !== undefined' in load-matches.ts. While the instruction.md does mention these exact patterns in the 'Implementation Requirements' section, it does not mention the file path 'packages/router-core/src/load-matches.ts' which is asserted by test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly. Also, test_preload_error_stop"
+      "reason": "Tests assert on specific patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and 'inner.firstBadMatchIndex !== undefined' via regex in test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly. While instruction.md does mention these patterns in the 'Implementation Requirements' section, the tests also reference specific file paths (packages/router-core/src/load-matches.ts) and utilities like 'createTestRouter' from './routerTestUti"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md explicitly states the exact fix: 'The preload loop's break condition must check for inner.serialError || inner.firstBadMatchIndex != null' and 'headMaxIndex calculation must use inner.firstBadMatchIndex !== undefined ? inner.firstBadMatchIndex : inner.matches.length - 1'. These are literal code changes, not just descriptions of what's broken."
+      "reason": "The instruction.md 'Implementation Requirements' section explicitly states the exact code changes: 'The preload loop's break condition must check for inner.serialError || inner.firstBadMatchIndex != null' and 'headMaxIndex calculation must use inner.firstBadMatchIndex !== undefined ? inner.firstBadMatchIndex : inner.matches.length - 1'. This is the exact fix, not just a description of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_break_condition_includes_firstbadmatchindex asserts a specific regex pattern 'if\\s*\\(\\s*inner\\.serialError\\s*\\|\\|\\s*inner\\.firstBadMatchIndex\\s*!=\\s*null\\s*\\)' and test_headmaxindex_uses_firstbadmatchindex_directly asserts 'headMaxIndex\\s*=\\s*\\n?\\s*inner\\.firstBadMatchIndex\\s*!==\\s*undefined'. An alternative correct fix using different variable names, different condition ordering, or a different approach (e.g., early return pattern, wrapping in try-catch that prevents child execution) would"
+      "reason": "test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly use regex to match exact variable names and exact code patterns (e.g., 'inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined'). An alternative correct fix using different variable names, different condition structures, or a different architectural approach would fail these tests even if it correctly fixes the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly are pure text-matching tests (regex on source file content with no execution). While test_preload_error_stops_child_handlers does execute code, 2 of the 3 fail_to_pass tests are purely 'assert pattern in open(path).read()' style."
+      "reason": "test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly are purely text-matching tests using regex on source code files. They do 'assert match is not None' after regex search on file content, with no execution or behavioral verification. While test_preload_error_stops_child_handlers does execute code, these two f2p tests are pure text assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for specific code patterns and behavioral changes. test_preload_error_stops_child_handlers verifies that childBeforeLoad and childHead are NOT called when parent fails, which would not pass with a stub/no-op implementation since the default behavior is to call them. The regex tests require specific code patterns that don't exist in the base commit."
+      "reason": "test_preload_error_stops_child_handlers creates a real router with routes and verifies child handlers are not called when parent beforeLoad throws during preload. A stub/no-op implementation would not pass this. The regex tests also cannot pass without the specific code changes being present."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/router and solve.sh is in the solution/ directory. An agent could read /solution/solve.sh to discover the exact sed/perl commands needed. Additionally, the instruction.md itself contains the literal code patterns that the tests check for, so the agent could simply grep the instruction for the fix."
+      "reason": "The solution is in /workspace/router (same container) at solution/solve.sh. The agent could read it directly. Also, since tests check for exact regex patterns in source code, the agent could grep the test files or solution to find the exact strings to insert without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) parent error stops preload (tested by test_preload_error_stops_child_handlers), (2) child beforeLoad not called (tested), (3) child head not called (tested). The specific implementation requirements about firstBadMatchIndex are also tested."
+      "reason": "All three explicit behavioral requirements from instruction.md are tested: (1) preload stops (via test_preload_error_stops_child_handlers), (2) child beforeLoad not called (childBeforeLoad not.toHaveBeenCalled), (3) child head not called (childHead not.toHaveBeenCalled)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, including references to fail_to_pass and pass_to_pass categories."
+      "reason": "Tests are well-structured with descriptive function names and docstrings explaining what each test verifies (e.g., 'Verify the fix: when parent beforeLoad throws during preload, child beforeLoad should not be called')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in a routing library, not producing structured data."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md names the exact variable 'firstBadMatchIndex', the exact conditions 'inner.serialError || inner.firstBadMatchIndex != null', and the exact expression 'inner.firstBadMatchIndex !== undefined ? inner.firstBadMatchIndex : inner.matches.length - 1'. This is essentially giving the complete solution code, far beyond describing the bug."
+      "reason": "The instruction.md explicitly names the variable 'firstBadMatchIndex', the exact break condition code, and the exact headMaxIndex calculation formula. These are implementation-level details that amount to specifying the exact fix, not just describing the bug domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits task involving config files."
     }
   },
   "tier_a_fails": [

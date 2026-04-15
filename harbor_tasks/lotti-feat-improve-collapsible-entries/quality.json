@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details like 'final isExpanding' variable name, 'RenderAbstractViewport.maybeOf', 'Scrollable.maybeOf', '_CollapsibleBody', '_CollapsibleBodyState', 'SizeTransition', 'FadeTransition', 'Alignment.topCenter', 'didUpdateWidget', '_controller.forward()', '_controller.reverse()'. While the instruction.md does mention most of these explicitly, the tests also check for 'package:flutter/rendering.dart' import string and specific code patterns like 'if (isExp"
+      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md alone. For example, test_collapsible_body_widget checks for exact class names '_CollapsibleBody' and '_CollapsibleBodyState' as string literals in source. test_scroll_uses_viewport_check asserts 'final isExpanding' as an exact string. test_no_duplicate_date_in_body asserts the absence of 'entry_datetime_widget.dart' import and 'datePadding' variable by exact name. While instruction.md does mention most o"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md prescribes exact implementation: 'Import package:flutter/rendering.dart', 'storing this as a final isExpanding variable', 'Use RenderAbstractViewport.maybeOf', 'Replace with a private _CollapsibleBody StatefulWidget (and corresponding _CollapsibleBodyState)', 'Use Flutter's SizeTransition widget', 'Implement didUpdateWidget...call _controller.forward() when expanding and _controller.reverse() when collapsing', 'use Alignment.topCenter'. This is essentially dictating the solution l"
+      "reason": "The instruction explicitly dictates implementation details: 'Import package:flutter/rendering.dart', 'storing this as a final isExpanding variable', 'Use RenderAbstractViewport.maybeOf', 'Guard the Scrollable.ensureVisible call inside an if (isExpanding) block', 'Replace with a private _CollapsibleBody StatefulWidget (and corresponding _CollapsibleBodyState)', 'Remove the datePadding variable', 'Remove the entry_datetime_widget.dart import'. These are exact code-level prescriptions, not descript"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'final isExpanding', exact class names '_CollapsibleBody' and '_CollapsibleBodyState', exact import 'package:flutter/rendering.dart', exact method calls 'RenderAbstractViewport.maybeOf' and 'Scrollable.maybeOf', exact widget names 'SizeTransition' and 'FadeTransition', exact alignment 'Alignment.topCenter'. An alternative correct fix using different variable names, a different class structure, or ClipRect-based animation i"
+      "reason": "Tests assert gold-specific implementation details: test_scroll_uses_viewport_check requires exact string 'final isExpanding' (an alternative could use 'var isExpanding' or 'bool isExpanding'), test_collapsible_body_widget requires exact class names '_CollapsibleBody' and '_CollapsibleBodyState', test_no_duplicate_date_in_body requires absence of exact string 'datePadding'. A correct alternative using different variable names, different class names, or different refactoring approaches would fail "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_scroll_uses_viewport_check, test_header_shows_date_when_expanded, test_collapse_animation_uses_size_transition, test_collapsible_section_top_alignment, test_no_duplicate_date_in_body) are purely text-matching: they read source files and assert on string presence/absence (e.g., 'assert \"RenderAbstractViewport.maybeOf\" in src'). No test compiles the Dart code, runs it, or checks runtime behavior."
+      "reason": "All fail-to-pass tests (test_scroll_uses_viewport_check, test_header_shows_date_when_expanded, test_collapsible_body_widget, test_animated_size_top_alignment, test_no_duplicate_date_in_body) exclusively use 'assert ... in src' pattern on file contents. None import, instantiate, or execute the Dart code. They are purely text/grep-based checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., 'final isExpanding', '_CollapsibleBody', 'SizeTransition', 'Alignment.topCenter'). A stub or no-op implementation wouldn't contain these strings, so the tests would fail. The tests require actual code changes to pass."
+      "reason": "The f2p tests check for specific code patterns that don't exist in the base commit (e.g., 'RenderAbstractViewport.maybeOf', '_CollapsibleBody', 'Alignment.topCenter'). A stub or no-op implementation would not add these patterns to the source files, so the tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container and contains the exact git commit SHA (1da86998cfa8f8bd27483b8e698fd38d88e6193f) to checkout. An agent could read /solution/solve.sh or simply run it to pass all tests. Additionally, since tests are purely text-matching, the agent could grep the test file for expected strings and insert them into the source files."
+      "reason": "The solution/solve.sh is present in the container and simply does 'git checkout 1da86998cfa... -- <files>'. An agent could read /workspace/lotti's solve.sh or the solution directory, find the target commit SHA, and run the same git checkout command. The tests don't prevent this. Additionally, since tests are purely text-based, the agent could grep test files to discover exact expected strings."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from instruction.md (viewport-aware scroll, header date display, SizeTransition animation, AnimatedSize top alignment, no duplicate date) have corresponding test functions that check for them."
+      "reason": "All five behavioral requirements from the instruction (conditional scroll, header date, SizeTransition animation, AnimatedSize alignment, no duplicate date) are each tested by dedicated test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments (Gates pass_to_pass, Fail-to-pass pr_diff), named descriptively (test_scroll_uses_viewport_check, test_header_shows_date_when_expanded, etc.), and have docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized into two clear groups (pass_to_pass gates and fail-to-pass core changes) with descriptive function names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves Dart/Flutter UI code changes, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves UI widget code changes, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, widget names, and commands in instruction.md are consistent with those checked in the tests. No typos detected."
+      "reason": "File paths, variable names, widget names, and Dart API references in instruction.md and tests appear correct and consistent with Flutter/Dart conventions."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact variable names ('final isExpanding'), exact class names ('_CollapsibleBody', '_CollapsibleBodyState'), exact imports ('package:flutter/rendering.dart'), exact method calls ('RenderAbstractViewport.maybeOf', 'Scrollable.maybeOf', '_controller.forward()', '_controller.reverse()'), and exact widget parameters ('Alignment.topCenter'). This goes far beyond identifying the buggy file/module \u2014 it dictates the exact implementation."
+      "reason": "The instruction names exact files, exact variable names ('datePadding', 'isExpanding'), exact class names ('_CollapsibleBody', '_CollapsibleBodyState'), exact imports to add/remove, and exact API calls to use. This goes well beyond describing the bug domain and prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [

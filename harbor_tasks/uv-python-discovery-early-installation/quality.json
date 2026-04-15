@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (crates/uv-python/src/discovery.rs, crates/uv-python/src/installation.rs), the function names to rename (python_interpreters \u2192 python_installations, etc.), the from_tuple method to remove, the struct PythonInstallation, and the public function find_python_installations. All test assertions reference these same entities, which are discoverable from the instruction."
+      "reason": "The instruction names all relevant file paths (discovery.rs, installation.rs), function names (python_interpreters \u2192 python_installations, python_interpreters_from_executables \u2192 python_installations_from_executables, python_interpreters_with_executable_name \u2192 python_installations_with_executable_name, from_tuple, find_python_installations, PythonInstallation), return types (impl Iterator<Item = Result<PythonInstallation, Error>>), and field access patterns (.source, .interpreter) that the tests "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact renames (python_interpreters \u2192 python_installations, python_interpreters_from_executables \u2192 python_installations_from_executables, python_interpreters_with_executable_name \u2192 python_installations_with_executable_name), tells the agent to construct 'PythonInstallation { source, interpreter }' struct literal inside python_installations_from_executables, remove from_tuple, and use .source/.interpreter field access. This is a step-by-step solution, not a pr"
+      "reason": "The instruction explicitly states exact renames (python_interpreters \u2192 python_installations), exact return types, exact field access patterns to use (.source/.interpreter instead of tuple destructuring), exact struct literal construction (PythonInstallation { source, interpreter }), and the exact method to remove (from_tuple). This is a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific function names (python_installations, python_installations_from_executables, python_installations_with_executable_name), exact return type signatures (Result<PythonInstallation), specific field access patterns (.source/.interpreter with counts >= 5), and absence of tuple destructuring patterns. An alternative correct refactoring that used different names (e.g., find_installations, discover_python, etc.) or a different structural approach would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: exact function names (python_installations, python_installations_from_executables, python_installations_with_executable_name), exact return type signatures (Result<PythonInstallation), exact struct construction pattern (PythonInstallation\\{), minimum counts of .source/.interpreter field accesses (>=5), and absence of specific tuple destructuring patterns. An alternative correct refactoring using different names or patterns would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are text/regex-based checks on source files (e.g., test_helper_signatures_return_python_installation uses regex on source, test_closures_use_field_access_not_tuple_destructuring counts regex matches). While test_refactored_code_compiles and test_repo_cargo_check_uv_python do run cargo check/clippy (execution), the core structural tests are purely 'assert pattern in open(path).read()' style checks."
+      "reason": "Most tests are text-matching on source files (regex searches for function names, return types, field accesses, struct construction patterns). While test_refactored_code_compiles and test_repo_cargo_check_uv_python run cargo check, and test_repo_cargo_fmt/clippy run actual tools, the core structural tests (test_helper_signatures_return_python_installation, test_closures_use_field_access_not_tuple_destructuring, test_python_installation_constructed_in_from_executables, test_find_python_installatio"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_refactored_code_compiles, test_from_tuple_removed) cannot be satisfied by stubs: the first requires the entire uv-python crate to compile after changes (cargo check), and the second requires from_tuple to be absent from installation.rs while the code still compiles. A stub or no-op would either fail compilation or leave from_tuple present."
+      "reason": "The fail-to-pass tests (test_refactored_code_compiles, test_from_tuple_removed) cannot be satisfied by stubs: from_tuple exists in the base code so must be actively removed, and cargo check requires the code to actually compile after changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /repo after applying solve.sh, and the agent could read the gold patch from solution/solve.sh if it exists in the container. The tests check for specific text patterns that could be matched by reading the solution file and copying changes verbatim."
+      "reason": "The solution is in /repo accessible to the agent via solve.sh (which is hidden but the gold patch content is applied to /repo). More critically, the instruction.md itself provides an essentially complete solution specification, and the agent could also examine the git history or PR references mentioned in the test file header (PR #18564) to find the exact patch."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: renamed helpers with correct signatures, from_tuple removal, struct construction in from_executables, field access instead of tuple destructuring, find_python_installations remains public, and code compiles."
+      "reason": "All behaviors listed in instruction.md are tested: renamed helpers with correct return types, from_tuple removal, struct construction in from_executables, field access instead of tuple destructuring, find_python_installations remaining public, and compilation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, grouped by category (fail_to_pass vs pass_to_pass), and each has a docstring explaining its purpose. Section comments separate groups."
+      "reason": "Tests are well-organized with clear section headers (Fail-to-pass, Pass-to-pass, Repo CI/CD), descriptive function names, and docstrings explaining each check's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is a code refactoring task and does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task involves Rust code refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, function names, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in file paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact function names to rename (python_interpreters \u2192 python_installations), exact struct literal syntax to use (PythonInstallation { source, interpreter }), exact method to remove (from_tuple), and exact field access patterns (.source, .interpreter). This goes well beyond identifying the buggy module \u2014 it provides the complete implementation plan."
+      "reason": "The instruction names exact function renames (python_interpreters \u2192 python_installations), exact struct literal syntax (PythonInstallation { source, interpreter }), exact method to remove (from_tuple), and exact field access patterns. This goes far beyond naming the relevant files/modules and constitutes implementation-level guidance."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config-edit task."
+      "reason": "This is a code refactoring task, not a config edit task."
     }
   },
   "tier_a_fails": [

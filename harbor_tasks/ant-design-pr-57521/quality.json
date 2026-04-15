@@ -3,64 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Every test assert checks for specific variable names, patterns, and file paths that are explicitly documented in instruction.md's 'Required Implementation Specifications' section, including linkTargetOffsetRef, newTargetOffset, finalTargetOffset, targetOffsetParams, _linkTargetOffset, linkOffsetTop, and the exact function signatures."
+      "reason": "The instruction describes all key behaviors tested: per-link targetOffset prop on Anchor.Link, precedence over global targetOffset, fallback to global when unset, scroll behavior respecting per-link offsets, active link detection with per-link offsets, and cleanup on unmount. The tests check these exact behaviors. The specific file paths (Anchor.tsx, AnchorLink.tsx) and component/prop names (targetOffset, Anchor.Link) are all mentioned in the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction.md section 'Required Implementation Specifications' provides the exact implementation patterns, variable names (e.g., 'linkTargetOffsetRef', 'newTargetOffset', 'finalTargetOffset', 'targetOffsetParams', 'linkOffsetTop'), exact type signatures, and exact code patterns like 'const finalTargetOffset = targetOffsetParams ?? targetOffset ?? offsetTop ?? 0'. This is essentially dictating the solution, not describing what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes expected behavior (per-link targetOffset, precedence rules, cleanup) without specifying implementation details like variable names (linkTargetOffsetRef), exact code changes, or line numbers. A developer must reason about how to implement the feature."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names like 'linkTargetOffsetRef', 'newTargetOffset', 'finalTargetOffset', 'targetOffsetParams', '_linkTargetOffset', 'linkOffsetTop', and exact patterns like 'linkTargetOffsetRef.current[link] = newTargetOffset'. A correct alternative implementation using different variable names (e.g., 'perLinkOffsets' instead of 'linkTargetOffsetRef') would fail these regex-based tests."
+      "outcome": "pass",
+      "reason": "The tests verify behavioral outcomes (scroll positions like 900, 800, 850, 700) based on the semantics of targetOffset, not implementation details. An alternative implementation using different internal variable names, different state management approaches, or different ways of passing offsets through context would still pass as long as the scroll behavior is correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests use regex pattern matching on source file contents (e.g., re.search on read_file output). None import or execute the code, instantiate components, or verify runtime behavior. The only execution-based test is the ESLint check which is a pass-to-pass test."
+      "outcome": "pass",
+      "reason": "The tests run actual Jest test suites that render React components, fire click events, and assert on scrollTo spy call arguments. They execute the code behaviorally rather than inspecting source text. The test runner uses run_jest_test which writes and executes .test.tsx files."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests are text-matching tests that check for string patterns in source files. An agent could satisfy them by inserting dead code or comments containing the required patterns (e.g., adding '// linkTargetOffsetRef = React.useRef<Record<string, number>>({})' as a comment) without implementing any actual functionality."
+      "outcome": "pass",
+      "reason": "A stub implementation that doesn't add targetOffset support to Anchor.Link would fail these tests. For example, test_per_link_target_offset_takes_precedence expects scrollTo(0, 850) when link targetOffset=150 overrides global targetOffset=500. Without the feature, it would scroll to 500 (global offset), producing scrollTo(0, 500), failing the assertion."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/ant-design and the agent could read /solution/solve.sh which contains the complete gold patch. The tests are pure regex matches on file contents, so the agent could also grep the test file to discover exact patterns needed without understanding the feature."
+      "reason": "The solution is stored at /workspace/ant-design's accessible filesystem via solution/solve.sh content. While the file says '(hidden)', the Docker environment has the repo checked out and the agent could potentially read /solution/ or grep for test fixture values. The solve.sh is described as hidden but there's no explicit mechanism preventing the agent from accessing files outside instruction.md in the container."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 12 required implementation specifications from instruction.md have corresponding test functions that check for their presence."
+      "reason": "All 6 behaviors from instruction.md are tested: (1) Link accepts targetOffset prop, (2) link-level takes precedence over global, (3) fallback to global when link has none, (4) clicking uses link-specific offset, (5) active link detection respects per-link offsets (test_active_link_detection_with_per_link_offsets), (6) cleanup on unmount (test_target_offset_cleanup_on_unmount). The AnchorLink type test also verifies the prop type."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments separating 'fail-to-pass' and 'pass-to-pass' sections, each test has a descriptive name and docstring indicating what it checks."
+      "reason": "Tests are well-structured with descriptive function names (test_per_link_target_offset_scrolling, test_per_link_target_offset_takes_precedence, etc.), docstrings explaining each test's purpose, and Jest describe/it blocks within the test code. Clear separation of concerns across test functions."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies React component code, not structured data output."
+      "reason": "This task involves modifying React component props and behavior, not producing structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "File paths (components/anchor/Anchor.tsx, components/anchor/AnchorLink.tsx), prop names (targetOffset), component names (Anchor, Anchor.Link, AnchorLink), and interface names (AntAnchor, AnchorLinkBaseProps) are all correctly spelled and consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies exact variable names (linkTargetOffsetRef, newTargetOffset, finalTargetOffset, targetOffsetParams, _linkTargetOffset, linkOffsetTop), exact type signatures, exact code patterns, and exact files to modify. This goes far beyond naming the buggy file \u2014 it dictates the exact implementation down to variable naming."
+      "outcome": "pass",
+      "reason": "The instruction mentions files to modify (Anchor.tsx, AnchorLink.tsx) which is appropriate since they're the obvious files for this domain. It mentions interface names (AntAnchor, AnchorLinkBaseProps) but doesn't specify exact lines, variable names, or implementation approaches. This is reasonable domain-level guidance, not solution leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript component files, not configuration files."
+      "reason": "This is a code-only task modifying React component files, not a configuration editing task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

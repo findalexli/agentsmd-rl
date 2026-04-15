@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific identifiers not mentioned in instruction.md: 'useDagRunServiceGetDagRun' (test_component_imports_dag_run_hook), 'runData' and 'dag_versions' (test_component_filters_versions), 'runId' (test_component_extracts_runid). The instruction mentions 'API provides endpoints' and 'URL parameters' but never names these specific function/variable names."
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_component_imports_dag_run_hook runs vitest with '-t DagRun is selected' matching a specific test name, test_component_extracts_runid uses '-t no DagRun', and the tests expect a specific test file 'DagVersionSelect.test.tsx' to exist (which the agent must create). The instruction never mentions these test names, the need to create a test file, or the specific API hook 'useDagRunServiceGetDagRun' that test_component"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the broken behavior (all versions shown regardless of selected DagRun) and expected behavior (filter by selected run) but does not specify exact code changes, line numbers, or specific function calls to use."
+      "reason": "instruction.md describes the problem (dropdown shows all versions regardless of selected DagRun) and expected behavior (filter based on DagRun) without specifying exact code changes, line numbers, or specific API hooks to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_component_imports_dag_run_hook assert 'useDagRunServiceGetDagRun' in content, test_component_extracts_runid asserts 'runId' in content, and test_component_filters_versions asserts both 'runData' and 'dag_versions' in content. An alternative correct fix using different variable names (e.g., 'dagRunResponse' instead of 'runData') or a different API hook would fail these tests."
+      "reason": "The tests require a specific test file (DagVersionSelect.test.tsx) to exist with specific test names matching 'DagRun is selected' and 'no DagRun'. The gold solution creates this test file as part of the patch. An alternative correct fix to the component alone (without creating this exact test file with these exact test names) would fail because the vitest commands in test_outputs.py run against this specific test file. The agent must reverse-engineer the exact test file structure."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_component_imports_dag_run_hook, test_component_extracts_runid, and test_component_filters_versions are purely text-based: they read the file and assert string presence (e.g., assert 'useDagRunServiceGetDagRun' in content). While test_dagversionselect_vitest does run vitest (behavioral), 3 of the 5 fail_to_pass tests are text-only grep checks."
+      "outcome": "pass",
+      "reason": "Tests execute vitest (subprocess.run with 'pnpm vitest run'), TypeScript compilation, ESLint, Prettier, and Vite build \u2014 all executing code rather than just inspecting text content."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The vitest test (test_dagversionselect_vitest) renders the component and checks that version items are filtered from 3 to 2 when a DagRun is selected. A stub or no-op implementation would still show all 3 versions and fail. The text-based tests also require non-trivial additions to pass."
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_dagversionselect_vitest, test_component_imports_dag_run_hook, test_component_extracts_runid, test_component_filters_versions) all depend on a test file DagVersionSelect.test.tsx that doesn't exist initially. The agent must CREATE this test file. An agent could write a trivial test file with passing stubs (e.g., tests that assert true) with the right test names ('DagRun is selected', 'no DagRun') and satisfy the subprocess-based checks without actually fixing the bug."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow (after solve.sh runs) or can be read from the container's solve.sh. The agent could read /solution/solve.sh to see the exact gold patch, including the test file content and the component changes. No measures prevent this."
+      "reason": "The solution directory exists at /workspace/airflow with solve.sh containing the full gold patch. The agent could read /solution/solve.sh (or the solution directory) to extract both the test file and component fix. The Dockerfile doesn't remove or protect the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies two behaviors: (1) show all versions when no DagRun selected, (2) show only associated versions when a DagRun is selected. Both are tested in the vitest file's two test cases."
+      "reason": "The instruction requires: (1) show all versions when no DagRun selected, (2) filter to run's versions when DagRun selected. Both behaviors are tested via the vitest test cases 'no DagRun' and 'DagRun is selected'."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized: separate functions for vitest execution, TypeScript checking, ESLint, Prettier, build, and component-level checks. The vitest test file uses describe/it blocks with clear names like 'shows all versions when no DagRun is selected'."
+      "reason": "Tests are well-named (test_dagversionselect_vitest, test_typescript_check, test_component_imports_dag_run_hook, etc.) with docstrings explaining what each verifies and whether it's fail_to_pass or pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI component behavior, not structured data output."
+      "reason": "Task is about a UI component fix, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths (DagVersionSelect.tsx, DagVersionSelect.test.tsx), commands (pnpm vitest run, pnpm tsc, pnpm eslint), and variable names are all correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names only the component file (DagVersionSelect.tsx) which is the obvious target. It doesn't mention specific line numbers, variable names, or exact API hooks to use. The hints are general guidance about URL params and API endpoints."
+      "reason": "instruction.md names only the component file DagVersionSelect.tsx which is the obvious target file for this task. It doesn't mention specific lines, internal functions, or exact API hooks."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -53,7 +53,7 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],

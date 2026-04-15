@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the affected file (packages/typescript-client/src/client.ts), both buggy patterns (${this.#syncState.handle!}-next and ${usedHandle ?? `handle`}-next), the required helper function createCacheBuster(), the required private field #refetchCacheBuster, and describes the build/style/test requirements. All asserted specifics in tests are discoverable from instruction.md."
+      "reason": "The instruction names the affected file (packages/typescript-client/src/client.ts), the buggy patterns ('${this.#syncState.handle!}-next' and '${usedHandle ?? `handle`}-next'), the required helper function name (createCacheBuster), and the required property (#refetchCacheBuster). All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Add a helper function createCacheBuster()', 'Add a private field #refetchCacheBuster', 'Remove both buggy patterns', and 'Replace the -next suffix logic with the #refetchCacheBuster mechanism'. This prescribes the exact implementation rather than just describing the bug."
+      "reason": "The instruction explicitly dictates the fix implementation: 'Add a helper function createCacheBuster()', 'Add a private field #refetchCacheBuster', 'Remove both buggy patterns', and 'Replace the -next suffix logic with the #refetchCacheBuster mechanism'. This prescribes exactly WHAT to change rather than only describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_createCacheBuster_exists checks for 'function createCacheBuster()' or 'const createCacheBuster' literally, and test_refetchCacheBuster_property checks for '#refetchCacheBuster'. A correct alternative fix using different naming (e.g., 'generateCacheBusterId' or '#cacheBustValue') would fail these tests despite correctly fixing the bug."
+      "reason": "test_createCacheBuster_exists asserts the literal string 'function createCacheBuster()' or 'const createCacheBuster' must appear in client.ts, and test_refetchCacheBuster_property asserts '#refetchCacheBuster' must appear. An alternative correct fix using different naming (e.g., 'generateCacheBusterId' or '#cacheBustValue') would fail these tests despite correctly fixing the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_no_next_suffix_in_client, test_createCacheBuster_exists, and test_refetchCacheBuster_property are purely text-matching (assert 'X' in open(path).read()). While test_typescript_compiles, test_client_builds, test_repo_stylecheck, and test_repo_unit_tests do execute subprocesses, the fail-to-pass tests (the ones specific to this bug fix) are entirely text-based with no behavioral verification."
+      "reason": "Tests test_no_next_suffix_in_client, test_createCacheBuster_exists, and test_refetchCacheBuster_property are purely text-matching (assert 'X' in open(path).read()). While test_typescript_compiles, test_client_builds, test_repo_unit_tests, and test_repo_stylecheck do execute subprocesses, three of the fail-to-pass tests are purely textual checks with no behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_no_next_suffix_in_client, test_createCacheBuster_exists, test_refetchCacheBuster_property) can be satisfied by simply removing the two buggy string patterns and adding a no-op 'function createCacheBuster() { }' and an unused '#refetchCacheBuster' field. This would pass all text-matching tests without actually fixing the 409 retry behavior."
+      "reason": "A trivial implementation that simply adds 'function createCacheBuster() { return \"\" }' and '#refetchCacheBuster' as a comment, while deleting the two buggy pattern strings, could pass test_no_next_suffix_in_client, test_createCacheBuster_exists, and test_refetchCacheBuster_property without actually fixing the retry behavior. The unit tests (test_repo_unit_tests) may catch some issues but are pass_to_pass tests, not f2p."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/electric and solve.sh reveals the exact commit SHA (0031e81777c0a93ab90161be5e6d0e9c999e00d2). The agent could simply run 'git fetch origin 0031e81777c0a93ab90161be5e6d0e9c999e00d2 && git checkout 0031e81777c0a93ab90161be5e6d0e9c999e00d2' to get the gold solution, or read /solution/solve.sh if accessible."
+      "reason": "The solution is a git checkout of commit 0031e81777c0a93ab90161be5e6d0e9c999e00d2, visible in /workspace/electric/.git and in solution/solve.sh. An agent could read solve.sh or simply run 'git fetch origin 0031e81777c0a93ab90161be5e6d0e9c999e00d2 && git checkout 0031e81777c0a93ab90161be5e6d0e9c999e00d2' to pass all tests."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md requires 'Every retry URL must be unique' and 'Handles must never be fabricated from existing handles' and 'The state machine contract must be preserved', but no test verifies these behavioral invariants. Tests only check text patterns and that existing tests still pass."
+      "reason": "The instruction states invariants like 'Every retry URL must be unique' and 'Handles must never be fabricated from existing handles', but no test actually verifies these behavioral properties. Tests only check for string presence/absence and that compilation/existing tests pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Each test function has a descriptive name and docstring explaining what it checks (e.g., test_no_next_suffix_in_client, test_createCacheBuster_exists). Tests are well-named and clearly structured."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., test_no_next_suffix_in_client, test_createCacheBuster_exists) and organized logically from compilation to specific fix verification."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a TypeScript client bug, not producing structured data output."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction and tests appear correct with no typos."
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact buggy patterns ('${this.#syncState.handle!}-next' and '${usedHandle ?? `handle`}-next'), the exact methods (#requestShape and fetchSnapshot), and prescribes exact implementation details (createCacheBuster function name, #refetchCacheBuster field name). This goes well beyond describing the bug."
+      "reason": "The instruction specifies exact implementation details: the exact function name 'createCacheBuster()', the exact property name '#refetchCacheBuster', and the exact buggy patterns to remove, which goes beyond naming the affected file and describes the precise solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

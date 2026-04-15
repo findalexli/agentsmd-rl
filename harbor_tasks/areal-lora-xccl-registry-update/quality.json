@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: (1) test_lora_xccl_update_payload_has_lora_fields checks that the XCCL request is at index [1] of result.requests, (2) test_non_lora_xccl_payload_empty checks endpoint name '/areal_update_weights_xccl' and that payload == {}, (3) test_lora_xccl_endpoint_updates_lora_registry expects the endpoint function signature to accept both 'request' and 'raw_request' parameters with specific attribute access patterns (request.lor"
+      "reason": "Tests assert on specific endpoint paths ('/areal_update_weights_lora_xccl', '/areal_update_weights_xccl'), specific payload keys ('lora_name', 'lora_int_id'), specific function names ('build_distributed_weight_update_requests' in class 'VLLMBackend', 'update_weight_lora_xccl'), specific file paths ('areal/engine/vllm_ext/areal_vllm_server.py', 'areal/engine/vllm_remote.py'), the versioned naming format (e.g., 'gsm8k-lora-v1'), and the request structure (result.requests[1]). While instruction.md "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (payload not forwarded, registry not updated) and expected behavior, but does not specify exact code changes like 'change line X to Y' or 'replace foo() with bar()'. The developer must reason about how to implement the fix."
+      "reason": "The instruction describes what is broken (payload not forwarded, registry not updated) but does not specify exact code changes, line numbers, or specific implementation details like 'change payload={} to payload={} if not meta.use_lora else payload'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests extract the function via AST using exact class/method names ('VLLMBackend', 'build_distributed_weight_update_requests') and execute it with mocked dependencies. The test_lora_xccl_endpoint_updates_lora_registry test expects the endpoint function to accept exactly (request, raw_request) parameters and access request.lora_name and request.lora_int_id. An alternative fix that uses a different parameter name or accesses the payload differently (e.g., parsing from raw_request body) would fail. "
+      "reason": "Tests extract functions by exact name using AST (e.g., 'build_distributed_weight_update_requests' from class 'VLLMBackend', 'update_weight_lora_xccl') and then execute them in a mock environment. The test_lora_xccl_endpoint_updates_lora_registry test assumes the function signature takes 'request' and 'raw_request' parameters with specific attribute access patterns (request.lora_name, request.lora_int_id, raw_request.app.state.openai_serving_models.lora_requests). An alternative implementation th"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract functions via AST, exec them, and call them with mock objects to verify behavioral correctness. For example, test_lora_xccl_update_payload_has_lora_fields calls _call_build_distributed which actually executes the function and checks returned values. test_lora_xccl_endpoint_updates_lora_registry runs the async endpoint function and checks registry state changes."
+      "reason": "Tests extract functions via AST, exec them in mock environments, and call them with test inputs to verify behavioral outcomes (payload contents, registry state changes). They are not simple text-matching assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check non-trivial behavior: test_lora_xccl_update_payload_has_lora_fields verifies that payload contains specific keys with computed values (versioned name), test_lora_xccl_endpoint_updates_lora_registry verifies that the registry is mutated (old name removed, new name added). A stub/no-op implementation would not produce these results."
+      "reason": "The fail-to-pass tests check that: (1) payload contains lora_name/lora_int_id with correct versioned values when use_lora=True, (2) registry is updated after endpoint call. A stub/no-op implementation would not produce these specific payload values or registry mutations, so the tests cannot be trivially satisfied."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/AReaL and solve.sh is in the container's /solution/ directory. The agent could potentially read the solution patch directly. Additionally, the test file references specific fixture values (like 'gsm8k-lora-v1', lora_int_id=42) that could be found by grepping test files, though the agent is told it cannot see tests/."
+      "reason": "The solution is in /workspace/AReaL's git history or the agent could read /solution/solve.sh (the gold patch) if it exists in the container. The Dockerfile doesn't remove /solution/ and the tests don't prevent file access. An agent could simply read the patch and apply it."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies two main behaviors: (1) payload forwarding with lora_name and lora_int_id when use_lora=True, empty payload otherwise, and (2) registry update after XCCL completion. All of these are tested: test_lora_xccl_update_payload_has_lora_fields, test_lora_xccl_update_payload_varies_with_version, test_non_lora_xccl_payload_empty, and test_lora_xccl_endpoint_updates_lora_registry."
+      "reason": "The instruction specifies two behaviors: (1) payload forwarding with LoRA metadata and (2) registry update after XCCL weight update. Both are tested by test_lora_xccl_update_payload_has_lora_fields/test_lora_xccl_update_payload_varies_with_version and test_lora_xccl_endpoint_updates_lora_registry respectively. The non-LoRA empty payload case is also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the expected payload schema (lora_name format as '{lora_name}-v{version}', lora_int_id as integer) and the registry update behavior."
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying internal code behavior (payload contents and registry updates), not producing structured data output like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files to look at (vllm_remote.py and areal_vllm_server.py) which is appropriate for the task domain. It does not reference specific line numbers or exact code to change."
+      "reason": "The instruction describes the bug at the architectural level (XCCL path, model name registry, distributed weight update request builder, LoRA-specific endpoint) without naming specific files, line numbers, or exact function names. The agent must locate the relevant code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -57,6 +57,6 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
+  "pass_count": 7,
   "fail_count": 3
 }

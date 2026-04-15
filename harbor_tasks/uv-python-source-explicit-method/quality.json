@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (crates/uv-python/src/discovery.rs), the method (allows_installation), the enum (PythonSource), all variant names with their explicit/non-explicit classification, and references to existing methods like is_maybe_system. All test-specific details (file path, variant names, method signatures) are discoverable from the instruction."
+      "reason": "The instruction names the file path (crates/uv-python/src/discovery.rs), the method name (is_explicit), the signature (pub(crate) fn is_explicit(&self) -> bool), the exact variant classifications (ProvidedPath, ParentInterpreter, etc. as true; Managed, DiscoveredEnvironment, etc. as false), and the allows_installation method. All test-asserted specifics (method existence, variant mapping, delegation via .is_explicit(), removal of 'let is_explicit = match', preservation of is_maybe_system and all"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (inline logic should be extracted to a method on PythonSource) and gives the context, but does not specify exact line numbers, the exact method signature, or the exact code to write. A developer must still decide how to implement is_explicit (name, visibility, signature, match vs matches! macro, etc.)."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact method signature ('pub(crate) fn is_explicit(&self) -> bool'), the exact return values for every variant, and that allows_installation should call this new method instead of inline matching. This is essentially a complete specification of the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert the method must be named exactly 'is_explicit' (test_is_explicit_method_exists greps for 'fn\\s+is_explicit'), and test_allows_installation_delegates greps for '.is_explicit()'. An alternative correct fix using a different method name (e.g., 'is_user_provided', 'is_direct_source') would fail these tests despite being a valid refactoring. The instruction never mandates the name 'is_explicit'."
+      "reason": "test_is_explicit_method_exists uses a regex matching 'fn\\s+is_explicit' specifically, requiring the exact method name 'is_explicit'. test_allows_installation_delegates greps for '.is_explicit()' requiring exactly that call. test_allows_installation_no_inline_variant_match greps for 'let is_explicit = match'. An alternative correct fix using a different method name (e.g., 'is_user_provided') or different delegation pattern would fail these tests."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "While tests use grep and text parsing rather than compiling/running Rust code, test_is_explicit_variant_mapping executes a Python script that parses the Rust source, extracts the method body, builds a variant->bool mapping, and simulates calling is_explicit for every variant. This goes beyond simple text matching to verify behavioral correctness of the logic. The approach is reasonable given no Rust compiler is available."
+      "outcome": "fail",
+      "reason": "The tests are fundamentally text-matching: test_is_explicit_method_exists uses grep for a regex pattern in the source file; test_is_explicit_variant_mapping parses the Rust source text with Python regex to simulate behavior rather than compiling/running the Rust code; test_allows_installation_delegates counts grep matches of '.is_explicit()'; test_allows_installation_no_inline_variant_match greps for text patterns. None compile or execute the Rust code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass: test_is_explicit_method_exists requires a specific method signature; test_is_explicit_variant_mapping parses the method body and verifies each variant maps to the correct boolean; test_allows_installation_delegates requires >=2 calls to .is_explicit(); test_allows_installation_no_inline_variant_match requires removal of the inline match. These cannot be satisfied by stubs."
+      "reason": "A stub implementation would not pass: test_is_explicit_method_exists requires the method signature to exist in the file, test_is_explicit_variant_mapping requires correct variant-to-bool mapping in the method body, test_allows_installation_delegates requires >=2 calls to .is_explicit(), and test_allows_installation_no_inline_variant_match requires removal of 'let is_explicit = match'. These cannot be satisfied without actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /repo/../solution/solve.sh (or similar path in the container), and there's no evidence it's removed. The agent could read /solution/solve.sh to get the exact patch. Additionally, the gold patch is a simple, well-defined transformation that the agent could discover by reading the test file expectations if it had access to test_outputs.py."
+      "reason": "The solution file exists at /repo/../solution/solve.sh in the container (the Dockerfile doesn't remove it), and the agent could read it directly. Additionally, the test file at tests/test_outputs.py contains the complete expected variant mapping and all grep patterns, which the agent could read to reverse-engineer the exact solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) extracting is_explicit as a method on PythonSource \u2014 tested by test_is_explicit_method_exists and test_is_explicit_variant_mapping; (2) removing inline match \u2014 tested by test_allows_installation_no_inline_variant_match; (3) using the new method in allows_installation \u2014 tested by test_allows_installation_delegates. All described behaviors are covered."
+      "reason": "All behaviors specified in instruction.md are tested: is_explicit method existence, correct variant classification, delegation in allows_installation, and removal of inline matching logic. The doc comment requirement is the only thing not explicitly tested, but the instruction says 'should be documented' which is advisory."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (fail-to-pass behavioral tests, pass-to-pass regression guards, pass-to-pass CI/CD checks) with clear comments and descriptive docstrings for each test function."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass vs pass-to-pass, regression guards), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is a code refactoring task that doesn't produce structured data output."
+      "reason": "This task involves refactoring Rust code and does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variant names, or method names across the instruction and test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or variant names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file and method (allows_installation) which is appropriate context for the task, mentions the pattern to refactor, and lists variant classifications. It doesn't specify exact line numbers or the exact implementation to write, leaving localization effort minimal but not zero."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (crates/uv-python/src/discovery.rs), exact method (allows_installation), exact new method signature (pub(crate) fn is_explicit(&self) -> bool), and exact variant-to-bool mapping. This goes well beyond describing the problem \u2014 it prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,11 +51,15 @@
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
 }

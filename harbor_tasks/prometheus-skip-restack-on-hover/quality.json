@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_comment_updated asserts the exact literal string 'restack on toggle (but not on focus/hover)' which is not mentioned in instruction.md. The instruction says 'Update the comment to reflect that restacking should only happen on toggle, not on focus/hover' but does not specify this exact wording. Also, test_hook_accepts_opts_parameter asserts the exact regex pattern 'opts.hooks.setSeries.push((u, _i, opts)' with specific parameter names, and test_hook_checks_opts_show asserts the exact string "
+      "outcome": "pass",
+      "reason": "The instruction names the target file path, the function setStackedOpts, the setSeries hook, the three parameters (u, _i, opts), the condition 'opts.show != null', the exact comment text 'restack on toggle (but not on focus/hover)', and the operations stack()/delBand()/setData(). All asserted specifics in tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'Accept the third opts parameter', 'Only perform the restacking operations when opts.show != null', and even specifies which functions (stack(), delBand(), addBand(), setData()) should be gated. This is essentially a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly states the exact fix: use third 'opts' parameter with signature '(u, _i, opts)', check 'opts.show != null', and update the comment to exact text 'restack on toggle (but not on focus/hover)'. This is a complete implementation specification, not just a description of the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'if (opts.show != null)' and exact parameter patterns '(u, _i, opts)'. An alternative correct fix using 'opts.show !== undefined' or naming the parameter 'options' instead of 'opts' or using 'typeof opts.show !== \"undefined\"' would fail the tests despite being functionally correct."
+      "reason": "Tests assert exact literal strings like 'if (opts.show != null)' and 'restack on toggle (but not on focus/hover)', and exact regex patterns for parameter names '(u, _i, opts)'. An alternative correct fix using e.g. 'opts.show !== undefined' or different variable names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_hook_accepts_opts_parameter, test_hook_checks_opts_show, test_hook_conditionally_restack, test_hook_not_called_on_hover, and test_comment_updated are all pure text-matching (regex/string search on file content). Only test_repo_ui_lint and test_repo_ui_unit_tests execute code. The majority of f2p tests are textual assertions with no behavioral execution."
+      "reason": "Tests test_hook_accepts_opts_parameter, test_hook_checks_opts_show, test_hook_conditionally_restack, test_hook_not_called_on_hover, and test_comment_updated all use regex/string matching on file content (open(TARGET_FILE).read()). Only test_repo_ui_lint and test_repo_ui_unit_tests execute code. The f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since the f2p tests are purely text-matching (e.g., checking 'if (opts.show != null)' in source), an agent could simply insert the expected strings as dead code or comments without implementing any actual behavioral fix, and all text-based tests would pass."
+      "reason": "The f2p tests (test_hook_accepts_opts_parameter, test_hook_checks_opts_show, etc.) only check for text patterns in the source file. An agent could satisfy them by inserting the exact expected strings as dead code or comments without actually fixing the bug's behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace or could be accessible. The tests check for exact literal strings like 'if (opts.show != null)' and 'restack on toggle (but not on focus/hover)' which the agent could extract by reading tests/test_outputs.py or solution/solve.sh if accessible in the container filesystem."
+      "reason": "The solution is in /workspace/prometheus as solve.sh with the exact patch. The agent could read tests/test_outputs.py to find the exact literal strings being asserted (e.g., 'if (opts.show != null)') and insert them. The instruction itself also provides the complete solution specification."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The three expected behaviors (no restacking on hover, correct restacking on toggle, TypeScript compilation) are all tested via the conditional check tests, lint test, and unit test."
+      "reason": "All three explicit requirements from instruction.md are tested: the opts parameter (test_hook_accepts_opts_parameter), the opts.show != null check (test_hook_checks_opts_show), and the comment update (test_comment_updated). TypeScript compilation is covered by lint test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies (e.g., test_hook_accepts_opts_parameter, test_hook_checks_opts_show, etc.)."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies (e.g., 'The setSeries hook callback must accept the third opts parameter')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code and does not produce structured data output."
+      "reason": "Task involves modifying TypeScript source code, not producing structured data outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution."
+      "reason": "File paths, function names, variable names, and commands are all correctly spelled and consistent between instruction.md and the test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (uPlotStackHelpers.ts), the exact function (setStackedOpts), the exact hook (setSeries), and specifies the exact conditional logic (opts.show != null). This goes well beyond identifying the buggy area \u2014 it's a complete implementation specification."
+      "reason": "The instruction names the exact file, exact function (setStackedOpts), exact hook (setSeries), exact parameter names (u, _i, opts), exact condition ('opts.show != null'), and exact comment text. This goes far beyond identifying the buggy module \u2014 it provides the complete implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -62,6 +61,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 6
 }

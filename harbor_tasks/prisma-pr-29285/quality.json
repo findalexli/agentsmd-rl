@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The test `test_adapter_uses_execute_for_queries` asserts that `performIO` must contain `this.client.execute(` instead of `this.client.query(`. The instruction.md never mentions `performIO`, `execute()`, `query()`, the binary protocol, or the text protocol. It only vaguely says 'precision is lost'. The specific method name and the specific API call (`execute` vs `query`) are undiscoverable from the instruction alone."
+      "reason": "test_adapter_uses_execute_for_queries asserts 'this.client.execute(' must appear in the performIO method body. The instruction never mentions 'execute', 'binary protocol', 'text protocol', or the specific method name 'performIO'. The agent cannot discover from instruction.md alone that the fix involves changing query() to execute() in the performIO method."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (precision loss with large decimals) but does not state the fix (change query() to execute()). A developer must reason about the root cause."
+      "reason": "instruction.md only describes symptoms (precision loss with large decimals) and points to relevant files/classes. It does not say to change query() to execute() or mention binary vs text protocol."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The test `test_adapter_uses_execute_for_queries` does a regex search for `this.client.execute(` in the `performIO` method body. An alternative valid fix (e.g., converting values to strings before passing to query, or using a different serialization approach) would not pass because the test mandates the specific `execute()` API call."
+      "reason": "test_adapter_uses_execute_for_queries uses regex to find the performIO method and asserts 'this.client.execute(' is present. An alternative correct fix (e.g., converting values to strings before passing to query(), or using a different serialization approach) would fail this test even if it correctly preserved decimal precision."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The primary fail-to-pass test (`test_adapter_uses_execute_for_queries`) reads the source file and checks for the literal string `this.client.execute(` via regex. It does not call, import, or execute the code. The lint and error-mapping tests are pass-to-pass behavioral tests, but the core f2p test is purely text-matching."
+      "reason": "test_adapter_uses_execute_for_queries is purely textual: it reads the source file and checks for string patterns ('this.client.execute(' in performIO body). It does not execute the code or test actual decimal precision behavior. Two of three tests are execution-based (lint + vitest), but the fail-to-pass test is entirely text-matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub or trivial implementation that simply renames `.query(` to `.execute(` in the performIO method (without understanding the precision bug) would pass the f2p test, since it only checks for the string `this.client.execute(` in the method body."
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not pass: the f2p test requires the literal string 'this.client.execute(' to appear in the performIO method body. The original code has 'this.client.query(' there, so doing nothing fails. However, this is a very narrow textual check rather than behavioral."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/prisma` (solution/solve.sh applies a patch). The agent could read `/tests/test_outputs.py` to see exactly what string (`this.client.execute(`) is asserted, or read the solve.sh patch directly. The test checks a literal string, making it trivially matchable."
+      "reason": "The solution is in /workspace/prisma's git history or solve.sh at /tests/../solution/solve.sh. The agent could read test_outputs.py to discover exactly what string pattern is expected ('this.client.execute(') and make that minimal text change without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction mentions that the adapter 'must continue to work with the existing test suite' and that error-mapping tests must pass. However, the actual precision-loss behavior (correctly storing/retrieving large decimal values) is never tested behaviorally \u2014 only a source-code string match is performed."
+      "reason": "instruction.md says 'Large decimal values are incorrectly stored/retrieved' and the adapter 'must continue to work with the existing test suite', but no test actually verifies decimal precision preservation through execution \u2014 only that the source text contains 'execute'."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (`test_adapter_uses_execute_for_queries`, `test_lint_adapter`, `test_repo_adapter_errors_test`) with docstrings explaining their purpose and categorized as fail-to-pass or pass-to-pass."
+      "reason": "Tests are clearly named (test_adapter_uses_execute_for_queries, test_lint_adapter, test_repo_adapter_errors_test) with docstrings explaining purpose and context."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a code fix, not structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the file `packages/adapter-mariadb/src/mariadb.ts` and the classes `MariaDbQueryable` and `MariaDbTransaction`, but these are natural for the task domain. It doesn't name the exact buggy line or the specific fix."
+      "reason": "instruction.md names the file (mariadb.ts) and classes (MariaDbQueryable, MariaDbTransaction), which is reasonable for the task domain. It does not name specific lines or the exact fix (execute vs query)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -54,13 +54,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

@@ -2,65 +2,63 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_uses_buildplatforms_find checks for exact strings 'buildPlatforms.find', 'p.os === \"linux\"', 'p.arch === \"aarch64\"', 'p.distro === \"amazonlinux\"'. While instruction.md hints at using buildPlatforms array, it never specifies the exact filter predicates with 'p.os', 'p.arch', 'p.distro' variable names. Also test_binary_size_step_structure asserts 'depends_on:' which is not mentioned in instruction.md."
+      "outcome": "pass",
+      "reason": "The instruction mentions the key specifics: buildPlatforms.find(), the filter criteria (p.os === 'linux', p.arch === 'aarch64', p.distro === 'amazonlinux'), the expected image name 'linux-aarch64-2023-amazonlinux-with-docker-v29', the prohibition against hand-built object literals, the required return properties (key, label, agents, depends_on), features: ['docker'], and getImageKey(). All test assertions map to concepts discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's Hints section explicitly states 'Find the entry for linux-aarch64 with amazonlinux distro and reuse that instead of constructing a new object' and the Expected Behavior says 'should use the same platform configuration as the linux-aarch64-build-cpp step... available in the buildPlatforms array'. This tells the agent exactly what to change (replace hand-built object with buildPlatforms lookup), leaving minimal reasoning required."
+      "reason": "The instruction explicitly states 'Use buildPlatforms.find() to locate the correct platform configuration' and 'Filter using the criteria: p.os === \"linux\", p.arch === \"aarch64\", p.distro === \"amazonlinux\"' and 'NOT use a hand-built platform object literal containing os: \"linux\", arch: \"aarch64\", distro: \"amazonlinux\", release: \"2023\"'. This essentially dictates the exact code change (replace hand-built object with buildPlatforms.find(p => p.os === 'linux' && p.arch === 'aarch64' && p.distro ==="
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_uses_buildplatforms_find requires exactly 'buildPlatforms.find' with exact predicate strings like 'p.os === \"linux\"'. An alternative correct fix could use buildPlatforms.filter()[0], or use a variable name other than 'p' (e.g., 'platform => platform.os === \"linux\"'), or store the result in a variable first. These would all be correct but fail the tests."
+      "reason": "The tests enforce very specific implementation details: Test 4 requires `buildPlatforms.(find|filter|findIndex)` regex match in the function body. Test 3 checks for absence of the hand-built object pattern. An alternative correct fix like storing the platform in a variable outside the function and referencing it, or using a different lookup mechanism (e.g., a helper function that wraps buildPlatforms), would fail these regex-based checks even though the behavior is correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_uses_buildplatforms_find and test_no_handbuilt_platform_object) are purely text/regex-based: they read file content and check for string patterns like 'buildPlatforms.find' in content and regex matching. They never execute the code, import the module, or verify the actual image name generated. test_syntax_check runs 'node --check' but that's a pass-to-pass gate, not a behavioral test."
+      "outcome": "pass",
+      "reason": "The tests execute the code via Node.js subprocess: they eval() the buildPlatforms array and getImageKey function, call getImageKey(platform) and check its return value. While Tests 3-4 use regex on function source code, Tests 1-2 genuinely execute code and verify behavioral output. The mix includes both execution-based and text-based checks, but the core behavioral tests do execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty function, return None) would not pass tests: test_not_stub checks for minimum line count and specific content, test_no_handbuilt_platform_object checks the function exists, and test_uses_buildplatforms_find requires specific strings in the file. The original buggy code also fails test_uses_buildplatforms_find since it lacks 'buildPlatforms.find'."
+      "reason": "A stub implementation would not pass: the tests eval and execute getImageKey() on the actual platform object from buildPlatforms, checking the returned string equals 'linux-aarch64-2023-amazonlinux-with-docker'. Without the features: ['docker'] field being present on the platform, getImageKey would return the wrong string. The bug fix is required for the behavioral tests to pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun (the REPO directory) as solve.sh would be in /solution/. More critically, the agent could read the test file at tests/test_outputs.py to discover exact assert strings ('buildPlatforms.find', 'p.os === \"linux\"' etc.) and craft a solution matching those patterns without understanding the bug. The Dockerfile doesn't prevent access to /solution/ or test files."
+      "reason": "The solution file exists at /workspace/bun and solve.sh is accessible in the container. The agent could read the test helper script embedded in test_outputs.py or grep for the expected string 'linux-aarch64-2023-amazonlinux-with-docker' in the test files. Additionally, the instruction itself essentially gives away the exact fix, making it trivial to pattern-match without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) using buildPlatforms array instead of hand-built object - tested by test_uses_buildplatforms_find and test_no_handbuilt_platform_object, (2) correct platform with features field - implicitly tested by requiring buildPlatforms.find. All stated requirements are covered."
+      "reason": "All behaviors explicitly required by instruction.md are tested: using buildPlatforms.find() (Test 4), filtering with the specified criteria (Test 1-2 verify correct platform found), not using hand-built object (Test 3), generating correct image name (Test 2), and the return step properties are implicitly covered by the function structure checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear categories (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests, Pass-to-pass/static) marked by comments, descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into sections with clear comments (Gates, Fail-to-pass, Pass-to-pass static/repo_tests), each test function has descriptive names and docstrings explaining what they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing a CI configuration script, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames (.buildkite/ci.mjs), function names (getBinarySizeStep, getEc2Agent, buildPlatforms), paths, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function 'getBinarySizeStep()' and the exact file '.buildkite/ci.mjs', specifies the exact incorrect vs correct image names, identifies the missing 'features' field, and the Hints section says to find 'linux-aarch64 with amazonlinux distro' in buildPlatforms. This goes well beyond describing what's broken."
+      "reason": "The instruction names the exact function (getBinarySizeStep), the exact pattern to avoid (hand-built object with specific fields), the exact method to use (buildPlatforms.find()), and the exact filter criteria. While it doesn't say 'line 831', it effectively localizes the fix to a specific function with a specific replacement pattern, which is excessive hint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is a localized 6-line change within the getBinarySizeStep function, replacing a hand-built object with a buildPlatforms.find() call. It doesn't contradict other files or require a full-file rewrite."
+      "reason": "The gold diff is a localized 6-line change in .buildkite/ci.mjs, replacing a hand-built object with a buildPlatforms.find() call. It doesn't contradict other files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 7,
+  "fail_count": 4
 }

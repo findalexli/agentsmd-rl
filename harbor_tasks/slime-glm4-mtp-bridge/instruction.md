@@ -2,31 +2,30 @@
 
 ## Problem
 
-The `GLM4MoELiteBridge` class in `slime_plugins/mbridge/glm4moe_lite.py` is a stub — it inherits from `DeepseekV3Bridge` but doesn't override any behavior. This causes multiple failures when trying to use MTP (Multi-Token Prediction) training with GLM-4.7-Flash:
+The `GLM4MoELiteBridge` class in `slime_plugins/mbridge/glm4moe_lite.py` is a stub — it inherits from `DeepseekV3Bridge` but doesn't override any behavior. When using MTP (Multi-Token Prediction) training with GLM-4.7-Flash, several assumptions the parent bridge makes about the model don't hold:
 
-1. **rope_theta lookup fails**: GLM-4.7-Flash stores `rope_theta` inside a `rope_parameters` dict rather than as a top-level config attribute. The parent bridge's `_build_config()` accesses `hf_config.rope_theta` directly, which doesn't exist for this model. When `rope_parameters` is absent entirely, `rope_theta` should default to `1000000`.
+1. **rope_theta lookup fails**: GLM-4.7-Flash stores `rope_theta` inside a `rope_parameters` dict rather than as a top-level config attribute. The parent bridge's `_build_config()` accesses `hf_config.rope_theta` directly, which doesn't exist for this model.
 
-2. **Wrong layer index for MTP weights**: DeepSeek V3 has 61 transformer layers and the parent bridge hardcodes `model.layers.61` for MTP weight mapping. GLM-4.7-Flash has `num_hidden_layers=47`, so MTP checkpoint conversion produces incorrect weight names (layer 61 instead of 47). The bridge should use `num_hidden_layers` as the dynamic layer index `{n}` throughout all MTP weight name mappings.
+2. **MTP weight name conversion uses wrong layer index**: DeepSeek V3 has 61 transformer layers and the parent bridge uses `model.layers.61` in MTP weight mappings. GLM-4.7-Flash has 47 layers, so MTP checkpoint conversion produces weight names that reference non-existent layer 61 instead of the correct layer index.
 
-3. **FP8 dequantization applied incorrectly**: The parent bridge's `_get_safetensor_io` returns an FP8 dequantization variant. GLM-4.7-Flash ships standard bf16 safetensors, so the bridge should use the standard `SafeTensorIO` class from `mbridge.core.safetensor_io` instead.
+3. **Wrong safetensor I/O class**: The parent bridge's `_get_safetensor_io` returns an FP8 dequantization variant. GLM-4.7-Flash ships standard bf16 safetensors.
 
-4. **Shared weight mapping broken**: The `_SHARED_STATE_DICT_MAPPING` in the parent hardcodes layer 61. For a model with `num_hidden_layers={n}`, the mapping needs to include:
-   - `embedding.word_embeddings.weight` → [`model.embed_tokens.weight`, `model.layers.{n}.embed_tokens.weight`]
-   - `output_layer.weight` → [`lm_head.weight`, `model.layers.{n}.shared_head.head.weight`]
+4. **Shared weight mapping uses hardcoded layer index**: The parent's `_SHARED_STATE_DICT_MAPPING` hardcodes layer 61 for embedding and output layer mappings. GLM-4.7-Flash needs these mapped to the correct dynamic layer index derived from the model's actual layer count.
 
-5. **MTP parameter name conversion missing**: The bridge's MTP parameter conversion (`_convert_mtp_param`) needs to map MCore-format MTP layer parameter names to HuggingFace format using the dynamic layer index `{n}`. The following direct mappings are required:
-   - `mtp.layers.0.enorm.weight` → `model.layers.{n}.enorm.weight`
-   - `mtp.layers.0.hnorm.weight` → `model.layers.{n}.hnorm.weight`
-   - `mtp.layers.0.eh_proj.weight` → `model.layers.{n}.eh_proj.weight`
-   - `mtp.layers.0.final_layernorm.weight` → `model.layers.{n}.shared_head.norm.weight`
+5. **MTP parameter name conversion incomplete**: The bridge needs to convert MCore-format MTP parameter names to HuggingFace format. Direct MTP layer parameters (enorm, hnorm, eh_proj, final_layernorm) need mapping, and transformer-layer parameters within the MTP layer need delegation to the parent's attention/MLP weight mapping methods.
 
-   Transformer-layer parameters within the MTP layer should be delegated through the parent class's existing attention/MLP weight name mapping methods. For example:
-   - `mtp.layers.0.transformer_layer.self_attention.linear_proj.weight` → `model.layers.{n}.self_attn.o_proj.weight`
-   - `mtp.layers.0.transformer_layer.mlp.linear_fc2.weight` → `model.layers.{n}.mlp.down_proj.weight`
-
-6. **Shared weight export**: When converting weights to HF format via `_weight_to_hf_format`, shared weights (embedding and output) should produce entries for both the base model name and the MTP layer name. For example, `embedding.word_embeddings.weight` should produce both `model.embed_tokens.weight` and `model.layers.{n}.embed_tokens.weight`, and `output_layer.weight` should produce both `lm_head.weight` and `model.layers.{n}.shared_head.head.weight`.
+6. **Shared weight export incomplete**: When converting weights to HF format, shared weights (embedding and output) should produce entries for both the base model name and the MTP layer name.
 
 ## Files to Look At
 
 - `slime_plugins/mbridge/glm4moe_lite.py` — The GLM-4.7-Flash checkpoint bridge (currently a stub)
 - `slime/backends/megatron_utils/model_provider.py` — Model provider that configures Megatron model initialization
+
+## Expected Behavior
+
+After the fix, the bridge should correctly handle GLM-4.7-Flash models:
+- rope_theta is read from the nested rope_parameters dict when present, and defaults to 1000000 when absent
+- All MTP weight name mappings use the dynamic layer index from the model's num_hidden_layers (47 for GLM-4.7-Flash)
+- Safetensor loading uses the standard SafeTensorIO class, not FP8 dequantization
+- Shared weight mappings are computed dynamically using the model's actual layer count
+- MTP parameter names are converted correctly with the dynamic layer index

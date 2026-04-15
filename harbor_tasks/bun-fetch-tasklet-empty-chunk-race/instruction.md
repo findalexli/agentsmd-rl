@@ -5,7 +5,7 @@
 When using `pipeline(Readable.fromWeb(res.body), createWriteStream(out))` with Bun's fetch, the pipeline can permanently stall and then spin at 100% CPU in `waitForPromise`.
 
 The root cause is a race condition in how body chunks are delivered:
-1. HTTP thread receives body data, writes it to a buffer, and schedules an `onProgressUpdate` task
+1. HTTP thread receives body data, writes it to `scheduled_response_buffer`, and schedules an `onProgressUpdate` task
 2. JavaScript touches `res.body`, which drains the buffer synchronously via `onStartStreamingHTTPResponseBodyCallback`
 3. The already-queued `onProgressUpdate` task runs and finds the buffer empty
 4. The code then processes a zero-length non-terminal chunk, which resolves a pending pull with length 0
@@ -14,15 +14,17 @@ The root cause is a race condition in how body chunks are delivered:
 
 ## Expected Behavior
 
-Add a guard that prevents processing when a stale task finds an empty buffer in the non-terminal (has_more) success case. The guard should be placed before calling the body-received callback.
+Add a guard in `FetchTasklet.zig` that prevents processing when a stale `onProgressUpdate` task finds an empty `scheduled_response_buffer` in the non-terminal success case.
 
-The fix must include a comment explaining this as a "stale-task race" and reference the `onStartStreamingHTTPResponseBodyCallback` callback. The guard must check three conditions:
-- The scheduled response buffer is empty: `scheduled_response_buffer.list.items.len == 0`
-- The result indicates more data is coming: `this.result.has_more`
-- The result indicates success: `this.result.isSuccess()`
+The guard must:
+- Check that the `scheduled_response_buffer` list items length is zero
+- Check that `this.result` indicates more data is coming (`has_more` is true)
+- Check that `this.result` indicates success (via `isSuccess()`)
+- Be placed inside the `is_waiting_body` block, before the call to `onBodyReceived()`
+- Include a comment explaining this as a "stale-task race" that references the `onStartStreamingHTTPResponseBodyCallback` callback
 
-The terminal branch (`!has_more`) should NOT be affected - a zero-length final chunk is valid and should be processed normally.
+The terminal branch (when `has_more` is false) should NOT be affected - a zero-length final chunk is valid and should be processed normally.
 
 ## File
 
-- `src/bun.js/webcore/fetch/FetchTasklet.zig` - Contains the streaming body handling logic that needs the guard
+- `src/bun.js/webcore/fetch/FetchTasklet.zig` - Contains the streaming body handling logic

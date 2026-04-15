@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the file path, WriteTodosInput class name, StructuredTool.from_function usage, args_schema=WriteTodosInput, infer_schema=False, exact import lines, removal of from __future__ import annotations, removal of TYPE_CHECKING, _write_todos function, runtime: ToolRuntime parameter, and performance requirement. All assert targets in tests are discoverable from the instruction."
+      "reason": "The instruction mentions all key specifics tested: TodoListMiddleware instantiation, middleware.tools[0] being a StructuredTool named 'write_todos', WriteTodosInput as a Pydantic model with 'todos' in its schema, 100 instantiations under 1 second, unit tests passing, and lint checks passing. The file path is explicitly stated. All assert targets are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact import lines to use, exact class definitions (WriteTodosInput(BaseModel) with todos: list[Todo] = Field(description=...)), exact method signatures (StructuredTool.from_function with args_schema=WriteTodosInput, infer_schema=False), and the exact function name _write_todos with its parameter types. This is effectively the complete solution specification, leaving almost no reasoning for the agent."
+      "reason": "The instruction explicitly states the fix: 'Move imports to module level', 'Remove from __future__ import annotations', 'Define a standalone function for the tool logic', 'Use StructuredTool.from_function() with args_schema=WriteTodosInput and infer_schema=False'. This is a step-by-step implementation recipe, not a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact import line strings like 'from langchain_core.tools import InjectedToolCallId, StructuredTool, tool', exact function name 'def _write_todos(', exact string 'runtime: ToolRuntime', 'class WriteTodosInput(BaseModel):', 'todos: list[Todo] = Field(description='. An alternative correct fix using a different function name, different import ordering, or a class-based tool definition would fail these text-matching tests despite being functional"
+      "reason": "Tests assert specific implementation details: test_write_todos_schema_has_todos_field imports WriteTodosInput directly from the module (requiring that exact class name to be exported), test_tool_is_structured_tool_named_write_todos checks isinstance(tool, StructuredTool) which rules out using the @tool decorator approach. An alternative fix using @tool that's still fast would fail the StructuredTool isinstance check."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_imports_no_type_checking_for_runtime, test_imports_structured_tool, test_imports_pydantic, test_imports_tool_runtime, test_no_future_annotations, test_write_todos_input_model_exists, test_standalone_write_todos_function, test_structured_tool_in_init are all pure text-matching (assert 'string' in content). While some behavioral tests exist (test_todo_list_middleware_instantiation, test_tool_is_structured_tool, etc.), the majority are string-in-file checks."
+      "outcome": "pass",
+      "reason": "Tests execute Python code via subprocess (uv run), import and instantiate classes, check isinstance, call model_json_schema(), and run pytest suites. They test actual behavior, not just text patterns in files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests (test_todo_list_middleware_instantiation, test_tool_is_structured_tool, test_write_todos_input_schema, test_initialization_performance) actually run the code and verify functional behavior. A stub returning None or empty collections would not pass these tests as they check isinstance, tool.name, schema properties, and performance."
+      "reason": "The f2p tests (test_repo_unit_tests, test_repo_todo_tests, test_repo_middleware_tests, test_repo_lint_package, test_repo_lint_tests) run the existing test suite and linter. A stub or no-op implementation would fail the existing unit tests that test actual middleware behavior. The new behavioral tests also check real instantiation, type checks, and schema properties."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/langchain/solution/solve.sh or could be discovered by examining the test file at tests/test_outputs.py which contains exact strings to match. The agent could read the gold patch from solve.sh and apply it directly, or simply grep for the expected strings in test_outputs.py and produce matching code."
+      "reason": "The solution file exists at /workspace/langchain/solution/solve.sh (or could be written there). The agent could read the gold patch from the test file or solution directory. The Dockerfile doesn't remove /solution/ or restrict access. The agent could also grep test_outputs.py to discover exact expected values."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: fast instantiation (test_initialization_performance), StructuredTool type (test_tool_is_structured_tool), WriteTodosInput schema (test_write_todos_input_schema), direct imports (test_imports_no_type_checking_for_runtime), existing tests pass (test_repo_unit_tests, test_repo_todo_tests), lint checks (test_repo_lint_package)."
+      "reason": "All behaviors in the instruction are tested: fast instantiation (test_initialization_performance), StructuredTool named write_todos (test_tool_is_structured_tool_named_write_todos), WriteTodosInput with todos field (test_write_todos_schema_has_todos_field), module-level imports are implicitly tested by lint and unit tests, and existing tests pass (test_repo_unit_tests etc.)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_imports_no_type_checking_for_runtime, test_initialization_performance, etc.) and each has a docstring explaining what it checks. They are logically grouped from static checks to behavioral tests to integration tests."
+      "reason": "Tests are well-named with descriptive docstrings, logically grouped into behavioral tests and pass-to-pass regression tests, with clear separation of concerns."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the WriteTodosInput Pydantic model schema with exact field names and types (todos: list[Todo] with Field(description=...))."
+      "outcome": "not_applicable",
+      "reason": "The task doesn't produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify, exact import lines to use, exact class and function names to create, and exact method calls (StructuredTool.from_function with specific kwargs). This goes far beyond describing what's broken\u2014it provides the complete implementation blueprint."
+      "reason": "The instruction names the exact file to modify and gives precise implementation steps: 'Use StructuredTool.from_function() with args_schema=WriteTodosInput and infer_schema=False', 'Remove from __future__ import annotations', 'Move imports to module level'. This goes beyond identifying the bug and prescribes the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -53,7 +53,6 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
@@ -61,5 +60,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

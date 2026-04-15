@@ -2,56 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "instruction.md is '(missing)' \u2014 the agent sees nothing, so no test-specific paths (e.g., FULL_PATH, 'class StabilityInferencer', 'private val cache'), function names, or schema keys are discoverable from the instruction."
+      "outcome": "pass",
+      "reason": "The instruction names the target file path, the class StabilityInferencer, the cache type MutableMap<SymbolForAnalysis, Stability>, the field name 'cache', the method signatures, and the specific patterns (fullSymbol in cache, cache[fullSymbol]!!, currentlyAnalyzing.contains(symbol), currentlyAnalyzing + symbol) that tests check for. All test-asserted specifics are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md is empty/missing, so it cannot possibly leak the solution. However, the solution exists in /workspace's solution/solve.sh which is a separate anti-cheating concern."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Add a cache field... initialized as mutableMapOf()', 'Check the cache first using fullSymbol in cache and return cache[fullSymbol]!!', 'Change currentlyAnalyzing.contains(fullSymbol) to use the symbol parameter', etc. This is a complete step-by-step implementation guide, not a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_cache_field_exists assert the exact string 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', and test_cache_is_used_in_stabilityOf checks for 'cache[fullSymbol]' and 'cache[' patterns. An alternative correct caching implementation (e.g., using a HashMap, different variable name, or different caching strategy) would fail these tests."
+      "reason": "Tests assert on exact implementation details like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache) return cache[fullSymbol]!!', 'cache[fullSymbol] = result', 'currentlyAnalyzing.contains(symbol)', and 'currentlyAnalyzing + symbol'. Alternative correct fixes (e.g., using a ConcurrentHashMap, getOrPut, computeIfAbsent, or different variable names) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (e.g., test_cache_field_exists, test_cache_is_used_in_stabilityOf, test_private_stabilityOf_method_exists) all use string/regex matching on the source file content rather than executing the Kotlin code or running any behavioral tests. They are purely textual assertions."
+      "reason": "The tests are purely text-matching: they read the file content and check for specific string patterns like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache)', etc. No test compiles or executes the Kotlin code to verify actual caching behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests check for specific strings in the source file (e.g., 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()'), so a stub that simply inserts those exact strings into the file would pass without actually fixing the exponential explosion bug."
+      "reason": "The f2p tests check for specific string patterns in the file content. A stub that simply writes the expected strings into the file (without implementing actual caching logic) would pass all tests, since no behavioral execution occurs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace's solution/solve.sh containing the exact gold patch. An agent could read this file and apply it directly. Additionally, the test file itself contains enough hints about what strings to insert."
+      "reason": "The solution patch is present at /workspace/kotlin with the solve.sh script accessible in the container. The agent could read solution/solve.sh to see the exact patch, or grep for the expected patterns in test files. The tests only do string matching, so copying the gold patch verbatim trivially passes."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md is missing, so no behavior is explicitly required \u2014 yet numerous tests exist. There is no correspondence between instruction requirements and test coverage."
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (cache field, cache check, cache store, private method signature, cycle detection changes, execution order) are tested, though only via text matching."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear docstrings, comments separating 'PASS-TO-PASS TESTS' from fail-to-pass tests, and descriptive function names like test_cache_field_exists, test_api_compatibility_structure."
+      "reason": "Tests are well-named with descriptive docstrings, grouped into pass-to-pass (p2p) and fail-to-pass (f2p) categories, with clear comments explaining what each test validates."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves modifying Kotlin source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the test and solution files."
+      "reason": "File paths, variable names, class names, and method signatures in the instruction are consistent and correct with no apparent typos."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "not_applicable",
-      "reason": "instruction.md is missing entirely, so there is nothing to evaluate for hint leakage."
+      "outcome": "fail",
+      "reason": "The instruction specifies not just the file but exact implementation details: exact field declaration syntax, exact method signatures, exact cache check patterns ('fullSymbol in cache'), and exact parameter name changes. This goes far beyond identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (patching a Kotlin source file), not a config-edit task."
+      "reason": "This is a code-only task modifying a single Kotlin source file, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -59,8 +59,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
+  "pass_count": 4,
   "fail_count": 6
 }

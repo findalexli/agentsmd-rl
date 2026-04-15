@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key identifiers tested: LoaderStaleReloadMode (exported from index.ts), RouteLoaderObject (in route.ts), defaultStaleReloadMode (in router.ts), object-form loader syntax, and the files to modify (load-matches.ts, route.ts, router.ts, index.ts). The test for 'shouldReloadInBackground' and 'routeLoader?.handler' are implementation-specific variable names not mentioned in the instruction, but the instruction does describe the blocking vs background behavior and object-form"
+      "reason": "The instruction names all key specifics tested: LoaderStaleReloadMode type, RouteLoaderObject type (implied by object-form loader syntax), defaultStaleReloadMode router option, the files to modify (route.ts, router.ts, load-matches.ts, index.ts), export requirements, and the 'background'/'blocking' mode values. The test for 'routeLoader?.handler' and 'shouldReloadInBackground' variable names are implementation details not mentioned, but these are discoverable from the described requirements (ext"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired feature behavior and which files to modify, but does not specify exact code changes, line numbers, or specific variable names like 'shouldReloadInBackground'. It describes what to build, not how to build it."
+      "reason": "The instruction describes the feature to implement (staleReloadMode with background/blocking modes) and which files to modify, but does not specify exact code changes, line numbers, or specific implementation patterns. A developer must still reason about how to implement the feature."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_load_matches_extracts_handler_from_object_loader greps for exact string 'routeLoader?.handler', test_should_reload_in_background_variable_exists greps for exact variable name 'shouldReloadInBackground'. An alternative correct implementation using different variable names (e.g., 'isBackgroundReload', 'loaderConfig?.handler', 'loader.handler') would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: test_load_matches_extracts_handler_from_object_loader greps for exact string 'routeLoader?.handler', test_should_reload_in_background_variable_exists greps for exact variable name 'shouldReloadInBackground'. A correct alternative implementation could use different variable names (e.g., 'reloadInBackground', 'isBackgroundReload') or different property access patterns (e.g., 'routeLoader.handler') and would fail these tests despite being functi"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely grep-based text searches (test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_default_stale_reload_mode_option_exists, test_load_matches_extracts_handler_from_object_loader, test_should_reload_in_background_variable_exists, test_blocking_stale_reload_mode_logic all use grep). Only the pass-to-pass tests actually build/execute code. No f2p test imports, calls, or executes the implemented code to verify behavior."
+      "reason": "The fail-to-pass tests are almost entirely grep-based text searches (test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_default_stale_reload_mode_option_exists, test_load_matches_extracts_handler_from_object_loader, test_should_reload_in_background_variable_exists, test_blocking_stale_reload_mode_logic all use grep). Only the pass-to-pass tests (build, type-check, unit tests) actually execute code. The f2p tests never import, call, or execute the implemented "
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests can be satisfied by simply adding the grepped strings as comments or dead code. For example, adding '// LoaderStaleReloadMode' to index.ts, '// RouteLoaderObject' to route.ts, '// defaultStaleReloadMode' to router.ts, '// routeLoader?.handler shouldReloadInBackground blocking' to load-matches.ts would pass all f2p tests without implementing any actual feature."
+      "reason": "All fail-to-pass tests can be satisfied by simply adding the right strings to files without implementing any actual logic. For example, adding a comment '// LoaderStaleReloadMode' to index.ts passes test_loader_stale_reload_mode_type_exported, adding '// routeLoader?.handler' to load-matches.ts passes test_load_matches_extracts_handler_from_object_loader, etc. No behavioral verification is performed."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/router's solve.sh which references a specific merge commit (6f297a249424c0fd1c1a56aa4fc12c8217be7b6a) and downloads files from GitHub. The agent could read solution/solve.sh to get the exact commit and files. Additionally, since f2p tests are pure grep checks, the agent could trivially pass by inserting the expected strings as comments."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and downloads the exact gold patch files from a specific commit SHA. An agent could read /solution/solve.sh to discover the merge commit hash 6f297a249424c0fd1c1a56aa4fc12c8217be7b6a and simply execute the script or download those files directly."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that 'Navigation waits for stale loader reloads to complete before resolving' in blocking mode, but no test actually verifies this runtime blocking behavior. Tests only check for string presence in source files, not actual blocking vs background behavior."
+      "reason": "The instruction requires that 'blocking' mode makes navigation wait for stale loader reloads to complete before resolving, and that 'background' mode shows stale data immediately. No test actually verifies this runtime behavior - only text patterns are checked. The actual blocking vs background behavioral difference is never tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections with descriptive function names and comments."
+      "reason": "Tests are well-organized with clear sections (Fail-to-Pass and Pass-to-Pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves adding TypeScript types and behavior to a router library, not producing structured data output."
+      "reason": "This task involves adding TypeScript type definitions and logic to a router library, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction and tests appear correct and consistent."
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction lists files to modify which is appropriate for a feature implementation task. It doesn't specify exact line numbers or precise code changes, only the files and concepts."
+      "reason": "The instruction names the files to modify which is appropriate for a feature implementation task. It doesn't specify exact line numbers or specific code patterns to use, only the feature requirements and which files are involved."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

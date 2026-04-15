@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file `packages/eslint-plugin-react-hooks/package.json`, describes the problem (peer dependency range doesn't include ESLint 10), and the expected behavior (should install with ESLint 10). The tests check this file's peerDependencies.eslint field for `^10.0.0` and backward compatibility with versions 3-9, all discoverable from the instruction. The package name `eslint-plugin-react-hooks` and the eslint peer dependency are explicitly mentioned."
+      "reason": "The instruction names the file `packages/eslint-plugin-react-hooks/package.json`, describes the problem (peer dependency for eslint doesn't include ^10.0.0), and the expected behavior (clean install with ESLint 10). The tests check this file's peerDependencies.eslint field for ^10.0.0 and backward compat versions ^3-^9, all of which are discoverable from the instruction's description of the problem domain (ESLint plugin peer deps). The package name 'eslint-plugin-react-hooks' is explicitly menti"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the symptom (peer dependency conflict with ESLint 10) and points to the file, but does not specify the exact change (e.g., 'add || ^10.0.0 to the range'). A developer must reason about what to change in the peerDependencies field."
+      "reason": "The instruction describes the symptom (peer dependency conflict with ESLint 10) and points to the file, but does not say 'add || ^10.0.0' or specify the exact change. A developer must reason about what to modify in the peerDependencies field."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_v10_uses_or_separator asserts `'|| ^10.0.0' in r`, requiring the exact string format `|| ^10.0.0`. An alternative correct fix like `>=3.0.0` or `^3.0.0 || >=4.0.0 || ^10.0.0-0` or using `>=10.0.0` instead of `^10.0.0` would also correctly resolve the peer dependency issue but would fail this test. The test enforces gold-specific formatting rather than behavioral correctness."
+      "reason": "test_v10_uses_or_separator asserts `'|| ^10.0.0' in r`, which enforces the exact string format '|| ^10.0.0' with specific spacing. An alternative correct fix like '||^10.0.0' (no space) or '^10' or '^10.0.0-0' or '>=10.0.0' would fail this test despite being valid semver ranges that satisfy ESLint 10. The test enforces a gold-specific formatting choice rather than testing behavioral compatibility."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_eslint_v10_in_peer_deps, test_v10_uses_or_separator, test_backward_compat_maintained) are pure text/string checks: they read package.json and assert substrings in the eslint peer dependency string. They do not actually run npm install with ESLint 10 to verify installation works. However, the pass-to-pass tests do run subprocesses (eslint, jest, license checks), so it's a mixed picture. But the f2p tests are entirely text-based."
+      "reason": "The core fail-to-pass tests (test_eslint_v10_in_peer_deps, test_v10_uses_or_separator, test_backward_compat_maintained) all do string-matching on the package.json text (`'|| ^10.0.0' in r`, `'^10.0.0' in r`). They don't actually run `npm install` with ESLint 10 or use semver resolution to verify compatibility. However, the pass-to-pass repo tests do execute subprocesses (eslint, jest, license checks), so not every test is pure text matching. But the f2p tests are purely text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for `^10.0.0` and `|| ^10.0.0` in the peer dependency string. The base commit's package.json does not contain these strings, so a stub/no-op implementation would fail these tests. The agent must actually modify the file."
+      "reason": "The f2p tests check for '|| ^10.0.0' and '^10.0.0' in the eslint peer dependency string. A stub or no-op wouldn't add this string to the package.json, so the original file would fail these tests. The fix requires actual modification of the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/react (solution/solve.sh is mounted or available). The agent could read the test file at tests/test_outputs.py to discover the exact expected strings like '|| ^10.0.0' and '^10.0.0'. Also, the gold patch is trivially simple \u2014 the agent could grep for the fixture string '|| ^10.0.0' in test files and apply it mechanically without understanding the bug."
+      "reason": "The solution file exists at /workspace/react (solution/solve.sh is mapped into the container environment). The agent could read the Dockerfile or solution/solve.sh if accessible, or simply grep for the expected test fixture string '|| ^10.0.0' in test files. The test file at tests/test_outputs.py contains the literal expected string '|| ^10.0.0' which the agent could discover and use directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires ESLint 10 compatibility in peerDependencies. The tests verify ESLint 10 is in the range, backward compatibility is maintained, and existing repo tests/lint still pass. All described behavior is tested."
+      "reason": "The instruction requires ESLint 10 compatibility via peer deps, and tests verify both the addition of ^10.0.0 and backward compatibility with ESLint 3-9. All explicitly required behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/static, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "The task involves editing a package.json peer dependency field, not producing structured data output like JSON/CSV/API responses."
+      "outcome": "pass",
+      "reason": "The task produces structured data (package.json), and the instruction implicitly references the standard npm package.json schema. The tests verify specific schema keys (name, version, peerDependencies, eslint) which are standard npm fields documented externally."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "In test_package_structure_intact, `f\"name wrong: {pkg.get(name)}\"` references bare `name` instead of `\"name\"` (string literal), which would cause a NameError at runtime. This is a bug in the test code, though it only triggers on failure path."
+      "reason": "In test_package_structure_intact, the assertion message uses `{pkg.get(name)}` instead of `{pkg.get('name')}` \u2014 `name` is an unquoted variable reference that would cause a NameError at runtime if that assertion triggers."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction points to `packages/eslint-plugin-react-hooks/package.json` which is the only relevant file for this task domain. It doesn't name exact lines or the specific field to change, just describes the symptom."
+      "reason": "The instruction points to `packages/eslint-plugin-react-hooks/package.json` which is the obvious and only relevant file for a peer dependency issue in this plugin. This is domain-appropriate, not excessive localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is a single-line change in package.json (adding `|| ^10.0.0` to the eslint peer dependency range). It's highly localized and doesn't contradict any other files."
+      "reason": "The gold diff is a single-line change in package.json (adding '|| ^10.0.0' to the eslint peer dependency range), which is highly localized and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
@@ -59,6 +59,6 @@
   "tier_c_fails": [
     "no_typos"
   ],
-  "pass_count": 7,
+  "pass_count": 8,
   "fail_count": 4
 }

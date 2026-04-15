@@ -2,63 +2,63 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the target file (packages/astro/src/vite-plugin-css/index.ts), the function (ensureModulesLoaded), the constants (RESOLVED_MODULE_DEV_CSS, RESOLVED_MODULE_DEV_CSS_ALL, RESOLVED_MODULE_DEV_CSS_PREFIX), the const.ts file, the import source './const.js', and the pattern to follow (PROPAGATED_ASSET_QUERY_PARAM guard with continue). All assert'd specifics in tests are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "test_guard_prevents_deadlock asserts the literal string 'imp.id === RESOLVED_MODULE_DEV_CSS' in built output and checks for 'continue' within 300 chars. The instruction.md never mentions 'imp.id', 'RESOLVED_MODULE_DEV_CSS', 'RESOLVED_MODULE_DEV_CSS_ALL', 'RESOLVED_MODULE_DEV_CSS_PREFIX', 'PROPAGATED_ASSET_QUERY_PARAM', or the specific guard pattern with 'continue'. It mentions the constant file and virtual module IDs but not the exact variable names used in the guard or the imp.id pattern. Also,"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'Modify the ensureModulesLoaded function to skip virtual dev-css modules during the dependency walk', names all three exact constants to check, says 'The fix should be placed BEFORE the fetchModule call', and references the existing PROPAGATED_ASSET_QUERY_PARAM guard as the pattern to follow. This essentially dictates the exact code change (an if-continue block checking three constants before fetchModule), leaving no reasoning about WHAT to change."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (dev server hangs), names the relevant files and functions, and mentions virtual module IDs, but does not specify the exact fix (adding a guard with continue before fetchModule). A developer must still reason about what change to make."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'imp.id === RESOLVED_MODULE_DEV_CSS', 'imp.id === RESOLVED_MODULE_DEV_CSS_ALL', and 'imp.id.startsWith(RESOLVED_MODULE_DEV_CSS_PREFIX)'. An alternative correct fix using e.g. a helper function, a Set lookup, a regex, or imp.id?.startsWith('\\0virtual:astro:dev-css') would fail these string-matching tests despite being functionally correct."
+      "reason": "test_guard_prevents_deadlock asserts the exact string 'imp.id === RESOLVED_MODULE_DEV_CSS' in the built output and requires 'continue' within 300 characters. An alternative correct fix (e.g., using a Set to track visited modules, checking with includes() instead of ===, using 'return' in a helper function instead of 'continue', or using different variable naming) would fail these assertions despite correctly fixing the deadlock."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_typescript_compiles, test_virtual_css_guard_present, test_guard_positioned_before_fetchmodule) are purely text-matching: they read the source file and check for exact string presence. Only test_package_builds and test_lint_passes execute the code. No test actually invokes ensureModulesLoaded or verifies the deadlock is prevented."
+      "reason": "test_guard_prevents_deadlock is purely text-matching: it reads the built file content and asserts specific strings ('imp.id === RESOLVED_MODULE_DEV_CSS', 'continue', 'fetchModule') are present at certain positions. It does not execute the code or verify actual deadlock-free behavior. While other tests do execute builds and imports, the core deadlock-prevention test is purely textual."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_typescript_compiles, test_virtual_css_guard_present, test_guard_positioned_before_fetchmodule) only check that specific strings appear in the source file. An agent could simply insert a dead-code comment block containing those exact strings without implementing any actual fix, and all three f2p tests would pass."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_guard_prevents_deadlock, test_package_builds, test_module_imports_correctly) cannot be satisfied by a stub. test_guard_prevents_deadlock requires specific guard code in the built output that doesn't exist at the base commit. test_package_builds requires a successful build. A no-op change wouldn't add the required guard pattern."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/astro/../solution/solve.sh (or wherever mounted). The agent could read it. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the exact strings being asserted and insert them as comments without understanding the bug."
+      "reason": "The solution file exists at /workspace/astro (as solution/solve.sh is placed in the container environment). An agent could read the solve.sh script or inspect the test file at tests/test_outputs.py to discover the exact expected strings like 'imp.id === RESOLVED_MODULE_DEV_CSS' and craft a matching patch. The tests check for literal strings that could be reverse-engineered from the test file."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires modifying ensureModulesLoaded to skip virtual dev-css modules, rebuilding, and passing lint. Tests cover the guard presence, positioning before fetchModule, constants being imported/defined, build success, and lint passing."
+      "outcome": "fail",
+      "reason": "instruction.md says to verify 'pnpm lint' passes, but test_lint_passes runs 'biome lint' on a single file rather than the full 'pnpm lint' command. Also, instruction says to run 'pnpm -C packages/astro build' but tests use 'build:ci'. The actual deadlock-free dev server behavior described in the problem is not tested (no integration test spinning up a dev server)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_virtual_css_guard_present, test_guard_positioned_before_fetchmodule, etc.), have docstrings explaining fail-to-pass vs pass-to-pass, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_typescript_compiles, test_package_builds, test_lint_passes, test_module_imports_correctly, test_guard_prevents_deadlock), each has a docstring explaining what it checks and whether it's fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code; it does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing a code bug, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction are consistent with the test suite and solution. No typos detected."
+      "reason": "File paths, commands, variable names, and function names are consistently spelled correctly across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (packages/astro/src/vite-plugin-css/index.ts), exact function (ensureModulesLoaded), exact placement (before fetchModule), exact pattern to follow (PROPAGATED_ASSET_QUERY_PARAM guard), and exact constants to use. This goes far beyond describing what's broken."
+      "reason": "instruction.md explicitly names the exact function 'ensureModulesLoaded' in the exact file 'packages/astro/src/vite-plugin-css/index.ts', plus the exact constant file and all three virtual module ID patterns. This significantly narrows the search space beyond what's needed for a 'fix the hang' task, essentially pointing to the exact location and mechanism."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only fix task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

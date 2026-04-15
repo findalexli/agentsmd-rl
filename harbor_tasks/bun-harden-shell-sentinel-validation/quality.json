@@ -3,55 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_sentinel_bun_prefix_roundtrip checks for 'jsobjs_len: u32' as a struct field and parameter name; test_sentinel_bunstr_prefix_roundtrip checks for 'const jsobjs_len: u32 = @intCast(jsobjs.len)' and specific LexerAscii/LexerUnicode call patterns with jsobjs_len; test_raw_sentinel_no_crash checks for 'idx >= self.jsobjs_len', 'idx >= interpreter.jsobjs.len' in Builtin.zig, and 'idx >= this.base.interpreter.jsobjs.len"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_sentinel_bun_prefix_roundtrip checks for 'jsobjs_len: u32' as a struct field and parameter name; test_sentinel_bunstr_prefix_roundtrip checks for 'const jsobjs_len: u32 = @intCast(jsobjs.len)' in interpreter.zig; test_raw_sentinel_no_crash checks for 'idx >= self.jsobjs_len' and specific patterns like 'file.jsbuf.idx >= interpreter.jsobjs.len' in Builtin.zig and 'val.idx >= this.base.interpreter.jsobjs."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes what is broken (validateJSObjRefIdx checks maxInt(u32) instead of array length, missing sentinel escaping, wrong stdio indices) but does not prescribe the exact fix like 'add jsobjs_len parameter' or specific code changes."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix details: 'validateJSObjRefIdx function only checked if the index exceeded maxInt(u32) rather than the actual array length' (telling you to change the check), 'incorrectly used stdin_no when extracting blobs for stdout and stderr redirects' (telling you exactly what to change to what). These describe the specific code changes needed, not just symptoms."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_sentinel_bun_prefix_roundtrip requires a parameter named exactly 'jsobjs_len: u32'; test_sentinel_bunstr_prefix_roundtrip requires exactly 'jsobjs_len: u32 = @intCast(jsobjs.len)' and LexerAscii.new/LexerUnicode.new calls with 'jsobjs_len' as 4th arg. An alternative fix using a different variable name (e.g., 'obj_count') or different architecture (e.g., passing the whole array) would fail."
+      "reason": "Tests assert on gold-specific variable names and implementation details. test_sentinel_bun_prefix_roundtrip requires the exact name 'jsobjs_len' as parameter and field. test_sentinel_bunstr_prefix_roundtrip requires 'jsobjs_len: u32 = @intCast(jsobjs.len)' and LexerAscii/Unicode.new calls with 'jsobjs_len'. An alternative correct fix using a different parameter name (e.g., 'obj_count') or different validation approach would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three fail-to-pass tests (test_sentinel_bun_prefix_roundtrip, test_sentinel_bunstr_prefix_roundtrip, test_raw_sentinel_no_crash) exclusively use regex/string matching on source files (e.g., re.search on shell.zig content) without any code execution or behavioral verification. They are pure text-matching tests."
+      "reason": "The three fail_to_pass tests (test_sentinel_bun_prefix_roundtrip, test_sentinel_bunstr_prefix_roundtrip, test_raw_sentinel_no_crash) all exclusively read source files and do regex/string matching on source code text. They never compile or execute the Zig code. Only pass_to_pass tests (test_shell_escape_api_works, test_repo_shell_file_tests, etc.) actually execute code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the text 'jsobjs_len: u32' to the right files (via comments or dead code) without actually implementing the fix would pass all three f2p tests, since they only check for string/regex presence in source files, not behavioral correctness."
+      "reason": "The f2p tests only check for the presence of specific strings/patterns in source files. An agent could simply insert the exact expected strings as comments or dead code (e.g., adding '// jsobjs_len: u32 = @intCast(jsobjs.len)' as a comment) without actually implementing the fix, and the regex-based tests would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's solve.sh (accessible at solution/solve.sh in the container). The agent could read /solution/solve.sh or simply grep test files for the exact patterns being asserted (like 'jsobjs_len') and add those strings to source files without understanding the bug."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, since tests only check for string patterns in source files, the agent could grep test_outputs.py for the exact patterns being asserted and insert them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires: (1) strings with sentinel byte round-trip correctly, (2) out-of-bounds references throw 'Invalid JS object reference in shell', (3) stdio redirections use correct fd indices. The tests do NOT verify actual round-trip behavior, do NOT test that the error message is thrown at runtime, and do NOT verify correct stdio redirection behavior\u2014they only check source code text patterns."
+      "reason": "instruction.md requires 'All user-supplied strings, including those containing the internal sentinel byte, should round-trip through shell interpolation correctly' and 'Out-of-bounds object references should be caught early and throw a proper JavaScript error'. No test actually executes shell interpolation with sentinel bytes or verifies the JavaScript error message is thrown at runtime."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with docstrings explaining each test's purpose, labeled by category (pass_to_pass, fail_to_pass), and have clear descriptive names."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
       "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names files and functions relevant to the bug domain (validateJSObjRefIdx, SPECIAL_CHARS, initRedirections) but doesn't specify exact line numbers or the precise fix. The function/file names are appropriate context for the task domain."
+      "outcome": "fail",
+      "reason": "instruction.md names exact buggy functions ('validateJSObjRefIdx'), exact buggy behavior ('only checked if the index exceeded maxInt(u32) rather than the actual array length'), and exact bug location ('incorrectly used stdin_no when extracting blobs for stdout and stderr redirects'). This goes well beyond describing symptoms and reveals the specific fixes needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -59,8 +60,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 2,
+  "fail_count": 8
 }

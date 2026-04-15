@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact files (buildThunks.ts, infiniteQueries.test.ts), the string 'meta: undefined' to be replaced, the expected patterns 'request: expect.anything()' and 'response: expect.anything()', the commands to run (yarn vitest, yarn build, npx tsc), and the meta/pageResponse.meta relationship. All assert targets in tests are discoverable from instruction.md."
+      "reason": "The instruction names both affected files (buildThunks.ts, infiniteQueries.test.ts), the specific string changes (meta: undefined \u2192 meta with request/response using expect.anything()), the commands to run (yarn vitest, yarn build, npx tsc), and all key concepts tested. The exact literal 'meta: pageResponse.meta,' checked in test_build_thunks_has_meta_handling is implied by the instruction saying 'the infinite query result construction after fetching a page does not include the meta field that is"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'The infinite query result construction after fetching a page does not include the meta field that is present in pageResponse' \u2014 this directly tells the agent to add meta from pageResponse. Combined with 'meta: undefined' must become 'meta with request/response', this is effectively telling the agent exactly what code to write rather than just describing the broken behavior."
+      "reason": "The instruction essentially spells out the fix: it says 'The infinite query result construction after fetching a page does not include the meta field that is present in pageResponse' and explicitly states to replace 'meta: undefined' with 'meta' containing 'request: expect.anything()' and 'response: expect.anything()'. This leaves almost no reasoning for the agent \u2014 it tells WHAT to change in both files."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_build_thunks_has_meta_handling asserts the exact string 'meta: pageResponse.meta,' which forces one specific implementation. An alternative correct fix like 'meta: pageResponse[\"meta\"],' or destructuring meta from pageResponse first would fail this test. test_infinite_queries_test_file_updated checks for exact strings 'request: expect.anything()' and 'response: expect.anything()' \u2014 alternatives like expect.any(Object) would fail."
+      "reason": "test_build_thunks_has_meta_handling asserts the exact string 'meta: pageResponse.meta,' in the source file. An alternative correct fix like 'meta: pageResponse[\"meta\"],' or extracting meta into a variable first (e.g., 'const pageMeta = pageResponse.meta; ... meta: pageMeta,') would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_build_thunks_has_meta_handling and test_infinite_queries_test_file_updated are pure text-matching tests (assert 'meta: pageResponse.meta,' in content). While other tests do execute code (test_repo_unit_tests_pass runs vitest, test_repo_build runs build), the core f2p tests (test_build_thunks_has_meta_handling) only check file content, not behavior."
+      "reason": "test_build_thunks_has_meta_handling is purely textual: 'assert \"meta: pageResponse.meta,\" in content'. test_infinite_queries_test_file_updated is also purely textual: checking for absence of 'meta: undefined' and presence of 'request: expect.anything()'. While some tests do run subprocesses (test_repo_unit_tests_pass, test_repo_build), the core f2p tests (test_build_thunks_has_meta_handling, test_infinite_queries_test_file_updated) are string-matching only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests require actual code changes: test_build_thunks_has_meta_handling requires adding 'meta: pageResponse.meta,' to buildThunks.ts, test_infinite_queries_test_file_updated requires removing 'meta: undefined' and adding new expectations, and test_repo_unit_tests_pass runs the actual test suite which would fail without the fix. A stub/no-op wouldn't pass these."
+      "reason": "The f2p tests require specific structural changes (adding 'meta: pageResponse.meta,' to buildThunks.ts and updating test expectations) and also run the actual vitest suite (test_repo_unit_tests_pass) which would fail without the real fix. A stub/no-op implementation would not pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/redux-toolkit with solve.sh available in the container's solution directory. An agent could read /solution/solve.sh (if accessible) or simply grep the test file for the exact expected strings. The text-matching tests (asserting 'meta: pageResponse.meta,') make it trivial to pass by inserting that exact string without understanding the bug."
+      "reason": "The solution is in /workspace/redux-toolkit's solve.sh (mapped from solution/solve.sh) and the test checks for exact string 'meta: pageResponse.meta,'. An agent could read the solution file or grep for the expected fixture strings. No measures prevent reading /solution/ directory contents."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: meta handling in buildThunks.ts (test_build_thunks_has_meta_handling), test file updates (test_infinite_queries_test_file_updated), vitest passes (test_repo_unit_tests_pass), build succeeds (test_repo_build), TypeScript compiles (test_typescript_compiles)."
+      "reason": "All behaviors described in instruction.md are tested: buildThunks.ts fix (test_build_thunks_has_meta_handling), test file update (test_infinite_queries_test_file_updated), vitest passes (test_repo_unit_tests_pass), build succeeds (test_repo_build), TypeScript compiles (test_typescript_compiles)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_build_thunks_has_meta_handling, test_repo_unit_tests_pass, etc.), have descriptive docstrings explaining what each verifies, and are logically grouped into structural checks vs pass-to-pass regression tests."
+      "reason": "Tests are well-named with descriptive docstrings indicating what each verifies (e.g., 'core fail-to-pass test', 'structural fix', 'repo CI gate'). Clear separation between f2p and p2p tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in source code, not producing structured data like JSON/CSV/API/DB outputs."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md are all correct and consistent with the actual repository structure."
+      "reason": "File paths, commands, variable names, and function names are all correct and consistent between instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly identifies the exact file (buildThunks.ts), the exact issue ('does not include the meta field that is present in pageResponse'), and the exact test expectation to change ('meta: undefined' \u2192 'meta with request/response'). This goes beyond describing what's broken and pinpoints the exact location and nature of the fix."
+      "reason": "The instruction names the exact file (buildThunks.ts), describes the exact missing field ('meta field that is present in pageResponse'), and prescribes exact test changes ('expect.anything() for each'). This goes well beyond naming the buggy module \u2014 it localizes the fix to a specific code pattern."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agent config/markdown-edits task."
     }
   },
   "tier_a_fails": [

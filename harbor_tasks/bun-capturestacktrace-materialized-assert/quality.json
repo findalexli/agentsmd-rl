@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (src/bun.js/bindings/FormatStackTraceForJS.cpp), the function (errorConstructorFuncCaptureStackTrace), and all key API calls (hasMaterializedErrorInfo, computeErrorInfoToJSValue, putDirect, setStackFrames, deleteProperty, putDirectCustomAccessor, RETURN_IF_EXCEPTION) that the tests check for. The tests assert on these same identifiers, and they are all discoverable from instruction.md."
+      "reason": "The instruction names the file path (src/bun.js/bindings/FormatStackTraceForJS.cpp), the function (errorConstructorFuncCaptureStackTrace), and all key API calls/patterns tested (hasMaterializedErrorInfo, putDirect, computeErrorInfoToJSValue, setStackFrames, putDirectCustomAccessor, deleteProperty, RETURN_IF_EXCEPTION, JSC_DEFINE_HOST_FUNCTION, spaces indentation, #include root.h, newline/trailing whitespace, 35 non-blank lines, 4 distinct JSC API calls). Every assert target in the tests is disco"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md essentially specifies the exact fix: use a positive hasMaterializedErrorInfo() conditional with if/else, put computeErrorInfoToJSValue and putDirect in the materialized path, put setStackFrames/deleteProperty/putDirectCustomAccessor in the else path. This is not just describing what's broken \u2014 it's a detailed implementation specification that tells the agent exactly what to write."
+      "reason": "The instruction explicitly prescribes the exact fix structure: use a positive hasMaterializedErrorInfo() conditional with if/else, put computeErrorInfoToJSValue and putDirect in the if-branch, put setStackFrames/deleteProperty/putDirectCustomAccessor in the else-branch. This is not just describing what's broken \u2014 it's a step-by-step implementation specification that tells the agent exactly WHAT to change and HOW."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: positive hasMaterializedErrorInfo conditional (not negated), putDirect in the if-body, computeErrorInfoToJSValue in the if-body, setStackFrames NOT in the if-body, else branch existence, etc. An alternative correct fix (e.g., using a different approach like always eagerly computing, or using a flag variable, or restructuring differently) would fail these structural tests even if it correctly fixes the bug."
+      "reason": "The tests enforce very specific implementation details: a positive if(hasMaterializedErrorInfo()) with an else branch, putDirect and computeErrorInfoToJSValue in the if-body, setStackFrames only in else-body, putDirectCustomAccessor in else-body, etc. An alternative correct fix (e.g., using a different conditional structure, a helper function, or a different approach to eagerly setting the stack) would fail these tests even if it correctly fixes the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test is essentially text/pattern matching on the C++ source file. Tests use regex to search for function names, API calls, and structural patterns in the source code. No test compiles or executes the C++ code. The f2p tests (test_materialized_branch_with_else, test_setStackFrames_not_in_materialized_path, test_materialized_path_eagerly_sets_stack) all use regex-based scope analysis on source text rather than behavioral verification."
+      "reason": "Every test is text/pattern matching on the C++ source file (regex searches on file contents, brace-matching scope analysis). No test actually compiles or executes the code, runs the JS reproduction case, or verifies runtime behavior. The subprocess calls just run Python scripts that parse text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests would not pass on the base (unfixed) code: the base code has 'if (!instance->hasMaterializedErrorInfo())' (negated form), no else branch, and setStackFrames is called unconditionally. test_materialized_branch_with_else requires a positive conditional with else, test_setStackFrames_not_in_materialized_path requires setStackFrames absent from the if-body, and test_materialized_path_eagerly_sets_stack requires putDirect and computeErrorInfoToJSValue in the if-body. A stub would also f"
+      "reason": "The f2p tests (test_materialized_branch_with_else, test_setStackFrames_not_in_materialized_path, test_materialized_path_eagerly_sets_stack) check for structural changes that are not present in the base commit. The base code has 'if (!instance->hasMaterializedErrorInfo())' (negated), no else branch for the materialized path, and no putDirect/computeErrorInfoToJSValue in a materialized branch. A stub or unchanged file would fail these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/bun after solve.sh runs, and the agent could potentially read the gold patch from solution/solve.sh if it exists in the container. Additionally, the instruction.md itself is so detailed that it essentially provides the solution, making cheating trivial even without accessing hidden files."
+      "reason": "The solution is in /workspace/bun at the gold patch location. The agent could read solve.sh from /solution/ directory if it exists in the container (the Dockerfile doesn't explicitly remove it). Also, the instruction.md essentially provides the complete solution structure, so the agent doesn't need to cheat \u2014 it can just follow the detailed implementation requirements verbatim."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements listed in instruction.md are tested: positive hasMaterializedErrorInfo conditional (test_materialized_branch_with_else), computeErrorInfoToJSValue and putDirect in materialized path (test_materialized_path_eagerly_sets_stack), no setStackFrames in materialized path (test_setStackFrames_not_in_materialized_path), setStackFrames/deleteProperty/putDirectCustomAccessor in non-materialized path (respective tests), RETURN_IF_EXCEPTION (test_exception_safety), 35+ lines (test_not_stub)"
+      "reason": "All requirements from instruction.md are tested: branching structure (positive hasMaterializedErrorInfo with else), materialized path contents (computeErrorInfoToJSValue, putDirect, no setStackFrames), non-materialized path (setStackFrames, deleteProperty, putDirectCustomAccessor, RETURN_IF_EXCEPTION), 35+ lines, 4+ JSC APIs, spaces indentation, #include root.h, newline ending, no trailing whitespace."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings, and grouped by category (Gate/pass_to_pass, Fail-to-pass, Pass-to-pass regression, Config-derived). Each test has a clear purpose documented in its docstring."
+      "reason": "Tests are well-organized with descriptive names, docstrings, and section comments (Gate, Fail-to-pass, Pass-to-pass, Config-derived). Each test clearly states what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data output."
+      "reason": "The task involves modifying C++ source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or API call names throughout the instruction and test files."
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (src/bun.js/bindings/FormatStackTraceForJS.cpp) and exact function (errorConstructorFuncCaptureStackTrace), and provides a detailed specification of what code should go in which branch \u2014 effectively describing the exact patch structure rather than just the bug symptoms."
+      "reason": "The instruction names the exact file (FormatStackTraceForJS.cpp), exact function (errorConstructorFuncCaptureStackTrace), and prescribes exact implementation details including which API calls go in which branches. This goes far beyond identifying the buggy component \u2014 it's a complete implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a C++ source file, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific patterns like 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', and 'defer name_allocator.free(name_z)' with exact variable names. The instruction.md mentions 'Use a memory allocation strategy that keeps short hostnames efficient (on the stack) but safely handles longer ones (spilling to heap)' but never names stackFallback, dupeZ, name_allocator, or name_z. These specific identifiers are undiscoverable from the instruction "
+      "outcome": "pass",
+      "reason": "The instruction names the file path `src/bun.js/api/bun/dns.zig`, the specific patterns (`stackFallback(1024, bun.default_allocator)`, `name_allocator.dupeZ(u8, query.name)`, `defer name_allocator.free(name_z)`), the struct `LibInfo`, and the vulnerable fixed-size buffer pattern. All asserted specifics in the tests (file paths, pattern strings, variable names) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md bullet point 2 says 'Use a memory allocation strategy that keeps short hostnames efficient (on the stack) but safely handles longer ones (spilling to heap)' and bullet 3 says 'Properly clean up any dynamically allocated memory after use'. Combined with bullet 1 'Remove the fixed 1024-byte stack buffer', this essentially describes the exact solution pattern (stackFallback allocator with defer free), not just what's broken."
+      "reason": "The instruction explicitly states the exact fix patterns: 'Allocate using std.heap.stackFallback(1024, bun.default_allocator)', 'Copy the hostname using name_allocator.dupeZ(u8, query.name)', and 'Free the allocated memory using defer name_allocator.free(name_z)'. This is the complete solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_stack_fallback_pattern_present requires exact regex 'std.heap.stackFallback(1024, bun.default_allocator)', test_dynamic_allocation_with_dupeZ requires 'name_allocator.dupeZ(u8, query.name)', test_proper_cleanup_with_defer_free requires 'defer name_allocator.free(name_z)'. An alternative correct fix using e.g. ArrayList, a different allocator, alloc+@memcpy instead of dupeZ, or different variable names would fail these tests."
+      "reason": "Tests assert on gold-specific variable names and implementation details: test_stack_fallback_pattern_present checks for exact `std.heap.stackFallback(1024, bun.default_allocator)`, test_dynamic_allocation_with_dupeZ checks for exact `name_allocator.dupeZ(u8, query.name)`, and test_proper_cleanup_with_defer_free checks for exact `defer name_allocator.free(name_z)`. An alternative correct fix using e.g. a different allocator, different variable names like `hostname_alloc`, or a different allocatio"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_no_fixed_buffer_used, test_stack_fallback_pattern_present, test_dynamic_allocation_with_dupeZ, test_proper_cleanup_with_defer_free) all use regex pattern matching on source file text. Only test_zig_fmt_check and test_zig_ast_check execute subprocesses. No test actually compiles the code, runs the DNS lookup function, or tests behavior with long hostnames."
+      "reason": "The four fail-to-pass tests (test_no_fixed_buffer_used, test_stack_fallback_pattern_present, test_dynamic_allocation_with_dupeZ, test_proper_cleanup_with_defer_free) are all pure text pattern matching via regex on file contents. Only test_zig_fmt_check and test_zig_ast_check execute subprocesses, but those are pass-to-pass tests. No test actually compiles or runs the DNS code to verify the buffer overflow is fixed."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply inserts the exact text strings 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', and 'defer name_allocator.free(name_z)' anywhere in the file while removing the fixed buffer pattern would pass all f2p tests. The tests are pure text matching with no compilation or execution verification."
+      "reason": "The fail-to-pass tests only check for text patterns in the source file. An agent could satisfy all four f2p tests by simply inserting the exact text strings as comments or dead code (e.g., adding `// std.heap.stackFallback(1024, bun.default_allocator)` and similar patterns) without actually fixing the buffer overflow. The tests don't verify compilation or runtime behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's git history accessible via solution/solve.sh which is a file in the container. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover the exact regex patterns being checked, then insert matching text without understanding the bug."
+      "reason": "The solution is in `/workspace/bun` accessible via `solution/solve.sh` which is visible in the container. The agent could read the solve.sh or the git apply patch directly. Additionally, the instruction.md itself contains the exact strings being tested, so the agent can trivially match fixture strings without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction.md says 'Hostnames longer than 1024 bytes must not overflow the stack buffer' but no test verifies this behavioral requirement (e.g., no test passes a >1024-byte hostname to the lookup function). The tests only check source code text patterns."
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (removing the fixed-size buffer, using stackFallback, using dupeZ, using defer free) are tested by the fail-to-pass tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with comments separating 'pass-to-pass (static)', 'pass-to-pass (repo_tests)', and 'fail-to-pass (pr_diff)' sections. Each test has a descriptive name and docstring explaining its purpose."
+      "reason": "Tests are well-organized with clear sections (pass-to-pass static, pass-to-pass repo_tests, fail-to-pass pr_diff), descriptive names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a buffer overflow in source code, not producing structured data output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction and tests appear correct with no typos."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifically names 'var name_buf: [1024]u8 = undefined' as the exact buggy declaration, points to the exact file and struct (LibInfo.lookup in dns.zig), and prescribes the solution strategy (stack for short, heap for long). This goes beyond identifying the bug domain."
+      "reason": "The instruction names the exact file (`src/bun.js/api/bun/dns.zig`) and provides the exact replacement code patterns including specific variable names (`name_allocator`, `name_z`), specific function calls (`stackFallback`, `dupeZ`), and specific parameters. This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -60,9 +59,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 4,
+  "fail_count": 6
 }

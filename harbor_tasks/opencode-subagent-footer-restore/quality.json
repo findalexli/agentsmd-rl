@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for specific implementation details not mentioned in instruction.md: e.g., test_subagent_footer_token_cost checks for '.cache' property access, 'Locale' reference, 'Intl.NumberFormat'; test_subagent_footer_exists_with_navigation checks for 'onMouseUp'/'onClick'/'onMouseDown'/'onPress' (instruction mentions these but lumped together); test_dialog_model_control_flow checks for specific pattern 'return' after 'dialog.replace' which is not described in instructions; test_session_index_im"
+      "reason": "Tests check for very specific implementation details not mentioned in instruction.md. For example, test_subagent_footer_token_cost checks for '.cache' property access, 'Intl.NumberFormat' usage, and 'currency' string. test_subagent_footer_exists_with_navigation checks for 'onMouseUp'/'onClick'/'onMouseDown'/'onPress' event handlers. test_dialog_model_control_flow checks for exact code patterns like 'dialog.replace' and 'dialog.clear' appearing after the if-block closing brace. While instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction describes the exact fix for dialog-model.tsx: 'When the variant list is empty after model selection, the dialog state does not behave correctly \u2014 it should clear but does not.' Combined with specifying the exact file, this strongly hints at the control flow change (moving dialog.clear() outside the else block). For dialog-variant.tsx it explicitly says 'Contains a lint error (unused import) that must be removed' \u2014 telling the agent exactly what to do."
+      "reason": "The instruction explicitly describes the fix for dialog-model.tsx: 'When the variant list is empty after model selection, the dialog state does not behave correctly \u2014 it should clear but does not.' Combined with the specific file path and the description of the exact behavioral issue, this heavily constrains the solution to moving the dialog.clear() call outside the if-else block, which is exactly the gold patch. However, it doesn't literally say 'change line X to Y', so this is borderline. The "
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_dialog_model_control_flow asserts a very specific code pattern: checks that 'return' appears between 'dialog.replace' and 'dialog.clear' via regex. An alternative correct fix like using early return at the top, restructuring with a ternary, or using a different control flow pattern would fail this test. test_subagent_footer_exists_with_navigation checks for specific string literals like 'Parent', 'Prev'/'Previous', 'Next' and specific event handler names. test_subagent_footer_token_cost che"
+      "reason": "test_dialog_model_control_flow asserts a very specific code pattern: it checks that after the closing brace of `if (local.model.variant.list().length > 0)`, the text `dialog.clear()` appears. This corresponds exactly to the gold patch's refactoring (moving dialog.clear outside the else block with a return statement). An alternative correct fix like keeping the if-else structure but fixing the logic differently would fail this test. Similarly, test_subagent_footer_exists_with_navigation checks fo"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_subagent_footer_exists_with_navigation, test_subagent_footer_token_cost, test_dialog_model_control_flow, test_dialog_variant_no_unused_imports, test_session_index_imports, test_session_index_conditional_render) are ALL text-matching tests using readFileSync + string includes/regex checks. None of them import, compile, or execute the components. They are essentially 'assert X in open(path).read()' checks."
+      "reason": "The fail-to-pass tests (test_subagent_footer_exists_with_navigation, test_subagent_footer_token_cost, test_dialog_model_control_flow, test_dialog_variant_no_unused_imports, test_session_imports_subagent_footer, test_session_renders_subagent_footer) all use Node.js to read file contents and check for string patterns like `code.includes('Parent')`, `code.includes('Intl.NumberFormat')`, `code.includes('onMouseUp')`. None of them actually import, instantiate, or execute the components. They are fund"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific content that wouldn't exist in a stub: subagent-footer.tsx must exist (it's a new file), must contain specific navigation labels, token/cost logic, event handlers. A stub file wouldn't pass these content checks. The dialog fixes also require specific code patterns."
+      "reason": "A stub/empty file would fail since tests check for specific exports (SubagentFooter), specific string content (Parent, Next, tokens, Intl.NumberFormat), and specific patterns. An empty or minimal stub would not contain these required strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/opencode as a git repo. The agent could potentially run 'git log' or look at remote branches to find the PR diff. The solve.sh contains the full patch. While solve.sh is described as 'hidden', there's no evidence the /solution/ directory is removed from the container. The agent could also grep test files if accessible."
+      "reason": "The solution patch is available at /workspace/opencode (the solve.sh applies a git patch). An agent could potentially read the test file at tests/test_outputs.py to see exactly what string patterns are checked and craft a file that passes all text-matching assertions without understanding the actual bug. Additionally, since tests are purely text-based checks, the agent could create a file with the right keywords without implementing real functionality."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction mentions: SubagentFooter with navigation, token/cost display, mouse handlers, conditional rendering, dialog-model control flow fix, dialog-variant unused import removal. Tests cover all of these: footer existence/navigation, token/cost, session index imports and conditional render, dialog model control flow, dialog variant unused imports."
+      "outcome": "fail",
+      "reason": "Instruction mentions 'Only appears when the session has a parentID (conditionally rendered)' but the test_session_renders_subagent_footer only checks that `<Show when={session()?.parentID}>` and `<SubagentFooter` appear in the session index file - it doesn't verify actual conditional rendering behavior. The instruction's requirement about keyboard shortcut hints is not tested beyond checking for navigation label strings."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names (test_subagent_footer_exists_with_navigation, test_dialog_model_control_flow), and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/fail_to_pass), descriptive function names (test_subagent_footer_exists_with_navigation, test_dialog_model_control_flow), and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces TSX component files, not structured data like JSON/CSV/API/DB."
+      "reason": "This task involves creating/modifying TSX UI components, not producing structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, component names, and variable names in instruction.md appear correct and consistent with the test files and solution."
+      "reason": "File paths, component names, and variable names in the instruction are consistent and correctly spelled throughout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (dialog-model.tsx, dialog-variant.tsx) and describes precisely what's wrong: 'unused import' in dialog-variant.tsx and 'it should clear but does not' for dialog-model.tsx. This makes localization trivial and tells the agent exactly what to fix."
+      "reason": "The instruction names specific files (dialog-model.tsx, dialog-variant.tsx) and describes the exact nature of the bugs: 'unused import' in dialog-variant.tsx and the specific control flow issue with dialog.clear in dialog-model.tsx. For dialog-variant.tsx, the instruction literally says 'Contains a lint error (unused import) that must be removed' which tells the agent exactly what to do."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task involving TSX component creation and modification, not a configuration edit task."
     }
   },
   "tier_a_fails": [
@@ -59,8 +59,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

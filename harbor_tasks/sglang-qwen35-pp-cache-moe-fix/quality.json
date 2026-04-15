@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check specific file paths like 'python/sglang/srt/disaggregation/decode.py' and class names like 'HybridMambaDecodeReqToTokenPool' which are not mentioned in instruction.md. The test test_decode_pp_parameters checks for specific parameter names 'mamba_layer_ids' and 'start_layer' in HybridMambaDecodeReqToTokenPool.__init__ and checks that '# TODO: Support PP' is removed - none of these specifics are in the instruction. The test test_qwen3_vl_pp_properties checks for fallback behavior (defa"
+      "reason": "Tests assert specific file paths like 'python/sglang/srt/disaggregation/decode.py' and class names like 'HybridMambaDecodeReqToTokenPool' which are not mentioned in instruction.md. The test test_decode_pp_parameters checks for this class in that specific file, and test_qwen3_vl_pp_properties checks for 'Qwen3_5VLForConditionalGeneration' in 'python/sglang/srt/models/qwen3_vl.py'. While instruction.md mentions HybridReqToTokenPool and some pool classes, it never mentions HybridMambaDecodeReqToTok"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (cache not sharded, weight loading failure) and the general approach (utility function, filtering, PP-aware pools) but does not specify exact code changes like 'change line X to Y'. It describes the architectural fix needed without giving the implementation."
+      "reason": "The instruction describes what's broken and the general shape of the fix (create get_layer_id, filter weights, make pools PP-aware, add properties) but doesn't specify exact code changes like 'change line X to Y'. The developer still needs to reason about implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_decode_pp_parameters requires exact parameter names 'mamba_layer_ids' and 'start_layer' in HybridMambaDecodeReqToTokenPool.__init__. test_qwen3_5_load_weights_pp_filtering requires the function be named exactly 'get_layer_id' and called within load_weights/load_fused_expert_weights. test_qwen3_vl_pp_properties requires specific fallback behavior (default 0, fallback to config.num_hidden_layers). An alternative correct fix using different"
+      "reason": "Tests assert on gold-specific implementation details: test_qwen3_5_load_weights_pp_filtering requires the function be named exactly 'get_layer_id' and called within load_weights/load_fused_expert_weights methods via AST inspection. test_decode_pp_parameters requires exact parameter names 'mamba_layer_ids' and 'start_layer' in HybridMambaDecodeReqToTokenPool.__init__. test_qwen3_vl_pp_properties requires specific fallback behavior (return 0 for missing model, return config.num_hidden_layers for m"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_decode_pp_parameters uses only AST inspection to check parameter names exist, without executing the constructor. test_qwen3_5_load_weights_pp_filtering uses only AST walking to check that 'get_layer_id' is called and 'continue' exists - pure text/structure inspection. test_qwen3_vl_pp_properties does execute extracted property functions against mock objects, which is behavioral. However, several f2p tests are purely structural AST checks, not behavioral execution."
+      "reason": "Most fail-to-pass tests (test_decode_pp_parameters, test_qwen3_5_load_weights_pp_filtering, test_qwen3_5_memory_pool_pp_params, test_hybrid_linear_kv_pool_start_layer) are pure AST inspection \u2014 they check whether certain parameter names exist in function signatures or whether certain function calls appear in the AST. They never actually execute the modified code. test_qwen3_vl_pp_properties does exec extracted property functions against mock objects, which is behavioral, but the majority rely on"
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_decode_pp_parameters only checks AST structure - simply adding 'mamba_layer_ids' and 'start_layer' as unused parameters to __init__ and removing the TODO comment would pass. test_qwen3_5_load_weights_pp_filtering only checks that get_layer_id is called and continue exists - adding a dead-code call to get_layer_id with a continue in the same function would pass without actually implementing PP filtering."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for structural changes that don't exist in the base commit (e.g., mamba_layer_ids parameter, start_layer parameter, get_layer_id calls in load methods). A stub or no-op implementation wouldn't add these AST structures, so they would fail on the unmodified code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/sglang and the gold patch could potentially be accessed. The test file test_outputs.py is in the container and could be read to reverse-engineer exact requirements. The Dockerfile and test structure don't prevent reading /solution/ or test files."
+      "reason": "The solution exists at /workspace/sglang as a git repo, and the agent could potentially read the solve.sh or look at git history. Also, since tests are purely AST-based, the agent could reverse-engineer exact expected changes by reading the test file at tests/test_outputs.py and making minimal structural changes to pass AST checks without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires that 'Mamba cache pools should only allocate memory for layers within the current PP rank's range' (actual memory allocation behavior) and 'Weight loading should skip any layer whose ID falls outside the current rank's range \u2014 no KeyError should occur' (runtime behavior). Tests only check AST structure and a utility function, never test actual memory allocation or weight loading behavior."
+      "outcome": "pass",
+      "reason": "The instruction's four required fixes (get_layer_id utility, weight loading filtering, PP-aware cache pools, start_layer/end_layer properties on VL wrappers) are all tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,15 +35,15 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves code bug fixes, not structured data output."
+      "reason": "This task involves code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction names exact files ('python/sglang/srt/layers/utils/common.py'), exact class names ('HybridReqToTokenPool', 'MambaPool', 'HybridLinearKVPool'), exact method names ('load_weights', 'load_fused_expert_weights'), and specifies exact function signatures ('get_layer_id' utility function that extracts layer ID from weight names). It even specifies the exact location for the new utility function."
+      "reason": "Instruction.md explicitly names the exact file 'python/sglang/srt/layers/utils/common.py' for get_layer_id, specifies exact class names like 'HybridReqToTokenPool', 'MambaPool', 'HybridLinearKVPool', and describes precise parameter changes (start_layer should not be hardcoded to 0). It also names the exact methods load_weights and load_fused_expert_weights. This level of localization removes significant reasoning about where changes are needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -54,14 +54,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 5
 }

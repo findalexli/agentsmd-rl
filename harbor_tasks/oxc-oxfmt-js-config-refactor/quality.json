@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific literal strings not fully specified in instruction.md. For example: test_js_config_error_handling asserts '.catch((err) => {' exact syntax, 'err.message +=' exact pattern, and 'getUnsupportedTypeScriptModuleLoadHint(err, path)' with exact parameter names. test_tsdown_config_define asserts exact string 'define: { \"import.meta.vitest\": \"undefined\" }'. test_vitest_config_includes_source asserts exact string 'includeSource: [\"./src-js/**/*.ts\"]'. test_cli_ts_import_updated"
+      "reason": "Tests assert very specific strings not fully discoverable from instruction.md. For example: test_js_config_error_handling asserts '.catch((err) => {' (exact syntax with parentheses/braces), 'err.message +=' (exact operator), and 'getUnsupportedTypeScriptModuleLoadHint(err, path)' (exact parameter names 'err, path'). The instruction says to use .catch() pattern and append hint to message, but doesn't specify the exact parameter name 'path' or the exact syntax '.catch((err) => {'. Also test_cli_ts"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies implementation details like: 'The pattern should use .catch() with an error parameter, access err.message, and use throw err', the exact function name 'getUnsupportedTypeScriptModuleLoadHint', exact test description strings, exact file paths to create, and exact config values. This goes well beyond describing what's broken \u2014 it prescribes the exact fix."
+      "reason": "The instruction explicitly tells the agent WHAT to change in great detail: rename function to 'getUnsupportedTypeScriptModuleLoadHint', use '.catch()' with 'err.message +=' pattern, exact test descriptions, exact config values like 'vitest run', 'vitest/importMeta' in types, 'import.meta.vitest' as 'undefined' in define, 'src-js/**/*.ts' in includeSource, exact import path './cli/js_config/index'. This is essentially a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_js_config_error_handling checks for exact '.catch((err) => {' syntax (not '.catch(error => {' or '.catch((error) => {'), exact 'err.message +=' pattern, and 'getUnsupportedTypeScriptModuleLoadHint(err, path)' with exact parameter name 'path'. test_tsdown_config_define and test_vitest_config_includes_source check exact whitespace/formatting. An equally correct alternative using different variable names or formatting would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact '.catch((err) => {' syntax (test_js_config_error_handling), exact parameter names 'err, path' in getUnsupportedTypeScriptModuleLoadHint call, exact spacing in config strings like 'define: { \"import.meta.vitest\": \"undefined\" }' and 'includeSource: [\"./src-js/**/*.ts\"]'. An alternative correct implementation using .catch(error => { or .catch(function(err) { or different config formatting would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The F2P tests (test_js_config_directory_structure, test_cli_ts_import_updated, test_node_version_has_inline_tests, test_js_config_error_handling, test_node_version_function_signature, test_package_json_test_command, test_tsconfig_has_vitest_types, test_tsdown_config_define, test_vitest_config_includes_source) are almost entirely text-matching tests using 'assert X in open(path).read()' or os.path.exists checks. While some P2P tests run subprocesses (test_typescript_compiles, test_inline_vitest_t"
+      "reason": "The F2P tests (test_js_config_directory_structure, test_cli_ts_import_updated, test_node_version_has_inline_tests, test_js_config_error_handling, test_node_version_function_signature, test_package_json_test_command, test_tsconfig_has_vitest_types, test_tsdown_config_define, test_vitest_config_includes_source) are ALL text-matching tests using 'assert X in open(path).read()' or os.path.exists checks. None of them import and call the code or execute the functions. The P2P tests do run subprocesses"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The F2P tests check for specific file existence, specific content patterns, and removal of old files. A stub/no-op implementation would not create the required directory structure or file contents, so these tests would fail."
+      "reason": "While the F2P tests are text-based, they check for specific content that wouldn't be present in stub files \u2014 e.g., the inline vitest guard, specific function exports, specific test descriptions, specific config values. A default/empty file would not pass these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/oxc/apps/oxfmt (or could be found via the solve.sh). The agent could read test_outputs.py to discover exact assert strings and directly write files matching those patterns. The tests only check for literal string presence, making it trivial to match fixture strings without understanding the refactoring."
+      "reason": "The solution is available at /workspace/oxc/apps/oxfmt after solve.sh runs, but more critically, the agent could grep test_outputs.py (if accessible) or the solution directory for exact expected strings. The tests check for exact literal strings that could be directly copied. The Dockerfile doesn't restrict access to /solution/ or test files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: directory structure, import updates, inline tests presence, error handling pattern, function naming, package.json update, tsconfig types, tsdown define, vitest includeSource, TypeScript compilation, and test execution."
+      "reason": "All behaviors specified in instruction.md are tested: directory structure, import path updates, inline tests presence, error handling pattern, function naming, package.json test command, tsconfig types, tsdown define, vitest includeSource, TypeScript compilation, and test execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings (e.g., 'F2P: js_config/ directory exists with correct files', 'P2P: TypeScript compiles without errors'). They are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'F2P: js_config/ directory exists with correct files', 'P2P: TypeScript compiles without errors'), clearly grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves code refactoring and file reorganization, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies exact implementation details: '.catch() with an error parameter, access err.message, and use throw err', exact function name 'getUnsupportedTypeScriptModuleLoadHint', exact test description strings, exact file locations. This goes beyond naming the buggy module to prescribing the exact code pattern."
+      "reason": "The instruction specifies exact implementation details: exact function name 'getUnsupportedTypeScriptModuleLoadHint', exact .catch() pattern with err.message, exact config values, exact test description strings, exact import path. This goes beyond describing what's broken and tells the agent exactly what to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Config edits (package.json, tsconfig.json, tsdown.config.ts, vitest.config.ts) are localized changes (adding a field, changing a script command) rather than full-file rewrites."
+      "reason": "The config edits (package.json, tsconfig.json, tsdown.config.ts, vitest.config.ts) are localized changes \u2014 adding a field or changing a value \u2014 not full-file rewrites."
     }
   },
   "tier_a_fails": [

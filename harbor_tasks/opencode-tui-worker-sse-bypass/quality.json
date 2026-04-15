@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for specific symbols not mentioned in instruction.md: WorkspaceID (imported and used as WorkspaceID.make), Bus.InstanceDisposed.type (checked via accessesInStream), AbortController (checked via collectNews), and the exact 'server.connected' event emission pattern. Also, test_const_over_let, test_no_else, test_no_try_catch reference AGENTS.md coding style rules that are not mentioned in instruction.md. The instruction mentions 'Handle Bus.InstanceDisposed events' and 'Use AbortControl"
+      "reason": "Tests check for specific identifiers not mentioned in instruction.md: WorkspaceID.make (test_instance_disposed_handling checks Bus.InstanceDisposed access pattern), the test_agent_config_no_any checks for 'any' type keyword absence, test_agent_config_const_over_let checks let count <=3, test_agent_config_no_else checks for no else statements, test_agent_config_no_try_catch checks for no try/catch \u2014 these AGENTS.md coding style constraints (lines 12, 13, 70, 84) are never mentioned in instruction"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'Use Bus.subscribeAll from @/bus', 'Wrap in WorkspaceContext.provide', 'Wrap in Instance.provide', 'Handle Bus.InstanceDisposed events', 'Use AbortController with signal', 'Remove all calls to createOpencodeClient and sdk.event.subscribe'. This is a step-by-step implementation guide, not a bug description."
+      "reason": "instruction.md explicitly states the exact fix: 'Use Bus.subscribeAll', 'Wrap in WorkspaceContext.provide', 'Wrap in Instance.provide', 'Handle Bus.InstanceDisposed events', 'Use AbortController with signal', 'Remove all calls to createOpencodeClient and sdk.event.subscribe'. This is a step-by-step implementation recipe, not just a bug description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: Bus.subscribeAll must be called (not Bus.subscribe with a filter), WorkspaceContext.provide must be called, Instance.provide must be called, AbortController must be instantiated via 'new AbortController', Bus.InstanceDisposed must appear as a property access. An alternative correct fix using a different event subscription pattern (e.g., Bus.on for specific events, or a wrapper function) would fail. The anti-stub check requires >= 15 meaningfu"
+      "reason": "Tests assert on gold-specific implementation details: the variable must be named exactly 'startEventStream' (findVarDecl), must use Bus.subscribeAll (not an alternative subscription pattern), must use exactly WorkspaceContext.provide and Instance.provide call expressions, must reference Bus.InstanceDisposed as a property access. A correct alternative using e.g. Bus.subscribe with a filter callback, or a different event handling pattern, would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests use TypeScript AST analysis (which is better than raw string matching), but they still only inspect the static structure of the code \u2014 they never execute the worker, never verify events are actually streamed, never test that the bus subscription works. Every test is a structural/syntactic check on the source file, not a behavioral execution test."
+      "reason": "Tests use TypeScript AST analysis (parsing the source file and checking for specific AST nodes like call expressions, property accesses, import declarations). While AST analysis is more sophisticated than simple string matching, it still inspects source code structure rather than executing the code or testing runtime behavior. No test actually runs the worker or verifies events are received."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty function or pass-through) would fail the not_stub check (requires >= 15 meaningful AST nodes) and would fail bus_subscribe, workspace_provide, instance_provide checks. The f2p tests require specific API calls to be present in the AST."
+      "reason": "The f2p tests check for specific AST patterns (Bus.subscribeAll calls, WorkspaceContext.provide, Instance.provide, removal of createOpencodeClient) that would not be present in a stub implementation. The not_stub check requires >=15 meaningful AST nodes. A default/empty implementation would fail these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /repo after solve.sh runs, but the agent could also simply read the test file's embedded _AST_SCRIPT to understand exactly what checks are performed and craft code to pass them. The AST script is passed as a string in the test file. Additionally, the instruction.md itself provides nearly the complete solution specification."
+      "reason": "The solution is in /repo accessible to the agent via solve.sh in the solution/ directory. The gold patch is a git apply command that could be extracted. Additionally, the instruction.md itself provides such detailed implementation steps that it essentially leaks the solution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 8 requirements listed in instruction.md's 'Expected Behavior' section are tested: Bus.subscribeAll, WorkspaceContext.provide, Instance.provide, InstanceDisposed handling, AbortController/signal, GlobalBus.on, RPC methods intact, and removal of createOpencodeClient/sdk.event.subscribe."
+      "reason": "All 8 requirements listed in instruction.md are tested: Bus.subscribeAll (test_bus_subscribe_in_stream), WorkspaceContext.provide (test_workspace_context_wrapping), Instance.provide (test_instance_context_wrapping), InstanceDisposed handling (test_instance_disposed_handling), AbortController+signal (test_abort_controller_cleanup), GlobalBus.on (test_global_bus_forwarding), RPC methods (test_rpc_methods_intact), removal of SSE (test_sse_client_removed)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_bus_subscribe_in_stream, test_workspace_context_wrapping, etc.), grouped by category (gate/f2p/p2p/style), and each has a docstring explaining what it checks."
+      "reason": "Tests are well-organized with clear docstrings, grouped into gate/f2p/p2p/anti-stub/agent-config sections with comments, and named descriptively (e.g., test_bus_subscribe_in_stream, test_workspace_context_wrapping)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "Task involves code refactoring, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, module names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (packages/opencode/src/cli/cmd/tui/worker.ts), the exact function (startEventStream), and provides a step-by-step list of exact API calls to make (Bus.subscribeAll, WorkspaceContext.provide, Instance.provide, etc.). This goes well beyond identifying the buggy area \u2014 it's a complete implementation specification."
+      "reason": "instruction.md names the exact file (worker.ts), the exact function (startEventStream), and provides a detailed 8-point implementation checklist including specific API calls (Bus.subscribeAll, WorkspaceContext.provide, Instance.provide, Bus.InstanceDisposed). This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names all key specifics tested: typeOrder array with exact types, typeLabels object with exact mappings ('Features', 'Fix', etc.), conventionalMatch variable name, groups[type] pattern, `### ${label}` heading format, removal of `#### ${pkg.name}`, removal of fs.readFileSync(changelogPath), git log --pretty=format:\"%h %ae %s\", --no-merges, removal of appendAuthors function, removal of resolveAuthorForCommit, removal of authorCache, retention of resolveAuthorForPR/prAuth"
+      "reason": "The instruction explicitly names all key identifiers tested: typeOrder, typeLabels, conventionalMatch, groups[type], ### ${label} headings, #### ${pkg.name} removal, fs.readFileSync(changelogPath), git log --pretty=format:\"%h %ae %s\", --no-merges, resolveAuthorForCommit, authorCache, appendAuthors, resolveAuthorForPR, prAuthorCache, typeIndex function, and sort by typeIndex(a) - typeIndex(b). Every assert target in the tests corresponds to something described in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names (conventionalMatch, typeOrder, typeLabels, typeIndex, groups), exact regex patterns, exact data structures, exact label mappings, and exact format strings. This goes far beyond describing what's broken \u2014 it prescribes the implementation in detail, leaving almost no reasoning about WHAT to change."
+      "reason": "The instruction is extremely prescriptive, specifying exact variable names (conventionalMatch, typeOrder, typeLabels, groups, typeIndex), exact regex patterns, exact array contents, exact object mappings, exact sorting expressions (typeIndex(a) - typeIndex(b)), and exact git log format strings. This goes far beyond describing what's broken and essentially dictates the implementation line by line."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'conventionalMatch', 'typeOrder', 'typeLabels', 'typeIndex', 'groups[type]', specific regex pattern `### \\${label}`, and specific function removal patterns. An alternative correct implementation using different variable names (e.g., 'commitMatch', 'categoryOrder', 'categoryLabels', 'sortIndex') would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'conventionalMatch', 'typeOrder', 'typeLabels', 'typeIndex', 'groups[type]', and specific regex patterns like '(\\w+)'. An alternative correct implementation using different variable names (e.g., 'commitMatch', 'priorityOrder', 'categoryLabels', 'sortIndex') would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are purely text-matching: they read the script file and assert on string patterns like 'typeOrder' in content, 'conventionalMatch' in content, regex searches for variable names. Only test_script_syntax_valid and test_repo_eslint_scripts/test_repo_prettier_scripts actually execute the code. No test actually runs the changelog generation to verify behavioral output."
+      "reason": "Nearly all fail-to-pass tests use only text matching (regex/string searches on file content), e.g., test_typeorder_array_exists checks 'assert \"typeOrder\" in content', test_conventional_commit_parsing checks 'assert \"conventionalMatch\" in content'. Only test_script_syntax_valid and the eslint/prettier tests actually execute the code. No test runs the script and checks the actual changelog output."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since the tests only check for string presence in source code, an agent could write a script containing all the right variable names and patterns as dead code (e.g., comments or unused variables) without implementing any actual changelog generation logic, and all fail-to-pass tests would pass."
+      "reason": "An agent could trivially pass all fail-to-pass tests by adding dead code comments or unused variable declarations containing the required strings (typeOrder, typeLabels, conventionalMatch, groups, typeIndex, etc.) without implementing any actual functionality. The tests only check for string presence in the file, not behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/router after solve.sh runs, and the agent could read test_outputs.py (which is in the container at tests/test_outputs.py) to see exactly what strings to include. The agent could also simply grep for expected patterns in the test file and insert matching strings into the script without understanding the task."
+      "reason": "The solution exists at /workspace/router as applied by solve.sh, and the agent could read solution/solve.sh (which contains the full gold patch) or simply grep the test file for expected string patterns and insert them as dead code. The tests only check for string presence, making this trivially exploitable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: typeOrder/typeLabels definitions, conventional commit parsing, grouping by type, markdown headings, removal of CHANGELOG.md reading, git log format, removal of appendAuthors/resolveAuthorForCommit, type sorting, and retention of resolveAuthorForPR."
+      "reason": "All major behavioral requirements from the instruction are tested: typeOrder array, typeLabels object, conventional commit parsing, grouping by type, markdown headings, no CHANGELOG.md reading, git log format, removal of appendAuthors/resolveAuthorForCommit/authorCache, type sorting, and preservation of resolveAuthorForPR."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections, each test has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests are well-organized with clear sections (fail-to-pass and pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a markdown changelog string, not structured data like JSON/CSV/API/DB."
+      "reason": "The task produces a markdown changelog, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact variable names (conventionalMatch, typeOrder, typeLabels, typeIndex), exact regex patterns, exact function names to remove (resolveAuthorForCommit, appendAuthors, authorCache), and exact format strings. This is excessive implementation detail leakage beyond identifying the file to modify."
+      "reason": "The instruction specifies exact variable names (conventionalMatch, typeOrder, typeLabels, typeIndex, groups), exact regex patterns, exact function names to add/remove, exact git command formats, and exact sorting expressions. This goes well beyond identifying the file to modify and essentially provides the implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a JavaScript script, not a config edit task."
+      "reason": "This is a code-only task modifying a single script file, not a config edit task."
     }
   },
   "tier_a_fails": [

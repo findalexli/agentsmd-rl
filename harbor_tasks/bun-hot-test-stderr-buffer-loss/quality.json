@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_repo_format checks prettier@3.6.2 formatting, test_repo_oxlint checks oxlint compliance, and test_trailing_partial_lines_preserved checks for specific patterns like `lines.pop()`, `lines.at(-1)`, or helper functions matching `function\\s+\\w+.*?stderr`. The instruction mentions Prettier@3.6.2 and oxlint but does not mention the specific regex patterns used to validate the fix (e.g., the"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_repo_format requires prettier@3.6.2, test_repo_oxlint requires oxlint, and test_trailing_partial_lines_preserved checks for specific patterns like `lines.pop()`, `lines.at(-1)`, etc. The instruction mentions Prettier@3.6.2 and oxlint, but test_trailing_partial_lines_preserved asserts that `str = ''` must not appear in sourcemap blocks and checks for specific preservation mechanisms (p"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the fix mechanism: 'remaining unprocessed lines from the current split must be preserved (e.g., by saving the trailing partial line with pop(), at(-1), or similar array operations)' and 'must not use stdout:\"inherit\" or stderr:\"inherit\"' and 'must implement early-exit detection (e.g., via Promise.race, monitoring bundler.exited, or AbortController)'. These are specific implementation directives, not just descriptions of what's broken."
+      "reason": "The instruction explicitly describes the fix in detail: 'remaining unprocessed lines from the current split must be preserved (e.g., by saving the trailing partial line with pop(), at(-1), or similar array operations)', 'Bundler subprocesses must not use stdout:\"inherit\" or stderr:\"inherit\"', and 'must implement early-exit detection (e.g., via Promise.race, monitoring bundler.exited, or AbortController)'. These are specific implementation prescriptions, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_trailing_partial_lines_preserved uses regex to check for specific patterns like `lines.pop()`, `lines.at(-1)`, `str = lines.pop`, or a helper function with 'stderr' in the signature. A correct alternative that restructures the loop entirely (e.g., using a different buffering approach without pop/at/-1 and without a named helper function containing 'stderr') could fail this test. Similarly, test_data_loss_pattern_fixed requires either specific array operations (slice/splice/join) or the comp"
+      "reason": "test_data_loss_pattern_fixed uses regex to check for specific patterns like `lines.slice(`, `lines.splice(`, `remaining =`, `.join('\\n'`, etc. An alternative correct fix that restructures the loop entirely (e.g., using a different buffering strategy without these specific method calls, or using a named variable other than 'remaining' or 'lines') could fail the test. Similarly, test_trailing_partial_lines_preserved checks for `lines.pop()`, `lines.at(-1)`, or a helper function matching `function."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests (test_data_loss_pattern_fixed, test_trailing_partial_lines_preserved, test_bundler_no_inherit_pipes, test_early_bundler_exit_detection) are purely text-based regex searches over file contents. None execute the code, run the test suite, or verify actual behavior. They only check `assert 'pattern' in open(path).read()` style assertions."
+      "reason": "All fail-to-pass tests (test_data_loss_pattern_fixed, test_trailing_partial_lines_preserved, test_bundler_no_inherit_pipes, test_early_bundler_exit_detection) are purely text/regex-based inspection of source code. They never execute the code, run the tests, or verify runtime behavior. Every assertion is of the form 'assert pattern in source code' or 'assert not pattern in source code'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass because the tests check that specific buggy patterns are removed (str='' + continue outer must be gone), new patterns are added (pop/slice/etc.), inherit is removed from spawn calls, and early exit detection exists. Simply leaving the file unchanged or writing a stub would fail these checks."
+      "reason": "A stub implementation (empty file or no changes) would fail test_not_stub (requires >=10 non-comment lines changed), test_data_loss_pattern_fixed (buggy pattern would still be present), and test_sourcemap_tests_preserved (tests must still exist with 50-reload assertions). The tests do require meaningful changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun (the solve.sh applies a patch there) and the agent could read the gold patch from /solution/solve.sh if it exists in the container. The Dockerfile doesn't remove /solution/. Additionally, since tests are purely text-matching, the agent could reverse-engineer the expected patterns from the test file if it accessed tests/test_outputs.py."
+      "reason": "The solution directory exists at /workspace/bun or could be accessed. The agent could read the solution patch from solve.sh if it exists in the container. Additionally, since tests are pure regex checks on source code, the agent could grep test_outputs.py to discover the exact regex patterns being checked and craft code to match them without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three symptoms described in instruction.md (data loss, pipe backpressure, early-exit detection) are tested by corresponding test functions, plus preservation of the three sourcemap tests and formatting/linting checks."
+      "reason": "All three symptoms described in instruction.md (data loss on duplicate errors, pipe backpressure, early-exit detection) have corresponding tests (test_data_loss_pattern_fixed/test_trailing_partial_lines_preserved, test_bundler_no_inherit_pipes, test_early_bundler_exit_detection). The constraints about 10+ line changes, formatting, and preserved tests are also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (test/cli/hot/hot.test.ts), the exact buggy pattern (`str = \"\"` inside inner loop before `continue outer`), and prescribes specific fix approaches (pop(), at(-1), Promise.race, AbortController). This goes beyond describing what's broken and into specifying exactly where and how to fix."
+      "reason": "The instruction names the exact file (test/cli/hot/hot.test.ts), describes the exact buggy code pattern ('sets str = \"\" inside the inner loop before doing continue outer'), and specifies exact fix approaches (pop(), at(-1), Promise.race, bundler.exited, AbortController). This goes well beyond describing the bug \u2014 it localizes the exact lines and prescribes specific fixes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

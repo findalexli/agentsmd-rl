@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert on a specific function name `none_to_none_str` which must be importable from `prime_rl.utils.config`. While instruction.md does mention this function name explicitly ('Implement a helper function named `none_to_none_str`'), the test `test_entrypoints_no_exclude_none` checks via AST that `exclude_none=True` is not present in `model_dump` calls \u2014 this specific check mechanism (AST walking for keyword arguments) is not described in the instruction. However, the instruction does say"
+      "reason": "The tests assert the function must be named exactly `none_to_none_str` and be importable from `prime_rl.utils.config`. While instruction.md does mention this function name and location, test_entrypoints_no_exclude_none uses AST inspection to check that `exclude_none=True` is removed from `model_dump` calls in all three entrypoints \u2014 this specific behavioral requirement (remove exclude_none=True from model_dump) is stated in instruction.md. However, test_non_none_passthrough (truncated) tests spe"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Implement a helper function named `none_to_none_str` in `src/prime_rl/utils/config.py`', specifies it should recursively convert None to 'None' strings, lists exact behavioral requirements (not mutate input, handle edge cases), and tells the agent to remove `exclude_none=True` from `model_dump()` calls and wrap with `none_to_none_str`. This is essentially a specification of the solution, not just a description of the bug."
+      "reason": "instruction.md explicitly states: 'Implement a helper function named `none_to_none_str` in `src/prime_rl/utils/config.py`', describes exactly what it should do (recursively convert None to 'None' strings), specifies it should not mutate input, and says entrypoints 'should not use `exclude_none=True`'. This is the complete solution specification, not just a bug description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests require the function to be named exactly `none_to_none_str` and importable from `prime_rl.utils.config` (e.g., `test_flat_none_conversion` does `from prime_rl.utils.config import none_to_none_str`). An alternative correct fix that used a different function name (e.g., `convert_none_values`) or placed the helper in a different module would fail. The tests also specifically check via AST that `exclude_none=True` is absent from model_dump calls, mandating one particular approach."
+      "reason": "Tests hard-code the function name `none_to_none_str` and require it to be importable from `prime_rl.utils.config`. An alternative correct fix could use a different function name (e.g., `convert_nones`, `prepare_for_toml`) or implement the conversion inline in each entrypoint, or use a decorator pattern \u2014 all would fix the bug but fail the tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute code via subprocess (`_run_py`), import and call `none_to_none_str`, perform TOML round-trip serialization/deserialization, and use AST parsing to verify code structure. They are not simple text-matching tests."
+      "reason": "Tests actually import and call `none_to_none_str`, perform TOML round-trip serialization/deserialization, and use AST parsing to verify code structure. They execute code via subprocess and check behavioral results, not just text patterns."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests like `test_flat_none_conversion` assert specific output values (e.g., `result == {'a': 'None', 'b': 42, ...}`), `test_edge_cases` checks non-mutation, and `test_entrypoints_no_exclude_none` verifies AST changes. A stub returning None or empty dict would not pass these assertions."
+      "reason": "test_flat_none_conversion asserts specific output like {\"a\": \"None\", \"b\": 42, ...} which cannot be satisfied by returning empty dict or None. test_edge_cases checks non-mutation. A stub returning {} or None would fail these assertions."
     },
     "anti_cheating_measures": {
       "outcome": "pass",
-      "reason": "The solution directory is referenced in solve.sh but the tests don't read from /solution/. The test values are inline assertions about function behavior, not fixture files the agent could grep for. The agent would need to actually implement the function correctly."
+      "reason": "The solution directory is not mounted in the container (Dockerfile only clones the repo at base commit). Tests execute actual code behavior. The agent cannot simply grep for expected values since the tests verify functional behavior through subprocess execution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: recursive None conversion, non-mutation, edge cases (empty dicts, all-None, lists, booleans), TOML round-trip, and removal of exclude_none=True from entrypoints."
+      "reason": "All behaviors described in instruction.md are tested: recursive None conversion, non-mutation, edge cases (empty dicts, all-None, no-None), preservation of non-None values, TOML round-trip, and removal of exclude_none=True from entrypoints."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names and docstrings, clearly separated into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with comments indicating their purpose."
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass vs Fail-to-pass/pr_diff), descriptive function names, docstrings, and comments explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves TOML serialization but doesn't produce a new structured data schema; it modifies existing serialization behavior."
+      "reason": "The task involves TOML config serialization but doesn't produce a structured data API/schema that needs documentation beyond what's described."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in instruction.md are all correct and consistent with the codebase."
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names exact files to modify (`src/prime_rl/utils/config.py`, `src/prime_rl/entrypoints/inference.py`, etc.), the exact function name to create (`none_to_none_str`), the exact parameter to remove (`exclude_none=True`), and even the exact method call to wrap (`model_dump()`). This goes well beyond describing the bug domain \u2014 it specifies the localization and implementation."
+      "reason": "instruction.md names exact function name `none_to_none_str`, exact file `src/prime_rl/utils/config.py`, exact lines to change (e.g., 'calls `config.model_dump(exclude_none=True, mode=\"json\")`'), and exact fix approach. This goes beyond identifying the bug domain into specifying the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config-edit task."
+      "reason": "This is a code-editing task, not a config-editing task."
     }
   },
   "tier_a_fails": [

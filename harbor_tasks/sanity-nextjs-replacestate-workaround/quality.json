@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (sessionId.ts, createAuthStore.ts), function names (clearSessionId, consumeSessionId, getSessionId, handleCallbackUrl), the export signature (export function clearSessionId()), the import pattern, and the GitHub issue URL (github.com/vercel/next.js/issues/91819) that the tests assert on."
+      "reason": "The instruction names the exact files (sessionId.ts, createAuthStore.ts), the functions (getSessionId, consumeSessionId, handleCallbackUrl), the concept of a clearSessionId function, and the URL https://github.com/vercel/next.js/issues/91819. All specifics tested (function names, file paths, import patterns, comment references) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Add a new exported function clearSessionId() that calls consumeSessionId()', 'Import the new clearSessionId function alongside getSessionId', 'call clearSessionId() immediately after getSessionId()', and 'Add a comment explaining this is a workaround for https://github.com/vercel/next.js/issues/91819'. This is a complete specification of WHAT to change, not just a description of what's broken."
+      "reason": "The instruction explicitly states the fix: add a way to 'explicitly clear/re-consume the session ID' (requirement 1), call it 'after getting the session ID' in handleCallbackUrl (requirement 2), and include a specific comment (requirement 3). Combined with naming the exact function signature pattern (clearSessionId calling consumeSessionId), this leaves virtually no reasoning for the agent about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details like 'export function clearSessionId(): void' signature, that the function body contains exactly one non-comment line 'consumeSessionId()', exact regex patterns for import statements, and the specific comment URL pattern. An alternative correct fix (e.g., naming it resetSessionId, inlining the logic, using a different comment format) would fail."
+      "reason": "Tests assert on the exact function name 'clearSessionId' (test_clear_session_id_exported), exact signature 'export function clearSessionId(): void', exact body containing only 'consumeSessionId()' (test_session_id_function_behavior asserts len(lines)==1), and exact import pattern. An alternative correct fix (e.g., calling consumeSessionId() directly in handleCallbackUrl, or using a differently-named function, or inlining the workaround) would fail these tests despite being equally valid."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_clear_session_id_exported, test_clear_session_id_imported_in_auth_store, test_clear_session_id_called_in_handle_callback, test_session_id_function_behavior) all exclusively use file reading and regex matching (open(path).read() with string/regex assertions). None import, call, or execute the code to verify behavior."
+      "reason": "The fail_to_pass tests (test_clear_session_id_exported, test_clear_session_id_imported_in_auth_store, test_clear_session_id_called_in_handle_callback, test_session_id_function_behavior) are ALL text-matching tests using regex on file contents with open(path).read(). None import or execute the code. The pass_to_pass tests do run builds/checks but those verify existing behavior, not the bug fix."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check file contents via string matching. An agent could simply add the exact text patterns the tests look for (e.g., 'export function clearSessionId(): void { consumeSessionId() }') without understanding the bug. The tests don't verify runtime behavior, so a syntactically matching but semantically broken stub would pass."
+      "reason": "All four fail_to_pass tests only check text presence in files. A stub that simply adds the text 'export function clearSessionId(): void { consumeSessionId() }' to sessionId.ts and adds the import/call to createAuthStore.ts passes all tests without any actual runtime behavior verification of the bug fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/sanity's solve.sh (solution/solve.sh), and the agent could read it. Additionally, since the instruction already specifies the exact fix and tests only check file text, the agent can trivially match the expected patterns without understanding the bug."
+      "reason": "The solution is in /workspace/sanity's solve.sh (accessible in container at solution/solve.sh or via the environment). The agent could read the solution file, or simply grep for the exact patterns the tests check (like 'clearSessionId', 'github.com/vercel/next.js/issues/91819') since they're literal strings in the test file which may be accessible."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: clearSessionId export in sessionId.ts, import in createAuthStore.ts, call after getSessionId in handleCallbackUrl, the workaround comment, and build/type/lint checks."
+      "reason": "All three requirements from instruction.md are tested: (1) clearSessionId export in sessionId.ts, (2) clearSessionId called after getSessionId in handleCallbackUrl, (3) comment referencing the Next.js issue."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_clear_session_id_exported, test_clear_session_id_imported_in_auth_store, etc.), have docstrings explaining what they verify, and are labeled with fail_to_pass/pass_to_pass markers."
+      "reason": "Tests are well-named, have descriptive docstrings, and are clearly separated into pass_to_pass and fail_to_pass categories with comments explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, commands, and variable names in instruction.md are consistent and correct."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact files, exact function names to create, exact function signatures, exact call patterns, and exact comment text. This goes far beyond identifying the buggy area \u2014 it's a complete implementation specification."
+      "reason": "The instruction names both exact files and exact functions to modify (getSessionId, consumeSessionId in sessionId.ts, handleCallbackUrl in createAuthStore.ts), and specifies the exact nature of the fix (add a clearing function, call it after getSessionId). This goes beyond describing what's broken and into prescribing the exact implementation location and approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are present in instruction.md: exact string literals like 'strncmp(h->key.data(), \"content-length\", 14)', 'strncmp(h->value.data(), contentLengthString.data()', 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH', 'h->value.length() == 0', 'contentLengthString.data() == nullptr', file paths like 'scripts/pr-comments.ts', 'CLAUDE.md', 'package.json', 'packages/bun-uws/src/HttpParser.h', and schema keys (when, user, kind, location, body, url, resolved, outdated). All strings che"
+      "reason": "All assert'd specifics \u2014 file paths (HttpParser.h, scripts/pr-comments.ts, CLAUDE.md, package.json), literal strings ('strncmp(h->key.data(), \"content-length\", 14)', 'contentLengthString.data() == nullptr', 'h->value.length() == 0', 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH', 'pr:comments', 'pr-comments.ts', 'bun run pr:comments', 'gh pr view'), variable names (contentLengthString), and schema keys (when, user, kind, location, body, url, resolved, outdated) \u2014 are all explicitly named in instruct"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: 'Use req->bf.mightHave(\"content-length\")' to short-circuit, 'Iterate headers using a pattern like for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )', 'Check for Content-Length header key using h->key.length() == 14 && !strncmp(h->key.data(), \"content-length\", 14)', 'Store the first Content-Length value in a std::string_view contentLengthString variable', 'Track first-occurrence detection using contentLengthString.data"
+      "reason": "instruction.md specifies the exact implementation: use 'req->bf.mightHave(\"content-length\")' to short-circuit, iterate with 'for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )', check key with 'h->key.length() == 14 && !strncmp(h->key.data(), \"content-length\", 14)', store in 'std::string_view contentLengthString', check 'h->value.length() == 0', use 'contentLengthString.data() == nullptr', compare with 'strncmp(h->value.data(), contentLengthString.data(), contentLengthString.leng"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'strncmp(h->key.data(), \"content-length\", 14)' (test_http_parser_validates_duplicate_content_length), 'strncmp(h->value.data(), contentLengthString.data()' (same test), 'h->value.length() == 0' and 'contentLengthString.data() == nullptr' (test_http_parser_rejects_empty_content_length). An alternative correct fix using different variable names, memcmp instead of strncmp, or a different iteration pattern would fail these string-mat"
+      "reason": "Tests assert exact implementation strings like 'strncmp(h->key.data(), \"content-length\", 14)', 'strncmp(h->value.data(), contentLengthString.data()', 'contentLengthString.data() == nullptr', and 'h->value.length() == 0'. An alternative correct fix using different variable names (e.g., 'clValue' instead of 'contentLengthString'), different comparison methods (e.g., std::string_view::operator==), or different iteration patterns would fail these text-matching tests despite being functionally correc"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core C++ fix tests (test_http_parser_validates_duplicate_content_length, test_http_parser_rejects_empty_content_length, test_http_parser_content_length_parsing_preserved) are purely text-matching: they read the source file and assert specific strings exist. They never compile the code or test actual HTTP request handling behavior. test_pr_comments_script_parses does run 'bun build' which is a minor execution check, but the security-critical tests are all textual."
+      "reason": "The core C++ tests (test_http_parser_validates_duplicate_content_length, test_http_parser_rejects_empty_content_length, test_http_parser_content_length_parsing_preserved) are purely text-matching: they read the source file and assert substrings exist. They never compile the code, run it, or send HTTP requests to verify behavior. The pr-comments.ts test only checks transpilation, not runtime behavior. The only behavioral tests are pass-to-pass repo tests (lint, ban-words, bun-types, smuggling tes"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "For the C++ parser tests, a stub that simply adds the exact asserted strings as comments in HttpParser.h (e.g., '// strncmp(h->key.data(), \"content-length\", 14)') would pass all assertions without implementing any actual fix. For pr-comments.ts, a nearly empty TypeScript file that transpiles successfully would pass test_pr_comments_script_parses."
+      "reason": "A stub pr-comments.ts that is simply an empty valid TypeScript file (e.g., 'export {}') would pass test_pr_comments_script_parses. For the C++ tests, since they're text-matching, an agent could just append a comment block containing all the required strings without implementing any logic, and the tests would pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists in the container at /workspace/bun and the solve.sh is a gold patch. The agent could read /solution/solve.sh (or the truncated version) to obtain exact strings. Additionally, since the tests are pure string matching against source files, the agent could simply insert the exact fixture strings as dead code or comments to pass all checks."
+      "reason": "The solution is in /workspace/bun's git history or could be obtained from the solve.sh. More critically, since tests are pure text-matching (assert 'X' in src), the agent could simply append a multi-line comment to HttpParser.h containing all required strings without understanding the bug. The instruction.md itself also provides the complete solution code."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that 'Identical duplicate values should still be accepted' but no test verifies this acceptance behavior. The instruction also specifies detailed JSON schema fields (when, user, kind, location, body, url, resolved, outdated) for the PR comments tool, but no test checks these schema fields in the output. The actual HTTP rejection behavior is never tested with real requests."
+      "reason": "The instruction requires the script to 'accept PR number, URL, or current branch as input', 'support --json flag', fetch three GitHub endpoints, and present chronological listings. None of this runtime behavior is tested \u2014 only transpilation is checked. The instruction also requires identical duplicates to be accepted, but no test verifies this acceptance behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff)', 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with clear section comments (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), each function has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the JSON output schema for pr-comments.ts with exact field names: when, user, kind, location, body, url, resolved, outdated, matching what the tests check for in CLAUDE.md documentation."
+      "outcome": "fail",
+      "reason": "The instruction documents the JSON schema (when, user, kind, location, body, url, resolved, outdated) but no test validates that the script actually produces output conforming to this schema. The only test for pr-comments.ts checks transpilation, not output format."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths, variable names, commands, and literal strings in instruction.md and tests are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation patterns including 'for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )', 'h->key.length() == 14 && !strncmp(h->key.data(), \"content-length\", 14)', 'contentLengthString.data() == nullptr', and the exact return expression 'HttpParserResult::error(HTTP_ERROR_400_BAD_REQUEST, HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH)'. This goes far beyond naming the file and describes the exact code to write."
+      "reason": "instruction.md specifies exact implementation details: the precise loop pattern ('for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )'), exact variable names ('contentLengthString'), exact comparison expressions, and exact error return value. This goes far beyond naming the file or describing the bug \u2014 it provides the complete code solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The package.json and CLAUDE.md edits in the gold patch are localized additions (one line in package.json scripts, one new section appended to CLAUDE.md) and don't contradict other files."
+      "reason": "The gold config diffs (package.json, CLAUDE.md) are localized additions \u2014 a single line in package.json and an appended section in CLAUDE.md \u2014 and don't contradict other files."
     }
   },
   "tier_a_fails": [
@@ -60,8 +60,9 @@
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
+    "structured_data_schema",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 8
 }

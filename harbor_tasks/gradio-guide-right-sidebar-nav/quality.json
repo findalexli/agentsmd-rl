@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file path, all variable names (current_header_id, guide_slug, y, slug), CSS classes (sticky, hidden, lg:block, float-right, etc.), data structure fields (text, href, level), color classes (text-orange-500, text-gray-600), calculation patterns ((slug.level - 2) * 0.75rem), and structural requirements that the tests check for. The tests verify these same elements."
+      "reason": "The instruction names the target file path, all variable names (current_header_id, guide_slug, y, slug), CSS classes (sticky, hidden, lg:block, float-right, etc.), type fields (text, href, level), color classes (text-orange-500, text-gray-600), calculation patterns ((slug.level - 2) * 0.75rem), and structural requirements that the tests check for. The tests assert on patterns like 'current_header_id', 'guide_slug', 'sticky', 'float-right', specific CSS classes, and indentation calculations \u2014 all"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like variable names (current_header_id), exact CSS classes (sticky, hidden, lg:block, float-right, overflow-y-auto, h-screen, top-8), exact indentation formula ((slug.level - 2) * 0.75rem), exact color classes (text-orange-500, font-medium), exact reactive statement syntax ($: with y and slug), exact bind directive (bind:scrollY={y}), and exact conditional rendering ({#if guide_slug.length > 0}). This is essentially the complete solution spe"
+      "reason": "The instruction provides extremely specific implementation details that essentially dictate the exact solution: exact variable name 'current_header_id', exact reactive statement pattern '$: if (y !== undefined ...)', exact CSS classes in exact order, exact indentation formula '(slug.level - 2) * 0.75rem', exact class changes 'remove mx-auto, add lg:min-w-0 and lg:pl-8'. This goes far beyond describing what's broken \u2014 it prescribes the precise fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_right_sidebar_with_slug_links checks for exact each block patterns over guide_slug with anchor elements; test_scroll_tracking_reactive checks for exact variable name 'current_header_id', exact reactive statement '$:' with 'offsetTop' and '100'; test_toc_indentation_by_level checks for exact pattern '(slug.level - 2)' and 'rem'; test_conditional_toc_rendering checks exact pattern 'guide_slug.length > 0'. Alternative correct implementation"
+      "reason": "Tests assert on gold-specific implementation details: test_scroll_tracking_reactive checks for exact variable name 'current_header_id' and exact reactive pattern '$: if'; test_right_sidebar_with_slug_links checks for exact CSS classes 'sticky' and anchor elements in specific each blocks; test_indentation_based_on_heading_level checks for exact pattern '(slug.level - 2)'. An alternative correct implementation using different variable names (e.g., 'activeSection'), different scroll tracking approa"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The tests primarily use regex pattern matching on the source file text (e.g., searching for 'current_header_id' string, checking for CSS class names in text, pattern matching '{#each}' blocks). While they use Node.js subprocess calls, these are just parsing the file text, not executing/rendering the Svelte component. Tests like test_scroll_tracking_reactive, test_toc_indentation_by_level, and test_conditional_toc_rendering are all text-matching assertions."
+      "reason": "The tests primarily use regex pattern matching on the file content (e.g., re.findall, re.search) and Node.js scripts that parse the file text rather than executing the component. Tests like test_scroll_tracking_reactive just check for string patterns like 'current_header_id' and '$:' in the script text. No test actually renders the Svelte component or checks runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific new code that doesn't exist in the base commit (e.g., current_header_id variable, guide_slug each blocks with anchors in a sticky sidebar, level-based indentation, conditional rendering). A stub or no-op would not add these patterns to the file."
+      "reason": "The fail-to-pass tests check for specific structural additions (right sidebar with slug links, scroll tracking reactive statements, indentation calculations, conditional rendering) that don't exist in the base commit. A stub or no-op would not add these patterns to the file, so these tests would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /repo as solve.sh with the complete patch. The agent could read solution/solve.sh (if accessible) or the gold patch content. Additionally, since tests are purely text-matching on the target file, the agent could grep test files to discover exact patterns being checked and write code matching those patterns without understanding the problem."
+      "reason": "The solution exists at /repo as solve.sh content is available via the gold patch. An agent could read solution/solve.sh if accessible in the container. Additionally, since tests are purely text-matching on file content, the agent could grep test files to discover exact patterns needed (e.g., 'current_header_id', specific CSS class combinations) and inject them without understanding the problem."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The tests cover the main requirements: right sidebar with slug links, scroll tracking reactive behavior, TOC indentation by level, main content layout changes (mx-auto removal), conditional TOC rendering, and preservation of existing structure (pass-to-pass tests)."
+      "outcome": "fail",
+      "reason": "Instruction requires 'Previous/next guide navigation links remain functional' (requirement 6) and 'Existing left sidebar navigation is preserved' (requirement 5), but while pass_to_pass tests check basic structure, no test specifically verifies that existing navigation functionality is preserved after the change."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections, with descriptive function names like test_right_sidebar_with_slug_links and test_scroll_tracking_reactive."
+      "reason": "Tests are well-organized with clear categories (pass_to_pass gate tests vs fail_to_pass behavioral tests), descriptive function names (test_right_sidebar_with_slug_links, test_scroll_tracking_reactive, etc.), and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the guide_slug data structure schema with its three fields (text: string, href: string, level: number) and the guide_names type structure."
+      "reason": "The instruction documents the guide_slug type schema with three fields (text: string, href: string, level: number) which matches what the tests verify."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file path (js/_website/src/routes/[[version]]/guides/[guide]/+page.svelte), exact current CSS classes to modify ('lg:w-8/12 mx-auto'), exact replacements ('Remove the mx-auto centering', 'Add lg:min-w-0', 'Add lg:pl-8'), and exact variable names and implementation patterns. This goes well beyond identifying the buggy area."
+      "reason": "The instruction explicitly names the exact file to modify ('js/_website/src/routes/[[version]]/guides/[guide]/+page.svelte'), specifies exact class changes ('Remove the mx-auto centering', 'Add lg:min-w-0', 'Add lg:pl-8'), and provides exact implementation patterns like 'Declare a variable named current_header_id of type string'. This is excessive localization that eliminates the need for any debugging or reasoning."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -58,8 +58,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 6
 }

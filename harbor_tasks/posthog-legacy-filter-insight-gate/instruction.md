@@ -2,47 +2,49 @@
 
 ## Problem
 
-PostHog's Insights API currently blocks access to legacy insight *endpoints* when the feature flag `"legacy-insight-endpoints-disabled"` is enabled. However, there is no equivalent gate for legacy filter *payloads* sent to the modern endpoints.
+PostHog's Insights API currently blocks access to legacy insight *endpoints* when the feature flag `"legacy-insight-endpoints-disabled"` is enabled. However, there is no equivalent gate for legacy filter *payloads* sent to modern endpoints.
 
-Users can still create or update insights using the old `filters`-based format (without a `query` key) through the standard POST/PATCH endpoints at `/api/projects/{team_id}/insights/`. This means organizations being migrated away from legacy filters have no way to prevent new legacy-filter insights from being created via the API.
+Users can still create or update insights using the old `filters`-based format (without a `query` key) through POST/PATCH requests to `/api/projects/{team_id}/insights/`. Organizations being migrated away from legacy filters need a way to prevent new legacy-filter insights from being created via these API endpoints.
 
-## Expected Behavior
+When a user attempts to create or update an insight with legacy filters, and the feature flag `"legacy-insight-filters-disabled"` is enabled for their organization, the API should reject the request with HTTP 403 Forbidden and the exact error message:
 
-When the feature flag `"legacy-insight-filters-disabled"` is enabled for a user's organization/project:
-- POST/PATCH requests to `/api/projects/{team_id}/insights/` that contain legacy `filters` (with no `query` or an empty `query`) must be rejected with HTTP 403 Forbidden
-- The error message must be exactly: `"Creating or updating insights with legacy filters is not available for this user."`
-- Requests that use the modern `query`-based format must continue to work normally (HTTP 201/200), unaffected by the flag
+> "Creating or updating insights with legacy filters is not available for this user."
 
-## Required Implementation in `posthog/api/insight.py`
+## Requirements
 
-### 1. Feature Flag Constant
+### Feature Flag Integration
 
-Define a module-level constant named `LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG` with the exact string value `"legacy-insight-filters-disabled"`.
+Use the feature flag string `"legacy-insight-filters-disabled"` to control access. When checking if this flag is enabled:
+- Pass the user's `distinct_id` as a string
+- Include `groups` with `"organization"` and `"project"` keys mapped to the team's organization ID and team ID (both as strings)
+- Include `group_properties` with nested structures containing the organization and project IDs
+- Disable feature flag event tracking by setting `send_feature_flag_events=False`
 
-### 2. Blocking Function
+If the user has no `distinct_id` or it is falsy (None, empty string), the flag check should return `False` (allowing the request).
 
-Create a function named `is_legacy_insight_filters_blocked(user: Any, team: Team) -> bool` that:
-- Returns `False` immediately if the user has no `distinct_id` attribute or if `distinct_id` is falsy (None, empty string)
-- Calls `posthoganalytics.feature_enabled()` with these exact parameters when the user has a valid `distinct_id`:
-  - First argument: the flag string `"legacy-insight-filters-disabled"`
-  - Second argument: user's `distinct_id` converted to string via `str(distinct_id)`
-  - `groups` keyword argument: `{"organization": str(team.organization_id), "project": str(team.id)}`
-  - `group_properties` keyword argument: `{"organization": {"id": str(team.organization_id)}, "project": {"id": str(team.id)}}`
-  - `send_feature_flag_events=False`
-- Returns the boolean result returned by `feature_enabled()`
-- Uses Python type hints for both parameters and return type
+### Legacy Filter Detection
 
-### 3. Serializer Validation
+A request should be treated as using "legacy filters" when ALL of the following are true:
+1. The request contains a `"filters"` key with a non-None value
+2. The request either lacks a `"query"` key entirely, OR the `"query"` value is `None`, OR the `"query"` value is an empty dict `{}`
 
-In the `InsightSerializer` class, implement a `validate` method that:
-- Accepts `attrs: dict[str, Any]` and returns `dict[str, Any]`
-- Detects legacy filter payloads by checking:
-  - `"filters"` key exists in `attrs` AND has a non-None value
-  - `"query"` key is either absent from `attrs`, or has value `None`, or has value `{}`
-- When both conditions indicate legacy filters are being used AND `is_legacy_insight_filters_blocked(self.context["request"].user, self.context["get_team"]())` returns `True`:
-  - Raise `PermissionDenied` with the exact message: `"Creating or updating insights with legacy filters is not available for this user."`
-- For all non-blocked requests, delegate to `super().validate(attrs)` and return its result
+Modern query-based requests (those with a non-empty `"query"` value) must continue to work normally, regardless of the feature flag state.
 
-## Reference
+### Implementation Location
 
-- `posthog/api/insight.py` — Contains `InsightSerializer` class and the existing `is_legacy_insight_endpoint_blocked` pattern to mirror
+The insight API already contains similar feature flag gating logic for endpoints. Look for existing patterns involving `is_legacy_insight_endpoint_blocked` and `posthoganalytics.feature_enabled` to understand how to integrate the new filter-based gating. The validation for insight creation and update happens in the serializer layer.
+
+### Code Quality Requirements
+
+- All new functions must have Python type hints (mypy-strict style) for parameters and return types
+- Code must pass ruff lint and format checks
+- The validation must properly delegate to parent validation logic for non-blocked requests
+
+## Expected Behavior Summary
+
+| Scenario | Feature Flag State | Expected Result |
+|----------|-------------------|-----------------|
+| Legacy filters payload (filters present, query empty/absent) | Enabled | HTTP 403 with message "Creating or updating insights with legacy filters is not available for this user." |
+| Legacy filters payload | Disabled | Normal processing (HTTP 201/200) |
+| Query-based payload | Any | Normal processing (HTTP 201/200) |
+| No distinct_id | Any | Normal processing (user bypasses check) |

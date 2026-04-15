@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (slime/ray/rollout.py), the function (_start_router), the relevant flags (has_pd_disaggregation, use_slime_router), and describes both bugs. The tests check for attributes like slime_router_pd_disaggregation and disable_circuit_breaker, which are implied by the bug descriptions (passing PD disaggregation info to the slime router, disabling circuit breaker). While the exact attribute names aren't stated verbatim, the behavior is clearly described and a developer wou"
+      "reason": "The instruction names the file (slime/ray/rollout.py), function (_start_router), the has_pd_disaggregation flag, the use_slime_router branch, the circuit breaker behavior, and PD disaggregation context. The tests check for slime_router_pd_disaggregation and disable_circuit_breaker attributes, which are discoverable from the described bugs (the router needs to be told PD is active, and circuit breaker should be disabled). The attribute names are implementation details but are logically derivable "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (assertion crashes, circuit breaker mismarks workers) and what the correct behavior should be, but does not specify exact code changes like 'remove line X' or 'add attribute Y'. A developer must reason about the implementation."
+      "reason": "The instruction describes what is broken (assertion crashes, circuit breaker mismarks workers) but does not specify exact code changes like 'remove line X' or 'add attribute Y=Z'. A developer must reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific attribute names: test_slime_router_pd_flag_set checks for exactly 'slime_router_pd_disaggregation' on router_args, and test_circuit_breaker_disabled_with_pd checks for exactly 'disable_circuit_breaker'. An alternative correct fix might use different attribute names (e.g., 'pd_disagg_enabled', 'circuit_breaker_off', or 'enable_pd_disaggregation') or pass the flag differently (e.g., as a constructor argument). These tests would fail for such alternatives."
+      "reason": "Tests assert on gold-specific attribute names: test_slime_router_pd_flag_set checks for 'slime_router_pd_disaggregation' and test_circuit_breaker_disabled_with_pd checks for 'disable_circuit_breaker'. An alternative correct fix might use different attribute names (e.g., 'pd_mode=True' or 'circuit_breaker_enabled=False') and would fail these tests. The instruction.md does not mandate these specific attribute names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute the _start_router function via subprocess with mocked dependencies, inspecting returned values and attributes on captured arguments. They are behavioral, not text-matching."
+      "reason": "Tests use subprocess.run to execute the extracted _start_router function with mocks, checking return values and attribute states on captured arguments. They execute the code behaviorally, not just grep for text patterns."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests exercise actual behavior: test_slime_router_pd_disagg_no_crash fails on the unpatched code due to the assert statement; test_slime_router_pd_flag_set checks a specific attribute is set; test_circuit_breaker_disabled_with_pd checks disable_circuit_breaker is True. A stub/no-op would not set these attributes."
+      "reason": "The fail-to-pass tests would fail on the unpatched code: test_slime_router_pd_disagg_no_crash fails because the assertion raises AssertionError; test_slime_router_pd_flag_set fails because slime_router_pd_disaggregation is never set; test_circuit_breaker_disabled_with_pd fails because disable_circuit_breaker is never set. A stub/no-op wouldn't pass these."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/slime's sibling or the container may contain solve.sh. More importantly, the test file itself contains the full _PREAMBLE with exact attribute names (slime_router_pd_disaggregation, disable_circuit_breaker) that the agent could discover by reading /tests/test_outputs.py if it exists in the container, directly revealing the expected fix."
+      "reason": "The solution file exists at /workspace/slime's container context and solve.sh is in solution/solve.sh. An agent could read /solution/solve.sh (if accessible) or the gold patch to extract exact attribute names (slime_router_pd_disaggregation, disable_circuit_breaker) and the exact diff. The Dockerfile doesn't explicitly prevent access to the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Both bugs are tested: Bug 1 (slime router + PD disagg crash) is covered by test_slime_router_pd_disagg_no_crash and test_slime_router_pd_flag_set. Bug 2 (circuit breaker) is covered by test_circuit_breaker_disabled_with_pd. Regression tests also present."
+      "reason": "Both bugs described in instruction.md are tested: Bug 1 (slime router + PD crash) is tested by test_slime_router_pd_disagg_no_crash and test_slime_router_pd_flag_set; Bug 2 (circuit breaker) is tested by test_circuit_breaker_disabled_with_pd. Regression tests also cover non-PD cases."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments (pass_to_pass static, fail_to_pass pr_diff, pass_to_pass pr_diff, pass_to_pass repo_tests) and have descriptive docstrings."
+      "reason": "Tests are grouped with clear section comments (pass_to_pass static, fail_to_pass pr_diff, pass_to_pass pr_diff, pass_to_pass repo_tests) and each test has a descriptive docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves fixing Python code behavior, not producing structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md. (Note: 'AssertionError' in the instruction is actually how the original code's assertion manifests, not a typo in the instruction itself \u2014 the instruction says 'AssertionError' which is technically a typo for 'AssertionError' vs 'AssertionError'... actually it says 'AssertionError' which is a typo for 'AssertionError'. Wait \u2014 re-reading: 'crashes with an AssertionError' \u2014 this is a typo for 'AssertionError' vs 'As"
+      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled. The instruction mentions 'AssertionError' which mirrors a Python AssertionError (though technically a typo of 'Assertion' \u2014 but this matches what Python actually raises)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction says 'around line 890-940' and specifically names both branches ('if args.use_slime_router:' and 'else:'), giving precise localization. While the file is already identified by the task domain, the line range and branch-level specificity go beyond what's needed and reduce the localization challenge."
+      "outcome": "pass",
+      "reason": "The instruction mentions the file (slime/ray/rollout.py), function (_start_router), and approximate line range (890-940), but this is appropriate for the task domain \u2014 the file and function are natural context. It doesn't specify exact line numbers to change or exact attribute names to add."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
@@ -55,9 +55,7 @@
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

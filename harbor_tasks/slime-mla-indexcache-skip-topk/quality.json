@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check very specific structural requirements not fully discoverable from instruction.md alone. For example: test_skip_topk_init_unconditional checks that self.skip_topk is initialized at indent <= 8 (method-body level), test_return_includes_topk_indices checks for 'return output,' with 'topk' or 'return output, None' patterns, test_decoder_layer_threads_topk checks for specific unpacking patterns with 'hidden_states', 'residual', and 'topk' all on the same line. The instruction mentions the"
+      "reason": "Tests check very specific implementation details not mentioned in instruction.md. For example: test_return_includes_topk_indices checks for 'return output, None' pattern; test_decoder_layer_threads_topk checks that lines start with 'hidden_states' or 'topk' and contain all three variables; test_skip_topk_init_unconditional uses a subprocess that checks indent level <= 8 for method-body level initialization. The instruction mentions these behaviors at a high level but doesn't specify the exact re"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (skip_topk/next_skip_topk only initialized inside use_nsa branch) and what the expected behavior is (default to False, return tuples), but doesn't specify exact code changes like 'move line X to Y' or 'add this specific code'."
+      "reason": "The instruction describes the bug (attributes only initialized inside `if self.use_nsa:` branch) and the expected behavior (defaults to False, unconditional availability), but does not specify the exact code changes, line numbers, or implementation details of the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The UNCONDITIONAL_INIT_CHECK script enforces that self.skip_topk and self.next_skip_topk must be initialized at indent <= 8 in the patch. An alternative correct fix that initializes these at a different indent level (e.g., indent 12 with a guard like 'if not self.use_nsa:') would fail the test even though it correctly fixes the AttributeError. The test enforces a specific implementation approach (method-body level init) rather than just correctness."
+      "reason": "The UNCONDITIONAL_INIT_CHECK subprocess test requires indent <= 8 for the attribute initialization to pass. This enforces a specific structural approach (placing init at method-body level before the `if self.use_nsa:` block). An alternative valid fix like initializing with `self.skip_topk = False` in an `else` branch at indent 16, or using `getattr(self, 'skip_topk', False)` in the forward path, would fail despite being correct fixes."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core fail_to_pass tests (test_skip_topk_init_unconditional, test_next_skip_topk_init_unconditional) run subprocess-based scope-aware analysis that parses patch structure and traces control flow scope/indentation, not just simple string matching. The pass_to_pass tests do use text matching but are supplementary regression checks."
+      "reason": "The fail-to-pass tests (test_skip_topk_init_unconditional, test_next_skip_topk_init_unconditional) use subprocess execution with scope-aware analysis that parses patch hunks and traces control flow scope, not simple string matching. The pass-to-pass tests do use text inspection but are supplementary regression checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests verify that self.skip_topk and self.next_skip_topk are initialized at method-body level (indent <= 8), not nested inside conditionals. A stub/no-op change would not move these initializations to a different scope level, so the base commit fails these tests as designed."
+      "reason": "The fail-to-pass tests check that self.skip_topk and self.next_skip_topk are initialized at indent <= 8 (method-body level). In the base commit, they are at indent 16 inside conditional blocks, so these tests would fail without the actual fix. A stub/no-op change would not pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/slime (though solve.sh is in solution/ which may not be in the container). However, the agent could potentially read the test file at tests/test_outputs.py to discover the exact UNCONDITIONAL_INIT_CHECK script and reverse-engineer exactly what indent level and patterns are needed. The Dockerfile doesn't prevent access to test files."
+      "reason": "The solution file exists at /workspace/slime and the Dockerfile shows the repo is cloned there. The agent could potentially read the solve.sh if it's mounted, or inspect the test file at tests/test_outputs.py which contains the exact UNCONDITIONAL_INIT_CHECK script with all the validation logic. The UNCONDITIONAL_INIT_CHECK string is embedded directly in the test file, giving away exactly what the tests check (indent <= 8)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: unconditional init of skip_topk/next_skip_topk, forward_absorb_prepare returning 2-tuple, NSA branch config attrs preserved, DecoderLayer 3-tuple return, and Model unpacking topk_indices."
+      "reason": "All behaviors mentioned in instruction.md are tested: unconditional init of skip_topk/next_skip_topk (f2p tests), NSA config attributes preserved, forward skip logic with prev_topk_indices, return tuple format, and decoder layer threading of topk_indices."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gate, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves editing a patch file, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task involves editing a patch file, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file (docker/patch/latest/sglang.patch) and the class (DeepseekV2AttentionMLA) which is appropriate for the task domain. It describes the bug location (inside 'if self.use_nsa:' branch) but this is necessary context for understanding the bug, not a specific fix instruction."
+      "reason": "The instruction identifies the file (sglang.patch / deepseek_v2.py) and the general location (attributes in __init__ inside `if self.use_nsa:` branch), but this is necessary context for the bug description, not excessive localization. It doesn't specify exact line numbers or the precise fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

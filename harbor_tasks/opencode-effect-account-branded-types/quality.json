@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: RefreshToken/DeviceCode/UserCode branded types in schema.ts, Schema.Class (\u22655) replacing Schema.Struct in service.ts, Schema.Duration in schema.ts, Layer.effect/Effect.gen/AccountRepo.of/namespace in repo.ts, AGENTS.md with 'Effect guide' section covering schema/service/error patterns with Schema.brand and 'branded', and the file paths packages/opencode/src/account/{schema,service,repo,account.sql}.ts. The snake_case drizzle fields (active_account_"
+      "reason": "The instruction names all key specifics: RefreshToken/DeviceCode/UserCode branded types with make constructors, Schema.Class replacing Schema.Struct (5+ usages), Schema.Duration for time fields, Layer.effect/Effect.gen/AccountRepo.of pattern, export namespace AccountRepo, AGENTS.md with 'Effect guide' section covering Schema.brand/branded/service/error patterns, and file paths in packages/opencode/src/account/. The snake_case Drizzle fields (active_account_id etc.) are implicit from the existing"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what patterns to adopt (Schema.Class, Schema.brand with withStatics, Layer.effect with Effect.gen, Schema.Duration) but doesn't give exact code, line numbers, or copy-paste solutions. A developer must still reason about how to implement each change."
+      "reason": "The instruction describes what patterns to adopt (branded types, Schema.Class, Layer.effect, etc.) but doesn't specify exact line changes, exact code snippets, or specific line numbers. A developer must still reason about how to implement these changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details that constrain to essentially one solution: test_schema_class_in_service counts exact occurrences of 'extends Schema.Class' (\u22655), test_repo_uses_layer_effect checks for exact strings 'Layer.effect', 'AccountRepo.of', 'Effect.gen', 'export namespace AccountRepo'. An alternative correct fix using e.g. 'Schema.Class' with different syntax patterns, or exporting the namespace differently (e.g. 'export declare namespace AccountRepo'), could fail these"
+      "reason": "Tests assert very specific implementation details: test_schema_class_in_service checks for exactly 'extends Schema.Class' string count >= 5 and absence of 'Schema.Struct'; test_repo_uses_layer_effect checks for exact strings 'Layer.effect', 'AccountRepo.of', 'Effect.gen', 'export namespace AccountRepo'. Alternative correct implementations (e.g., using 'Schema.Class<' without 'extends', or naming the namespace differently, or using AccountRepo.make instead of AccountRepo.of) would fail these text"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text-matching: test_schema_class_in_service counts string occurrences of 'extends Schema.Class' and checks absence of 'Schema.Struct'; test_login_uses_duration checks for 'Schema.Duration' string; test_repo_uses_layer_effect checks for 'Layer.effect', 'AccountRepo.of', 'Effect.gen', 'export namespace AccountRepo' strings; test_agents_md tests check string presence. Only test_branded_types_exported actually executes code. The majority of f2p tests are 'assert X in"
+      "reason": "Most f2p tests are pure text matching: test_schema_class_in_service counts 'extends Schema.Class' strings, test_login_uses_duration checks for 'Schema.Duration' string, test_repo_uses_layer_effect checks for string literals 'Layer.effect'/'AccountRepo.of'/'Effect.gen'/'export namespace AccountRepo', test_agents_md_has_effect_guide and test_agents_md_branded_schema_rule are pure text searches. Only test_branded_types_exported actually executes code. The majority of f2p tests are text-based assert"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_branded_types_exported actually constructs branded types and would fail without real implementation. The text-matching tests (Schema.Class, Layer.effect, etc.) require actual code changes to the files \u2014 a stub/no-op wouldn't pass since the base code doesn't contain these patterns. While they're text-based, they can't be trivially satisfied."
+      "reason": "test_branded_types_exported actually runs code that imports and calls RefreshToken.make/DeviceCode.make/UserCode.make - a stub can't satisfy this. The text-matching tests require specific patterns that don't exist in the base code (e.g., 'extends Schema.Class' count >= 5, 'Schema.Duration', 'Layer.effect'), so the base code would fail them. A trivial stub won't pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is stored at /workspace/opencode as part of the git repo context, and solve.sh is accessible. An agent could read the solution directory or the gold patch to extract exact changes. Additionally, since most tests are string-matching, the agent could grep test files (if accessible) to find exact expected strings and insert them mechanically."
+      "reason": "The solution exists at /workspace/opencode as a git repo and solve.sh is applied via git apply. The agent could potentially read the solution patch from the hidden files. Additionally, since most tests are text-matching (checking for string presence in files), the agent could trivially insert the expected strings without understanding the actual refactoring needed."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction mentions extracting 'fetchOrgs' and 'fetchUser' helpers to deduplicate HTTP logic, but no test verifies this. Also, the instruction mentions 'withStatics to provide a make constructor' pattern but only one test (test_branded_types_exported) verifies the .make() constructor works."
+      "reason": "Instruction mentions 'Shared logic for fetching org and user data should be extracted into fetchOrgs and fetchUser helpers' but no test verifies the existence or behavior of these helpers. Also, the instruction says 'exports namespace AccountRepo with a Service type' but tests only check for 'export namespace AccountRepo' string, not that it contains a Service type."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, config/instruction checks, pass-to-pass repo_tests, pass-to-pass agent_config), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass, config/instruction, pass-to-pass repo_tests, pass-to-pass agent_config), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about refactoring TypeScript code patterns, not producing structured data output like JSON/CSV/API responses."
+      "reason": "This task is about code refactoring and documentation, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and schema references in the instruction are all correct and consistent with the codebase structure."
+      "reason": "File paths, variable names, and commands in the instruction are consistent and correctly spelled. All referenced files (schema.ts, service.ts, repo.ts, account.sql.ts, index.ts, AGENTS.md) are accurate."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files (schema.ts, service.ts, repo.ts, etc.) which is appropriate for the task domain. It describes patterns to adopt without specifying exact line numbers or giving copy-paste code. The file-level granularity is appropriate for a refactoring task."
+      "reason": "The instruction describes patterns and files at an appropriate level of abstraction. It names the relevant files (which is natural for the task domain) but doesn't specify exact line numbers or exact code to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md edit is an additive append of an 'Effect guide' section, which is localized and doesn't contradict other files. The gold diff shows it appends content after existing text."
+      "reason": "The AGENTS.md edit in the gold patch is an append of ~35 lines documenting Effect guide patterns, which is localized and doesn't contradict other files."
     }
   },
   "tier_a_fails": [

@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_import_core_modules checks for `_external_run_ids` attribute as a dict on LangChainTracer, but instruction.md never mentions this attribute name. Tests also reference specific imports like `_configure` from callbacks.manager (test_repo_manager_imports), `_TracerCore` from tracers.core, and specific test file paths like `tests/unit_tests/runnables/test_tracing_interops.py` that are not mentioned in instruction.m"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_import_core_modules checks for `_external_run_ids` attribute (a dict) on LangChainTracer, but instruction.md never mentions this attribute name or its type. The test also checks `hasattr(tracer, '_external_run_ids')` and `isinstance(tracer._external_run_ids, dict)`, which are undiscoverable from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (external RunTree not removed from run_map in _end_trace) and the affected files, but does not prescribe the exact fix mechanism (e.g., refcounting with _external_run_ids). The developer must reason about what data structure and cleanup logic to implement."
+      "reason": "instruction.md describes the bug (external RunTree not removed from run_map in _end_trace) and expected behavior, but does not prescribe a specific fix like 'add a refcount dict' or 'change line X to Y'. A developer must still reason about what mechanism to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_import_core_modules explicitly asserts `hasattr(tracer, '_external_run_ids')` and `isinstance(tracer._external_run_ids, dict)`, which forces the agent to use the exact same attribute name and type as the gold solution. An alternative correct fix using a different tracking mechanism (e.g., a set, a counter, or a different attribute name) would fail this test."
+      "reason": "test_import_core_modules asserts `hasattr(tracer, '_external_run_ids')` and `isinstance(tracer._external_run_ids, dict)`, requiring the exact attribute name `_external_run_ids` as a dict. An alternative correct fix using a different attribute name (e.g., `_injected_run_refcounts`) or a different data structure (e.g., a set with separate counter) would fail this test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute actual Python code via subprocess (uv run python -c ...), invoke real traceable functions and RunnableLambda chains, and check behavioral outcomes (run_map emptiness, no accumulation). They also run pytest suites and ruff checks. No test relies solely on text matching in source files."
+      "reason": "Tests execute actual Python code via subprocess (uv run python -c ...), run pytest suites, and check behavioral outcomes like run_map emptiness and RunTree accumulation counts. They are not simple text-matching assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_external_run_id_cleanup_single_child, test_external_run_id_cleanup_sibling_children, test_runtree_no_accumulation) check that tracer.run_map is empty after invocations complete. Without the actual fix, external RunTrees remain in run_map, causing these tests to fail. A stub/no-op implementation won't pass."
+      "reason": "The fail-to-pass tests (test_external_run_id_cleanup_single_child, test_external_run_id_cleanup_sibling_children, test_runtree_no_accumulation) check that tracer.run_map is empty after invocations. Without the actual fix, the base commit leaves entries in run_map, so a stub/no-op would fail these tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /solution/fix.patch and /solution/solve.sh in the container. The agent could simply read these files (e.g., `cat /solution/fix.patch`) to obtain the exact gold patch and apply it without understanding the bug."
+      "reason": "The solution patch exists at /solution/fix.patch in the container, and solve.sh applies it with `git apply /solution/fix.patch`. An agent could simply read this file and apply it directly, bypassing any reasoning about the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction.md specifies: (1) external parent RunTree removed from run_map - tested by test_external_run_id_cleanup_single_child, (2) multiple sibling children don't cause premature cleanup - tested by test_external_run_id_cleanup_sibling_children, (3) memory flat across invocations - tested by test_runtree_no_accumulation, (4) both sync and async paths - partially covered. All core behaviors are tested."
+      "reason": "instruction.md specifies: cleanup of external RunTree from run_map, handling multiple sibling children, flat memory across invocations, both sync/async paths, and mocked clients. Tests cover cleanup (single child, siblings), accumulation, existing unit tests, and imports. Async is partially covered through existing unit test suites."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_external_run_id_cleanup_single_child, test_runtree_no_accumulation, etc.), each has a docstring explaining its purpose, and they are logically grouped from specific behavioral tests to broader pass-to-pass regression tests."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., test_external_run_id_cleanup_single_child, test_runtree_no_accumulation) and grouped logically from core behavioral tests to pass-to-pass regression tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a memory leak in Python tracer code; it does not produce structured data outputs like JSON/CSV/API/DB schemas."
+      "reason": "This task is about fixing a memory leak in tracer code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact files and methods involved: 'callbacks/manager.py - Where external RunTrees are injected into the handler's run_map', 'tracers/base.py - Base tracer with _end_trace implementation', 'tracers/core.py - _start_trace and tracer state management'. This level of localization essentially tells the agent exactly where to look and what methods to modify, reducing the debugging/localization challenge."
+      "reason": "instruction.md explicitly names the exact files and methods involved: 'manager.py - Where external RunTrees are injected', 'core.py - _start_trace', 'base.py - _end_trace implementation', 'langchain.py - copies state when creating new tracers'. This significantly narrows the localization task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

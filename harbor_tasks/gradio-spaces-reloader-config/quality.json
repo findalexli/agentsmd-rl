@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (gradio/utils.py), the class (SpacesReloader), the parent class (ServerReloader), the methods (swap_blocks, postrun, get_config_file), and the attribute (demo.config). All test assertions rely on these named entities, which are discoverable from the instruction."
+      "reason": "instruction.md names the file (gradio/utils.py), class (SpacesReloader), parent class (ServerReloader), methods (swap_blocks, postrun, get_config_file), and the attribute (demo.config). All test assertions reference these same entities, and the behavior (config regeneration after swap_blocks, delegation to super) is described in the Required Behavior section."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The 'Required Behavior' section explicitly states the exact fix: 'demo.config must be assigned the value returned by demo.get_config_file()' and 'The swap_blocks method must still delegate to the parent class implementation (super().swap_blocks(demo))'. This is the complete solution, not just a description of what's broken."
+      "reason": "The instruction explicitly states the exact fix: 'demo.config must be assigned the value returned by demo.get_config_file()' and 'The swap_blocks method must still delegate to the parent class implementation (super().swap_blocks(demo))'. This tells the agent exactly what code to write, leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_not_stub asserts 'len(body_stmts) >= 2' in the swap_blocks method body via AST inspection, and test_swap_blocks_calls_parent checks for _parent_swap_called on the reloader instance (set by the mock parent). An alternative correct fix that places the config reassignment in postrun instead of swap_blocks (which is equally valid) would fail these tests because swap_blocks wouldn't have the required 2+ statements."
+      "reason": "test_not_stub asserts 'len(body_stmts) >= 2' in swap_blocks, enforcing that the fix is specifically a swap_blocks override with at least 2 statements. test_swap_blocks_calls_parent checks _parent_swap_called via the mock parent, requiring super().swap_blocks(demo) specifically. An alternative correct fix that puts the config reassignment in postrun directly (without overriding swap_blocks) would fail these tests despite being behaviorally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST extraction + exec to instantiate SpacesReloader, call swap_blocks and postrun with MagicMock demos, and assert on runtime behavior (demo.config values, return values, method calls). They are not purely text-matching."
+      "reason": "Tests extract the SpacesReloader class via AST, instantiate it, call swap_blocks and postrun with MagicMock demos, and assert on behavioral outcomes (demo.config values, return values, method calls). They are not purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_swap_blocks_regenerates_config checks that demo.config equals the value from get_config_file (not the initial {'stale': True}), test_postrun_updates_config_on_swap checks the config is refreshed after postrun, and test_swap_blocks_calls_parent checks parent delegation. A stub/pass/return-None implementation would fail these since demo.config would remain stale."
+      "reason": "The f2p tests (test_swap_blocks_regenerates_config, test_config_varies_per_demo, test_postrun_updates_config_on_swap) set demo.config to a stale value and assert it equals get_config_file()'s return value after calling swap_blocks/postrun. A stub swap_blocks that does nothing (pass/return None) would leave demo.config as the stale value, failing the assertion."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/gradio as a git repo, and solve.sh with the exact patch is in /solution/solve.sh. An agent could read /solution/solve.sh or the patch directly to obtain the answer. There's no evidence these files are removed or made inaccessible in the container."
+      "reason": "The solution exists at /workspace/gradio as a git repo and solve.sh is in /solution/solve.sh. The Dockerfile doesn't remove /solution/ and the agent could read it. Additionally, the agent could inspect the test file at tests/test_outputs.py to see the exact expected behavior and mock structure."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three required behaviors from the instruction are tested: (1) demo.config reassignment after swap_blocks (test_swap_blocks_regenerates_config), (2) super().swap_blocks delegation (test_swap_blocks_calls_parent), (3) working from postrun (test_postrun_updates_config_on_swap)."
+      "reason": "All three required behaviors from instruction.md are tested: demo.config reassignment (test_swap_blocks_regenerates_config), super().swap_blocks delegation (test_swap_blocks_calls_parent), and correct behavior in postrun (test_postrun_updates_config_on_swap)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a Python class method, not producing structured data output."
+      "reason": "This task involves fixing a Python class method, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'demo.config must be assigned the value returned by demo.get_config_file()' and 'The swap_blocks method must still delegate to the parent class implementation (super().swap_blocks(demo))'. This gives the exact code to write, going well beyond identifying the buggy file/class."
+      "reason": "instruction.md explicitly names the exact method to override (swap_blocks), the exact assignment (demo.config = demo.get_config_file()), and the exact delegation pattern (super().swap_blocks(demo)). This goes beyond naming the buggy file/class and essentially specifies the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

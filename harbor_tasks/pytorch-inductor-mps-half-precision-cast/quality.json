@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (CLAUDE.md), the repo path (/workspace/repo), the indentation change (4-space to 2-space), the specific conditions (no line starting with exactly 4 spaces, at least one line with 2-space indent), and the pass_to_pass tests (test_harness_utils, test_log_parsers_java, test_cli smoke, swebench importable). All test assertions correspond to discoverable information from the instruction."
+      "reason": "The instruction describes the file (CLAUDE.md at /workspace/repo), the indentation conversion (4-space to 2-space), the specific conditions (no line starting with exactly 4 spaces, at least one line with 2-space indent), and the pass_to_pass tests by name. All test assertions map to discoverable information from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired outcome (convert 4-space to 2-space indentation) but does not specify exact implementation details like specific sed/python commands or line numbers. The agent must still decide how to perform the conversion."
+      "reason": "The instruction describes what needs to change (convert 4-space to 2-space indentation in CLAUDE.md) but does not specify the exact implementation method, line numbers, or code to write. A developer still needs to reason about how to perform the conversion."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The test_claude_md_uses_two_space_indent function checks that no line starts with exactly 4 spaces (but not 8), and that some line starts with exactly 2 spaces (but not 4). However, the gold solution collapses ALL levels of 4-space indentation (4, 8, 12...) into a single 2-space indent. An alternative correct fix that preserves nesting (e.g., 4->2, 8->4, 12->6) would produce lines starting with exactly 4 spaces (from originally 8-space lines), which would FAIL the test assertion at the check `if"
+      "reason": "The test test_claude_md_uses_two_space_indent checks that no line starts with exactly 4 spaces (but not 8), and that some line starts with exactly 2 spaces (but not 4). However, the gold solution collapses ALL levels of 4-space nesting into a single 2-space indent. An alternative correct fix that does proportional conversion (4\u21922, 8\u21924, 12\u21926) would have lines starting with exactly 4 spaces (from original 8-space lines), which would FAIL the test at the check `if line.startswith('    ') and not li"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass test (test_claude_md_uses_two_space_indent) only reads the file and checks text patterns \u2014 it does `Path(...).read_text()` and inspects line prefixes. It never executes the file or tests behavioral consequences. The pass_to_pass tests do execute subprocesses, but the core task verification is purely text-based inspection."
+      "reason": "The fail_to_pass test (test_claude_md_uses_two_space_indent) only reads the file content and inspects text patterns via string startswith checks \u2014 it does not execute/call any code or run subprocesses. The pass_to_pass tests do execute subprocesses, but the core task validation is purely text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass test checks that the original 4-space indentation is gone and 2-space indentation exists. A stub/no-op would leave the original 4-space lines intact and fail the assertion. The agent must actually modify the file."
+      "reason": "The f2p test checks that no line starts with exactly 4 spaces and that at least one line has 2-space indentation. A stub/no-op would leave the original 4-space indentation intact, which would fail the first assertion. The test requires actual modification of the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/repo/../solution/solve.sh (or mounted at a known path). The Dockerfile copies repo to /workspace/repo and the solve.sh is accessible. An agent could potentially read the solution file. Additionally, the test only checks simple text patterns (no 4-space lines, some 2-space lines), so the agent could trivially match the fixture by just stripping all leading whitespace and adding 2 spaces to any previously-indented line."
+      "reason": "The solution is available at /workspace/repo or accessible via solution/solve.sh in the container (the Dockerfile copies repo into /workspace/repo and the environment sets REPO=/workspace/repo). An agent could read /solution/solve.sh or the test file test_outputs.py to discover the exact expected behavior and fixture values. The solve.sh script is a shell script that could be directly executed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) no lines with exactly 4-space indent \u2014 tested; (2) at least one line with 2-space indent \u2014 tested; (3) existing tests pass \u2014 tested via pass_to_pass tests for harness_utils, log_parsers_java, cli smoke, and swebench import."
+      "reason": "The instruction requires: (1) no 4-space indentation lines \u2014 tested; (2) at least one 2-space line \u2014 tested; (3) pass_to_pass tests for harness_utils, log_parsers_java, cli smoke, and importability \u2014 all tested. All explicitly required behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly separated into 'FAIL TO PASS' and 'PASS TO PASS' sections with descriptive names and docstrings explaining each test's purpose."
+      "reason": "Tests are clearly grouped with comments separating 'FAIL TO PASS' and 'PASS TO PASS' sections, with descriptive function names and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing a markdown file's indentation, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves editing a markdown file's indentation, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file CLAUDE.md which is the obvious target of the task. It doesn't reveal specific line numbers or implementation details beyond describing the indentation change needed."
+      "reason": "The instruction names the file CLAUDE.md which is the obvious target of the task. It doesn't reveal line numbers or implementation details beyond the necessary task description of converting 4-space to 2-space indentation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold solution only modifies CLAUDE.md's indentation, which is a localized change to a single file. The diff doesn't contradict other tier-1 files."
+      "reason": "The task involves editing a single file (CLAUDE.md) with a well-defined transformation (indentation change). The gold diff is localized to that file and doesn't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [

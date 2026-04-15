@@ -2,64 +2,65 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully specified in instruction.md: (1) test_mcpservice_records_metrics_for_tools_list checks for 'performance.now()' and 'startTime' variable name \u2014 instruction says 'high-resolution wall-clock time' but never mentions performance.now() or the variable name 'startTime'. (2) test_mcpservice_records_metrics_for_tools_call checks for 'tool_error' literal which IS mentioned, and 'execute_tool' which IS mentioned. (3) test_streamable_router_creates_ses"
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (McpService.ts, plugin.ts, createStreamableRouter.ts, metrics.ts), metric names ('mcp.server.operation.duration', 'mcp.server.session.duration'), interface names (McpServerOperationAttributes, McpServerSessionAttributes), attribute keys ('mcp.method.name', 'gen_ai.tool.name', 'error.type', etc.), bucket boundary values, method names (createHistogram, performance.now(), startTime variable), schema references (ListToolsRequestSchema, CallToolRequestSchema i"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction describes what metrics to add and their schema but doesn't specify exact code changes like 'change line X to Y'. It describes the desired behavior and architecture without giving the implementation."
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: specific variable names ('startTime'), exact code patterns ('performance.now() - startTime divided by 1000'), exact method signatures ('metrics.createHistogram<McpServerOperationAttributes>()'), placement in 'finally' blocks, exact parameter names for constructors and factory methods. This goes well beyond describing what's broken and tells the agent exactly WHAT to change and HOW."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names like 'startTime' (test_mcpservice_records_metrics_for_tools_list, test_mcpservice_records_metrics_for_tools_call, test_streamable_router_creates_session_histogram). An alternative correct implementation using a different variable name (e.g., 'start', 'begin', 'startMs') would fail. Tests also require 'performance.now()' specifically \u2014 using Date.now() or process.hrtime() would fail despite being valid high-resolution timing approaches."
+      "reason": "Tests assert on gold-specific implementation details: test_mcpservice_records_metrics_for_tools_list checks for exact variable name 'startTime', the regex 'performance.now() - startTime', and that '.record(' appears after 'finally'. test_mcpservice_creates_operation_duration_histogram checks constructor has 'metrics' param via regex. An alternative correct implementation using Date.now(), a different variable name like 'start', or a wrapper/decorator pattern would fail these tests despite being "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests read file contents as strings and check for substring presence (e.g., content.includes('performance.now()'), content.includes('startTime'), content.includes('.record(')). No test actually imports, instantiates, or calls the code. Every test is effectively 'assert pattern in file_content' via Node.js string operations."
+      "reason": "Every test reads file contents as text and checks for string patterns (e.g., content.includes('mcp.server.operation.duration'), regex matching for 'performance.now() - startTime'). No test imports the modules, instantiates classes, calls methods, or verifies runtime behavior. They are purely text-matching checks disguised as Node.js execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for new file (metrics.ts) and new code patterns (histogram creation, performance timing, record calls) that don't exist in the base repo. A stub/empty implementation would not contain these specific strings and patterns."
+      "reason": "The tests check for specific strings and patterns that would not exist in the original codebase (e.g., 'mcp.server.operation.duration', 'bucketBoundaries', 'McpServerOperationAttributes' interface). A stub or no-op implementation would not contain these strings, so the tests do require meaningful code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/backstage (the solve.sh writes to that location). An agent could read solve.sh or the generated files. Additionally, since all tests are text-matching, an agent could grep test_outputs.py to discover exact strings being checked (e.g., 'startTime', 'performance.now()', 'bucketBoundaries') and insert them without understanding the task."
+      "reason": "The solution exists at /workspace/backstage and solve.sh is accessible. An agent could read the solution patch or the solve.sh script directly. Additionally, since tests are purely text-matching, an agent could simply insert the expected strings into files without understanding the problem."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires: (1) README update \u2014 not tested, (2) changeset file \u2014 not tested, (3) actual metric recording behavior \u2014 only string presence is checked, not runtime behavior. The duration computation correctness (seconds vs milliseconds) is never verified."
+      "reason": "The instruction requires updating the README and creating a changeset file, but no tests verify these requirements. The instruction also requires session duration instrumentation in createStreamableRouter.ts with specific attributes ('mcp.protocol.version', 'network.transport': 'tcp'), but the test file is truncated and the visible tests focus mainly on McpService. The plugin.ts metricsServiceRef integration is mentioned but testing coverage appears incomplete."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., test_metrics_module_exports_bucket_boundaries, test_mcpservice_creates_operation_duration_histogram) and grouped logically into gates and fail-to-pass sections."
+      "reason": "Tests are well-named with descriptive function names (e.g., test_metrics_module_exports_bucket_boundaries, test_mcpservice_records_metrics_for_tools_call) and include docstrings explaining what each test verifies. They are logically grouped into gate tests and fail-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The metric schema (attribute names, bucket boundaries, interface fields) is documented in instruction.md with specific field names and values."
+      "reason": "The instruction documents exact metric schemas including interface definitions, attribute names/types, bucket boundary values, and metric names following OTel semantic conventions with cited spec URLs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction."
+      "reason": "No typos found in file paths, variable names, metric names, or interface names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction names files to modify (McpService.ts, createStreamableRouter.ts, plugin.ts, metrics.ts) which is appropriate for the task domain. It doesn't specify exact line numbers or exact code to write."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'stored in a variable that captures the start time', 'duration must be computed as the difference between the current time and the start time, divided by 1000', 'recorded in a finally block', exact method signatures for constructors, and exact histogram creation code patterns. This goes beyond naming relevant files and leaks the exact solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 6
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four files, describes the exact function signatures (showPanel/showSidebar with forceFocus: boolean), the constants (focusableUIElements.addonPanel, sidebarRegion, storyPanelRoot), the API options (forceFocus, poll), the removal of useRegionFocusAnimation, the onClick(false)/onKeyDown(true) pattern, and the conditional checks (!wasPanelShown, !wasNavShown) are implied by 'when the panel becomes visible'. The test for `if (!wasPanelShown)` and `if (!wasNavShown)` exact v"
+      "reason": "The instruction names all file paths (shortcuts.ts, Panel.tsx, addons.tsx, menu.tsx), the specific constants (focusableUIElements.addonPanel, focusableUIElements.sidebarRegion, focusableUIElements.storyPanelRoot), the function signatures (forceFocus: boolean), the API options (forceFocus, poll), the behavior of onClick(false) vs onKeyDown(true), and the removal of useRegionFocusAnimation. All asserted specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: 'showPanel function should accept a forceFocus parameter of type boolean', 'onClick handler should call the show function with false', 'onKeyDown handler should call the show function with true', 'Remove any imports or usage of useRegionFocusAnimation'. This is not describing what's broken but prescribing the exact code changes, leaving virtually no reasoning for the developer."
+      "reason": "The instruction essentially dictates the exact implementation: 'showPanel function should accept a forceFocus parameter of type boolean', 'onClick handler should call the show function with false', 'onKeyDown handler should call the show function with true', 'Remove useRegionFocusAnimation'. This is not describing what's broken \u2014 it's prescribing the exact code changes line by line."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'showPanel: async (forceFocus: boolean)', 'onClick={() => showPanel(false)}', 'showSidebar: async (forceFocus: boolean)', 'onClick={() => showSidebar(false)}'. An alternative correct fix using different parameter names (e.g., 'force' instead of 'forceFocus'), different function signatures, or inline logic would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests assert exact string patterns like 'showPanel: async (forceFocus: boolean)' and 'onClick={() => showPanel(false)}' and 'showSidebar: async (forceFocus: boolean)'. An alternative correct fix using a different parameter name (e.g., 'forceIndicator'), a different function structure, or wrapping in a helper would fail these literal string checks despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every fail-to-pass test uses `assert 'some string' in open(path).read()` pattern \u2014 pure text matching against file contents. No tests import modules, execute code, or verify runtime behavior. The only execution-based test is test_typescript_compiles which runs `yarn nx run-many`."
+      "reason": "Nearly every fail-to-pass test is purely text matching: e.g., test_shortcuts_module_has_focus_call_for_panel checks 'if (!wasPanelShown)' in content, test_addons_showpanel_uses_forcefocus_param checks 'showPanel: async (forceFocus: boolean)' in content. Only test_typescript_compiles actually executes code. No tests import modules, call functions, or verify runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings that don't exist in the base commit (e.g., 'if (!wasPanelShown)' near 'focusableUIElements.addonPanel' with 'forceFocus: true', 'showPanel: async (forceFocus: boolean)'). A stub/no-op implementation wouldn't add these strings to the files, so the tests would fail."
+      "reason": "The tests check for specific strings that do not exist in the base commit (e.g., 'if (!wasPanelShown)' with 'forceFocus: true', removal of useRegionFocusAnimation). A stub or no-op implementation would not add these strings to the files, so the tests would fail without actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace with solve.sh containing the exact gold patch. The agent could read /solution/solve.sh or the test file itself (test_outputs.py) to discover the exact strings being asserted. The tests are pure string-matching, so copying the expected patterns directly into files would pass without understanding the bug."
+      "reason": "The solution directory exists at /workspace with solve.sh containing the exact gold patch. The agent could read /solution/solve.sh to get the complete answer. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact patterns expected and write them verbatim."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: shortcuts focus calls for panel and sidebar, Panel.tsx constant usage, forceFocus parameter in addons.tsx and menu.tsx, onClick(false)/onKeyDown(true) patterns, and removal of useRegionFocusAnimation."
+      "reason": "All required behaviors from instruction.md are tested: shortcuts calling focusOnUIElement for both panel and sidebar, Panel using constant for id, forceFocus parameter in showPanel/showSidebar, onClick(false)/onKeyDown(true) patterns, and removal of useRegionFocusAnimation from both files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names (e.g., test_shortcuts_module_has_focus_call_for_panel), docstrings explaining what they verify including FAIL-TO-PASS labels, and are logically grouped by component/file."
+      "reason": "Tests are well-named (e.g., test_shortcuts_module_has_focus_call_for_panel), have docstrings explaining what they test and why (FAIL-TO-PASS annotations), and are logically grouped by component/file."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modifications, not structured data output."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction are all correct and match the actual codebase."
+      "reason": "All file paths, variable names, function names, and commands in the instruction match those used in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact files to modify, exact function signatures ('showPanel: async (forceFocus: boolean)'), exact handler behaviors ('onClick handler should call the show function with false'), and exact cleanup steps. This goes far beyond naming the buggy module \u2014 it prescribes the complete implementation."
+      "reason": "The instruction specifies exact file paths to modify AND exact implementation details: the exact parameter names ('forceFocus: boolean'), exact call patterns ('onClick with false, onKeyDown with true'), and exact API usage ('focusableUIElements.addonPanel with forceFocus: true, poll: true'). This goes well beyond describing the bug \u2014 it's a step-by-step implementation guide."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

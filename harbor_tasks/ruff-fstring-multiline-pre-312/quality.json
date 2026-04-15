@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests reference specific details not in instruction.md: test_no_unwrap_panic_in_modified_file checks for '.unwrap()', 'panic!', 'unreachable!' patterns in production code of 'interpolated_string_element.rs' (the AGENTS.md:79 reference is mentioned but the exact patterns and file scanning logic aren't fully specified). test_fstring_mixed_fields_pre312 checks 'len(lines) >= 3' for multiline preservation and specific assertion strings like '{[ttttteeeeeeeeest'. test_fstring_multiline_allowed_on_312"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_no_unwrap_panic_in_modified_file checks for '.unwrap()', 'panic!', 'unreachable!' patterns in production code (instruction mentions this but only as a general guideline); test_fstring_mixed_fields_pre312 checks 'len(lines) >= 3' for preserved multiline fields; test_fstring_multiline_allowed_on_312 asserts '{\\n    [' must appear in py312 output, meaning the list MUST expand on 3.12 when there's already a multiline field \u2014 this sp"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the bug (multiline f-string expansion pre-3.12) and expected behavior, specifies the file to modify, but does not prescribe the exact code change. The developer must reason about how to implement the fix."
+      "reason": "The instruction describes the bug (multiline expansion in pre-3.12 f-strings), specifies the file to modify, and describes expected behavior, but does not prescribe the specific code change (e.g., checking target_version, using interpolated_element_expression_range, etc.)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_no_unwrap_panic_in_modified_file hard-codes the path 'crates/ruff_python_formatter/src/other/interpolated_string_element.rs' and scans for specific patterns. More critically, test_fstring_multiline_allowed_on_312 asserts '{\\n    [' must appear in py312 output for the mixed-fields case - an alternative correct fix might handle this differently (e.g., not expanding the first field even on 3.12 if the formatter decides the line fits). The gold solution's approach of checking interpolated_eleme"
+      "reason": "test_no_unwrap_panic_in_modified_file reads the specific file 'interpolated_string_element.rs' and checks for '.unwrap()', 'panic!', 'unreachable!' patterns. An alternative correct fix that uses a different file or adds a helper with .unwrap() in a different module would fail this test. More critically, the behavioral tests check specific string patterns like '{\\n    [' and '{[ttttteeeeeeeeest' which are reasonably implementation-agnostic. However, the test_fstring_multiline_allowed_on_312 test "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests execute subprocesses (cargo build, cargo test, ruff format) and check behavioral output. test_no_unwrap_panic_in_modified_file is text-based but checks a code quality constraint. The core behavioral tests (test_fstring_no_multiline_expansion_pre312, test_fstring_mixed_fields_pre312, test_fstring_multiline_allowed_on_312) actually run the formatter binary and inspect its output."
+      "reason": "Most tests execute subprocesses (cargo build, cargo test, ruff format) and inspect behavioral output. The behavioral tests (_format_code) actually run the formatter binary and check the formatted output. Only test_no_unwrap_panic_in_modified_file is a text-inspection test, but the majority of tests verify actual execution behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_fstring_no_multiline_expansion_pre312, test_fstring_mixed_fields_pre312) check that the formatter does NOT expand replacement fields to multiline on py311 - this requires an actual code change since the base commit has the bug. A stub/no-op would fail because the base behavior produces the multiline expansion."
+      "reason": "test_fstring_no_multiline_expansion_pre312 asserts that '{\\n    [' is NOT in the formatted output and that '{[ttttteeeeeeeeest' IS present \u2014 a stub/no-op would leave the buggy formatter behavior which DOES expand to multiline, so the test would fail. test_fstring_mixed_fields_pre312 similarly checks that compact fields stay flat on pre-3.12. These cannot be satisfied without implementing the fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ruff's git history or could be in /solution/solve.sh in the container. The agent could read solve.sh directly to obtain the gold patch. The Dockerfile doesn't remove /solution/ and the test file paths are accessible."
+      "reason": "The solution patch exists at /workspace/ruff as a git repo, and solve.sh is at /solution/solve.sh inside the container. An agent could read /solution/solve.sh (or the hidden test file at /tests/test_outputs.py) to discover the exact patch. There are no explicit anti-cheating measures preventing access to these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from instruction.md are tested: pre-3.12 flat fields stay flat (test_fstring_no_multiline_expansion_pre312), pre-3.12 mixed fields preserve multiline but keep flat ones flat (test_fstring_mixed_fields_pre312), and 3.12+ allows expansion (test_fstring_multiline_allowed_on_312)."
+      "reason": "All behaviors described in instruction.md are tested: pre-3.12 flat fields stay flat (test_fstring_no_multiline_expansion_pre312), pre-3.12 mixed fields preserve multiline but keep flat ones flat (test_fstring_mixed_fields_pre312), 3.12+ allows expansion (test_fstring_multiline_allowed_on_312), code quality requirements (clippy, fmt, no unwrap/panic)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with clear section headers (Gates, Pass-to-pass, Fail-to-pass, Config-derived) and each has descriptive docstrings explaining what they verify."
+      "reason": "Tests are clearly grouped with comment headers (Gates, Pass-to-pass, Fail-to-pass, Config-derived), each has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file to modify: 'crates/ruff_python_formatter/src/other/interpolated_string_element.rs' with a description of what it does ('handles formatting of f-string replacement field elements, including the multiline expansion decision'). This narrows localization significantly, though the task domain is large enough that some guidance is reasonable."
+      "reason": "instruction.md explicitly names the exact file to modify: 'crates/ruff_python_formatter/src/other/interpolated_string_element.rs' with a description of what it does ('handles formatting of f-string replacement field elements, including the multiline expansion decision'). This significantly narrows the search space and leaks localization information."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

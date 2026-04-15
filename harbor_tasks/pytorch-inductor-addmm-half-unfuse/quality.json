@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests reference specific file path '/workspace/torch/_inductor/fx_passes/post_grad.py', function name 'unfuse_bias_add_to_pointwise', and assert specific behavior (early return of None, replaced=False for bf16/fp16, replaced=True for fp32/fp64). The instruction.md never names the file 'post_grad.py', never names the function 'unfuse_bias_add_to_pointwise', and doesn't specify the exact function signature or parameter names like 'inp', 'alpha', 'beta'. Tests also check for coding style rules from"
+      "reason": "Tests assert on specific file path '/workspace/torch/_inductor/fx_passes/post_grad.py', function name 'unfuse_bias_add_to_pointwise', and specific behavior (returning None for bf16/fp16, proceeding for float32/float64). The instruction.md never names the file 'post_grad.py' or the function 'unfuse_bias_add_to_pointwise'. It only vaguely describes 'post-grad FX passes' and 'pattern-matching optimization'. The agent would need to discover these specifics on its own."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (splitting addmm causes precision loss for half dtypes) and the expected behavior (fix accuracy for bf16/fp16, keep optimization for fp32/fp64), but does not specify the exact code change or line numbers."
+      "reason": "The instruction describes the problem (splitting addmm causes precision loss for half dtypes) and expected behavior (fix the regression for bf16/fp16 while preserving float32/float64), but does not state the exact fix (e.g., adding an early return guard checking dtype). The agent must reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests extract the function 'unfuse_bias_add_to_pointwise' by name via AST walking and execute it with mocked inputs. An alternative correct fix that, for example, modifies 'should_prefer_unfused_addmm' (the extra_check function) to reject half dtypes before the pattern even matches would not be detected by these tests, which only test 'unfuse_bias_add_to_pointwise'. The tests are tightly coupled to the gold solution's approach of adding a guard inside that specific function."
+      "reason": "Tests extract the function 'unfuse_bias_add_to_pointwise' by name via AST, then execute it with mocks expecting match.replaced==False and result==None for half dtypes. An alternative correct fix that modifies 'should_prefer_unfused_addmm' (the extra_check function) to return False for half dtypes would also be correct but would fail these tests since the function body itself wouldn't contain the guard. Similarly, a fix in the caller or at a different level would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract the function via AST, exec it with mocks in a subprocess, and check behavioral output (whether replacement occurred, return value). They call and execute the code rather than just checking text patterns."
+      "reason": "Tests extract the function via AST, execute it with mocks in a subprocess, and check behavioral outcomes (replaced flag, return value). This is behavioral testing, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The unpatched function would proceed with replacement for bf16/fp16 (replaced=True), so stub/default behavior wouldn't pass. The f2p tests (test_bfloat16_not_unfused, test_float16_not_unfused, test_guard_returns_early) require the function to NOT replace for half dtypes, which requires an actual code change. Additionally test_float32_still_unfused and test_float64_still_unfused ensure a simple 'return None always' stub would fail."
+      "reason": "The f2p tests (test_bfloat16_not_unfused, test_float16_not_unfused, test_guard_returns_early) check that the function returns None without calling replace_by_example for half dtypes. The unpatched code would proceed with replacement for all dtypes, so a stub or the original code would fail these tests. Additionally, test_float32_still_unfused and test_float64_still_unfused ensure a simple 'always return None' stub would fail."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace's container as '/solution/solve.sh' (or similar path based on the task structure). The agent could read the gold patch from solution/solve.sh which contains the exact diff. Also, the test file at tests/test_outputs.py contains the complete mock infrastructure and expected behavior, which an agent could read to reverse-engineer the exact fix needed."
+      "reason": "The solution file exists at /workspace (or /solution/solve.sh in the container). The agent could read the gold patch from solve.sh or grep for it. The Dockerfile does not remove or protect the solution directory. Also, the test file itself is at tests/test_outputs.py and could be read to reverse-engineer exactly what's needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) bf16/fp16 produce correct results (tested via not-unfused checks), (2) fp32/fp64 continue working (tested via still-unfused checks). Both explicit behavioral requirements are covered."
+      "reason": "The instruction requires: (1) bf16/fp16 should not have accuracy regression (tested by not-unfused checks), (2) float32/float64 should continue working (tested by still-unfused checks). Both core behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ([static], [pr_diff] fail_to_pass, [pr_diff] pass_to_pass, [agent_config]), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments ([static] pass_to_pass, [pr_diff] fail_to_pass, [pr_diff] pass_to_pass, [agent_config] pass_to_pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem at a conceptual level (addmm splitting, post-grad FX passes, pattern-matching optimization) without naming the exact file or function. It mentions 'post-grad FX passes' which is a domain concept, not a specific file path."
+      "reason": "The instruction.md describes the problem at a conceptual level (addmm optimization in post-grad FX passes) without naming the specific file or function. The agent must locate these themselves."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

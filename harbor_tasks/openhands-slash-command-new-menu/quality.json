@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (constants.ts, use-slash-command.ts, test file path), variable names (BUILT_IN_COMMANDS, isSkillsLoading, isV1Conversation, SlashCommandItem), hook names (useActiveConversation, useConversationSkills), string literals (conversation_version === 'V1'), and test descriptions. The test assertions on specific strings like 'BUILT_IN_COMMANDS', '/new', 'SlashCommandItem', 'useActiveConversation', 'isSkillsLoading', and 'conversation_version === \"V1\"' are all exp"
+      "reason": "The instruction names all key specifics tested: BUILT_IN_COMMANDS in constants.ts, /new command, SlashCommandItem type, useActiveConversation hook, conversation_version === 'V1', isSkillsLoading, the test file path, and the three test descriptions. The exact test names ('includes /new built-in command for V1 conversations', etc.) are discoverable from the instruction's test descriptions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: add BUILT_IN_COMMANDS constant in constants.ts, import useActiveConversation, check conversation_version === 'V1', check isSkillsLoading, update useMemo dependencies with specific variable names. This is a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly tells the agent exactly what to do: add BUILT_IN_COMMANDS constant in constants.ts, import useActiveConversation, check conversation_version === 'V1', check isSkillsLoading, update useMemo dependencies. It specifies exact variable names, exact file locations, and exact implementation steps. This leaves virtually no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_constants_file_updated assert exact string 'BUILT_IN_COMMANDS' in constants.ts, test_active_conversation_hook_imported asserts 'useActiveConversation' in the hook file, test_v1_conversation_check_implemented asserts exact string 'conversation_version === \"V1\"', and test_skills_loading_check asserts 'isSkillsLoading'. An alternative correct implementation using different variable names (e.g., BUILTIN_SLASH_COMMANDS, isLoadingSkills) or different patterns (e.g., checking version vi"
+      "reason": "Tests like test_constants_file_updated assert exact string 'BUILT_IN_COMMANDS' in constants.ts, test_active_conversation_hook_imported asserts 'useActiveConversation' in the hook file, test_v1_conversation_check_implemented asserts exact string 'conversation_version === \"V1\"', and test_skills_loading_check asserts 'isSkillsLoading'. An alternative correct implementation using different variable names (e.g., SLASH_COMMANDS, isV1, skillsLoading) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Multiple tests are purely text-matching: test_constants_file_updated does only 'assert \"BUILT_IN_COMMANDS\" in content', test_active_conversation_hook_imported does 'assert \"useActiveConversation\" in content', test_v1_conversation_check_implemented does string matching on 'conversation_version === \"V1\"', test_skills_loading_check does 'assert \"isSkillsLoading\" in content'. These never execute or import the code."
+      "reason": "Tests test_constants_file_updated, test_active_conversation_hook_imported, test_v1_conversation_check_implemented, and test_skills_loading_check are purely text-matching (assert 'X' in file.read_text()) with no execution. While tests 1-3 do run the actual test suite via subprocess, a significant portion of the test suite is pure text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The first three behavioral tests (test_v1_conversation_includes_new_command, test_v0_conversation_excludes_new_command, test_returns_empty_while_loading) run the actual test suite via subprocess, which uses renderHook to call useSlashCommand and checks filteredItems behavior. A stub returning empty would fail the V1 test that expects '/new' in commands."
+      "reason": "The behavioral tests (test_v1_conversation_includes_new_command, test_v0_conversation_excludes_new_command, test_returns_empty_while_loading) run actual renderHook tests that check filteredItems contains/doesn't contain '/new'. A stub returning empty array would fail the V1 test; a stub always including /new would fail the V0 test."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/OpenHands with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the patch content to extract the exact implementation. Additionally, the test file path and expected test names are fully specified, allowing the agent to just create matching files."
+      "reason": "The solution exists at /workspace/OpenHands in the container (solve.sh applies a patch there). The agent could read the solution patch from the solve.sh file or the gold patch contents. Additionally, the test file path and exact test names are given, so the agent could create tests that trivially pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: /new appears for V1 (test_v1_conversation_includes_new_command), /new excluded for V0 (test_v0_conversation_excludes_new_command), loading state returns empty (test_returns_empty_while_loading), BUILT_IN_COMMANDS in constants (test_constants_file_updated), active conversation import (test_active_conversation_hook_imported), typecheck and lint pass."
+      "reason": "All behaviors from instruction.md are tested: /new appears for V1, doesn't appear for V0, empty during loading, BUILT_IN_COMMANDS in constants, useActiveConversation imported, V1 check present, isSkillsLoading check, typecheck passes, lint passes."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining fail-to-pass vs pass-to-pass nature, and what each test validates."
+      "reason": "Tests are well-named with descriptive docstrings explaining fail-to-pass vs pass-to-pass status and what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI hook implementation, not structured data output like JSON/CSV/API/DB."
+      "reason": "The task involves modifying TypeScript hooks and constants, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, commands, and hook names in the instruction are correctly spelled and consistent with the codebase."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files to modify, exact variable names to create (BUILT_IN_COMMANDS, isV1Conversation, isSkillsLoading), exact hooks to import (useActiveConversation), and exact useMemo dependency list changes. This goes beyond identifying the problem domain into specifying the exact implementation."
+      "reason": "The instruction names exact files (use-slash-command.ts, constants.ts), exact variable names (BUILT_IN_COMMANDS, isSkillsLoading, isV1Conversation), exact hook names (useActiveConversation), and exact implementation details (useMemo dependencies). This goes beyond identifying the buggy area and specifies the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

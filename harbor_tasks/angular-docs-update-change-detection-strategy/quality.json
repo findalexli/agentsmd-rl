@@ -3,55 +3,55 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths, the exact literal strings to add ('OnPush is enabled by default'), the exact patterns to remove (e.g., 'ChangeDetectionStrategy.OnPush,'), the enum member 'OnPush = 0', the property 'changeDetection?', and references to 'Eager' and 'default'/'optional' proximity checks. The git commit SHA (c1261b02...) is only checked in test_repo_git_valid which is a pass_to_pass gate about the environment, not something the agent needs to discover. All behavi"
+      "reason": "The instruction lists all affected file paths that tests check, describes the expected behaviors (OnPush as default in JSDoc, Eager references, removal of manual OnPush instructions), and the commit SHA c1261b0 is implicit in the repo setup. The specific string checks in tests (e.g., 'default' near 'OnPush', 'optional' near 'Eager') align with the Expected Behavior section items 1-4."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction.md section 'Expected Behavior After Fix' essentially states the exact fix: it specifies the exact text 'OnPush is enabled by default' must appear in JSDoc comments, exact strings that must NOT appear, and that 'Eager' must appear near 'optional' and 'OnPush' near 'default'. This tells the agent precisely WHAT to change (add specific text, remove specific patterns), leaving very little reasoning about what the fix should be."
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (documentation contradicts new default behavior) and what the expected state should be, but does not specify exact line changes, replacement strings, or precise edits. A developer must reason about how to update each file."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests check for exact string containment ('OnPush is enabled by default') and absence of specific patterns, plus proximity checks (first mention of OnPush near 'default', first mention of Eager near 'optional'). These are flexible enough that different phrasings/restructurings of the surrounding documentation would all pass, as long as the key phrases are present and forbidden patterns removed. The tests don't assert on specific line numbers or exact paragraph content."
+      "outcome": "fail",
+      "reason": "The truncated tests (visible portion ends at ~10000 chars) include checks like searching for specific strings near 'OnPush' and 'default' in specific files. The test likely asserts exact phrases like 'OnPush is enabled by default' (seen in solve.sh's idempotency check) or checks that the first mention of 'OnPush' in skipping-subtrees.md appears with 'default'. Alternative correct phrasings like 'OnPush is the default since v22' vs 'NOTE: OnPush is enabled by default' could fail string-matching t"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The tests are almost entirely text-matching: checking for string presence/absence in files (e.g., 'OnPush is enabled by default' in content, absence of 'ChangeDetectionStrategy.OnPush,'), balanced braces, file existence. While there are some structural checks (TypeScript syntax via tsc, balanced brackets/comments), the core f2p tests are all `assert 'foo' in content` or `assert 'foo' not in content` with no behavioral execution of the code."
+      "reason": "The visible tests are entirely file-content checks: reading files, checking string presence/absence, counting braces, grep commands. No code is imported or executed behaviorally. The truncated portion likely continues with `assert 'default' in ...` style text checks. This is fundamentally a documentation-update task where all tests inspect file text content rather than runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that specific strings like 'OnPush is enabled by default' are present and that patterns like 'ChangeDetectionStrategy.OnPush,' are absent. A stub/no-op implementation (leaving files unchanged) would fail these tests because the original files don't contain 'OnPush is enabled by default' and do contain the forbidden patterns."
+      "reason": "The pass_to_pass (gate) tests verify structural properties of the existing repo (file existence, brace balance, copyright headers, valid git status). These would pass on the unmodified repo but the fail_to_pass tests (truncated) verify specific content changes like 'OnPush' being described as default. A stub or no-op wouldn't pass the content-specific checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/angular's solution/solve.sh (mounted in container), and the agent could read it. Additionally, the test file at tests/test_outputs.py contains all the exact fixture strings ('OnPush is enabled by default', the forbidden patterns, proximity requirements), so the agent could grep the test file to discover exact expected values without understanding the task."
+      "reason": "The solution file exists at /workspace/angular's container and solve.sh is accessible. The agent could read /solution/solve.sh to see the exact git patch. Additionally, the idempotency check string 'NOTE: OnPush is enabled by default' in solve.sh reveals the exact expected text. The agent could also grep test_outputs.py for expected strings."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md's 'Expected Behavior After Fix' section (points 1-4) are tested: JSDoc content checks, absence of deprecated patterns, proximity checks for 'default' and 'optional' near OnPush and Eager respectively."
+      "reason": "The instruction's Expected Behavior items 1-4 map to test checks: JSDoc updates in constants.ts and directives.ts, removal of manual OnPush instructions from docs/config files, and correct default/optional descriptions. All explicitly required behaviors appear to be tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (test_syntax_check, test_onpush_default_jsdoc_constants, test_changedetection_property_jsdoc_directives, etc.), clear docstrings explaining what each test verifies, and logical grouping with section comments (Gates, Pass-to-pass, Fail-to-pass)."
+      "reason": "Tests are well-named (test_syntax_check, test_jsdoc_comments_structure, test_markdown_files_valid, etc.), grouped by concern (gates vs behavioral), and include docstrings explaining their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves documentation/code edits, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task produces documentation/text file edits, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and string patterns in instruction.md and tests are consistent and correct. No typos detected in paths like 'packages/core/src/change_detection/constants.ts' or pattern strings."
+      "reason": "All file paths, variable names, and commands in instruction.md match those in the test files and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact enum member ('OnPush = 0'), the exact property ('changeDetection?'), the exact text to add ('OnPush is enabled by default'), and the exact strings to remove from specific files. This goes beyond describing what's broken and essentially specifies the exact edits needed."
+      "reason": "The instruction explicitly lists all 8 affected files, describes exactly what's wrong in each, and specifies precise expected outcomes like 'The first mention of OnPush in skipping-subtrees.md should be in context with the word default' and 'The first mention of Eager in advanced-configuration.md should be in context with the word optional'. This goes beyond describing what's broken and into specifying the exact fix pattern."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch (solve.sh) applies localized diffs to specific sections of each file\u2014modifying JSDoc comments, removing code blocks, and changing specific phrases\u2014rather than rewriting entire files."
+      "reason": "The gold patch (solve.sh) makes localized changes to specific files - updating JSDoc comments, removing specific sections of markdown, and editing specific lines in config files. No full-file rewrites."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],

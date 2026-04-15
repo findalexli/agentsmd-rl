@@ -2,61 +2,62 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the parameter name 'numericTickPrefix' (used in test_prefix_day_ticks, test_prefix_week_and_month_ticks, test_no_prefix_returns_plain_numbers, and test_linegraph_stickiness_wiring), the identifier 'isStickiness' checked via AST in test_linegraph_stickiness_wiring, the dayjs import convention 'lib/dayjs' in test_dayjs_import_convention (AGENTS.md:95 is referenced but not provided to the agent), and the exact output form"
+      "outcome": "pass",
+      "reason": "The instruction names the exact file paths (dates.ts, LineGraph.tsx), the function name (createXAxisTickCallback), the parameter name (numericTickPrefix), the identifier (isStickiness), the logic source (insightVizDataLogic), the import convention (lib/dayjs), and the expected output format ('Day 1', 'Week 2', 'Month 3'). All asserted specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the broken behavior and expected behavior, and points to relevant files, but does not specify the exact code change (e.g., doesn't say 'add a numericTickPrefix parameter')."
+      "reason": "The instruction describes what's broken (labels show plain numbers instead of prefixed labels) and specifies the interface contract (parameter name, behavior), but does not give the exact code changes like 'change line X to Y'. A developer must still reason about how to implement the parameter and wiring."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_linegraph_stickiness_wiring uses AST parsing to check for a property assignment named exactly 'numericTickPrefix' and an identifier 'isStickiness'. An alternative correct fix using a different parameter name (e.g., 'stickinessPrefix' or 'labelPrefix') or a different conditional variable would fail these tests despite being functionally correct."
+      "reason": "The instruction mandates exact variable names ('numericTickPrefix', 'isStickiness') and test_linegraph_stickiness_wiring uses AST inspection to check for a property assignment named exactly 'numericTickPrefix' and an identifier exactly 'isStickiness'. While the instruction does specify these names, the AST-based test for LineGraph.tsx constrains implementation details heavily \u2014 e.g., an alternative correct fix using a different property name in the call object or a wrapper function would fail. T"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core tests (test_prefix_day_ticks, test_prefix_week_and_month_ticks, test_no_prefix_returns_plain_numbers) actually transpile and execute the TypeScript code via Node.js, calling createXAxisTickCallback and checking return values. test_linegraph_stickiness_wiring does AST inspection rather than text grep. The repo tests run actual lint/jest commands."
+      "reason": "The core tests (test_prefix_day_ticks, test_prefix_week_and_month_ticks, test_no_prefix_returns_plain_numbers) actually transpile and execute the TypeScript code via Node.js, calling createXAxisTickCallback and checking return values. test_linegraph_stickiness_wiring uses AST parsing (not plain text grep). test_dayjs_import_convention uses regex but it's checking import patterns. Overall, the primary behavioral tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests call createXAxisTickCallback with numericTickPrefix and assert specific prefixed outputs like 'Day 1', 'Week 1', 'Month 1'. A stub returning String(value) would fail since '1' != 'Day 1'. The AST test checks for specific property names that don't exist in the base code."
+      "reason": "A stub implementation of createXAxisTickCallback that always returns String(value) would fail test_prefix_day_ticks (expects 'Day 1' not '1'). A stub returning empty string would also fail. The fail-to-pass tests require actual implementation of the prefix logic."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch is stored in /workspace/posthog or accessible via solution/solve.sh. The agent could read the solution file, or grep test files (if accessible) for expected strings like 'numericTickPrefix' and 'Day 1'. The Dockerfile doesn't prevent access to /solution/ directory."
+      "reason": "The solution file exists at /workspace/posthog (solution/solve.sh contains the full git patch). An agent could read the solve.sh or the PATCH content if it has filesystem access to the solution directory. Additionally, the test file at tests/test_outputs.py contains the expected fixture values ('Day 1', 'Week 1', etc.) which could be discovered by reading the test file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md specifies Day/Week/Month prefix behavior and that non-stickiness insights should be unaffected. Tests cover all three prefix types, the no-prefix case, and the LineGraph wiring \u2014 matching the instruction's requirements."
+      "reason": "The instruction requires: (1) numericTickPrefix parameter in createXAxisTickCallback \u2014 tested by test_prefix_day_ticks, test_prefix_week_and_month_ticks; (2) backward compatibility without prefix \u2014 tested by test_no_prefix_returns_plain_numbers; (3) LineGraph wiring with isStickiness \u2014 tested by test_linegraph_stickiness_wiring; (4) dayjs import convention \u2014 tested by test_dayjs_import_convention. All explicit requirements are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments ('Fail-to-pass', 'Pass-to-pass \u2014 regression + config guards', 'Pass-to-pass \u2014 repo CI/CD tests'), have descriptive names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass', 'Pass-to-pass', 'repo CI/CD tests'), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves UI label formatting, not structured data output like JSON/CSV/API schemas."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths, variable names, function names, and commands in the instruction are all correct and consistent with the test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names the two relevant files (dates.ts and LineGraph.tsx) and describes what they do, but these are the natural files for the task domain. It doesn't specify exact line numbers or the specific code changes needed."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files (dates.ts, LineGraph.tsx), the exact function (createXAxisTickCallback), the exact parameter name (numericTickPrefix), and the exact identifier (isStickiness) from insightVizDataLogic. It also specifies the capitalization logic ('day' \u2192 'Day'). This goes beyond describing what's broken and essentially dictates the implementation architecture, reducing the localization challenge to near zero."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 7,
   "fail_count": 3
 }

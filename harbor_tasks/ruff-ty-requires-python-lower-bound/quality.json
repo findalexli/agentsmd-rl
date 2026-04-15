@@ -3,60 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for a function named `resolve_requires_python` in `pyproject.rs` (test_no_unwrap_in_resolve_requires_python, test_no_local_imports_in_resolve), but instruction.md never mentions this function name. The agent would need to discover or create it. Also, tests assert specific error message substrings like 'supported' and 'does not include' \u2014 while instruction.md does mention these, the function name `resolve_requires_python` is a critical test-specific detail not discoverable from instru"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_no_unwrap_in_resolve_requires_python checks for 'unreachable!(' which instruction only says 'Avoid using .unwrap(), panic!(), or unreachable!()' (close but instruction doesn't mention the exact patterns checked). More critically, test_repo_cargo_fmt, test_repo_cargo_check_ty_project, and test_repo_cargo_clippy_ty_project are CI gates not mentioned in instruction.md at all. The instruction never mentions cargo fmt, cargo check, o"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (panics on unsupported versions) and expected behavior (graceful handling, error messages) but does not specify exact code changes like 'add a NoSupportedVersion variant' or 'use PythonVersion::iter().find()'."
+      "reason": "The instruction describes what's broken (panic on unsupported versions) and the expected behavior, but does not specify the exact code change (e.g., adding NoSupportedVersion variant, using PythonVersion::iter().find()). The agent must reason about the fix."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests test_no_unwrap_in_resolve_requires_python and test_no_local_imports_in_resolve scan for a function named exactly `resolve_requires_python`. An alternative correct fix might use a differently-named function (e.g., `get_python_version_from_requires`) or restructure the logic into a different location, which would fail these tests. Additionally, the tests enforce implementation-specific constraints (no .unwrap() in that specific function) that a correct alternative might not share."
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (no panic, correct exit codes, error message content) and code style constraints (no .unwrap(), no local imports) rather than gold-specific implementation details. An alternative fix using different variable names or a different iteration approach would pass as long as it handles the edge cases correctly and follows style rules."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core behavioral tests (test_requires_python_27_no_panic, test_requires_python_future_version_error, etc.) execute the ty binary as a subprocess and check exit codes and output. The code-style tests do read source text, but they complement the behavioral tests rather than replacing them."
+      "reason": "Tests execute the ty binary via subprocess (test_requires_python_27_no_panic, test_requires_python_future_version_error, etc.) and run cargo commands. The code-style tests (test_no_unwrap_in_resolve_requires_python, test_no_local_imports_in_resolve) do inspect source text, but this is appropriate for style enforcement and is combined with behavioral execution tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_requires_python_27_no_panic checks that exit code != 101 (no panic) when running with ==2.7, which currently panics. test_requires_python_future_version_error checks for non-zero exit code AND specific error message content for ==44.44, which also currently panics. A stub/no-op wouldn't fix the panic behavior."
+      "reason": "The f2p tests (test_requires_python_27_no_panic, test_requires_python_future_version_error) execute the actual ty binary against real project configurations. A stub/no-op implementation would still panic on ==2.7 (the original bug), so the tests cannot be satisfied without a real fix. The ==44.44 test requires non-zero exit code with specific error message content."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/ruff after applying solve.sh, and the agent could potentially read solution/solve.sh if it exists in the container. The Dockerfile and test infrastructure don't prevent the agent from accessing these files. Also, the agent could grep test files for expected strings like 'supported' or 'does not include'."
+      "reason": "The solution file exists at /workspace/ruff/solution/solve.sh (or wherever mounted) and contains the complete gold patch. The agent could read it. Additionally, the test file at tests/test_outputs.py reveals exact assertion strings like 'supported' and 'does not include' that the agent could grep for and hardcode."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three categories of expected behavior from instruction.md are tested: Python 2 specifiers not panicking (test_requires_python_27_no_panic), future version error messages (test_requires_python_future_version_error), and code style requirements (test_no_unwrap_in_resolve_requires_python, test_no_local_imports_in_resolve)."
+      "reason": "All behaviors described in instruction.md are tested: Python 2 specifiers not panicking (test_requires_python_27_no_panic), future version error with specific message (test_requires_python_future_version_error), no .unwrap()/panic!/unreachable! (test_no_unwrap_in_resolve_requires_python), no local imports (test_no_local_imports_in_resolve)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive names, and detailed docstrings explaining the purpose and context of each test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Rust binary's error handling, not producing structured data outputs."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md mentions the relevant files (pyproject.rs, metadata.rs) which is appropriate given the task domain, but doesn't specify exact line numbers or the specific code changes needed."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact function ('resolve_requires_python') and exact file ('crates/ty_project/src/metadata/pyproject.rs') under 'Function to Modify'. This is excessive localization when part of the task should be identifying where the bug lives."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-fix task, not a config-edit task."
+      "reason": "This is a code-fix task, not an agentmd-edits/config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 7,
   "fail_count": 3
 }

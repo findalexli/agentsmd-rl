@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific literal strings not mentioned in instruction.md, e.g. '\"org\", \"get-default\"' (Go string formatting), '[\"org\", \"get-default\"]' (Python list formatting), 'newAutoError', 'l.runPulumiCmdSync(ctx, \"org\", \"get-default\")', 'self._run_pulumi_cmd_sync([\"org\", \"get-default\"])', 'Returns the default organization' (exact docstring text). The instruction never specifies these exact string patterns, error handling with newAutoError, or the exact CLI runner method names."
+      "reason": "Tests assert very specific literal strings not mentioned in instruction.md, e.g. '\"org\", \"get-default\"' (Go string formatting), '[\"org\", \"get-default\"]' (Python list formatting), 'newAutoError', 'l.runPulumiCmdSync(ctx, \"org\", \"get-default\")', 'self._run_pulumi_cmd_sync([\"org\", \"get-default\"])', 'Returns the default organization' (exact docstring text). The instruction doesn't specify these exact string patterns, error handling with newAutoError, or the exact CLI runner method names."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what methods to add and their signatures but does not specify exact implementation details like line numbers, error handling patterns (newAutoError), or the exact internal method calls to use."
+      "outcome": "fail",
+      "reason": "instruction.md provides exact method signatures like 'OrgGetDefault(context.Context) (string, error)' and 'OrgSetDefault(ctx context.Context, orgName string) error', exact file paths to modify, and exact test function names. While it describes WHAT to add, it provides so much specificity (exact signatures, exact receiver types like 'func (l *LocalWorkspace)') that little reasoning is needed about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details: 'l.runPulumiCmdSync(ctx, \"org\", \"get-default\")' must appear verbatim (test_go_methods_follow_existing_patterns), 'self._run_pulumi_cmd_sync([\"org\", \"get-default\"])' must appear verbatim (test_python_methods_follow_existing_patterns), 'newAutoError' must be used (test_go_org_methods_have_proper_error_handling). An alternative correct implementation using slightly different formatting or a wrapper function would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact string 'l.runPulumiCmdSync(ctx, \"org\", \"get-default\")' in test_go_methods_follow_existing_patterns, 'self._run_pulumi_cmd_sync([\"org\", \"get-default\"])' in test_python_methods_follow_existing_patterns, 'newAutoError' in test_go_org_methods_have_proper_error_handling. An alternative correct implementation using different formatting (e.g., extra spaces, different variable capture patterns, or a helper wrapper) would fail these string-match"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is a string-in-file check (e.g., 'assert \"OrgGetDefault\" in content', 'assert '\"org\", \"get-default\"' in content'). While test_go_syntax_valid and test_go_auto_build_passes do run 'go build', no test actually calls the implemented methods or verifies runtime behavior. The tests are predominantly text-matching."
+      "reason": "The vast majority of tests (test_go_workspace_interface_has_org_methods, test_go_local_workspace_has_org_methods, test_python_workspace_has_abstract_org_methods, test_python_local_workspace_has_org_methods, test_go_methods_follow_existing_patterns, test_python_methods_follow_existing_patterns, etc.) are purely text-matching with 'assert X in open(path).read()'. While some tests do run 'go build' and 'py_compile', those are compilation checks, not behavioral execution of the new methods."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The tests only check for string presence in files and compilation. An agent could add stub methods that match the exact string patterns (e.g., a Go OrgGetDefault that contains 'org', 'get-default' and 'newAutoError' but just returns empty string/nil) and pass all tests. The Go build tests would pass with stubs as long as they compile."
+      "outcome": "pass",
+      "reason": "The text-matching tests check for specific implementation patterns (method definitions, CLI command strings, error handling) that wouldn't be present by default. A stub/empty implementation wouldn't contain strings like '\"org\", \"get-default\"' or 'newAutoError'. The go build/vet tests also enforce interface compliance."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/pulumi's solve.sh which is accessible in the container. An agent could read /solution/solve.sh or the patch content directly. Additionally, since tests are purely text-matching, the agent could grep test files (if accessible) and insert matching strings without understanding the task."
+      "reason": "The solution exists at /workspace/pulumi with solve.sh in /solution/solve.sh. An agent could read /solution/solve.sh to get the exact patch, or could inspect the test file at tests/test_outputs.py to see exactly what strings are being matched and craft minimal insertions to pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (Go interface methods, Go implementation, Python abstract methods, Python implementation, test functions in both languages) are checked by the test suite."
+      "reason": "All behaviors described in instruction.md (Go interface methods, Go implementation, Python abstract methods, Python implementation, Go tests, Python tests) are covered by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped by language (Go/Python) and concern (interface, implementation, patterns, syntax, tests existence)."
+      "reason": "Tests are well-named (test_go_workspace_interface_has_org_methods, test_python_local_workspace_has_org_methods, etc.), have docstrings, and are logically grouped by language and concern. There's even a comment section header for 'Pass-to-pass tests'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task produces code changes, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "File paths, variable names, commands, and method names in instruction.md appear correct and consistent with the test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction specifies which files to edit and method signatures, which is appropriate for this task type. It doesn't leak specific line numbers or exact implementation code."
+      "outcome": "fail",
+      "reason": "instruction.md names exact files (local_workspace.go, _local_workspace.py, workspace.go, _workspace.py), exact method signatures, exact struct/class names, and exact test function names, leaving essentially no localization work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -52,13 +52,15 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
 }

@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test test_wrap_raw_values_default_true greps for the exact string 'wrapRawValues ?? true' in a specific file path 'packages/client/src/runtime/core/jsonProtocol/serializeJsonQuery.ts'. While instruction.md mentions the pattern 'wrapRawValues ?? true', it does not mention the exact file path 'packages/client/src/runtime/core/jsonProtocol/serializeJsonQuery.ts' - it only says 'JSON query serialization layer'. Also, the test test_deserialize_json_object_is_a_function imports from './packages/cl"
+      "outcome": "pass",
+      "reason": "The instruction names deserializeJsonObject, normalizeJsonProtocolValues, Raw/FieldRef/Enum tagged types, wrapRawValues ?? true pattern, @prisma/client-engine-runtime exports, and all the behavioral expectations tested. The test for grep on 'wrapRawValues ?? true' in 'packages/client/src/runtime/core/jsonProtocol/serializeJsonQuery.ts' is discoverable from the instruction's description of the wrapRawValues default change and the package context."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly states the fix pattern 'wrapRawValues ?? true' and describes exactly what to change: add a 'Raw' case to deserialization, add 'FieldRef' and 'Enum' handling to normalization to pass through unchanged, rename/export 'deserializeJsonObject', and change the default to true using 'wrapRawValues ?? true'. This is essentially a specification of the patch, not just a description of what's broken."
+      "reason": "Instruction item 4 explicitly states the fix: 'The default should be true, using the pattern wrapRawValues ?? true'. This tells the agent the exact code pattern to write rather than just describing the broken behavior. Similarly, item 1 effectively says 'export a function named deserializeJsonObject' which is the fix itself."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_wrap_raw_values_default_true uses grep for the exact literal string 'wrapRawValues ?? true' in a specific file path. An alternative correct fix could use a different pattern like 'wrapRawValues !== false' or 'wrapRawValues === undefined ? true : wrapRawValues' or assign the default elsewhere, all of which would be functionally correct but fail the grep test."
+      "reason": "test_wrap_raw_values_default_true uses grep for the exact string 'wrapRawValues ?? true' in a specific file path. An alternative correct fix like 'wrapRawValues === undefined ? true : wrapRawValues' or using a different variable name would fail this test despite being functionally correct. The test asserts on gold-specific implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_wrap_raw_values_default_true is purely a grep-based text search ('grep -n \"wrapRawValues ?? true\"') with no execution or behavioral verification. While other tests do execute code, this test specifically only checks for a string pattern in source code."
+      "reason": "test_wrap_raw_values_default_true is purely a grep-based text search (assert result.returncode == 0 from grep 'wrapRawValues ?? true') with no behavioral execution. While most other tests do execute code via tsx, this test only checks for a literal string pattern in source code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_deserialize_handles_raw_type, test_normalize_handles_fieldref, test_normalize_handles_enum, test_deserialize_json_object_is_a_function) actually call the functions and check specific return values/types. A stub returning None/undefined would fail these checks (e.g., result !== 42, result.$type !== 'FieldRef', typeof check)."
+      "reason": "The f2p tests (deserialize_handles_raw_type, normalize_handles_fieldref, normalize_handles_enum, deserialize_json_object_is_a_function) all execute actual code and check specific return values or function existence. A stub returning None/undefined would fail these checks (e.g., result !== 42 check, typeof check)."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh is present in the container at /workspace and downloads the actual PR patch from GitHub. An agent could read solve.sh to discover the exact patch URL (https://github.com/prisma/prisma/pull/29182.patch) and simply apply it. Even if /solution/ isn't directly accessible, the agent could also fetch the same PR patch by finding the PR number from the instruction context."
+      "reason": "The solution is solve.sh which downloads and applies a patch from GitHub. The agent could read /workspace/prisma_repo after the solution is applied, or simply run 'curl -sL https://github.com/prisma/prisma/pull/29182.patch' themselves since the PR number is discoverable from the commit context. Also, the test file paths and expected strings are all visible in the test file if the agent can access it."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: deserializeJsonObject export (test_deserialize_json_object_is_a_function), Raw type handling (test_deserialize_handles_raw_type), FieldRef handling (test_normalize_handles_fieldref), Enum handling (test_normalize_handles_enum), wrapRawValues default (test_wrap_raw_values_default_true), existing tests passing (test_json_protocol_unit_tests, test_repo_client_engine_runtime_tests), prettier-check and check-engines-override."
+      "reason": "All behaviors listed in instruction.md are tested: deserializeJsonObject export (test 2), Raw type handling (test 3), FieldRef handling (test 4), Enum handling (test 5), wrapRawValues default (test 6), existing tests passing (tests 1, 8, 9), prettier-check (test 7), check-engines-override (test 8)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, each has a docstring explaining what it tests and why it fails on base vs passes after fix, and the module has a top-level docstring explaining the bug context."
+      "reason": "Tests are well-named (test_deserialize_handles_raw_type, test_normalize_handles_fieldref, etc.), each has a docstring explaining what it verifies and the base vs fix behavior, and they are logically grouped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a deserialization bug in a library, not producing structured data output."
+      "reason": "This task involves fixing code behavior, not producing structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names specific functions (deserializeJsonObject, normalizeJsonProtocolValues), specific tagged type cases to add ('Raw', 'FieldRef', 'Enum'), the exact code pattern to use ('wrapRawValues ?? true'), and even the specific default value change (false to true). This goes well beyond describing the symptom and essentially specifies the implementation."
+      "reason": "The instruction explicitly names the exact pattern 'wrapRawValues ?? true' and specifies the file context (JSON query serialization code). It also explicitly says to add 'deserializeJsonObject' as an export name, which is telling the agent the exact fix rather than just describing the symptom."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +60,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

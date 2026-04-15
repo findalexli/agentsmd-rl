@@ -3,62 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions check for strings, values, field names, file paths, and ordering requirements that are explicitly documented in instruction.md. The exact PHP array structure, import statement, switch case, file paths, and positioning requirements are all specified."
+      "reason": "The instruction.md specifies all config field names/values (key, name, version, url, package, enabled, beta, dev, hidden, family, prism, source, gitUrl, gitRepoName, gitUserName, gitBranch, changelog), the files to modify (app/config/sdks.php, src/Appwrite/Platform/Tasks/SDKs.php), the ordering requirement (after Kotlin, before GraphQL), and the need for a Rust language class import and switch case. All test assertions check for these specified elements."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly provides the complete PHP array to insert, the exact import line, the exact switch case code, and the exact position (after Kotlin, before GraphQL). This is a complete solution specification, not a problem description \u2014 the agent needs zero reasoning about what to change."
+      "reason": "The instruction essentially specifies the exact solution: a table of all config key-value pairs, the exact files to modify, the exact ordering (after Kotlin, before GraphQL), and the exact requirements for a use statement and switch case. A developer doesn't need to reason about what to change \u2014 the instruction is a precise recipe."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The task is essentially a config-editing task where the solution is tightly specified (exact field values, exact strings). There's effectively one correct way to implement it, so the tests matching exact strings is appropriate \u2014 alternative correct fixes would use the same values since they're specified requirements."
+      "reason": "The tests use regex and PHP token analysis to check for structural properties (e.g., 'key' => 'rust', case 'rust', new Rust(), import containing 'Rust') rather than exact line content. Alternative correct implementations (different whitespace, different array formatting, realpath vs string literal for paths) would still pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_rust_sdk_config_exists, test_rust_sdk_config_values, test_rust_language_import, test_rust_switch_case, test_rust_sdk_array_structure, test_switch_case_order) are purely text-matching with patterns like `assert \"'key' => 'rust'\" in content`. Only test_php_syntax_valid, test_composer_autoload_works, test_pint_linter, and test_phpstan_analysis execute code. The core fail-to-pass tests never import or execute the PHP configuration."
+      "outcome": "pass",
+      "reason": "Tests execute PHP scripts that use token_get_all() for token analysis, run php -l for syntax validation, run composer dump-autoload, composer validate, vendor/bin/pint, and vendor/bin/phpstan. While some tests use regex on file content, they parse PHP structure rather than doing simple string grep, and many tests actually execute PHP tooling."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would not pass the tests since they check for specific strings like \"'key' => 'rust'\", \"case 'rust':\", and \"use Appwrite\\SDK\\Language\\Rust;\" that don't exist in the base repository. The agent must actually add these entries."
+      "reason": "The base commit does not have Rust support, so a stub/no-op implementation would fail tests like test_rust_sdk_config_exists (checks for 'key' => 'rust'), test_rust_language_import (checks for Rust token in SDKs.php), and test_rust_switch_case (checks for case 'rust' and new Rust()). These require actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/appwrite/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, the instruction.md itself contains the complete solution verbatim, so an agent could simply copy-paste from the instructions without understanding anything."
+      "reason": "The solution file exists at /workspace as solve.sh (copied during setup). The agent could potentially read /solution/solve.sh or the gold patch to extract the exact changes needed. The tests also run PHP scripts from /tmp/pt.py which the agent could inspect, but more critically the solution directory may be accessible."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: config fields/values, import statement, switch case, PHP syntax, ordering after Kotlin/before GraphQL, and linting/static analysis."
+      "reason": "All behaviors described in the instruction are tested: config existence (test_rust_sdk_config_exists), config values (test_rust_sdk_config_values), all required fields (test_rust_sdk_array_structure), language import (test_rust_language_import), switch case (test_rust_switch_case), ordering (test_switch_case_order), PHP syntax (test_php_syntax_valid), and code style/static analysis (test_pint_linter, test_phpstan_analysis)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_rust_sdk_config_exists, test_switch_case_order, etc.), have docstrings explaining what they verify and whether they're fail-to-pass or pass-to-pass, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_rust_sdk_config_exists, test_rust_sdk_config_values, etc.), each has a docstring explaining what it verifies, and they're logically grouped by concern (config, language handling, syntax, CI checks)."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The exact PHP array schema for the Rust SDK configuration is fully documented in instruction.md with all field names and values."
+      "reason": "The instruction provides a detailed table of all config properties and their expected values, which constitutes the schema for the structured PHP array configuration."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact files to modify, exact position (after Kotlin, before GraphQL), exact code blocks to insert, and complete array structures. This goes far beyond naming the relevant module \u2014 it provides the full implementation."
+      "reason": "The instruction names exact files (app/config/sdks.php, src/Appwrite/Platform/Tasks/SDKs.php), exact ordering (after Kotlin, before GraphQL), and provides every single config field with exact values. This goes beyond describing the problem and essentially specifies the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is a localized insertion of a new array entry in sdks.php and a few lines in SDKs.php, not a full-file rewrite. It doesn't contradict other files."
+      "reason": "The gold diff is localized: it adds a new array entry in sdks.php (19 lines) and adds 4 lines in SDKs.php (one use statement and a 3-line switch case). No full-file rewrites or contradictions with other files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 8,
-  "fail_count": 4
+  "pass_count": 9,
+  "fail_count": 3
 }

@@ -3,64 +3,62 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific generator function names (removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties), the exact AST property path 'description: detail.description', the exact type annotation pattern 'TSPropertySignature' with key 'description' appearing at least twice, and registration in 'simplificationStrategies' array. While the instruction mentions these generator names and the description field, it doesn't mention the exact AST-level checks (e.g., TSPropertyS"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_errorsMatch_rejects_different_descriptions expects the function to be named exactly 'errorsMatch' (instruction mentions 'comparison function' but doesn't name it); test_description_in_error_types checks for exactly 2+ TSPropertySignature nodes named 'description' via AST parsing; test_error_mapping_copies_description checks for 'description: detail.description' pattern in AST (the variable name 'detail'"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states what to change: add 'description' as 'string | null' to CompileErrors and error.details types, preserve description in error mapping, compare description in errorsMatch, and add three specific generator functions (removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties). This is essentially a complete specification of the fix, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (description field missing from types, comparison, mapping) and what new strategies to add, but doesn't specify exact line numbers, exact code changes, or the specific patch to apply. A developer must still reason about where and how to implement the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_new_generators_defined requires exact function names 'removeFunctionParameters', 'removeArrayPatternElements', 'removeObjectPatternProperties' as generator functions. test_error_mapping_copies_description checks for the exact AST pattern 'description: detail.description' (ObjectProperty with specific key/value names). test_description_in_error_types counts TSPropertySignature nodes named 'description' requiring >= 2. An alternative corre"
+      "reason": "Tests are highly implementation-specific: test_error_mapping_copies_description uses AST parsing to check for an ObjectProperty with key 'description' whose value is a MemberExpression 'detail.description' \u2014 this requires the exact variable name 'detail' in the .map callback. An alternative implementation using destructuring (e.g., ({category, reason, description}) => ({category, reason, description})) would fail this AST check. test_description_in_error_types requires exactly TSPropertySignatur"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests are textual/AST inspection rather than behavioral. test_description_in_error_types parses the source and counts TSPropertySignature nodes. test_error_mapping_copies_description parses the AST looking for a specific object property pattern. test_new_generators_defined and test_new_strategies_registered parse the AST for function declarations. Only test_errorsMatch_rejects_different_descriptions actually executes the function. The build/lint tests execute but are pass_to_pass tests."
+      "outcome": "pass",
+      "reason": "Tests use a mix of approaches: test_errorsMatch_rejects_different_descriptions extracts and executes the errorsMatch function via eval(); compilation/build tests run actual TypeScript compilation and build commands; AST-based tests parse the source code structure rather than doing simple string matching. While some tests are AST-inspection rather than behavioral execution, the key behavioral test (errorsMatch) does execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (errorsMatch behavioral test, description type check, error mapping check, generators check, strategies registration) cannot be satisfied by stub implementations since they check for specific code structures and behavioral outcomes that don't exist in the original code."
+      "reason": "The f2p tests (errorsMatch behavioral test, description type checks, mapping checks, generator function definitions, strategy registration) cannot be satisfied by stub implementations \u2014 they require actual structural changes to the source file that implement the described bug fix. A no-op or empty implementation would not pass any of these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/react (same container) as solve.sh is copied there. The agent could read the solution directory if it exists. Also, since tests mostly do AST inspection of the source file, an agent could grep the test file to discover exactly what patterns are expected (e.g., 'detail.description', specific generator names) and produce them without understanding the bug."
+      "reason": "The solution directory exists at /workspace/react (solution/solve.sh is in the task), and the Dockerfile doesn't remove it. An agent could potentially read the gold patch from the solution directory or from the task's solution files if accessible. Additionally, the test file itself contains significant implementation hints in its JavaScript code strings that could be pattern-matched."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (description in error types, description in error extraction, description in errorsMatch comparison, three new generator strategies) are tested by the test suite."
+      "reason": "All explicitly required behaviors in instruction.md are tested: full error comparison including description (test_errorsMatch_rejects_different_descriptions), description in type definitions (test_description_in_error_types), description preserved in mapping (test_error_mapping_copies_description), three new generator strategies defined and registered (test_new_generators_defined, test_new_strategies_registered)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., test_errorsMatch_rejects_different_descriptions, test_description_in_error_types) and clearly grouped by concern."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test checks (e.g., 'errorsMatch must return false when error descriptions differ', 'Generator functions removeFunctionParameters... must be defined')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "The task involves modifying TypeScript source code, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, variable names, or strategy names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction names the exact file (compiler/packages/snap/src/minimize.ts), the exact function (errorsMatch), exact type names (CompileErrors, error.details), exact field names (description: string | null), and exact new function names (removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties). This goes well beyond identifying the buggy module."
+      "reason": "The instruction names very specific implementation details: the exact function 'errorsMatch', the exact fields 'category', 'reason', 'description', the exact type 'string | null', the exact array 'simplificationStrategies', and exact strategy names. While it doesn't specify line numbers, it effectively tells the agent exactly what to change in what structures, reducing the localization challenge significantly."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 4
 }

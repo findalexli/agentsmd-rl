@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (tests/v1/engine/test_abort_final_step.py), the function (test_abort_during_final_step), the concept of replacing a fixed sleep with a polling loop with timeout, and the relevant context (asyncio.sleep, status file reading, FINISHED_ statuses). All specifics checked by tests (polling loop with file read, timeout mechanism, no standalone fixed sleep, the file path) are discoverable from the instruction."
+      "reason": "The instruction names the file (tests/v1/engine/test_abort_final_step.py), the function (test_abort_during_final_step), the pattern to fix (fixed sleep replaced with polling loop with timeout), and the relevant concepts (status file, FINISHED_ entries). All test-specific paths and function names are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (fixed sleep causes race condition) and the general approach (replace fixed sleep with active polling with timeout), but does not give exact code, line numbers to change, or specific variable names. A developer still needs to reason about the implementation."
+      "reason": "The instruction describes what is broken (fixed sleep is insufficient) and the general approach (replace with active waiting/polling with timeout) but does not give exact code, line numbers to change, or specific variable names. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_polling_captures_delayed_status extracts the while-loop source code from the function and executes it in a harness that expects specific variable names like 'captured_statuses', 'status_file', 'status_lines', and specific patterns like 'open(' inside the while loop and 'FINISHED_' string matching. An alternative correct fix using e.g. a helper function, different variable names, or asyncio.wait_for with a coroutine that reads the file would likely fail these AST-based checks. The tests are "
+      "reason": "test_polling_captures_delayed_status extracts the while loop source code from the function and executes it in a harness that expects specific variable names like 'captured_statuses', 'status_file', 'status_lines', and specific patterns (e.g., 'open(' inside the loop, 'FINISHED_' string). An alternative correct fix using e.g., asyncio.wait_for with a helper coroutine, or different variable names like 'finish_statuses', or using Path.read_text() instead of open(), would fail these AST/text-based c"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_polling_captures_delayed_status actually extracts code from the solution, builds a harness, and executes it as a subprocess to verify the polling behavior works with a delayed write. Other tests use AST parsing (structural inspection) rather than pure text matching. This is a mix of structural and behavioral verification."
+      "reason": "test_polling_captures_delayed_status extracts the polling loop code and actually executes it as a subprocess, verifying behavioral correctness (that it catches a delayed write). The other tests do AST analysis which is structural but meaningful. The mix includes actual code execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would fail: test_no_standalone_fixed_sleep requires removing/moving the asyncio.sleep(0.1), test_polling_loop_with_file_read requires a while loop with open() and FINISHED_, test_timeout_mechanism_exists requires time-based timeout in the loop, and test_polling_captures_delayed_status actually executes the polling code. None of these pass with the original code."
+      "reason": "A stub/no-op implementation would fail: test_no_standalone_fixed_sleep checks the buggy sleep(0.1) is not outside a loop (base code has it outside), test_polling_loop_with_file_read requires a while loop with open() and FINISHED_ (base has none), test_timeout_mechanism_exists requires timeout logic in the loop, and test_polling_captures_delayed_status executes the loop and checks it captures delayed writes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /repo as solution/solve.sh (the gold patch), and the agent could read it. Also, the test file test_outputs.py is at a known path and contains the exact checks, so the agent could grep for expected patterns and reverse-engineer exactly what's needed without understanding the bug."
+      "reason": "The solution is in /repo as solve.sh is applied there, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh or the patch content directly. The Dockerfile doesn't remove /solution/ directory, and tests don't guard against this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires replacing fixed sleep with polling loop with timeout. The tests check: no standalone fixed sleep (test_no_standalone_fixed_sleep), polling loop exists (test_polling_loop_with_file_read), timeout mechanism exists (test_timeout_mechanism_exists), and behavioral correctness (test_polling_captures_delayed_status). All required behaviors are tested."
+      "reason": "The instruction requires replacing the fixed sleep with polling that actively waits with a timeout. The tests verify: no standalone fixed sleep (test_no_standalone_fixed_sleep), polling loop with file read (test_polling_loop_with_file_read), timeout mechanism (test_timeout_mechanism_exists), and behavioral correctness (test_polling_captures_delayed_status)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_no_standalone_fixed_sleep, test_polling_loop_with_file_read, test_timeout_mechanism_exists, test_polling_captures_delayed_status), grouped with comments (static/pass_to_pass vs fail_to_pass), and each has a docstring explaining its purpose."
+      "reason": "Tests are well-organized with clear docstrings, grouped by pass_to_pass vs fail_to_pass, and named descriptively (e.g., test_syntax_check, test_no_standalone_fixed_sleep, test_polling_loop_with_file_read)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a test file's wait strategy, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task modifies test code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function (which is the task domain), describes the general section ('after await gen_task where the status file is read'), but doesn't give exact line numbers or the specific code to write. The file is already obvious from the bug description."
+      "reason": "The instruction mentions the file and function name but these are necessary context. It describes the general approach (polling with timeout) without specifying exact lines, variable names, or implementation details. The file is already obvious from the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a test file, not a configuration edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

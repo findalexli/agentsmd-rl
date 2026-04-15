@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (openhands/server/routes/git.py), the two endpoints, the Sphinx `.. deprecated::` directive format, and the exact deprecation text strings ('The microagents UI has already been removed' and 'and is not supported in V1'). The test checks for `deprecated=True` in decorators, which is the standard FastAPI way to mark endpoints as deprecated \u2014 the instruction says 'Mark both endpoints as deprecated so they appear as deprecated when inspecting the FastAPI app or viewing"
+      "reason": "The instruction names the file (openhands/server/routes/git.py), the two endpoints, the Sphinx `.. deprecated::` directive format, and the exact deprecation text strings ('The microagents UI has already been removed' and 'and is not supported in V1'). The tests check for `deprecated=True` in decorators, the directive in docstrings, and the specific text strings \u2014 all discoverable from the instruction. Function names `get_repository_microagents` and `get_repository_microagent_content` are implici"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what should be done (mark endpoints as deprecated, add Sphinx directives with specific text) but doesn't specify exact line numbers, exact code snippets, or exact placement. A developer still needs to figure out the specific decorator keyword and docstring formatting."
+      "reason": "The instruction describes what needs to happen (mark endpoints as deprecated, use Sphinx directive with specific text) but does not specify exact code changes like 'add deprecated=True to line X' or provide the exact patch. A developer still needs to figure out how to add the deprecated flag and format the docstring."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests use AST parsing to check for `deprecated=True` specifically in the `@app.get` decorator's keyword arguments. An alternative correct fix like using FastAPI's `Depends` with a deprecation warning, using a custom decorator wrapper, or setting `deprecated=True` via a route configuration dict would fail. However, the main concern is the docstring checks: tests assert exact substrings 'microagents UI has already been removed' and 'not supported in V1' and '.. deprecated::'. While these are s"
+      "reason": "The tests use AST analysis to check for `deprecated=True` specifically as a keyword argument in @app.get decorators, and check for exact substring matches in docstrings ('microagents UI has already been removed', 'not supported in V1', '.. deprecated::'). While the decorator check is fairly constrained, a correct alternative that uses a different docstring phrasing containing the required concepts (e.g., 'The microagents UI has already been removed from the product and is not supported in V1') w"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The tests primarily use AST parsing to check for the presence of specific strings in docstrings (`'.. deprecated::' in docstring`, `'microagents UI has already been removed' in docstring`) and specific keyword arguments in decorators. They never actually import the FastAPI app, instantiate routes, or call endpoints. The `test_repo_ruff_lint` and `test_repo_py_compile` tests do execute subprocesses, but the core deprecation tests are essentially structural/textual checks via AST, not behavioral v"
+      "reason": "The tests parse the file AST and check for specific strings in docstrings and keyword arguments in decorators. They do NOT import the FastAPI app, instantiate it, or call the OpenAPI schema to verify the endpoints actually appear as deprecated. Tests like test_microagents_endpoint_docstring_deprecated are purely textual checks ('assert \".. deprecated::\" in docstring'). The subprocess tests only run linting/syntax checks, not behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_repo_ruff_lint, test_repo_py_compile, test_functions_exist, test_file_syntax_valid) verify that existing functionality still works. A stub implementation would not have the existing function definitions, so test_functions_exist would fail. The f2p tests serve their purpose of ensuring the file remains valid."
+      "reason": "A stub or no-op implementation would fail: the tests check for `deprecated=True` in decorator keywords and specific deprecation text in docstrings. Without actually modifying the file, neither the deprecated flag nor the docstring text would be present."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/openhands and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact patch. Additionally, the test file at tests/test_outputs.py reveals exactly what's checked (deprecated=True keyword, exact docstring substrings), so grepping for expected fixture values is trivial."
+      "reason": "The solution file exists at /workspace/openhands (the solve.sh operates there) and the agent could read /solution/solve.sh or examine the test file at tests/test_outputs.py to discover exactly what strings and patterns are expected. The Dockerfile doesn't restrict access to these paths."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) marking both endpoints as deprecated in API/OpenAPI docs \u2014 tested via deprecated=True checks; (2) adding Sphinx deprecated directives with specific text \u2014 tested via docstring checks. All explicit requirements are covered."
+      "reason": "The instruction requires: (1) marking both endpoints as deprecated (tested via decorator keyword check), (2) using Sphinx `.. deprecated::` directive in docstrings with specific text (tested via docstring substring checks). All explicitly required behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_microagents_endpoint_deprecated_flag, test_microagents_content_endpoint_docstring_deprecated, etc.), have docstrings, use helper functions, and are logically grouped with a clear comment separating pass-to-pass tests."
+      "reason": "Tests are well-named (test_microagents_endpoint_deprecated_flag, test_microagents_content_endpoint_docstring_deprecated, etc.), have docstrings, and are logically grouped by concern (decorator flags, docstrings, syntax, existence, CI checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data output; it modifies API endpoint decorators and docstrings."
+      "reason": "The task modifies Python source code to add deprecation markers; it does not produce structured data output like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md, tests, and solution files."
+      "reason": "File paths, function names, endpoint paths, and directive names are all correctly spelled and consistent between instruction.md and the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file to modify (openhands/server/routes/git.py) which is appropriate since the task domain is about specific API endpoints. It doesn't specify exact line numbers or exact code changes \u2014 just the behavioral outcome and text requirements."
+      "reason": "The instruction names the file to modify (openhands/server/routes/git.py) which is appropriate given it's the only file involved. It doesn't specify line numbers or exact code to write, just the desired outcome and text content."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Python source, not a configuration file edit."
+      "reason": "This is a code-only task modifying a Python source file, not a configuration edit task."
     }
   },
   "tier_a_fails": [

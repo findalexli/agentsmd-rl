@@ -3,61 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_file_not_stub asserts `normalizeDirectiveWhitespace` must be present in the file and that the file has >50 lines. The instruction mentions `parseInlineDirectives` but does not explicitly require `normalizeDirectiveWhitespace` to exist as an exported/named function, nor does it specify a minimum file length. Also test_no_any_type, test_no_prototype_mutation, test_no_dynamic_import, test_no_ts_nocheck, test_no_inline_lint_suppression assert specific coding constraints not mentioned in the ins"
+      "reason": "test_file_not_stub asserts that 'normalizeDirectiveWhitespace' must be present in the source file (assert 'normalizeDirectiveWhitespace' in src), but instruction.md never mentions this function name as a required export or identifier. Also, test_file_not_stub requires len(src.splitlines()) > 50, which is not stated in instruction.md. The instruction mentions 'normalizeDirectiveWhitespace' is not discoverable from the instruction alone as a required string in the file."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the broken behavior (whitespace normalization flattens indentation) and the expected behavior (indentation preserved, word-boundary space insertion, etc.) but does not specify exact code changes like 'change line X to Y' or 'replace function A with B'. The developer must reason about what to change."
+      "reason": "The instruction describes the broken behavior (whitespace normalization flattens indentation) and the expected behavior, but does not specify the exact code changes like 'add replacementPreservesWordBoundary function' or 'change line X to Y'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_file_not_stub asserts `normalizeDirectiveWhitespace` must appear in the source file. The gold solution happens to keep this function name, but an alternative correct fix could rename it, inline the logic, or restructure differently. This forces a specific internal helper function name that a correct alternative wouldn't necessarily share."
+      "reason": "test_file_not_stub asserts 'normalizeDirectiveWhitespace' must be present in the source file. An alternative correct implementation that renames or removes this function (e.g., inlining the logic or using a different function name) would fail this test. This constrains the solution to gold-specific internal function names."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "While many tests execute the code via tsx subprocess calls (_call_parse), test_file_not_stub, test_no_ts_nocheck, test_no_inline_lint_suppression, test_no_any_type, test_no_prototype_mutation, test_no_dynamic_import are purely text-based checks (reading file content and asserting string presence/absence). test_file_not_stub specifically only checks that strings like 'normalizeDirectiveWhitespace' appear in source text without execution. However, the majority of behavioral tests do execute code, "
+      "outcome": "pass",
+      "reason": "Most tests use _call_parse() which executes the TypeScript code via tsx subprocess and checks the returned JSON values. Tests like test_repo_lint_directive_tags, test_repo_unit_tests_directive_tags also run actual tools. While some tests (test_file_not_stub, test_no_ts_nocheck, etc.) do text inspection, the core behavioral tests execute the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (indentation preservation, code block indentation, YAML indentation, word-boundary space insertion, leading blank line stripping) assert specific content in the returned text field from parseInlineDirectives. A stub returning empty string or default values would fail these assertions (e.g., '    indented text' in r1['text'] would fail for empty string)."
+      "reason": "A stub returning e.g. {hasReplyTag: false, text: ''} would fail test_basic_reply_tag_detection (which checks hasReplyTag is True for tagged input and text contains 'hello world'), test_indentation_preserved_plain_text, etc. The tests require specific correct outputs."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/openclaw as solve.sh could be read. The gold patch is in solution/solve.sh which may be accessible in the container. An agent could potentially read it. Additionally, the test file test_outputs.py is at a known path and contains all expected values, so the agent could grep for fixture strings."
+      "reason": "The solution file exists at /workspace/openclaw as solve.sh could potentially be accessed. Additionally, the gold patch is in solution/solve.sh which may be accessible in the container. The agent could read the solution directory to extract the exact patch."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (return fields, indentation preservation, word-boundary space insertion, leading blank line stripping, real implementation requirement) are tested by corresponding test functions."
+      "reason": "All five behavior requirements in instruction.md (return fields, indentation preservation, word-boundary space insertion, leading blank line stripping, real implementation) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_indentation_preserved_plain_text, test_code_block_indentation_preserved, etc.) with docstrings explaining what each test verifies. They are logically grouped by behavior category."
+      "reason": "Tests are well-named (test_indentation_preserved_plain_text, test_code_block_indentation_preserved, test_yaml_indentation_preserved, etc.) and each has a docstring explaining what it checks. They are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the return schema: an object with `hasReplyTag` (boolean) and `text` (string) fields, with examples for each case."
+      "reason": "The instruction documents the return schema: an object with hasReplyTag (boolean) and text (string) fields, with examples for each case."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file to modify (src/utils/directive-tags.ts) and the function (parseInlineDirectives), which is appropriate for the task domain. It doesn't specify exact line numbers or the specific code changes needed."
+      "reason": "The instruction names the file (src/utils/directive-tags.ts) and the function (parseInlineDirectives) but doesn't specify exact line numbers or the precise code fix. The file is already obvious from the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 4
+  "pass_count": 8,
+  "fail_count": 3
 }

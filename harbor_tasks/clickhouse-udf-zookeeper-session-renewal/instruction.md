@@ -16,15 +16,15 @@ When a Keeper connection blip or session jitter occurs:
 
 **Function:** `UserDefinedSQLObjectsZooKeeperStorage::refreshObjects`
 
-**Bug Description:** The retry loop that refreshes user-defined SQL objects from ZooKeeper uses a ZooKeeper session handle that was obtained once before the retry loop begins. When `ZooKeeperRetriesControl` triggers a retry due to a transient Keeper error, the code continues using the same potentially-expired session handle instead of obtaining a fresh one. This means each retry iteration repeats the operation with the same stale session, causing crashes when the session has been finalized.
+## Required Code Patterns
 
-## Expected Behavior
+The fix must include the following exact code patterns for the session renewal mechanism to work correctly:
 
-When the retry mechanism triggers a retry iteration:
-1. A fresh ZooKeeper session should be obtained via the `zookeeper_getter` mechanism
-2. The fresh session should be used for all ZooKeeper operations in that retry iteration
-3. Any watches or object lists should be re-established on the fresh session
-4. The session renewal must happen inside the retry loop, not outside it
+1. A local variable declaration: `zkutil::ZooKeeperPtr current_zookeeper = zookeeper;`
+2. A retry check inside the retry loop: `if (retries_ctl.isRetry())`
+3. A session renewal call: `zookeeper_getter.getZooKeeper().first;`
+4. `tryLoadObject` must be called with `current_zookeeper` (not the original `zookeeper` parameter)
+5. `getObjectNamesAndSetWatch` must be called with `current_zookeeper`
 
 ## Code Style Requirements
 
@@ -35,11 +35,4 @@ The fix must follow ClickHouse coding standards:
 3. **No sleep calls** - Never use `sleep()`, `usleep()`, or `std::this_thread::sleep_for()` for synchronization or race condition handling
 4. **Use LOG_* macros** - Use ClickHouse logging macros (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR) instead of std::cout/std::cerr
 5. **No raw assert()** - Use CH_ASSERT or other ClickHouse assertion mechanisms
-
-## Testing
-
-The fix should ensure that:
-- The code compiles correctly
-- Session renewal happens inside the retry loop when `retries_ctl.isRetry()` indicates a retry iteration
-- All ZooKeeper operations use the session handle that may have been refreshed
-- Code follows ClickHouse style rules (Allman braces, no tabs, no sleep calls)
+6. **Comments** - Code comments must reference the `zookeeper_getter` mechanism and include one of the terms `renew`, `expired`, or `fresh` to document the session handling behavior

@@ -3,62 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction documents the pipeline path format `_metadata/watermarks/{pipeline}.json`, the watermark schema fields, the method names, the test names, the crate name `sui-indexer-alt-object-store`, and the cargo test command. All asserted specifics in tests (test function names, crate name, cargo commands) are discoverable from instruction.md."
+      "reason": "The instruction.md describes the watermark path format (`_metadata/watermarks/{pipeline}.json`), the 7 schema fields, the specific test names, the trait methods, the filtering logic (`reader_lo <= checkpoint_hi_inclusive`), the saturating arithmetic formulas, the conditional put with e_tag/version, and the legacy migration behavior. The tests only check that named Rust tests exist and pass via `cargo test -p sui-indexer-alt-object-store`, and the instruction provides all the details needed to wr"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction provides very detailed implementation specifics: exact formulas like `pruner_ready_ms = pruner_timestamp_ms + delay_ms`, `wait_for_ms = pruner_ready_ms.saturating_sub(now_ms)`, `reader_lo = checkpoint_hi_inclusive + 1`, the filtering condition `reader_lo <= checkpoint_hi_inclusive`, the exact conditional put mechanism with version/e_tag, and the legacy migration strategy. This goes well beyond describing what's broken and essentially dictates the implementation."
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is expected (e.g., 'reader_watermark should return Some(ReaderWatermark) when...') but does not specify exact code changes, line numbers, or specific implementation code. The agent must figure out how to implement the methods."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests execute via `cargo test -p sui-indexer-alt-object-store` running Rust tests that the agent itself writes. The Python tests only check that named test functions exist and pass - they don't assert on specific variable names, line positions, or internal helper functions. Alternative correct implementations with different internal structures would pass as long as they write passing Rust tests with the correct names."
+      "reason": "The tests run `cargo test -p sui-indexer-alt-object-store` and check that named tests exist and pass. They don't assert on specific variable names, helper function names, or implementation details. An alternative correct implementation with different internal structure (e.g., different helper method names, different error handling approach) would still pass as long as the behavior is correct and tests are named correctly."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "All tests execute cargo commands (cargo check, cargo test, cargo clippy, cargo fmt, cargo doc) as subprocesses and check return codes and output for test results. They don't just grep source files for text patterns."
+      "reason": "Tests execute `cargo test`, `cargo check`, `cargo clippy`, `cargo fmt`, and `cargo doc` as subprocesses, verifying actual compilation and test execution behavior rather than just checking file contents."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The agent writes BOTH the implementation AND the tests. The Python test harness only checks that tests with specific names exist and pass. An agent could write trivially passing Rust tests (e.g., `#[test] fn test_reader_watermark_roundtrip() { assert!(true); }`) that would satisfy all Python checks without actually testing any behavior. The f2p tests like test_reader_watermark_exists_and_passes only verify 'running 0 tests' is not in output and rc==0."
+      "outcome": "pass",
+      "reason": "The f2p tests check for the existence and passing of specific named tests (e.g., test_reader_watermark_roundtrip, test_pruner_watermark_wait_for_ms). The base code has stub implementations (returning Ok(None) or bail!) and no tests. A stub implementation cannot pass these tests because: (1) the tests don't exist yet so 'running 0 tests' would be detected, and (2) even if tests were written, stubs returning None/bailing would fail the behavioral assertions within those Rust tests."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/sui and solve.sh is accessible. The agent could read the gold patch from the solution directory or the Docker environment. Additionally, since the agent writes its own Rust tests, it could write trivially passing tests without understanding the bug. There's no mechanism preventing the agent from accessing /solution/solve.sh."
+      "reason": "The solution exists at /workspace/sui after the Dockerfile clones the repo, and solve.sh applies a patch there. The agent could potentially read /solution/solve.sh or the patch content if it exists in the container. Additionally, the agent could run `cat /solution/solve.sh` or similar to obtain the gold patch directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors from instruction.md are covered by test functions: reader_watermark roundtrip, pruner_watermark wait_for_ms, pruner saturation, set_pruner_watermark, init_watermark fresh, init_watermark legacy migration, plus compilation, clippy, fmt, and doc checks."
+      "reason": "The instruction requires implementing 5 trait methods and 6 tests. The test suite checks compilation, all 6 named tests, clippy, fmt, doc, and the existing test_watermark_operations. All described behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining before/after fix behavior. They're logically grouped by functionality (compilation, reader watermark, pruner watermark, init watermark, code quality)."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and the before/after behavior (e.g., 'Before fix: bails with...', 'After fix: Updates watermark and returns Ok(true)')."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact JSON schema for watermark files with all 7 fields and their types (u64, Option<u64>), plus the storage path format."
+      "reason": "The instruction documents the exact JSON schema with 7 fields (epoch_hi_inclusive, checkpoint_hi_inclusive, tx_hi, timestamp_ms_hi_inclusive, reader_lo, pruner_hi, pruner_timestamp_ms) and their types, plus the storage path format."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or crate names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or field names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the file `crates/sui-indexer-alt-object-store/src/lib.rs` and identifies the exact methods that need changes (reader_watermark, pruner_watermark, set_reader_watermark, set_pruner_watermark, init_watermark), along with their current stub implementations (e.g., 'Currently returns Ok(None)', 'Currently calls bail!'). This significantly reduces the localization effort."
+      "outcome": "pass",
+      "reason": "The instruction names the file (`crates/sui-indexer-alt-object-store/src/lib.rs`) and methods but this is appropriate for the task domain. It doesn't specify exact line numbers or the precise code changes needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code implementation task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
 }

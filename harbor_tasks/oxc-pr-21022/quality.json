@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction lists all file paths tested (RUST_GENERATOR, GENERATED_JS_FILES, SOURCE_CODE_TS), the exact string patterns asserted (e.g., 'utf8Slice, latin1Slice', 'utf8Slice.call(uint8, pos, end)', '{ utf8Slice } = Buffer.prototype'), the cargo check/test commands, and the absence conditions (no TextDecoder, decodeStr, textDecoder). All test specifics are discoverable from instruction.md."
+      "reason": "The instruction lists all file paths tested (RUST_GENERATOR, all GENERATED_JS_FILES, SOURCE_CODE_TS), the exact string patterns asserted (utf8Slice, latin1Slice destructuring, utf8Slice.call patterns, absence of TextDecoder/decodeStr), and the cargo check/test commands. All test-specific literals and paths are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact replacement patterns: 'must use utf8Slice.call(uint8, pos, end)', 'must contain { utf8Slice, latin1Slice } = Buffer.prototype', 'must use utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen)'. These are the exact code strings to write, leaving no reasoning about WHAT to change."
+      "reason": "instruction.md explicitly states the exact replacement patterns: 'Must use utf8Slice.call(uint8, pos, end)', 'Must contain { utf8Slice, latin1Slice } = Buffer.prototype', 'Must use utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen)'. These are the exact solutions, not just descriptions of what's broken. The Required Patterns section is essentially the complete fix specification."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'utf8Slice.call(uint8, pos, end)' and '{ utf8Slice, latin1Slice } = Buffer.prototype'. An alternative correct fix using e.g. 'Buffer.prototype.utf8Slice.call(uint8, pos, end)' directly without destructuring, or using different variable naming/spacing, would fail these text-matching assertions."
+      "reason": "Tests assert exact literal strings like 'utf8Slice.call(uint8, pos, end)', '{ utf8Slice, latin1Slice } = Buffer.prototype', and '{ utf8Slice } = Buffer.prototype'. An alternative correct fix using e.g. 'Buffer.prototype.utf8Slice.call(uint8, pos, end)' without destructuring, or different variable naming, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_generated_js_use_utf8slice, test_no_textdecoder_in_generated_js, test_source_code_ts_uses_utf8slice, test_rust_generator_uses_utf8slice, etc.) are entirely 'assert X in open(path).read()' pattern-matching on file contents. While pass-to-pass tests do run cargo check/test, the core fail-to-pass tests never execute the JS code or import modules."
+      "reason": "The fail-to-pass tests (test_rust_generator_uses_utf8slice, test_generated_js_use_utf8slice, test_no_textdecoder_in_generated_js, test_source_code_ts_uses_utf8slice, test_comments_reference_utf8slice) are all purely text-matching assertions using 'assert X in content'. The pass-to-pass tests do run cargo check/test, but all f2p tests are purely string-in-file checks with no execution of the modified code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings like 'utf8Slice.call(uint8, pos, end)' that don't exist in the base commit files. A stub/no-op implementation would not add these strings, so the tests would fail without actual changes."
+      "reason": "The f2p tests check for specific strings like 'utf8Slice.call(uint8, pos, end)' and absence of 'new TextDecoder' that don't exist in the base commit files. A stub/no-op implementation wouldn't pass since the base files contain TextDecoder patterns and lack utf8Slice patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/oxc or could be accessed via the solve.sh. The agent could also read the test file at tests/test_outputs.py to see exact expected strings and simply write those strings into the files. The tests are pure text-matching, so an agent could match fixture strings without understanding the bug."
+      "reason": "The solution is in /workspace/oxc's container environment at solution/solve.sh, and the test file at tests/test_outputs.py contains all expected literal strings. An agent could read the test file to extract exact patterns to match, or read solve.sh to copy the patch directly. No measures prevent this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (Rust generator patterns, generated JS patterns, source_code.ts patterns, no TextDecoder/decodeStr, cargo check compilation, comments referencing utf8Slice) are tested."
+      "reason": "All required patterns listed in instruction.md (utf8Slice destructuring, utf8Slice.call usage, absence of TextDecoder/decodeStr, comment updates, cargo compilation) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments (fail-to-pass, pass-to-pass, integration), named descriptively (test_rust_generator_uses_utf8slice, test_no_textdecoder_in_generated_js, etc.), and have docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear sections (fail-to-pass vs pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code file modifications, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md and tests match consistently with no apparent typos."
+      "reason": "File paths, commands, and variable names in the instruction match those in the test suite with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact file paths, exact string patterns to use (e.g., 'utf8Slice.call(uint8, pos, end)'), and exact patterns to remove. It even specifies 'STR_DESERIALIZER_BODY' internal constant name and the exact destructuring syntax. This goes far beyond describing the problem."
+      "reason": "instruction.md names exact file paths, exact string patterns to use (e.g., 'utf8Slice.call(uint8, pos, end)'), and exact patterns to remove. The 'Required Patterns' section specifies the precise code changes needed, going well beyond identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-editing task, not a config-editing task."
     }
   },
   "tier_a_fails": [

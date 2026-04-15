@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The instruction doesn't mention the specific score threshold value 0.7 (tests assert '0.7' in src), the exact class names TestEagle3ServerPage (test_class_names_updated checks for it), or the specific environment variable pattern 'override(' (test_env_override_added). The instruction says 'a value appropriate for EAGLE3' but doesn't specify 0.7, making it undiscoverable."
+      "reason": "The instruction mentions updating the score threshold to 'a value appropriate for EAGLE3' but never specifies the exact value 0.7. The test test_score_threshold_updated asserts '0.7' must be in the source. Similarly, the instruction doesn't mention the old threshold value 0.22 that the test checks must be absent. The exact class names TestEagle3ServerBase and TestEagle3ServerPage are tested but only partially implied by the instruction ('Eagle3 in the name'). The override pattern for SGLANG_ALLO"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: use DEFAULT_DRAFT_MODEL_EAGLE3, DEFAULT_TARGET_MODEL_EAGLE3, set algorithm to EAGLE3, add --dtype float16, --chunked-prefill-size 1024, use override() for SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN, rename to Eagle3. This is a step-by-step recipe, not a description of what's broken."
+      "reason": "The instruction explicitly states the exact changes: import EAGLE3 constants, use EAGLE3 class names, set algorithm to EAGLE3, add --dtype float16 and --chunked-prefill-size 1024, add override() for SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN, update naming to TestEagle3LargeBS. This is essentially a step-by-step fix description rather than a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching (e.g., test_new_args_added checks for exact string '\"--dtype=float16\"', test_score_threshold_updated checks for exact '0.7', test_name_updated checks for exact 'TestEagle3LargeBS'). An alternative correct implementation using e.g. '--dtype', 'float16' as separate args or threshold 0.71 would fail."
+      "reason": "Tests use string matching like '\"--dtype=float16\"' (test_new_args_added) requiring exact quoting style, 'TestEagle3LargeBS' as an exact string (test_name_updated), and exact class names TestEagle3ServerBase/TestEagle3ServerPage (test_class_names_updated). An alternative correct fix using different formatting (e.g., '--dtype', 'float16' as separate args instead of '--dtype=float16') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests (test_imports_use_eagle3, test_class_names_updated, test_speculative_algorithm_eagle3, test_new_args_added, test_env_override_added, test_name_updated, test_score_threshold_updated) are purely text-matching with 'assert X in src' patterns. While there are py_compile subprocess checks, the core behavioral tests only inspect source text, never execute the test file or import its classes."
+      "reason": "Almost every fail-to-pass test (test_imports_use_eagle3, test_class_names_updated, test_speculative_algorithm_eagle3, test_new_args_added, test_env_override_added, test_name_updated, test_score_threshold_updated) reads the source file as text and checks for string presence. While some use AST parsing (test_class_names_updated, test_not_stub), no test actually imports, executes, or runs the test code. The repo_tests only check py_compile syntax."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub file (empty or minimal) would not contain the required strings like DEFAULT_DRAFT_MODEL_EAGLE3, TestEagle3ServerBase with 2+ methods, EAGLE3, --dtype=float16, etc. The test_not_stub check specifically verifies the class has at least 2 methods with meaningful setUpClass."
+      "reason": "A stub file (empty or pass-only) would fail test_not_stub which checks for at least 2 methods and meaningful setUpClass implementation, and would also fail all the string-presence checks since the required constants/class names wouldn't be present."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/sglang as solve.sh content can be inferred. More critically, the agent could read the test file tests/test_outputs.py to discover all exact strings being checked (0.7, TestEagle3LargeBS, etc.) and produce a file matching those patterns without understanding the bug."
+      "reason": "The solution is in /workspace/sglang's git history or the solve.sh script. The agent could read the solution file at solution/solve.sh if accessible in the container, or simply grep the test file for expected patterns. The tests only check string presence, making it trivial to produce a passing file by copying expected strings without understanding."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md (EAGLE3 imports, class names, algorithm setting, dtype/chunked-prefill-size args, env override, naming, threshold) are tested by corresponding test functions."
+      "reason": "All behaviors listed in the instruction (EAGLE3 imports, class names, algorithm setting, dtype/chunked-prefill args, env override, naming update, score threshold) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub), descriptive function names, and docstrings explaining each check."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each check's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing a Python test file, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves editing a Python test configuration file, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file path (test/registered/spec/eagle/test_eagle_infer_beta.py) and specifies exact constant names (DEFAULT_DRAFT_MODEL_EAGLE3, DEFAULT_TARGET_MODEL_EAGLE3), exact argument values (--dtype float16, --chunked-prefill-size 1024), and exact patterns (override() for SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN), which is excessive localization for what should be a debugging/migration task."
+      "reason": "The instruction explicitly names the exact file to modify (test/registered/spec/eagle/test_eagle_infer_beta.py) and specifies exact constant names, class names, argument values, and even the override pattern to use, leaving essentially no localization or reasoning work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff (solve.sh) makes localized edits to a single file (test_eagle_infer_beta.py) with targeted string replacements, not a full-file rewrite."
+      "reason": "The gold patch (solve.sh) makes localized edits to a single file via targeted string replacements, not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [

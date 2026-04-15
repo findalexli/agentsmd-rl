@@ -2,55 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all file paths (utils.ts, plugin.ts, preview-server-plugin/plugin.ts), the specific variable/function names (isRolldown, bundlerOptionsKey, getBundlerOptions), the import pattern ('import * as vite from vite'), the detection mechanism ('rolldownVersion' in vite), and the fallback logic (rolldownOptions/rollupOptions). All assert'd specifics in tests are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings like \"isRolldown = 'rolldownVersion' in vite\", \"bundlerOptionsKey = isRolldown\", \"import * as vite from 'vite'\", \"build?.rolldownOptions ?? build?.rollupOptions\", \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\", \"getBundlerOptions(serverEnv?.build)?.input\", and \"[bundlerOptionsKey]:\". The instruction.md does not specify these exact variable names, import styles, or expression forms. For example, the instruction says 'export a computed k"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details: 'Check if rolldownVersion exists in the vite module', 'Export a computed key bundlerOptionsKey that returns rolldownOptions for Vite 8+ or rollupOptions for Vite 7', 'Export a helper function getBundlerOptions(build) that reads build.rolldownOptions or build.rollupOptions', 'Replace hardcoded rollupOptions: with computed [bundlerOptionsKey]:'. This is a step-by-step solution, not a problem description."
+      "reason": "The instruction tells the agent exactly what to do: detect 'rolldownVersion' in vite ('Vite exposes a marker...that identifies when Rolldown is in use'), export a computed key resolving to the correct property name, export a helper that reads bundler options, and replace all hardcoded references with computed property access. It specifies the exact files to change and the exact pattern of the fix. This goes well beyond describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details like 'isRolldown = \\'rolldownVersion\\' in vite', 'bundlerOptionsKey = isRolldown', 'export function getBundlerOptions', 'import * as vite from \\'vite\\'', 'build?.rolldownOptions ?? build?.rollupOptions', and exact import statements. An alternative correct fix using different variable names, a different detection approach (e.g., semver check), or a different function signature would fail these string-matching tests."
+      "reason": "Tests assert gold-specific implementation details: exact variable names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact import syntax (\"import * as vite from 'vite'\", \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\"), exact expressions (\"build?.rolldownOptions ?? build?.rollupOptions\"), and exact usage patterns (\"[bundlerOptionsKey]:\"). An alternative correct fix using different names (e.g., 'bundlerKey', 'getOptions') or a different detection mechanism would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_utils_exports_bundler_detection, test_utils_imports_vite, test_getBundlerOptions_uses_rolldownOptions_fallback, test_bundlerOptionsKey_returns_correct_key, test_plugin_imports_bundler_utils, etc.) are ALL 'assert X in open(path).read()' pattern \u2014 pure text matching with no code execution, no imports, no behavioral verification. The p2p tests do run subprocesses (build, lint, typecheck), but every f2p test is text-based."
+      "reason": "The f2p tests (test_utils_exports_bundler_detection, test_utils_imports_vite, test_getBundlerOptions_uses_rolldownOptions_fallback, test_plugin_imports_bundler_utils, etc.) are ALL pure text-matching: they read files and assert substrings exist. None import or execute the TypeScript code, none call functions. The p2p tests (build, types, eslint) do run subprocesses, but every f2p test is purely 'assert X in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all f2p tests are string-matching against file contents, a stub implementation that simply writes the exact expected strings into the files (without any real logic) would pass all f2p tests. The tests don't verify that getBundlerOptions actually works correctly at runtime."
+      "reason": "Since f2p tests only check for string presence in source files, a stub implementation that simply contains the asserted strings as comments or dead code would pass all f2p tests. For example, adding '// isRolldown = rolldownVersion in vite' and similar strings would satisfy the assertions without implementing any actual fix."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/router's git history accessible via solve.sh, and the agent could read the test file at tests/test_outputs.py to see exact expected strings (e.g., 'isRolldown = \\'rolldownVersion\\' in vite') and write them verbatim. The tests are pure string matching so the agent can match literal fixture strings without understanding the bug."
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly (cat /workspace/router/../solution/solve.sh or find / -name solve.sh). Additionally, since tests are pure string matching, the agent could grep test files to find exact strings to insert."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires adding detection utilities, updating plugin.ts for client/server configs, and updating preview-server-plugin. All these are tested via string matching plus build/lint/type checks."
+      "reason": "The instruction mentions build, types, eslint passing, and the specific changes to utils.ts, plugin.ts, and preview-server-plugin/plugin.ts. All of these are tested (build/types/eslint via subprocess tests, file changes via string-matching tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (utils exports, plugin imports, preview server, compilation checks), and annotated with f2p/p2p markers."
+      "reason": "Tests are well-named with descriptive docstrings, grouped by file (utils, plugin, preview-server), and marked as f2p or p2p. The structure is clear and informative."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and function names are all consistent and correctly spelled across instruction, tests, and solution."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact line numbers ('~line 247 client, ~line 267 server', '~line 30'), exact variable names to create (bundlerOptionsKey, getBundlerOptions, isRolldown), and exact replacement patterns ([bundlerOptionsKey]: instead of rollupOptions:). This goes far beyond describing what's broken."
+      "reason": "The instruction names exact files to modify (utils.ts, plugin.ts, preview-server-plugin/plugin.ts) and describes the exact nature of the fix (add detection using vite marker, export computed key, replace hardcoded rollupOptions). It also hints at the specific detection mechanism ('Vite exposes a marker in its module')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -61,6 +62,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

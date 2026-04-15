@@ -2,40 +2,40 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific strings/patterns not fully specified in instruction.md. For example, test_min_tps_validation_in_stress asserts 'let min_tps = opts.min_tps;' exactly, and 'if let Some(min_tps) = min_tps' exactly, and 'duration.as_secs_f64()' and 'num_success_txes as f64'. The instruction says 'calculates the actual TPS from num_success_txes / duration' but doesn't mandate the exact Rust expressions like 'duration.as_secs_f64()' or 'num_success_txes as f64'. Also 'let min_tps = opts.min"
+      "outcome": "pass",
+      "reason": "All test assertions check for specific strings, patterns, and file paths that are explicitly mentioned in instruction.md: 'pub min_tps: Option<f64>', '#[clap(long, global = true)]', 'let min_tps = opts.min_tps;', 'if let Some(min_tps) = min_tps', 'num_success_txes as f64', 'duration.as_secs_f64()', 'is below minimum threshold', 'anyhow::anyhow!' / 'anyhow!(', file paths options.rs and stress.rs, license headers, and cargo check command."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes WHAT to add (a --min-tps flag with specific behavior) and which files to modify, but doesn't give exact code lines or diffs. It describes the feature requirements, not the exact implementation."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact code patterns to use: 'let min_tps = opts.min_tps;', 'if let Some(min_tps) = min_tps', the exact TPS calculation formula, the exact error message format containing 'is below minimum threshold', and even the exact clap attribute '#[clap(long, global = true)]'. This goes beyond describing what's broken and tells the agent exactly what code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details. test_min_tps_validation_in_stress requires exactly 'let min_tps = opts.min_tps;', 'if let Some(min_tps) = min_tps', 'num_success_txes as f64', 'duration.as_secs_f64()', and 'is below minimum threshold'. An alternative correct implementation using e.g. 'let min = opts.min_tps;' or 'if let Some(threshold) = min_tps' or 'opts.min_tps.map(|t| ...)' or 'as_secs_f64() on duration' stored differently would fail these string-matching tests despite being"
+      "reason": "Tests assert on gold-specific implementation details like exact variable extraction pattern 'let min_tps = opts.min_tps;' (test_min_tps_validation_in_stress), exact conditional pattern 'if let Some(min_tps) = min_tps' \u2014 an alternative correct implementation using 'if let Some(threshold) = opts.min_tps' or 'match opts.min_tps' would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The majority of fail-to-pass tests (test_min_tps_option_parses, test_min_tps_field_exists_in_opts, test_min_tps_validation_in_stress, test_license_header_options_rs, test_license_header_stress_rs) are purely text-matching via 'assert X in open(path).read()'. Only test_min_tps_compiles and the pass-to-pass tests actually execute the code. The core feature validation tests do not call/execute anything."
+      "reason": "Tests test_min_tps_option_parses, test_min_tps_field_exists_in_opts, test_min_tps_validation_in_stress, test_license_header_options_rs, and test_license_header_stress_rs are all purely text-matching with 'assert X in open(path).read()'. Only test_min_tps_compiles and the pass-to-pass tests actually execute the code. The majority of f2p tests are text-based, not behavioral."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty files, no changes) would fail test_min_tps_compiles (since it checks cargo check after presumably the field is used), test_min_tps_option_parses (checks for 'pub min_tps: Option<f64>'), and test_min_tps_validation_in_stress (checks for validation logic). These require actual code additions."
+      "reason": "A stub implementation that does nothing would fail test_min_tps_compiles (cargo check would fail if min_tps field is referenced but not defined) and would fail the text-matching tests since the required strings wouldn't be present. The tests do require actual code changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/sui as applied by solve.sh, and the agent could read solution/solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what strings to include. The tests only check for string presence in files, so the agent could simply grep the test file for expected strings and insert them."
+      "reason": "The solution is available at /workspace/sui after solve.sh runs, and the agent could read solution/solve.sh or look at the test file to see exact strings to insert. The tests only check for string presence in files, so the agent could just append the expected strings as comments without understanding anything."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction specifies 'handle edge cases (avoid division by zero on very short durations)' but no test verifies this behavior. The gold solution uses .max(1.0) for this, but tests don't check for division-by-zero handling. Also, the instruction says the flag 'Accepts an optional float value' but no test verifies actual CLI parsing with a float argument."
+      "reason": "Instruction requires 'Handle edge cases (avoid division by zero on very short durations) by ensuring the denominator is at least 1.0' and 'If the actual TPS is below the minimum, return an error'. Neither of these behaviors is tested via execution \u2014 only via text matching. There's no test that actually runs the binary with --min-tps to verify runtime behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings indicating fail-to-pass vs pass-to-pass, descriptive function names, and a section comment separating the two groups."
+      "reason": "Tests are well-organized with descriptive names, docstrings explaining what each tests, and clear separation between fail-to-pass and pass-to-pass tests with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,15 +43,15 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names both files to modify and gives very specific implementation details like '#[clap(long, global = true)]' attribute, the exact field name 'min_tps', the struct name 'Opts', and the exact error message format 'TPS {actual_tps:.2} is below minimum threshold {min_tps}'. This is borderline but combined with the file names, it significantly narrows the solution space."
+      "reason": "instruction.md specifies exact code patterns like 'let min_tps = opts.min_tps;' and 'if let Some(min_tps) = min_tps', exact variable names, exact clap attributes, and exact error message format. This is excessive localization that removes the need for the agent to reason about implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"

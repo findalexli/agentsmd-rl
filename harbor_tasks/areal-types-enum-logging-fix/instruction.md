@@ -2,35 +2,42 @@
 
 ## Context
 
-AReaL is a distributed RL training framework for LLM alignment. The `areal/experimental/openai/types.py` file defines `InteractionWithTokenLogpReward`, a dataclass that manages completions/responses with their rewards. The `areal/reward/clevr_count_70k.py` file implements a reward function for the CLEVR counting dataset.
+AReaL is a distributed RL training framework for LLM alignment. Two files need fixes:
 
-## Issues
+- `areal/experimental/openai/types.py` — defines `InteractionWithTokenLogpReward`, a dataclass managing completions/responses with rewards
+- `areal/reward/clevr_count_70k.py` — implements a reward function for the CLEVR counting dataset
 
-### 1. Missing space in log message
+## Issues to Fix
 
-In the `to_tensor_dict` method of `InteractionWithTokenLogpReward`, the warning message about parent input length has adjacent string literals that run together without a space. When the parent length check fails, the log output shows something like `"constructed properly.Ignoring"` instead of having a space between sentences. Locate the `logger.warning()` call in `to_tensor_dict` and ensure a space separates the sentences.
+### 1. Missing space in warning message
+
+In `types.py`, when a warning is logged about parent input length being too small, the message sentences run together without a space — e.g., `"constructed properly.Ignoring"` instead of `"constructed properly. Ignoring"`. Find and fix this concatenation bug.
 
 ### 2. Bare `print()` instead of logger in reward function
 
-In `areal/reward/clevr_count_70k.py`, the `clevr_count_70k_reward_fn` function uses a bare `print()` call to log correct matches. The project's logging conventions require using `areal.utils.logging.getLogger()` instead, with a PascalCase logger name (e.g., `"CLEVR70KReward"` or similar, at least 3 characters). Other reward modules like `gsm8k.py` and `geometry3k.py` already follow this convention. The logger must be imported from `areal.utils`, not from the standard library.
+In `clevr_count_70k.py`, a `print()` call outputs correct-match information. The project requires using `areal.utils.logging.getLogger()` (imported from `areal.utils`, not stdlib) with a PascalCase descriptive name (at least 3 characters). Compare with other reward modules like `gsm8k.py` or `geometry3k.py` for the expected pattern.
 
 ### 3. Properties returning bare strings instead of enums
 
-The `api_type` and `input_name_for_logging` properties in `InteractionWithTokenLogpReward` return raw string literals. These should be proper enum types for type safety. Two new enum classes are needed:
+The `api_type` and `input_name_for_logging` properties return raw string literals. These should be proper `str`-compatible enum types for type safety.
 
-- **`ApiType`** (a `str, Enum` subclass) with members whose string values are:
+Define two enum classes:
+
+- **`ApiType`** — a `str, Enum` subclass with values:
   - `"completion"` — for completion interactions
   - `"response"` — for response interactions
+  - `"none"` — for the else case
 
-- **`InputName`** (a `str, Enum` subclass) with members whose string values are:
+- **`InputName`** — a `str, Enum` subclass with values:
   - `"messages"` — for completion input data
   - `"input_data"` — for response input data
+  - `"none"` — for the else case
 
-The `api_type` property should return type `ApiType` and the `input_name_for_logging` property should return type `InputName`.
+Both properties must return their respective enum types (not bare strings), including the `"none"` case.
 
 ### 4. Missing return type annotation
 
-The `clevr_count_70k_reward_fn` function must have an explicit `-> float` return type annotation.
+The `clevr_count_70k_reward_fn` function needs an explicit `-> float` return type annotation.
 
 ## Files to modify
 

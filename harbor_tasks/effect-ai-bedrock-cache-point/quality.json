@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/ai/amazon-bedrock/src/AmazonBedrockLanguageModel.ts), the function (prepareMessages), the constants/functions (getCachePoint, BEDROCK_CACHE_POINT), and the case blocks (case \"user\" and case \"assistant\"). All test-asserted specifics like getCachePoint(message), BEDROCK_CACHE_POINT, content.push, and the file path are discoverable from the instruction."
+      "reason": "The instruction names the file path (packages/ai/amazon-bedrock/src/AmazonBedrockLanguageModel.ts), the function (prepareMessages), the constant (BEDROCK_CACHE_POINT), the function getCachePoint, and the case blocks ('case \"user\"' and 'case \"assistant\"'). All test assertions reference these same entities, and they are all discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially tells the agent exactly what to do: add a getCachePoint check with content.push(BEDROCK_CACHE_POINT) to the user case block, mirroring the assistant case block. It says 'the user case block is missing this logic' and 'should have cache point handling equivalent to the assistant block.' This leaves almost no reasoning about WHAT to change."
+      "reason": "The instruction essentially describes the exact fix: add a getCachePoint check in the user case block, referencing the assistant case block as a template. It says 'the user case block should have cache point handling equivalent to the case \"assistant\" block' \u2014 this tells the agent exactly what code to add (an if(getCachePoint(message)){content.push(BEDROCK_CACHE_POINT)} block), leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific patterns: regex matching 'if (getCachePoint(message)) { content.push(BEDROCK_CACHE_POINT)' inside the user case block. An alternative correct fix that uses a different structure (e.g., a helper function, a ternary, or pushing via a shared utility) would fail the regex pattern match in test_user_message_has_cache_point_check even if functionally correct."
+      "reason": "The tests use regex to match a very specific pattern: 'if (getCachePoint(message)) { ... content.push(BEDROCK_CACHE_POINT)'. An alternative correct fix that uses a different variable name, uses a helper function, inlines the logic differently, or structures the conditional differently (e.g., ternary, early return, different push syntax) would fail the regex check. The tests assert on implementation-specific details rather than behavior."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The primary fail-to-pass test (test_user_message_has_cache_point_check) is purely textual: it reads the source file and does regex/string matching on the content. It does not import, call, or execute the code. The tsc test does run a subprocess but only checks compilation, not runtime behavior. No test actually invokes prepareMessages with a user message containing a cache point and checks the output."
+      "reason": "The primary f2p tests (test_user_message_has_cache_point_check, test_assistant_message_has_cache_point_check) are purely text/regex matching on source file content: they read the file with open() and check string patterns. The tsc test does execute a subprocess but only checks compilation, not runtime behavior of the cache point feature. No test actually calls prepareMessages or verifies that cache points are correctly added to user messages."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass because the test checks for specific getCachePoint(message) calls and if-block patterns within the user case block of the actual source file. Simply doing nothing or returning empty values wouldn't add that text to the source."
+      "reason": "A stub or no-op implementation would not pass because the tests check for specific code patterns (getCachePoint(message) and the push pattern) that don't exist in the original source file's user case block. The agent must actually add the specific code."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/effect as solve.sh's gold patch, and the agent could read solution/solve.sh (or the git diff within it) to see exactly what lines to add. The tests only check source file text, so the agent could also grep the test file for the expected patterns and reverse-engineer the exact code to insert."
+      "reason": "The solution file exists at /workspace/effect (the solve.sh with the exact patch is accessible if the agent reads solution/solve.sh). The agent could also grep for the expected patterns in the test file or solution and replicate them. Additionally, since tests are pure text matching, the agent could just insert the exact string pattern without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires cache point handling in the user case block equivalent to the assistant case, and TypeScript compilation should pass. Both are tested (text pattern matching for the cache point logic, and tsc --noEmit for compilation)."
+      "reason": "The instruction requires cache point handling in the user case block equivalent to the assistant case block, and TypeScript compilation. Both are tested (text pattern matching for cache point handling, tsc --noEmit for compilation)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_user_message_has_cache_point_check, test_assistant_message_has_cache_point_check, test_source_structure, test_typescript_check) and have docstrings explaining their purpose."
+      "reason": "Tests are well-named (test_user_message_has_cache_point_check, test_assistant_message_has_cache_point_check, test_source_structure, test_typescript_check), have docstrings explaining what they verify, and are logically grouped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves editing TypeScript source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,7 +43,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (AmazonBedrockLanguageModel.ts), the exact function (prepareMessages), the exact case block ('case \"user\"'), and the exact fix pattern (getCachePoint check pushing BEDROCK_CACHE_POINT). This goes well beyond identifying what's broken \u2014 it specifies exactly where and how to fix it."
+      "reason": "The instruction names the exact function (prepareMessages), the exact file path, the exact case block ('case \"user\"'), and explicitly says to add getCachePoint handling equivalent to the assistant block. This goes well beyond identifying the buggy module \u2014 it pinpoints exactly where and what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

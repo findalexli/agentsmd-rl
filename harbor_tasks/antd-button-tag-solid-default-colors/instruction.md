@@ -1,8 +1,8 @@
-# Task: Add Default Colors for Solid Variants
+# Task: Fix Missing Default Colors for Solid Variants
 
 ## Problem
 
-When using `variant="solid"` on Button or Tag components without explicitly specifying a `color` prop, the components do not receive a default color assignment. This causes styling issues where the solid variant doesn't have proper color styling applied.
+When using `variant="solid"` on Button or Tag components without explicitly specifying a `color` prop, the components render without proper color styling. This happens because the solid variant doesn't receive a default color assignment when the color prop is undefined.
 
 ## Codebase Context
 
@@ -13,7 +13,7 @@ The Button component is defined as `InternalCompoundedButton` using `React.forwa
 - `variant` / `contextVariant` — the variant from direct props / ConfigProvider context
 - `color` / `contextColor` — the color from direct props / ConfigProvider context
 
-The function returns a `[color, variant]` tuple in various cases. When neither a direct color nor a context color is provided, it falls through to a default `['default', 'outlined']`.
+The function returns a `[color, variant]` tuple in various cases. When neither a direct color nor a context color is provided, it currently falls through to a default `['default', 'outlined']`, even when the variant is `'solid'`.
 
 ### Tag (`components/tag/hooks/useColor.ts`)
 
@@ -29,26 +29,26 @@ After resolving `nextColor` from the raw `color` prop, the hook checks whether t
 
 ### Button
 
-When no explicit color is provided and the variant is solid:
+When no explicit color is provided and the variant is `'solid'`:
 
-1. After the existing merged-type handling and before the context fallback, the code should check `if (variant === 'solid')` and return `['primary', variant]` in that case
-2. After the context fallback (where both `contextColor` and `contextVariant` are set), the code should check `if (contextVariant === 'solid')` and return `['primary', contextVariant]`
-3. Non-solid variants must keep existing behavior, falling through to `['default', 'outlined']`
+1. When `variant` is `'solid'` and no direct color prop is provided, the component should return the color `'primary'` paired with the variant instead of falling through to the non-solid default
+2. When `contextVariant` is `'solid'` and no context color is provided via ConfigProvider, the component should return the color `'primary'` paired with the context variant instead of falling through to the non-solid default
+3. Non-solid variants must continue to fall through to their existing default behavior (`['default', 'outlined']`)
 4. The component must continue to be defined using `React.forwardRef` and named `InternalCompoundedButton`
 
 ### Tag
 
 When no explicit color is provided:
 
-1. The `nextColor` variable needs to be changed from `const` to `let` so it can be reassigned
-2. After `nextColor` is computed from the raw `color` prop, a condition checking `nextColor === undefined` combined with `nextVariant === 'solid'` should assign `nextColor = 'default'`
-3. The preset and status checks below must call `isPresetColor(nextColor)` and `isPresetStatusColor(nextColor)` — using the resolved `nextColor` variable rather than the raw `color` prop — so they correctly account for the defaulted value
-4. Non-solid variants should NOT receive default colors
+1. The resolved color variable must allow reassignment so it can be updated when default color logic applies
+2. When `nextVariant` is `'solid'` and the resolved color is `undefined`, the code should assign `'default'` as the color value before the preset/status checks
+3. The preset color check (`isPresetColor`) and status color check (`isPresetStatusColor`) must use the resolved color variable rather than the raw color prop, so they correctly account for any defaulted value
+4. Non-solid variants should NOT receive default colors — only `'solid'` variants should
 
 ## Files to Modify
 
-- `components/button/Button.tsx` — add default color logic for Button
-- `components/tag/hooks/useColor.ts` — add default color logic for Tag
+- `components/button/Button.tsx` — add default color logic for Button solid variant
+- `components/tag/hooks/useColor.ts` — add default color logic for Tag solid variant
 
 ## Verification
 

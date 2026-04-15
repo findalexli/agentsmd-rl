@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific AST structural details: test_example_select_not_in_stop_triggers checks that 'example_select' is absent from _setup_stop_events event_triggers; test_submit_btn_false_in_example_chain checks for a .then() with submit_btn=False; test_events_to_cancel_conditional checks for a compound ast.BoolOp(And) condition guarding events_to_cancel with 'example_select'. These specific implementation patterns (compound condition with And, .then() with submit_btn=False as a keyword) ar"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_events_to_cancel_conditional requires a compound `ast.BoolOp` with `ast.And` containing 'example_select' and 'events_to_cancel'; test_submit_btn_false_in_example_chain requires a `.then()` call with `submit_btn=False` keyword. The instruction mentions these behaviors at a high level but doesn't specify the exact AST structures (compound boolean condition with And, .then() with submit_btn=False keyword argumen"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix: 'it should not be registered as an additional trigger in the stop-events setup', 'submit button should still be temporarily hidden via a .then() step within the example chain', and 'collection of events eligible for cancellation should only include the example event when examples actually execute'. These are direct implementation instructions, not just bug descriptions."
+      "reason": "instruction.md essentially describes the exact fix: 'should not be registered as an additional trigger in the stop-events setup', 'submit button should still be temporarily hidden via a .then() step within the example chain', 'collection of events eligible for cancellation should only include the example event when examples actually execute'. These three points map directly to the three code changes in the gold patch. This goes beyond describing what's broken and prescribes HOW to fix it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_events_to_cancel_conditional requires specifically an ast.BoolOp with ast.And (compound condition) guarding events_to_cancel with 'example_select'. An alternative correct fix could use separate if-statements, a different variable name, or a different control flow structure. test_submit_btn_false_in_example_chain requires specifically a .then() call with submit_btn=False keyword argument; an alternative could use update() or a different method. These tests enforce the gold solution's specifi"
+      "reason": "test_events_to_cancel_conditional requires a compound `if` condition using `ast.BoolOp(ast.And)` containing both 'example_select' and 'events_to_cancel'. An alternative correct fix might use a separate if-statement, a ternary, or a different guard variable name instead of 'example_select'. test_submit_btn_false_in_example_chain requires a `.then()` call with submit_btn=False keyword \u2014 an alternative might use a different chaining method or set submit_btn in a different way. These tests are tight"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_example_select_not_in_stop_triggers, test_submit_btn_false_in_example_chain, test_events_to_cancel_conditional) all work by parsing the AST of the source file and checking structural patterns - they never actually execute the ChatInterface or test runtime behavior. They are sophisticated text/structure matching, not behavioral verification."
+      "reason": "The fail-to-pass tests (test_example_select_not_in_stop_triggers, test_submit_btn_false_in_example_chain, test_events_to_cancel_conditional) all use AST parsing to check structural properties of the source code rather than executing the code and verifying runtime behavior. They never instantiate ChatInterface or simulate clicking an example. While they use AST instead of raw text, they are still static analysis checks on code structure, not behavioral tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code structures that don't exist in the original code: a .then() with submit_btn=False, removal of example_select from stop triggers, and a compound condition for events_to_cancel. A stub or no-op would not pass these."
+      "reason": "The f2p tests check for specific AST structures that wouldn't exist in a stub implementation: removing example_select from stop triggers, adding a .then() with submit_btn=False, and using a compound condition for events_to_cancel. A stub or no-op _setup_events would fail all three."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/gradio as a git repo, and solve.sh is in /solution/solve.sh. An agent could read /solution/solve.sh or the git history to find the exact patch. Additionally, since tests are pure AST checks, the agent could grep test files to discover exactly what AST patterns are expected."
+      "reason": "The solution directory exists at /workspace/gradio with solve.sh accessible. An agent could read the gold patch from the solution directory or grep for expected patterns. The Dockerfile doesn't remove or protect the solution files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four acceptance criteria from instruction.md are tested: submit button restoration (test_submit_btn_false_in_example_chain), valid Python (test_syntax_valid), ruff format/check (test_ruff_formatting, test_repo_ruff_check), and existing unit tests pass (test_repo_chat_interface_init_unit_tests, etc.)."
+      "reason": "All four acceptance criteria from instruction.md are tested: submit button restoration (via AST checks on .then() and stop triggers), valid Python (test_syntax_valid), ruff format/check (test_ruff_formatting, test_repo_ruff_check), and existing unit tests passing (test_repo_chat_interface_init_unit_tests, etc.)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names and docstrings, are clearly grouped by concern (static checks, pr_diff checks, repo_tests), and each maps to a specific check."
+      "reason": "Tests are well-named, each has a docstring, and they are annotated with comments like '[static] pass_to_pass', '[pr_diff] fail_to_pass', '[repo_tests] pass_to_pass' indicating their category."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Python source code, not producing structured data."
+      "reason": "This task involves fixing a Python source file, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (gradio/chat_interface.py), the exact class (ChatInterface), and describes precisely which event handler registration to modify ('should not be registered as an additional trigger in the stop-events setup') and where to add code ('.then() step within the example chain'). This goes well beyond naming the buggy module."
+      "reason": "instruction.md explicitly names the file (gradio/chat_interface.py), the class (ChatInterface), and describes the exact mechanism: 'should not be registered as an additional trigger in the stop-events setup' and 'via a .then() step within the example chain'. This goes beyond naming the buggy file and describes the specific code patterns that need to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes all key elements tested: TrackioConfig with mode/project/name/space_id fields, valid modes (disabled/online/local), default values, StatsLoggerConfig.trackio field, StatsLogger.init()/commit()/close() lifecycle with trackio.init(project=..., name=...)/trackio.log()/trackio.finish(), and logging.py integration with trackio.log(). All file paths (cli_args.py, stats_logger.py, logging.py) are named. The specific field names, valid modes, default values, and method signatur"
+      "reason": "The instruction describes all key elements tested: TrackioConfig with mode/project/name/space_id fields, valid modes ('disabled','online','local'), default values, StatsLoggerConfig.trackio field, StatsLogger.init() calling trackio.init(project=..., name=...), StatsLogger.commit() calling trackio.log(), StatsLogger.close() calling trackio.finish(), and logging.py calling trackio.log(). All file paths are explicitly listed. The specific field names, method names, and behavioral expectations are a"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (what to add) but doesn't give exact line numbers, exact code snippets, or precise implementation details like 'change line X to Y'. It describes the feature at a specification level, requiring the developer to figure out how to implement it."
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact method calls (trackio.init(project=..., name=...)), exact field names (mode, project, name, space_id), exact valid mode values, exact default values, exact lifecycle methods, and even the try/except with pass pattern in logging.py. This goes beyond describing 'what's broken' and essentially dictates the implementation. However, this is a feature-addition task rather than a bug-fix task, so some specificity is expected. The instructio"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use AST inspection that checks for very specific implementation details. For example, test_stats_logger_trackio_init checks for `trackio.init()` called as `trackio.init(project=..., name=...)` with exactly the variable name `trackio` and attribute `init`. An alternative correct implementation that wraps trackio in a helper function, uses `import trackio as tio; tio.init(...)`, or calls trackio through an abstraction layer would fail. Similarly, test_stats_logger_trackio_commit checks for `"
+      "reason": "Tests use AST inspection that checks for very specific implementation details: test_stats_logger_trackio_init checks for an ast.Call with func.value.id == 'trackio' and func.attr == 'init', requiring the exact variable name 'trackio' and method name 'init'. test_stats_logger_trackio_commit checks for trackio.log specifically. An alternative correct implementation that wraps trackio in a helper class or uses a different import alias (e.g., 'import trackio as tio') would fail these AST-based tests"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The TrackioConfig tests (test_trackio_config_exists_with_fields, test_trackio_config_rejects_invalid_modes, test_trackio_config_accepts_valid_modes, test_trackio_config_defaults) actually instantiate the class via exec and test its behavior (construction, validation). While some tests (trackio_init, trackio_commit, trackio_close) use AST inspection rather than execution, the config tests do execute code. It's a mix, with the behavioral config tests being genuinely behavioral."
+      "reason": "Tests use a mix of approaches: some use subprocess execution to actually instantiate TrackioConfig and test its behavior (mode validation, defaults), while others use AST parsing to verify code structure. The behavioral tests (config creation, ValueError on invalid modes) actually execute the dataclass code. The AST tests verify structural integration rather than just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would not pass these tests. test_trackio_config_rejects_invalid_modes requires a ValueError to be raised. test_trackio_config_exists_with_fields requires specific field names. test_stats_logger_trackio_init requires trackio.init() calls in the AST. These cannot be satisfied without actual implementation."
+      "reason": "A stub/empty implementation cannot pass: test_trackio_config_rejects_invalid_modes requires ValueError on invalid modes (a plain dataclass wouldn't raise), test_trackio_config_exists_with_fields requires all four specific fields, test_stats_logger_trackio_init requires trackio.init() call with project/name kwargs in the AST, etc. These require actual implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is available at /workspace/AReaL via the gold patch applied by solve.sh. The Dockerfile does not remove the solution directory, and the agent could potentially read /solution/solve.sh if it exists in the container. Additionally, the test file itself is at tests/test_outputs.py and could be read to understand exactly what's being checked, allowing the agent to game the AST checks."
+      "reason": "The solution exists at /workspace/AReaL and solve.sh is in /solution/. The Dockerfile doesn't remove or protect the solution directory. An agent could read the solution patch directly or grep for expected patterns. Additionally, the test file itself is accessible and contains exact implementation expectations that could be reverse-engineered."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies that trackio.init should fall back to experiment_name and trial_name when project/name are not set, but no test verifies this fallback behavior. Also, the instruction mentions space_id should be passed to trackio.init, but no test checks that space_id is passed. The instruction mentions pyproject.toml dependencies but no test checks that."
+      "reason": "The instruction specifies that trackio.init should fall back to experiment_name and trial_name when project/name are not set, but no test verifies this fallback behavior. The instruction also mentions space_id for HF Spaces deployment and that trackio.init should receive config and space_id kwargs, but tests only check for project and name kwargs in trackio.init(). The pyproject.toml dependency addition mentioned in 'Files to Look At' is not tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_trackio_config_exists_with_fields, test_trackio_config_rejects_invalid_modes), have docstrings, and are logically grouped by component (config tests, stats_logger tests, logging tests). Clear section comments separate gates from fail-to-pass tests."
+      "reason": "Tests are well-structured with descriptive names (test_trackio_config_exists_with_fields, test_trackio_config_rejects_invalid_modes, etc.), docstrings explaining what each test checks, and clear separation between config tests, logger lifecycle tests, and logging helper tests."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for TrackioConfig (field names, types, defaults, valid values for mode) which constitutes the structured data schema for the configuration dataclass."
+      "reason": "The instruction documents the exact schema of TrackioConfig: mode (str, default 'disabled'), project (str|None), name (str|None), space_id (str|None), with valid mode values explicitly listed."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in instruction.md."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify (cli_args.py, stats_logger.py, logging.py) and describes precisely what methods (init, commit, close) need changes and what calls to add (trackio.init with project/name kwargs, trackio.log with step, trackio.finish). This goes beyond describing behavior and essentially specifies the implementation at a method-level granularity, though it doesn't give line numbers."
+      "outcome": "pass",
+      "reason": "The instruction names files that are natural for the task domain (config file, stats logger, logging helper) without specifying exact line numbers. The level of specificity (which classes/methods to modify) is appropriate for a feature integration task where the agent needs to understand the existing patterns."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,13 +51,13 @@
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
   "pass_count": 7,
   "fail_count": 4

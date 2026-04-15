@@ -2,48 +2,48 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific string patterns like 'DOCUMENTSDB => \\array_filter(\\explode(...))' and '$databaseHost !== $dsn->getHost()' and exact variable names like '$databaseSharedTables' and exact conditional patterns like 'if (!empty($dsn) && !empty($databaseSharedTables))'. The instruction.md describes these conceptually but does not specify these exact string patterns, variable names, or code structures. For example, the variable name '$databaseHost' and the exact match expression syntax are"
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (request.php, message.php, Create.php), env variable names (_APP_DATABASE_SHARED_TABLES, _APP_DATABASE_DOCUMENTSDB_SHARED_TABLES, etc.), patterns (array_filter, setTenant, $databaseHost, $dsn->getHost()), exception message, and constants (DOCUMENTSDB, VECTORSDB) that the tests assert on. All test-specific strings and identifiers are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fixes: 'Remove the (int) cast', 'Wrap the explode() calls with array_filter()', 'Add adapter-based separate pool detection', 'Add array_filter() on explode() calls for specific env vars', 'Add !empty($databaseSharedTables) check before pool filtering', and 'Add explicit if (empty($databases)) check that throws Exception(...)'. These are detailed implementation instructions, not just descriptions of what's broken."
+      "reason": "The instruction explicitly states the exact fix patterns, e.g., 'The resulting code must contain the exact pattern: array_filter(\\explode(...))' and 'The method call pattern must be ->setTenant($project->getSequence()) or ->setTenant($projectDocument->getSequence()) exactly' and the exact exception message. This tells the agent exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching (e.g., assert '->setTenant($project->getSequence())' in content, assert '$databaseHost !== $dsn->getHost()' in content, assert exact 'DOCUMENTSDB => \\array_filter(...)' patterns). An alternative correct fix using different variable names (e.g., '$dbHost' instead of '$databaseHost'), different code structure, or different formatting would fail these tests despite being functionally correct."
+      "reason": "Tests like test_request_php_uses_array_filter assert on exact text patterns (array_filter on same line as _APP_DATABASE_SHARED_TABLES), test_request_php_has_separate_pool_detection checks for exact variable name '$databaseHost', and test_create_php_has_pool_validation checks for exact error message string. An alternative correct fix using different variable names or multi-line formatting would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all tests in TestSharedModeFixes are pure text matching: they read file contents and assert specific strings are present/absent. The TestPhpSyntax class does run 'php -l' for syntax checks, but the core behavioral tests are all 'assert X in content' style with no actual code execution or behavioral verification."
+      "reason": "The majority of tests (test_request_php_uses_array_filter, test_request_php_no_int_cast_on_settenant, test_request_php_has_separate_pool_detection, test_worker_php_*, test_create_php_*) are purely text-matching with patterns like 'assert has_array_filter' and string-in-file checks. Only test_array_filter_removes_empty_strings_from_shared_tables and test_int_cast_truncates_uuid_sequence actually execute code, and those test PHP language behavior, not the actual modified code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific patterns that don't exist in the original files (e.g., array_filter wrapping, removed (int) cast, $databaseHost variable, separate pool detection). A stub/no-op implementation wouldn't pass since the original code has the bugs that the tests check against."
+      "outcome": "fail",
+      "reason": "The first two tests (test_array_filter_removes_empty_strings and test_int_cast_truncates_uuid_sequence) test generic PHP behavior that passes without any code changes to the repo. They verify that array_filter removes empty strings and (int) truncates UUIDs - these are PHP language facts, not behavior of the agent's fix. A stub/no-op agent wouldn't pass the file-content tests, but these behavioral tests are tautological."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/appwrite as a git repo and solve.sh is in /solution/. An agent could read /solution/solve.sh to get the exact patch, or could simply apply the gold patch. The tests are pure text-matching, so copying the exact strings from the test assertions into the files would pass without understanding the bug."
+      "reason": "The solution exists at /workspace/appwrite and solve.sh is accessible. The agent could read the git history or the solution directory. Also, since tests are purely text-matching (checking for specific strings in files), the agent could just insert the exact expected strings as comments or dead code without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four issues described in instruction.md (int cast removal, array_filter wrapping, separate pool detection, empty pool exception) are tested across the test classes."
+      "reason": "All four issues described in the instruction are covered by tests: Issue 1 (int cast) by test_*_no_int_cast_on_settenant, Issue 2 (array_filter) by test_*_uses_array_filter, Issue 3 (separate pools) by test_*_has_separate_pool_detection, Issue 4 (pool validation) by test_create_php_* tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into classes (TestSharedModeFixes, TestPhpSyntax, TestRepoCI) with descriptive method names and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped in a TestSharedModeFixes class, each test has a descriptive name and docstring explaining which issue it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves PHP code fixes, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task modifies PHP source code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, env var names, and PHP function names in instruction.md are consistent with the test assertions and gold solution."
+      "reason": "File paths, variable names, env variable names, and commands appear consistent between instruction and tests with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files, exact method calls (setTenant with (int) cast), exact env var names, exact function wrappers (array_filter on explode), and exact exception patterns. It essentially provides a detailed implementation specification rather than a problem description."
+      "reason": "The instruction specifies exact code patterns like 'array_filter(\\explode(..., System::getEnv(...)))' and exact variable patterns like '$databaseHost !== $dsn->getHost()' and exact exception messages. This goes beyond describing the bug to prescribing the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -51,10 +51,10 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],

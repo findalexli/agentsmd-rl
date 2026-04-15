@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), and describes all four behavioral expectations that map to the test assertions (different promises return false, promise vs object returns false, same reference returns true, nested objects with different promises return false). The thenable test is also covered by the 'handle all Promise-like objects (anything with a .then method)' note."
+      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), and describes the expected behaviors (promise vs promise, promise vs object, same reference, nested promises, thenables) that align with what the tests check. The test commands and build commands are also mentioned."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (Promise-like objects incorrectly compared as equal) and expected behavior, but does not specify the exact fix (e.g., adding an isPromiseLike helper function or the specific code to insert). A developer must reason about how to implement the fix."
+      "reason": "The instruction describes the bug (deepEqual incorrectly returns true for different Promises) and expected behavior, but does not specify the exact fix (e.g., it doesn't say 'add an isPromiseLike helper function' or 'add a check after Object.is'). A developer must reason about what code to add."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The f2p tests (e.g., test_deepequal_different_promises) don't actually import/execute the code from the source file. Instead they read the source file and check `src.includes('isPromiseLike(a) || isPromiseLike(b)')` \u2014 a literal string match for a specific implementation detail. An alternative correct fix (e.g., checking `a instanceof Promise || b instanceof Promise`, or using a differently-named helper, or inlining the check as `typeof a.then === 'function'`) would fail these tests because the s"
+      "reason": "The tests check `src.includes('isPromiseLike(a) || isPromiseLike(b)')` as a string literal in the source file. This means the tests require a specific implementation detail \u2014 a function named exactly `isPromiseLike` called with exactly `(a)` and `(b)` in that exact pattern. An alternative correct fix (e.g., checking `typeof a.then === 'function'` inline, or naming the helper `isThenable`, or using `a instanceof Promise`) would fail the string check and thus fail the tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests do NOT import or execute the actual deepEqual function from the source. They read the source file as text, check for the literal string 'isPromiseLike(a) || isPromiseLike(b)', and conditionally enable promise checking in a locally-defined deepEqual. This is effectively `assert 'isPromiseLike(a) || isPromiseLike(b)' in source_text` \u2014 a text-matching test, not a behavioral test."
+      "reason": "The f2p tests (test_deepequal_*) do NOT actually import or execute the real deepEqual function from the codebase. Instead, they read the source file as text, check if it contains the string 'isPromiseLike(a) || isPromiseLike(b)', and then run a locally-defined JS deepEqual function that conditionally includes promise handling based on that string check. This is fundamentally a text-matching test disguised as a behavioral test."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests reconstruct a local deepEqual function and only add promise handling if the source contains the exact string 'isPromiseLike(a) || isPromiseLike(b)'. If an agent simply adds that string as a comment without fixing the actual function, the test's local reimplementation would still pass. The tests don't execute the actual code, so a stub or trivially wrong implementation that includes the magic string would pass."
+      "reason": "The f2p tests define their own deepEqual implementation locally in JS and conditionally enable the promise check based on whether the source file contains the string 'isPromiseLike(a) || isPromiseLike(b)'. They don't test the actual compiled code. If the agent writes the magic string into the file without any real implementation, the locally-defined deepEqual in the test would still activate the promise check branch and pass."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The agent can read /workspace/router/solution/solve.sh (the solve script is in the container's filesystem) or simply grep the test file to discover that tests check for the literal string 'isPromiseLike(a) || isPromiseLike(b)' and insert that string to pass without understanding the bug. The solution directory appears accessible in the container."
+      "reason": "The agent can (a) read /workspace/router solution files or the solve.sh if accessible, (b) grep for the exact string 'isPromiseLike(a) || isPromiseLike(b)' that the tests check for, or (c) simply insert that literal string as a comment into the source file to make the text-based checks pass. The tests' reliance on string matching (`src.includes('isPromiseLike(a) || isPromiseLike(b)')`) makes this trivially exploitable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four expected behaviors from the instruction (different promises \u2192 false, promise vs object \u2192 false, same reference \u2192 true, nested objects with different promises \u2192 false) are tested, plus thenable handling and repo-level tests."
+      "reason": "All four expected behaviors from instruction.md are tested: different promises return false, promise vs object returns false, same promise reference returns true, and nested objects with different promises return false. Thenable objects are also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_deepequal_different_promises, test_deepequal_same_promise, etc.) with docstrings indicating F2P vs P2P classification."
+      "reason": "Tests are well-named (test_deepequal_different_promises, test_deepequal_same_promise, etc.), have docstrings with F2P/P2P labels, and are logically grouped by scenario."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, commands, and variable names in instruction.md are correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function, which is appropriate for this task domain. It doesn't specify exact line numbers or the specific code fix needed."
+      "reason": "The instruction names the file and function which is reasonable for the task domain, but doesn't specify exact line numbers or the specific fix implementation (like adding isPromiseLike)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

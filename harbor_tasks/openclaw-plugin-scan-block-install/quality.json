@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three file paths (install.ts, install-security-scan.runtime.ts, install-security-scan.ts), the error code constant names (SECURITY_SCAN_BLOCKED, SECURITY_SCAN_FAILED), their string values, the type union, the 'Installation continues' string to remove, the hook precedence logic pattern, and the blocked result structure. All specifics asserted in tests are discoverable from the instruction."
+      "reason": "The instruction names all three file paths (install.ts, install-security-scan.runtime.ts, install-security-scan.ts), the error code constant names (SECURITY_SCAN_BLOCKED, SECURITY_SCAN_FAILED), their string values, the type name InstallSecurityScanResult, the blocked/code field, the hook precedence logic pattern, and the 'Installation continues' string. All test assertions check things discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, specifying exact implementation details like 'hookResult?.blocked ? hookResult : builtinBlocked', the exact closed union type '\"security_scan_blocked\" | \"security_scan_failed\" | undefined', that each error code must appear 'at least twice in the file', and the exact field name 'code'. This goes well beyond describing what's broken and tells the agent precisely what to write."
+      "reason": "The instruction specifies exact implementation details: the exact union type '\"security_scan_blocked\" | \"security_scan_failed\" | undefined' for the code field, the exact logic pattern 'hookResult?.blocked ? hookResult : builtinBlocked', the exact error code string values and their constant names, and that error codes must appear 'at least twice' in the file. This goes well beyond describing what's broken and prescribes HOW to fix it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_runtime_blocks_critical_findings checks for 'function buildBlockedScanResult' (a specific helper function name), 'builtinScan.critical > 0' (exact variable/property names), and 'builtinScan.status === \"error\"'. test_hook_precedence_over_builtin_block checks for 'const hookResult = await runBeforeInstallHook' (exact variable name pattern) and '?.blocked' syntax. An alternative correct fix using different helper names or inline logic would"
+      "reason": "Tests assert on gold-specific implementation details: test_runtime_blocks_critical_findings checks for 'function buildBlockedScanResult' (a specific helper function name from the gold patch), 'builtinScan.critical > 0' (exact expression), test_hook_precedence_over_builtin_block checks for 'const hookResult = await runBeforeInstallHook' (exact variable name from gold). An alternative correct fix using different helper names or inline logic would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads source files as text and checks for patterns via regex or string matching (e.g., code.includes('Installation continues'), /SECURITY_SCAN_BLOCKED/.test(code), /function buildBlockedScanResult/.test(code)). No test actually imports, calls, or executes the plugin install functions to verify runtime behavior. This is purely textual/structural assertion."
+      "reason": "Every fail-to-pass test reads source files and uses regex pattern matching on the text content. None of them import, call, or execute the actual plugin install functions. For example, test_scan_failure_blocks_install just checks if the string 'Installation continues' is absent and 'SECURITY_SCAN_FAILED' is present in the file text. test_runtime_blocks_critical_findings checks for regex patterns like /function buildBlockedScanResult/ in source text."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all tests are text-based pattern matching on source files, an agent could satisfy them by inserting dead code containing the required strings/patterns (e.g., adding comments or unused functions with 'function buildBlockedScanResult', 'builtinScan.critical > 0', etc.) without actually fixing the bug. The tests don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "The tests check for specific patterns that don't exist in the base code (e.g., SECURITY_SCAN_BLOCKED/FAILED codes, buildBlockedScanResult function, removal of 'Installation continues'). A stub or no-op implementation would not pass these checks since the base code lacks these patterns."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/openclaw as part of the environment, and the tests only do text pattern matching on source files. An agent could read the test file itself (tests/test_outputs.py) to see exactly what patterns are checked and craft matching text without understanding the bug. The solve.sh is also accessible via the repo."
+      "reason": "The solution file exists at /workspace/openclaw as part of the environment, and the agent could potentially read the gold patch from solve.sh if mounted. More critically, since all tests are text-matching (regex on file contents), the agent could simply grep the test file for the expected patterns and write code that matches those regexes without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors described in the instruction (error codes defined, error codes used, scan failure blocks install, runtime blocks critical findings, runtime blocks scan errors, hook precedence, removal of 'Installation continues') are covered by corresponding test functions."
+      "outcome": "fail",
+      "reason": "The instruction requires that installing a plugin with eval('danger') should fail with a clear error, but no test actually executes an install to verify this end-to-end behavior. The instruction also requires the three install paths (package, bundle, file) all need treatment, but tests only check text patterns, not actual execution of those paths."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear function names (test_scan_failure_blocks_install, test_error_codes_defined, etc.), docstrings explaining each check, and section comments grouping them into 'Gates (pass_to_pass)' and 'Fail-to-pass (pr_diff)' categories."
+      "reason": "Tests are well-named (test_scan_failure_blocks_install, test_error_codes_defined, etc.), have docstrings explaining what they check, and are logically grouped into gates (pass_to_pass) and behavioral tests (fail_to_pass)."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for InstallSecurityScanResult's blocked object (with code field having the closed union type) and the PLUGIN_INSTALL_ERROR_CODE constant structure with specific key-value pairs."
+      "reason": "The instruction documents the exact schema for InstallSecurityScanResult type update (blocked.code field with specific union type) and the PLUGIN_INSTALL_ERROR_CODE constant entries with their string values."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, string values, and type definitions in the instruction are consistent and correct with no apparent typos."
+      "reason": "File paths, variable names, error code strings, and type names are consistent between instruction.md and the test file with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact implementation details like the specific fallback pattern 'hookResult?.blocked ? hookResult : builtinBlocked', specifies that 'const hookResult' must capture the hook result, and names internal helper function patterns. This goes beyond identifying the buggy area and prescribes exact code changes."
+      "reason": "The instruction names the exact affected files, specifies exact function patterns like 'hookResult?.blocked ? hookResult : builtinBlocked', exact field names and union types, and even specifies that error codes must appear 'at least twice'. This goes beyond identifying the buggy area and prescribes the exact solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -54,11 +54,11 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,

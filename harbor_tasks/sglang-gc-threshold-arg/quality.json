@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant files (server_args.py, engine.py), the functions (ServerArgs, add_cli_args, check_server_args, _launch_subprocesses), the argument name (--gc-threshold), and the behavior (1-3 integers, gc.set_threshold). All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names the relevant files (server_args.py, engine.py), the relevant functions (ServerArgs, add_cli_args, check_server_args, _launch_subprocesses), the argument name (--gc-threshold), the validation logic (1-3 integers), and the gc.set_threshold() call. All test specifics (file paths, function names, argument names, validation behavior) are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (accept --gc-threshold, validate 1-3 ints, apply via gc.set_threshold in _launch_subprocesses) but does not specify exact code changes, line numbers, or implementation details like helper function names."
+      "reason": "The instruction describes the desired behavior (accept --gc-threshold, validate 1-3 ints, apply via gc.set_threshold in _launch_subprocesses) but does not specify exact code changes, line numbers, or implementation details like helper function names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_gc_function_sets_thresholds searches engine.py for any FunctionDef containing 'set_threshold', extracts it, and executes it standalone. It assumes the function takes a single argument with a .gc_threshold attribute. An alternative implementation that inlines gc.set_threshold directly in _launch_subprocesses (without a separate helper function) would fail this test because the extraction logic looks for a standalone function. Additionally, test_gc_invoked_in_launch_subprocesses checks if a s"
+      "reason": "test_gc_function_sets_thresholds searches engine.py for a FunctionDef containing 'set_threshold', extracts it, and executes it standalone expecting it to accept an object with a gc_threshold attribute. This forces a specific implementation pattern (a separate helper function with gc.set_threshold and accessing server_args.gc_threshold). If someone inlined the gc.set_threshold call directly in _launch_subprocesses, the test would still find it but would try to exec the entire _launch_subprocesses"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests execute code via subprocesses: test_gc_function_sets_thresholds actually calls the extracted function and checks gc.get_threshold(); test_cli_parser_accepts_gc_threshold constructs an argparse parser and calls parse_args; test_validation_rejects_invalid_gc_threshold executes the validation code. These are behavioral tests, not just string matching."
+      "reason": "The fail-to-pass tests execute code in subprocesses: test_gc_function_sets_thresholds actually calls the extracted function and checks gc.get_threshold(), test_cli_parser_accepts_gc_threshold creates an argparse parser and parses arguments, test_validation_rejects_invalid_gc_threshold executes the validation code. These are behavioral tests, not just text searches."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty function, pass, return None) would not pass: test_gc_function_sets_thresholds asserts gc.get_threshold() returns specific values after calling the function; test_cli_parser_accepts_gc_threshold asserts parsed arguments match expected values; test_validation_rejects_invalid_gc_threshold asserts exceptions are raised for invalid inputs."
+      "reason": "A stub implementation would not pass: test_gc_function_sets_thresholds verifies gc.get_threshold() returns specific values after calling the function; test_cli_parser_accepts_gc_threshold verifies parsed argument values; test_validation_rejects_invalid_gc_threshold verifies exceptions are raised for invalid inputs. None of these can be satisfied by no-ops."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/sglang/_eval_tmp.py path is temporary, but solve.sh is referenced and the gold patch is in /solution/solve.sh. If the agent can read /solution/solve.sh (the Dockerfile doesn't prevent this), it can directly apply the gold patch. No evidence of /solution being removed or protected in the Dockerfile."
+      "reason": "The solution is available at /workspace/sglang/_eval_tmp.py during test execution (though temporary), and more critically, the solve.sh with the exact patch is in /solution/solve.sh. An agent could read /solution/solve.sh to get the exact gold patch and apply it directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors from the instruction are tested: (1) CLI argument acceptance via test_cli_parser_accepts_gc_threshold, (2) validation of 1-3 integers via test_validation_rejects_invalid_gc_threshold, (3) applying thresholds via gc.set_threshold in _launch_subprocesses via test_gc_function_sets_thresholds and test_gc_invoked_in_launch_subprocesses."
+      "reason": "All three behaviors specified in the instruction are tested: (1) CLI argument acceptance via test_cli_parser_accepts_gc_threshold, (2) validation of 1-3 integers via test_validation_rejects_invalid_gc_threshold, (3) application of thresholds in _launch_subprocesses via test_gc_invoked_in_launch_subprocesses and test_gc_function_sets_thresholds."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Integration), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Integration), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB; it's a code modification task adding a CLI argument."
+      "reason": "This task involves adding a CLI argument and GC configuration, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and the test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant files and functions but these are naturally part of the task domain. It doesn't specify exact line numbers or the precise implementation pattern (e.g., doesn't say 'create a _set_gc helper function')."
+      "reason": "The instruction names the relevant files and functions but these are natural for the task domain. It describes what to implement, not how to implement it at a line-level. Mentioning _launch_subprocesses and check_server_args is appropriate guidance, not leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

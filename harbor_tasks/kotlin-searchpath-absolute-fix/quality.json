@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three files to modify, the specific argument names (X_KLIB, X_MODULE_PATH, CLASSPATH), the method `absolutePathStringOrThrow()`, the SearchPathType/PathListType concepts, and the `joinToString` pattern. All test-asserted specifics (file paths, argument names, function names like absolutePathStringOrThrow, the map/joinToString pattern) are discoverable from instruction.md."
+      "reason": "The instruction names all three files to modify, the specific argument names (X_KLIB, X_MODULE_PATH, CLASSPATH), the method `absolutePathStringOrThrow()`, SearchPathType/PathListType types, and the joinToString pattern. All test-asserted specifics (file paths, argument names, method names, patterns) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'the result must be mapped through absolutePathStringOrThrow() before calling joinToString with the path separator' and 'use .map { it.absolutePathStringOrThrow() }'. This tells the agent exactly WHAT code to write, not just what's broken."
+      "reason": "The instruction explicitly states the fix: 'The arguments should use absolutePathStringOrThrow() to convert relative paths to absolute' and 'the result must be mapped through absolutePathStringOrThrow() before calling joinToString with the path separator.' This tells the agent exactly what code change to make rather than just describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact regex patterns like `get(X_KLIB)?\\.map.*?absolutePathStringOrThrow.*?joinToString` which require the specific chaining pattern `.map { it.absolutePathStringOrThrow() }?.joinToString`. An alternative correct fix using, e.g., a helper function, intermediate variable, or `forEach` with a builder would fail these regex-based tests."
+      "reason": "Tests use regex patterns like `get(X_KLIB)?\\.map.*?absolutePathStringOrThrow.*?joinToString` that assert on the exact implementation pattern (using .map with absolutePathStringOrThrow before joinToString). An alternative correct fix, e.g., using flatMap, a helper function, or resolving paths at a different abstraction layer, would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_generator_has_absolute_path_fix, test_compat_generated_has_absolute_path_fix, test_impl_generated_has_absolute_path_fix, test_no_raw_joinToString_for_searchpaths) all exclusively use `open(path).read()` and regex/string matching on file contents. No code is compiled, executed, or behaviorally tested. The syntax tests only check for 'syntax' in error messages."
+      "reason": "The fail-to-pass tests (test_generator_has_absolute_path_fix, test_compat_generated_has_absolute_path_fix, test_impl_generated_has_absolute_path_fix, test_no_raw_joinToString_for_searchpaths) all read files and check for string/regex patterns like `assert 'absolutePathStringOrThrow' in content`. No test actually executes the code, compiles it meaningfully, or tests that paths are actually resolved to absolute. The syntax tests only check for absence of 'syntax' in error output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the presence of `absolutePathStringOrThrow` in specific patterns that don't exist in the base commit files. A stub or no-op would not add these strings to the files, so the tests would fail without actual changes."
+      "reason": "The fail-to-pass tests check for the presence of 'absolutePathStringOrThrow' and absence of raw 'joinToString' patterns in the source files. A stub/no-op implementation would leave the original code unchanged, which would fail these tests since the original code uses raw joinToString without absolutePathStringOrThrow."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/kotlin's solution/solve.sh in the container. The agent could read it directly. Additionally, the tests only check for string patterns in files, so the agent could grep test files to discover the exact expected patterns and mechanically insert them."
+      "reason": "The solution file exists at /workspace/kotlin (the solve.sh is in solution/solve.sh in the container). An agent could read solution/solve.sh to find the exact sed commands needed. Additionally, since tests are purely text-matching, the agent could grep test files to discover the exact patterns being asserted."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) absolutePathStringOrThrow calls in all three files for the three arguments, (2) valid Kotlin syntax, (3) no raw joinToString for SearchPathType. All of these are tested."
+      "reason": "All behavior described in instruction.md is tested: absolutePathStringOrThrow usage in all three files, valid Kotlin syntax, and no raw joinToString for SearchPathType arguments."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_generator_has_absolute_path_fix), include docstrings explaining fail-to-pass vs pass-to-pass, and are logically grouped by file/concern."
+      "reason": "Tests are well-named with descriptive function names and docstrings that classify them as 'Fail-to-pass' or 'Pass-to-pass', explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,15 +39,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, method names, and commands in the instruction and tests appear correct and consistent with the repository structure."
+      "reason": "File paths, variable names, method names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files to modify, specific method names to use (absolutePathStringOrThrow), and the exact code pattern ('mapped through absolutePathStringOrThrow() before calling joinToString'). It even specifies the generator file BtaImplGenerator.kt, effectively localizing the bug for the agent."
+      "reason": "The instruction names the exact files to modify including full paths, specifies the exact method name to use (absolutePathStringOrThrow), the exact pattern (map before joinToString), and even mentions the generator file BtaImplGenerator.kt. This goes beyond describing the bug domain and essentially provides the implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Kotlin source files, not a config edit task."
+      "reason": "This is a code-editing task, not a config-editing task."
     }
   },
   "tier_a_fails": [

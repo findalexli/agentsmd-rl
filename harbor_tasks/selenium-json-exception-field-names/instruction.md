@@ -24,10 +24,36 @@ Note: The exact field names and class names will vary depending on the beans inv
 
 ## Files to Modify
 
-The error is thrown when merging duplicate field writers during JSON deserialization in the JSON binding code. Two source files in the Selenium JSON package need to be updated:
+The error is thrown when merging duplicate field writers during JSON deserialization. Two source files in the Selenium JSON package need updates:
 
-1. The main coercer class that handles JSON to Java object conversion
-2. The property descriptor class that describes bean properties
+1. `java/src/org/openqa/selenium/json/InstanceCoercer.java` - the main coercer class
+2. `java/src/org/openqa/selenium/json/SimplePropertyDescriptor.java` - the property descriptor class
+
+## Required Changes
+
+### InstanceCoercer.java
+
+Add `toString()` methods to these inner classes:
+
+- **FieldWriter** - toString() should include the declaring class name and field name (e.g., `ClassName.fieldName`)
+- **SimplePropertyWriter** - toString() should include the property descriptor info
+- **TypeAndWriter** - toString() should delegate to `writer.toString()`
+
+Also update the duplicate field merge function to include field comparison information in the error message using a format like `FieldWriter(X) vs FieldWriter(Y)`.
+
+### SimplePropertyDescriptor.java
+
+Add `toString()` method that returns the class simple name and field name (e.g., `ClassName.fieldName`).
+
+## Expected Error Message Format
+
+```
+Duplicate JSON field name detected while collecting field writers:
+    FieldWriter(org.openqa.selenium.json.JsonTest$ChildFieldBean.value) vs
+    FieldWriter(org.openqa.selenium.json.JsonTest$ParentFieldBean.value)
+```
+
+The error message should include the full class path and field name for each conflicting field writer.
 
 ## Testing
 

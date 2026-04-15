@@ -3,7 +3,7 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md explicitly names the file path (packages/solid-router/src/headContentUtils.tsx), the function (useTags), the import (replaceEqualDeep from @tanstack/router-core), the use of Solid.createMemo with prev parameter, and replaceEqualDeep(prev, next) \u2014 all specifics asserted in the tests."
+      "reason": "instruction.md names the exact file path (packages/solid-router/src/headContentUtils.tsx), the function name (useTags), the import (replaceEqualDeep from @tanstack/router-core), the use of Solid.createMemo with prev parameter, and replaceEqualDeep(prev, next) call \u2014 all specifics asserted in the tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
@@ -11,43 +11,43 @@
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details via regex: 'return Solid.createMemo((prev', 'replaceEqualDeep(prev, next)'. An alternative correct fix using different variable names (e.g., 'previous' instead of 'prev', or 'newTags' instead of 'next'), or a different memoization approach that also prevents FOUC, would fail these tests."
+      "reason": "Tests use regex to assert exact patterns like 'return Solid.createMemo((prev', 'replaceEqualDeep(prev, next)', and import from '@tanstack/router-core'. An alternative correct fix using e.g. a different variable name (like 'previous' instead of 'prev'), or 'next' named differently, or a different deep-equal utility, or wrapping in a helper function, would fail these regex tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three fail-to-pass tests (test_use_tags_imports_replace_equal_deep, test_use_tags_returns_create_memo, test_use_tags_calls_replace_equal_deep) are purely text-matching via regex on file contents with no code execution. They use patterns like `assert re.search(r'replaceEqualDeep\\s*\\(\\s*prev\\s*,\\s*next\\s*\\)', content)`."
+      "reason": "The three fail-to-pass tests (test_use_tags_imports_replace_equal_deep, test_use_tags_returns_create_memo, test_use_tags_calls_replace_equal_deep) are purely text-matching with regex on file content \u2014 they never import, execute, or test actual behavior. While pass-to-pass tests do run builds/tests, the core fail-to-pass tests are all 'assert pattern in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests only check for string patterns in source code. An agent could simply add a dead-code comment like '// replaceEqualDeep(prev, next)' or add unused import and unreachable code matching the regex patterns without actually fixing the bug."
+      "reason": "A stub that simply writes the matching text patterns into headContentUtils.tsx (e.g., adding the import line and a function with 'return Solid.createMemo((prev' and 'replaceEqualDeep(prev, next)') without actually fixing the bug could pass the three f2p tests, since they only check for string patterns in the file."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router as part of the solve.sh, and the test patterns are simple regex matches on file content. An agent could read solution/solve.sh to extract the exact fix, or simply grep the test file for the expected patterns and insert matching strings."
+      "reason": "The solution is in /workspace/router accessible to the agent via solve.sh (which is at solution/solve.sh in the container). The agent could read or cat the solution file. Also, since tests are pure regex on file content, the agent could grep test files to discover exact patterns needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three code pattern requirements from instruction.md are tested (import, createMemo with prev, replaceEqualDeep call), plus all verification steps (unit tests, types, build, eslint, publint) are tested."
+      "reason": "All three code pattern requirements listed in instruction.md are tested (import, createMemo with prev, replaceEqualDeep call), plus all five verification checks (unit tests, types, build, eslint, publint) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear docstrings, separated into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, and each test has a descriptive name."
+      "reason": "Tests are clearly grouped with comments into 'FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS' sections, each test has a descriptive name and docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, function names, and variable names in instruction.md and tests are consistent and correct."
+      "reason": "File paths, command names, function names, and variable names in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (packages/solid-router/src/headContentUtils.tsx), the exact function (useTags), and the exact implementation details (import replaceEqualDeep, use Solid.createMemo with prev parameter, call replaceEqualDeep(prev, next)). This is explicit solution leakage, not just pointing at the problem domain."
+      "reason": "instruction.md explicitly names the exact file (packages/solid-router/src/headContentUtils.tsx), the exact function (useTags), and the exact implementation details (import replaceEqualDeep, use Solid.createMemo with prev parameter, call replaceEqualDeep(prev, next)). This completely gives away the solution location and implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

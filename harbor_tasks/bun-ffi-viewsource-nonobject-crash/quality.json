@@ -3,66 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on many specifics not mentioned in instruction.md: test_ffi_struct_integrity checks for 'clearAndFree' identifier; test_zig_no_banned_patterns checks for banned patterns like 'std.fs.Dir', 'std.fs.cwd', 'std.debug.assert' (from CLAUDE.md, not mentioned in instructions); test_repo_prettier_ffi_tests runs prettier on 'test/js/bun/ffi/*.test.ts'; test_repo_file_structure checks for 'build.zig', 'CMakeLists.txt', 'tsconfig.json'; test_js_lint_oxlint checks 'oxlint.json'. None of these a"
+      "reason": "Tests check specific things not mentioned in instruction.md: test_repo_prettier_ffi_tests checks 'test/js/bun/ffi/*.test.ts' with prettier, test_repo_prettier_scripts checks 'scripts/build.mjs' and 'scripts/build.ts', test_js_lint_oxlint runs oxlint on 'src/js', test_js_files_valid_syntax checks 'scripts/build.mjs'. While instruction.md mentions prettier formatting and oxlint.json structure, it doesn't mention specific script files like 'scripts/build.mjs' or 'scripts/build.ts'. Also, the test t"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix mechanism: 'non-object values like numbers or strings pass through' and mentions the check 'isEmptyOrUndefinedOrNull()' is insufficient, and that error-return paths leak memory because they 'free the symbol keys but not the arg_types arrays'. This essentially tells the agent to add an isObject() check and to free arg_types in error paths, which is exactly the gold patch."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (non-object symbol descriptors crash instead of throwing TypeError, and error-path cleanup is imperfect) without specifying the exact code changes needed. The agent must figure out to add `!value.isObject()` check and `arg_types.deinit` cleanup themselves."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_value_guard_rejects_non_objects checks for specific type-check tokens like 'isObject', 'isStruct', etc. near 'isEmptyOrUndefinedOrNull'. test_error_path_frees_arg_types checks for 'arg_types' near 'clearAndFree'. test_memory_leak_fix_all_three_functions checks that exactly 3 functions (print/open/linkSymbols) contain arg_types cleanup near clearAndFree. An alternative correct fix using different patterns (e.g., restructuring the code differently, using a helper function with a different nam"
+      "reason": "test_value_guard_rejects_non_objects searches for specific patterns like 'isObject' in the generateSymbols region. An alternative fix using e.g. 'isStruct' or a different type-checking approach might not pass. test_error_path_cleanup specifically looks for 'arg_types.deinit' or 'arg_types' combined with 'deinit' \u2014 an alternative cleanup using a different method name or approach would fail. test_cleanup_count requires 'at least 2' cleanup sites with 'arg_types' and 'deinit' patterns, which is gol"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_value_guard_rejects_non_objects, test_error_path_frees_arg_types, test_memory_leak_fix_all_three_functions, test_error_message_format) are all pure source text analysis using regex and string matching on ffi.zig content. No code is compiled or executed. The pass-to-pass tests do run some subprocesses (prettier, node) but the core behavioral tests are entirely text-based."
+      "reason": "The fail-to-pass tests (test_value_guard_rejects_non_objects, test_error_path_cleanup, test_cleanup_count) are purely source text analysis \u2014 they read ffi.zig and search for string patterns like 'isObject', 'arg_types.deinit' without executing any code or testing runtime behavior. The note in the test file acknowledges 'Zig requires the full Bun build toolchain... All checks therefore operate on source analysis.' This means every f2p test is effectively `assert 'foo' in open(path).read()`."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply adds '!value.isObject()' next to 'isEmptyOrUndefinedOrNull' and adds 'arg_types' near 'clearAndFree' in three functions would pass all f2p tests without actually fixing the bug correctly, since tests only do text pattern matching. The tests don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns (isObject guard, arg_types.deinit cleanup) that don't exist in the base commit. A stub or no-op change would not introduce these patterns, so the tests would fail without an actual implementation."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's git history (solution/solve.sh applies a patch) and the agent could read the solve.sh or grep for the expected patterns. The test checks are pure text matching on source code, so the agent could reverse-engineer exactly what strings to insert by reading test_outputs.py patterns."
+      "reason": "The solution is in /workspace/bun's git history or could be found via the solve.sh patch. The agent could read the solution file at solution/solve.sh (if accessible in the container) or simply grep for the exact patterns the tests look for ('isObject', 'arg_types.deinit') and add them. Since tests are pure text matching, the agent could pass by inserting those exact strings without understanding the bug."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'should throw a TypeError with a message like Expected an object for key \"myFunc\"' but no test actually verifies that a TypeError is thrown at runtime. test_error_message_format only checks that the string pattern exists in source code, not that it's actually triggered."
+      "outcome": "pass",
+      "reason": "The instruction mentions two main behaviors: (1) throwing TypeError for non-object symbol descriptors (tested by test_value_guard_rejects_non_objects) and (2) error-path cleanup of arg_types arrays (tested by test_error_path_cleanup and test_cleanup_count). Both are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into 'Gates (pass_to_pass, static)', 'Pass-to-pass (repo_tests)', and 'Fail-to-pass (pr_diff)' sections with descriptive function names."
+      "reason": "Tests are well-organized with clear sections (Gates/static, pass_to_pass/repo_tests, fail_to_pass/pr_diff), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves fixing a bug in Zig source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function ('generateSymbols'), the exact line area ('around line 1420'), the exact check ('isEmptyOrUndefinedOrNull'), the exact call chain ('value.getTruthy() -> value.get()'), and the exact memory leak ('free the symbol keys but not the arg_types arrays') and the exact functions affected ('print, open, linkSymbols'). This goes far beyond describing what's broken."
+      "reason": "The instruction names the exact file 'src/bun.js/api/ffi.zig', lists specific function names like 'generateSymbols', 'generateSymbolForFunction', 'isEmptyOrUndefinedOrNull', and explicitly describes 'error-path cleanup requirements' for 'arg_types arrays' with 'clearAndFree'. This strongly hints at the exact fix (add cleanup of arg_types before clearAndFree, and add a type guard near isEmptyOrUndefinedOrNull)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 5,
+  "fail_count": 5
 }

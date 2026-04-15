@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path, constant name MAX_NUMBER_OF_SIGNATURES, value 2, type usize, the exact strings like 'exceeds the maximum allowed', 'FieldViolation::new(\"signatures\")', 'ErrorReason::FieldInvalid', 'request.signatures.len()', and the requirement for a comment mentioning sender/sponsor. All test assertions check for things explicitly described in the instruction."
+      "reason": "The instruction names all key specifics tested: MAX_NUMBER_OF_SIGNATURES constant with value 2 and type usize, the file path, request.signatures.len(), 'exceeds the maximum allowed' phrase, FieldViolation::new(\"signatures\"), ErrorReason::FieldInvalid, validation before signature parsing, comment about sender/sponsor, cargo fmt, and cargo check. The test for license header (test_target_file_has_license_header) checks for pre-existing content that should already be present. All test-asserted speci"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: define a constant named MAX_NUMBER_OF_SIGNATURES with value 2, check request.signatures.len() > MAX_NUMBER_OF_SIGNATURES, use FieldViolation::new('signatures') with 'exceeds the maximum allowed' message and ErrorReason::FieldInvalid. This is a near-complete specification of the code to write, not just a description of what's broken."
+      "reason": "The instruction essentially specifies the exact implementation: define a constant named MAX_NUMBER_OF_SIGNATURES with value 2, compare request.signatures.len() against it, use FieldViolation::new(\"signatures\") with ErrorReason::FieldInvalid, include 'exceeds the maximum allowed' in the error message, and place it before signature parsing. This is a complete specification of WHAT to change and HOW, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details: test_validation_occurs_before_signature_parsing checks for the literal string 'request.signatures.len() > MAX_NUMBER_OF_SIGNATURES' and 'let signatures = request'. An alternative correct fix using e.g. 'request.signatures.len() >= MAX_NUMBER_OF_SIGNATURES + 1' or storing len in a variable first would fail. The tests enforce gold-specific code patterns rather than behavior."
+      "reason": "Tests assert on exact implementation details: test_validation_occurs_before_signature_parsing checks for the literal string 'request.signatures.len() > MAX_NUMBER_OF_SIGNATURES', test_error_is_invalid_argument checks for exact string 'FieldViolation::new(\"signatures\")', test_signature_validation_code_exists checks for 'request.signatures.len()' and 'exceeds the maximum allowed'. An alternative correct implementation using >= instead of >, or a different variable name, or a different error messag"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_signature_limit_constant_exists, test_signature_validation_code_exists, test_validation_occurs_before_signature_parsing, test_error_is_invalid_argument, and test_code_has_proper_documentation are all purely text-matching with 'assert X in open(path).read()'. The cargo check/clippy/fmt tests do execute subprocesses, but the core fail-to-pass tests only inspect source text, never calling the code or testing actual rejection behavior."
+      "reason": "The fail-to-pass tests (test_signature_limit_constant_exists, test_signature_validation_code_exists, test_validation_occurs_before_signature_parsing, test_error_is_invalid_argument, test_code_has_proper_documentation) are ALL text-matching tests using `assert 'string' in open(path).read()` or regex on file content. None import, call, or execute the code to verify behavior. The cargo check/clippy/fmt tests are pass-to-pass tests that verify compilation, not the actual validation behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass: the tests check for specific strings like MAX_NUMBER_OF_SIGNATURES, 'request.signatures.len()', 'exceeds the maximum allowed', etc. that must be added to the file. The default file at the base commit does not contain these strings."
+      "reason": "A stub/no-op implementation would not pass the fail-to-pass tests since they check for specific strings like MAX_NUMBER_OF_SIGNATURES, 'request.signatures.len()', 'exceeds the maximum allowed', etc. that must be present in the source file. The default file does not contain these strings."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/sui with solve.sh visible in the container. An agent could read /tmp/patch.txt or the solve.sh script (if accessible), or simply grep the test file at tests/test_outputs.py to discover all expected strings and patterns. The tests only do text matching so the agent could insert the exact expected strings as dead code."
+      "reason": "The solution is available at /workspace/sui (the solve.sh patches it there), and the agent could read the solution/solve.sh file which contains the exact patch. The tests only check file content via string matching, so the agent could simply apply the patch from solve.sh or copy the expected strings into the file without understanding the problem."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that requests with >2 signatures are 'rejected early with an InvalidArgument error' and that it 'Results in an InvalidArgument gRPC status code', but no test actually sends a gRPC request or verifies runtime rejection behavior. Only source text patterns are checked."
+      "reason": "The instruction requires the validation results in an 'InvalidArgument gRPC status code', but no test actually sends a gRPC request with >2 signatures and verifies the status code. All tests are static text analysis of the source file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_signature_limit_constant_exists, test_validation_occurs_before_signature_parsing, etc.), each has a docstring explaining what it checks, and they are logically grouped by concern."
+      "reason": "Tests are well-named (e.g., test_signature_limit_constant_exists, test_validation_occurs_before_signature_parsing), have docstrings explaining what they verify, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API responses."
+      "reason": "This task involves adding validation code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, commands, and string literals in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file path 'crates/sui-rpc-api/src/grpc/v2/transaction_execution_service/mod.rs' and specifies exact code patterns like 'request.signatures.len()', 'FieldViolation::new(\"signatures\")', and the constant name/value. This goes well beyond what's needed for task domain understanding."
+      "reason": "The instruction explicitly names the exact file path 'crates/sui-rpc-api/src/grpc/v2/transaction_execution_service/mod.rs' and specifies it should be added 'within the transaction execution service', and specifies the exact constant name, value, type, error format, and placement relative to existing code. This goes well beyond identifying the domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

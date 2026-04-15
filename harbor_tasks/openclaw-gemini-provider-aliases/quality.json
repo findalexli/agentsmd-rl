@@ -3,65 +3,63 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test file 'provider-models.test.ts' must exist and contain specific test names like 'resolves gemini 3.1 pro' and 'flash-lite'; the helper function name 'cloneFirstGoogleTemplateModel' is tested indirectly; the constant 'GOOGLE_GEMINI_CLI_PROVIDER_ID' is expected in index.ts (test_template_provider_id_fallback checks for it); the exact parameter name 'templateProviderId' is required in the function signature. While 'templateProviderI"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_runtime_provider_not_hardcoded checks for regex patterns on resolveGoogle31ForwardCompatModel call arguments; test_template_provider_id_fallback checks for 'templateProviderId' in the function signature and 'GOOGLE_GEMINI_CLI_PROVIDER_ID' in the call site; test_typescript_syntax checks balanced braces/parens. The constant GOOGLE_GEMINI_CLI_PROVIDER_ID is referenced in instruction.md but its exact usage in the call site (as templ"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md under 'Expected Fix' specifies exactly what to do: 'pass the actual runtime ctx.provider ID instead of hardcoded \"google\"', 'add a templateProviderId fallback', 'Add a templateProviderId parameter to resolveGoogle31ForwardCompatModel', 'Create a helper that tries template lookup first with the actual provider ID, then falls back to the template provider ID', and 'check gemini-3.1-flash-lite before gemini-3.1-flash'. This is the complete solution design, not just a bug description."
+      "reason": "Instruction.md explicitly states implementation details: 'The resolver must check for gemini-3.1-flash-lite before gemini-3.1-flash', 'The code must use the actual runtime provider ID (from context) rather than a hardcoded string literal \"google\"', 'The resolution function must accept a templateProviderId parameter to enable cross-provider template lookup'. These are specific implementation changes, not just descriptions of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_template_provider_id_fallback checks for the exact string 'templateProviderId' in the function signature and in the call site in index.ts; test_runtime_provider_not_hardcoded uses regex to match the exact call pattern of resolveGoogle31ForwardCompatModel. An alternative fix that, e.g., uses a different parameter name like 'fallbackProviderId' or restructures the function differently would fail these tests."
+      "reason": "test_template_provider_id_fallback asserts 'templateProviderId' must appear in the function signature and 'GOOGLE_GEMINI_CLI_PROVIDER_ID' must appear in the call in index.ts. test_runtime_provider_not_hardcoded uses regex to check the exact call pattern of resolveGoogle31ForwardCompatModel. An alternative correct fix using a different parameter name (e.g., 'fallbackProviderId') or different architecture (e.g., a provider alias registry) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several fail-to-pass tests are purely text-matching: test_runtime_provider_not_hardcoded does regex on source code looking for 'providerId: \"google\"'; test_template_provider_id_fallback checks for 'templateProviderId' string in file content; test_prefix_ordering_flash_lite_before_flash checks line numbers of string occurrences. While test_resolve_pro_for_alias_provider and similar run vitest, they only check stdout for substrings like 'resolves gemini 3.1 pro' rather than directly testing behavi"
+      "outcome": "pass",
+      "reason": "Tests use a mix of approaches: several tests run vitest subprocess to execute actual test code (test_resolve_pro_for_alias_provider, test_resolve_flash_from_direct_provider, test_flash_lite_not_misclassified_as_flash), and others do static analysis (test_runtime_provider_not_hardcoded, test_template_provider_id_fallback). The behavioral tests do execute code via vitest, so it's not purely text-matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests that run vitest (test_resolve_pro_for_alias_provider, test_resolve_flash_from_direct_provider, test_flash_lite_not_misclassified_as_flash) depend on a test file 'provider-models.test.ts' that doesn't exist in the base repo \u2014 it's created by the solution. If the agent simply creates a trivial test file with passing tests that include the right keywords in test names, all three vitest-based f2p tests would pass without actually fixing the bug."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require actual working implementation: test_resolve_pro_for_alias_provider runs vitest which executes mock-based tests that verify cross-provider resolution logic; test_flash_lite_not_misclassified_as_flash verifies correct prefix ordering. A stub returning undefined/None would fail the vitest assertions expecting defined results."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/openclaw as solve.sh (or could be accessed via the solution/ directory). The agent could read the gold patch from the solve.sh script or the test file to understand exactly what's expected. Additionally, since the test file 'provider-models.test.ts' is created by the solution itself, the agent could simply create a fake test file with passing tests matching expected stdout patterns."
+      "reason": "The solution file exists at /workspace/openclaw as solve.sh content, and the gold patch test file at solution/solve.sh is accessible. The agent could potentially read the solve.sh or the test file to discover expected patterns. Additionally, the test file provider-models.test.ts is created by the solution script itself, so the agent could write any test file that trivially passes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: prefix ordering fix (test_prefix_ordering_flash_lite_before_flash), runtime provider not hardcoded (test_runtime_provider_not_hardcoded), templateProviderId parameter (test_template_provider_id_fallback), and cross-provider resolution (test_resolve_pro_for_alias_provider)."
+      "reason": "All behaviors described in instruction.md (cross-provider resolution, direct provider resolution, flash-lite prefix ordering, runtime provider not hardcoded, templateProviderId parameter) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (pass_to_pass repo tests, static gates, fail_to_pass pr_diff checks), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive names grouped into pass-to-pass (repo_tests) and fail-to-pass (pr_diff) categories, with clear docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes, not structured data output."
+      "reason": "This task involves TypeScript code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files, exact function ('resolveGoogle31ForwardCompatModel'), exact parameter to add ('templateProviderId'), exact variable to change ('ctx.provider' instead of hardcoded 'google'), and exact prefix reordering. This goes well beyond identifying the buggy module \u2014 it specifies the complete implementation approach."
+      "reason": "Instruction.md names the exact files to modify (extensions/google/index.ts, extensions/google/provider-models.ts), describes the exact parameter to add (templateProviderId), and specifies the exact ordering fix (check flash-lite before flash). This goes beyond describing the bug domain and into specifying the exact fix location and approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 5
 }

@@ -1,23 +1,27 @@
-# Fix binary-size agent image name in CI
+# Fix binary-size agent image name generation
 
 ## Problem
 
-The `binary-size` CI step is failing with an "Image not found" error from robobun. The issue is in how the agent configuration is constructed for this Buildkite step.
+The `binary-size` CI step fails with an "Image not found" error from robobun. The error occurs because the generated AMI name is missing the `-with-docker` suffix.
 
-Currently, `getBinarySizeStep()` in the CI configuration file constructs a hand-built platform object when calling `getEc2Agent()`. This approach omits the `features` field that should include `["docker"]`.
+**Incorrect image name generated:** `linux-aarch64-2023-amazonlinux-v29` (this AMI does not exist)  
+**Correct image name expected:** `linux-aarch64-2023-amazonlinux-with-docker-v29`
 
-Without the `features` field, `getImageKey()` generates an incorrect image name:
-- **Incorrect**: `linux-aarch64-2023-amazonlinux-v29` (this AMI doesn't exist)
-- **Correct**: `linux-aarch64-2023-amazonlinux-with-docker-v29`
+The AMI name is constructed by `getImageKey()` based on platform configuration objects that should include a `features` array. When the `features` field is missing or empty, the generated image key lacks the `-with-docker` suffix, causing the image lookup to fail.
 
-## Expected Behavior
+## Expected Outcome
 
-The `binary-size` step should use the same platform configuration as the `linux-aarch64-build-cpp` step. This configuration is available in the `buildPlatforms` array which already contains the correct platform object with all required fields including `features: ["docker"]`.
+Your solution must generate the correct image name (`linux-aarch64-2023-amazonlinux-with-docker-v29`) for the binary-size step's EC2 agent.
 
-## Files to Look At
+The implementation must:
 
-- `.buildkite/ci.mjs` — Contains `getBinarySizeStep()` function that needs to be fixed
+- Use `buildPlatforms.find()` to locate the correct platform configuration
+- Filter using the criteria: `p.os === "linux"`, `p.arch === "aarch64"`, and `p.distro === "amazonlinux"`
+- NOT use a hand-built platform object literal containing `os: "linux"`, `arch: "aarch64"`, `distro: "amazonlinux"`, `release: "2023"`
+- Return a step object containing the properties: `key`, `label`, `agents`, and `depends_on`
 
-## Hints
+## Context
 
-Look at how other steps in the same file configure their agents. The `buildPlatforms` array is defined elsewhere in the file and contains the full platform specifications. Find the entry for `linux-aarch64` with `amazonlinux` distro and reuse that instead of constructing a new object.
+The codebase contains a `buildPlatforms` array with full platform specifications including `features: ["docker"]` fields. The `getImageKey()` function uses the `features` array to determine the image name suffix. Platform objects in this codebase have the structure: `{ os, arch, distro, release, features: [...] }`.
+
+The `linux-aarch64-build-cpp` step in the CI configuration uses a platform object with `features: ["docker"]` and generates the correct image name. The binary-size step should use equivalent platform configuration.

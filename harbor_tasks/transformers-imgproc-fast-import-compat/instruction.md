@@ -13,16 +13,16 @@ Additionally, the existing module aliasing mechanism has a subtle issue: when Py
 
 ## Relevant Files
 
-- `src/transformers/__init__.py` — the main package init where lazy module aliases are created (see the `_create_tokenization_alias` function and the `_LAZY_IMPORTS` dict around line 119)
+- `src/transformers/__init__.py` — the main package init
 - `src/transformers/image_processing_backends.py` — the new target module that replaced `image_processing_utils_fast`
 
 ## Expected Behavior
 
-1. **`BaseImageProcessorFast` import**: `from transformers.image_processing_utils_fast import BaseImageProcessorFast` should resolve successfully. The class is available under the name `BaseImageProcessorFast` (in `image_processing_backends`, it is aliased from `TorchvisionBackend`).
+1. **`BaseImageProcessorFast` import**: `from transformers.image_processing_utils_fast import BaseImageProcessorFast` should resolve successfully. The imported class must be identical (`is`) to `TorchvisionBackend` from `transformers.image_processing_backends`.
 
-2. **`divide_to_patches` import and function**: `from transformers.image_processing_utils_fast import divide_to_patches` should work and return the same function as `from transformers.image_transforms import divide_to_patches`. The function accepts numpy arrays in CHW format (channels, height, width) and a patch size integer, returning a list of patches.
+2. **`divide_to_patches` import and function**: `from transformers.image_processing_utils_fast import divide_to_patches` should work and return the same function (`is`) as `from transformers.image_transforms import divide_to_patches`. The function accepts numpy arrays in CHW format (channels, height, width) and a patch size integer, returning a list of patches.
 
-3. **Module `__file__` attribute**: After `import transformers`, the alias module `transformers.image_processing_utils_fast` must be registered in `sys.modules` with `__file__` present directly in `mod.__dict__` (not via `__getattr__`). This prevents `inspect` operations from triggering circular imports.
+3. **Module `__file__` attribute**: After `import transformers`, the module `transformers.image_processing_utils_fast` must be registered in `sys.modules` with `__file__` present directly in `mod.__dict__` (not via `__getattr__`). This prevents `inspect` operations from triggering circular imports.
 
 4. **Tokenization aliases preserved**: Existing tokenization module aliases (`tokenization_utils_fast`, `tokenization_utils`) must continue to work.
 
@@ -35,7 +35,3 @@ from transformers.image_processing_utils_fast import BaseImageProcessorFast
 from transformers.image_processing_utils_fast import divide_to_patches
 # ImportError: No module named 'transformers.image_processing_utils_fast'
 ```
-
-## Implementation Note
-
-The solution requires adding `image_processing_utils_fast` to the lazy imports dictionary and creating a module alias. The string `"image_processing_utils_fast"` must appear as a string literal in `src/transformers/__init__.py`'s AST (e.g., as a key in the lazy imports mapping).

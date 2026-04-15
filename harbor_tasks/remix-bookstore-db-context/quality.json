@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key files (database.ts, auth.ts, context.db.ts, books.tsx, cart.tsx, admin.books.tsx, README.md, context.ts), the Database symbol from 'remix/data-table', the context.set/get pattern, and the removal of module augmentation. The account.tsx file is tested implicitly through test_repo_bookstore_account_tests but isn't listed in 'Files to Look At' \u2014 however, the instruction says 'Files to Look At' not 'exhaustive list', and the pattern description is sufficient to discover"
+      "reason": "The instruction names all key files (database.ts, auth.ts, context.db.ts, books.tsx, cart.tsx, admin.books.tsx, README.md, context.ts), the Database symbol from 'remix/data-table', the context.set/get pattern, and the removal of module augmentation. The account.tsx file is tested indirectly via test_repo_bookstore_account_tests but is not listed in instruction.md's 'Files to Look At' \u2014 however, the instruction says to change handlers that use the database, and the account file follows the same p"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'store the database handle using context.set(Database, db) instead of context.db = db', 'read the database back with get(Database) instead of destructuring db', and 'Import Database from remix/data-table'. This tells the agent precisely WHAT to change and HOW, leaving minimal reasoning required."
+      "reason": "The instruction explicitly states the exact fix: use 'context.set(Database, db)' instead of 'context.db = db', use 'get(Database)' instead of destructuring 'db', import 'Database' from 'remix/data-table', and remove the module augmentation file. This is not describing what's broken \u2014 it's prescribing the exact code changes line by line. A developer reading this doesn't need to reason about what to change; the solution is spelled out."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for specific patterns that are inherent to the task specification itself: importing Database from 'remix/data-table', using context.set(Database, ...), and get(Database). These are the canonical API patterns described in the task, not arbitrary implementation choices. Any correct solution must use these exact APIs since they're the framework's standard context pattern."
+      "reason": "The tests check for patterns that any correct implementation must use: importing Database from 'remix/data-table', using context.set(Database, ...) and get(Database). Since the instruction specifies using the Database symbol from remix/data-table and the standard context API, there's essentially one correct approach. The tests check for the presence of these patterns via regex, which would match reasonable variations in formatting and style. The typecheck/lint/format/test checks ensure functiona"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_database_middleware_context_api, test_handlers_use_get_database_pattern, test_auth_middleware_uses_get_database, test_no_module_augmentation, test_readme_documents_new_pattern, test_readme_no_old_context_db) are primarily regex/string matching on file contents (readFileSync + regex test), not executing the code. While pass_to_pass tests do run typecheck, lint, and actual test suites, the core behavioral tests that distinguish pass from fail are text-matching only."
+      "reason": "The fail_to_pass tests (test_database_middleware_context_api, test_handlers_use_get_database_pattern, test_auth_middleware_uses_get_database, test_no_module_augmentation, test_readme_documents_new_pattern, test_readme_no_old_context_db) are predominantly text-matching tests using regex on file contents (readFileSync + regex). They don't import or execute the code. However, the pass_to_pass tests do run typecheck, lint, format, and actual test suites, which execute the code. Since the fail_to_pas"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass these tests. The f2p tests check for specific code patterns (Database import, context.set(Database,...), get(Database)), absence of old patterns (context.db=, db destructuring), deletion of a file, and README content changes. The existing codebase uses the old pattern, so doing nothing fails. A trivial stub would also fail the pass_to_pass typecheck and test suite runs."
+      "reason": "A stub implementation would not pass these tests. test_no_module_augmentation requires deleting a file. test_database_middleware_context_api requires specific import and context.set patterns in database.ts. test_handlers_use_get_database_pattern requires changes across multiple handler files. The pass_to_pass tests (typecheck, lint, tests) ensure the changes are functionally correct, not just textually present."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution exists at /workspace/remix and solve.sh is accessible in the container. The agent could read the solution patch or grep for the expected patterns. Additionally, the test fixture strings ('get(Database)', 'context.set(Database') are literal in the test file which could be discovered by reading test_outputs.py if accessible."
+      "reason": "The solution exists at /workspace/remix as a git repo, and solve.sh applies a git patch. The agent could potentially read the solution by examining git history or the solve.sh file if accessible. Also, the test patterns are simple regex matches on file contents that could be satisfied by inserting the expected strings as comments without actually implementing the changes \u2014 though the typecheck and test suite pass_to_pass tests would catch most such cheating."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: middleware uses context.set(Database, db), handlers use get(Database), module augmentation file is deleted, README is updated to reflect new pattern and doesn't reference old pattern. The pass_to_pass tests ensure nothing is broken."
+      "reason": "All behaviors described in the instruction are tested: database middleware using context.set(Database, db), handlers using get(Database), auth middleware using get(Database), removal of module augmentation file, and README updates. The account.tsx changes are covered by test_repo_bookstore_account_tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (pass_to_pass/static, pass_to_pass/repo_tests, fail_to_pass/pr_diff behavioral, fail_to_pass/pr_diff README), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (pass_to_pass/static, pass_to_pass/repo_tests, fail_to_pass/pr_diff behavioral, fail_to_pass/README), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "This task involves code refactoring, not producing structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, commands, and package references in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction lists every specific file to modify and exactly what changes to make in each (e.g., 'context.set(Database, db) instead of context.db = db'). While listing files is somewhat justified for a refactoring task, the instruction goes beyond localizing the problem to prescribing the exact code transformations."
+      "reason": "The instruction explicitly names exact files to modify and the exact code patterns to use (context.set(Database, db), get(Database), import Database from 'remix/data-table'). It even specifies which file to delete (app/types/context.db.ts). This goes beyond naming obvious domain files \u2014 it provides the complete implementation strategy."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code refactoring task, not a config-edit task."
+      "reason": "This is a code refactoring task, not an agentmd-edits/config-only task."
     }
   },
   "tier_a_fails": [

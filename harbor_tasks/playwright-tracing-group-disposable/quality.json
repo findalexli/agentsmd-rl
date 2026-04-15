@@ -2,32 +2,32 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "All test assertions reference file paths, strings, and patterns that are explicitly mentioned in instruction.md: tracing.ts path, DisposableStub import, 'from ./disposable', 'return new DisposableStub', groupEnd(), Promise<Disposable> in both types files, 'returns: <[Disposable]>' in docs, 'npm run flint' and 'Before committing' in CLAUDE.md. The instruction names all these files and concepts."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_tracing_ts_imports_disposable checks for 'DisposableStub' and 'from ./disposable' import path. The instruction says 'search the source tree to find it' but never names 'DisposableStub' or the exact import path 'from ./disposable'. Also test_api_docs_updated asserts exact string 'returns: <[Disposable]>' which is not specified in the instruction (it only says 'follow the format pattern')."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent to 'Import DisposableStub from the disposable module', 'return a DisposableStub that calls groupEnd() when disposed', change return type to 'Promise<Disposable>', and add specific text to CLAUDE.md. This is a step-by-step recipe, not a problem description. A competent developer doesn't need to reason about what to change."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (group() returns void instead of a disposable) and what needs to change at a high level, but doesn't specify exact code changes like 'change line X to Y'. It tells the agent to search for the utility class rather than naming it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'return new DisposableStub' and 'from ./disposable' in test_tracing_ts_imports_disposable and test_tracing_group_returns_disposable. An alternative correct implementation that e.g. uses a different import path, re-exports DisposableStub through another module, or stores the stub in a variable before returning would fail these text-matching tests."
+      "reason": "Tests assert gold-specific implementation details: test_tracing_ts_imports_disposable requires exact string 'DisposableStub' and exact import 'from ./disposable'. An alternative correct implementation using a different disposable class (e.g., inline anonymous object with Symbol.dispose, or a different utility) would fail. test_tracing_group_returns_disposable asserts 'return new DisposableStub' which locks in one specific implementation."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_tracing_ts_imports_disposable, test_tracing_group_returns_disposable, test_types_d_updated, test_api_docs_updated, and test_claude_md_has_flint_rule all use `assert 'string' in file.read_text()` pattern \u2014 pure text matching with no code execution or behavioral verification. test_typescript_compiles and test_flint_linting do run subprocesses, but the core f2p tests are all text-based."
+      "reason": "Most tests are pure text/string matching: test_tracing_ts_imports_disposable checks 'DisposableStub in content', test_tracing_group_returns_disposable checks 'return new DisposableStub in content', test_types_d_updated checks 'Promise<Disposable> in content', test_api_docs_updated checks 'returns: <[Disposable]> in content', test_claude_md_has_flint_rule checks string presence. Only test_typescript_compiles actually executes code (tsc). The core behavioral tests are all string-in-file assertions"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'DisposableStub' in tracing.ts, 'return new DisposableStub', 'Before committing' in CLAUDE.md). A stub/no-op implementation wouldn't add these strings to the files."
+      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'DisposableStub' in tracing.ts, 'Promise<Disposable>' in types files, 'npm run flint' in CLAUDE.md). A stub/no-op implementation wouldn't add these strings, so the tests would fail without actual changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. The agent could read it directly. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py for the exact strings being asserted and insert them mechanically."
+      "reason": "The solution directory exists at /workspace with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings like 'DisposableStub', 'from ./disposable', 'return new DisposableStub', 'returns: <[Disposable]>', and 'Before committing'. No measures prevent reading these files."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires the pattern 'await using group = await context.tracing.group(\"name\")' to work and 'automatically call groupEnd() when disposed'. No test actually verifies this runtime behavior \u2014 all tests are text-matching on source files."
+      "reason": "The instruction says the solution should 'Allow the await using pattern' and 'Automatically call groupEnd() when the disposable is disposed' but no test actually verifies this runtime behavior - tests only check for string patterns in source files."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,32 +35,31 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly names the exact file (tracing.ts), the exact class to import (DisposableStub), the exact module path ('./disposable'), and the exact return statement pattern. This goes well beyond naming the module \u2014 it specifies the implementation."
+      "outcome": "pass",
+      "reason": "The instruction names the file packages/playwright-core/src/client/tracing.ts which is the obvious file for this task domain. It doesn't name exact line numbers or the specific utility class (DisposableStub). The files to edit are naturally scoped to the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The CLAUDE.md edit in the gold patch is a single line addition in the Commit Convention section, which is localized and doesn't contradict other files."
+      "reason": "The CLAUDE.md edit is a single line addition in the Commit Convention section. The gold diff is localized and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 5
 }

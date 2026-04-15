@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path `app/controllers/shared/api.php`, the exact guard pattern `if ($route === null)`, the exception constant `GENERAL_ROUTE_NOT_FOUND`, the `AppwriteException` class, and both locations (Http::init action and shutdown action). All test assertions check for these same elements which are discoverable from instruction.md."
+      "reason": "The instruction names the file path `app/controllers/shared/api.php`, the exact guard pattern `if ($route === null)`, the exception constant `GENERAL_ROUTE_NOT_FOUND`, the method `$utopia->getRoute()`, and both locations (Http::init and shutdown). All test assertions check for these named elements, which are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides the exact code to insert (`if ($route === null) { throw new AppwriteException(AppwriteException::GENERAL_ROUTE_NOT_FOUND); }`), specifies both exact locations, and even provides a complete code snippet. This is effectively telling the agent exactly what to change rather than describing what's broken."
+      "reason": "The instruction provides the exact code to insert (`if ($route === null) { throw new AppwriteException(AppwriteException::GENERAL_ROUTE_NOT_FOUND); }`) and specifies both exact locations. It explicitly tells the agent WHAT to change rather than just describing the broken behavior. The 'Error Handling Pattern' section gives the literal fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string patterns like `if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`. An alternative correct fix using `if (!$route)` or `if (is_null($route))` or a different exception type would fail the tests even though it would correctly fix the null dereference bug."
+      "reason": "Tests like test_null_route_guard_in_init_action and test_null_route_guard_in_shutdown_action search for the exact string `if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`. An alternative correct fix using e.g. `if (is_null($route))` or `if (!$route)` or a different exception type would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The F2P tests (test_null_route_guard_in_init_action, test_null_route_guard_in_shutdown_action) are purely text-matching: they read the file content and search for string patterns like `if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`. While P2P tests do run `php -l` and PHPStan, the core F2P tests never execute the code or test actual behavior."
+      "reason": "The F2P tests (test_null_route_guard_in_init_action, test_null_route_guard_in_shutdown_action) are purely text-matching: they read the file content and search for string patterns like `if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`. They never execute the PHP code or test the actual runtime behavior of null route handling. The P2P tests do run `php -l` and phpstan, but the core behavioral tests are text-based."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The F2P tests check for the presence of specific guard patterns that don't exist in the original code. A stub or no-op implementation would fail because the original file doesn't contain `if ($route === null)` with `GENERAL_ROUTE_NOT_FOUND`."
+      "outcome": "fail",
+      "reason": "The F2P tests only check for the presence of specific strings in the file content (`if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`). An agent could simply insert those strings as dead code comments or unreachable code blocks and pass the tests without actually fixing the bug."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at `/workspace/appwrite` and `solve.sh` contains the exact patch. An agent could read `/solution/solve.sh` or simply grep the test file for the expected patterns and insert them verbatim without understanding the bug."
+      "reason": "The solution file exists at `/workspace/appwrite` in the container (solve.sh is accessible), and the tests are purely text-matching so the agent could grep for expected patterns. The agent could also read the test file to discover exact string patterns to insert."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: null guard in init action, null guard in shutdown action, correct exception constant usage, PHP syntax validity, and code style compliance."
+      "reason": "The instruction requires: (1) null guards in both init and shutdown actions, (2) throwing GENERAL_ROUTE_NOT_FOUND, (3) valid PHP syntax. All three are tested, plus additional linting and static analysis."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -35,31 +35,32 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying PHP source code, not producing structured data output."
+      "reason": "This task modifies PHP source code and does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, class names, and commands are all correctly spelled and consistent between instruction.md and the test file."
+      "reason": "No typos detected in filenames, paths, commands, variable names, or exception constants."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact locations ('Around line 98-100', 'Http::init action', 'shutdown action'), the exact guard pattern to use, and even provides a complete code snippet. This goes beyond describing the bug to providing the exact fix."
+      "reason": "The instruction explicitly names both exact locations ('First location (Http::init action)' and 'Second location (shutdown action)'), provides the exact code pattern to insert, and essentially gives the complete solution rather than just describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a PHP source file, not a configuration edit task."
+      "reason": "This is a code-only task, not a configuration editing task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
+    "test_not_tautological",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

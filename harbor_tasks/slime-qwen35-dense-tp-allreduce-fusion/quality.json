@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific identifiers not mentioned in instruction.md: 'Qwen2MoeSparseMoeBlock' (used in isinstance checks in test_linear_forward_isinstance_dispatch, test_attn_forward_isinstance_dispatch), '_sglang_needs_allreduce_fusion' (tested in test_fusion_attr_and_conditional_postprocess), 'should_fuse_mlp_allreduce_with_next_layer' (tested in test_fusion_query_both_classes), and 'is_last_layer' parameter. The instruction mentions 'allreduce fusion' generically but never names these specific "
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the exact string 'Qwen2MoeSparseMoeBlock' (used in isinstance checks in test_linear_forward_isinstance_dispatch and test_attn_forward_isinstance_dispatch), the method name 'should_fuse_mlp_allreduce_with_next_layer' (test_fusion_query_both_classes), and the attribute '_sglang_needs_allreduce_fusion' (test_fusion_attr_and_conditional_postprocess). The instruction mentions branching on MoE vs dense but never names the sp"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md's 'Required changes' section essentially prescribes the exact fix: 'Check the layer communicator to determine whether allreduce fusion with the next layer should be used', 'Branch based on whether the MLP is a MoE block or dense', 'For dense MLPs, call the MLP with the fusion flag instead of the batch parameter', 'mark the hidden states tensor appropriately and skip the regular postprocessing'. This describes precisely WHAT to change, not just what's broken."
+      "reason": "instruction.md's 'Required changes' section explicitly describes the fix step-by-step: pass allow_allreduce_fusion parameters in __init__, check layer communicator for fusion, branch on MoE vs dense, call MLP with fusion flag, mark hidden states tensor, and skip postprocessing. This is essentially a detailed implementation recipe, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact method name 'should_fuse_mlp_allreduce_with_next_layer', exact attribute name '_sglang_needs_allreduce_fusion', exact isinstance check against 'Qwen2MoeSparseMoeBlock', and 'allow_allreduce_fusion=True'. An alternative correct fix (e.g., using a different branching mechanism or different attribute names for fusion tracking) would fail these tests."
+      "reason": "Tests assert gold-specific implementation details: exact method name 'should_fuse_mlp_allreduce_with_next_layer', exact attribute name '_sglang_needs_allreduce_fusion', exact class name 'Qwen2MoeSparseMoeBlock' in isinstance checks, and 'allow_allreduce_fusion=True' as a literal string. An alternative correct fix using different dispatch logic (e.g., hasattr check, config flag) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests use regex matching on patch file text (e.g., re.search for 'allow_allreduce_fusion\\s*=\\s*True') and AST parsing of reconstructed code fragments from diff hunks. No code is actually executed, no model is run, no subprocess is invoked. This is textual/structural inspection, not behavioral verification."
+      "reason": "All tests are purely textual/AST analysis of the patch file content. They use regex searches (e.g., re.search for 'allow_allreduce_fusion') and AST parsing of extracted code fragments. No test imports the module, executes the code, or verifies numerical correctness. This is essentially 'assert string in file' with AST sugar."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific additions (allow_allreduce_fusion=True, isinstance dispatch, should_fuse_mlp_allreduce_with_next_layer calls, _sglang_needs_allreduce_fusion attribute) that are not present in the base commit's patch file. A stub or no-op would not add these patterns to the patch file."
+      "reason": "The fail-to-pass tests check for specific code patterns (allow_allreduce_fusion=True, isinstance dispatch, should_fuse_mlp_allreduce_with_next_layer calls, _sglang_needs_allreduce_fusion attribute) that are not present in the base commit's patch file. A stub/no-op would not add these patterns to the patch."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/slime's git history or solution/solve.sh which contains the exact gold patch text. An agent could read solve.sh to obtain the exact replacement patch content and apply it directly. The test fixture values (specific strings like 'should_fuse_mlp_allreduce_with_next_layer') are also visible in test_outputs.py if accessible."
+      "reason": "The solution file exists at /workspace/slime's filesystem and solution/solve.sh contains the complete gold patch. An agent could read solve.sh to extract the exact fix. Additionally, since tests are pure text matching on the patch file, the agent could grep test_outputs.py for the expected strings and insert them directly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (distinguish dense vs MoE, allreduce fusion for dense, init changes, forward method branching) are tested via the corresponding test functions checking for isinstance dispatch, fusion query, attribute setting, and init parameters."
+      "reason": "The instruction lists 4 required behaviors (distinguish dense/MoE, allreduce fusion for dense, maintain MoE convention, correct init params). Tests cover all: init allreduce_fusion params (tests 2-3), isinstance dispatch (tests 4-5), fusion query (test 6), and conditional postprocess (test 7)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_linear_init_allreduce_fusion, test_attn_forward_isinstance_dispatch, etc.), have docstrings, and are organized with clear helper functions and a separation between gate tests and fail-to-pass tests."
+      "reason": "Tests are well-organized with descriptive names (test_linear_init_allreduce_fusion, test_attn_forward_isinstance_dispatch, etc.), docstrings explaining each check, and clear separation between gate tests and fail-to-pass tests with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves modifying a patch file, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task produces a patch file modification, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No apparent typos in filenames, paths, class names, or variable names throughout the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact classes to modify (Qwen3_5LinearDecoderLayer, Qwen3_5AttentionDecoderLayer), specific methods (__init__, forward), and specific mechanisms (LayerCommunicator, allreduce fusion, postprocess_layer). It also specifies the exact file path. This goes well beyond describing what's broken and into specifying exact localization."
+      "reason": "instruction.md names the exact classes to modify (Qwen3_5LinearDecoderLayer, Qwen3_5AttentionDecoderLayer), exact methods (__init__, forward), and provides step-by-step implementation instructions including 'pass the appropriate parameters to enable allreduce fusion in the LayerCommunicator' and 'mark the hidden states tensor appropriately'. This goes well beyond identifying the buggy file."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code patch editing task, not a config-edit task."
+      "reason": "This is a code patch editing task, not a config-only edit task."
     }
   },
   "tier_a_fails": [

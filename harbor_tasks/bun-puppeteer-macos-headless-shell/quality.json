@@ -3,39 +3,39 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file path (test/integration/next-pages/test/dev-server-puppeteer.ts), describes all five behavioral issues (headless mode, executablePath, chmod permissions, finite timeouts, retry delay), and mentions platform-awareness (macOS vs Linux). All test assertions map to behaviors described in the instruction. The specific variable name 'isMacOS' is not mentioned but is a natural implementation choice for 'platform-aware' logic."
+      "reason": "The instruction names the target file path `test/integration/next-pages/test/dev-server-puppeteer.ts`, describes all five behavioral changes (headless mode platform-awareness, executablePath conditional, chmod cached binaries, finite timeouts, retry delay), and mentions the relevant concepts (isMacOS, shell mode, Gatekeeper, etc.) that map to each test's assertions. The tests check for patterns (isMacOS variable, headless conditional, executablePath spread, timeout values, retry delay, chmod com"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fixes: 'headless mode should be made platform-aware so that macOS avoids the .app bundle entirely', 'executablePath behavior should be re-evaluated for correctness on macOS', 'downloaded browser binaries may lack execute permissions' (implying chmod), 'timeout and protocolTimeout are set to 0... should fail fast', 'delay between launch retries is only 1 second, which is insufficient'. These are not just descriptions of what's broken but prescriptions of what"
+      "reason": "The instruction explicitly states the fix approach for each issue: 'headless mode should be made platform-aware so that macOS avoids the .app bundle entirely', 'executablePath...should be re-evaluated for correctness on macOS considering the headless mode selection', 'downloaded browser binaries...may lack execute permissions', 'timeout and protocolTimeout are set to 0...should fail fast', 'delay between launch retries is only 1 second...insufficient'. These are solution descriptions, not just p"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_macos_headless_shell_mode requires a variable named exactly 'isMacOS' (regex: r'const\\s+isMacOS\\s*='), test_executable_path_excluded_on_macos expects a specific spread expression pattern with executablePath, test_chmod_cached_binaries expects execSync calls with backtick template strings containing specific binary names. An alternative correct fix using different variable names (e.g., 'isDarwin') or different chmod approaches (e.g., fs.chmo"
+      "reason": "Tests assert very specific implementation patterns: test_macos_headless_shell_mode requires a `const isMacOS =` variable and a headless expression that evaluates to 'shell' when isMacOS=true via Node.js eval. test_executable_path_excluded_on_macos requires a spread expression `...(...)` containing executablePath that evaluates to {} when isMacOS=true. An alternative correct fix using e.g. `const isApple = ...` or `if (process.platform === 'darwin') { launchOptions.headless = 'shell' }` would fai"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Several tests use _run_node() to actually evaluate JavaScript expressions extracted from the source code, checking runtime behavior (e.g., test_macos_headless_shell_mode evaluates the headless expression with different isMacOS values, test_chmod_cached_binaries creates temp files and verifies chmod makes them executable). This goes beyond pure text matching."
+      "reason": "Several tests extract code expressions and evaluate them via Node.js subprocess (_run_node), checking actual runtime behavior (e.g., test_macos_headless_shell_mode evaluates the headless expression, test_executable_path_excluded_on_macos evaluates the spread expression, test_chmod_cached_binaries creates temp files and runs chmod commands). This goes beyond pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests verify specific behavioral properties that cannot be satisfied by stub/default implementations. For example, test_macos_headless_shell_mode requires evaluating to 'shell' on macOS and true on Linux, test_finite_timeouts requires timeout > 0, test_retry_delay_increased requires delay > 1000ms. The original code has headless:true, timeout:0, and 1000ms delay, so these would all fail without the fix."
+      "reason": "The fail-to-pass tests check specific behavioral properties that the original code doesn't satisfy: the original has `headless: true` (not platform-conditional), `timeout: 0`, `setTimeout(r, 1000)`, and no chmod commands. A stub/no-op would fail these checks."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun as a git repo where the agent operates, and solve.sh is at /solution/solve.sh in the container. An agent could read /solution/solve.sh (if accessible) or the test file at tests/test_outputs.py to extract exact expected patterns. The Dockerfile doesn't show any restriction preventing access to these files."
+      "reason": "The solution is available at /workspace/bun via the solve.sh script content which is in the container's solution/ directory. The agent could read /solution/solve.sh or simply look at the git history. Additionally, the test file tests/test_outputs.py is accessible and contains all expected patterns and values."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from instruction.md are tested: headless mode (test_macos_headless_shell_mode), executablePath exclusion on macOS (test_executable_path_excluded_on_macos), chmod permissions (test_chmod_cached_binaries), finite timeouts (test_finite_timeouts), and retry delay (test_retry_delay_increased). Pass-to-pass tests cover regression checks."
+      "reason": "All five behavioral requirements from instruction.md are tested: headless mode (test_macos_headless_shell_mode), executablePath (test_executable_path_excluded_on_macos), chmod (test_chmod_cached_binaries), timeouts (test_finite_timeouts), retry delay (test_retry_delay_increased). Pass-to-pass tests cover preserved behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff) \u2014 core behavioral fixes' and 'Pass-to-pass (pr_diff) \u2014 regression checks'), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments ('fail_to_pass' vs 'pass_to_pass'), descriptive function names and docstrings explaining each check's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing a TypeScript test configuration file, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "The task involves editing a TypeScript test configuration file, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -43,11 +43,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names only the relevant file (dev-server-puppeteer.ts), which is appropriate since there's only one file to edit. It doesn't specify exact line numbers or exact code changes, though it does describe the nature of the fixes needed."
+      "reason": "The instruction names the single relevant file which is appropriate for the task domain. It doesn't specify exact line numbers or exact code changes, though it does describe the solution approach (scored under no_solution_leakage)."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is a localized edit to a single file (dev-server-puppeteer.ts), modifying specific launch configuration options and adding chmod commands. It's not a full-file rewrite."
+      "reason": "The gold patch is localized to a single file with targeted changes to launch configuration and retry logic, not a full-file rewrite."
     }
   },
   "tier_a_fails": [

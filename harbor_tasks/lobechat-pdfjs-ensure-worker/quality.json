@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all file paths (src/libs/pdfjs/index.tsx, worker.ts, pdf.worker.ts, PDF/index.tsx, PdfPreview.tsx, CLAUDE.md), the variable name 'workerSrc', the function 'ensureWorker()', the template literal format with npmmirror.com URL, and the CLAUDE.md restructuring with 'Trigger condition', 'Workflow:', and 'ToolSearch'. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (src/libs/pdfjs/index.tsx, worker.ts, pdf.worker.ts, the two viewer components, CLAUDE.md), the `workerSrc` template literal format with npmmirror URL, `ensureWorker()` function name, `GlobalWorkerOptions.workerSrc`, imports from `@/libs/pdfjs`, 'Trigger condition', 'Workflow:', 'ToolSearch' \u2014 all explicitly mentioned in the instructions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction tells the agent exactly what to implement: 'Define a const workerSrc template literal using the format https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs', 'Define an ensureWorker() function that checks if pdfjs.GlobalWorkerOptions.workerSrc is set', 'Export a wrapper Document component that calls ensureWorker() in its body'. This is the complete solution specification, not just a description of what's broken."
+      "reason": "The instruction explicitly tells the agent exactly what to implement: 'Define a const workerSrc template literal using the format https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs', 'Define an ensureWorker() function', 'Export a wrapper Document component that calls ensureWorker() in its body', and specifies exact CLAUDE.md restructuring including 'Step 1 must mention using ToolSearch'. This is a detailed implementation specification, not just a descriptio"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: 'const workerSrc' as a template literal (regex match), 'ensureWorker()' as a specific function call string, 'GlobalWorkerOptions.workerSrc' in content. An alternative valid fix could use a different variable name (e.g., 'WORKER_URL'), a different function name (e.g., 'initWorker'), or set workerSrc directly in the Document wrapper without a separate function \u2014 all would fix the bug but fail the tests."
+      "reason": "Tests assert on gold-specific implementation details: `const workerSrc` as a template literal (regex match), the exact function name `ensureWorker()`, and that it appears as a call `ensureWorker()` in the file. An alternative correct fix could use a different variable name (e.g., `WORKER_URL`), a different function name (e.g., `initWorker`), or set workerSrc inline in the Document wrapper without a separate function \u2014 all would fix the bug but fail the tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_ensure_worker_sets_src extracts the workerSrc template and executes it via Node.js subprocess to verify it correctly sets the worker source with version interpolation. While many tests are text-based checks, the core behavioral test actually executes code. The pass-to-pass tests run eslint, vitest, and other subprocess-based verifications."
+      "reason": "test_ensure_worker_sets_src extracts the workerSrc template and executes it via Node subprocess to verify it correctly sets workerSrc with version interpolation. While many tests do use text matching (imports, CLAUDE.md content), the core behavioral test actually executes code, so not every test is purely text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_ensure_worker_sets_src) require creating a new file with specific functional code that is executed via Node.js. A stub file would not contain the required template literal, ensureWorker function, or pass the Node execution check. The deletion tests require actual file removal. The import tests require modifying existing files."
+      "reason": "The f2p tests (test_ensure_worker_sets_src) cannot be satisfied by a stub \u2014 the Node execution verifies that the extracted template literal actually produces a URL containing the version and 'pdf.worker'. The old file deletion tests require actual file removal. The import tests require real content changes in existing files."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/lobe-chat in the container environment (applied via solve.sh). The agent could read the gold patch from the solution directory or inspect git history. Additionally, the test file itself at tests/test_outputs.py contains exact expected strings that could be matched directly."
+      "reason": "The solution is present at /workspace/lobe-chat in the container (the gold patch is applied via solve.sh). The agent could potentially read /solution/solve.sh or the git diff to discover the exact patch. Additionally, the Dockerfile doesn't remove the solution directory."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: creating the unified module with workerSrc/ensureWorker/Document wrapper (test_ensure_worker_sets_src), removing old files (test_old_worker_files_removed), updating imports in both viewer components (test_pdf_viewer_imports_unified, test_pdf_preview_imports_unified), CLAUDE.md restructuring (test_claude_md_linear_section_updated), and Document still being rendered (test_pdf_viewers_still_use_document)."
+      "reason": "All behaviors from instruction.md are tested: unified module creation with workerSrc/ensureWorker/Document wrapper, old file deletion, import updates in both viewer components, CLAUDE.md restructuring with Trigger condition/Workflow/ToolSearch, plus pass-to-pass CI checks (lint, tests, circular deps)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_ensure_worker_sets_src, test_old_worker_files_removed, etc.), have docstrings explaining the rationale, and are clearly separated into behavioral fix tests and pass-to-pass CI checks with a section comment."
+      "reason": "Tests are well-named (test_ensure_worker_sets_src, test_old_worker_files_removed, etc.), have docstrings explaining rationale, and are grouped with a clear separator comment for pass-to-pass CI/CD checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces source code files and documentation, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task produces source code files and documentation, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, commands, and function names in the instruction match those referenced in the tests. No typos detected."
+      "reason": "All file paths, variable names, URLs, and commands in instruction.md match what's expected in the tests without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details including the exact URL template format, exact function names (ensureWorker), exact variable names (workerSrc), and exact section headings for CLAUDE.md ('Trigger condition', 'Workflow:', 'ToolSearch'). This goes beyond identifying the buggy area and prescribes the exact solution."
+      "reason": "The instruction specifies exact implementation details: the exact URL format for workerSrc, exact function name 'ensureWorker()', exact variable name 'workerSrc', exact structure of CLAUDE.md changes including 'Step 1 must mention using ToolSearch'. This goes beyond identifying what's broken and prescribes the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task involving source files and documentation, not configuration file edits in the agentmd-edits sense."
+      "reason": "This is primarily a code task, not an agentmd-edits task focused on config files."
     }
   },
   "tier_a_fails": [

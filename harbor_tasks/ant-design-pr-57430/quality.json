@@ -3,60 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions the file `components/calendar/generateCalendar.tsx`, the semantic keys (`itemContent`, `classNames`, `styles`), the class `ant-picker-calendar-date-content`, `CalendarSemanticType`, `clsx`, and both month/year view modes. The tests check for these same elements. The specific variable names like `mergedItemContentClassName` are not mentioned in the instruction, but these are implementation details tested via text matching (addressed in other rubrics)."
+      "reason": "The instruction describes `itemContent` as the semantic key, mentions `classNames` and `styles` props, month/year view modes, the `ant-picker-calendar-date-content` class, `cellRender`, `dateCellRender`, `monthCellRender`, `CalendarSemanticType`, and `clsx` \u2014 all of which are the specific elements tested. The tests check for these exact behaviors (className application, style application, cellRender wrapping) all discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT needs to be done (add `itemContent` semantic key support) but does not specify exact variable names, line numbers, or the precise code changes. A developer must still reason about how to implement it."
+      "reason": "The instruction describes WHAT needs to be done (add `itemContent` semantic key support) and WHERE (generateCalendar.tsx), but does not specify exact line numbers, variable names like `mergedItemContentClassName`, or the precise code changes needed. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names like `mergedItemContentClassName` and `mergedItemContentStyle` (test_itemcontent_className_applied_to_date_content, test_itemcontent_style_applied_to_date_content, test_itemcontent_in_datecellrender_deps). A correct alternative could use different variable names like `itemContentClass` or `contentClassName` and would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "The tests verify behavior via DOM rendering \u2014 checking that elements with class `ant-picker-calendar-date-content` also have the custom classes/styles applied. An alternative implementation (e.g., using different internal variable names, applying classes differently, or structuring the code differently) would pass as long as the DOM output is correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_itemcontent_type_in_classnames, test_itemcontent_type_in_styles, test_itemcontent_className_applied_to_date_content, test_itemcontent_style_applied_to_date_content, test_itemcontent_in_datecellrender_deps, test_itemcontent_applied_in_month_mode) are ALL text-matching tests using `open(filepath).read()` and regex. While some pass_to_pass tests run Jest/TypeScript/ESLint, the core fail_to_pass tests never execute the code or verify runtime behavior."
+      "outcome": "pass",
+      "reason": "The tests create Jest test files that render the Calendar component via React's render(), then query the DOM for elements and assert on their classes and style attributes. The Python tests execute Jest via subprocess and check return codes. This is behavioral testing, not text grepping of source."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for specific strings and patterns that don't exist in the base code (e.g., `mergedItemContentClassName`, `itemContent` in type definitions). A stub or no-op implementation would not add these to the source file, so the tests would fail."
+      "reason": "A stub or no-op implementation would not cause `ant-picker-calendar-date-content` elements to have custom classes like `my-custom-content-class` or inline styles with `background-color`. The tests check that the custom className/style values actually appear on DOM elements, which requires real implementation changes."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution directory exists at `/workspace/antd` and `solution/solve.sh` is in the container. An agent could read `/solution/solve.sh` (or the gold patch within it) to extract the exact changes needed. The tests also check for specific string patterns that could be discovered by reading the test file at `tests/test_outputs.py`."
+      "reason": "The solution is available at /workspace/antd after solve.sh runs, but more critically, the agent could read `/solution/solve.sh` which exists in the container and contains the exact gold patch. The test file is also written to disk at a known path, so the agent could read it to understand exactly what's expected. There's no protection against reading these files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) accepting `itemContent` in `classNames` and `styles` - tested by type tests, (2) merging with `clsx` - tested by regex, (3) applying inline styles - tested, (4) both month and year view support - tested by counting 2+ occurrences, (5) TypeScript types updated - tested. All explicit requirements are covered."
+      "reason": "The instruction requires: (1) classNames.itemContent support \u2014 tested in month and year modes, (2) styles.itemContent support \u2014 tested in month and year modes, (3) proper class merging with clsx \u2014 tested via multiple class combination test, (4) cellRender compatibility \u2014 tested. TypeScript type updates are partially tested via tsc compilation check. All major acceptance criteria are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They are logically grouped by concern (types, className application, style application, dependencies, both modes, compilation, linting)."
+      "reason": "Tests are well-structured: Python test functions have descriptive names (e.g., `test_itemcontent_behavior_classnames_month`), the Jest tests are grouped in `describe` blocks (`classNames.itemContent`, `styles.itemContent`, `itemContent with cellRender`), and each test has a clear descriptive name."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a UI component's TypeScript code, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task modifies a React component's props interface, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, class names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file `components/calendar/generateCalendar.tsx` which is reasonable for a single-file change task. It doesn't specify line numbers or exact code to write. The file is naturally the obvious target given the task domain."
+      "reason": "The instruction names `components/calendar/generateCalendar.tsx` as the file to modify, which is reasonable given the task domain (Calendar component modification). It doesn't specify line numbers or exact code changes. The mention of `clsx` and `CalendarSemanticType` are architectural hints but not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single TypeScript source file, not a configuration edit task."
+      "reason": "This is a code-only task modifying a TypeScript/React component, not a configuration edit task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "anti_cheating_measures"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 9,
+  "fail_count": 1
 }

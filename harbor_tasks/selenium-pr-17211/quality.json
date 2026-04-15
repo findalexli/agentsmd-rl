@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Every assert in the tests checks for identifiers explicitly named in instruction.md: sessionReadTimeout, READ_TIMEOUT_BUFFER, Duration.ofSeconds(30), NodeClientKey with URI/Duration fields and equals/hashCode, longFrom, fetchNodeTimeout returning Optional<Duration>, nodeTimeoutCache as ConcurrentMap<URI, Duration>, httpClients as ConcurrentMap<NodeClientKey, CacheEntry>, compareTo/plus(READ_TIMEOUT_BUFFER), the file path HandleSession.java, bazel build target, class structure, etc. All are disco"
+      "reason": "Every test assertion checks for identifiers explicitly named in instruction.md: sessionReadTimeout, READ_TIMEOUT_BUFFER, Duration.ofSeconds(30), NodeClientKey with URI/Duration fields, equals/hashCode, longFrom, fetchNodeTimeout returning Optional<Duration>, nodeTimeoutCache as ConcurrentMap<URI, Duration>, httpClients as ConcurrentMap<NodeClientKey, CacheEntry>, compareTo/nodeTimeout, .plus(READ_TIMEOUT_BUFFER), the file path HandleSession.java, and bazel build targets. All are discoverable fro"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact solution: specific method signatures (static Duration sessionReadTimeout(Capabilities caps)), exact constant names and values (READ_TIMEOUT_BUFFER = Duration.ofSeconds(30)), exact field types (ConcurrentMap<URI, Duration> nodeTimeoutCache), exact inner class structure (NodeClientKey with specific fields), exact map type change (ConcurrentMap<NodeClientKey, CacheEntry>), and exact computation formula (max(sessionReadTimeout, nodeTimeout) + READ_TIMEOU"
+      "reason": "instruction.md explicitly prescribes the exact solution: specific method names (sessionReadTimeout, longFrom, fetchNodeTimeout), exact field names (nodeTimeoutCache), exact types (ConcurrentMap<URI, Duration>), exact constant values (Duration.ofSeconds(30)), exact class structure (NodeClientKey with URI uri and Duration readTimeout), and exact computation formula (max(sessionReadTimeout, nodeTimeout) + READ_TIMEOUT_BUFFER). This is not describing what's broken \u2014 it's dictating what to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact method name 'sessionReadTimeout', exact constant name 'READ_TIMEOUT_BUFFER', exact class name 'NodeClientKey', exact helper name 'longFrom', exact method name 'fetchNodeTimeout', exact field name 'nodeTimeoutCache', exact map type 'ConcurrentMap<NodeClientKey, CacheEntry>'. An alternative correct fix using different names (e.g., 'getPageLoadTimeout', 'TIMEOUT_PADDING', 'ClientCacheKey') would fail all f2p tests."
+      "reason": "Tests assert on gold-specific implementation details via string matching: exact method signature 'static Duration sessionReadTimeout(Capabilities caps)', exact field name 'nodeTimeoutCache', exact type 'ConcurrentMap<URI, Duration> nodeTimeoutCache', exact class name 'NodeClientKey', exact helper name 'longFrom', exact return type 'Optional<Duration> fetchNodeTimeout'. An alternative correct fix using different names (e.g., 'getPageLoadTimeout', 'NodeHttpKey', 'parseNumericValue') would fail all"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The 8 fail-to-pass tests (test_session_read_timeout_method_exists through test_http_clients_map_uses_node_client_key) all exclusively use `assert 'string' in content` or `assert re.search(pattern, content)` on the file text. They never import, instantiate, or call any Java code. Only the pass-to-pass tests (bazel build/test) execute the code. The f2p tests are purely textual grep checks."
+      "reason": "All 8 fail-to-pass tests are purely text-matching: they read HandleSession.java and assert substrings/regex patterns exist in the source code (e.g., 'assert \"READ_TIMEOUT_BUFFER\" in content'). Only the pass-to-pass tests (bazel build/test) execute the code. The f2p tests never import, instantiate, or call any Java method."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since f2p tests only check for string presence in the source file (e.g., 'READ_TIMEOUT_BUFFER' in content, 'class NodeClientKey' in content), an agent could satisfy them by adding dead code or comments containing the required strings without actually implementing the bug fix. For example, adding '// READ_TIMEOUT_BUFFER class NodeClientKey fetchNodeTimeout' as a comment would pass several tests."
+      "reason": "Since f2p tests only check for string presence in source code, an agent could pass all of them by adding dead code: a comment block or unused methods containing the required strings (e.g., 'static Duration sessionReadTimeout(Capabilities caps) { return null; }') without actually fixing the timeout bug. The bazel build test is pass-to-pass, not f2p."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/selenium at solve.sh (solution/solve.sh). The agent could read the solution file if it exists in the container. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py for exact strings to match (e.g., 'READ_TIMEOUT_BUFFER', 'NodeClientKey') and insert them as comments or dead code."
+      "reason": "The solution file exists at /workspace/selenium (accessible via solve.sh path) and the agent could read it. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the exact strings being asserted and simply inject them as comments or dead code into HandleSession.java."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behavioral requirements from instruction.md are tested: sessionReadTimeout method, READ_TIMEOUT_BUFFER constant, NodeClientKey class with fields/equals/hashCode, timeout calculation with compareTo and plus, longFrom helper, fetchNodeTimeout returning Optional, nodeTimeoutCache field, httpClients map type change, plus compilation and existing tests."
+      "reason": "All behaviors listed in instruction.md (sessionReadTimeout method, READ_TIMEOUT_BUFFER constant, NodeClientKey class, longFrom helper, fetchNodeTimeout returning Optional, nodeTimeoutCache field, httpClients map type change, effective timeout calculation) are tested, plus compilation and formatting checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear sections (fail-to-pass vs pass-to-pass), descriptive function names, and docstrings explaining what each test verifies and why."
+      "reason": "Tests are well-organized with a clear header comment, grouped into 'fail_to_pass' and 'pass_to_pass' sections with comments, and each test has a descriptive docstring explaining what it checks and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces Java source code, not structured data like JSON/CSV/API/DB output."
+      "reason": "The task produces Java source code modifications, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or method signatures across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, variable names, or method signatures across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify (HandleSession.java), exact method signatures, exact constant names and values, exact field types, and exact inner class structure. This goes far beyond identifying the buggy module \u2014 it provides the complete implementation specification."
+      "reason": "instruction.md explicitly names the exact file to modify (HandleSession.java) with full path, exact method signatures, exact field names, exact types, and exact constant values. This goes far beyond identifying the buggy module \u2014 it prescribes the entire implementation at a line-by-line level."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying a Java source file, not a configuration edit task."
     }
   },
   "tier_a_fails": [

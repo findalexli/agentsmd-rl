@@ -3,56 +3,55 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'function createCacheBuster()' (test_createCacheBuster_function_exists), '#refetchCacheBuster' private field (test_refetchCacheBuster_private_field_exists), 'CACHE_BUSTER_QUERY_PARAM' constant (test_cache_buster_query_param_usage), exact warning strings like 'Received 409 response without a shape handle header' and 'proxy or CDN stripping required headers' (test_warning_on_missing_handle_header). The instruction m"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'function createCacheBuster()' (exact function signature), '#refetchCacheBuster' (exact private field name), 'CACHE_BUSTER_QUERY_PARAM' (exact constant name), 'this.#refetchCacheBuster = undefined' (exact cleanup pattern), exact warning strings like 'Received 409 response without a shape handle header' and 'proxy or CDN stripping required headers'. The instruction says 'A cache-busting mechanism should be used' bu"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states 'A cache-busting mechanism should be used for retried requests that lack a handle header' and 'The client should warn when a 409 response is missing the required handle header (indicating proxy or CDN issues)'. These describe the exact fix approach rather than just the broken behavior. It also says 'The -next suffix pattern should not appear in handle construction code', which is the specific code change."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (unbounded -next suffix growth) and the desired behavior (cache-busting, warnings) but does not specify exact code changes, line numbers, or the precise implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_createCacheBuster_function_exists requires exactly 'function createCacheBuster()' with Date.now() and Math.random(); test_refetchCacheBuster_private_field_exists requires exactly '#refetchCacheBuster'; test_cache_buster_query_param_usage requires exactly 'CACHE_BUSTER_QUERY_PARAM' and 'this.#refetchCacheBuster = undefined'. An alternative correct fix using a different naming convention (e.g., '#cacheBuster', 'generateUniqueId()') or a diffe"
+      "reason": "Tests enforce gold-specific implementation: test_createCacheBuster_function_exists asserts exact function name 'function createCacheBuster()' with Date.now() and Math.random(); test_refetchCacheBuster_private_field_exists asserts exact field name '#refetchCacheBuster'; test_cache_buster_query_param_usage asserts 'CACHE_BUSTER_QUERY_PARAM' and exact cleanup pattern. An alternative fix using e.g. a UUID, a counter, or a different naming convention would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_no_next_suffix_in_client_code, test_createCacheBuster_function_exists, test_refetchCacheBuster_private_field_exists, test_cache_buster_query_param_usage, test_warning_on_missing_handle_header, test_markMustRefetch_handles_undefined) are ALL pure text-matching: they read the source file and assert on string patterns. None of them import, call, or execute the code to verify behavior. The pass-to-pass tests do run vitest/typecheck/eslint but these aren't fail-to-pass."
+      "reason": "The fail-to-pass tests (test_no_next_suffix_in_client_code, test_createCacheBuster_function_exists, test_refetchCacheBuster_private_field_exists, test_cache_buster_query_param_usage, test_warning_on_missing_handle_header, test_markMustRefetch_handles_undefined) are ALL pure text/regex searches on file content with no code execution. Only the pass-to-pass tests run vitest/typecheck/stylecheck."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for text patterns in source code. An agent could simply add dead code comments or unused functions containing the required strings (e.g., a never-called 'function createCacheBuster()' with Date.now() and Math.random(), an unused '#refetchCacheBuster' field, a comment with the warning text) and pass all f2p tests without actually fixing the bug."
+      "reason": "A stub that simply writes a file containing the expected strings ('function createCacheBuster()', '#refetchCacheBuster', 'CACHE_BUSTER_QUERY_PARAM', etc.) without any functional implementation would pass all f2p tests since they only check text content, not behavior."
     },
     "anti_cheating_measures": {
       "outcome": "fail",
-      "reason": "The solution is in /workspace/electric at the path accessible by solve.sh. The agent could read solution/solve.sh directly (it's in the container), or inspect the test file at tests/test_outputs.py to see the exact strings being asserted ('function createCacheBuster()', '#refetchCacheBuster', exact warning messages) and insert them without understanding the bug."
+      "reason": "The solution file exists at /workspace/electric (solve.sh is in solution/), and the agent could read it. Additionally, since tests only check for specific strings in the source file, the agent could grep test_outputs.py for the exact strings to insert without understanding the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'Repeated 409s lead to handles like handle-next-next-next-next' and '414 URI Too Long errors', but no test verifies that repeated 409s no longer accumulate suffixes through actual execution. The behavioral requirements are only checked via text matching, not runtime behavior."
+      "reason": "Instruction says 'The -next suffix pattern should not appear in handle construction code' (tested), but the core behavioral requirement \u2014 that repeated 409s don't cause unbounded handle growth or 414 errors \u2014 is never tested via actual execution/simulation of the 409 retry loop."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, include docstrings explaining fail-to-pass vs pass-to-pass categorization, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining fail-to-pass vs pass-to-pass, and each test has a clear single responsibility."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a bug fix in a TypeScript client library, not producing structured data output."
+      "reason": "This task does not produce structured data output (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the class ('ShapeStream'), the file ('packages/typescript-client/src/client.ts'), and describes the exact problematic pattern ('appending -next to the current one') and the exact fix approach ('cache-busting mechanism', warning about proxy/CDN). This goes beyond identifying the bug to prescribing the solution."
+      "outcome": "pass",
+      "reason": "The instruction names the file (client.ts) and class (ShapeStream) but these are natural for the task domain. It doesn't specify exact line numbers or the precise fix implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological",
@@ -60,9 +59,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 2,
-  "fail_count": 8
+  "pass_count": 4,
+  "fail_count": 6
 }
