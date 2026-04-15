@@ -95,11 +95,14 @@ Replace all `{{PLACEHOLDER}}` tokens across files:
 
 ### 4. Fill in the files (this order)
 
-#### Dockerfile
-- Choose base image: `python:3.12-slim` / `node:22-slim` / `rust:1.85-slim`
+#### Dockerfile — reproducibility rules
+
+- Choose base image with **exact tag** (NEVER `:latest`): `python:3.12-slim` / `node:22-slim` / `rust:1.85-slim`
+- **Pin every `pip install`** with `==X.Y.Z` (e.g., `pip install pytest==8.3.4 requests==2.32.3`). Unpinned deps cause reward noise when upstream bumps a minor.
 - For non-Python repos, ensure `python3` is available (needed by pytest runner)
 - Clone with `--filter=blob:none` (default) or `--depth=N` for large repos
 - Install ONLY deps needed by test_outputs.py — no torch, no GPU libs
+- **Do NOT** `COPY solution/` or `COPY tests/` — harness mounts them externally. Including them leaks the answer.
 - Always `mkdir -p /logs/verifier`
 
 #### solve.sh
@@ -169,13 +172,24 @@ The template test.sh is standardized boilerplate. It installs pytest, runs test_
 
 #### instruction.md — WRITE THIS LAST
 
-By now you know exactly what test_outputs.py checks. Describe the *symptom* those tests capture.
+By now you know exactly what test_outputs.py checks. The instruction MUST describe the *symptom* those tests capture — with enough specificity that every asserted detail is recoverable, **without** revealing the fix.
 
-- Lead with what's broken, not why
-- Point to relevant file(s) and function(s)
-- Do NOT copy from the PR body, reveal patch details, or mention test files
-- Some ambiguity is OK — the agent should explore
-- Delete the HTML comment guidelines before finishing
+**The two failure modes we must avoid:**
+
+1. **Spec-test coupling** (76% of our prior batch failed this): tests assert on an exact literal `"4acc9acc76d5079…"` but the instruction only says "install rustup with SHA256 verification." The agent cannot discover the SHA. → *FAIL.*
+
+   Rule: **every specific value `test_outputs.py` asserts on — file paths, function names, SHAs, schema keys, literal strings, HTTP status codes, error messages — must be named in the instruction OR cited to an authoritative URL the agent can fetch.** Walk down your test file line by line. For each `assert X == Y` / `assert Y in result`, confirm `Y` is findable from instruction.md.
+
+2. **Solution leakage**: the instruction tells the agent *what to change* ("change line 42 to return None", "add `except KeyError`"). The agent copy-pastes and passes. → *FAIL.*
+
+   Rule: describe **what is broken** (symptom, observable behavior, expected contract) without naming the fix. "Parsing `foo.toml` with an empty `[section]` raises `KeyError: 'name'`; it should return an empty dict." — good.  "Change `d[name]` to `d.get(name, {})` in parser.py:42." — leakage.
+
+**Checklist before finishing:**
+- [ ] Every literal/SHA/path/name your tests assert on is in the instruction OR cited to a URL
+- [ ] The *fix* is not named (no `change X to Y`, no `replace foo() with bar()`, no file:line reference to the broken line unless localization is genuinely part of the task)
+- [ ] Structured outputs (JSON/CSV): exact schema keys/types documented
+- [ ] No PR-body boilerplate, no "this PR fixes…" phrasing
+- [ ] HTML comment guidelines from the template deleted
 
 ### 5. Build Docker and discover repo CI/CD
 
@@ -243,18 +257,35 @@ Must be `1`. If `0`, read the pytest output (`-v --tb=short`), fix solve.sh or t
 
 ### 7. Self-audit
 
-After Docker validation passes:
+After Docker validation passes, verify **every** item below. If any fails, fix and re-validate.
 
-1. **Anti-pattern scan**: check each test against the 10 anti-patterns above.
-2. **Manifest sync**: every `def test_*` has a matching check in eval_manifest.yaml.
-3. **P2P coverage**: at least 1 pass_to_pass test from repo CI/CD.
-4. **F2P coverage**: at least 2 fail_to_pass tests that fail on base commit.
+**Tier A — reward-integrity (these are BLOCKING):**
+- [ ] **behavior_in_task_description**: every literal/SHA/path/name asserted in tests is in instruction.md or cited to a URL
+- [ ] **no_solution_leakage**: instruction describes the symptom, not the fix; no file:line of the bug, no patch snippet
+- [ ] **solution_uniqueness_guard**: tests would pass on 3 different correct fixes (not only on gold's exact variable names / helper functions / line layout)
+- [ ] **tests_verify_behavior_not_text**: every test calls code, runs subprocess, or compiles — no pure `grep 'literal'` tests
+- [ ] **test_not_tautological**: no f2p passes on `return None` / empty function / stub
+- [ ] **pass_to_pass_coverage**: ≥1 p2p from repo CI/CD
+- [ ] **anti_cheating_measures**: agent can't find the answer via `find / -name solve`, env vars, or a grep that matches the fixture string
+- [ ] **no_hidden_solution_artifacts**: `COPY solution/` and `COPY tests/` NOT in Dockerfile; `.dockerignore` covers them
+
+**Tier B — important:**
+- [ ] **dockerfile_determinism**: base image has a version tag (NEVER `:latest`); no `curl | bash` of moving target
+- [ ] **no_network_during_tests**: test.sh has no `pip install`, `apt-get install`, `npm install`, or `curl` at test time
+- [ ] **pinned_dependencies**: every `pip install` has `==X.Y.Z`
+- [ ] **f2p_p2p_classification_correct**: all f2p actually fail at base, all p2p actually pass at base
+
+**Anti-pattern scan** (from §4 above): none of the 10 anti-patterns present.
+
+**Manifest sync**: every `def test_*` has a matching check id in eval_manifest.yaml.
 
 ```
 Self-audit:
   Docker: NOP=0, GOLD=1
   Tests: N total (X f2p, Y p2p)
   CI/CD tests: [list commands added]
+  Tier A checklist: all pass
+  Tier B checklist: all pass
   Anti-patterns: none
   Manifest sync: yes
 ```

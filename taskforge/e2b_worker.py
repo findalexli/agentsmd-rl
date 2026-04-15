@@ -37,15 +37,17 @@ import argparse
 import asyncio
 import json
 import logging
+import atexit
 import os
 import re
+import signal
 import sys
 import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 
-from e2b import AsyncSandbox, AsyncTemplate, Template
+from e2b import AsyncSandbox, AsyncTemplate, Template, Sandbox
 from e2b.sandbox.commands.command_handle import CommandExitException
 
 logging.basicConfig(
@@ -61,6 +63,85 @@ SANDBOX_TIMEOUT = 3600  # seconds — refreshed before each agent step
 
 
 # ---------------------------------------------------------------------------
+# Robust sandbox cleanup — prevent orphans from filling 100-sandbox quota
+# ---------------------------------------------------------------------------
+
+
+def cleanup_orphan_sandboxes(api_key: str | None = None, reason: str = "cleanup") -> int:
+    """Kill all E2B sandboxes on the account. Returns count killed.
+
+    Use at startup (clean slate) and on signal/exit (release quota).
+    This is sync so it works in signal handlers and atexit hooks.
+    """
+    api_key = api_key or os.environ.get("E2B_API_KEY", "")
+    if not api_key:
+        return 0
+
+    killed = 0
+    try:
+        p = Sandbox.list(api_key=api_key)
+        while True:
+            items = p.next_items()
+            if not items:
+                break
+            for s in items:
+                try:
+                    Sandbox.kill(s.sandbox_id, api_key=api_key)
+                    killed += 1
+                except Exception:
+                    pass
+            if not p.has_next:
+                break
+    except Exception as e:
+        logger.warning("Failed to cleanup sandboxes (%s): %s", reason, e)
+
+    if killed > 0:
+        logger.info("[%s] Killed %d orphaned sandboxes", reason, killed)
+    return killed
+
+
+def install_cleanup_handlers(api_key: str | None = None) -> None:
+    """Install signal + atexit handlers to clean up sandboxes on exit.
+
+    Handles: SIGTERM, SIGINT, normal exit. Does NOT handle SIGKILL (kill -9)
+    since the process can't catch that — but atexit covers most crashes.
+
+    On signal, we set a flag and let asyncio's default handler raise
+    KeyboardInterrupt so the main loop's finally blocks can run their
+    individual sandbox.kill() calls first. Then atexit runs bulk cleanup
+    as a safety net.
+    """
+    api_key = api_key or os.environ.get("E2B_API_KEY", "")
+    if not api_key:
+        return
+
+    cleaned = [False]
+
+    def _cleanup_once(reason: str):
+        if cleaned[0]:
+            return
+        cleaned[0] = True
+        try:
+            cleanup_orphan_sandboxes(api_key, reason=reason)
+        except Exception as e:
+            logger.warning("Cleanup failed during %s: %s", reason, e)
+
+    # Register atexit first — runs on any exit path including KeyboardInterrupt
+    atexit.register(_cleanup_once, reason="atexit")
+
+    # For SIGTERM, convert to KeyboardInterrupt so asyncio finally blocks run.
+    # SIGINT (Ctrl+C) already does this naturally — don't override it.
+    def _sigterm_handler(signum, frame):
+        logger.warning("Received SIGTERM, draining then cleaning up...")
+        # Raise KeyboardInterrupt in main thread — asyncio will cancel tasks
+        # and run their finally blocks (including per-sandbox kill)
+        raise KeyboardInterrupt("SIGTERM received")
+
+    signal.signal(signal.SIGTERM, _sigterm_handler)
+    # SIGINT (Ctrl+C) already raises KeyboardInterrupt; no need to handle
+
+
+# ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
 
@@ -73,6 +154,7 @@ class StartAt(str, Enum):
     ENRICH = "enrich"
     IMPROVE = "improve"
     VALIDATE = "validate"
+    JUDGE = "judge"          # retrofit entry: skip validate, trust prior nop=0/gold=1
 
     @classmethod
     def from_str(cls, s: str) -> "StartAt":
@@ -84,7 +166,7 @@ class StartAt(str, Enum):
     def should_run(self, node: "StartAt") -> bool:
         """Return True if `node` should execute given this entry point.
 
-        DAG order: scaffold < qgate < rubric < enrich < improve < validate
+        DAG order: scaffold < qgate < rubric < enrich < improve < validate < judge
         A node runs if it is >= the entry point.
         """
         order = list(StartAt)
@@ -119,6 +201,14 @@ class WorkerResult:
     valid: bool = False  # nop==0 and gold==1
     downloaded: bool = False
     rubric_icr: float | None = None
+    # Quality judge / reconcile (20-rubric pipeline revamp)
+    judge_status: str = ""              # "ok" | "error" | "skipped"
+    judge_summary: dict = field(default_factory=dict)
+    reconcile_status: str = ""          # "ok" | "abandoned" | "error" | "rate_limited"
+    reconcile_time: float = 0.0
+    reconcile_outcome: dict = field(default_factory=dict)
+    judge_status_post: str = ""
+    judge_summary_post: dict = field(default_factory=dict)
     total_time: float = 0.0
     error: str = ""
     nodes: dict = field(default_factory=dict)
@@ -197,6 +287,10 @@ async def create_worker_sandbox(
     envs = {
         "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
         "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY", ""),
+        # JUDGE_API_KEY is the REAL Anthropic key — routed directly to api.anthropic.com.
+        # Kept separate from ANTHROPIC_API_KEY so the pool backend (MiniMax/GLM/Kimi)
+        # can override ANTHROPIC_API_KEY without disturbing the judge.
+        "JUDGE_API_KEY": os.environ.get("JUDGE_API_KEY") or os.environ.get("ANTHROPIC_API_KEY", ""),
     }
     if backend_env:
         envs.update(backend_env)
@@ -376,6 +470,8 @@ async def upload_taskforge_modules(sandbox: AsyncSandbox) -> None:
         "gemini_rubric_constructor.py", "hierarchy_context.py",
         "quality_gate.py", "models.py", "config.py", "judge.py",
         "rubric_validator.py",
+        # 20-rubric pipeline revamp
+        "rubrics.py", "task_lint.py", "quality_judge.py",
     ]:
         py_file = ROOT / "taskforge" / py_name
         if py_file.exists():
@@ -502,19 +598,37 @@ async def node_scaffold(
 
     await sandbox.files.write("/workspace/scaffold_prompt.md", prompt.encode())
 
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        "cat /workspace/scaffold_prompt.md | claude -p "
-        "--dangerously-skip-permissions --model opus "
-        "--output-format json",
-        user="worker",
-    )
+    # Inner retry loop: preserve sandbox across transient 429 bursts when many
+    # concurrent workers drain Claude Code's 10-retry budget simultaneously.
+    inner_retries = 3
+    base_backoff = 45.0
+    last_err = ""
+    code, stdout, stderr = 0, "", ""
+    for attempt in range(inner_retries + 1):
+        code, stdout, stderr = await run_cmd(
+            sandbox,
+            "cat /workspace/scaffold_prompt.md | claude -p "
+            "--dangerously-skip-permissions --model opus "
+            "--output-format json",
+            user="worker",
+        )
+        if code == 0:
+            break
 
-    if code != 0:
         combined = stdout + stderr
-        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
-            return "rate_limited", "", combined[:500]
-        return "error", "", combined[:500]
+        last_err = combined[:500]
+
+        if not _is_rate_limit(combined):
+            return "error", "", last_err
+
+        if attempt < inner_retries:
+            delay = base_backoff * (3 ** attempt)
+            logger.warning("node_scaffold rate-limited (attempt %d/%d); sleeping %.0fs",
+                           attempt + 1, inner_retries + 1, delay)
+            await asyncio.sleep(delay)
+            continue
+
+        return "rate_limited", "", last_err
 
     # Check if scaffold agent abandoned the task
     try:
@@ -571,23 +685,50 @@ async def node_scaffold(
     return "ok", task_name, ""
 
 
-async def node_qgate(sandbox: AsyncSandbox) -> tuple[str, list[str]]:
+async def node_qgate(sandbox: AsyncSandbox, agentmd: bool = False) -> tuple[str, list[str]]:
     """Node 1: Programmatic quality gate — runs INSIDE the sandbox.
 
-    Reads: /workspace/task/eval_manifest.yaml (in sandbox)
+    Two-pass check:
+      1. task_lint.lint_task    — all 10 programmatic rubrics (dockerfile_determinism,
+         pinned_dependencies, pass_to_pass_coverage, test_not_tautological, etc.).
+         Runs for BOTH code-only and agentmd tasks.
+      2. classify_task_fast     — agentmd-specific (jailbreak, boilerplate, config-edit
+         quality). Only runs when agentmd=True.
+
+    Reads: /workspace/task/* inside the sandbox
     Returns: (verdict, flags) where verdict is "passed", "DELETE", or "error"
 
-    IMPORTANT: This runs in the sandbox, not on the host, because for new tasks
-    the files only exist in the sandbox at this point.
+    DELETE is returned if:
+      - task_lint finds ≥1 Tier-A rubric fail (reward-integrity killer)
+      - classify_task_fast says DELETE (jailbreak, no manifest, boilerplate-only) — agentmd only
+
+    Tier-B findings are logged as flags but do not block.
     """
+    script = (
+        "from taskforge.task_lint import lint_task, summarize; "
+        "from pathlib import Path; import json; "
+        "td = Path('/workspace/task'); "
+        "findings = lint_task(td); "
+        "s = summarize(findings); "
+        "out = {"
+        "  'lint_summary': s, "
+        "  'lint_tier_a': [str(f) for f in findings if f.tier=='A' and f.severity=='fail'], "
+        "  'lint_tier_b': [str(f) for f in findings if f.tier=='B' and f.severity=='fail'][:5],"
+        "}; "
+    )
+    if agentmd:
+        script += (
+            "from taskforge.quality_gate import classify_task_fast; "
+            "qr = classify_task_fast(td); "
+            "out['verdict'] = qr.verdict; out['flags'] = qr.flags; "
+        )
+    else:
+        script += "out['verdict'] = ''; out['flags'] = []; "
+    script += "print(json.dumps(out))"
     code, stdout, stderr = await run_cmd(
         sandbox,
-        "cd /workspace && python3 -c \""
-        "from taskforge.quality_gate import classify_task_fast; "
-        "from pathlib import Path; import json; "
-        "r = classify_task_fast(Path('/workspace/task')); "
-        "print(json.dumps({'verdict': r.verdict, 'flags': r.flags}))\"",
-        timeout=15,
+        f"cd /workspace && python3 -c \"{script}\"",
+        timeout=30,
     )
     if code != 0:
         logger.warning("Quality gate failed in sandbox: %s", (stderr or stdout)[:200])
@@ -597,9 +738,30 @@ async def node_qgate(sandbox: AsyncSandbox) -> tuple[str, list[str]]:
         last_line = stdout.strip().split("\n")[-1]
         data = json.loads(last_line)
         verdict = data.get("verdict", "")
-        flags = data.get("flags", [])
+        flags = list(data.get("flags", []))
+        lint_summary = data.get("lint_summary", {})
+        tier_a_fails = data.get("lint_tier_a", [])
+        tier_b_fails = data.get("lint_tier_b", [])
+
+        # Surface lint findings as flags so they appear in telemetry + abandon logs
+        if lint_summary.get("tier_a_fails", 0):
+            flags.append(f"lint_tier_a:{lint_summary['tier_a_fails']}")
+            flags.extend(f"A:{f[:120]}" for f in tier_a_fails[:4])
+        if lint_summary.get("by_tier", {}).get("B", 0):
+            flags.append(f"lint_tier_b:{lint_summary['by_tier']['B']}")
+            flags.extend(f"B:{f[:120]}" for f in tier_b_fails[:3])
+
         if verdict == "DELETE":
             return "DELETE", flags
+
+        # New: Tier-A programmatic fail → DELETE.
+        # These are unambiguous reward-integrity bugs (unguarded COPY solution/,
+        # tautological asserts, zero p2p, pure-grep tests) that no amount of
+        # downstream reconciliation can fix — regenerate from scratch.
+        if lint_summary.get("tier_a_fails", 0) > 0:
+            flags.insert(0, "lint_DELETE: tier-A rubric failure")
+            return "DELETE", flags
+
         # verdict="" means "needs Gemini" which we treat as "passed" for the fast gate
         return "passed", flags
     except (json.JSONDecodeError, IndexError):
@@ -656,6 +818,273 @@ async def node_rubric_loop(
         return "error", "", f"parse_error: {stdout[:100]}", 0
 
 
+# ── Gemini CLI prompt (embedded, same as gemini_cli_rubric_extractor.py) ─────
+
+_GEMINI_CLI_PROMPT = """\
+# Task: Extract Rubric Rules and Distractors from Agent Config Files
+
+You are analyzing a repository to extract **coding convention rules** from agent \
+configuration files (CLAUDE.md, AGENTS.md, SKILL.md, etc.) that are relevant to \
+a specific code change (the "gold diff").
+
+## Your Job
+
+1. **Read each config file** listed below using `cat -n` to see exact line numbers.{config_files_hint}
+2. **Read the gold diff** at {diff_path}
+3. **Extract rules** from config files into three categories:
+
+### Category A: Rubric Rules (gold diff FOLLOWS this convention)
+Rules from config files that the gold diff demonstrably follows. These must be:
+- Imperative coding conventions (naming, architecture, imports, testing patterns, \
+config patterns, style, error handling)
+- NOT workflow instructions ("run pre-commit", "use git add", "create PR", "push")
+- Actually followed by the gold diff (provide specific evidence from the diff)
+
+### Category B: Distractor Rules (gold diff correctly IGNORES this convention)
+Rules from config files that SEEM relevant to the PR but should NOT be followed because:
+- They apply to a different scope/domain than the changed files
+- Following them would cause a bug or break architecture boundaries
+- They conflict with the specific requirements of this change
+- They mention technologies/patterns used in the diff but for a different purpose
+
+### Category C: Skip (workflow, irrelevant, too generic)
+Rules about git operations, PR creation, build commands, test execution — NOT about \
+code patterns. Also skip rules completely unrelated to the changed files' domain.
+
+## CRITICAL Requirements
+
+- **Exact line numbers**: Use `cat -n <file>` to read config files. Report the EXACT \
+line range where each rule appears. Do NOT guess or approximate.
+- **Quote source text**: Copy the verbatim text from the config file at those lines.
+- **Evidence for rubric rules**: Show specifically how the gold diff follows the rule \
+(reference actual code, variable names, patterns from the diff).
+- **Why distracting**: For distractors, explain why an agent working on THIS specific \
+change might mistakenly follow this rule.
+- **No workflow rules**: Skip anything about: running commands, git operations, PR \
+creation, CI/CD, pre-commit hooks, build systems, deployment.
+- **Collision types** for distractors: rule_conflict, scope_ambiguity, meta_confusion, \
+architecture_boundary, would_cause_bug
+- **Severity** for distractors: high (would cause bug), medium (wasted effort), \
+low (minor confusion)
+
+## Output
+
+Respond with ONLY a single JSON object (no markdown fences, no explanation, no text \
+before or after). The JSON must have these keys:
+
+- "config_files_found": array of {{"path": str, "type": str, "total_lines": int}}
+- "rubric_rules": array of {{"rule": str, "source_path": str, "source_lines": str, \
+"source_text": str, "evidence_in_gold": str, "category": str, "verification": str}}
+- "distractor_rules": array of {{"rule": str, "source_path": str, "source_lines": str, \
+"source_text": str, "collision_type": str, "why_distracting": str, "severity": str}}
+- "skipped_rules": array of {{"rule_summary": str, "source_path": str, "source_lines": str, \
+"skip_reason": str}}
+"""
+
+
+async def node_gemini_cli_rubric(
+    sandbox: AsyncSandbox,
+    repo_url: str,
+    model: str = "gemini-3.1-pro-preview",
+) -> tuple[str, int, int, int]:
+    """Node 2b: Gemini CLI rubric extraction — exact line numbers via cat -n.
+
+    Runs `gemini` CLI inside the E2B sandbox against /workspace/repo/.
+    The CLI executes shell commands (cat -n) to read config files with exact
+    line numbers, then cross-references against the gold diff.
+
+    Reads: /workspace/task/eval_manifest.yaml, /workspace/task/solution/solve.sh,
+           /workspace/repo/ (cloned repo)
+    Writes: updated eval_manifest.yaml with rubrics + distractors
+    Returns: (status, rubrics_added, distractors_added, skipped)
+
+    status: "ok" | "no_new_rules" | "error"
+    """
+    # Step 1: Extract gold diff from solve.sh
+    # Write extraction script to file to avoid shell escaping hell
+    extract_script = r'''
+import re, sys
+from pathlib import Path
+text = Path("/workspace/task/solution/solve.sh").read_text()
+m = re.search(r"diff --git.*", text, re.DOTALL)
+if m:
+    d = re.sub(r"\n(PATCH|EOF|DIFF|GOLD)\s*$", "", m.group(0))
+    sys.stdout.write(d)
+else:
+    # Fallback: entire solve.sh — handles python/cat/sed-based patches
+    sys.stdout.write(text)
+'''
+    await sandbox.files.write("/workspace/_extract_diff.py", extract_script.encode())
+    code, gold_diff, _ = await run_cmd(
+        sandbox, "python3 /workspace/_extract_diff.py", timeout=10,
+    )
+    if code != 0 or not gold_diff.strip():
+        return "error", 0, 0, 0
+
+    # Write diff/patch to a temp file in sandbox
+    await sandbox.files.write("/workspace/gold_diff.patch", gold_diff.encode())
+
+    # Step 2: Discover config files in /workspace/repo/
+    code, config_out, _ = await run_cmd(
+        sandbox,
+        "find /workspace/repo/ -maxdepth 5 "
+        "\\( -name 'CLAUDE.md' -o -name 'AGENTS.md' -o -name 'CONVENTIONS.md' "
+        "-o -name 'SKILL.md' -o -name '.cursorrules' \\) "
+        "-not -path '*/.git/*' -not -path '*/node_modules/*' "
+        "| sed 's|^/workspace/repo/||' | sort 2>/dev/null; "
+        "find /workspace/repo/.claude/rules/ -name '*.md' 2>/dev/null "
+        "| sed 's|^/workspace/repo/||' | sort; "
+        "find /workspace/repo/.claude/skills/ -name '*.md' 2>/dev/null "
+        "| sed 's|^/workspace/repo/||' | sort; "
+        "find /workspace/repo/.cursor/rules/ -name '*.md' -o -name '*.mdc' 2>/dev/null "
+        "| sed 's|^/workspace/repo/||' | sort",
+        timeout=30,
+    )
+    config_files = [f.strip() for f in config_out.strip().splitlines() if f.strip()]
+
+    if config_files:
+        hint = "\n   Known config files in this repo:\n" + \
+               "\n".join(f"   - {f}" for f in config_files) + \
+               "\n   Also check for any you might find beyond this list."
+    else:
+        hint = "\n   Search the repo for config files (CLAUDE.md, AGENTS.md, SKILL.md, etc.)"
+
+    # Step 3: Build and write the prompt
+    prompt = _GEMINI_CLI_PROMPT.format(
+        diff_path="/workspace/gold_diff.patch",
+        config_files_hint=hint,
+    )
+    await sandbox.files.write("/workspace/gemini_prompt.txt", prompt.encode())
+
+    # Step 4: Run gemini CLI
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        f'cat /workspace/gemini_prompt.txt | '
+        f'npx -y @google/gemini-cli -m {model} -p "Follow the instructions from stdin." -y -o json 2>/dev/null',
+        timeout=900,  # 15 min — big repos (bun, next.js, playwright) need >5 min
+    )
+
+    if code != 0:
+        combined = (stdout + stderr)[:500]
+        if "429" in combined or "rate limit" in combined.lower():
+            return "error", 0, 0, 0
+        logger.warning("gemini CLI error: %s", combined[:200])
+        return "error", 0, 0, 0
+
+    # Step 5: Parse response
+    try:
+        envelope = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        # Try to find JSON in mixed output
+        match = re.search(r'\{.*"session_id".*\}', stdout, re.DOTALL)
+        if match:
+            try:
+                envelope = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                return "error", 0, 0, 0
+        else:
+            return "error", 0, 0, 0
+
+    if envelope.get("error"):
+        logger.warning("gemini CLI returned error: %s", envelope["error"])
+        return "error", 0, 0, 0
+
+    response_text = envelope.get("response", "")
+    if not response_text:
+        return "error", 0, 0, 0
+
+    # Parse JSON from response text
+    parsed = None
+    response_text = response_text.strip()
+    for attempt_fn in [
+        lambda: json.loads(response_text),
+        lambda: json.loads(re.search(r'```(?:json)?\s*\n(.*?)```', response_text, re.DOTALL).group(1)),
+        lambda: json.loads(response_text[response_text.index('{'):response_text.rindex('}') + 1]),
+    ]:
+        try:
+            parsed = attempt_fn()
+            break
+        except Exception:
+            continue
+
+    if not parsed or ("rubric_rules" not in parsed and "distractor_rules" not in parsed):
+        logger.warning("gemini CLI: could not parse rubric JSON from response")
+        return "error", 0, 0, 0
+
+    # Step 6: Merge into eval_manifest.yaml
+    # Write extraction result to a file in sandbox to avoid shell escaping issues
+    await sandbox.files.write(
+        "/workspace/gemini_extraction.json",
+        json.dumps(parsed).encode(),
+    )
+
+    # Run merge script that reads from the file
+    merge_script = r'''
+import json, yaml
+from pathlib import Path
+
+data = json.loads(Path("/workspace/gemini_extraction.json").read_text())
+mp = Path("/workspace/task/eval_manifest.yaml")
+m = yaml.safe_load(mp.read_text()) or {}
+
+existing_r = {r.get("rule","")[:50].lower().strip() for r in (m.get("rubric") or []) if isinstance(r, dict)}
+existing_d = {d.get("rule","")[:50].lower().strip() for d in (m.get("distractors") or []) if isinstance(d, dict)}
+
+new_r = []
+for r in data.get("rubric_rules", []):
+    rule = r.get("rule", "")
+    if len(rule) < 15 or rule[:50].lower().strip() in existing_r:
+        continue
+    new_r.append({
+        "rule": rule,
+        "source": {"path": r.get("source_path",""), "lines": str(r.get("source_lines",""))},
+        "source_text": r.get("source_text",""),
+        "evidence": r.get("evidence_in_gold",""),
+        "category": r.get("category",""),
+        "verification": "llm_judge",
+    })
+
+new_d = []
+for d in data.get("distractor_rules", []):
+    rule = d.get("rule", "")
+    if len(rule) < 15 or rule[:50].lower().strip() in existing_d:
+        continue
+    new_d.append({
+        "rule": rule,
+        "source": {"path": d.get("source_path",""), "lines": str(d.get("source_lines",""))},
+        "source_text": d.get("source_text",""),
+        "collision_type": d.get("collision_type","scope_ambiguity"),
+        "why_distracting": d.get("why_distracting",""),
+        "severity": d.get("severity","medium"),
+    })
+
+m["rubric"] = (m.get("rubric") or []) + new_r
+m["distractors"] = (m.get("distractors") or []) + new_d
+if new_r or new_d:
+    mp.write_text(yaml.dump(m, default_flow_style=False, sort_keys=False, allow_unicode=True))
+skipped = len(data.get("skipped_rules", []))
+print(json.dumps({"rubrics": len(new_r), "distractors": len(new_d), "skipped": skipped}))
+'''
+    await sandbox.files.write("/workspace/merge_rubric.py", merge_script.encode())
+    code, merge_out, merge_err = await run_cmd(
+        sandbox, "python3 /workspace/merge_rubric.py", timeout=15,
+    )
+
+    if code != 0:
+        logger.warning("gemini CLI merge failed: %s", (merge_err or merge_out)[:200])
+        return "error", 0, 0, 0
+
+    try:
+        counts = json.loads(merge_out.strip().split("\n")[-1])
+        nr = counts.get("rubrics", 0)
+        nd = counts.get("distractors", 0)
+        ns = counts.get("skipped", 0)
+        status = "ok" if (nr + nd) > 0 else "no_new_rules"
+        return status, nr, nd, ns
+    except (json.JSONDecodeError, IndexError):
+        return "error", 0, 0, 0
+
+
 async def node_clone_repo(sandbox: AsyncSandbox, task_name: str) -> tuple[str, str]:
     """Clone the task's source repo into /workspace/repo/ for rubric extraction.
 
@@ -665,13 +1094,44 @@ async def node_clone_repo(sandbox: AsyncSandbox, task_name: str) -> tuple[str, s
     """
     code, repo_info, _ = await run_cmd(
         sandbox,
-        "python3 -c \""
-        "from pathlib import Path; import re; "
-        "df = Path('/workspace/task/environment/Dockerfile').read_text(); "
-        "repo = re.search(r'github\\.com/([^/]+/[^\\s]+?)(?:\\.git|[\\s]|$)', df); "
-        "commit = re.search(r'(?:git checkout |git fetch.*origin |ARG\\s+BASE_COMMIT=)([a-f0-9]{7,})', df); "
-        "print(repo.group(1) if repo else ''); "
-        "print(commit.group(1) if commit else '')\"",
+        r"""python3 -c "
+from pathlib import Path; import re, yaml
+repo_url = commit = ''
+
+# Try Dockerfile first
+df = Path('/workspace/task/environment/Dockerfile')
+if df.exists():
+    text = df.read_text()
+    m = re.search(r'github\.com/([^/\s]+/[^\s]+?)(?:\.git|[\s]|$)', text)
+    if m: repo_url = m.group(1).rstrip('/')
+    for pat in [r'git checkout\s+([a-f0-9]{7,40})', r'ARG\s+BASE_COMMIT=([a-f0-9]{7,40})', r'git fetch[^\n]*origin\s+([a-f0-9]{7,40})']:
+        cm = re.search(pat, text)
+        if cm: commit = cm.group(1); break
+
+# Fallback: eval_manifest.yaml
+if not repo_url or not commit:
+    mf = Path('/workspace/task/eval_manifest.yaml')
+    if mf.exists():
+        m = yaml.safe_load(mf.read_text()) or {}
+        src = m.get('source', {}) or {}
+        if not repo_url and src.get('repo'): repo_url = str(src['repo']).strip('\"')
+        if not commit and src.get('base_commit'): commit = str(src['base_commit']).strip('\"')
+
+# Fallback: task.toml
+if not repo_url or not commit:
+    tp = Path('/workspace/task/task.toml')
+    if tp.exists():
+        tt = tp.read_text()
+        if not repo_url:
+            m = re.search(r'source_repo\s*=\s*\"([^\"]+)\"', tt)
+            if m: repo_url = m.group(1)
+        if not commit:
+            m = re.search(r'base_commit\s*=\s*\"([a-f0-9]{7,40})\"', tt)
+            if m: commit = m.group(1)
+
+print(repo_url)
+print(commit)
+" """,
         timeout=10,
     )
     repo_url = repo_commit = ""
@@ -682,12 +1142,22 @@ async def node_clone_repo(sandbox: AsyncSandbox, task_name: str) -> tuple[str, s
 
     if repo_url and repo_commit:
         if re.match(r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$', repo_url):
+            # Use shallow fetch pattern (faster than full clone)
+            # Separate chown so checkout failure is detected
             clone_code, _, clone_err = await run_cmd(
                 sandbox,
-                f"git clone --filter=blob:none https://github.com/{repo_url}.git /workspace/repo "
-                f"&& cd /workspace/repo && git checkout {repo_commit}; "
-                f"chown -R worker:worker /workspace/repo 2>/dev/null || true",
+                f"git init /workspace/repo && "
+                f"cd /workspace/repo && "
+                f"git remote add origin https://github.com/{repo_url}.git && "
+                f"git fetch --depth=1 origin {repo_commit} && "
+                f"git checkout {repo_commit}",
                 timeout=180,
+            )
+            # Fix ownership separately (don't let this mask checkout failure)
+            await run_cmd(
+                sandbox,
+                "chown -R worker:worker /workspace/repo 2>/dev/null || true",
+                timeout=10,
             )
             if clone_code == 0:
                 logger.info("[%s] repo cloned at %s", task_name, repo_commit[:8])
@@ -888,11 +1358,98 @@ async def node_rubric_lint(sandbox: AsyncSandbox) -> tuple[int, list[str]]:
     return injected, samples
 
 
+async def node_quality_judge(sandbox: AsyncSandbox) -> tuple[str, dict]:
+    """Node 6b: LLM quality judge — Opus 4.6 scores task against 10 llm_judge rubrics.
+
+    Uses JUDGE_API_KEY (real Anthropic endpoint), NOT the pool's ANTHROPIC_API_KEY
+    (which may point at MiniMax/GLM/Kimi for the executor).
+
+    Reads: /workspace/task/instruction.md, tests/test_outputs.py, solution/solve.sh,
+           environment/Dockerfile
+    Writes: /workspace/task/quality.json  (per-rubric verdicts + summary)
+    Returns: (status, summary_dict)
+      status: "ok" | "skipped" | "error"
+      summary_dict: { tier_a_fails, tier_b_fails, tier_c_fails, pass_count, fail_count }
+    """
+    # Write the runner script to a file (inline try/except doesn't fit -c one-liner)
+    judge_script = (
+        "from taskforge.quality_judge import judge_task, JudgeError\n"
+        "from pathlib import Path\n"
+        "import json\n"
+        "td = Path('/workspace/task')\n"
+        "try:\n"
+        "    r = judge_task(td)\n"
+        "except JudgeError as e:\n"
+        "    r = {'error': str(e)}\n"
+        "open(td / 'quality.json', 'w').write(json.dumps(r, indent=2))\n"
+        "summary_keys = ['tier_a_fails', 'tier_b_fails', 'tier_c_fails', "
+        "'pass_count', 'fail_count', 'error']\n"
+        "print(json.dumps({k: r.get(k) for k in summary_keys if r.get(k) is not None}))\n"
+    )
+    await sandbox.files.write("/workspace/run_judge.py", judge_script.encode())
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cd /workspace && python3 /workspace/run_judge.py",
+        timeout=240,  # Opus judge ~5-30s typical
+    )
+    if code != 0:
+        return "error", {"error": (stderr or stdout)[:200]}
+    try:
+        last = stdout.strip().split("\n")[-1]
+        data = json.loads(last)
+    except (json.JSONDecodeError, IndexError):
+        return "error", {"error": f"parse: {stdout[:200]}"}
+    if data.get("error"):
+        return "error", data
+    return "ok", data
+
+
+async def node_instruction_reconcile(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Node 6c: Instruction reconciliation — cheap executor rewrites instruction.md
+    using the judge's findings, then re-validates (nop=0, gold=1 must still hold).
+
+    Called ONLY when node_quality_judge flags behavior_in_task_description,
+    no_solution_leakage, or instruction_no_hint_leakage as FAIL.
+
+    The executor is the pool backend (MiniMax/GLM/Kimi) — NOT Opus — because
+    this is a conventional rewrite task, not a judgment call.
+
+    Reads: /workspace/task/quality.json + instruction.md + tests/ + solution/
+    Writes: /workspace/task/instruction.md (rewritten); reconcile_status.json
+    Returns: (status, error)
+      status: "ok" | "abandoned" | "error" | "rate_limited"
+    """
+    return await _run_agent(sandbox, "instruction_reconcile.md")
+
+
+def _is_rate_limit(text: str) -> bool:
+    """Detect rate-limit signatures in claude -p output."""
+    if not text:
+        return False
+    lower = text.lower()
+    return ("429" in text
+            or "rate limit" in lower
+            or "hit your limit" in lower
+            or "overloaded" in lower)
+
+
 async def _run_agent(
     sandbox: AsyncSandbox,
     prompt_name: str,
+    *,
+    inner_retries: int = 3,
+    base_backoff: float = 45.0,
 ) -> tuple[str, str]:
-    """Run a claude -p agent with a prompt file. Returns (status, error)."""
+    """Run a claude -p agent with a prompt file. Returns (status, error).
+
+    Claude Code has built-in 10-retry exponential backoff per HTTP call that
+    preserves multi-turn conversation state. But when 60+ concurrent workers
+    hammer the same backend, those 10 retries can exhaust. This outer wrapper
+    adds *sandbox-level* backoff: sleep, re-run claude -p (fresh conversation).
+    Empirically smoother than relying on Claude Code's retries alone.
+
+    Backoff schedule (base=45s): 45s, 135s, 405s — total ~10 min max wait.
+    """
     prompt_file = ROOT / "taskforge" / "prompts" / prompt_name
     if not prompt_file.exists():
         return "skipped", f"prompt file missing: {prompt_name}"
@@ -900,20 +1457,35 @@ async def _run_agent(
     prompt = prompt_file.read_text()
     await sandbox.files.write(f"/workspace/{prompt_name}", prompt.encode())
 
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        f"cat /workspace/{prompt_name} | claude -p "
-        f"--dangerously-skip-permissions --model opus "
-        f"--output-format json",
-        user="worker",
-    )
+    last_err = ""
+    for attempt in range(inner_retries + 1):
+        code, stdout, stderr = await run_cmd(
+            sandbox,
+            f"cat /workspace/{prompt_name} | claude -p "
+            f"--dangerously-skip-permissions --model opus "
+            f"--output-format json",
+            user="worker",
+        )
 
-    if code != 0:
+        if code == 0:
+            return "ok", ""
+
         combined = stdout + stderr
-        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
-            return "rate_limited", combined[:500]
-        return "error", combined[:500]
-    return "ok", ""
+        last_err = combined[:500]
+
+        if not _is_rate_limit(combined):
+            return "error", last_err
+
+        if attempt < inner_retries:
+            delay = base_backoff * (3 ** attempt)
+            logger.warning("_run_agent(%s) rate-limited (attempt %d/%d); sleeping %.0fs",
+                           prompt_name, attempt + 1, inner_retries + 1, delay)
+            await asyncio.sleep(delay)
+            continue
+
+        return "rate_limited", last_err
+
+    return "rate_limited", last_err
 
 
 async def _read_reward(sandbox: AsyncSandbox) -> float:
@@ -927,16 +1499,19 @@ async def _read_reward(sandbox: AsyncSandbox) -> float:
 
 async def _read_task_name(sandbox: AsyncSandbox, pr_ref: str) -> str:
     """Read task name from task.toml or derive from PR ref."""
+    # Only run python3 — don't let ls output leak into the name
     code, stdout, _ = await run_cmd(
         sandbox,
-        "ls /workspace/task/task.toml 2>/dev/null && "
-        "python3 -c \"import tomllib; "
-        "print(tomllib.load(open('/workspace/task/task.toml','rb')).get('name',''))\" 2>/dev/null",
+        "python3 -c \""
+        "import tomllib, os; "
+        "p = '/workspace/task/task.toml'; "
+        "print(tomllib.load(open(p,'rb')).get('name','') if os.path.exists(p) else '')"
+        "\" 2>/dev/null",
     )
-    if code == 0 and stdout.strip():
-        lines = stdout.strip().split("\n")
-        name = lines[-1].strip()
-        if name:
+    if code == 0:
+        name = stdout.strip()
+        # Reject anything that looks like a path (contains /)
+        if name and "/" not in name and not name.startswith("."):
             return name
 
     if "#" in pr_ref:
@@ -959,6 +1534,32 @@ def _refresh_timeout(sandbox: AsyncSandbox) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _claim_pr(claim_dir: Path, pr_ref: str) -> tuple[Path, bool]:
+    """Atomically claim a PR for processing. Returns (claim_file, acquired).
+
+    Uses POSIX O_CREAT|O_EXCL for cross-process atomicity. If the claim file
+    already exists, another worker has the PR — return (path, False).
+
+    The claim file holds the owning worker's PID + timestamp for observability.
+    Claim files are NEVER deleted automatically: after a task completes
+    (PASS or FAIL), the claim remains as a "this PR was handled" record, so
+    a parallel pipeline run won't re-pick it up.
+    """
+    import os
+    claim_dir.mkdir(parents=True, exist_ok=True)
+    slug = pr_ref.replace("/", "__").replace("#", "_")
+    claim_path = claim_dir / f"{slug}.claim"
+    try:
+        fd = os.open(str(claim_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        try:
+            os.write(fd, f"pid={os.getpid()} ts={time.time():.0f} pr_ref={pr_ref}\n".encode())
+        finally:
+            os.close(fd)
+        return claim_path, True
+    except FileExistsError:
+        return claim_path, False
+
+
 async def run_task(
     task_ref: str,
     task_dir: Path,
@@ -969,6 +1570,7 @@ async def run_task(
     pr_ref: str | None = None,
     agentmd: bool = True,
     force: bool = False,
+    claim_dir: Path | None = None,
 ) -> WorkerResult:
     """Unified DAG pipeline — one function, entry point controlled by start_at.
 
@@ -997,6 +1599,17 @@ async def run_task(
     )
     t_start = time.monotonic()
 
+    # Cross-process claim: if another worker (same or different pipeline process)
+    # has already claimed this PR, skip it early — before burning sandbox time.
+    # Only applies to new-PR scaffolds; existing-task processing ignores claims.
+    if is_new and claim_dir is not None:
+        claim_path, acquired = _claim_pr(claim_dir, pr_ref)
+        if not acquired:
+            logger.info("[%s] already claimed by another worker (%s)", pr_ref, claim_path.name)
+            result.error = "claimed_elsewhere"
+            result.total_time = round(time.monotonic() - t_start, 2)
+            return result
+
     async with sandbox_sem:
         sandbox = None
         backend = None
@@ -1005,8 +1618,13 @@ async def run_task(
 
         try:
             # ── Acquire backend ───────────────────────────────────
-            needs_llm = start_at.should_run(StartAt.ENRICH)  # nodes 3+ need LLM
-            if pool and needs_llm:
+            # Every start_at stage except pure-scaffold includes at least one LLM
+            # node: validate_and_fix, instruction_reconcile, improve, enrich, etc.
+            # Previous code only acquired on `start_at >= ENRICH`, which starved
+            # start_at=VALIDATE and start_at=QGATE retrofit runs of an executor —
+            # claude-p then failed in the sandbox because no ANTHROPIC_API_KEY
+            # was injected.
+            if pool:
                 backend_ctx = pool.acquire()
                 backend = await backend_ctx.__aenter__()
                 backend_env = backend.subprocess_env()
@@ -1090,16 +1708,27 @@ async def run_task(
                 repo_url, _ = await node_clone_repo(sandbox, result.task_name)
 
             # ── Node 1: Programmatic Quality Gate ─────────────────
-            if start_at.should_run(StartAt.QGATE) and agentmd:
+            # Runs for BOTH code-only and agentmd tasks, ALWAYS (regardless of
+            # start_at). task_lint covers the 10 programmatic rubrics (dockerfile
+            # determinism, pinned deps, tautological tests, pure-grep tests,
+            # zero-p2p, COPY solution/, etc.). The agentmd-specific
+            # classify_task_fast only runs when agentmd=True.
+            # Always-on because: (a) it's <2s deterministic, (b) we want retrofit
+            # mode (--start-at validate) to still get programmatic lint protection.
+            if True:
                 t0 = time.monotonic()
-                verdict, flags = await node_qgate(sandbox)
+                verdict, flags = await node_qgate(sandbox, agentmd=agentmd)
                 elapsed = time.monotonic() - t0
                 result.qgate_verdict = verdict
 
                 await update_sandbox_status(sandbox, "quality_gate", _stamp(
                     "quality_gate", verdict, elapsed, f"flags={flags}"))
 
-                if verdict == "DELETE":
+                # DELETE semantics:
+                # - NEW tasks (scaffold mode): short-circuit — regenerate from scratch.
+                # - EXISTING tasks (retrofit mode): record the verdict but CONTINUE
+                #   into validate+judge+reconcile so we get a chance to repair.
+                if verdict == "DELETE" and is_new:
                     result.error = f"quality_gate: DELETE ({flags})"
                     result.valid = False
                     result.total_time = round(time.monotonic() - t_start, 2)
@@ -1142,6 +1771,26 @@ async def run_task(
                         write_status_json(dest, result)
                     logger.info("[%s] ABANDONED: %s", result.task_name, abandon_reason[:100])
                     return result
+
+            _refresh_timeout(sandbox)
+
+            # ── Node 2b: Gemini CLI Rubric (exact line numbers) ───
+            if start_at.should_run(StartAt.RUBRIC) and agentmd and repo_url:
+                t0 = time.monotonic()
+                cli_status, nr, nd, ns = await node_gemini_cli_rubric(
+                    sandbox, repo_url)
+                elapsed = time.monotonic() - t0
+
+                await update_sandbox_status(sandbox, "gemini_cli_rubric", {
+                    **_stamp("gemini_cli_rubric", cli_status, elapsed,
+                             f"+{nr}R +{nd}D skip={ns}"),
+                    "model": "gemini-3.1-pro-preview",
+                    "rubrics_added": nr,
+                    "distractors_added": nd,
+                    "skipped": ns,
+                })
+                logger.info("[%s] gemini CLI rubric: %s +%dR +%dD skip=%d (%.1fs)",
+                            result.task_name, cli_status, nr, nd, ns, elapsed)
 
             _refresh_timeout(sandbox)
 
@@ -1215,7 +1864,25 @@ async def run_task(
                 logger.info("[%s] validate: %s nop=%.1f gold=%.1f (%.1fs)",
                             result.task_name, s, result.nop_reward, result.gold_reward, elapsed)
 
-            # ── Node 6: Rubric Lint ───────────────────────────────
+            # ── Retrofit: trust prior validation ──────────────────
+            # When start_at=JUDGE, we skipped validate_and_fix. The task was
+            # validated previously (it's in harbor_tasks/, meaning it already
+            # passed nop=0/gold=1 at download time). Seed result.valid=True from
+            # the prior status.json so judge+reconcile nodes run.
+            if start_at == StartAt.JUDGE and not result.valid:
+                # Read the existing status.json (uploaded with task files)
+                prior_status = await read_sandbox_status(sandbox)
+                prior_validate = prior_status.get("nodes", {}).get("validate", {})
+                result.nop_reward = prior_validate.get("nop_reward", 0.0)
+                result.gold_reward = prior_validate.get("gold_reward", 1.0)
+                result.valid = (
+                    prior_status.get("valid", True)
+                    or (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                )
+                logger.info("[%s] retrofit: trusting prior nop=%.1f gold=%.1f → valid=%s",
+                            result.task_name, result.nop_reward, result.gold_reward, result.valid)
+
+            # ── Node 6a: Rubric Lint (agentmd only) ───────────────
             if result.valid and agentmd:
                 injected, samples = await node_rubric_lint(sandbox)
                 if injected > 0:
@@ -1226,6 +1893,95 @@ async def run_task(
                     })
                     logger.warning("[%s] RUBRIC TAMPERING: %d injected rules cleaned",
                                    result.task_name, injected)
+
+            # ── Node 6b: Quality Judge (Opus 4.6 via JUDGE_API_KEY) ─
+            # Scores task against 10 llm_judge rubrics. Writes quality.json.
+            # Runs for BOTH code-only and agentmd tasks.
+            judge_summary: dict = {}
+            if result.valid:
+                t0 = time.monotonic()
+                js, judge_summary = await node_quality_judge(sandbox)
+                elapsed = time.monotonic() - t0
+                result.judge_status = js
+                result.judge_summary = judge_summary
+                await update_sandbox_status(sandbox, "quality_judge", {
+                    "status": js,
+                    "time": round(elapsed, 2),
+                    **{k: judge_summary.get(k) for k in
+                       ["tier_a_fails", "tier_b_fails", "pass_count", "fail_count"]},
+                })
+                if js == "ok":
+                    logger.info("[%s] judge: %d pass, %d fail, tier_a=%s",
+                                result.task_name,
+                                judge_summary.get("pass_count", 0),
+                                judge_summary.get("fail_count", 0),
+                                judge_summary.get("tier_a_fails", []))
+
+            # ── Node 6c: Instruction Reconcile (conditional) ──────
+            # Runs when the judge flagged instruction-level issues and we think
+            # a targeted rewrite can fix them without breaking the oracle.
+            INSTRUCTION_RUBRICS = {
+                "behavior_in_task_description",
+                "no_solution_leakage",
+                "instruction_no_hint_leakage",
+            }
+            reconcile_needed = (
+                result.valid
+                and result.judge_status == "ok"
+                and any(r in INSTRUCTION_RUBRICS
+                        for r in judge_summary.get("tier_a_fails", []))
+            )
+            if reconcile_needed:
+                logger.info("[%s] reconcile needed — judge flagged %s",
+                            result.task_name,
+                            [r for r in judge_summary.get("tier_a_fails", [])
+                             if r in INSTRUCTION_RUBRICS])
+                t0 = time.monotonic()
+                rs, rerr = await node_instruction_reconcile(sandbox)
+                elapsed = time.monotonic() - t0
+                result.reconcile_status = rs
+                result.reconcile_time = round(elapsed, 2)
+                if rs == "rate_limited":
+                    if pool and backend:
+                        pool.report_429(backend)
+                    raise _RateLimited(f"rate limited during reconcile: {rerr}")
+
+                # Read reconcile_status.json written by the agent
+                rec_data: dict = {}
+                try:
+                    rec_raw = await sandbox.files.read(
+                        "/workspace/task/reconcile_status.json", format="text")
+                    rec_data = json.loads(rec_raw)
+                    result.reconcile_outcome = rec_data
+                except Exception as e:
+                    logger.warning("[%s] reconcile_status read failed: %s",
+                                   result.task_name, str(e)[:80])
+
+                if rec_data.get("abandoned"):
+                    logger.info("[%s] reconcile abandoned: %s",
+                                result.task_name, rec_data.get("reason", ""))
+                elif rec_data.get("reconciled"):
+                    # Agent claims nop=0 and gold=1 still hold. Trust but verify:
+                    # rec_data may include reward numbers from the agent's own run.
+                    new_nop = rec_data.get("nop_reward")
+                    new_gold = rec_data.get("gold_reward")
+                    if new_nop is not None:
+                        result.nop_reward = float(new_nop)
+                    if new_gold is not None:
+                        result.gold_reward = float(new_gold)
+                    result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                    if not result.valid:
+                        logger.warning(
+                            "[%s] reconcile claimed success but nop=%.1f gold=%.1f",
+                            result.task_name, result.nop_reward, result.gold_reward)
+                    else:
+                        # Re-run judge post-reconcile to confirm instruction issue fixed
+                        js2, judge_summary2 = await node_quality_judge(sandbox)
+                        result.judge_status_post = js2
+                        result.judge_summary_post = judge_summary2
+                        logger.info("[%s] post-reconcile judge: %s tier_a=%s",
+                                    result.task_name, js2,
+                                    judge_summary2.get("tier_a_fails", []))
 
             # ── Node 7: Download (ONCE, only if valid) ────────────
             result.total_time = round(time.monotonic() - t_start, 2)
@@ -1278,10 +2034,12 @@ async def run_task(
 
     result.total_time = round(time.monotonic() - t_start, 2)
     status_str = "PASS" if result.valid else "FAIL"
+    err_suffix = f" err={result.error[:120]}" if (not result.valid and result.error) else ""
     logger.info(
-        "[%s] %s  nop=%.1f gold=%.1f improve=%s backend=%s start=%s (%.1fs)",
+        "[%s] %s  nop=%.1f gold=%.1f improve=%s backend=%s start=%s (%.1fs)%s",
         result.task_name, status_str, result.nop_reward, result.gold_reward,
         result.improve_status, result.backend_name, result.start_at, result.total_time,
+        err_suffix,
     )
     return result
 
@@ -1360,26 +2118,120 @@ async def run_batch(
     agentmd: bool = True,
     force: bool = False,
     max_retries: int = 2,
+    failed_log_path: Path | None = None,
+    claim_dir: Path | None = None,
 ) -> list[WorkerResult]:
-    """Dispatch items to E2B sandboxes via async queue with retry."""
+    """Dispatch items to E2B sandboxes via async queue with retry.
+
+    If `failed_log_path` is provided, every FAILed task (terminal, not mid-retry)
+    is appended there as JSONL with structured failure metadata so the batch can
+    be resumed later with a filtered input file.
+    """
     sandbox_sem = asyncio.Semaphore(concurrency)
     results: list[WorkerResult] = []
     results_lock = asyncio.Lock()
 
-    queue: asyncio.Queue[tuple[str | dict, int]] = asyncio.Queue()
+    # Classifier for failure_type based on WorkerResult fields.
+    def _classify_failure(r: WorkerResult) -> str:
+        err = (r.error or "").lower()
+        if r.scaffold_status == "abandoned":
+            return "scaffold_abandoned"   # PR deemed unsuitable by agent
+        if r.scaffold_status == "error" or "scaffold failed" in err:
+            return "scaffold_error"
+        if "rate limit" in err:
+            return "rate_limit_exhausted"  # inner + outer retries all failed
+        if r.qgate_verdict == "DELETE":
+            return "qgate_rejected"
+        if r.rubric_status == "abandoned":
+            return "rubric_abandoned"
+        if r.nop_reward == 1.0 or r.gold_reward == 0.0:
+            return "test_contract_failed"  # nop should fail, gold should pass
+        if r.nop_reward == -1.0 and r.gold_reward == -1.0 and mode == "pipeline":
+            return "validate_unreachable"   # never got to validate node
+        if "docker" in err or "build" in err.lower():
+            return "docker_build_error"
+        if r.error:
+            return "other_error"
+        return "unknown"
+
+    def _classify_phase(r: WorkerResult) -> str:
+        """Which pipeline phase the task died in."""
+        if r.scaffold_status in ("abandoned", "error"):
+            return "scaffold"
+        if not r.task_name:
+            return "scaffold"
+        if r.qgate_verdict == "DELETE":
+            return "qgate"
+        if r.rubric_status in ("abandoned", "error"):
+            return "rubric"
+        if r.improve_status == "error":
+            return "improve"
+        if r.nop_reward == -1.0 and r.gold_reward == -1.0:
+            return "pre_validate"
+        if r.nop_reward == 1.0 or r.gold_reward == 0.0:
+            return "validate"
+        return "unknown"
+
+    failed_log_lock = asyncio.Lock()
+
+    async def _log_failure(r: WorkerResult):
+        """Append one FAIL record to failed_tasks.jsonl using fcntl for
+        cross-process safety (multiple pipeline processes can share one log)."""
+        if failed_log_path is None:
+            return
+        entry = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "pr_ref": r.task_ref,
+            "task_name": r.task_name,
+            "failure_phase": _classify_phase(r),
+            "failure_type": _classify_failure(r),
+            "scaffold_status": r.scaffold_status,
+            "qgate_verdict": r.qgate_verdict,
+            "rubric_status": r.rubric_status,
+            "improve_status": r.improve_status,
+            "nop_reward": r.nop_reward,
+            "gold_reward": r.gold_reward,
+            "backend": r.backend_name,
+            "start_at": r.start_at,
+            "total_time": r.total_time,
+            "last_error": (r.error or "")[:300],
+        }
+        async with failed_log_lock:
+            import fcntl
+            line = json.dumps(entry) + "\n"
+            with failed_log_path.open("a") as fh:
+                try:
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+                    fh.write(line)
+                    fh.flush()
+                finally:
+                    try:
+                        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+                    except Exception:
+                        pass
+
+    # Sentinel object used to tell workers to exit. Must be a distinct object
+    # so it cannot collide with real items (which are str or dict).
+    _SHUTDOWN = object()
+
+    queue: asyncio.Queue = asyncio.Queue()
     for item in items:
         await queue.put((item, 0))
 
     total = len(items)
     done_count = 0
 
-    async def worker():
+    async def worker(worker_id: int):
         nonlocal done_count
         while True:
-            try:
-                item, retries = queue.get_nowait()
-            except asyncio.QueueEmpty:
+            # Blocking get — workers park here when queue is empty, rather
+            # than exiting. Re-enqueued (rate-limited) items always get picked
+            # up, even if every other worker is temporarily busy.
+            payload = await queue.get()
+            if payload is _SHUTDOWN:
+                queue.task_done()
                 return
+            item, retries = payload
 
             try:
                 if mode == "docker-only":
@@ -1394,6 +2246,7 @@ async def run_batch(
                             pr_ref=item["pr_ref"],
                             agentmd=agentmd,
                             force=force,
+                            claim_dir=claim_dir,
                         )
                     else:
                         # Existing task
@@ -1403,6 +2256,7 @@ async def run_batch(
                             start_at=start_at,
                             agentmd=agentmd,
                             force=force,
+                            claim_dir=claim_dir,
                         )
                 else:
                     raise ValueError(f"Unknown mode: {mode}")
@@ -1418,20 +2272,79 @@ async def run_batch(
                         if done_count % 10 == 0 or r.valid:
                             valid_count = sum(1 for x in results if x.valid)
                             logger.info("Progress: %d/%d done, %d valid", done_count, total, valid_count)
+                    # Persist structured FAIL record for resumability.
+                    # Skip if the task was simply claimed by another worker —
+                    # that's coordination, not a real failure.
+                    if not r.valid and "claimed_elsewhere" not in (r.error or ""):
+                        await _log_failure(r)
 
             except Exception as e:
-                logger.error("Worker error for %s: %s", item, e)
+                logger.error("Worker %d error for %s: %s", worker_id, item, e)
+                crashed = WorkerResult(
+                    task_ref=str(item), mode=mode, error=str(e)[:500]
+                )
                 async with results_lock:
-                    results.append(WorkerResult(
-                        task_ref=str(item), mode=mode, error=str(e)[:500]
-                    ))
+                    results.append(crashed)
                     done_count += 1
+                await _log_failure(crashed)
 
-            queue.task_done()
+            finally:
+                queue.task_done()
 
     worker_count = min(concurrency * 2, len(items))
-    workers = [asyncio.create_task(worker()) for _ in range(worker_count)]
-    await asyncio.gather(*workers)
+    workers = [asyncio.create_task(worker(i)) for i in range(worker_count)]
+
+    # Heartbeat: log queue + pool state every 2 min so operators can SEE progress
+    # during long cooldown waits instead of thinking the pipeline crashed.
+    heartbeat_stop = asyncio.Event()
+
+    async def heartbeat():
+        while not heartbeat_stop.is_set():
+            try:
+                await asyncio.wait_for(heartbeat_stop.wait(), timeout=120)
+                return
+            except asyncio.TimeoutError:
+                pass
+            try:
+                qsize = queue.qsize()
+            except Exception:
+                qsize = -1
+            cooldowns = {}
+            if pool is not None:
+                now = time.monotonic()
+                for s in pool._slots:
+                    remaining = max(0, s.cooldown_until - now)
+                    if remaining > 0:
+                        cooldowns[s.backend.name] = f"{remaining:.0f}s (429s={s.consecutive_429s})"
+            async with results_lock:
+                valid_n = sum(1 for r in results if r.valid)
+                done_n = done_count
+            logger.info(
+                "HEARTBEAT: done=%d/%d valid=%d queue_pending=%d cooldowns=%s",
+                done_n, total, valid_n, qsize,
+                cooldowns or "{}"
+            )
+
+    heartbeat_task = asyncio.create_task(heartbeat())
+
+    try:
+        # Drain barrier: wait until every enqueued item (including re-enqueues)
+        # has been task_done()'d. Re-enqueued items keep the unfinished-task
+        # counter above zero, so join() only releases once the *transitive*
+        # work is done.
+        await queue.join()
+
+        # Now tell every worker to exit.
+        for _ in range(worker_count):
+            await queue.put(_SHUTDOWN)
+        await asyncio.gather(*workers)
+    finally:
+        heartbeat_stop.set()
+        heartbeat_task.cancel()
+        try:
+            await heartbeat_task
+        except (asyncio.CancelledError, Exception):
+            pass
 
     return results
 
@@ -1524,10 +2437,24 @@ async def async_main(args):
         print("No items to process. Check --input, --tasks, or task directory.")
         sys.exit(1)
 
+    # Per-run failure log (structured JSONL for resumability).
+    failed_log_dir = ROOT / "pipeline_logs"
+    failed_log_dir.mkdir(exist_ok=True)
+    failed_log_path = Path(args.failed_log) if args.failed_log else (
+        failed_log_dir / f"failed_tasks_{int(time.time())}.jsonl"
+    )
+    logger.info("Failed-task log: %s", failed_log_path)
+
+    claim_dir = Path(args.claim_dir) if args.claim_dir else None
+    if claim_dir:
+        logger.info("Cross-process claim dir: %s", claim_dir)
+
     wall_start = time.monotonic()
     results = await run_batch(
         items, args.mode, pool, args.concurrency, task_dir,
         start_at=start_at, agentmd=args.agentmd, force=args.force,
+        failed_log_path=failed_log_path,
+        claim_dir=claim_dir,
     )
     wall_time = time.monotonic() - wall_start
 
@@ -1585,7 +2512,7 @@ def main():
     parser.add_argument("--mode", choices=["pipeline", "docker-only"], required=True,
                         help="pipeline: unified DAG (LLM + Docker). docker-only: no LLM, just Docker oracle")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "validate"],
+                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
                         help="DAG entry point (default: scaffold for --input, validate for existing tasks)")
     parser.add_argument("--task-dir", default="harbor_tasks")
     parser.add_argument("--tasks", type=str, default=None, help="Comma-sep task names")
@@ -1597,7 +2524,26 @@ def main():
     parser.add_argument("--pool", action="store_true", help="Use multi-backend pool")
     parser.add_argument("--agentmd", action="store_true", help="Enable agentmd quality nodes (qgate, rubric, lint)")
     parser.add_argument("--force", action="store_true", help="Force re-process even if task exists on disk")
+    parser.add_argument("--failed-log", type=str, default=None,
+                        help="Path to failed_tasks.jsonl (default: pipeline_logs/failed_tasks_<ts>.jsonl)")
+    parser.add_argument("--claim-dir", type=str, default=None,
+                        help="Directory for cross-process PR claims. If set, multiple pipeline "
+                             "processes can share an input file and atomically coordinate which PRs "
+                             "each one processes. Recommended: './pipeline_claims/'.")
+    parser.add_argument("--no-cleanup", action="store_true",
+                        help="Skip sandbox cleanup at startup (useful if another batch is running)")
     args = parser.parse_args()
+
+    # Robust sandbox hygiene:
+    # 1. Kill any orphaned sandboxes from previous runs (startup cleanup)
+    # 2. Install signal handlers so SIGTERM/SIGINT clean up before exit
+    # 3. atexit fallback for unexpected exits (but NOT for kill -9)
+    if not args.no_cleanup:
+        killed = cleanup_orphan_sandboxes(reason="startup")
+        if killed > 0:
+            logger.info("Startup cleanup: freed %d orphaned sandboxes", killed)
+    install_cleanup_handlers()
+
     asyncio.run(async_main(args))
 
 
